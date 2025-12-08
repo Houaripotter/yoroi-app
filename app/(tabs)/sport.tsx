@@ -1,33 +1,98 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   Image,
-  Alert,
-  RefreshControl,
+  Dimensions,
 } from 'react-native';
-import { Plus, Trash2, Calendar } from 'lucide-react-native';
-import { WorkoutCalendar } from '@/components/WorkoutCalendar';
-import { WorkoutModal } from '@/components/WorkoutModal';
-import { SoftCard } from '@/components/SoftCard';
-import { Workout, WorkoutType, WORKOUT_TYPES } from '@/types/workout';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ActivityModal } from '@/components/ActivityModal';
+import { Workout, WorkoutType } from '@/types/workout';
 import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
 import { useFocusEffect } from 'expo-router';
+
+// Fonction helper pour garantir l'authentification avec retry
+const ensureUserAuthenticated = async () => {
+  let retries = 0;
+  const maxRetries = 3;
+
+  while (retries < maxRetries) {
+    try {
+      console.log(`🔑 [Tentative ${retries + 1}/${maxRetries}] Vérification de l'utilisateur...`);
+
+      // D'abord essayer de récupérer la session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('❌ Erreur getSession:', sessionError);
+        retries++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      // Si pas de session, créer une authentification anonyme
+      if (!session) {
+        console.log('🔑 Pas de session, authentification anonyme...');
+        const { data, error: signInError } = await supabase.auth.signInAnonymously();
+
+        if (signInError) {
+          console.error('❌ Erreur signInAnonymously:', signInError);
+          console.error('❌ Détails:', JSON.stringify(signInError, null, 2));
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        if (data.user) {
+          console.log('✅ Authentification anonyme réussie:', data.user.id);
+          return data.user;
+        }
+      }
+
+      // Vérifier l'utilisateur
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error('❌ Erreur getUser:', userError);
+        retries++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      if (!user) {
+        console.error('❌ getUser retourne null');
+        retries++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      console.log('✅ Utilisateur trouvé:', user.id);
+      return user;
+    } catch (error) {
+      console.error('❌ Exception dans ensureUserAuthenticated:', error);
+      retries++;
+      if (retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  console.error('❌ ÉCHEC: Impossible d\'authentifier l\'utilisateur après', maxRetries, 'tentatives');
+  return null;
+};
 
 export default function SportScreen() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   const fetchWorkouts = useCallback(async () => {
-    setLoading(true);
     const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
       .toISOString()
       .split('T')[0];
@@ -35,9 +100,11 @@ export default function SportScreen() {
       .toISOString()
       .split('T')[0];
 
-    const { data: { user } } = await supabase.auth.getUser();
+    console.log('📅 Récupération workouts du', startOfMonth, 'au', endOfMonth);
+
+    const user = await ensureUserAuthenticated();
     if (!user) {
-      setLoading(false);
+      console.error('❌ Impossible de récupérer l\'utilisateur');
       return;
     }
 
@@ -50,11 +117,12 @@ export default function SportScreen() {
       .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error fetching workouts:', error);
+      console.error('❌ Erreur lors de la récupération des workouts:', error);
     } else {
+      console.log('✅ Workouts récupérés:', data?.length || 0, 'workout(s)');
+      console.log('📊 Détails des workouts:', data);
       setWorkouts(data || []);
     }
-    setLoading(false);
   }, [currentMonth]);
 
   useFocusEffect(
@@ -62,12 +130,6 @@ export default function SportScreen() {
       fetchWorkouts();
     }, [fetchWorkouts])
   );
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchWorkouts();
-    setRefreshing(false);
-  }, [fetchWorkouts]);
 
   const handlePreviousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
@@ -79,418 +141,553 @@ export default function SportScreen() {
 
   const handleDayPress = (date: string) => {
     setSelectedDate(date);
+    // La modal va récupérer les activités actuelles via currentActivities
     setModalVisible(true);
   };
 
-  const handleAddWorkout = async (type: WorkoutType) => {
-    if (!selectedDate) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      Alert.alert('Erreur', 'Vous devez être connecté pour ajouter un entraînement');
+  const handleActivitySelect = async (types: WorkoutType[]): Promise<void> => {
+    if (!selectedDate) {
+      console.error('❌ Pas de date sélectionnée');
       return;
     }
 
-    const { error } = await supabase.from('workouts').insert({
-      user_id: user.id,
-      date: selectedDate,
-      type,
-    });
+    console.log('🔵 [DÉBUT] Sauvegarde workout pour le', selectedDate, '- Types:', types);
 
-    if (error) {
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'entraînement');
-      console.error('Error adding workout:', error);
-    } else {
-      fetchWorkouts();
+    try {
+      const user = await ensureUserAuthenticated();
+
+      if (!user) {
+        console.error('❌ Impossible de récupérer l\'utilisateur pour sauvegarder');
+        return;
+      }
+
+      console.log('✅ Utilisateur authentifié:', user.id);
+
+      // Supprimer les anciens entraînements pour cette date
+      console.log('🗑️  Suppression des anciens workouts pour', selectedDate);
+      const { error: deleteError } = await supabase
+        .from('workouts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('date', selectedDate);
+
+      if (deleteError) {
+        console.error('❌ Erreur suppression:', deleteError);
+        return;
+      }
+      console.log('✅ Anciens workouts supprimés');
+
+      // Ajouter les nouveaux entraînements seulement s'il y en a
+      if (types.length > 0) {
+        const workoutsToInsert = types.map(type => ({
+          user_id: user.id,
+          date: selectedDate,
+          type,
+        }));
+
+        console.log('💾 Insertion de', workoutsToInsert.length, 'workout(s):', workoutsToInsert);
+
+        const { data, error: insertError } = await supabase
+          .from('workouts')
+          .insert(workoutsToInsert)
+          .select();
+
+        if (insertError) {
+          console.error('❌ Erreur insertion:', insertError);
+          return;
+        }
+
+        console.log('✅ Workouts sauvegardés dans Supabase:', data);
+      } else {
+        console.log('ℹ️  Aucun workout à ajouter (suppression uniquement)');
+      }
+
+      // Rafraîchir les données
+      console.log('🔄 Rafraîchissement du calendrier...');
+      await fetchWorkouts();
+      console.log('✅ [FIN] Calendrier rafraîchi - Total workouts:', workouts.length);
+    } catch (error) {
+      console.error('❌ [ERREUR GLOBALE]:', error);
     }
   };
 
-  const handleDeleteWorkout = async (workoutId: string) => {
-    Alert.alert(
-      'Supprimer l\'entraînement',
-      'Êtes-vous sûr de vouloir supprimer cet entraînement ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            const { error } = await supabase.from('workouts').delete().eq('id', workoutId);
+  const getCurrentActivitiesForDate = (date: string): WorkoutType[] => {
+    return workouts
+      .filter(w => w.date === date)
+      .map(w => w.type);
+  };
 
-            if (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer l\'entraînement');
-              console.error('Error deleting workout:', error);
-            } else {
-              fetchWorkouts();
-            }
-          },
-        },
-      ]
+  // Compter le nombre d'entraînements ce mois
+  const workoutCount = workouts.length;
+
+  // Calculer le nombre d'entraînements par type
+  const workoutStats = useMemo(() => {
+    const stats = {
+      gracie_barra: 0,
+      basic_fit: 0,
+      running: 0,
+    };
+
+    workouts.forEach(workout => {
+      if (workout.type === 'gracie_barra') stats.gracie_barra++;
+      else if (workout.type === 'basic_fit') stats.basic_fit++;
+      else if (workout.type === 'running') stats.running++;
+    });
+
+    return stats;
+  }, [workouts]);
+
+  // Générer les données du calendrier mensuel
+  const calendarData = useMemo(() => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    // Premier jour du mois
+    const firstDay = new Date(year, month, 1);
+    // Dernier jour du mois
+    const lastDay = new Date(year, month + 1, 0);
+    // Jour de la semaine du premier jour (0 = dimanche, 1 = lundi, etc.)
+    let firstDayOfWeek = firstDay.getDay();
+    if (firstDayOfWeek === 0) firstDayOfWeek = 7; // Dimanche devient 7
+
+    const days: (Date | null)[] = [];
+
+    // Ajouter les jours vides au début (pour aligner avec lundi)
+    for (let i = 1; i < firstDayOfWeek; i++) {
+      days.push(null);
+    }
+
+    // Ajouter tous les jours du mois
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      days.push(new Date(year, month, day));
+    }
+
+    return days;
+  }, [currentMonth]);
+
+  const getWorkoutsForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    const dayWorkouts = workouts.filter(w => w.date === dateString);
+
+    // Log seulement si des workouts sont trouvés pour éviter le spam
+    if (dayWorkouts.length > 0) {
+      console.log('🏋️ Workouts trouvés pour', dateString, ':', dayWorkouts.length, dayWorkouts.map(w => w.type));
+    }
+
+    return dayWorkouts;
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const isSelected = (date: Date) => {
+    if (!selectedDate) return false;
+    const dateString = date.toISOString().split('T')[0];
+    return dateString === selectedDate;
+  };
+
+  const renderCalendarDay = ({ item }: { item: Date | null }) => {
+    if (!item) {
+      // Jour vide au début du mois
+      return <View style={styles.emptyDay} />;
+    }
+
+    const dayWorkouts = getWorkoutsForDate(item);
+    const today = isToday(item);
+    const selected = isSelected(item);
+    const dateString = item.toISOString().split('T')[0];
+    const hasWorkouts = dayWorkouts.length > 0;
+
+    return (
+      <View style={styles.dayCell}>
+        <TouchableOpacity
+          style={[
+            styles.dayCellInner,
+            hasWorkouts && styles.dayCellWithWorkout,
+            today && styles.todayCell,
+            selected && styles.selectedCell,
+          ]}
+          onPress={() => handleDayPress(dateString)}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.dayNumber,
+              today && styles.todayText,
+              selected && styles.selectedText,
+            ]}
+          >
+            {item.getDate()}
+          </Text>
+
+          {/* Images des entraînements */}
+          {hasWorkouts && (
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              position: 'absolute',
+              bottom: 6,
+              left: 0,
+              right: 0,
+              gap: 2,
+            }}>
+              {dayWorkouts.slice(0, 3).map((workout) => (
+                workout.type === 'running' ? (
+                  <MaterialCommunityIcons
+                    key={workout.id}
+                    name="run"
+                    size={16}
+                    color="#10B981"
+                    style={{ margin: 1 }}
+                  />
+                ) : (
+                  <Image
+                    key={workout.id}
+                    source={
+                      workout.type === 'basic_fit'
+                        ? require('../../assets/images/basic-fit.png')
+                        : require('../../assets/images/gracie-barra.png')
+                    }
+                    style={{ width: 16, height: 16, resizeMode: 'contain', margin: 1 }}
+                  />
+                )
+              ))}
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
     );
   };
 
-  const selectedDayWorkouts = selectedDate
-    ? workouts.filter((w) => w.date === selectedDate)
-    : [];
-
-  // Stats for the current month
-  const totalWorkouts = workouts.length;
-  const jjbCount = workouts.filter((w) => w.type === 'gracie_barra').length;
-  const muscuCount = workouts.filter((w) => w.type === 'basic_fit').length;
+  const MONTHS = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-            colors={[theme.colors.primary]}
-          />
-        }
-      >
+      {/* Card calendrier */}
+      <View style={styles.calendarCard}>
+        {/* Header Stats - Résumé du mois */}
+        <View style={styles.statsHeader}>
+          <Text style={styles.statsTitle}>Résumé du mois</Text>
+
+          {/* Total entraînements */}
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total Entraînements</Text>
+            <Text style={styles.totalNumber}>{workoutCount}</Text>
+          </View>
+
+          {/* Détail par type avec logos */}
+          <View style={styles.statsDetailContainer}>
+            {/* Gracie Barra */}
+            <View style={styles.statItem}>
+              <Image
+                source={require('../../assets/images/gracie-barra.png')}
+                style={styles.statLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.statCount}>x{workoutStats.gracie_barra}</Text>
+            </View>
+
+            <View style={styles.statDivider} />
+
+            {/* Basic Fit */}
+            <View style={styles.statItem}>
+              <Image
+                source={require('../../assets/images/basic-fit.png')}
+                style={styles.statLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.statCount}>x{workoutStats.basic_fit}</Text>
+            </View>
+
+            <View style={styles.statDivider} />
+
+            {/* Running */}
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons
+                name="run"
+                size={24}
+                color="#10B981"
+              />
+              <Text style={styles.statCount}>x{workoutStats.running}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Header avec navigation */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Entraînements</Text>
-            <Text style={styles.subtitle}>Suivez vos séances</Text>
-          </View>
-          <View style={styles.calendarIcon}>
-            <Calendar size={28} color={theme.colors.primary} strokeWidth={2.5} />
-          </View>
+          <TouchableOpacity onPress={handlePreviousMonth} style={styles.navButton}>
+            <ChevronLeft size={24} color="#1A1A1A" strokeWidth={2.5} />
+          </TouchableOpacity>
+
+          <Text style={styles.monthYear}>
+            {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </Text>
+
+          <TouchableOpacity onPress={handleNextMonth} style={styles.navButton}>
+            <ChevronRight size={24} color="#1A1A1A" strokeWidth={2.5} />
+          </TouchableOpacity>
         </View>
 
-        {/* Monthly Stats */}
-        <View style={styles.statsGrid}>
-          <SoftCard style={styles.statCard}>
-            <Text style={styles.statValue}>{totalWorkouts}</Text>
-            <Text style={styles.statLabel}>Total</Text>
-          </SoftCard>
-
-          <SoftCard style={[styles.statCard, { backgroundColor: '#FEE2E2' }]}>
-            <View style={styles.statIconContainer}>
-              <Image
-                source={WORKOUT_TYPES.gracie_barra.logo}
-                style={styles.statIcon}
-                resizeMode="contain"
-              />
+        {/* Jours de la semaine */}
+        <View style={styles.weekDays}>
+          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
+            <View key={`${day}-${index}`} style={styles.weekDayCell}>
+              <Text style={styles.weekDayText}>{day}</Text>
             </View>
-            <Text style={styles.statValue}>{jjbCount}</Text>
-            <Text style={styles.statLabel}>JJB</Text>
-          </SoftCard>
-
-          <SoftCard style={[styles.statCard, { backgroundColor: theme.colors.orangePastel }]}>
-            <View style={styles.statIconContainer}>
-              <Image
-                source={WORKOUT_TYPES.basic_fit.logo}
-                style={styles.statIcon}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.statValue}>{muscuCount}</Text>
-            <Text style={styles.statLabel}>Muscu</Text>
-          </SoftCard>
+          ))}
         </View>
 
-        {/* Calendar */}
-        <SoftCard style={styles.calendarCard}>
-          <WorkoutCalendar
-            currentMonth={currentMonth}
-            workouts={workouts}
-            onPreviousMonth={handlePreviousMonth}
-            onNextMonth={handleNextMonth}
-            onDayPress={handleDayPress}
-            selectedDate={selectedDate || undefined}
+        {/* Grille du calendrier */}
+        <View style={styles.calendarContainer}>
+          <FlatList
+            data={calendarData}
+            renderItem={renderCalendarDay}
+            keyExtractor={(item, index) => item ? item.toISOString() : `empty-${index}`}
+            numColumns={7}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            extraData={workouts}
           />
-        </SoftCard>
+        </View>
 
-        {/* Selected Day Workouts */}
-        {selectedDate && (
-          <SoftCard style={styles.selectedDayCard}>
-            <View style={styles.selectedDayHeader}>
-              <Text style={styles.selectedDayTitle}>
-                {new Date(selectedDate).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-              </Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => setModalVisible(true)}
-                activeOpacity={0.7}
-              >
-                <Plus size={20} color={theme.colors.surface} strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
+        {/* Légende */}
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <Image
+              source={require('../../assets/images/basic-fit.png')}
+              style={styles.legendLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.legendText}>Musculation</Text>
+          </View>
 
-            {selectedDayWorkouts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>Aucun entraînement ce jour</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Appuyez sur + pour en ajouter un
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.workoutsList}>
-                {selectedDayWorkouts.map((workout) => (
-                  <View key={workout.id} style={styles.workoutItem}>
-                    <View style={styles.workoutInfo}>
-                      <Image
-                        source={WORKOUT_TYPES[workout.type].logo}
-                        style={styles.workoutLogo}
-                        resizeMode="contain"
-                      />
-                      <View style={styles.workoutDetails}>
-                        <Text style={styles.workoutLabel}>
-                          {WORKOUT_TYPES[workout.type].label}
-                        </Text>
-                        <Text style={styles.workoutShortLabel}>
-                          {WORKOUT_TYPES[workout.type].shortLabel}
-                        </Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteWorkout(workout.id)}
-                      style={styles.deleteButton}
-                      activeOpacity={0.7}
-                    >
-                      <Trash2 size={18} color={theme.colors.textSecondary} strokeWidth={2.5} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
-          </SoftCard>
-        )}
+          <View style={styles.legendItem}>
+            <Image
+              source={require('../../assets/images/gracie-barra.png')}
+              style={styles.legendLogo}
+              resizeMode="contain"
+            />
+            <Text style={styles.legendText}>JJB</Text>
+          </View>
 
-        {/* Clubs Section */}
-        <View style={styles.clubsSection}>
-          <Text style={styles.sectionTitle}>MES CLUBS</Text>
-          <View style={styles.clubsGrid}>
-            <SoftCard style={[styles.clubCard, { backgroundColor: '#FEE2E2' }]}>
-              <Image
-                source={WORKOUT_TYPES.gracie_barra.logo}
-                style={styles.clubLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.clubName}>Gracie Barra</Text>
-              <Text style={styles.clubLocation}>Les Olives</Text>
-            </SoftCard>
-
-            <SoftCard style={[styles.clubCard, { backgroundColor: theme.colors.orangePastel }]}>
-              <Image
-                source={WORKOUT_TYPES.basic_fit.logo}
-                style={styles.clubLogo}
-                resizeMode="contain"
-              />
-              <Text style={styles.clubName}>Basic Fit</Text>
-              <Text style={styles.clubLocation}>Marseille</Text>
-            </SoftCard>
+          <View style={styles.legendItem}>
+            <MaterialCommunityIcons name="run" size={24} color="#10B981" />
+            <Text style={styles.legendText}>Running</Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
 
-      {/* Workout Selection Modal */}
-      <WorkoutModal
+      <ActivityModal
         visible={modalVisible}
         selectedDate={selectedDate || ''}
         onClose={() => setModalVisible(false)}
-        onSelectWorkout={handleAddWorkout}
+        onSelectActivity={handleActivitySelect}
+        currentActivities={selectedDate ? getCurrentActivitiesForDate(selectedDate) : []}
       />
     </View>
   );
 }
 
+const { width: screenWidth } = Dimensions.get('window');
+const cellSize = screenWidth / 7;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: theme.spacing.xl,
+    backgroundColor: '#FFFFFF',
     paddingTop: 60,
-    gap: theme.spacing.xl,
-    paddingBottom: 40,
+    paddingHorizontal: theme.spacing.md,
+  },
+  calendarCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: theme.spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  title: {
-    fontSize: theme.fontSize.display,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
-    marginTop: 4,
-  },
-  calendarIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.mintPastel,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
+    paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.lg,
-    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
   },
-  statIconContainer: {
-    width: 32,
-    height: 32,
-    marginBottom: theme.spacing.xs,
+  navButton: {
+    padding: theme.spacing.sm,
+    borderRadius: theme.radius.md,
+    backgroundColor: '#F3F4F6',
   },
-  statIcon: {
-    width: 32,
-    height: 32,
-  },
-  statValue: {
-    fontSize: theme.fontSize.xxxl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-  },
-  statLabel: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
-    textTransform: 'uppercase',
-  },
-  calendarCard: {
-    padding: theme.spacing.xl,
-  },
-  selectedDayCard: {
-    padding: theme.spacing.xl,
-    gap: theme.spacing.lg,
-  },
-  selectedDayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  selectedDayTitle: {
+  monthYear: {
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    textTransform: 'capitalize',
+    color: '#1A1A1A',
+  },
+  weekDays: {
+    flexDirection: 'row',
+    paddingHorizontal: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  weekDayCell: {
+    width: cellSize,
+    alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
+  },
+  weekDayText: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.semibold,
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+  },
+  calendarContainer: {
     flex: 1,
   },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.primary,
+  emptyDay: {
+    width: cellSize,
+    height: cellSize,
+    padding: 2,
+  },
+  dayCell: {
+    width: cellSize,
+    height: cellSize,
+    padding: 2,
+  },
+  dayCellInner: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.md,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    position: 'relative',
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xxl,
-    gap: theme.spacing.sm,
+  dayCellWithWorkout: {
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  emptyStateText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+  todayCell: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryBackground,
   },
-  emptyStateSubtext: {
-    fontSize: theme.fontSize.md,
+  selectedCell: {
+    backgroundColor: theme.colors.primaryLight,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+  dayNumber: {
+    fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textTertiary,
+    color: '#1A1A1A',
+    position: 'absolute',
+    top: 4,
+    left: 6,
   },
-  workoutsList: {
-    gap: theme.spacing.md,
+  todayText: {
+    color: '#10B981',
+    fontWeight: theme.fontWeight.bold,
   },
-  workoutItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  selectedText: {
+    color: '#3B82F6',
+    fontWeight: theme.fontWeight.bold,
+  },
+  statsHeader: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: theme.radius.xl,
     padding: theme.spacing.lg,
-    backgroundColor: theme.colors.beigeLight,
-    borderRadius: theme.radius.lg,
-  },
-  workoutInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
     gap: theme.spacing.md,
-    flex: 1,
   },
-  workoutLogo: {
-    width: 40,
-    height: 40,
-  },
-  workoutDetails: {
-    flex: 1,
-  },
-  workoutLabel: {
+  statsTitle: {
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
-  },
-  workoutShortLabel: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    color: '#059669',
     textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  deleteButton: {
-    padding: theme.spacing.sm,
-  },
-  clubsSection: {
-    gap: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  clubsGrid: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-  },
-  clubCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: theme.spacing.xl,
-    gap: theme.spacing.md,
-  },
-  clubLogo: {
-    width: 60,
-    height: 60,
-  },
-  clubName: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    letterSpacing: 0.5,
     textAlign: 'center',
   },
-  clubLocation: {
+  totalContainer: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  totalLabel: {
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    color: '#6B7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  totalNumber: {
+    fontSize: 48,
+    fontWeight: theme.fontWeight.black,
+    color: '#10B981',
+    letterSpacing: -1,
+  },
+  statsDetailContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#D1FAE5',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  statLogo: {
+    width: 24,
+    height: 24,
+  },
+  statCount: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: '#1F2937',
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#D1FAE5',
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    marginTop: theme.spacing.md,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  legendLogo: {
+    width: 24,
+    height: 24,
+  },
+  legendText: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.semibold,
+    color: '#6B7280',
   },
 });

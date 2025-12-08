@@ -1,4 +1,4 @@
-export type WorkoutType = 'gracie_barra' | 'basic_fit';
+export type WorkoutType = 'gracie_barra' | 'basic_fit' | 'running';
 
 export interface Workout {
   id: string;
@@ -23,5 +23,11 @@ export const WORKOUT_TYPES = {
     shortLabel: 'Muscu',
     logo: require('@/assets/images/basic-fit.png'),
     color: '#F59E0B', // Orange
+  },
+  running: {
+    label: 'Running',
+    shortLabel: 'Course',
+    logo: undefined, // Utilise une icône Lucide/MaterialCommunityIcons au lieu d'une image
+    color: '#10B981', // Vert
   },
 } as const;

@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
@@ -22,11 +23,20 @@ import { MetricSelector } from '@/components/MetricSelector';
 import { BMICard } from '@/components/BMICard';
 import { MetricType, METRIC_CONFIGS, WeightEntry } from '@/types/health';
 import { useMemo, useEffect, useState } from 'react';
-import YoroiLogo from '@/components/Logo';
+import { Platform } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { useCallback } from 'react';
 import { theme } from '@/lib/theme';
+
+const motivationalQuotes = [
+  "⛩️ Être et durer ⛩️",
+  "⛩️ Ce qui ne te tue pas te rend plus fort ⛩️",
+  "⛩️ La discipline est mère du succès ⛩️",
+  "⛩️ Tomber sept fois, se relever huit ⛩️",
+  "⛩️ Dieu n'impose à aucune âme une charge supérieure à sa capacité ⛩️",
+  "⛩️ Le seul combat perdu d'avance est celui auquel on renonce ⛩️",
+];
 
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
@@ -35,9 +45,15 @@ export default function DashboardScreen() {
   const [weightEntries, setWeightEntries] = useState<WeightEntry>([]);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
   const [weightHistoryData, setWeightHistoryData] = useState<any[]>([]); // Nouvel état pour les données du graphique
-  const [goalWeight] = useState(75.0);
+  const [goalWeight, setGoalWeight] = useState(75.0);
   const [startWeight] = useState(95.0);
   const [height] = useState(175);
+  const [currentQuote, setCurrentQuote] = useState('');
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+    setCurrentQuote(motivationalQuotes[randomIndex]);
+  }, []);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -57,19 +73,48 @@ export default function DashboardScreen() {
       setCurrentWeight(null);
     }
 
-    // Récupération des données pour le graphique (7-10 dernières mesures)
+    // Récupération de l'objectif de poids
+    try {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('target_weight')
+        .single();
+
+      if (profileError) {
+        if (profileError.code !== 'PGRST116') { // PGRST116 est l'erreur pour 'table not found'
+          console.error('Error fetching profile data:', profileError);
+        }
+        setGoalWeight(75.0); // Valeur par défaut si l'objectif n'est pas trouvé
+      } else if (profileData) {
+        setGoalWeight(profileData.target_weight);
+      }
+    } catch (e) {
+      console.error('Silently caught error fetching profile data:', e);
+      setGoalWeight(75.0); // Valeur par défaut en cas d'erreur inattendue
+    }
+
+
+    // Récupération des données pour le graphique et les tendances (90 dernières mesures max)
     const { data: historyData, error: historyError } = await supabase
       .from('measurements')
       .select('weight, created_at')
-      .order('created_at', { ascending: true })
-      .limit(10); // Récupère les 10 dernières mesures pour le graphique
+      .order('created_at', { ascending: false })
+      .limit(90); // Récupère jusqu'à 90 mesures pour le calcul des tendances
 
     if (historyError) {
       console.error('Error fetching history data:', historyError);
       setWeightHistoryData([]);
+      setWeightEntries([]);
     } else if (historyData) {
-      // Transformer les données pour LineChart: { value: number, label: string }
-      const formattedData = historyData.map((item) => ({
+      // Transformer les données pour weightEntries (ordre descendant pour calcul de tendance)
+      const entriesData = historyData.map((item) => ({
+        date: new Date(item.created_at).toISOString().split('T')[0],
+        weight: item.weight,
+      }));
+      setWeightEntries(entriesData);
+
+      // Transformer les données pour LineChart (ordre ascendant pour affichage)
+      const formattedData = [...historyData].reverse().map((item) => ({
         value: item.weight,
         label: new Date(item.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
       }));
@@ -130,14 +175,38 @@ export default function DashboardScreen() {
   }, [currentWeight, startWeight, goalWeight]);
 
   const weightTrends = useMemo(() => {
-    const sevenDayChange = weightEntries.length >= 7
-      ? weightEntries[0].weight - weightEntries[6].weight
-      : 0;
-    const thirtyDayChange = weightEntries.length >= 14
-      ? weightEntries[0].weight - weightEntries[13].weight
-      : 0;
-    const ninetyDayChange = -6.7;
-    const totalChange = currentWeight - startWeight;
+    const calculateMovingAverage = (entries: WeightEntry[], start: number, end: number) => {
+      if (entries.length === 0) return 0;
+      const relevantEntries = entries.slice(start, end);
+      const sum = relevantEntries.reduce((acc, entry) => acc + entry.weight, 0);
+      return sum / relevantEntries.length;
+    };
+
+    // Tendance 7 jours (moyenne mobile)
+    let sevenDayChange = 0;
+    if (weightEntries.length >= 14) {
+      const last7DaysAvg = calculateMovingAverage(weightEntries, 0, 7); // Jours 1-7
+      const prev7DaysAvg = calculateMovingAverage(weightEntries, 7, 14); // Jours 8-14
+      sevenDayChange = last7DaysAvg - prev7DaysAvg;
+    }
+
+    // Tendance 30 jours (moyenne mobile)
+    let thirtyDayChange = 0;
+    if (weightEntries.length >= 60) {
+      const last30DaysAvg = calculateMovingAverage(weightEntries, 0, 30);
+      const prev30DaysAvg = calculateMovingAverage(weightEntries, 30, 60);
+      thirtyDayChange = last30DaysAvg - prev30DaysAvg;
+    }
+
+    // Tendance 90 jours (moyenne mobile)
+    let ninetyDayChange = 0;
+    if (weightEntries.length >= 90) {
+      const last45DaysAvg = calculateMovingAverage(weightEntries, 0, 45);
+      const prev45DaysAvg = calculateMovingAverage(weightEntries, 45, 90);
+      ninetyDayChange = last45DaysAvg - prev45DaysAvg;
+    }
+
+    const totalChange = currentWeight !== null ? currentWeight - startWeight : 0;
 
     return [
       { period: '7j', change: sevenDayChange, isPositive: sevenDayChange < 0 },
@@ -151,7 +220,7 @@ export default function DashboardScreen() {
     { label: 'Dans 7 jours', weight: 88.8, date: '8 Déc 2024' },
     { label: 'Dans 1 mois', weight: 86.5, date: '1 Jan 2025' },
     { label: 'Dans 3 mois', weight: 82.0, date: '1 Mars 2025' },
-    { label: 'Objectif (75kg)', weight: 75.0, date: '15 Juin 2025', isGoal: true },
+    { label: `Objectif (${goalWeight}kg)`, weight: goalWeight, date: '15 Juin 2025', isGoal: true },
   ], []);
 
   const getGreeting = () => {
@@ -183,9 +252,9 @@ export default function DashboardScreen() {
           />
         }
       >
-        {/* Logo Yoroi en haut du ScrollView */}
-        <View className="items-center justify-center mb-8">
-          <YoroiLogo width={120} height={120} />
+        {/* Citation motivante en haut du ScrollView */}
+        <View style={styles.quoteContainer}>
+          <Text style={styles.quoteText}>{currentQuote}</Text>
         </View>
         {/* Header existant */}
         <View style={styles.header}>
@@ -250,27 +319,31 @@ export default function DashboardScreen() {
           </SoftCard>
         </AnimatedCard>
 
-        <AnimatedCard delay={300}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>TENDANCES PONDÉRALES</Text>
-            <View style={styles.trendsGrid}>
-              {weightTrends.map((trend, index) => (
-                <WeightTrendCard
-                  key={index}
-                  period={trend.period}
-                  change={trend.change}
-                  isPositive={trend.isPositive}
-                />
-              ))}
+        {weightEntries.length >= 14 && (
+          <AnimatedCard delay={300}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>TENDANCES PONDÉRALES</Text>
+              <View style={styles.trendsGrid}>
+                {weightTrends.map((trend, index) => (
+                  <WeightTrendCard
+                    key={index}
+                    period={trend.period}
+                    change={trend.change}
+                    isPositive={trend.isPositive}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        </AnimatedCard>
+          </AnimatedCard>
+        )}
 
-        <AnimatedCard delay={400}>
-          <SoftCard>
-            <PredictionsList predictions={predictions} />
-          </SoftCard>
-        </AnimatedCard>
+        {weightEntries.length >= 7 && (
+          <AnimatedCard delay={400}>
+            <SoftCard>
+              <PredictionsList predictions={predictions} />
+            </SoftCard>
+          </AnimatedCard>
+        )}
 
         {chartData.length > 0 && (
           <AnimatedCard delay={550}>
@@ -289,19 +362,49 @@ export default function DashboardScreen() {
 
         <AnimatedCard delay={625}>
           <SoftCard>
-            <BMICard weight={currentWeight ?? 0} height={height} />
+            {currentWeight && currentWeight > 0 ? (
+              <BMICard weight={currentWeight} height={height} />
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateEmoji}>📊</Text>
+                <Text style={styles.emptyStateTitle}>Ajoutez votre première mesure</Text>
+                <Text style={styles.emptyStateSubtext}>
+                  Commencez votre suivi pour voir votre IMC et vos statistiques
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyStateButton}
+                  onPress={() => router.push('/(tabs)/entry')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.emptyStateButtonText}>Ajouter une mesure</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </SoftCard>
         </AnimatedCard>
 
         <AnimatedCard delay={700}>
           <View style={styles.motivationCard}>
           <Text style={styles.motivationEmoji}>🎯</Text>
-          <Text style={styles.motivationText}>
-            Excellent progrès ! Vous avez perdu {currentWeight !== null ? (startWeight - currentWeight).toFixed(1) : '--'} kg.
-          </Text>
-          <Text style={styles.motivationSubtext}>
-            Plus que {currentWeight !== null ? (currentWeight - goalWeight).toFixed(1) : '--'} kg pour atteindre votre objectif !
-          </Text>
+          {currentWeight && currentWeight > 0 && currentWeight < startWeight ? (
+            <>
+              <Text style={styles.motivationText}>
+                Excellent progrès ! Vous avez perdu {(startWeight - currentWeight).toFixed(1)} kg.
+              </Text>
+              <Text style={styles.motivationSubtext}>
+                Plus que {(currentWeight - goalWeight).toFixed(1)} kg pour atteindre votre objectif !
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.motivationText}>
+                Commencez votre suivi aujourd'hui !
+              </Text>
+              <Text style={styles.motivationSubtext}>
+                Chaque grand voyage commence par un premier pas
+              </Text>
+            </>
+          )}
           </View>
         </AnimatedCard>
       </ScrollView>
@@ -373,6 +476,8 @@ const styles = StyleSheet.create({
   },
   trendsGrid: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     gap: theme.spacing.md,
   },
   chartCard: {
@@ -422,5 +527,59 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.1,
+  },
+  quoteContainer: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xxl,
+    paddingHorizontal: theme.spacing.md,
+    paddingTop: Platform.OS === 'ios' ? 20 : 0,
+    paddingVertical: theme.spacing.xl,
+  },
+  quoteText: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    fontStyle: 'italic',
+    color: '#4A5568',
+    textAlign: 'center',
+    lineHeight: theme.fontSize.xl * 1.4,
+  },
+  emptyStateCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xxxl,
+    gap: theme.spacing.md,
+  },
+  emptyStateEmoji: {
+    fontSize: 56,
+    marginBottom: theme.spacing.sm,
+  },
+  emptyStateTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.black,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  emptyStateSubtext: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: theme.fontSize.md * 1.5,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  emptyStateButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xxl,
+    borderRadius: theme.radius.xl,
+    marginTop: theme.spacing.md,
+    ...theme.shadow.sm,
+  },
+  emptyStateButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.surface,
+    letterSpacing: 0.3,
   },
 });

@@ -33,13 +33,13 @@ export function WeightTrendCard({ period, change, isPositive = true }: WeightTre
     >
       <Animated.View style={[styles.container, { backgroundColor, transform: [{ scale }] }]}>
         <Text style={styles.period}>{period}</Text>
-        <View style={styles.changeContainer}>
+        <View style={styles.changeRow}>
           <Icon size={20} color={textColor} strokeWidth={2.5} />
           <Text style={[styles.change, { color: textColor }]}>
             {change > 0 ? '+' : ''}{change.toFixed(1)}
           </Text>
+          <Text style={styles.unit}>kg</Text>
         </View>
-        <Text style={styles.unit}>kg</Text>
       </Animated.View>
     </Pressable>
   );
@@ -51,7 +51,9 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: theme.radius.xxl,
     padding: theme.spacing.lg,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: theme.spacing.sm, // Ajout d'un gap pour l'espacement vertical
     ...theme.shadow.sm,
   },
   period: {
@@ -60,9 +62,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
-  changeContainer: {
+  changeRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
   },
@@ -75,5 +79,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.xs,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
 });

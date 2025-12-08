@@ -73,7 +73,7 @@ export function WorkoutCalendar({
       {/* Header avec navigation */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onPreviousMonth} style={styles.navButton}>
-          <ChevronLeft size={24} color={theme.colors.textPrimary} strokeWidth={2.5} />
+          <ChevronLeft size={24} color="#FFFFFF" strokeWidth={2.5} />
         </TouchableOpacity>
 
         <Text style={styles.monthYear}>
@@ -81,7 +81,7 @@ export function WorkoutCalendar({
         </Text>
 
         <TouchableOpacity onPress={onNextMonth} style={styles.navButton}>
-          <ChevronRight size={24} color={theme.colors.textPrimary} strokeWidth={2.5} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -152,6 +152,9 @@ export function WorkoutCalendar({
 const styles = StyleSheet.create({
   container: {
     gap: theme.spacing.lg,
+    backgroundColor: '#1A202C', // Fond sombre pour le conteneur
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
@@ -162,15 +165,15 @@ const styles = StyleSheet.create({
   navButton: {
     padding: theme.spacing.sm,
     borderRadius: theme.radius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   monthYear: {
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    color: '#FFFFFF',
   },
   weekDays: {
     flexDirection: 'row',
-    paddingHorizontal: theme.spacing.xs,
   },
   weekDayCell: {
     flex: 1,
@@ -178,57 +181,58 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   weekDayText: {
-    fontSize: theme.fontSize.xs,
+    fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    color: '#A0AEC0',
     textTransform: 'uppercase',
   },
   calendar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.xs,
   },
   dayCell: {
-    width: `${(100 - (6 * 0.8)) / 7}%`,
+    flex: 1,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#2D3748', // Gris foncé
     position: 'relative',
+    margin: 2,
   },
   todayCell: {
     borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderColor: '#68D391', // Vert pour aujourd'hui
   },
   selectedCell: {
-    backgroundColor: theme.colors.mintPastel,
+    backgroundColor: '#4A5568', // Gris plus clair pour sélection
   },
   workoutCell: {
-    backgroundColor: theme.colors.beigeLight,
+    backgroundColor: '#1A202C', // Gris très foncé pour jours avec activité
   },
   dayText: {
-    fontSize: theme.fontSize.md,
+    fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textPrimary,
+    color: '#E2E8F0', // Gris clair pour contraste
   },
   todayText: {
-    color: theme.colors.primary,
-    fontWeight: theme.fontWeight.extrabold,
+    color: '#68D391', // Vert pour aujourd'hui
+    fontWeight: theme.fontWeight.bold,
   },
   selectedText: {
-    color: theme.colors.textPrimary,
-    fontWeight: theme.fontWeight.extrabold,
+    color: '#FFFFFF', // Blanc pour sélection
+    fontWeight: theme.fontWeight.bold,
   },
   workoutLogos: {
     position: 'absolute',
-    bottom: 2,
+    bottom: 4,
     flexDirection: 'row',
     gap: 2,
+    justifyContent: 'center',
+    width: '100%',
   },
   smallLogo: {
-    width: 18,
-    height: 18,
+    width: 15,
+    height: 15,
   },
 });

@@ -1,7 +1,10 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "Yoroi",
+    "slug": "yoroi",
+    "displayName": "Yoroi",
+    "description": "Track your fitness journey with Yoroi",
+    "githubUrl": "https://github.com/your-username/yoroi",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +13,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.boltexponativewind"
+      "bundleIdentifier": "com.houari.yoroi"
     },
     "web": {
       "bundler": "metro",
@@ -26,7 +29,13 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.anonymous.boltexponativewind"
+      "package": "com.houari.yoroi"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3743da81-d416-4eb3-b7a5-45e2094947cb"
+      }
     }
   }
 }
