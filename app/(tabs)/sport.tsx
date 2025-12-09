@@ -12,79 +12,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { ActivityModal } from '@/components/ActivityModal';
 import { Workout, WorkoutType } from '@/types/workout';
-import { supabase } from '@/lib/supabase';
 import { theme } from '@/lib/theme';
 import { useFocusEffect } from 'expo-router';
-
-// Fonction helper pour garantir l'authentification avec retry
-const ensureUserAuthenticated = async () => {
-  let retries = 0;
-  const maxRetries = 3;
-
-  while (retries < maxRetries) {
-    try {
-      console.log(`🔑 [Tentative ${retries + 1}/${maxRetries}] Vérification de l'utilisateur...`);
-
-      // D'abord essayer de récupérer la session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('❌ Erreur getSession:', sessionError);
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      // Si pas de session, créer une authentification anonyme
-      if (!session) {
-        console.log('🔑 Pas de session, authentification anonyme...');
-        const { data, error: signInError } = await supabase.auth.signInAnonymously();
-
-        if (signInError) {
-          console.error('❌ Erreur signInAnonymously:', signInError);
-          console.error('❌ Détails:', JSON.stringify(signInError, null, 2));
-          retries++;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-
-        if (data.user) {
-          console.log('✅ Authentification anonyme réussie:', data.user.id);
-          return data.user;
-        }
-      }
-
-      // Vérifier l'utilisateur
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError) {
-        console.error('❌ Erreur getUser:', userError);
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      if (!user) {
-        console.error('❌ getUser retourne null');
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      console.log('✅ Utilisateur trouvé:', user.id);
-      return user;
-    } catch (error) {
-      console.error('❌ Exception dans ensureUserAuthenticated:', error);
-      retries++;
-      if (retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  }
-
-  console.error('❌ ÉCHEC: Impossible d\'authentifier l\'utilisateur après', maxRetries, 'tentatives');
-  return null;
-};
+import { checkWorkoutBadges } from '@/lib/badgeService';
+import { getWorkoutsByMonth, addWorkout, deleteWorkout, getAllWorkouts } from '@/lib/storage';
 
 export default function SportScreen() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -93,35 +24,18 @@ export default function SportScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const fetchWorkouts = useCallback(async () => {
-    const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
-      .toISOString()
-      .split('T')[0];
-    const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
-      .toISOString()
-      .split('T')[0];
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
 
-    console.log('📅 Récupération workouts du', startOfMonth, 'au', endOfMonth);
+    console.log('📅 Récupération workouts du mois', month + 1, '/', year);
 
-    const user = await ensureUserAuthenticated();
-    if (!user) {
-      console.error('❌ Impossible de récupérer l\'utilisateur');
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('workouts')
-      .select('*')
-      .eq('user_id', user.id)
-      .gte('date', startOfMonth)
-      .lte('date', endOfMonth)
-      .order('date', { ascending: false });
-
-    if (error) {
+    try {
+      const data = await getWorkoutsByMonth(year, month);
+      console.log('✅ Workouts récupérés depuis le stockage local:', data.length, 'workout(s)');
+      setWorkouts(data);
+    } catch (error) {
       console.error('❌ Erreur lors de la récupération des workouts:', error);
-    } else {
-      console.log('✅ Workouts récupérés:', data?.length || 0, 'workout(s)');
-      console.log('📊 Détails des workouts:', data);
-      setWorkouts(data || []);
+      setWorkouts([]);
     }
   }, [currentMonth]);
 
@@ -154,50 +68,28 @@ export default function SportScreen() {
     console.log('🔵 [DÉBUT] Sauvegarde workout pour le', selectedDate, '- Types:', types);
 
     try {
-      const user = await ensureUserAuthenticated();
-
-      if (!user) {
-        console.error('❌ Impossible de récupérer l\'utilisateur pour sauvegarder');
-        return;
-      }
-
-      console.log('✅ Utilisateur authentifié:', user.id);
-
       // Supprimer les anciens entraînements pour cette date
       console.log('🗑️  Suppression des anciens workouts pour', selectedDate);
-      const { error: deleteError } = await supabase
-        .from('workouts')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('date', selectedDate);
+      const allWorkouts = await getAllWorkouts();
+      const workoutsToDelete = allWorkouts.filter(w => w.date === selectedDate);
 
-      if (deleteError) {
-        console.error('❌ Erreur suppression:', deleteError);
-        return;
+      for (const workout of workoutsToDelete) {
+        await deleteWorkout(workout.id);
       }
       console.log('✅ Anciens workouts supprimés');
 
       // Ajouter les nouveaux entraînements seulement s'il y en a
       if (types.length > 0) {
-        const workoutsToInsert = types.map(type => ({
-          user_id: user.id,
-          date: selectedDate,
-          type,
-        }));
+        console.log('💾 Insertion de', types.length, 'workout(s):', types);
 
-        console.log('💾 Insertion de', workoutsToInsert.length, 'workout(s):', workoutsToInsert);
-
-        const { data, error: insertError } = await supabase
-          .from('workouts')
-          .insert(workoutsToInsert)
-          .select();
-
-        if (insertError) {
-          console.error('❌ Erreur insertion:', insertError);
-          return;
+        for (const type of types) {
+          await addWorkout({
+            date: selectedDate,
+            type,
+          });
         }
 
-        console.log('✅ Workouts sauvegardés dans Supabase:', data);
+        console.log('✅ Workouts sauvegardés localement');
       } else {
         console.log('ℹ️  Aucun workout à ajouter (suppression uniquement)');
       }
@@ -205,7 +97,10 @@ export default function SportScreen() {
       // Rafraîchir les données
       console.log('🔄 Rafraîchissement du calendrier...');
       await fetchWorkouts();
-      console.log('✅ [FIN] Calendrier rafraîchi - Total workouts:', workouts.length);
+      console.log('✅ [FIN] Calendrier rafraîchi');
+
+      // Vérifier et débloquer les badges
+      checkWorkoutBadges();
     } catch (error) {
       console.error('❌ [ERREUR GLOBALE]:', error);
     }

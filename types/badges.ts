@@ -1,0 +1,136 @@
+export type BadgeId =
+  // Débutant
+  | 'first_weight'
+  | 'first_workout'
+  | 'complete_profile'
+  // Régularité
+  | 'streak_7'
+  | 'streak_30'
+  | 'workout_month'
+  // Progression
+  | 'lost_1kg'
+  | 'lost_5kg'
+  | 'goal_reached';
+
+export type BadgeCategory = 'beginner' | 'consistency' | 'progress';
+
+export interface Badge {
+  id: BadgeId;
+  name: string;
+  description: string;
+  icon: string;
+  category: BadgeCategory;
+  color: string;
+  requirement: string;
+}
+
+export interface UserBadge {
+  id: string;
+  user_id: string;
+  badge_id: BadgeId;
+  unlocked_at: string;
+}
+
+export const BADGES: Record<BadgeId, Badge> = {
+  // DÉBUTANT
+  first_weight: {
+    id: 'first_weight',
+    name: 'Première pesée',
+    description: 'Enregistrer sa première mesure',
+    icon: '🎯',
+    category: 'beginner',
+    color: '#34D399',
+    requirement: 'Ajouter votre première mesure de poids',
+  },
+  first_workout: {
+    id: 'first_workout',
+    name: 'Premier entraînement',
+    description: 'Enregistrer son premier entraînement',
+    icon: '💪',
+    category: 'beginner',
+    color: '#3B82F6',
+    requirement: 'Enregistrer votre premier entraînement',
+  },
+  complete_profile: {
+    id: 'complete_profile',
+    name: 'Profil complet',
+    description: 'Remplir toutes les infos du profil',
+    icon: '👤',
+    category: 'beginner',
+    color: '#8B5CF6',
+    requirement: 'Remplir votre profil (nom, taille, objectif)',
+  },
+
+  // RÉGULARITÉ
+  streak_7: {
+    id: 'streak_7',
+    name: '7 jours consécutifs',
+    description: 'Se peser 7 jours de suite',
+    icon: '🔥',
+    category: 'consistency',
+    color: '#F59E0B',
+    requirement: 'Se peser pendant 7 jours consécutifs',
+  },
+  streak_30: {
+    id: 'streak_30',
+    name: '30 jours consécutifs',
+    description: 'Se peser 30 jours de suite',
+    icon: '⭐',
+    category: 'consistency',
+    color: '#F59E0B',
+    requirement: 'Se peser pendant 30 jours consécutifs',
+  },
+  workout_month: {
+    id: 'workout_month',
+    name: 'Sportif du mois',
+    description: '20 entraînements dans le mois',
+    icon: '🏅',
+    category: 'consistency',
+    color: '#EF4444',
+    requirement: 'Effectuer 20 entraînements dans un mois',
+  },
+
+  // PROGRESSION
+  lost_1kg: {
+    id: 'lost_1kg',
+    name: 'Premier kilo perdu',
+    description: 'Perdre 1 kg',
+    icon: '📉',
+    category: 'progress',
+    color: '#10B981',
+    requirement: 'Perdre au moins 1 kg par rapport à votre poids initial',
+  },
+  lost_5kg: {
+    id: 'lost_5kg',
+    name: '5 kilos perdus',
+    description: 'Perdre 5 kg',
+    icon: '🎉',
+    category: 'progress',
+    color: '#10B981',
+    requirement: 'Perdre au moins 5 kg par rapport à votre poids initial',
+  },
+  goal_reached: {
+    id: 'goal_reached',
+    name: 'Objectif atteint',
+    description: 'Atteindre son poids cible',
+    icon: '🏆',
+    category: 'progress',
+    color: '#FFD700',
+    requirement: 'Atteindre votre poids objectif',
+  },
+};
+
+export const BADGE_CATEGORIES: Record<BadgeCategory, { name: string; color: string }> = {
+  beginner: {
+    name: 'Débutant',
+    color: '#34D399',
+  },
+  consistency: {
+    name: 'Régularité',
+    color: '#F59E0B',
+  },
+  progress: {
+    name: 'Progression',
+    color: '#10B981',
+  },
+};

@@ -24,10 +24,10 @@ import { BMICard } from '@/components/BMICard';
 import { MetricType, METRIC_CONFIGS, WeightEntry } from '@/types/health';
 import { useMemo, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { supabase } from '../../lib/supabase';
 import { useFocusEffect, router } from 'expo-router';
 import { useCallback } from 'react';
 import { theme } from '@/lib/theme';
+import { getAllMeasurements, getUserSettings } from '@/lib/storage';
 
 const motivationalQuotes = [
   "⛩️ Être et durer ⛩️",
@@ -49,6 +49,7 @@ export default function DashboardScreen() {
   const [startWeight] = useState(95.0);
   const [height] = useState(175);
   const [currentQuote, setCurrentQuote] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('30');
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
@@ -57,69 +58,55 @@ export default function DashboardScreen() {
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
-    // Récupération du poids le plus récent
-    const { data: latestWeightData, error: latestWeightError } = await supabase
-      .from('measurements')
-      .select('weight')
-      .order('created_at', { ascending: false })
-      .limit(1);
 
-    if (latestWeightError) {
-      console.error('Error fetching latest weight:', latestWeightError);
-      setCurrentWeight(null);
-    } else if (latestWeightData && latestWeightData.length > 0) {
-      setCurrentWeight(latestWeightData[0].weight);
-    } else {
-      setCurrentWeight(null);
-    }
-
-    // Récupération de l'objectif de poids
     try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('target_weight')
-        .single();
+      // Récupération de toutes les mesures localement
+      const measurements = await getAllMeasurements();
 
-      if (profileError) {
-        if (profileError.code !== 'PGRST116') { // PGRST116 est l'erreur pour 'table not found'
-          console.error('Error fetching profile data:', profileError);
-        }
-        setGoalWeight(75.0); // Valeur par défaut si l'objectif n'est pas trouvé
-      } else if (profileData) {
-        setGoalWeight(profileData.target_weight);
+      // Récupération du poids le plus récent
+      if (measurements.length > 0) {
+        setCurrentWeight(measurements[0].weight);
+      } else {
+        setCurrentWeight(null);
       }
-    } catch (e) {
-      console.error('Silently caught error fetching profile data:', e);
-      setGoalWeight(75.0); // Valeur par défaut en cas d'erreur inattendue
-    }
 
+      // Récupération de l'objectif de poids depuis les paramètres
+      const settings = await getUserSettings();
+      setGoalWeight(settings.weight_goal || 75.0);
 
-    // Récupération des données pour le graphique et les tendances (90 dernières mesures max)
-    const { data: historyData, error: historyError } = await supabase
-      .from('measurements')
-      .select('weight, created_at')
-      .order('created_at', { ascending: false })
-      .limit(90); // Récupère jusqu'à 90 mesures pour le calcul des tendances
+      // Limiter aux 90 dernières mesures pour le calcul des tendances
+      const historyData = measurements.slice(0, 90);
 
-    if (historyError) {
-      console.error('Error fetching history data:', historyError);
+      if (historyData.length > 0) {
+        // Transformer les données pour weightEntries (ordre descendant pour calcul de tendance)
+        const entriesData = historyData.map((item) => ({
+          date: item.date,
+          weight: item.weight,
+          bodyFat: item.body_fat,
+          muscleMass: item.muscle_mass,
+          water: item.water,
+        }));
+        setWeightEntries(entriesData);
+
+        // Transformer les données pour LineChart (ordre ascendant pour affichage)
+        const formattedData = [...historyData].reverse().map((item) => ({
+          value: item.weight,
+          label: new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+        }));
+        setWeightHistoryData(formattedData);
+      } else {
+        setWeightHistoryData([]);
+        setWeightEntries([]);
+      }
+
+      console.log('✅ Données chargées depuis le stockage local');
+    } catch (error) {
+      console.error('❌ Erreur chargement données:', error);
+      setCurrentWeight(null);
       setWeightHistoryData([]);
       setWeightEntries([]);
-    } else if (historyData) {
-      // Transformer les données pour weightEntries (ordre descendant pour calcul de tendance)
-      const entriesData = historyData.map((item) => ({
-        date: new Date(item.created_at).toISOString().split('T')[0],
-        weight: item.weight,
-      }));
-      setWeightEntries(entriesData);
-
-      // Transformer les données pour LineChart (ordre ascendant pour affichage)
-      const formattedData = [...historyData].reverse().map((item) => ({
-        value: item.weight,
-        label: new Date(item.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-      }));
-      setWeightHistoryData(formattedData);
     }
+
     setLoading(false);
   }, []);
 
@@ -223,6 +210,20 @@ export default function DashboardScreen() {
     { label: `Objectif (${goalWeight}kg)`, weight: goalWeight, date: '15 Juin 2025', isGoal: true },
   ], []);
 
+  const filteredWeightData = useMemo(() => {
+    if (weightHistoryData.length === 0) return [];
+
+    const daysMap = {
+      '7': 7,
+      '30': 30,
+      '90': 90,
+      'all': weightHistoryData.length
+    };
+
+    const daysToShow = daysMap[selectedPeriod];
+    return weightHistoryData.slice(-daysToShow);
+  }, [weightHistoryData, selectedPeriod]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bonjour';
@@ -277,21 +278,55 @@ export default function DashboardScreen() {
 
         <AnimatedCard delay={200}>
           <SoftCard style={styles.chartCard}>
-            <Text style={styles.sectionTitle}>ÉVOLUTION PONDÉRALE</Text>
-            {weightHistoryData.length > 1 ? (
+            <View style={styles.chartHeader}>
+              <Text style={styles.sectionTitle}>ÉVOLUTION PONDÉRALE</Text>
+
+              {/* Boutons de sélection de période */}
+              <View style={styles.periodButtons}>
+                {[
+                  { key: '7', label: '7J' },
+                  { key: '30', label: '30J' },
+                  { key: '90', label: '90J' },
+                  { key: 'all', label: 'Tout' }
+                ].map((period) => (
+                  <TouchableOpacity
+                    key={period.key}
+                    style={[
+                      styles.periodButton,
+                      selectedPeriod === period.key && styles.periodButtonActive
+                    ]}
+                    onPress={() => setSelectedPeriod(period.key as '7' | '30' | '90' | 'all')}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.periodButtonText,
+                        selectedPeriod === period.key && styles.periodButtonTextActive
+                      ]}
+                    >
+                      {period.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {filteredWeightData.length >= 2 ? (
               <LineChart
-                data={weightHistoryData}
+                data={filteredWeightData}
                 width={screenWidth - 80}
-                height={200}
-                color={theme.colors.primary}
+                height={220}
+                color="#34D399"
                 hideDataPoints={false}
+                dataPointsColor="#34D399"
+                dataPointsRadius={6}
                 showVerticalLines
-                spacing={screenWidth / (weightHistoryData.length + 1) - 60}
+                spacing={Math.max(30, (screenWidth - 120) / (filteredWeightData.length))}
                 initialSpacing={20}
                 isAnimated
-                animationDuration={1200}
+                animationDuration={800}
                 onDataPointClick={(dataPoint) => {
-                  alert(`Poids: ${dataPoint.value} kg le ${dataPoint.label}`);
+                  alert(`📊 ${dataPoint.label}\nPoids: ${dataPoint.value} kg`);
                 }}
                 rulesColor={theme.colors.borderLight}
                 rulesType="solid"
@@ -304,15 +339,24 @@ export default function DashboardScreen() {
                 hideYAxisText={false}
                 showFractionalValues
                 backgroundColor={theme.colors.surface}
-                dataPointsColor={theme.colors.primary}
                 textShiftY={-8}
                 textShiftX={-5}
                 textColor={theme.colors.textPrimary}
+                areaChart
+                startFillColor="rgba(52, 211, 153, 0.3)"
+                endFillColor="rgba(52, 211, 153, 0.05)"
+                startOpacity={0.9}
+                endOpacity={0.2}
+                curved
               />
             ) : (
               <View style={styles.chartEmptyState}>
+                <Text style={styles.chartEmptyStateIcon}>📈</Text>
+                <Text style={styles.chartEmptyStateTitle}>
+                  Pas encore de courbe
+                </Text>
                 <Text style={styles.chartEmptyStateText}>
-                  Ajoutez plus de mesures pour voir votre courbe
+                  Ajoutez au moins 2 mesures pour voir votre évolution
                 </Text>
               </View>
             )}
@@ -482,21 +526,65 @@ const styles = StyleSheet.create({
   },
   chartCard: {
     paddingTop: theme.spacing.xl,
-    paddingBottom: 0,
+    paddingBottom: theme.spacing.md,
     alignItems: 'center',
     borderRadius: theme.radius.xxl,
+  },
+  chartHeader: {
+    width: '100%',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  periodButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  periodButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.borderLight,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  periodButtonActive: {
+    backgroundColor: '#34D399',
+  },
+  periodButtonText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.3,
+  },
+  periodButtonTextActive: {
+    color: '#FFFFFF',
   },
   chartEmptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 200,
+    height: 220,
     paddingHorizontal: theme.spacing.xl,
+    gap: theme.spacing.sm,
+  },
+  chartEmptyStateIcon: {
+    fontSize: 48,
+    opacity: 0.3,
+    marginBottom: theme.spacing.sm,
+  },
+  chartEmptyStateTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
   },
   chartEmptyStateText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.medium,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+    lineHeight: theme.fontSize.md * 1.5,
   },
   chart: {
     marginVertical: theme.spacing.md,

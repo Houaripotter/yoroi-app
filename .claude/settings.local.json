@@ -6,7 +6,8 @@
       "Bash(npm audit:*)",
       "Bash(npm run lint)",
       "Bash(npm install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(tail:*)"
     ],
     "deny": [],
     "ask": []

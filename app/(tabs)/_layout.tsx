@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Home, PlusCircle, Settings, TrendingUp, Dumbbell } from 'lucide-react-native';
+import { Home, PlusCircle, Settings, TrendingUp, Dumbbell, Camera } from 'lucide-react-native';
 import { AnimatedTabBarIcon } from '@/components/AnimatedTabBarIcon';
 import { theme } from '@/lib/theme';
 
@@ -69,6 +69,17 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color, focused }) => (
             <AnimatedTabBarIcon focused={focused}>
               <TrendingUp size={size} color={color} />
+            </AnimatedTabBarIcon>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="photos"
+        options={{
+          title: 'Photos',
+          tabBarIcon: ({ size, color, focused }) => (
+            <AnimatedTabBarIcon focused={focused}>
+              <Camera size={size} color={color} />
             </AnimatedTabBarIcon>
           ),
         }}
