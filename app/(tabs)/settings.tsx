@@ -1,31 +1,686 @@
-import { useState, useCallback, useEffect } from \'react\';\nimport {\n  Alert,\n  Modal,\n  ScrollView,\n  StyleSheet,\n  Text,\n  TextInput,\n  TouchableOpacity,\n  View,\n  Pressable,\n  Platform,\n} from \'react-native\';\nimport {\n  User,\n  Target,\n  Calendar,\n  Scale,\n  TrendingDown,\n  Palette,\n  Download,\n  Upload,\n  Trash2,\n  ChevronRight,\n  X,\n  Check,\n  Award,\n  CloudUpload, // Icône pour Sauvegarder\n  CloudDownload, // Icône pour Restaurer\n} from \'lucide-react-native\';\nimport { theme } from \'@/lib/theme\';\nimport { useFocusEffect, router } from \'expo-router\';\nimport { BadgesScreen } from \'@/components/BadgesScreen\';\nimport { ReminderSettingsComponent } from \'@/components/ReminderSettings\';\nimport { HealthSyncSettings } from \'@/components/HealthSyncSettings\';\nimport { exportData, importData, resetAllData, getStats, getUserSettings, saveUserSettings } from \'@/lib/storage\'; // Import des nouvelles fonctions et des settings\n\nexport default function SettingsScreen() {\n  const [height, setHeight] = useState(\'\');\n  const [weightGoal, setWeightGoal] = useState(\'\');\n  const [targetDate, setTargetDate] = useState(\'\');\n  const [weightUnit, setWeightUnit] = useState<\'kg\' | \'lbs\'>(\'kg\');\n  const [measurementUnit, setMeasurementUnit] = useState<\'cm\' | \'in\'>(\'cm\');\n  const [appTheme, setAppTheme] = useState<\'light\' | \'dark\' | \'system\'>(\'light\'); // Renamed from theme to appTheme to avoid conflict\n\n  // États pour les modals\n  const [themeModalVisible, setThemeModalVisible] = useState(false);\n  const [weightUnitModalVisible, setWeightUnitModalVisible] = useState(false);\n  const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);\n  const [resetModalVisible, setResetModalVisible] = useState(false);\n  const [badgesModalVisible, setBadgesModalVisible] = useState(false);\n\n  const fetchSettings = useCallback(async () => {\n    const settings = await getUserSettings();\n    setHeight(settings.height?.toString() || \'\');\n    setWeightGoal(settings.weight_goal?.toString() || \'\');\n    setTargetDate(settings.target_date || \'\');\n    setWeightUnit(settings.weight_unit || \'kg\');\n    setMeasurementUnit(settings.measurement_unit || \'cm\');\n    setAppTheme(settings.theme || \'light\');\n  }, []);\n\n  useFocusEffect(\n    useCallback(() => {\n      fetchSettings();\n    }, [fetchSettings])\n  );\n\n  const handleSaveProfile = async () => {\n    const heightNum = parseFloat(height);\n    const goalNum = parseFloat(weightGoal);\n\n    if (isNaN(heightNum) || heightNum < 100 || heightNum > 250) {\n      Alert.alert(\'Erreur\', \'La taille doit être entre 100 et 250 cm\');\n      return;\n    }\n\n    if (isNaN(goalNum) || goalNum <= 0) {\n      Alert.alert(\'Erreur\', \'Le poids objectif doit être supérieur à 0\');\n      return;\n    }\n\n    await saveUserSettings({\n      height: heightNum,\n      weight_goal: goalNum,\n      target_date: targetDate,\n      weight_unit: weightUnit,\n      measurement_unit: measurementUnit,\n      theme: appTheme !== \'system\' ? appTheme : undefined, // Save actual chosen theme or undefined for system\n    });\n\n    Alert.alert(\'Succès\', \'Profil sauvegardé\');\n  };\n\n  const handleExport = async () => {\n    const success = await exportData();\n    if (success && Platform.OS !== \'web\') {\n      // Une alerte de partage est déjà affichée par exportData, pas besoin d\'une autre ici\n      // On peut potentiellement ajouter un haptique si on veut\n    } else if (Platform.OS === \'web\') {\n        Alert.alert(\'Succès\', \'Fichier JSON généré dans les téléchargements du navigateur.\');\n    }\n  };\n\n  const handleImport = async () => {\n    Alert.alert(\n      \'Restaurer une sauvegarde\',\n      \'Ceci va écraser TOUTES vos données actuelles. Êtes-vous sûr de vouloir continuer ?\',\n      [\n        { text: \'Annuler\', style: \'cancel\' },\n        {\n          text: \'Restaurer\',\n          style: \'destructive\',\n          onPress: async () => {\n            const success = await importData();\n            if (success) {\n              fetchSettings(); // Recharger les settings après l\'import\n              // Rediriger vers l\'écran d\'accueil ou recharger l\'app si nécessaire\n              router.replace(\'/(tabs)\');\n            }\n          },\n        },\n      ]\n    );\n  };\n\n  const handleResetData = async () => {\n    try {\n      const success = await resetAllData();\n      setResetModalVisible(false);\n      if (success) {\n        Alert.alert(\'Succès\', \'Toutes vos données ont été supprimées du téléphone\');\n        fetchSettings(); // Recharger les settings après reset\n        router.replace(\'/(tabs)\'); // Rediriger après la suppression\n      } else {\n        Alert.alert(\'Erreur\', \'Impossible de supprimer les données\');\n      }\n    } catch (error: any) {\n      console.error(\'❌ Erreur réinitialisation:\', error);\n      Alert.alert(\'Erreur\', error.message || \'Erreur lors de la réinitialisation\');\n    }\n  };\n\n  return (\n    <View style={styles.container}>\n      <ScrollView\n        style={styles.scrollView}\n        contentContainerStyle={styles.content}\n        showsVerticalScrollIndicator={false}\n      >\n        <View style={styles.header}>\n          <Text style={styles.title}>Réglages</Text>\n        </View>\n\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>PROFIL</Text>\n          <View style={styles.card}>\n            <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => { /* Gérer la modification du nom d\'utilisateur */ }}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#FF6B6B20\' }]}>\n                  <User size={20} color={theme.colors.error} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Nom d\'utilisateur</Text>\n              </View>\n              <View style={styles.rowRight}>\n                <Text style={styles.rowValue}>Houari</Text> {/* Dynamiser ce champ */}\n                <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n              </View>\n            </TouchableOpacity>\n\n            <View style={styles.divider} />\n\n            <View style={styles.row}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#4ECDC420\' }]}>\n                  <Scale size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Taille</Text>\n              </View>\n              <TextInput\n                style={styles.input}\n                value={height}\n                onChangeText={setHeight}\n                keyboardType=\"decimal-pad\"\n                placeholder=\"175\"\n                placeholderTextColor={theme.colors.textTertiary}\n                onBlur={handleSaveProfile}\n              />\n            </View>\n\n            <View style={styles.divider} />\n\n            <View style={styles.row}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#FFE66D20\' }]}>\n                  <Target size={20} color={theme.colors.error} strokeWidth={2.5} /> {/* Replaced with error for visibility */}\n                </View>\n                <Text style={styles.rowLabel}>Poids cible</Text>\n              </View>\n              <TextInput\n                style={styles.input}\n                value={weightGoal}\n                onChangeText={setWeightGoal}\n                keyboardType=\"decimal-pad\"\n                placeholder=\"75.0\"\n                placeholderTextColor={theme.colors.textTertiary}\n                onBlur={handleSaveProfile}\n              />\n            </View>\n\n            <View style={styles.divider} />\n\n            <View style={styles.row}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#A8E6CF20\' }]}>\n                  <Calendar size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Date cible</Text>\n              </View>\n              <TextInput\n                style={styles.input}\n                value={targetDate}\n                onChangeText={setTargetDate}\n                placeholder=\"AAAA-MM-JJ\"\n                placeholderTextColor={theme.colors.textTertiary}\n                onBlur={handleSaveProfile}\n              />\n            </View>\n          </View>\n        </View>\n\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>AFFICHAGE</Text>\n          <View style={styles.card}>\n            <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => setThemeModalVisible(true)}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#C7CEEA20\' }]}>\n                  <Palette size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Thème</Text>\n              </View>\n              <View style={styles.rowRight}>\n                <Text style={styles.rowValue}>{appTheme === \'light\' ? \'Clair\' : appTheme === \'dark\' ? \'Sombre\' : \'Automatique\'}</Text>\n                <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n              </View>\n            </TouchableOpacity>\n\n            <View style={styles.divider} />\n\n            <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => setWeightUnitModalVisible(true)}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#FFB3BA20\' }]}>\n                  <Scale size={20} color={theme.colors.error} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Unité de poids</Text>\n              </View>\n              <View style={styles.rowRight}>\n                <Text style={styles.rowValue}>{weightUnit}</Text>\n                <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n              </View>\n            </TouchableOpacity>\n\n            <View style={styles.divider} />\n\n            <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => setMeasurementUnitModalVisible(true)}>\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#BAE1FF20\' }]}>\n                  <TrendingDown size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Unité de mesure</Text>\n              </View>\n              <View style={styles.rowRight}>\n                <Text style={styles.rowValue}>{measurementUnit}</Text>\n                <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n              </View>\n            </TouchableOpacity>\n          </View>\n        </View>\n\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>ACHIEVEMENTS</Text>\n          <View style={styles.card}>\n            <TouchableOpacity\n              style={styles.row}\n              activeOpacity={0.7}\n              onPress={() => setBadgesModalVisible(true)}\n            >\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: \'#FFD70020\' }]}>\n                  <Award size={20} color={theme.colors.success} strokeWidth={2.5} />\n                </View>\n                <Text style={styles.rowLabel}>Mes badges</Text>\n              </View>\n              <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n            </TouchableOpacity>\n          </View>\n        </View>\n\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>RAPPELS</Text>\n          <ReminderSettingsComponent />\n        </View>\n\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>APPLE HEALTH</Text>\n          <HealthSyncSettings />\n        </View>\n\n        {/* NOUVELLE SECTION: SÉCURITÉ DES DONNÉES */}\n        <View style={styles.section}>\n          <Text style={styles.sectionHeader}>SÉCURITÉ DES DONNÉES</Text>\n          <View style={styles.card}>\n            <TouchableOpacity\n              style={styles.row}\n              activeOpacity={0.7}\n              onPress={handleExport}\n            >\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>\n                  <CloudUpload size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <View>\n                  <Text style={styles.rowLabel}>Sauvegarder mes données</Text>\n                  <Text style={styles.rowSubtitle}>Créer un fichier JSON de backup</Text>\n                </View>\n              </View>\n              <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n            </TouchableOpacity>\n\n            <View style={styles.divider} />\n\n            <TouchableOpacity\n              style={styles.row}\n              activeOpacity={0.7}\n              onPress={handleImport}\n            >\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>\n                  <CloudDownload size={20} color={theme.colors.primary} strokeWidth={2.5} />\n                </View>\n                <View>\n                  <Text style={styles.rowLabel}>Restaurer une sauvegarde</Text>\n                  <Text style={styles.rowSubtitle}>Importer depuis un fichier JSON</Text>\n                </View>\n              </View>\n              <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n            </TouchableOpacity>\n\n            <View style={styles.divider} />\n\n            <TouchableOpacity\n              style={styles.row}\n              activeOpacity={0.7}\n              onPress={() => setResetModalVisible(true)}\n            >\n              <View style={styles.rowLeft}>\n                <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.error}20` }]}>\n                  <Trash2 size={20} color={theme.colors.error} strokeWidth={2.5} />\n                </View>\n                <View>\n                  <Text style={[styles.rowLabel, { color: theme.colors.error }]}>Réinitialiser</Text>\n                  <Text style={styles.rowSubtitle}>Supprimer toutes les données</Text>\n                </View>\n              </View>\n              <ChevronRight size={20} color={theme.colors.textTertiary} strokeWidth={2.5} />\n            </TouchableOpacity>\n          </View>\n        </View>\n\n        <View style={styles.section}>\n          <View style={styles.offlineNotice}>\n            <Text style={styles.offlineTitle}>🛡️ Mode Confidentialité Totale</Text>\n            <Text style={styles.offlineDescription}>\n              Toutes vos données restent sur votre téléphone. Aucune information n\'est envoyée vers un serveur externe. L\'application fonctionne à 100% en mode avion.\n            </Text>\n          </View>\n        </View>\n\n        <View style={styles.footer}>\n          <Text style={styles.footerText}>Version 1.0.0</Text>\n          <Text style={styles.footerText}>Yoroi</Text> {/* Updated app name */}\n        </View>\n      </ScrollView>\n\n      {/* Modal Thème */}\n      <Modal visible={themeModalVisible} transparent animationType=\"fade\">\n        <Pressable style={styles.modalOverlay} onPress={() => setThemeModalVisible(false)}>\n          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>\n            <View style={styles.modalHeader}>\n              <Text style={styles.modalTitle}>Choisir le thème</Text>\n              <TouchableOpacity onPress={() => setThemeModalVisible(false)}>\n                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />\n              </TouchableOpacity>\n            </View>\n\n            {/* Options de thème */}\n            <TouchableOpacity\n              style={[styles.optionButton, appTheme === \'light\' && styles.optionButtonActive]}\n              onPress={() => {\n                setAppTheme(\'light\');\n                saveUserSettings({ theme: \'light\' });\n                setThemeModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, appTheme === \'light\' && styles.optionTextActive]}>Clair</Text>\n              {appTheme === \'light\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n\n            <TouchableOpacity\n              style={[styles.optionButton, appTheme === \'dark\' && styles.optionButtonActive]}\n              onPress={() => {\n                setAppTheme(\'dark\');\n                saveUserSettings({ theme: \'dark\' });\n                setThemeModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, appTheme === \'dark\' && styles.optionTextActive]}>Sombre</Text>\n              {appTheme === \'dark\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n\n            <TouchableOpacity\n              style={[styles.optionButton, appTheme === \'system\' && styles.optionButtonActive]}\n              onPress={() => {\n                setAppTheme(\'system\');\n                saveUserSettings({ theme: \'system\' }); // Save \'system\' to indicate auto theme\n                setThemeModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, appTheme === \'system\' && styles.optionTextActive]}>Automatique</Text>\n              {appTheme === \'system\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n\n          </Pressable>\n        </Pressable>\n      </Modal>\n\n      {/* Modal Unité de poids */}\n      <Modal visible={weightUnitModalVisible} transparent animationType=\"fade\">\n        <Pressable style={styles.modalOverlay} onPress={() => setWeightUnitModalVisible(false)}>\n          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>\n            <View style={styles.modalHeader}>\n              <Text style={styles.modalTitle}>Unité de poids</Text>\n              <TouchableOpacity onPress={() => setWeightUnitModalVisible(false)}>\n                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />\n              </TouchableOpacity>\n            </View>\n\n            <TouchableOpacity\n              style={[styles.optionButton, weightUnit === \'kg\' && styles.optionButtonActive]}\n              onPress={() => {\n                setWeightUnit(\'kg\');\n                saveUserSettings({ weight_unit: \'kg\' });\n                setWeightUnitModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, weightUnit === \'kg\' && styles.optionTextActive]}>Kilogrammes (kg)</Text>\n              {weightUnit === \'kg\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n\n            <TouchableOpacity\n              style={[styles.optionButton, weightUnit === \'lbs\' && styles.optionButtonActive]}\n              onPress={() => {\n                setWeightUnit(\'lbs\');\n                saveUserSettings({ weight_unit: \'lbs\' });\n                setWeightUnitModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, weightUnit === \'lbs\' && styles.optionTextActive]}>Livres (lbs)</Text>\n              {weightUnit === \'lbs\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n          </Pressable>\n        </Pressable>\n      </Modal>\n\n      {/* Modal Unité de mesure */}\n      <Modal visible={measurementUnitModalVisible} transparent animationType=\"fade\">\n        <Pressable style={styles.modalOverlay} onPress={() => setMeasurementUnitModalVisible(false)}>\n          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>\n            <View style={styles.modalHeader}>\n              <Text style={styles.modalTitle}>Unité de mesure</Text>\n              <TouchableOpacity onPress={() => setMeasurementUnitModalVisible(false)}>\n                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />\n              </TouchableOpacity>\n            </View>\n\n            <TouchableOpacity\n              style={[styles.optionButton, measurementUnit === \'cm\' && styles.optionButtonActive]}\n              onPress={() => {\n                setMeasurementUnit(\'cm\');\n                saveUserSettings({ measurement_unit: \'cm\' });\n                setMeasurementUnitModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, measurementUnit === \'cm\' && styles.optionTextActive]}>Centimètres (cm)</Text>\n              {measurementUnit === \'cm\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n\n            <TouchableOpacity\n              style={[styles.optionButton, measurementUnit === \'in\' && styles.optionButtonActive]}\n              onPress={() => {\n                setMeasurementUnit(\'in\');\n                saveUserSettings({ measurement_unit: \'in\' });\n                setMeasurementUnitModalVisible(false);\n              }}\n            >\n              <Text style={[styles.optionText, measurementUnit === \'in\' && styles.optionTextActive]}>Pouces (inches)</Text>\n              {measurementUnit === \'in\' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}\n            </TouchableOpacity>\n          </Pressable>\n        </Pressable>\n      </Modal>\n\n      {/* Modal Réinitialisation */}\n      <Modal visible={resetModalVisible} transparent animationType=\"fade\">\n        <Pressable style={styles.modalOverlay} onPress={() => setResetModalVisible(false)}>\n          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>\n            <View style={styles.modalHeader}>\n              <Text style={styles.modalTitle}>Réinitialiser les données</Text>\n              <TouchableOpacity onPress={() => setResetModalVisible(false)}>\n                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />\n              </TouchableOpacity>\n            </View>\n\n            <Text style={styles.modalDescription}>\n              Cette action supprimera définitivement toutes vos données (poids, mensurations, entraînements, photos, badges, paramètres). Cette action est irréversible.\n            </Text>\n\n            <View style={styles.modalActions}>\n              <TouchableOpacity\n                style={styles.cancelButton}\n                onPress={() => setResetModalVisible(false)}\n              >\n                <Text style={styles.cancelButtonText}>Annuler</Text>\n              </TouchableOpacity>\n\n              <TouchableOpacity\n                style={styles.deleteButton}\n                onPress={handleResetData}\n              >\n                <Text style={styles.deleteButtonText}>Supprimer</Text>\n              </TouchableOpacity>\n            </View>\n          </Pressable>\n        </Pressable>\n      </Modal>\n\n      {/* Modal Badges */}\n      <BadgesScreen\n        visible={badgesModalVisible}\n        onClose={() => setBadgesModalVisible(false)}\n      />\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n    backgroundColor: theme.colors.background,\n  },\n  scrollView: {\n    flex: 1,\n  },\n  content: {\n    paddingTop: Platform.OS === \'ios\' ? 60 : theme.spacing.md,\n    paddingBottom: theme.spacing.xxl * 2,\n    paddingHorizontal: theme.spacing.xl,\n  },\n  header: {\n    paddingHorizontal: theme.spacing.xl,\n    marginBottom: theme.spacing.xl,\n  },\n  title: {\n    fontSize: theme.fontSize.display,\n    fontWeight: theme.fontWeight.black,\n    color: theme.colors.textPrimary,\n    letterSpacing: -0.5,\n  },\n  section: {\n    marginBottom: theme.spacing.xxl,\n  },\n  sectionHeader: {\n    fontSize: theme.fontSize.sm,\n    fontWeight: theme.fontWeight.bold,\n    color: theme.colors.textSecondary,\n    letterSpacing: 0.5,\n    textTransform: \'uppercase\',\n    paddingHorizontal: theme.spacing.xl,\n    marginBottom: theme.spacing.md,\n  },\
-  card: {\n    backgroundColor: theme.colors.surface,\n    marginHorizontal: theme.spacing.lg,\n    borderRadius: theme.radius.xl,\n    ...theme.shadow.sm,\n    borderWidth: 1,\n    borderColor: theme.colors.border,\n  },\
-  row: {\n    flexDirection: \'row\',\n    alignItems: \'center\',\n    justifyContent: \'space-between\',\n    paddingVertical: theme.spacing.md,\n    paddingHorizontal: theme.spacing.lg,\n    minHeight: 56,\n  },\
-  rowLeft: {\n    flexDirection: \'row\',\n    alignItems: \'center\',\n    gap: theme.spacing.md,\n    flex: 1,\n  },\
-  iconContainer: {\n    width: 32,\n    height: 32,\n    borderRadius: theme.radius.md,\n    alignItems: \'center\',\n    justifyContent: \'center\',\n  },\
-  rowLabel: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.semibold,\n    color: theme.colors.textPrimary,\n    letterSpacing: -0.2,\n  },\
-  rowSubtitle: {\n    fontSize: theme.fontSize.sm,\n    fontWeight: theme.fontWeight.regular,\n    color: theme.colors.textSecondary,\n    marginTop: 2,\n  },\
-  offlineNotice: {\n    backgroundColor: `${theme.colors.success}10`,\n    borderRadius: theme.radius.xl,\n    padding: theme.spacing.lg,\n    marginHorizontal: theme.spacing.xl,\n    borderWidth: 1,\n    borderColor: `${theme.colors.success}30`,\n  },\
-  offlineTitle: {\n    fontSize: theme.fontSize.lg,\n    fontWeight: theme.fontWeight.bold,\n    color: theme.colors.textPrimary,\n    marginBottom: theme.spacing.xs,\n  },\
-  offlineDescription: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.regular,\n    color: theme.colors.textSecondary,\n    lineHeight: theme.fontSize.md * 1.4,\n  },\
-  rowRight: {\n    flexDirection: \'row\',\n    alignItems: \'center\',\n    gap: theme.spacing.xs,\n  },\
-  rowValue: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.regular,\n    color: theme.colors.textSecondary,\n    letterSpacing: -0.2,\n  },\
-  input: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.regular,\n    color: theme.colors.textPrimary,\n    textAlign: \'right\',\n    minWidth: 100,\n    backgroundColor: theme.colors.background,\n    paddingVertical: theme.spacing.sm,\n    paddingHorizontal: theme.spacing.md,\n    borderRadius: theme.radius.md,\n  },\
-  divider: {\n    height: 1,\n    backgroundColor: theme.colors.border,\n    marginLeft: 60,\n  },\
-  footer: {\n    alignItems: \'center\',\n    gap: theme.spacing.xs,\n    paddingVertical: theme.spacing.lg,\n    paddingHorizontal: theme.spacing.xl,\n  },\
-  footerText: {\n    fontSize: theme.fontSize.xs,\n    fontWeight: theme.fontWeight.semibold,\n    color: theme.colors.textSecondary,\n    letterSpacing: 0.2,\n  },\
-  modalOverlay: {\n    flex: 1,\n    backgroundColor: \'rgba(0, 0, 0, 0.5)\',\n    justifyContent: \'center\',\n    alignItems: \'center\',\n    padding: theme.spacing.xl,\n  },\
-  modalContent: {\n    backgroundColor: theme.colors.surface,\n    borderRadius: theme.radius.xl,\n    padding: theme.spacing.xl,\n    width: \'100%\',\n    maxWidth: 400,\n    ...theme.shadow.md,\n  },\
-  modalHeader: {\n    flexDirection: \'row\',\n    justifyContent: \'space-between\',\n    alignItems: \'center\',\n    marginBottom: theme.spacing.lg,\n  },\
-  modalTitle: {\n    fontSize: theme.fontSize.lg,\n    fontWeight: theme.fontWeight.bold,\n    color: theme.colors.textPrimary,\n    letterSpacing: -0.3,\n  },\
-  modalDescription: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.regular,\n    color: theme.colors.textSecondary,\n    lineHeight: theme.fontSize.md * 1.4,\n    marginBottom: theme.spacing.xl,\n  },\
-  optionButton: {\n    flexDirection: \'row\',\n    justifyContent: \'space-between\',\n    alignItems: \'center\',\n    padding: theme.spacing.md,\n    backgroundColor: theme.colors.background,\n    borderRadius: theme.radius.md,\n    marginBottom: theme.spacing.sm,\n    borderWidth: 2,\n    borderColor: \'transparent\',\n  },\
-  optionButtonActive: {\n    backgroundColor: `${theme.colors.primary}10`,\n    borderColor: theme.colors.primary,\n  },\
-  optionText: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.semibold,\n    color: theme.colors.textPrimary,\n    letterSpacing: -0.2,\n  },\
-  optionTextActive: {\n    color: theme.colors.primary,\n  },\
-  modalActions: {\n    flexDirection: \'row\',\n    gap: theme.spacing.md,\n  },\
-  cancelButton: {\n    flex: 1,\n    padding: theme.spacing.md,\n    backgroundColor: theme.colors.border,\n    borderRadius: theme.radius.md,\n    alignItems: \'center\',\n  },\
-  cancelButtonText: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.semibold,\n    color: theme.colors.textSecondary,\n    letterSpacing: -0.2,\n  },\
-  deleteButton: {\n    flex: 1,\n    padding: theme.spacing.md,\n    backgroundColor: theme.colors.error,\n    borderRadius: theme.radius.md,\n    alignItems: \'center\',\n  },\
-  deleteButtonText: {\n    fontSize: theme.fontSize.md,\n    fontWeight: theme.fontWeight.semibold,\n    color: theme.colors.surface,\n    letterSpacing: -0.2,\n  },\
-});\n
+import React, { useState, useCallback } from 'react';
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Pressable,
+  Platform,
+  Switch
+} from 'react-native';
+import {
+  User,
+  Target,
+  Calendar,
+  Scale,
+  TrendingDown,
+  Palette,
+  Trash2,
+  ChevronRight,
+  X,
+  Check,
+  Award,
+  CloudUpload, // Sauvegarder
+  CloudDownload, // Restaurer
+  ShieldCheck
+} from 'lucide-react-native';
+import { theme } from '@/lib/theme';
+import { useFocusEffect, router } from 'expo-router';
+// Assure-toi que ces composants existent, sinon commente-les temporairement
+import { BadgesScreen } from '@/components/BadgesScreen'; 
+import { ReminderSettingsComponent } from '@/components/ReminderSettings';
+import { HealthSyncSettings } from '@/components/HealthSyncSettings';
+import { 
+  exportData, 
+  importData, 
+  resetAllData, 
+  getUserSettings, 
+  saveUserSettings 
+} from '@/lib/storage';
+
+export default function SettingsScreen() {
+  const [height, setHeight] = useState('');
+  const [weightGoal, setWeightGoal] = useState('');
+  const [targetDate, setTargetDate] = useState('');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [measurementUnit, setMeasurementUnit] = useState<'cm' | 'in'>('cm');
+  const [appTheme, setAppTheme] = useState<'light' | 'dark' | 'system'>('light');
+
+  // Modals
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
+  const [weightUnitModalVisible, setWeightUnitModalVisible] = useState(false);
+  const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);
+  const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [badgesModalVisible, setBadgesModalVisible] = useState(false);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const settings = await getUserSettings();
+      setHeight(settings.height?.toString() || '');
+      setWeightGoal(settings.weight_goal?.toString() || '');
+      setTargetDate(settings.target_date || '');
+      setWeightUnit(settings.weight_unit || 'kg');
+      setMeasurementUnit(settings.measurement_unit || 'cm');
+      setAppTheme(settings.theme || 'light');
+    } catch (e) {
+      console.log("Erreur chargement settings", e);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchSettings();
+    }, [fetchSettings])
+  );
+
+  const handleSaveProfile = async () => {
+    const heightNum = parseFloat(height);
+    const goalNum = parseFloat(weightGoal);
+
+    await saveUserSettings({
+      height: heightNum,
+      weight_goal: goalNum,
+      target_date: targetDate,
+      weight_unit: weightUnit,
+      measurement_unit: measurementUnit,
+      theme: appTheme,
+    });
+  };
+
+  const handleExport = async () => {
+    const success = await exportData();
+    if (success && Platform.OS === 'web') {
+        Alert.alert('Succès', 'Fichier généré.');
+    }
+    // Sur mobile, le share sheet s'ouvre tout seul
+  };
+
+  const handleImport = async () => {
+    Alert.alert(
+      'Restaurer une sauvegarde',
+      'Attention : Ceci va écraser TOUTES vos données actuelles. Continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Restaurer',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await importData();
+            if (success) {
+              await fetchSettings();
+              router.replace('/(tabs)');
+              Alert.alert("Succès", "Données restaurées.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleResetData = async () => {
+    try {
+      const success = await resetAllData();
+      setResetModalVisible(false);
+      if (success) {
+        Alert.alert('Réinitialisé', 'Toutes les données ont été effacées.');
+        fetchSettings();
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de supprimer.');
+    }
+  };
+
+  // Helper pour les lignes de menu
+  const MenuRow = ({ icon: Icon, color, label, value, onPress, isDestructive = false }: any) => (
+    <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={onPress}>
+      <View style={styles.rowLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: isDestructive ? '#FFEBEE' : `${color}20` }]}>
+          <Icon size={20} color={isDestructive ? theme.colors.error : color} strokeWidth={2.5} />
+        </View>
+        <View>
+          <Text style={[styles.rowLabel, isDestructive && { color: theme.colors.error }]}>{label}</Text>
+          {value && <Text style={styles.rowValue}>{value}</Text>}
+        </View>
+      </View>
+      <ChevronRight size={20} color={theme.colors.textTertiary} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>Réglages</Text>
+        </View>
+
+        {/* PROFIL */}
+        <Text style={styles.sectionHeader}>PROFIL</Text>
+        <View style={styles.card}>
+            <View style={styles.inputRow}>
+                <Text style={styles.inputLabel}>Taille (cm)</Text>
+                <TextInput 
+                    style={styles.input} 
+                    value={height} 
+                    onChangeText={setHeight} 
+                    placeholder="175" 
+                    keyboardType="numeric"
+                    onBlur={handleSaveProfile}
+                />
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.inputRow}>
+                <Text style={styles.inputLabel}>Poids Cible (kg)</Text>
+                <TextInput 
+                    style={styles.input} 
+                    value={weightGoal} 
+                    onChangeText={setWeightGoal} 
+                    placeholder="75" 
+                    keyboardType="numeric"
+                    onBlur={handleSaveProfile}
+                />
+            </View>
+        </View>
+
+        {/* GAMIFICATION */}
+        <Text style={styles.sectionHeader}>GAMIFICATION</Text>
+        <View style={styles.card}>
+            <MenuRow 
+                icon={Award} 
+                color={theme.colors.success} 
+                label="Mes badges" 
+                onPress={() => setBadgesModalVisible(true)} 
+            />
+        </View>
+
+        {/* AFFICHAGE */}
+        <Text style={styles.sectionHeader}>AFFICHAGE</Text>
+        <View style={styles.card}>
+            <MenuRow 
+                icon={Palette} 
+                color={theme.colors.primary} 
+                label="Thème" 
+                value={appTheme === 'light' ? 'Clair' : appTheme === 'dark' ? 'Sombre' : 'Système'}
+                onPress={() => setThemeModalVisible(true)}
+            />
+            <View style={styles.divider} />
+            <MenuRow 
+                icon={Scale} 
+                color={theme.colors.primary} 
+                label="Unité de poids" 
+                value={weightUnit === 'kg' ? 'Kilogrammes' : 'Livres'}
+                onPress={() => setWeightUnitModalVisible(true)}
+            />
+            <View style={styles.divider} />
+            <MenuRow 
+                icon={TrendingDown} 
+                color={theme.colors.primary} 
+                label="Unité de mesure" 
+                value={measurementUnit === 'cm' ? 'Centimètres' : 'Pouces'}
+                onPress={() => setMeasurementUnitModalVisible(true)}
+            />
+        </View>
+
+        {/* RAPPELS & NOTIFICATIONS */}
+        <Text style={styles.sectionHeader}>RAPPELS & NOTIFICATIONS</Text>
+        <ReminderSettingsComponent />
+
+        {/* APPLE HEALTH */}
+        <Text style={styles.sectionHeader}>APPLE HEALTH</Text>
+        <HealthSyncSettings />
+
+        {/* SÉCURITÉ DES DONNÉES */}
+        <Text style={styles.sectionHeader}>SÉCURITÉ DES DONNÉES</Text>
+        <View style={styles.card}>
+            <MenuRow 
+                icon={CloudUpload} 
+                color={theme.colors.primary} 
+                label="Sauvegarder mes données" 
+                value="Créer un fichier de backup JSON" 
+                onPress={handleExport} 
+            />
+            <View style={styles.divider} />
+            <MenuRow 
+                icon={CloudDownload} 
+                color={theme.colors.primary} 
+                label="Restaurer une sauvegarde" 
+                value="Importer un fichier de backup JSON" 
+                onPress={handleImport} 
+            />
+            <View style={styles.divider} />
+            <MenuRow 
+                icon={Trash2} 
+                color={theme.colors.error} 
+                label="Réinitialiser toutes les données" 
+                value="Supprimer définitivement tout" 
+                onPress={() => setResetModalVisible(true)} 
+                isDestructive={true}
+            />
+        </View>
+
+        <View style={styles.offlineNotice}>
+            <Text style={styles.offlineTitle}><ShieldCheck size={18} color={theme.colors.success} /> Mode Confidentialité Totale</Text>
+            <Text style={styles.offlineDescription}>
+              Toutes vos données restent sur votre téléphone. Aucune information n'est envoyée vers un serveur externe. L'application fonctionne à 100% en mode avion.
+            </Text>
+          </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Version 1.0.0</Text>
+          <Text style={styles.footerText}>Yoroi - Health Tracker Pro</Text>
+        </View>
+      </ScrollView>
+
+      {/* Modal Thème */}
+      <Modal visible={themeModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setThemeModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Choisir le thème</Text>
+              <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
+                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.optionButton, appTheme === 'light' && styles.optionButtonActive]}
+              onPress={() => {
+                setAppTheme('light');
+                saveUserSettings({ theme: 'light' });
+                setThemeModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, appTheme === 'light' && styles.optionTextActive]}>Clair</Text>
+              {appTheme === 'light' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionButton, appTheme === 'dark' && styles.optionButtonActive]}
+              onPress={() => {
+                setAppTheme('dark');
+                saveUserSettings({ theme: 'dark' });
+                setThemeModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, appTheme === 'dark' && styles.optionTextActive]}>Sombre</Text>
+              {appTheme === 'dark' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionButton, appTheme === 'system' && styles.optionButtonActive]}
+              onPress={() => {
+                setAppTheme('system');
+                saveUserSettings({ theme: 'system' });
+                setThemeModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, appTheme === 'system' && styles.optionTextActive]}>Automatique (Système)</Text>
+              {appTheme === 'system' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal Unité de poids */}
+      <Modal visible={weightUnitModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setWeightUnitModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Unité de poids</Text>
+              <TouchableOpacity onPress={() => setWeightUnitModalVisible(false)}>
+                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.optionButton, weightUnit === 'kg' && styles.optionButtonActive]}
+              onPress={() => {
+                setWeightUnit('kg');
+                saveUserSettings({ weight_unit: 'kg' });
+                setWeightUnitModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, weightUnit === 'kg' && styles.optionTextActive]}>Kilogrammes (kg)</Text>
+              {weightUnit === 'kg' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionButton, weightUnit === 'lbs' && styles.optionButtonActive]}
+              onPress={() => {
+                setWeightUnit('lbs');
+                saveUserSettings({ weight_unit: 'lbs' });
+                setWeightUnitModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, weightUnit === 'lbs' && styles.optionTextActive]}>Livres (lbs)</Text>
+              {weightUnit === 'lbs' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal Unité de mesure */}
+      <Modal visible={measurementUnitModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setMeasurementUnitModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Unité de mesure</Text>
+              <TouchableOpacity onPress={() => setMeasurementUnitModalVisible(false)}>
+                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.optionButton, measurementUnit === 'cm' && styles.optionButtonActive]}
+              onPress={() => {
+                setMeasurementUnit('cm');
+                saveUserSettings({ measurement_unit: 'cm' });
+                setMeasurementUnitModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, measurementUnit === 'cm' && styles.optionTextActive]}>Centimètres (cm)</Text>
+              {measurementUnit === 'cm' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionButton, measurementUnit === 'in' && styles.optionButtonActive]}
+              onPress={() => {
+                setMeasurementUnit('in');
+                saveUserSettings({ measurement_unit: 'in' });
+                setMeasurementUnitModalVisible(false);
+              }}
+            >
+              <Text style={[styles.optionText, measurementUnit === 'in' && styles.optionTextActive]}>Pouces (inches)</Text>
+              {measurementUnit === 'in' && <Check size={20} color={theme.colors.primary} strokeWidth={2.5} />}
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal Réinitialisation */}
+      <Modal visible={resetModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setResetModalVisible(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Réinitialiser les données</Text>
+              <TouchableOpacity onPress={() => setResetModalVisible(false)}>
+                <X size={24} color={theme.colors.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalDescription}>
+              Cette action supprimera définitivement toutes vos données (poids, mensurations, entraînements, photos, badges, paramètres). Cette action est irréversible.
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setResetModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={handleResetData}
+              >
+                <Text style={styles.deleteButtonText}>Supprimer</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal Badges */}
+      <BadgesScreen
+        visible={badgesModalVisible}
+        onClose={() => setBadgesModalVisible(false)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    paddingTop: Platform.OS === 'ios' ? 60 : theme.spacing.md,
+    paddingBottom: theme.spacing.xxl * 2,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  header: {
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.xl,
+  },
+  title: {
+    fontSize: theme.fontSize.display,
+    fontWeight: theme.fontWeight.black,
+    color: theme.colors.textPrimary,
+    letterSpacing: -0.5,
+  },
+  sectionHeader: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.lg, // Ajouté pour espacement entre sections
+  },
+  card: {
+    backgroundColor: theme.colors.surface,
+    marginHorizontal: theme.spacing.xl,
+    borderRadius: theme.radius.xl,
+    ...theme.shadow.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.xxl,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    minHeight: 56,
+  },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowLabel: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  rowValue: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.regular,
+    color: theme.colors.textSecondary,
+    letterSpacing: -0.2,
+  },
+  rowSubtitle: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.regular,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    minHeight: 56,
+  },
+  inputLabel: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textPrimary,
+    flex: 1,
+  },
+  input: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.regular,
+    color: theme.colors.textPrimary,
+    textAlign: 'right',
+    minWidth: 100,
+    backgroundColor: theme.colors.background,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radius.md,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginLeft: theme.spacing.lg + 40, // IconContainer width + gap
+  },
+  offlineNotice: {
+    backgroundColor: `${theme.colors.success}10`,
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.lg,
+    marginHorizontal: theme.spacing.xl,
+    borderWidth: 1,
+    borderColor: `${theme.colors.success}30`,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.xxl,
+  },
+  offlineTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  offlineDescription: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.regular,
+    color: theme.colors.textSecondary,
+    lineHeight: theme.fontSize.md * 1.4,
+  },
+  footer: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  footerText: {
+    fontSize: theme.fontSize.xs,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+    ...theme.shadow.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  modalTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  modalDescription: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.regular,
+    color: theme.colors.textSecondary,
+    lineHeight: theme.fontSize.md * 1.4,
+    marginBottom: theme.spacing.xl,
+  },
+  optionButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  optionButtonActive: {
+    backgroundColor: `${theme.colors.primary}10`,
+    borderColor: theme.colors.primary,
+  },
+  optionText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  optionTextActive: {
+    color: theme.colors.primary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textSecondary,
+    letterSpacing: -0.2,
+  },
+  deleteButton: {
+    flex: 1,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.error,
+    borderRadius: theme.radius.md,
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.surface,
+    letterSpacing: -0.2,
+  },
+});

@@ -18,8 +18,6 @@ import { Camera, Image as ImageIcon, GitCompare, Plus, X } from 'lucide-react-na
 import { theme } from '@/lib/theme';
 import { useFocusEffect, router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
-import { documentDirectory } from 'expo-file-system';
-import * as FileSystem from 'expo-file-system/legacy';
 import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getLatestMeasurement } from '@/lib/storage';
 
 export default function PhotosScreen() {

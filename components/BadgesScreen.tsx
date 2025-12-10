@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,62 +8,48 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { X, Award } from 'lucide-react-native';
 import { theme } from '@/lib/theme';
-import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory, UserBadge } from '@/types/badges';
+import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types/badges';
 import { BadgeItem } from './BadgeItem';
-import { supabase } from '@/lib/supabase';
 import { useFocusEffect } from 'expo-router';
+import { getAllMeasurements, getAllWorkouts, getUnlockedBadges, unlockBadge } from '@/lib/storage';
 
 interface BadgesScreenProps {
   visible: boolean;
   onClose: () => void;
 }
 
-// Fonction helper pour garantir l'authentification
-const ensureUserAuthenticated = async () => {
-  let retries = 0;
-  const maxRetries = 3;
+// Définition des conditions de déblocage des badges
+const calculateUnlockedBadges = async (): Promise<Set<BadgeId>> => {
+  const initiallyUnlocked = await getUnlockedBadges(); // Récupérer les badges déjà débloqués
+  const unlocked = new Set<BadgeId>(initiallyUnlocked.map(b => b.badge_id));
+  const allMeasurements = await getAllMeasurements();
+  const allWorkouts = await getAllWorkouts();
 
-  while (retries < maxRetries) {
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      if (!session) {
-        const { data, error: signInError } = await supabase.auth.signInAnonymously();
-        if (signInError) {
-          retries++;
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-        if (data.user) return data.user;
-      }
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        retries++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      return user;
-    } catch (error) {
-      retries++;
-      if (retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
+  const checkAndUnlock = async (badgeId: BadgeId, condition: boolean) => {
+    if (condition && !unlocked.has(badgeId)) {
+      await unlockBadge(badgeId);
+      unlocked.add(badgeId);
   }
+  };
 
-  return null;
+  // Logique de déblocage des badges
+  await checkAndUnlock('first_step', allMeasurements.length > 0);
+  await checkAndUnlock('assidu', allMeasurements.length >= 10);
+  await checkAndUnlock('bushi', allWorkouts.length >= 10);
+
+  // Ajoutez d'autres logiques de badge ici
+  // Exemple: Badge "Force Herculéenne" si 50 entraînements enregistrés
+  await checkAndUnlock('herculean_strength', allWorkouts.length >= 50);
+  // Exemple: Badge "Maître des données" si 100 mesures enregistrées
+  await checkAndUnlock('data_master', allMeasurements.length >= 100);
+
+  return unlocked;
 };
+
 
 export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeId>>(new Set());
@@ -73,25 +59,12 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
 
   const fetchUnlockedBadges = useCallback(async () => {
     try {
-      const user = await ensureUserAuthenticated();
-      if (!user) {
-        console.error('❌ Impossible de récupérer l\'utilisateur');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('user_badges')
-        .select('badge_id')
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('❌ Erreur lors de la récupération des badges:', error);
-      } else {
-        const badgeIds = new Set(data?.map(b => b.badge_id as BadgeId) || []);
-        setUnlockedBadges(badgeIds);
-      }
+      setLoading(true);
+      const badges = await calculateUnlockedBadges();
+      setUnlockedBadges(badges);
     } catch (error) {
-      console.error('❌ Exception:', error);
+      console.error('❌ Erreur lors du calcul des badges:', error);
+      Alert.alert('Erreur', 'Impossible de charger les badges.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -121,7 +94,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
 
   const unlockedCount = unlockedBadges.size;
   const totalCount = Object.keys(BADGES).length;
-  const progress = (unlockedCount / totalCount) * 100;
+  const progress = totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0;
 
   if (loading) {
     return (
@@ -409,7 +382,7 @@ const styles = StyleSheet.create({
     lineHeight: theme.fontSize.md * 1.5,
   },
   badgeDetailRequirement: {
-    backgroundColor: theme.colors.beigeLight,
+    backgroundColor: '#F0F3F5',
     borderRadius: theme.radius.xl,
     padding: theme.spacing.lg,
     gap: theme.spacing.xs,
@@ -430,7 +403,7 @@ const styles = StyleSheet.create({
     lineHeight: theme.fontSize.sm * 1.4,
   },
   unlockedBanner: {
-    backgroundColor: theme.colors.mintPastel,
+    backgroundColor: '#E0F2F1',
     borderRadius: theme.radius.full,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,

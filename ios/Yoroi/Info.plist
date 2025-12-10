@@ -47,6 +47,10 @@
     </dict>
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Yoroi a besoin de lire vos données de poids pour suivre votre progression.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Yoroi a besoin d'écrire votre poids pour synchroniser vos données.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your microphone</string>
     <key>NSPhotoLibraryUsageDescription</key>
