@@ -450,6 +450,14 @@ export const getLatestMeasurement = async (): Promise<Measurement | null> => {
   return result || null;
 };
 
+export const getFirstMeasurement = async (): Promise<Measurement | null> => {
+  const database = await openDatabase();
+  const result = await database.getFirstAsync<Measurement>(
+    'SELECT * FROM measurements ORDER BY date ASC LIMIT 1'
+  );
+  return result || null;
+};
+
 // ============================================
 // FONCTIONS CRUD - PLANNING HEBDOMADAIRE
 // ============================================

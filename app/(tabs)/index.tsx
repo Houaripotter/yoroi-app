@@ -23,6 +23,7 @@ import {
   Target,
   Activity,
   Droplet,
+  Ruler,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Card } from '@/components/ui/Card';
@@ -32,6 +33,7 @@ import { Badge } from '@/components/ui/Badge';
 import { WeightChart } from '@/components/WeightChart';
 import { useTheme } from '@/lib/ThemeContext';
 import { getAllMeasurements, getUserSettings, getAllWorkouts, getPhotosFromStorage, Photo } from '@/lib/storage';
+import { getLatestMeasurement, getFirstMeasurement, Measurement } from '@/lib/database';
 import { getDailyQuote } from '@/lib/quotes';
 import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress } from '@/lib/ranks';
 
@@ -54,6 +56,8 @@ export default function DashboardScreen() {
   const [trainingsThisWeek, setTrainingsThisWeek] = useState<any[]>([]);
   const [bodyComposition, setBodyComposition] = useState<{ bodyFat?: number; muscle?: number; water?: number } | null>(null);
   const [transformationPhotos, setTransformationPhotos] = useState<{ before?: Photo; after?: Photo } | null>(null);
+  const [latestMeasurement, setLatestMeasurement] = useState<Measurement | null>(null);
+  const [firstMeasurement, setFirstMeasurement] = useState<Measurement | null>(null);
 
   const quote = useMemo(() => getDailyQuote(), []);
   const rank = useMemo(() => getCurrentRank(streak), [streak]);
@@ -154,6 +158,18 @@ export default function DashboardScreen() {
         }
       } catch (e) {
         // Pas de photos
+      }
+
+      // Charger les mensurations (première et dernière)
+      try {
+        const [latest, first] = await Promise.all([
+          getLatestMeasurement(),
+          getFirstMeasurement(),
+        ]);
+        setLatestMeasurement(latest);
+        setFirstMeasurement(first);
+      } catch (e) {
+        // Pas de mensurations
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -384,7 +400,7 @@ export default function DashboardScreen() {
         {bodyComposition && (bodyComposition.bodyFat || bodyComposition.muscle || bodyComposition.water) && (
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push('/add-measurement')}
+            onPress={() => router.push('/entry')}
           >
             <Card style={styles.compositionCard}>
               <View style={styles.compositionHeader}>
@@ -426,6 +442,143 @@ export default function DashboardScreen() {
               </View>
             </Card>
           </TouchableOpacity>
+        )}
+
+        {/* ÉVOLUTION MENSURATIONS */}
+        {latestMeasurement && (latestMeasurement.waist || latestMeasurement.hips || latestMeasurement.chest) ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/stats')}
+          >
+            <Card style={styles.measurementsCard}>
+              <View style={styles.measurementsHeader}>
+                <Ruler size={20} color={colors.gold} />
+                <Text style={[styles.measurementsTitle, { color: colors.textPrimary }]}>Évolution Mensurations</Text>
+                <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+              </View>
+              <View style={styles.measurementsGrid}>
+                {/* TAILLE */}
+                {latestMeasurement.waist && (
+                  <View style={styles.measurementItem}>
+                    <Text style={[styles.measurementValue, { color: colors.textPrimary }]}>
+                      {latestMeasurement.waist.toFixed(0)}
+                      <Text style={[styles.measurementUnit, { color: colors.textSecondary }]}> cm</Text>
+                    </Text>
+                    {firstMeasurement?.waist && latestMeasurement.waist !== firstMeasurement.waist && (
+                      <View style={[
+                        styles.measurementDelta,
+                        { backgroundColor: latestMeasurement.waist < firstMeasurement.waist ? colors.successMuted : colors.dangerMuted }
+                      ]}>
+                        {latestMeasurement.waist < firstMeasurement.waist ? (
+                          <TrendingDown size={12} color={colors.success} />
+                        ) : (
+                          <TrendingUp size={12} color={colors.danger} />
+                        )}
+                        <Text style={[
+                          styles.measurementDeltaText,
+                          { color: latestMeasurement.waist < firstMeasurement.waist ? colors.success : colors.danger }
+                        ]}>
+                          {latestMeasurement.waist < firstMeasurement.waist ? '' : '+'}
+                          {(latestMeasurement.waist - firstMeasurement.waist).toFixed(0)} cm
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={[styles.measurementLabel, { color: colors.textSecondary }]}>Taille</Text>
+                  </View>
+                )}
+
+                {/* HANCHES */}
+                {latestMeasurement.hips && (
+                  <View style={styles.measurementItem}>
+                    <Text style={[styles.measurementValue, { color: colors.textPrimary }]}>
+                      {latestMeasurement.hips.toFixed(0)}
+                      <Text style={[styles.measurementUnit, { color: colors.textSecondary }]}> cm</Text>
+                    </Text>
+                    {firstMeasurement?.hips && latestMeasurement.hips !== firstMeasurement.hips && (
+                      <View style={[
+                        styles.measurementDelta,
+                        { backgroundColor: latestMeasurement.hips < firstMeasurement.hips ? colors.successMuted : colors.dangerMuted }
+                      ]}>
+                        {latestMeasurement.hips < firstMeasurement.hips ? (
+                          <TrendingDown size={12} color={colors.success} />
+                        ) : (
+                          <TrendingUp size={12} color={colors.danger} />
+                        )}
+                        <Text style={[
+                          styles.measurementDeltaText,
+                          { color: latestMeasurement.hips < firstMeasurement.hips ? colors.success : colors.danger }
+                        ]}>
+                          {latestMeasurement.hips < firstMeasurement.hips ? '' : '+'}
+                          {(latestMeasurement.hips - firstMeasurement.hips).toFixed(0)} cm
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={[styles.measurementLabel, { color: colors.textSecondary }]}>Hanches</Text>
+                  </View>
+                )}
+
+                {/* POITRINE */}
+                {latestMeasurement.chest && (
+                  <View style={styles.measurementItem}>
+                    <Text style={[styles.measurementValue, { color: colors.textPrimary }]}>
+                      {latestMeasurement.chest.toFixed(0)}
+                      <Text style={[styles.measurementUnit, { color: colors.textSecondary }]}> cm</Text>
+                    </Text>
+                    {firstMeasurement?.chest && latestMeasurement.chest !== firstMeasurement.chest && (
+                      <View style={[
+                        styles.measurementDelta,
+                        { backgroundColor: latestMeasurement.chest < firstMeasurement.chest ? colors.successMuted : colors.dangerMuted }
+                      ]}>
+                        {latestMeasurement.chest < firstMeasurement.chest ? (
+                          <TrendingDown size={12} color={colors.success} />
+                        ) : (
+                          <TrendingUp size={12} color={colors.danger} />
+                        )}
+                        <Text style={[
+                          styles.measurementDeltaText,
+                          { color: latestMeasurement.chest < firstMeasurement.chest ? colors.success : colors.danger }
+                        ]}>
+                          {latestMeasurement.chest < firstMeasurement.chest ? '' : '+'}
+                          {(latestMeasurement.chest - firstMeasurement.chest).toFixed(0)} cm
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={[styles.measurementLabel, { color: colors.textSecondary }]}>Poitrine</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity
+                style={[styles.measurementsLink, { borderTopColor: colors.border }]}
+                onPress={() => router.push('/entry')}
+              >
+                <Text style={[styles.measurementsLinkText, { color: colors.gold }]}>
+                  Voir toutes les mensurations
+                </Text>
+                <ChevronRight size={16} color={colors.gold} />
+              </TouchableOpacity>
+            </Card>
+          </TouchableOpacity>
+        ) : (
+          <Card style={styles.measurementsCard}>
+            <View style={styles.measurementsHeader}>
+              <Ruler size={20} color={colors.gold} />
+              <Text style={[styles.measurementsTitle, { color: colors.textPrimary }]}>Évolution Mensurations</Text>
+            </View>
+            <View style={styles.measurementsEmpty}>
+              <Text style={[styles.measurementsEmptyText, { color: colors.textSecondary }]}>
+                Aucune mensuration enregistrée
+              </Text>
+              <TouchableOpacity
+                style={[styles.measurementsEmptyButton, { backgroundColor: colors.gold }]}
+                onPress={() => router.push('/entry')}
+              >
+                <Ruler size={18} color={colors.background} />
+                <Text style={[styles.measurementsEmptyButtonText, { color: colors.background }]}>
+                  Ajouter mes mensurations
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
         )}
 
         {/* TRANSFORMATION AVANT/APRÈS */}
@@ -779,6 +932,88 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
     fontWeight: '500',
+  },
+
+  // MENSURATIONS
+  measurementsCard: {
+    marginBottom: 16,
+  },
+  measurementsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  measurementsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  measurementsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  measurementItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  measurementValue: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  measurementUnit: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  measurementDelta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  measurementDeltaText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  measurementLabel: {
+    fontSize: 12,
+    marginTop: 6,
+    fontWeight: '500',
+  },
+  measurementsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  measurementsLinkText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  measurementsEmpty: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  measurementsEmptyText: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  measurementsEmptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+  },
+  measurementsEmptyButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   // TRANSFORMATION

@@ -7,7 +7,17 @@
       "Bash(npm run lint)",
       "Bash(npm install:*)",
       "Bash(ls:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx expo install:*)",
+      "Bash(cat:*)",
+      "Bash(npx expo export:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nYoroi V2 - Refonte complète avec gamification et nouvelles fonctionnalités\n\n## Nouvelles fonctionnalités\n- Système de gamification complet (rangs, badges, achievements)\n- Profil guerrier avec progression et statistiques\n- Écran \"Ma Transformation\" avec photos avant/après\n- Planning d''entraînements avec calendrier interactif\n- Statistiques détaillées avec graphiques de poids\n- Chronomètre d''entraînement avec sons\n- Calculateur de macros et IMC\n- Fight Card et Story Card partageables\n- Export/Import de données (JSON/CSV)\n- Service de notation App Store\n\n## Améliorations techniques\n- Nouveau système de thèmes (clair/sombre)\n- Base de données SQLite locale\n- Service Apple Health amélioré\n- Architecture 100% offline\n- Nouveau layout avec 5 onglets (Accueil, Planning, +, Stats, Plus)\n\n## UI/UX\n- Nouvelle navigation par onglets\n- Écran d''onboarding\n- Animations Lottie\n- Sons et haptics\n- Avatars samouraï personnalisés\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

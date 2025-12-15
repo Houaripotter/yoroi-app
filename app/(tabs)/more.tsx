@@ -26,12 +26,14 @@ import {
   Upload,
   Lock,
   Share2,
+  FileText,
   LucideIcon,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { importAllData } from '@/lib/exportService';
+import { generateProgressPDF, ExportPeriod } from '@/lib/pdfExport';
 
 // ============================================
 // ECRAN PLUS - MENU GUERRIER
@@ -78,7 +80,7 @@ const MENU_ITEMS: MenuItem[] = [
     label: 'Mensurations',
     sublabel: 'Suivi de tes mesures',
     Icon: Ruler,
-    route: '/add-measurement',
+    route: '/entry',
     isGold: true,
   },
   {
@@ -106,6 +108,14 @@ const SETTINGS_ITEMS: MenuItem[] = [
     Icon: Settings,
     route: '/settings',
     isGold: false,
+  },
+  {
+    id: 'exportPdf',
+    label: 'Rapport PDF',
+    sublabel: 'Pour médecin/diététicien',
+    Icon: FileText,
+    onPress: () => {},
+    isGold: true,
   },
   {
     id: 'export',
@@ -193,6 +203,38 @@ export default function MoreScreen() {
     Linking.openURL('mailto:contact@yoroi-app.com?subject=Contact%20Yoroi');
   };
 
+  const handleExportPDF = async () => {
+    Alert.alert(
+      'Rapport PDF',
+      'Choisis la période du rapport',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: '30 derniers jours',
+          onPress: async () => {
+            try {
+              await generateProgressPDF('30j');
+            } catch (e) {
+              Alert.alert('Erreur', 'Impossible de générer le PDF');
+              console.log('PDF error:', e);
+            }
+          }
+        },
+        {
+          text: '90 derniers jours',
+          onPress: async () => {
+            try {
+              await generateProgressPDF('90j');
+            } catch (e) {
+              Alert.alert('Erreur', 'Impossible de générer le PDF');
+              console.log('PDF error:', e);
+            }
+          }
+        },
+      ]
+    );
+  };
+
   const handlePress = (item: MenuItem) => {
     // Gestion des items "coming soon"
     if (item.isComingSoon) {
@@ -219,6 +261,10 @@ export default function MoreScreen() {
     }
     if (item.id === 'contact') {
       handleContact();
+      return;
+    }
+    if (item.id === 'exportPdf') {
+      handleExportPDF();
       return;
     }
 
