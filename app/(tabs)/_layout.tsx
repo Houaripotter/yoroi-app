@@ -1,9 +1,17 @@
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Home, PlusCircle, Settings, TrendingUp, Dumbbell, Camera } from 'lucide-react-native';
-import { AnimatedTabBarIcon } from '@/components/AnimatedTabBarIcon';
-import { theme } from '@/lib/theme';
+import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
+
+// ============================================
+// TAB LAYOUT GUERRIER - 5 ONGLETS UNIQUEMENT
+// ============================================
+// 1. Accueil - Dashboard principal
+// 2. Stats - Graphiques et evolution
+// 3. + Ajouter - Nouvelle mesure (bouton central OR)
+// 4. Planning - Ma semaine type
+// 5. Plus - Menu avec autres ecrans
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -12,26 +20,34 @@ const triggerHaptic = () => {
 };
 
 export default function TabLayout() {
+  const { colors, isDark } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: 'shift',
+        tabBarActiveTintColor: colors.gold,
+        tabBarInactiveTintColor: colors.tabBarInactive,
         tabBarStyle: {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: colors.tabBar,
+          borderRadius: 28,
+          marginHorizontal: 16,
+          marginBottom: 16,
+          paddingBottom: 0,
+          paddingTop: 10,
+          height: 70,
+          position: 'absolute',
           borderTopWidth: 0,
-          elevation: 0,
-          ...theme.shadow.lg,
-          height: 88,
-          paddingBottom: 24,
-          paddingTop: 12,
+          shadowColor: isDark ? '#000' : 'rgba(0,0,0,0.1)',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: isDark ? 0.2 : 0.1,
+          shadowRadius: 12,
+          elevation: 10,
         },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textTertiary,
         tabBarLabelStyle: {
-          fontSize: theme.fontSize.xs,
-          fontWeight: theme.fontWeight.semibold,
-          letterSpacing: 0.3,
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 4,
         },
       }}
       screenListeners={{
@@ -40,69 +56,72 @@ export default function TabLayout() {
         },
       }}
     >
+      {/* 1. ACCUEIL */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Mesures',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <Home size={size} color={color} />
-            </AnimatedTabBarIcon>
+          title: 'Accueil',
+          tabBarIcon: ({ color }) => (
+            <Home size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
+
+      {/* 2. STATS */}
       <Tabs.Screen
-        name="entry"
+        name="stats"
         options={{
-          title: 'Saisie',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <PlusCircle size={size} color={color} />
-            </AnimatedTabBarIcon>
+          title: 'Stats',
+          tabBarIcon: ({ color }) => (
+            <BarChart2 size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
+
+      {/* 3. AJOUTER - Bouton central OR */}
       <Tabs.Screen
-        name="history"
+        name="add"
         options={{
-          title: 'Historique',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <TrendingUp size={size} color={color} />
-            </AnimatedTabBarIcon>
+          title: '',
+          tabBarIcon: () => (
+            <View style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: colors.gold,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 20,
+              shadowColor: colors.gold,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.4,
+              shadowRadius: 8,
+              elevation: 8,
+            }}>
+              <Plus size={28} color={colors.background} strokeWidth={2.5} />
+            </View>
           ),
         }}
       />
+
+      {/* 4. PLANNING */}
       <Tabs.Screen
-        name="photos"
+        name="planning"
         options={{
-          title: 'Photos',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <Camera size={size} color={color} />
-            </AnimatedTabBarIcon>
+          title: 'Planning',
+          tabBarIcon: ({ color }) => (
+            <Calendar size={24} color={color} strokeWidth={2} />
           ),
         }}
       />
+
+      {/* 5. PLUS */}
       <Tabs.Screen
-        name="sport"
+        name="more"
         options={{
-          title: 'Entraînements',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <Dumbbell size={size} color={color} />
-            </AnimatedTabBarIcon>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Réglages',
-          tabBarIcon: ({ size, color, focused }) => (
-            <AnimatedTabBarIcon focused={focused}>
-              <Settings size={size} color={color} />
-            </AnimatedTabBarIcon>
+          title: 'Plus',
+          tabBarIcon: ({ color }) => (
+            <Menu size={24} color={color} strokeWidth={2} />
           ),
         }}
       />

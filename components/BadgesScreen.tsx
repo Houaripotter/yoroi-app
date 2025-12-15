@@ -25,7 +25,7 @@ interface BadgesScreenProps {
 // Définition des conditions de déblocage des badges
 const calculateUnlockedBadges = async (): Promise<Set<BadgeId>> => {
   const initiallyUnlocked = await getUnlockedBadges(); // Récupérer les badges déjà débloqués
-  const unlocked = new Set<BadgeId>(initiallyUnlocked.map(b => b.badge_id));
+  const unlocked = new Set<BadgeId>(initiallyUnlocked.map(b => b.badge_id as BadgeId));
   const allMeasurements = await getAllMeasurements();
   const allWorkouts = await getAllWorkouts();
 

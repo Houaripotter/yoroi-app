@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Workout, WORKOUT_TYPES } from '@/types/workout';
 import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface WorkoutCalendarProps {
   currentMonth: Date;
@@ -26,6 +27,8 @@ export function WorkoutCalendar({
   onDayPress,
   selectedDate,
 }: WorkoutCalendarProps) {
+  const { colors } = useTheme();
+
   const getDaysInMonth = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -69,19 +72,19 @@ export function WorkoutCalendar({
   const days = getDaysInMonth();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card }]}>
       {/* Header avec navigation */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={onPreviousMonth} style={styles.navButton}>
-          <ChevronLeft size={24} color="#FFFFFF" strokeWidth={2.5} />
+        <TouchableOpacity onPress={onPreviousMonth} style={[styles.navButton, { backgroundColor: colors.cardHover }]}>
+          <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
 
-        <Text style={styles.monthYear}>
+        <Text style={[styles.monthYear, { color: colors.textPrimary }]}>
           {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
         </Text>
 
-        <TouchableOpacity onPress={onNextMonth} style={styles.navButton}>
-          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2.5} />
+        <TouchableOpacity onPress={onNextMonth} style={[styles.navButton, { backgroundColor: colors.cardHover }]}>
+          <ChevronRight size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
@@ -89,7 +92,7 @@ export function WorkoutCalendar({
       <View style={styles.weekDays}>
         {DAYS.map((day) => (
           <View key={day} style={styles.weekDayCell}>
-            <Text style={styles.weekDayText}>{day}</Text>
+            <Text style={[styles.weekDayText, { color: colors.textSecondary }]}>{day}</Text>
           </View>
         ))}
       </View>
@@ -98,7 +101,7 @@ export function WorkoutCalendar({
       <View style={styles.calendar}>
         {days.map((day, index) => {
           if (!day) {
-            return <View key={`empty-${index}`} style={styles.dayCell} />;
+            return <View key={`empty-${index}`} style={[styles.dayCell, { backgroundColor: colors.cardHover }]} />;
           }
 
           const dayWorkouts = getWorkoutsForDate(day);
@@ -111,9 +114,10 @@ export function WorkoutCalendar({
               key={dateString}
               style={[
                 styles.dayCell,
-                today && styles.todayCell,
-                selected && styles.selectedCell,
-                dayWorkouts.length > 0 && styles.workoutCell,
+                { backgroundColor: colors.cardHover },
+                today && [styles.todayCell, { borderColor: colors.success }],
+                selected && { backgroundColor: colors.goldMuted },
+                dayWorkouts.length > 0 && { backgroundColor: colors.card },
               ]}
               onPress={() => onDayPress(dateString)}
               activeOpacity={0.7}
@@ -121,8 +125,9 @@ export function WorkoutCalendar({
               <Text
                 style={[
                   styles.dayText,
-                  today && styles.todayText,
-                  selected && styles.selectedText,
+                  { color: colors.textPrimary },
+                  today && { color: colors.success, fontWeight: theme.fontWeight.bold },
+                  selected && { color: colors.gold, fontWeight: theme.fontWeight.bold },
                 ]}
               >
                 {day.getDate()}
@@ -152,7 +157,6 @@ export function WorkoutCalendar({
 const styles = StyleSheet.create({
   container: {
     gap: theme.spacing.lg,
-    backgroundColor: '#1A202C', // Fond sombre pour le conteneur
     borderRadius: theme.radius.xl,
     padding: theme.spacing.lg,
   },
@@ -165,12 +169,10 @@ const styles = StyleSheet.create({
   navButton: {
     padding: theme.spacing.sm,
     borderRadius: theme.radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   monthYear: {
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.black,
-    color: '#FFFFFF',
   },
   weekDays: {
     flexDirection: 'row',
@@ -183,7 +185,6 @@ const styles = StyleSheet.create({
   weekDayText: {
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.bold,
-    color: '#A0AEC0',
     textTransform: 'uppercase',
   },
   calendar: {
@@ -196,32 +197,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: theme.radius.md,
-    backgroundColor: '#2D3748', // Gris foncé
     position: 'relative',
     margin: 2,
   },
   todayCell: {
     borderWidth: 2,
-    borderColor: '#68D391', // Vert pour aujourd'hui
-  },
-  selectedCell: {
-    backgroundColor: '#4A5568', // Gris plus clair pour sélection
-  },
-  workoutCell: {
-    backgroundColor: '#1A202C', // Gris très foncé pour jours avec activité
   },
   dayText: {
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
-    color: '#E2E8F0', // Gris clair pour contraste
-  },
-  todayText: {
-    color: '#68D391', // Vert pour aujourd'hui
-    fontWeight: theme.fontWeight.bold,
-  },
-  selectedText: {
-    color: '#FFFFFF', // Blanc pour sélection
-    fontWeight: theme.fontWeight.bold,
   },
   workoutLogos: {
     position: 'absolute',

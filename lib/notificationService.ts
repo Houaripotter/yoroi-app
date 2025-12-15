@@ -124,6 +124,7 @@ export const scheduleNotifications = async (settings: ReminderSettings): Promise
     // Planifier une notification pour chaque jour sélectionné
     for (const day of settings.days) {
       const trigger: Notifications.NotificationTriggerInput = {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
         hour: hours,
         minute: minutes,
         weekday: day + 1, // expo-notifications utilise 1-7 (1 = Dimanche, 7 = Samedi)
@@ -181,6 +182,7 @@ export const testNotification = async (type: ReminderType = 'weight'): Promise<v
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds: 2, // Dans 2 secondes
       },
     });

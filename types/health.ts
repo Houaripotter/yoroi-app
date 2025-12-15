@@ -1,4 +1,4 @@
-export type MetricType = 'weight' | 'bodyFat' | 'muscleMass' | 'water';
+export type MetricType = 'weight' | 'bodyFat' | 'muscleMass' | 'water' | 'waist' | 'arms' | 'chest';
 
 export interface WeightEntry {
   id?: string;
@@ -32,7 +32,7 @@ export const METRIC_CONFIGS: Record<MetricType, MetricConfig> = {
   weight: {
     type: 'weight',
     label: 'Poids',
-    color: '#007AFF',
+    color: '#4ECDC4',
     unit: 'kg',
     icon: 'weight',
   },
@@ -56,5 +56,26 @@ export const METRIC_CONFIGS: Record<MetricType, MetricConfig> = {
     color: '#32ADE6',
     unit: '%',
     icon: 'droplets',
+  },
+  waist: {
+    type: 'waist',
+    label: 'Tour de Taille',
+    color: '#F39C12',
+    unit: 'cm',
+    icon: 'ruler',
+  },
+  arms: {
+    type: 'arms',
+    label: 'Bras',
+    color: '#3498DB',
+    unit: 'cm',
+    icon: 'arm',
+  },
+  chest: {
+    type: 'chest',
+    label: 'Poitrine',
+    color: '#E74C3C',
+    unit: 'cm',
+    icon: 'chest',
   },
 };

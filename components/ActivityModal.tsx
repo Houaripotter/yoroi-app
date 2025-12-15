@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, StyleSheet, Text, View, TouchableOpacity, Image, Pressable } from 'react-native';
+import { Modal, StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { X } from 'lucide-react-native';
 import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
@@ -77,11 +77,9 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               onPress={() => handleActivityToggle('basic_fit')}
               activeOpacity={0.8}
             >
-              <Image
-                source={require('../assets/images/basic-fit.png')}
-                style={styles.activityLogo}
-                resizeMode="contain"
-              />
+              <View style={styles.iconContainer}>
+                <Text style={styles.activityEmoji}>🏋️</Text>
+              </View>
               <Text style={[
                 styles.activityLabel,
                 selectedActivities.includes('basic_fit') && styles.activityLabelSelected
@@ -96,11 +94,9 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               onPress={() => handleActivityToggle('gracie_barra')}
               activeOpacity={0.8}
             >
-              <Image
-                source={require('../assets/images/gracie-barra.png')}
-                style={styles.activityLogo}
-                resizeMode="contain"
-              />
+              <View style={styles.iconContainer}>
+                <Text style={styles.activityEmoji}>🥋</Text>
+              </View>
               <Text style={[
                 styles.activityLabel,
                 selectedActivities.includes('gracie_barra') && styles.activityLabelSelected
@@ -221,6 +217,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  activityEmoji: {
+    fontSize: 28,
   },
   validateButton: {
     backgroundColor: '#2196F3',

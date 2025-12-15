@@ -1,281 +1,71 @@
-# 🏆 Système de Badges et Achievements - Yoroi
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { X, Lock, Award } from 'lucide-react-native';
+import { theme } from '@/constants/theme';
+import { getMeasurements, getWorkouts } from '@/lib/storage';
 
-Ce document explique comment fonctionne le système de badges et achievements dans l'application Yoroi.
+// Liste des Badges
+const BADGES = [
+  { id: 'first_weight', name: 'Première Pesée', icon: '⚖️', condition: 'measurements >= 1' },
+  { id: 'first_workout', name: 'Premier Entraînement', icon: '🥋', condition: 'workouts >= 1' },
+  { id: 'warrior', name: 'Guerrier (10 Séances)', icon: '⚔️', condition: 'workouts >= 10' },
+  { id: 'samurai', name: 'Samouraï (30 Séances)', icon: '👹', condition: 'workouts >= 30' },
+];
 
-## 📋 Table des matières
+export const BadgesScreen = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
+  const [unlocked, setUnlocked] = useState<string[]>([]);
 
-1. [Liste des badges](#liste-des-badges)
-2. [Configuration](#configuration)
-3. [Fonctionnement](#fonctionnement)
-4. [Architecture](#architecture)
-5. [Personnalisation](#personnalisation)
+  useEffect(() => {
+    if (visible) checkBadges();
+  }, [visible]);
 
----
+  const checkBadges = async () => {
+    const measurements = await getMeasurements();
+    const workouts = await getWorkouts();
+    const newUnlocked = [];
 
-## 🎖️ Liste des badges
+    if (measurements.length >= 1) newUnlocked.push('first_weight');
+    if (workouts.length >= 1) newUnlocked.push('first_workout');
+    if (workouts.length >= 10) newUnlocked.push('warrior');
+    if (workouts.length >= 30) newUnlocked.push('samurai');
 
-### **DÉBUTANT** 🌱
+    setUnlocked(newUnlocked);
+  };
 
-| Badge | Nom | Description | Condition |
-|-------|-----|-------------|-----------|
-| 🎯 | Première pesée | Enregistrer sa première mesure | Ajouter votre première mesure de poids |
-| 💪 | Premier entraînement | Enregistrer son premier entraînement | Enregistrer votre premier entraînement |
-| 👤 | Profil complet | Remplir toutes les infos du profil | Remplir votre profil (nom, taille, objectif) |
-
-### **RÉGULARITÉ** 🔥
-
-| Badge | Nom | Description | Condition |
-|-------|-----|-------------|-----------|
-| 🔥 | 7 jours consécutifs | Se peser 7 jours de suite | Se peser pendant 7 jours consécutifs |
-| ⭐ | 30 jours consécutifs | Se peser 30 jours de suite | Se peser pendant 30 jours consécutifs |
-| 🏅 | Sportif du mois | 20 entraînements dans le mois | Effectuer 20 entraînements dans un mois |
-
-### **PROGRESSION** 📈
-
-| Badge | Nom | Description | Condition |
-|-------|-----|-------------|-----------|
-| 📉 | Premier kilo perdu | Perdre 1 kg | Perdre au moins 1 kg par rapport à votre poids initial |
-| 🎉 | 5 kilos perdus | Perdre 5 kg | Perdre au moins 5 kg par rapport à votre poids initial |
-| 🏆 | Objectif atteint | Atteindre son poids cible | Atteindre votre poids objectif |
-
----
-
-## ⚙️ Configuration
-
-### Étape 1 : Créer la table dans Supabase
-
-1. Ouvrez votre projet Supabase
-2. Allez dans **SQL Editor**
-3. Exécutez le script `supabase_badges_setup.sql`
-
-Le script créera :
-- La table `user_badges`
-- Les index nécessaires
-- Les policies RLS (Row Level Security)
-- Une fonction utilitaire `unlock_badge()`
-
-### Étape 2 : Vérifier les policies
-
-Les policies suivantes sont automatiquement créées :
-- ✅ Les utilisateurs peuvent voir leurs propres badges
-- ✅ Les utilisateurs peuvent débloquer leurs badges
-- ❌ Les badges ne peuvent pas être supprimés (optionnel)
-
----
-
-## 🔧 Fonctionnement
-
-### Déblocage automatique
-
-Le système vérifie automatiquement les conditions de déblocage après chaque action :
-
-#### **Après une mesure de poids** (app/(tabs)/entry.tsx)
-```typescript
-checkWeightBadges();
-```
-
-Vérifie :
-- ✅ Badge "Première pesée"
-- ✅ Badge "7 jours consécutifs"
-- ✅ Badge "30 jours consécutifs"
-- ✅ Badge "Premier kilo perdu"
-- ✅ Badge "5 kilos perdus"
-- ✅ Badge "Objectif atteint"
-
-#### **Après un entraînement** (app/(tabs)/sport.tsx)
-```typescript
-checkWorkoutBadges();
-```
-
-Vérifie :
-- ✅ Badge "Premier entraînement"
-- ✅ Badge "Sportif du mois"
-
-### Notification
-
-Quand un badge est débloqué :
-1. 🎉 **Animation** : Le badge s'anime avec un effet de rotation
-2. 📳 **Feedback haptique** (iOS/Android uniquement)
-3. 🔔 **Alert** : "🏆 Félicitations ! Nouveau badge débloqué : [Nom du badge] 🎉"
-
-### Affichage
-
-Les badges sont accessibles depuis :
-- **Réglages** > Section "ACHIEVEMENTS" > **Mes badges**
-
-L'écran des badges affiche :
-- Une barre de progression (X / 9 badges débloqués)
-- Les badges organisés par catégorie
-- Badge débloqué : **Couleur dorée** avec animation
-- Badge verrouillé : **Grisé** avec opacité 0.5 et icône 🔒
-
----
-
-## 🏗️ Architecture
-
-### Fichiers créés
-
-```
-types/badges.ts                    # Types et configuration des badges
-components/BadgeItem.tsx            # Composant d'affichage d'un badge
-components/BadgesScreen.tsx         # Écran principal des badges
-lib/badgeService.ts                 # Logique de déblocage
-supabase_badges_setup.sql          # Script de création de la table
-BADGES_README.md                   # Documentation
-```
-
-### Structure de la table `user_badges`
-
-| Colonne | Type | Description |
-|---------|------|-------------|
-| id | UUID | Identifiant unique |
-| user_id | UUID | Référence vers l'utilisateur |
-| badge_id | TEXT | ID du badge (ex: 'first_weight') |
-| unlocked_at | TIMESTAMP | Date de déblocage |
-
-**Contrainte** : Un utilisateur ne peut débloquer qu'une fois chaque badge (UNIQUE constraint)
-
-### Flux de déblocage
-
-```
-1. Action utilisateur (mesure, entraînement)
-   ↓
-2. Appel à checkWeightBadges() ou checkWorkoutBadges()
-   ↓
-3. Vérification des conditions
-   ↓
-4. Appel à unlockBadge(badgeId)
-   ↓
-5. Insertion dans la table (si non déjà débloqué)
-   ↓
-6. Notification + Animation
-```
-
----
-
-## 🎨 Personnalisation
-
-### Ajouter un nouveau badge
-
-#### 1. Ajouter le type dans `types/badges.ts`
-
-```typescript
-export type BadgeId =
-  // ... badges existants
-  | 'nouveau_badge';
-
-export const BADGES: Record<BadgeId, Badge> = {
-  // ... badges existants
-  nouveau_badge: {
-    id: 'nouveau_badge',
-    name: 'Nom du badge',
-    description: 'Description courte',
-    icon: '🎊', // Emoji
-    category: 'progress',
-    color: '#10B981',
-    requirement: 'Condition détaillée',
-  },
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Mes Badges</Text>
+            <TouchableOpacity onPress={onClose}><X color="#000" size={24} /></TouchableOpacity>
+          </View>
+          <ScrollView>
+            <View style={styles.grid}>
+              {BADGES.map((badge) => {
+                const isUnlocked = unlocked.includes(badge.id);
+                return (
+                  <View key={badge.id} style={[styles.badge, !isUnlocked && styles.locked]}>
+                    <Text style={{fontSize: 32}}>{isUnlocked ? badge.icon : '🔒'}</Text>
+                    <Text style={styles.badgeName}>{badge.name}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 };
-```
 
-#### 2. Ajouter la logique de vérification dans `lib/badgeService.ts`
-
-```typescript
-// Dans checkWeightBadges() ou checkWorkoutBadges()
-if (/* condition */) {
-  const unlocked = await unlockBadge('nouveau_badge');
-  if (unlocked) unlockedBadges.push('nouveau_badge');
-}
-```
-
-#### 3. Ajouter le nom dans `showBadgeNotification()`
-
-```typescript
-switch (id) {
-  // ... cas existants
-  case 'nouveau_badge': return 'Nom du badge';
-}
-```
-
-### Personnaliser les couleurs
-
-Les couleurs des badges sont définies dans `types/badges.ts` :
-
-```typescript
-color: '#34D399', // Vert menthe
-color: '#3B82F6', // Bleu
-color: '#8B5CF6', // Violet
-color: '#F59E0B', // Orange
-color: '#FFD700', // Or
-```
-
-### Personnaliser les animations
-
-Les animations sont définies dans `components/BadgeItem.tsx` :
-
-```typescript
-// Animation de célébration lors du déblocage
-Animated.sequence([
-  Animated.parallel([
-    Animated.spring(scale, {
-      toValue: 1.2, // Échelle
-      useNativeDriver: true,
-    }),
-    Animated.timing(rotation, {
-      toValue: 1,
-      duration: 600, // Durée
-      useNativeDriver: true,
-    }),
-  ]),
-  // ...
-]).start();
-```
-
----
-
-## 🐛 Dépannage
-
-### Les badges ne se débloquent pas
-
-1. **Vérifiez la table** : `SELECT * FROM user_badges WHERE user_id = auth.uid();`
-2. **Vérifiez les policies** : Les policies RLS sont-elles actives ?
-3. **Vérifiez les logs** : Regardez la console pour les erreurs
-4. **Vérifiez l'authentification** : L'utilisateur est-il connecté ?
-
-### Les badges s'affichent mal
-
-1. **Rafraîchissez** : Pull-to-refresh sur l'écran des badges
-2. **Vérifiez les données** : Les emojis s'affichent-ils correctement ?
-3. **Vérifiez le theme** : Les couleurs sont-elles définies ?
-
-### Notification ne s'affiche pas
-
-1. **Vérifiez Haptics** : Les permissions sont-elles accordées ?
-2. **Vérifiez Platform** : Le code est-il exécuté sur web ?
-
----
-
-## 📊 Statistiques
-
-Le système peut être étendu pour afficher des statistiques :
-- Taux de complétion (X / 9 badges)
-- Badges par catégorie
-- Dernier badge débloqué
-- Badges les plus rares
-
----
-
-## 🚀 Améliorations futures
-
-Idées pour étendre le système :
-- 🎁 Récompenses pour les badges (ex: débloque un thème)
-- 📱 Notifications push pour les badges
-- 👥 Classement entre amis
-- 🏆 Badges saisonniers (ex: badge Halloween)
-- 🎯 Défis personnalisés
-
----
-
-## ✅ C'est terminé !
-
-Votre système de badges est maintenant opérationnel ! Les utilisateurs peuvent débloquer des badges en utilisant l'application normalement. 🎉
+const styles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  container: { backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '70%', padding: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  title: { fontSize: 22, fontWeight: 'bold' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 15, justifyContent: 'center' },
+  badge: { width: '45%', aspectRatio: 1, backgroundColor: '#F5F5F5', borderRadius: 15, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  locked: { opacity: 0.5 },
+  badgeName: { marginTop: 10, textAlign: 'center', fontWeight: '600' }
+});

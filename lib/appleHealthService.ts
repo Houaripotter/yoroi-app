@@ -2,46 +2,87 @@ import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addMeasurement, getAllMeasurements } from './storage';
 
-let AppleHealthKit: any; // Déclarer comme any pour gérer l'import conditionnel
+let AppleHealthKit: any = null; // Déclarer comme any pour gérer l'import conditionnel
+
+// Import sécurisé du module HealthKit
 try {
-  AppleHealthKit = require('react-native-health').default; // Essayer d'importer le module
+  if (Platform.OS === 'ios') {
+    AppleHealthKit = require('react-native-health').default;
+  }
 } catch (e) {
-  console.warn("⚠️ Module react-native-health non disponible ou échec d\'importation:", e);
-  AppleHealthKit = null; // S'assurer qu'il est null en cas d'échec
+  console.log("ℹ️ Module react-native-health non disponible (Mode Offline/Simulateur):", e);
+  AppleHealthKit = null;
 }
 
 const APPLE_HEALTH_ENABLED_KEY = '@yoroi_apple_health_enabled';
 const LAST_SYNC_KEY = '@yoroi_last_health_sync';
 
-// Garde-fou global pour éviter les crashes si le module n'est pas chargé
-const hasHealthKit = (): boolean => {
-  if (typeof AppleHealthKit === 'undefined' || !AppleHealthKit) {
-    console.warn('⚠️ AppleHealthKit non disponible');
+/**
+ * Vérification robuste de la disponibilité de HealthKit
+ * Cette fonction ne crashe JAMAIS, même si le module natif n'est pas chargé
+ */
+const isHealthKitAvailable = (): boolean => {
+  try {
+    // Vérification 1: Plateforme iOS uniquement
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+    
+    // Vérification 2: Module chargé
+    if (!AppleHealthKit || typeof AppleHealthKit === 'undefined') {
+      console.log("ℹ️ HealthKit non disponible (module non chargé)");
+      return false;
+    }
+    
+    // Vérification 3: Méthode initHealthKit existe
+    if (typeof AppleHealthKit.initHealthKit !== 'function') {
+      console.log("ℹ️ HealthKit non disponible (initHealthKit manquant)");
+      return false;
+    }
+    
+    // Vérification 4: Méthode isAvailable existe
+    if (typeof AppleHealthKit.isAvailable !== 'function') {
+      console.log("ℹ️ HealthKit non disponible (isAvailable manquant)");
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    console.log("ℹ️ HealthKit non disponible (erreur de vérification):", e);
     return false;
   }
-  return true;
 };
 
-// Fonction de sécurité pour vérifier la disponibilité de HealthKit
-const isHealthKitAvailable = () => {
-  return Platform.OS === 'ios' && hasHealthKit() && !!AppleHealthKit.isAvailable;
-};
+// Alias pour la compatibilité
+const hasHealthKit = isHealthKitAvailable;
 
-// Permissions nécessaires
-const permissions: any = {
-  permissions: {
-    read: [
-      AppleHealthKit?.Constants?.Permissions?.Weight,
-      AppleHealthKit?.Constants?.Permissions?.BodyMassIndex,
-      AppleHealthKit?.Constants?.Permissions?.BodyFatPercentage,
-      AppleHealthKit?.Constants?.Permissions?.LeanBodyMass,
-    ].filter(Boolean), // Filtrer les valeurs null ou undefined
-    write: [
-      AppleHealthKit?.Constants?.Permissions?.Weight,
-      AppleHealthKit?.Constants?.Permissions?.BodyMassIndex,
-      AppleHealthKit?.Constants?.Permissions?.BodyFatPercentage,
-    ].filter(Boolean),
-  },
+// Permissions nécessaires - construites de manière sécurisée
+const getPermissions = () => {
+  try {
+    if (!isHealthKitAvailable() || !AppleHealthKit?.Constants?.Permissions) {
+      return { permissions: { read: [], write: [] } };
+    }
+    
+    const Perms = AppleHealthKit.Constants.Permissions;
+    return {
+      permissions: {
+        read: [
+          Perms.Weight,
+          Perms.BodyMassIndex,
+          Perms.BodyFatPercentage,
+          Perms.LeanBodyMass,
+        ].filter(Boolean),
+        write: [
+          Perms.Weight,
+          Perms.BodyMassIndex,
+          Perms.BodyFatPercentage,
+        ].filter(Boolean),
+      },
+    };
+  } catch (e) {
+    console.log("ℹ️ Impossible de construire les permissions HealthKit:", e);
+    return { permissions: { read: [], write: [] } };
+  }
 };
 
 // Vérifier si Apple Health est disponible (version plus simple pour l'UI)
@@ -65,6 +106,7 @@ export const initializeAppleHealth = (): Promise<boolean> => {
     }
 
     try {
+      const permissions = getPermissions();
       AppleHealthKit.initHealthKit(permissions, (error: any) => {
         if (error) {
           console.error('❌ Erreur lors de l\'initialisation Apple Health:', error);
@@ -98,6 +140,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
         }
 
         // Vérifier les permissions de lecture pour le poids
+        const permissions = getPermissions();
         AppleHealthKit.getAuthStatus(permissions, (authError: any, results: any) => {
           if (authError) {
             console.log('⚠️ Erreur auth HealthKit:', authError);
@@ -105,7 +148,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
           }
 
           const hasPermission = results?.permissions?.read?.includes(
-            AppleHealthKit.Constants.Permissions.Weight
+            AppleHealthKit?.Constants?.Permissions?.Weight
           );
           resolve(!!hasPermission);
         });

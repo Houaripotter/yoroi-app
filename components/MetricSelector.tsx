@@ -9,7 +9,7 @@ interface MetricSelectorProps {
 }
 
 export function MetricSelector({ selected, onSelect }: MetricSelectorProps) {
-  const metrics: MetricType[] = ['weight', 'bodyFat', 'muscleMass', 'water'];
+  const metrics: MetricType[] = ['weight', 'waist', 'arms', 'chest', 'bodyFat', 'muscleMass', 'water'];
 
   return (
     <ScrollView

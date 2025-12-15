@@ -1,228 +1,194 @@
+import React, { useState, useCallback, useMemo } from 'react';
 import {
-  ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
   Dimensions,
   RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+  Image,
 } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts';
+import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SoftCard } from '@/components/SoftCard';
-import { ProgressRing } from '@/components/ProgressRing';
-import { ProgressSteps } from '@/components/ProgressSteps';
-import { WeightTrendCard } from '@/components/WeightTrendCard';
-import { PredictionsList } from '@/components/PredictionsList';
-import { UserAvatar } from '@/components/UserAvatar';
-import { AnimatedCard } from '@/components/AnimatedCard';
-import { InteractiveLineChart } from '@/components/InteractiveLineChart';
-import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { MetricSelector } from '@/components/MetricSelector';
-import { BMICard } from '@/components/BMICard';
-import { MetricType, METRIC_CONFIGS, WeightEntry } from '@/types/health';
-import { useMemo, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
-import { useCallback } from 'react';
-import { theme } from '@/lib/theme';
-import { getAllMeasurements, getUserSettings } from '@/lib/storage';
+import {
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  Flame,
+  Camera,
+  ChevronRight,
+  Trophy,
+  Target,
+  Activity,
+  Droplet,
+} from 'lucide-react-native';
+import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { Card } from '@/components/ui/Card';
+import { QuoteCard } from '@/components/ui/QuoteCard';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Badge } from '@/components/ui/Badge';
+import { WeightChart } from '@/components/WeightChart';
+import { useTheme } from '@/lib/ThemeContext';
+import { getAllMeasurements, getUserSettings, getAllWorkouts, getPhotosFromStorage, Photo } from '@/lib/storage';
+import { getDailyQuote } from '@/lib/quotes';
+import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress } from '@/lib/ranks';
 
-const motivationalQuotes = [
-  "⛩️ Être et durer ⛩️",
-  "⛩️ Ce qui ne te tue pas te rend plus fort ⛩️",
-  "⛩️ La discipline est mère du succès ⛩️",
-  "⛩️ Tomber sept fois, se relever huit ⛩️",
-  "⛩️ Dieu n'impose à aucune âme une charge supérieure à sa capacité ⛩️",
-  "⛩️ Le seul combat perdu d'avance est celui auquel on renonce ⛩️",
-];
+// ============================================
+// ⚔️ DASHBOARD GUERRIER - ACCUEIL
+// ============================================
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function DashboardScreen() {
-  const [loading, setLoading] = useState(true);
+  const { colors, gradients, isDark } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<MetricType>('weight');
-  const [weightEntries, setWeightEntries] = useState<WeightEntry>([]);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
-  const [weightHistoryData, setWeightHistoryData] = useState<any[]>([]); // Nouvel état pour les données du graphique
-  const [goalWeight, setGoalWeight] = useState(75.0);
-  const [startWeight] = useState(95.0);
-  const [height] = useState(175);
-  const [currentQuote, setCurrentQuote] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('30');
+  const [startWeight, setStartWeight] = useState<number | null>(null);
+  const [goalWeight, setGoalWeight] = useState<number | null>(null);
+  const [username, setUsername] = useState('Guerrier');
+  const [allMeasurements, setAllMeasurements] = useState<{ date: string; weight: number }[]>([]);
+  const [weightChange, setWeightChange] = useState<{ value: number; direction: 'up' | 'down' | 'stable' } | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [trainingsThisWeek, setTrainingsThisWeek] = useState<any[]>([]);
+  const [bodyComposition, setBodyComposition] = useState<{ bodyFat?: number; muscle?: number; water?: number } | null>(null);
+  const [transformationPhotos, setTransformationPhotos] = useState<{ before?: Photo; after?: Photo } | null>(null);
 
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-    setCurrentQuote(motivationalQuotes[randomIndex]);
-  }, []);
+  const quote = useMemo(() => getDailyQuote(), []);
+  const rank = useMemo(() => getCurrentRank(streak), [streak]);
+  const nextRank = useMemo(() => getNextRank(streak), [streak]);
+  const daysToNextRank = useMemo(() => getDaysToNextRank(streak), [streak]);
+  const rankProgress = useMemo(() => getRankProgress(streak), [streak]);
 
-  const fetchDashboardData = useCallback(async () => {
-    setLoading(true);
-
+  const loadData = useCallback(async () => {
     try {
-      // Récupération de toutes les mesures localement
+      const settings = await getUserSettings();
+      if (settings.username) setUsername(settings.username);
+      if (settings.weight_goal) setGoalWeight(settings.weight_goal);
+
       const measurements = await getAllMeasurements();
 
-      // Récupération du poids le plus récent
       if (measurements.length > 0) {
-        setCurrentWeight(measurements[0].weight);
-      } else {
-        setCurrentWeight(null);
+        const sorted = [...measurements].sort((a, b) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        setCurrentWeight(sorted[0].weight);
+
+        // Le poids de départ est le premier enregistrement
+        if (sorted.length > 1) {
+          setStartWeight(sorted[sorted.length - 1].weight);
+        }
+
+        // Stocker toutes les mesures pour le graphique
+        setAllMeasurements(sorted.map(m => ({ date: m.date, weight: m.weight })));
+
+        // Composition corporelle (dernière mesure avec données)
+        const withComposition = sorted.find(m => m.body_fat || m.muscle_mass || m.water);
+        if (withComposition) {
+          setBodyComposition({
+            bodyFat: withComposition.body_fat,
+            muscle: withComposition.muscle_mass,
+            water: withComposition.water,
+          });
+        }
+
+        // Calculer le streak
+        let currentStreak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let i = 0; i < sorted.length; i++) {
+          const measureDate = new Date(sorted[i].date);
+          measureDate.setHours(0, 0, 0, 0);
+          const expectedDate = new Date(today);
+          expectedDate.setDate(today.getDate() - i);
+
+          if (measureDate.getTime() === expectedDate.getTime()) {
+            currentStreak++;
+          } else {
+            break;
+          }
+        }
+        setStreak(currentStreak);
+
+        // Changement sur 7 jours
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgoMeasurement = sorted.find(m => new Date(m.date) <= weekAgo);
+
+        if (weekAgoMeasurement) {
+          const change = sorted[0].weight - weekAgoMeasurement.weight;
+          setWeightChange({
+            value: Math.abs(change),
+            direction: change > 0.1 ? 'up' : change < -0.1 ? 'down' : 'stable'
+          });
+        }
       }
 
-      // Récupération de l'objectif de poids depuis les paramètres
-      const settings = await getUserSettings();
-      setGoalWeight(settings.weight_goal || 75.0);
+      // Charger les entraînements de la semaine
+      try {
+        const workouts = await getAllWorkouts();
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0);
 
-      // Limiter aux 90 dernières mesures pour le calcul des tendances
-      const historyData = measurements.slice(0, 90);
-
-      if (historyData.length > 0) {
-        // Transformer les données pour weightEntries (ordre descendant pour calcul de tendance)
-        const entriesData = historyData.map((item) => ({
-          date: item.date,
-          weight: item.weight,
-          bodyFat: item.body_fat,
-          muscleMass: item.muscle_mass,
-          water: item.water,
-        }));
-        setWeightEntries(entriesData);
-
-        // Transformer les données pour LineChart (ordre ascendant pour affichage)
-        const formattedData = [...historyData].reverse().map((item) => ({
-          value: item.weight,
-          label: new Date(item.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-        }));
-        setWeightHistoryData(formattedData);
-      } else {
-        setWeightHistoryData([]);
-        setWeightEntries([]);
+        const thisWeek = workouts.filter(w => new Date(w.date) >= weekStart);
+        setTrainingsThisWeek(thisWeek);
+      } catch (e) {
+        // Pas d'entraînements
       }
 
-      console.log('✅ Données chargées depuis le stockage local');
+      // Charger les photos transformation (première et dernière)
+      try {
+        const photos = await getPhotosFromStorage();
+        if (photos.length >= 2) {
+          const sortedPhotos = [...photos].sort((a, b) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          );
+          setTransformationPhotos({
+            before: sortedPhotos[0],
+            after: sortedPhotos[sortedPhotos.length - 1],
+          });
+        }
+      } catch (e) {
+        // Pas de photos
+      }
     } catch (error) {
-      console.error('❌ Erreur chargement données:', error);
-      setCurrentWeight(null);
-      setWeightHistoryData([]);
-      setWeightEntries([]);
+      console.error('Erreur chargement:', error);
     }
-
-    setLoading(false);
   }, []);
-
-  // Supprimer loadData car les données sont maintenant gérées par fetchDashboardData
-  // const loadData = () => {
-  //   setWeightEntries([
-  //     { date: '2024-11-27', weight: 89.5, bodyFat: 22.3, muscleMass: 68.5, water: 55.2 },
-  //     { date: '2024-11-26', weight: 89.7, bodyFat: 22.5, muscleMass: 68.3, water: 55.0 },
-  //     { date: '2024-11-25', weight: 89.8, bodyFat: 22.6, muscleMass: 68.2, water: 54.9 },
-  //     { date: '2024-11-24', weight: 90.0, bodyFat: 22.8, muscleMass: 68.0, water: 54.8 },
-  //     { date: '2024-11-23', weight: 90.3, bodyFat: 23.0, muscleMass: 67.8, water: 54.6 },
-  //     { date: '2024-11-22', weight: 90.2, bodyFat: 22.9, muscleMass: 67.9, water: 54.7 },
-  //     { date: '2024-11-21', weight: 90.5, bodyFat: 23.2, muscleMass: 67.6, water: 54.5 },
-  //     { date: '2024-11-20', weight: 90.8, bodyFat: 23.4, muscleMass: 67.4, water: 54.3 },
-  //     { date: '2024-11-19', weight: 91.0, bodyFat: 23.6, muscleMass: 67.2, water: 54.2 },
-  //     { date: '2024-11-18', weight: 91.2, bodyFat: 23.8, muscleMass: 67.0, water: 54.0 },
-  //     { date: '2024-11-17', weight: 91.5, bodyFat: 24.0, muscleMass: 66.8, water: 53.8 },
-  //     { date: '2024-11-16', weight: 91.8, bodyFat: 24.2, muscleMass: 66.6, water: 53.6 },
-  //     { date: '2024-11-15', weight: 92.0, bodyFat: 24.4, muscleMass: 66.4, water: 53.5 },
-  //     { date: '2024-11-14', weight: 92.3, bodyFat: 24.6, muscleMass: 66.2, water: 53.3 },
-  //   ]);
-  // };
 
   useFocusEffect(
     useCallback(() => {
-      fetchDashboardData();
-    }, [fetchDashboardData])
+      loadData();
+    }, [loadData])
   );
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    fetchDashboardData();
+    await loadData();
     setRefreshing(false);
-  }, [fetchDashboardData]);
+  }, [loadData]);
 
-  const chartData = useMemo(() => {
-    const recentEntries = weightEntries.slice(0, 14).reverse();
-    return recentEntries.map((entry) => ({
-      value: entry[selectedMetric] || entry.weight,
-      date: entry.date,
-    }));
-  }, [weightEntries, selectedMetric]);
+  const totalLost = useMemo(() => {
+    if (!startWeight || !currentWeight) return 0;
+    return startWeight - currentWeight;
+  }, [startWeight, currentWeight]);
 
-  const currentMetricConfig = METRIC_CONFIGS[selectedMetric];
+  const remainingToGoal = useMemo(() => {
+    if (!goalWeight || !currentWeight) return 0;
+    return currentWeight - goalWeight;
+  }, [goalWeight, currentWeight]);
 
-  const progressSteps = useMemo(() => {
-    const totalSteps = 8;
-    const stepSize = (startWeight - goalWeight) / (totalSteps - 1);
-    return Array.from({ length: totalSteps }, (_, i) => ({
-      weight: startWeight - stepSize * i,
-      completed: currentWeight <= startWeight - stepSize * i,
-    }));
-  }, [currentWeight, startWeight, goalWeight]);
-
-  const weightTrends = useMemo(() => {
-    const calculateMovingAverage = (entries: WeightEntry[], start: number, end: number) => {
-      if (entries.length === 0) return 0;
-      const relevantEntries = entries.slice(start, end);
-      const sum = relevantEntries.reduce((acc, entry) => acc + entry.weight, 0);
-      return sum / relevantEntries.length;
-    };
-
-    // Tendance 7 jours (moyenne mobile)
-    let sevenDayChange = 0;
-    if (weightEntries.length >= 14) {
-      const last7DaysAvg = calculateMovingAverage(weightEntries, 0, 7); // Jours 1-7
-      const prev7DaysAvg = calculateMovingAverage(weightEntries, 7, 14); // Jours 8-14
-      sevenDayChange = last7DaysAvg - prev7DaysAvg;
-    }
-
-    // Tendance 30 jours (moyenne mobile)
-    let thirtyDayChange = 0;
-    if (weightEntries.length >= 60) {
-      const last30DaysAvg = calculateMovingAverage(weightEntries, 0, 30);
-      const prev30DaysAvg = calculateMovingAverage(weightEntries, 30, 60);
-      thirtyDayChange = last30DaysAvg - prev30DaysAvg;
-    }
-
-    // Tendance 90 jours (moyenne mobile)
-    let ninetyDayChange = 0;
-    if (weightEntries.length >= 90) {
-      const last45DaysAvg = calculateMovingAverage(weightEntries, 0, 45);
-      const prev45DaysAvg = calculateMovingAverage(weightEntries, 45, 90);
-      ninetyDayChange = last45DaysAvg - prev45DaysAvg;
-    }
-
-    const totalChange = currentWeight !== null ? currentWeight - startWeight : 0;
-
-    return [
-      { period: '7j', change: sevenDayChange, isPositive: sevenDayChange < 0 },
-      { period: '30j', change: thirtyDayChange, isPositive: thirtyDayChange < 0 },
-      { period: '90j', change: ninetyDayChange, isPositive: ninetyDayChange < 0 },
-      { period: 'Total', change: totalChange, isPositive: totalChange < 0 },
-    ];
-  }, [weightEntries, currentWeight, startWeight]);
-
-  const predictions = useMemo(() => [
-    { label: 'Dans 7 jours', weight: 88.8, date: '8 Déc 2024' },
-    { label: 'Dans 1 mois', weight: 86.5, date: '1 Jan 2025' },
-    { label: 'Dans 3 mois', weight: 82.0, date: '1 Mars 2025' },
-    { label: `Objectif (${goalWeight}kg)`, weight: goalWeight, date: '15 Juin 2025', isGoal: true },
-  ], []);
-
-  const filteredWeightData = useMemo(() => {
-    if (weightHistoryData.length === 0) return [];
-
-    const daysMap = {
-      '7': 7,
-      '30': 30,
-      '90': 90,
-      'all': weightHistoryData.length
-    };
-
-    const daysToShow = daysMap[selectedPeriod];
-    return weightHistoryData.slice(-daysToShow);
-  }, [weightHistoryData, selectedPeriod]);
+  const progressPercent = useMemo(() => {
+    if (!startWeight || !goalWeight || !currentWeight) return 0;
+    const totalToLose = startWeight - goalWeight;
+    if (totalToLose <= 0) return 100;
+    const lost = startWeight - currentWeight;
+    return Math.min(100, Math.max(0, (lost / totalToLose) * 100));
+  }, [startWeight, goalWeight, currentWeight]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -231,14 +197,10 @@ export default function DashboardScreen() {
     return 'Bonsoir';
   };
 
-  if (loading) {
-    return <SkeletonLoader />;
-  }
-
-  const screenWidth = Dimensions.get('window').width;
-
   return (
-    <View style={styles.container}>
+    <ScreenWrapper noPadding>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -247,427 +209,694 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#00C4B4"
-            colors={['#00C4B4']}
-            progressBackgroundColor="#FFFFFF"
+            tintColor={colors.gold}
+            colors={[colors.gold]}
           />
         }
       >
-        {/* Citation motivante en haut du ScrollView */}
-        <View style={styles.quoteContainer}>
-          <Text style={styles.quoteText}>{currentQuote}</Text>
-        </View>
-        {/* Header existant */}
+        {/* HEADER */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()} Houari,</Text>
-              <Text style={styles.title}>Votre Progression</Text>
-            </View>
-            <UserAvatar size={48} />
+          <View style={styles.headerLeft}>
+            <Image
+              source={require('@/assets/images/yoroi-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>{getGreeting()},</Text>
+            <Text style={[styles.username, { color: colors.textPrimary }]}>{username}</Text>
+          </View>
+          <View style={styles.headerBadges}>
+            <Badge
+              label={rank.name}
+              icon={rank.icon}
+              color={rank.color}
+              size="sm"
+            />
+            {streak > 0 && (
+              <View style={[styles.streakBadge, { backgroundColor: colors.goldMuted }]}>
+                <Flame size={14} color={colors.gold} />
+                <Text style={[styles.streakText, { color: colors.gold }]}>{streak}j</Text>
+              </View>
+            )}
           </View>
         </View>
 
-        <AnimatedCard delay={100}>
-          <SoftCard style={styles.progressCard}>
-            <Text style={styles.sectionTitle}>PROGRESSION</Text>
-            <ProgressRing current={currentWeight ?? 0} goal={goalWeight} size={240} />
-            <ProgressSteps steps={progressSteps} current={currentWeight ?? 0} />
-          </SoftCard>
-        </AnimatedCard>
+        {/* CITATION DU JOUR */}
+        <QuoteCard quote={quote} style={styles.quoteCard} />
 
-        <AnimatedCard delay={200}>
-          <SoftCard style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.sectionTitle}>ÉVOLUTION PONDÉRALE</Text>
-
-              {/* Boutons de sélection de période */}
-              <View style={styles.periodButtons}>
-                {[
-                  { key: '7', label: '7J' },
-                  { key: '30', label: '30J' },
-                  { key: '90', label: '90J' },
-                  { key: 'all', label: 'Tout' }
-                ].map((period) => (
-                  <TouchableOpacity
-                    key={period.key}
-                    style={[
-                      styles.periodButton,
-                      selectedPeriod === period.key && styles.periodButtonActive
-                    ]}
-                    onPress={() => setSelectedPeriod(period.key as '7' | '30' | '90' | 'all')}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.periodButtonText,
-                        selectedPeriod === period.key && styles.periodButtonTextActive
-                      ]}
-                    >
-                      {period.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+        {/* CARTE POIDS PRINCIPALE - CLIQUABLE */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push('/history')}
+        >
+          <Card variant="gold" style={styles.weightCard}>
+            <View style={styles.weightHeader}>
+              <View style={[styles.weightIconContainer, { backgroundColor: colors.goldMuted }]}>
+                <Scale size={24} color={colors.gold} strokeWidth={2} />
               </View>
+              <Text style={[styles.weightLabel, { color: colors.textPrimary }]}>Poids actuel</Text>
+              <ChevronRight size={20} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
             </View>
 
-            {filteredWeightData.length >= 2 ? (
-              <LineChart
-                data={filteredWeightData}
-                width={screenWidth - 80}
-                height={220}
-                color="#34D399"
-                hideDataPoints={false}
-                dataPointsColor="#34D399"
-                dataPointsRadius={6}
-                showVerticalLines
-                spacing={Math.max(30, (screenWidth - 120) / (filteredWeightData.length))}
-                initialSpacing={20}
-                isAnimated
-                animationDuration={800}
-                onDataPointClick={(dataPoint) => {
-                  alert(`📊 ${dataPoint.label}\nPoids: ${dataPoint.value} kg`);
-                }}
-                rulesColor={theme.colors.borderLight}
-                rulesType="solid"
-                xAxisColor={theme.colors.border}
-                yAxisColor={theme.colors.border}
-                yAxisLabelSuffix=" kg"
-                verticalLinesColor={theme.colors.borderLight}
-                thickness={3}
-                hideRules={false}
-                hideYAxisText={false}
-                showFractionalValues
-                backgroundColor={theme.colors.surface}
-                textShiftY={-8}
-                textShiftX={-5}
-                textColor={theme.colors.textPrimary}
-                areaChart
-                startFillColor="rgba(52, 211, 153, 0.3)"
-                endFillColor="rgba(52, 211, 153, 0.05)"
-                startOpacity={0.9}
-                endOpacity={0.2}
-                curved
-              />
+            {currentWeight ? (
+              <>
+                <View style={styles.weightDisplay}>
+                  <Text style={[styles.weightValue, { color: colors.textPrimary }]}>{currentWeight.toFixed(1)}</Text>
+                  <Text style={[styles.weightUnit, { color: colors.textSecondary }]}>kg</Text>
+
+                  {weightChange && weightChange.direction !== 'stable' && (
+                    <View style={[
+                      styles.trendBadge,
+                      { backgroundColor: weightChange.direction === 'down'
+                        ? colors.successMuted
+                        : colors.dangerMuted
+                      }
+                    ]}>
+                      {weightChange.direction === 'down' ? (
+                        <TrendingDown size={14} color={colors.success} />
+                      ) : (
+                        <TrendingUp size={14} color={colors.danger} />
+                      )}
+                      <Text style={[
+                        styles.trendText,
+                        { color: weightChange.direction === 'down'
+                          ? colors.success
+                          : colors.danger
+                        }
+                      ]}>
+                        {weightChange.direction === 'down' ? '-' : '+'}
+                        {weightChange.value.toFixed(1)} kg
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* BARRE DE PROGRESSION */}
+                {goalWeight && startWeight && (
+                  <View style={styles.progressSection}>
+                    <ProgressBar
+                      progress={progressPercent}
+                      height={10}
+                      showLabel
+                      labelPosition="right"
+                    />
+
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Départ</Text>
+                        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{startWeight} kg</Text>
+                      </View>
+                      <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                      <View style={styles.statItem}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Conquis</Text>
+                        <Text style={[styles.statValue, { color: colors.success }]}>
+                          {totalLost > 0 ? `-${totalLost.toFixed(1)}` : '0'} kg
+                        </Text>
+                      </View>
+                      <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                      <View style={styles.statItem}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Objectif</Text>
+                        <Text style={[styles.statValue, { color: colors.gold }]}>
+                          {goalWeight} kg
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </>
             ) : (
-              <View style={styles.chartEmptyState}>
-                <Text style={styles.chartEmptyStateIcon}>📈</Text>
-                <Text style={styles.chartEmptyStateTitle}>
-                  Pas encore de courbe
-                </Text>
-                <Text style={styles.chartEmptyStateText}>
-                  Ajoutez au moins 2 mesures pour voir votre évolution
-                </Text>
-              </View>
-            )}
-          </SoftCard>
-        </AnimatedCard>
-
-        {weightEntries.length >= 14 && (
-          <AnimatedCard delay={300}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>TENDANCES PONDÉRALES</Text>
-              <View style={styles.trendsGrid}>
-                {weightTrends.map((trend, index) => (
-                  <WeightTrendCard
-                    key={index}
-                    period={trend.period}
-                    change={trend.change}
-                    isPositive={trend.isPositive}
-                  />
-                ))}
-              </View>
-            </View>
-          </AnimatedCard>
-        )}
-
-        {weightEntries.length >= 7 && (
-          <AnimatedCard delay={400}>
-            <SoftCard>
-              <PredictionsList predictions={predictions} />
-            </SoftCard>
-          </AnimatedCard>
-        )}
-
-        {chartData.length > 0 && (
-          <AnimatedCard delay={550}>
-            <SoftCard>
-              <Text style={styles.sectionTitle}>ÉVOLUTION (14 JOURS)</Text>
-              <MetricSelector selected={selectedMetric} onSelect={setSelectedMetric} />
-              <InteractiveLineChart
-                data={chartData}
-                width={screenWidth - 80}
-                color={currentMetricConfig.color}
-                unit={currentMetricConfig.unit}
-              />
-            </SoftCard>
-          </AnimatedCard>
-        )}
-
-        <AnimatedCard delay={625}>
-          <SoftCard>
-            {currentWeight && currentWeight > 0 ? (
-              <BMICard weight={currentWeight} height={height} />
-            ) : (
-              <View style={styles.emptyStateCard}>
-                <Text style={styles.emptyStateEmoji}>📊</Text>
-                <Text style={styles.emptyStateTitle}>Ajoutez votre première mesure</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Commencez votre suivi pour voir votre IMC et vos statistiques
-                </Text>
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Commence ton combat</Text>
                 <TouchableOpacity
-                  style={styles.emptyStateButton}
-                  onPress={() => router.push('/(tabs)/entry')}
-                  activeOpacity={0.8}
+                  style={[styles.emptyButton, { backgroundColor: colors.gold }]}
+                  onPress={() => router.push('/(tabs)/add')}
                 >
-                  <Text style={styles.emptyStateButtonText}>Ajouter une mesure</Text>
+                  <Text style={[styles.emptyButtonText, { color: colors.background }]}>+ Première pesée</Text>
                 </TouchableOpacity>
               </View>
             )}
-          </SoftCard>
-        </AnimatedCard>
+          </Card>
+        </TouchableOpacity>
 
-        <AnimatedCard delay={700}>
-          <View style={styles.motivationCard}>
-          <Text style={styles.motivationEmoji}>🎯</Text>
-          {currentWeight && currentWeight > 0 && currentWeight < startWeight ? (
-            <>
-              <Text style={styles.motivationText}>
-                Excellent progrès ! Vous avez perdu {(startWeight - currentWeight).toFixed(1)} kg.
+        {/* ACTIONS RAPIDES */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/(tabs)/add')}
+          >
+            <LinearGradient
+              colors={gradients.gold}
+              style={styles.actionButtonGradient}
+            >
+              <Scale size={22} color={colors.background} />
+              <Text style={[styles.actionButtonText, { color: colors.background }]}>Nouvelle pesée</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButtonSecondary, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push('/photos')}
+          >
+            <Camera size={22} color={colors.textPrimary} />
+            <Text style={[styles.actionButtonSecondaryText, { color: colors.textPrimary }]}>Avant/Après</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* GRAPHIQUE ÉVOLUTION - CLIQUABLE */}
+        {allMeasurements.length > 0 && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/stats')}
+            style={styles.chartCard}
+          >
+            <WeightChart
+              data={allMeasurements}
+              onPointPress={(point) => {
+                console.log('Point cliqué:', point);
+              }}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* COMPOSITION CORPORELLE */}
+        {bodyComposition && (bodyComposition.bodyFat || bodyComposition.muscle || bodyComposition.water) && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/add-measurement')}
+          >
+            <Card style={styles.compositionCard}>
+              <View style={styles.compositionHeader}>
+                <Activity size={20} color={colors.info} />
+                <Text style={[styles.compositionTitle, { color: colors.textPrimary }]}>Composition corporelle</Text>
+                <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+              </View>
+              <View style={styles.compositionGrid}>
+                {bodyComposition.bodyFat && (
+                  <View style={styles.compositionItem}>
+                    <View style={[styles.compositionBar, { backgroundColor: colors.warning }]}>
+                      <Text style={[styles.compositionValue, { color: colors.background }]}>
+                        {bodyComposition.bodyFat.toFixed(1)}%
+                      </Text>
+                    </View>
+                    <Text style={[styles.compositionLabel, { color: colors.textSecondary }]}>Graisse</Text>
+                  </View>
+                )}
+                {bodyComposition.muscle && (
+                  <View style={styles.compositionItem}>
+                    <View style={[styles.compositionBar, { backgroundColor: colors.success }]}>
+                      <Text style={[styles.compositionValue, { color: colors.background }]}>
+                        {bodyComposition.muscle.toFixed(1)}%
+                      </Text>
+                    </View>
+                    <Text style={[styles.compositionLabel, { color: colors.textSecondary }]}>Muscle</Text>
+                  </View>
+                )}
+                {bodyComposition.water && (
+                  <View style={styles.compositionItem}>
+                    <View style={[styles.compositionBar, { backgroundColor: colors.info }]}>
+                      <Text style={[styles.compositionValue, { color: colors.background }]}>
+                        {bodyComposition.water.toFixed(1)}%
+                      </Text>
+                    </View>
+                    <Text style={[styles.compositionLabel, { color: colors.textSecondary }]}>Eau</Text>
+                  </View>
+                )}
+              </View>
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* TRANSFORMATION AVANT/APRÈS */}
+        {transformationPhotos && transformationPhotos.before && transformationPhotos.after && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/photos')}
+          >
+            <Card style={styles.transformationCard}>
+              <View style={styles.transformationHeader}>
+                <Trophy size={20} color={colors.gold} />
+                <Text style={[styles.transformationTitle, { color: colors.textPrimary }]}>Ma transformation</Text>
+                <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 'auto' }} />
+              </View>
+              <View style={styles.transformationPhotos}>
+                <View style={styles.transformationPhotoContainer}>
+                  <Image
+                    source={{ uri: transformationPhotos.before.file_uri }}
+                    style={styles.transformationPhoto}
+                    resizeMode="cover"
+                  />
+                  <View style={[styles.transformationBadge, { backgroundColor: colors.dangerMuted }]}>
+                    <Text style={[styles.transformationBadgeText, { color: colors.danger }]}>AVANT</Text>
+                  </View>
+                </View>
+                <View style={styles.transformationArrow}>
+                  <ChevronRight size={24} color={colors.gold} />
+                </View>
+                <View style={styles.transformationPhotoContainer}>
+                  <Image
+                    source={{ uri: transformationPhotos.after.file_uri }}
+                    style={styles.transformationPhoto}
+                    resizeMode="cover"
+                  />
+                  <View style={[styles.transformationBadge, { backgroundColor: colors.successMuted }]}>
+                    <Text style={[styles.transformationBadgeText, { color: colors.success }]}>APRÈS</Text>
+                  </View>
+                </View>
+              </View>
+              {totalLost > 0 && (
+                <View style={[styles.transformationStats, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.transformationStatsText, { color: colors.success }]}>
+                    -{totalLost.toFixed(1)} kg conquis
+                  </Text>
+                </View>
+              )}
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* PROGRESSION DE RANG - CLIQUABLE */}
+        {nextRank && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/profile')}
+          >
+            <Card style={styles.rankCard}>
+              <View style={styles.rankHeader}>
+                <Text style={styles.rankIcon}>{rank.icon}</Text>
+                <View style={styles.rankInfo}>
+                  <Text style={[styles.rankName, { color: colors.textPrimary }]}>{rank.name}</Text>
+                  <Text style={[styles.rankNameJp, { color: colors.textSecondary }]}>{rank.nameJp}</Text>
+                </View>
+                <View style={styles.rankArrow}>
+                  <ChevronRight size={20} color={colors.textMuted} />
+                </View>
+                <Text style={styles.nextRankIcon}>{nextRank.icon}</Text>
+                <View style={styles.rankInfo}>
+                  <Text style={[styles.nextRankName, { color: colors.textSecondary }]}>{nextRank.name}</Text>
+                  <Text style={[styles.rankNameJp, { color: colors.textSecondary }]}>{nextRank.nameJp}</Text>
+                </View>
+              </View>
+              <ProgressBar
+                progress={rankProgress}
+                height={8}
+                color="gold"
+                style={{ marginTop: 12 }}
+              />
+              <Text style={[styles.rankProgress, { color: colors.textSecondary }]}>
+                Encore {daysToNextRank} jours pour devenir {nextRank.name}
               </Text>
-              <Text style={styles.motivationSubtext}>
-                Plus que {(currentWeight - goalWeight).toFixed(1)} kg pour atteindre votre objectif !
-              </Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.motivationText}>
-                Commencez votre suivi aujourd'hui !
-              </Text>
-              <Text style={styles.motivationSubtext}>
-                Chaque grand voyage commence par un premier pas
-              </Text>
-            </>
-          )}
+            </Card>
+          </TouchableOpacity>
+        )}
+
+        {/* LIEN PHOTOS */}
+        <TouchableOpacity
+          style={[styles.photosLink, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => router.push('/photos')}
+        >
+          <View style={styles.photosLinkContent}>
+            <Camera size={20} color={colors.gold} />
+            <View>
+              <Text style={[styles.photosLinkText, { color: colors.textPrimary }]}>Ma Transformation</Text>
+              <Text style={[styles.photosLinkSubtext, { color: colors.textSecondary }]}>Visualise ta progression</Text>
+            </View>
           </View>
-        </AnimatedCard>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
-    </View>
+    </ScreenWrapper>
   );
 }
 
+// Constantes pour les valeurs non-thématiques
+const RADIUS = { md: 12, lg: 16 };
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: theme.spacing.lg,
-  },
-  loadingText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
-  },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: theme.spacing.xl,
-    paddingTop: 60,
-    gap: theme.spacing.xxl,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
+
+  // HEADER
   header: {
-    marginBottom: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
   },
-  headerTop: {
+  headerLeft: {
+    flex: 1,
+  },
+  logo: {
+    width: 100,
+    height: 36,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  greeting: {
+    fontSize: 13,
+  },
+  username: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  headerBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  streakText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // QUOTE
+  quoteCard: {
+    marginBottom: 16,
+  },
+
+  // POIDS
+  weightCard: {
+    marginBottom: 16,
+  },
+  weightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  weightIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weightLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  weightDisplay: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  weightValue: {
+    fontSize: 56,
+    fontWeight: '700',
+    letterSpacing: -2,
+  },
+  weightUnit: {
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    marginLeft: 8,
+  },
+  trendText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // PROGRESSION
+  progressSection: {
+    marginTop: 8,
+  },
+  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 16,
   },
-  greeting: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+  },
+  statLabel: {
+    fontSize: 12,
     marginBottom: 4,
   },
-  title: {
-    fontSize: theme.fontSize.display,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    letterSpacing: -0.5,
+  statValue: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  progressCard: {
+
+  // EMPTY STATE
+  emptyState: {
     alignItems: 'center',
-    paddingVertical: theme.spacing.xxxl,
-    borderRadius: theme.radius.xxl,
+    paddingVertical: 20,
   },
-  section: {
-    gap: theme.spacing.lg,
+  emptyText: {
+    fontSize: 16,
+    marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: theme.spacing.md,
+  emptyButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: RADIUS.md,
   },
-  trendsGrid: {
+  emptyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // ACTIONS
+  actionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
+    marginBottom: 16,
   },
-  chartCard: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.md,
+  actionButton: {
+    flex: 1,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  actionButtonGradient: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: theme.radius.xxl,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+  },
+  actionButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  actionButtonSecondary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+  },
+  actionButtonSecondaryText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // GRAPHIQUE
+  chartCard: {
+    marginBottom: 16,
   },
   chartHeader: {
-    width: '100%',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: 16,
   },
-  periodButtons: {
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // COMPOSITION CORPORELLE
+  compositionCard: {
+    marginBottom: 16,
+  },
+  compositionHeader: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
   },
-  periodButton: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.radius.full,
-    backgroundColor: theme.colors.borderLight,
-    minWidth: 50,
+  compositionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  compositionGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  compositionItem: {
+    flex: 1,
     alignItems: 'center',
   },
-  periodButtonActive: {
-    backgroundColor: '#34D399',
-  },
-  periodButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.3,
-  },
-  periodButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  chartEmptyState: {
+  compositionBar: {
+    width: '100%',
+    height: 70,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 220,
-    paddingHorizontal: theme.spacing.xl,
-    gap: theme.spacing.sm,
   },
-  chartEmptyStateIcon: {
-    fontSize: 48,
-    opacity: 0.3,
-    marginBottom: theme.spacing.sm,
+  compositionValue: {
+    fontSize: 20,
+    fontWeight: '700',
   },
-  chartEmptyStateTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
+  compositionLabel: {
+    fontSize: 12,
+    marginTop: 8,
+    fontWeight: '500',
   },
-  chartEmptyStateText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: theme.fontSize.md * 1.5,
+
+  // TRANSFORMATION
+  transformationCard: {
+    marginBottom: 16,
   },
-  chart: {
-    marginVertical: theme.spacing.md,
-    borderRadius: theme.radius.md,
-  },
-  motivationCard: {
-    backgroundColor: theme.colors.mintPastel,
-    padding: theme.spacing.xxl,
-    borderRadius: theme.radius.xxl,
+  transformationHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    ...theme.shadow.sm,
+    gap: 10,
+    marginBottom: 16,
   },
-  motivationEmoji: {
-    fontSize: 48,
-    marginBottom: theme.spacing.sm,
+  transformationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
   },
-  motivationText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  motivationSubtext: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.1,
-  },
-  quoteContainer: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 20 : 0,
-    paddingVertical: theme.spacing.xl,
-  },
-  quoteText: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    fontStyle: 'italic',
-    color: '#4A5568',
-    textAlign: 'center',
-    lineHeight: theme.fontSize.xl * 1.4,
-  },
-  emptyStateCard: {
+  transformationPhotos: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: theme.spacing.xxxl,
-    gap: theme.spacing.md,
+    gap: 8,
   },
-  emptyStateEmoji: {
-    fontSize: 56,
-    marginBottom: theme.spacing.sm,
+  transformationPhotoContainer: {
+    flex: 1,
+    position: 'relative',
   },
-  emptyStateTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+  transformationPhoto: {
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+  },
+  transformationBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  transformationBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  transformationArrow: {
+    paddingHorizontal: 4,
+  },
+  transformationStats: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    alignItems: 'center',
+  },
+  transformationStatsText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // RANG
+  rankCard: {
+    marginBottom: 16,
+  },
+  rankHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rankIcon: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  rankInfo: {
+    flex: 1,
+  },
+  rankName: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  rankNameJp: {
+    fontSize: 12,
+  },
+  rankArrow: {
+    marginHorizontal: 8,
+  },
+  nextRankIcon: {
+    fontSize: 28,
+    marginRight: 8,
+    opacity: 0.5,
+  },
+  nextRankName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  rankProgress: {
+    fontSize: 12,
     textAlign: 'center',
-    letterSpacing: -0.3,
+    marginTop: 8,
   },
-  emptyStateSubtext: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: theme.fontSize.md * 1.5,
-    paddingHorizontal: theme.spacing.lg,
+
+  // PHOTOS LINK
+  photosLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: RADIUS.lg,
+    padding: 16,
+    borderWidth: 1,
   },
-  emptyStateButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xxl,
-    borderRadius: theme.radius.xl,
-    marginTop: theme.spacing.md,
-    ...theme.shadow.sm,
+  photosLinkContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  emptyStateButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.surface,
-    letterSpacing: 0.3,
+  photosLinkText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  photosLinkSubtext: {
+    fontSize: 13,
+    marginTop: 2,
   },
 });
