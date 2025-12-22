@@ -89,13 +89,13 @@ export interface LogoOption {
 }
 
 export const LOGO_OPTIONS: LogoOption[] = [
-  { id: 'default', name: 'Classique', description: 'Kanji original', isPremium: false, image: null },
-  { id: 'logo_new', name: 'Nouveau', description: 'Logo moderne', isPremium: false, image: null }, // TODO: Add logo images
-  { id: 'logo1', name: 'Ocean', description: 'Fond bleu, logo blanc', isPremium: false, image: null },
-  { id: 'logo2', name: 'Midnight', description: 'Fond noir, logo blanc', isPremium: true, image: null },
-  { id: 'logo3', name: 'Tiffany', description: 'Fond noir, logo turquoise', isPremium: true, image: null },
-  { id: 'logo4', name: 'Bolt', description: 'Fond noir, logo jaune', isPremium: true, image: null },
-  { id: 'logo5', name: 'Matrix', description: 'Fond noir, logo vert', isPremium: true, image: null },
+  { id: 'default', name: 'Classique', description: 'Kanji original', isPremium: false, image: require('@/assets/images/logo2010.png') },
+  { id: 'logo_new', name: 'Logo 1', description: 'Design principal', isPremium: false, image: require('@/assets/logo d\'app/logo1.png') },
+  { id: 'logo1', name: 'Yoroi 1', description: 'Variante 1', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo1.png') },
+  { id: 'logo2', name: 'Yoroi 2', description: 'Variante 2', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo2.png') },
+  { id: 'logo3', name: 'Yoroi 3', description: 'Variante 3', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo3.png') },
+  { id: 'logo4', name: 'Yoroi 4', description: 'Variante 4', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo4.png') },
+  { id: 'logo5', name: 'Yoroi 5', description: 'Variante 5', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo5.png') },
 ];
 
 export const getSelectedLogo = async (): Promise<LogoVariant> => {

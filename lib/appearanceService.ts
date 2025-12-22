@@ -36,67 +36,83 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
   {
     id: 'classic',
     name: 'Classic',
-    themeColor: 'classic', // Turquoise classique
+    themeColor: 'classic',
     description: 'Le style intemporel',
     unlockXP: 0, // GRATUIT
-    icon: '⚔️',
+    icon: '⬜',
   },
   {
     id: 'tiffany',
     name: 'Tiffany',
-    themeColor: 'tiffany', // Bleu Tiffany
+    themeColor: 'tiffany',
     description: 'Élégance turquoise',
     unlockXP: 0, // GRATUIT
     icon: '💎',
   },
 
-  // === THÈMES PREMIUM ===
+  // === THÈMES PREMIUM (8 thèmes) ===
   {
-    id: 'samurai',
-    name: 'Samouraï',
-    themeColor: 'magma', // Rouge
-    description: 'La voie du bushido',
+    id: 'volt',
+    name: 'Volt',
+    themeColor: 'volt',
+    description: 'Énergie électrique',
+    unlockXP: 1000,
+    icon: '⚡',
+  },
+  {
+    id: 'magma',
+    name: 'Magma',
+    themeColor: 'magma',
+    description: 'Feu du combat',
     unlockXP: 2000,
-    icon: '🗡️',
-  },
-  {
-    id: 'shogun',
-    name: 'Shogun',
-    themeColor: 'volt', // Or électrique
-    description: 'Le commandant suprême',
-    unlockXP: 4000,
-    icon: '👑',
-  },
-  {
-    id: 'ninja',
-    name: 'Ninja',
-    themeColor: 'phantom', // Violet/sombre
-    description: "L'ombre silencieuse",
-    unlockXP: 6000,
-    icon: '🥷',
-  },
-  {
-    id: 'ronin',
-    name: 'Ronin',
-    themeColor: 'ghost', // Gris
-    description: 'Le guerrier sans maître',
-    unlockXP: 8000,
-    icon: '🌙',
+    icon: '🔥',
   },
   {
     id: 'sakura',
     name: 'Sakura',
-    themeColor: 'sakura', // Rose
-    description: 'La beauté du cerisier',
-    unlockXP: 10000,
+    themeColor: 'sakura',
+    description: 'Beauté du cerisier',
+    unlockXP: 3000,
     icon: '🌸',
+  },
+  {
+    id: 'matrix',
+    name: 'Matrix',
+    themeColor: 'matrix',
+    description: 'Vert cybernétique',
+    unlockXP: 4000,
+    icon: '💚',
+  },
+  {
+    id: 'blaze',
+    name: 'Blaze',
+    themeColor: 'blaze',
+    description: 'Flammes orangées',
+    unlockXP: 5000,
+    icon: '🟠',
+  },
+  {
+    id: 'phantom',
+    name: 'Phantom',
+    themeColor: 'phantom',
+    description: "L'ombre mystérieuse",
+    unlockXP: 6000,
+    icon: '💜',
+  },
+  {
+    id: 'ghost',
+    name: 'Ghost',
+    themeColor: 'ghost',
+    description: "L'esprit minimaliste",
+    unlockXP: 7000,
+    icon: '🤍',
   },
   {
     id: 'ocean',
     name: 'Ocean',
-    themeColor: 'ocean', // Bleu océan
+    themeColor: 'ocean',
     description: 'Profondeur marine',
-    unlockXP: 12000,
+    unlockXP: 8000,
     icon: '🌊',
   },
 ];
