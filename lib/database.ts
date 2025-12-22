@@ -91,7 +91,9 @@ export const initDatabase = async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       club_id INTEGER,
       sport TEXT NOT NULL,
+      session_type TEXT,
       date TEXT NOT NULL,
+      start_time TEXT,
       duration_minutes INTEGER,
       notes TEXT,
       muscles TEXT,
@@ -99,6 +101,23 @@ export const initDatabase = async () => {
       FOREIGN KEY (club_id) REFERENCES clubs (id)
     );
   `);
+
+  // Migration: ajouter les colonnes si elles n'existent pas
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN start_time TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_type TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN exercises TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE profile ADD COLUMN profile_photo TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
 
   // Table Planning Semaine Type
   await database.execAsync(`
@@ -138,6 +157,71 @@ export const initDatabase = async () => {
     );
   `);
 
+  // ============================================
+  // TABLES YOROI MEDIC - INFIRMERIE
+  // ============================================
+
+  // Table Blessures
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS injuries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      zone_id TEXT NOT NULL,
+      zone_view TEXT NOT NULL,
+      pain_type TEXT NOT NULL,
+      cause TEXT NOT NULL,
+      eva_score INTEGER NOT NULL,
+      notes TEXT,
+      date TEXT NOT NULL,
+      status TEXT DEFAULT 'active',
+      fit_for_duty TEXT DEFAULT 'operational',
+      healed_at TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Table Historique EVA
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS injury_eva_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      injury_id INTEGER NOT NULL,
+      eva_score INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (injury_id) REFERENCES injuries (id) ON DELETE CASCADE
+    );
+  `);
+
+  // Table Traitements
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS injury_treatments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      injury_id INTEGER NOT NULL,
+      treatment_type TEXT NOT NULL,
+      custom_description TEXT,
+      date TEXT NOT NULL,
+      completed INTEGER DEFAULT 1,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (injury_id) REFERENCES injuries (id) ON DELETE CASCADE
+    );
+  `);
+
+  // Table Rappels de Traitement
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS treatment_reminders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      injury_id INTEGER NOT NULL,
+      treatment_type TEXT NOT NULL,
+      frequency TEXT NOT NULL,
+      time TEXT,
+      next_reminder_date TEXT NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (injury_id) REFERENCES injuries (id) ON DELETE CASCADE
+    );
+  `);
+
   console.log('Database initialized successfully');
 };
 
@@ -153,6 +237,7 @@ export interface Profile {
   start_weight?: number;
   start_date?: string;
   avatar_gender?: 'homme' | 'femme';
+  profile_photo?: string | null; // URI de la photo custom, null = utiliser avatar
   created_at?: string;
 }
 
@@ -167,7 +252,7 @@ export interface Weight {
   metabolic_age?: number;
   bmr?: number;
   note?: string;
-  source?: 'manual' | 'tanita' | 'apple';
+  source?: 'manual' | 'body_composition' | 'apple';
   date: string;
   created_at?: string;
 }
@@ -198,15 +283,25 @@ export interface Club {
   created_at?: string;
 }
 
+export interface Exercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weight: number; // en kg
+  muscle_group?: string;
+}
+
 export interface Training {
   id?: number;
   club_id?: number;
   sport: string;
+  session_type?: string;
   date: string;
   start_time?: string;
   duration_minutes?: number;
   notes?: string;
   muscles?: string;
+  exercises?: Exercise[]; // For musculation workouts
   created_at?: string;
   // Joined fields
   club_name?: string;
@@ -242,6 +337,58 @@ export interface Photo {
 }
 
 // ============================================
+// TYPES YOROI MEDIC - INFIRMERIE
+// ============================================
+
+export interface Injury {
+  id?: number;
+  zone_id: string;
+  zone_view: 'front' | 'back';
+  pain_type: string;
+  cause: string;
+  eva_score: number; // 0-10
+  notes?: string;
+  date: string;
+  status: 'active' | 'healing' | 'healed';
+  fit_for_duty: 'operational' | 'restricted' | 'unfit';
+  healed_at?: string;
+  created_at?: string;
+  // Joined fields
+  zone_name?: string;
+}
+
+export interface InjuryEvaHistory {
+  id?: number;
+  injury_id: number;
+  eva_score: number; // 0-10
+  date: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface InjuryTreatment {
+  id?: number;
+  injury_id: number;
+  treatment_type: string;
+  custom_description?: string;
+  date: string;
+  completed: boolean;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface TreatmentReminder {
+  id?: number;
+  injury_id: number;
+  treatment_type: string;
+  frequency: 'daily' | 'twice_daily' | 'three_times_daily' | 'weekly' | 'as_needed';
+  time?: string;
+  next_reminder_date: string;
+  enabled: boolean;
+  created_at?: string;
+}
+
+// ============================================
 // FONCTIONS CRUD - PROFIL
 // ============================================
 
@@ -258,17 +405,18 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
   if (existing) {
     await database.runAsync(
       `UPDATE profile SET name = ?, height_cm = ?, target_weight = ?, start_weight = ?,
-       start_date = ?, avatar_gender = ? WHERE id = ?`,
+       start_date = ?, avatar_gender = ?, profile_photo = ? WHERE id = ?`,
       [profile.name, profile.height_cm || null, profile.target_weight || null,
        profile.start_weight || null, profile.start_date || null,
-       profile.avatar_gender || 'homme', existing.id!]
+       profile.avatar_gender || 'homme', profile.profile_photo || null, existing.id!]
     );
   } else {
     await database.runAsync(
-      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender, profile_photo)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [profile.name, profile.height_cm || null, profile.target_weight || null,
-       profile.start_weight || null, profile.start_date || null, profile.avatar_gender || 'homme']
+       profile.start_weight || null, profile.start_date || null, profile.avatar_gender || 'homme',
+       profile.profile_photo || null]
     );
   }
 };
@@ -308,6 +456,18 @@ export const getLatestWeight = async (): Promise<Weight | null> => {
   return result || null;
 };
 
+// Récupérer l'historique de composition corporelle
+export const getCompositionHistory = async (limit: number = 10): Promise<Weight[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<Weight>(
+    `SELECT * FROM weights
+     WHERE fat_percent IS NOT NULL OR muscle_percent IS NOT NULL OR water_percent IS NOT NULL
+     ORDER BY date DESC
+     LIMIT ?`,
+    [limit]
+  );
+};
+
 export const deleteWeight = async (id: number): Promise<void> => {
   const database = await openDatabase();
   await database.runAsync('DELETE FROM weights WHERE id = ?', [id]);
@@ -319,11 +479,13 @@ export const deleteWeight = async (id: number): Promise<void> => {
 
 export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
+  const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, date, duration_minutes, notes, muscles)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [data.club_id || null, data.sport, data.date, data.duration_minutes || null,
-     data.notes || null, data.muscles || null]
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [data.club_id || null, data.sport, data.session_type || null, data.date,
+     data.start_time || null, data.duration_minutes || null,
+     data.notes || null, data.muscles || null, exercisesJson]
   );
   return result.lastInsertRowId;
 };
@@ -335,18 +497,22 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
        WHERE t.date >= date('now', '-${days} days')
-       ORDER BY t.date DESC`
+       ORDER BY t.date DESC, t.start_time ASC`
     : `SELECT t.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
-       ORDER BY t.date DESC`;
+       ORDER BY t.date DESC, t.start_time ASC`;
 
-  return await database.getAllAsync<Training>(query);
+  const results = await database.getAllAsync<Training & { exercises?: string }>(query);
+  return results.map(r => ({
+    ...r,
+    exercises: r.exercises ? JSON.parse(r.exercises as string) : undefined
+  }));
 };
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
   const database = await openDatabase();
-  return await database.getAllAsync<Training>(
+  const results = await database.getAllAsync<Training & { exercises?: string }>(
     `SELECT t.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
      FROM trainings t
      LEFT JOIN clubs c ON t.club_id = c.id
@@ -354,19 +520,33 @@ export const getTrainingsByMonth = async (year: number, month: number): Promise<
      ORDER BY t.date ASC`,
     [year.toString(), month.toString().padStart(2, '0')]
   );
+  return results.map(r => ({
+    ...r,
+    exercises: r.exercises ? JSON.parse(r.exercises as string) : undefined
+  }));
 };
 
-export const getTrainingStats = async (): Promise<{ sport: string; count: number; club_name?: string; club_color?: string }[]> => {
+export const getTrainingStats = async (): Promise<{ sport: string; count: number; club_name?: string; club_color?: string; club_id?: number }[]> => {
   const database = await openDatabase();
+  // On groupe par nom de club OU sport (pas par club_id pour éviter les doublons)
+  // Si club_name existe, on l'utilise comme identifiant unique, sinon on utilise le sport
   return await database.getAllAsync(
     `SELECT
        t.sport,
-       c.name as club_name,
-       c.color as club_color,
-       COUNT(t.id) as count
-     FROM trainings t
+       MAX(t.club_id) as club_id,
+       COALESCE(c.name, t.sport) as club_name,
+       MAX(c.color) as club_color,
+       SUM(cnt) as count
+     FROM (
+       SELECT
+         sport,
+         club_id,
+         COUNT(id) as cnt
+       FROM trainings
+       GROUP BY sport, club_id
+     ) t
      LEFT JOIN clubs c ON t.club_id = c.id
-     GROUP BY t.sport
+     GROUP BY COALESCE(c.name, t.sport)
      ORDER BY count DESC`
   );
 };
@@ -560,6 +740,227 @@ export const isAchievementUnlocked = async (id: string): Promise<boolean> => {
 };
 
 // ============================================
+// FONCTIONS CRUD - YOROI MEDIC INFIRMERIE
+// ============================================
+
+// ---------- BLESSURES ----------
+
+export const addInjury = async (data: Injury): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO injuries (zone_id, zone_view, pain_type, cause, eva_score, notes, date, status, fit_for_duty)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [data.zone_id, data.zone_view, data.pain_type, data.cause, data.eva_score,
+     data.notes || null, data.date, data.status, data.fit_for_duty]
+  );
+  return result.lastInsertRowId;
+};
+
+export const getInjuries = async (status?: 'active' | 'healing' | 'healed'): Promise<Injury[]> => {
+  const database = await openDatabase();
+  const query = status
+    ? `SELECT * FROM injuries WHERE status = ? ORDER BY date DESC`
+    : `SELECT * FROM injuries ORDER BY date DESC`;
+
+  const params = status ? [status] : [];
+  return await database.getAllAsync<Injury>(query, params);
+};
+
+export const getActiveInjuries = async (): Promise<Injury[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<Injury>(
+    `SELECT * FROM injuries WHERE status IN ('active', 'healing') ORDER BY date DESC`
+  );
+};
+
+export const getInjuryById = async (id: number): Promise<Injury | null> => {
+  const database = await openDatabase();
+  const result = await database.getFirstAsync<Injury>(
+    'SELECT * FROM injuries WHERE id = ?', [id]
+  );
+  return result || null;
+};
+
+export const updateInjury = async (id: number, data: Partial<Injury>): Promise<void> => {
+  const database = await openDatabase();
+  const updates: string[] = [];
+  const values: any[] = [];
+
+  if (data.eva_score !== undefined) { updates.push('eva_score = ?'); values.push(data.eva_score); }
+  if (data.status !== undefined) { updates.push('status = ?'); values.push(data.status); }
+  if (data.fit_for_duty !== undefined) { updates.push('fit_for_duty = ?'); values.push(data.fit_for_duty); }
+  if (data.healed_at !== undefined) { updates.push('healed_at = ?'); values.push(data.healed_at); }
+  if (data.notes !== undefined) { updates.push('notes = ?'); values.push(data.notes); }
+
+  if (updates.length > 0) {
+    values.push(id);
+    await database.runAsync(`UPDATE injuries SET ${updates.join(', ')} WHERE id = ?`, values);
+  }
+};
+
+export const deleteInjury = async (id: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM injuries WHERE id = ?', [id]);
+};
+
+// ---------- HISTORIQUE EVA ----------
+
+export const addEvaHistory = async (data: InjuryEvaHistory): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO injury_eva_history (injury_id, eva_score, date, notes)
+     VALUES (?, ?, ?, ?)`,
+    [data.injury_id, data.eva_score, data.date, data.notes || null]
+  );
+  return result.lastInsertRowId;
+};
+
+export const getEvaHistory = async (injuryId: number): Promise<InjuryEvaHistory[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<InjuryEvaHistory>(
+    `SELECT * FROM injury_eva_history WHERE injury_id = ? ORDER BY date ASC`,
+    [injuryId]
+  );
+};
+
+export const getLatestEva = async (injuryId: number): Promise<InjuryEvaHistory | null> => {
+  const database = await openDatabase();
+  const result = await database.getFirstAsync<InjuryEvaHistory>(
+    `SELECT * FROM injury_eva_history WHERE injury_id = ? ORDER BY date DESC LIMIT 1`,
+    [injuryId]
+  );
+  return result || null;
+};
+
+// ---------- TRAITEMENTS ----------
+
+export const addTreatment = async (data: InjuryTreatment): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO injury_treatments (injury_id, treatment_type, custom_description, date, completed, notes)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [data.injury_id, data.treatment_type, data.custom_description || null,
+     data.date, data.completed ? 1 : 0, data.notes || null]
+  );
+  return result.lastInsertRowId;
+};
+
+export const getTreatments = async (injuryId: number): Promise<InjuryTreatment[]> => {
+  const database = await openDatabase();
+  const results = await database.getAllAsync<any>(
+    `SELECT * FROM injury_treatments WHERE injury_id = ? ORDER BY date DESC`,
+    [injuryId]
+  );
+  return results.map(t => ({ ...t, completed: t.completed === 1 }));
+};
+
+export const updateTreatment = async (id: number, data: Partial<InjuryTreatment>): Promise<void> => {
+  const database = await openDatabase();
+  const updates: string[] = [];
+  const values: any[] = [];
+
+  if (data.completed !== undefined) { updates.push('completed = ?'); values.push(data.completed ? 1 : 0); }
+  if (data.notes !== undefined) { updates.push('notes = ?'); values.push(data.notes); }
+
+  if (updates.length > 0) {
+    values.push(id);
+    await database.runAsync(`UPDATE injury_treatments SET ${updates.join(', ')} WHERE id = ?`, values);
+  }
+};
+
+// ---------- RAPPELS DE TRAITEMENT ----------
+
+export const addReminder = async (data: TreatmentReminder): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO treatment_reminders (injury_id, treatment_type, frequency, time, next_reminder_date, enabled)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [data.injury_id, data.treatment_type, data.frequency, data.time || null,
+     data.next_reminder_date, data.enabled ? 1 : 0]
+  );
+  return result.lastInsertRowId;
+};
+
+export const getReminders = async (injuryId?: number): Promise<TreatmentReminder[]> => {
+  const database = await openDatabase();
+  const query = injuryId
+    ? `SELECT * FROM treatment_reminders WHERE injury_id = ? ORDER BY next_reminder_date ASC`
+    : `SELECT * FROM treatment_reminders ORDER BY next_reminder_date ASC`;
+
+  const params = injuryId ? [injuryId] : [];
+  const results = await database.getAllAsync<any>(query, params);
+  return results.map(r => ({ ...r, enabled: r.enabled === 1 }));
+};
+
+export const getActiveReminders = async (): Promise<TreatmentReminder[]> => {
+  const database = await openDatabase();
+  const results = await database.getAllAsync<any>(
+    `SELECT * FROM treatment_reminders WHERE enabled = 1 AND next_reminder_date <= date('now') ORDER BY next_reminder_date ASC`
+  );
+  return results.map(r => ({ ...r, enabled: r.enabled === 1 }));
+};
+
+export const updateReminder = async (id: number, data: Partial<TreatmentReminder>): Promise<void> => {
+  const database = await openDatabase();
+  const updates: string[] = [];
+  const values: any[] = [];
+
+  if (data.next_reminder_date !== undefined) { updates.push('next_reminder_date = ?'); values.push(data.next_reminder_date); }
+  if (data.enabled !== undefined) { updates.push('enabled = ?'); values.push(data.enabled ? 1 : 0); }
+
+  if (updates.length > 0) {
+    values.push(id);
+    await database.runAsync(`UPDATE treatment_reminders SET ${updates.join(', ')} WHERE id = ?`, values);
+  }
+};
+
+export const deleteReminder = async (id: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM treatment_reminders WHERE id = ?', [id]);
+};
+
+// ---------- STATISTIQUES INFIRMERIE ----------
+
+export const getInjuryStats = async (): Promise<{
+  totalInjuries: number;
+  activeInjuries: number;
+  healedInjuries: number;
+  mostAffectedZone: string | null;
+  averageRecoveryDays: number;
+}> => {
+  const database = await openDatabase();
+
+  const total = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM injuries'
+  );
+
+  const active = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM injuries WHERE status IN ('active', 'healing')`
+  );
+
+  const healed = await database.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM injuries WHERE status = 'healed'`
+  );
+
+  const mostAffected = await database.getFirstAsync<{ zone_id: string; count: number }>(
+    `SELECT zone_id, COUNT(*) as count FROM injuries GROUP BY zone_id ORDER BY count DESC LIMIT 1`
+  );
+
+  const recoveryAvg = await database.getFirstAsync<{ avg_days: number }>(
+    `SELECT AVG(julianday(healed_at) - julianday(date)) as avg_days
+     FROM injuries WHERE status = 'healed' AND healed_at IS NOT NULL`
+  );
+
+  return {
+    totalInjuries: total?.count || 0,
+    activeInjuries: active?.count || 0,
+    healedInjuries: healed?.count || 0,
+    mostAffectedZone: mostAffected?.zone_id || null,
+    averageRecoveryDays: Math.round(recoveryAvg?.avg_days || 0),
+  };
+};
+
+// ============================================
 // STATISTIQUES & CALCULS
 // ============================================
 
@@ -632,8 +1033,26 @@ export const exportAllData = async () => {
   const photos = await getPhotos();
   const achievements = await getUnlockedAchievements();
 
+  // YOROI MEDIC data
+  const injuries = await getInjuries();
+  const injuryEvaHistory: InjuryEvaHistory[] = [];
+  const injuryTreatments: InjuryTreatment[] = [];
+  const treatmentReminders: TreatmentReminder[] = [];
+
+  // Get EVA history, treatments, and reminders for each injury
+  for (const injury of injuries) {
+    if (injury.id) {
+      const eva = await getEvaHistory(injury.id);
+      const treatments = await getTreatments(injury.id);
+      const reminders = await getReminders(injury.id);
+      injuryEvaHistory.push(...eva);
+      injuryTreatments.push(...treatments);
+      treatmentReminders.push(...reminders);
+    }
+  }
+
   return {
-    version: '1.0',
+    version: '2.0', // Updated version for YOROI MEDIC
     exported_at: new Date().toISOString(),
     data: {
       profile,
@@ -644,6 +1063,11 @@ export const exportAllData = async () => {
       weeklyPlan,
       photos,
       achievements,
+      // YOROI MEDIC
+      injuries,
+      injuryEvaHistory,
+      injuryTreatments,
+      treatmentReminders,
     }
   };
 };
@@ -702,9 +1126,93 @@ export const importData = async (jsonString: string): Promise<void> => {
       await unlockAchievement(id);
     }
   }
+
+  // Importer les données YOROI MEDIC (version 2.0+)
+  if (data.version >= '2.0') {
+    // Créer une map pour mapper les anciens IDs aux nouveaux
+    const injuryIdMap = new Map<number, number>();
+
+    // Importer les blessures
+    if (data.data.injuries) {
+      for (const injury of data.data.injuries) {
+        const oldId = injury.id;
+        delete injury.id; // Remove old ID
+        const newId = await addInjury(injury);
+        if (oldId) injuryIdMap.set(oldId, newId);
+      }
+    }
+
+    // Importer l'historique EVA
+    if (data.data.injuryEvaHistory) {
+      for (const eva of data.data.injuryEvaHistory) {
+        delete eva.id;
+        const newInjuryId = injuryIdMap.get(eva.injury_id);
+        if (newInjuryId) {
+          eva.injury_id = newInjuryId;
+          await addEvaHistory(eva);
+        }
+      }
+    }
+
+    // Importer les traitements
+    if (data.data.injuryTreatments) {
+      for (const treatment of data.data.injuryTreatments) {
+        delete treatment.id;
+        const newInjuryId = injuryIdMap.get(treatment.injury_id);
+        if (newInjuryId) {
+          treatment.injury_id = newInjuryId;
+          await addTreatment(treatment);
+        }
+      }
+    }
+
+    // Importer les rappels
+    if (data.data.treatmentReminders) {
+      for (const reminder of data.data.treatmentReminders) {
+        delete reminder.id;
+        const newInjuryId = injuryIdMap.get(reminder.injury_id);
+        if (newInjuryId) {
+          reminder.injury_id = newInjuryId;
+          await addReminder(reminder);
+        }
+      }
+    }
+  }
+};
+
+// ============================================
+// RESET COMPLET DE LA BASE DE DONNEES
+// ============================================
+
+export const resetDatabase = async (): Promise<void> => {
+  try {
+    const database = await openDatabase();
+
+    // Supprimer toutes les données de chaque table
+    await database.execAsync('DELETE FROM weights;');
+    await database.execAsync('DELETE FROM trainings;');
+    await database.execAsync('DELETE FROM measurements;');
+    await database.execAsync('DELETE FROM photos;');
+    await database.execAsync('DELETE FROM achievements;');
+    await database.execAsync('DELETE FROM weekly_plan;');
+    await database.execAsync('DELETE FROM clubs;');
+    await database.execAsync('DELETE FROM profile;');
+
+    // Tables YOROI MEDIC
+    await database.execAsync('DELETE FROM treatment_reminders;');
+    await database.execAsync('DELETE FROM injury_treatments;');
+    await database.execAsync('DELETE FROM injury_eva_history;');
+    await database.execAsync('DELETE FROM injuries;');
+
+    console.log('✅ Base de données SQLite réinitialisée');
+  } catch (error) {
+    console.error('❌ Erreur reset database:', error);
+    throw error;
+  }
 };
 
 export default {
   initDatabase,
   openDatabase,
+  resetDatabase,
 };
