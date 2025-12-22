@@ -121,64 +121,66 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Wrapper qui contient l'image ET les zones - CRUCIAL pour le positionnement */}
         <View
           style={[
             styles.bodyMapContainer,
             { backgroundColor: colors.backgroundElevated },
           ]}
         >
-          {/* Image du corps */}
-          <Image
-            source={
-              view === 'front'
-                ? require('@/assets/infirmerie/body_front.png')
-                : require('@/assets/infirmerie/body_back.png')
-            }
-            style={styles.bodyImage}
-            resizeMode="contain"
-          />
+          <View style={styles.imageWrapper}>
+            {/* Image du corps */}
+            <Image
+              source={
+                view === 'front'
+                  ? require('@/assets/infirmerie/body_front.png')
+                  : require('@/assets/infirmerie/body_back.png')
+              }
+              style={styles.bodyImage}
+              resizeMode="contain"
+            />
 
-          {/* Overlay zone sélectionnée */}
-          {selectedZoneName && (
-            <View style={[styles.selectedZoneOverlay, { backgroundColor: colors.accent }]}>
-              <Text style={styles.selectedZoneText}>📍 {selectedZoneName}</Text>
-            </View>
-          )}
+            {/* Overlay zone sélectionnée */}
+            {selectedZoneName && (
+              <View style={[styles.selectedZoneOverlay, { backgroundColor: colors.accent }]}>
+                <Text style={styles.selectedZoneText}>📍 {selectedZoneName}</Text>
+              </View>
+            )}
 
-          {/* Zones cliquables */}
-          {zones.map((zone) => {
-            const xPos = (zone.x / 100) * BODY_MAP_WIDTH;
-            const yPos = (zone.y / 100) * BODY_MAP_HEIGHT;
-            const radius = (zone.radius / 100) * BODY_MAP_WIDTH;
-            const isSelected = selectedZone === zone.id;
-            const zoneColor = getZoneColor(zone.id);
+            {/* Zones cliquables - MAINTENANT RELATIVES À L'IMAGE */}
+            {zones.map((zone) => {
+              const isSelected = selectedZone === zone.id;
+              const zoneColor = getZoneColor(zone.id);
 
-            return (
-              <TouchableOpacity
-                key={zone.id}
-                style={[
-                  styles.zone,
-                  {
-                    left: xPos - radius,
-                    top: yPos - radius,
-                    width: radius * 2,
-                    height: radius * 2,
-                    borderRadius: radius,
-                    backgroundColor: zoneColor,
-                    borderWidth: isSelected ? 4 : zoneColor !== 'transparent' ? 2 : 1,
-                    borderColor: isSelected
-                      ? '#FFFFFF'
-                      : zoneColor !== 'transparent'
-                      ? '#FFFFFF'
-                      : 'rgba(255, 255, 255, 0.15)',
-                    transform: isSelected ? [{ scale: 1.2 }] : [{ scale: 1 }],
-                  },
-                ]}
-                onPress={() => handleZonePress(zone)}
-                activeOpacity={0.7}
-              />
-            );
-          })}
+              return (
+                <TouchableOpacity
+                  key={zone.id}
+                  style={[
+                    styles.zone,
+                    {
+                      left: `${zone.x}%`,
+                      top: `${zone.y}%`,
+                      width: zone.radius * 10, // Multiplier pour avoir une taille raisonnable
+                      height: zone.radius * 10,
+                      borderRadius: zone.radius * 5,
+                      marginLeft: -(zone.radius * 5), // Centrer le cercle sur les coordonnées
+                      marginTop: -(zone.radius * 5),
+                      backgroundColor: zoneColor,
+                      borderWidth: isSelected ? 4 : zoneColor !== 'transparent' ? 2 : 1,
+                      borderColor: isSelected
+                        ? '#FFFFFF'
+                        : zoneColor !== 'transparent'
+                        ? '#FFFFFF'
+                        : 'rgba(255, 255, 255, 0.15)',
+                      transform: isSelected ? [{ scale: 1.2 }] : [{ scale: 1 }],
+                    },
+                  ]}
+                  onPress={() => handleZonePress(zone)}
+                  activeOpacity={0.7}
+                />
+              );
+            })}
+          </View>
         </View>
 
         {/* Légende */}
@@ -241,17 +243,22 @@ const styles = StyleSheet.create({
   },
   bodyMapContainer: {
     width: BODY_MAP_WIDTH,
-    height: BODY_MAP_HEIGHT,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+  },
+  // WRAPPER CRITIQUE : contient l'image ET les zones
+  imageWrapper: {
+    position: 'relative', // IMPORTANT : les zones seront relatives à ce wrapper
+    width: '100%',
+    aspectRatio: 0.55, // Ratio de l'image du corps (ajuster si nécessaire)
   },
   bodyImage: {
-    width: BODY_MAP_WIDTH,
-    height: BODY_MAP_HEIGHT,
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
   },
   zone: {
     position: 'absolute',
