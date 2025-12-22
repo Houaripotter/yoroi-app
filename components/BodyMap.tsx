@@ -34,18 +34,25 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
   const { colors } = useTheme();
   const [view, setView] = useState<'front' | 'back'>('front');
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [selectedZoneName, setSelectedZoneName] = useState<string | null>(null);
 
   const zones = view === 'front' ? BODY_ZONES_FRONT : BODY_ZONES_BACK;
 
   const handleZonePress = (zone: BodyZone) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedZone(zone.id);
-    setTimeout(() => setSelectedZone(null), 300);
+    setSelectedZoneName(zone.name);
+    setTimeout(() => {
+      setSelectedZone(null);
+      setSelectedZoneName(null);
+    }, 2000); // 2 secondes pour bien voir la zone
     onZonePress(zone, view);
   };
 
   const toggleView = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedZone(null);
+    setSelectedZoneName(null);
     setView(view === 'front' ? 'back' : 'front');
   };
 
@@ -131,6 +138,13 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
             resizeMode="contain"
           />
 
+          {/* Overlay zone sélectionnée */}
+          {selectedZoneName && (
+            <View style={[styles.selectedZoneOverlay, { backgroundColor: colors.accent }]}>
+              <Text style={styles.selectedZoneText}>📍 {selectedZoneName}</Text>
+            </View>
+          )}
+
           {/* Zones cliquables */}
           {zones.map((zone) => {
             const xPos = (zone.x / 100) * BODY_MAP_WIDTH;
@@ -151,12 +165,13 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
                     height: radius * 2,
                     borderRadius: radius,
                     backgroundColor: zoneColor,
-                    borderWidth: isSelected ? 3 : zoneColor !== 'transparent' ? 2 : 1,
+                    borderWidth: isSelected ? 4 : zoneColor !== 'transparent' ? 2 : 1,
                     borderColor: isSelected
-                      ? colors.accent
+                      ? '#FFFFFF'
                       : zoneColor !== 'transparent'
                       ? '#FFFFFF'
                       : 'rgba(255, 255, 255, 0.15)',
+                    transform: isSelected ? [{ scale: 1.2 }] : [{ scale: 1 }],
                   },
                 ]}
                 onPress={() => handleZonePress(zone)}
@@ -240,6 +255,29 @@ const styles = StyleSheet.create({
   },
   zone: {
     position: 'absolute',
+  },
+  selectedZoneOverlay: {
+    position: 'absolute',
+    top: 20,
+    left: '10%',
+    right: '10%',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 999,
+  },
+  selectedZoneText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   legend: {
     flexDirection: 'row',
