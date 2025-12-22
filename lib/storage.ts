@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
+// ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
 
 // ============================================
 // 🔧 GESTION CROSS-PLATFORM DES RÉPERTOIRES
@@ -66,7 +67,128 @@ const STORAGE_KEYS = {
   USER_CLUBS: '@yoroi_user_clubs',
   USER_GEAR: '@yoroi_user_gear',
   USER_BODY_STATUS: '@yoroi_user_body_status',
+  HYDRATION_LOG: '@yoroi_hydration_log',
+  HYDRATION_SETTINGS: '@yoroi_hydration_settings',
+  MOOD_LOG: '@yoroi_mood_log',
+  HOME_LAYOUT: '@yoroi_home_layout',
+  SELECTED_LOGO: '@yoroi_selected_logo',
 } as const;
+
+// ============================================
+// LOGOS PREMIUM - Personnalisation
+// ============================================
+
+export type LogoVariant = 'default' | 'logo_new' | 'logo1' | 'logo2' | 'logo3' | 'logo4' | 'logo5';
+
+export interface LogoOption {
+  id: LogoVariant;
+  name: string;
+  description: string;
+  isPremium: boolean;
+  image: any; // require() pour l'image
+}
+
+export const LOGO_OPTIONS: LogoOption[] = [
+  { id: 'default', name: 'Classique', description: 'Kanji original', isPremium: false, image: null },
+  { id: 'logo_new', name: 'Nouveau', description: 'Logo moderne', isPremium: false, image: null }, // TODO: Add logo images
+  { id: 'logo1', name: 'Ocean', description: 'Fond bleu, logo blanc', isPremium: false, image: null },
+  { id: 'logo2', name: 'Midnight', description: 'Fond noir, logo blanc', isPremium: true, image: null },
+  { id: 'logo3', name: 'Tiffany', description: 'Fond noir, logo turquoise', isPremium: true, image: null },
+  { id: 'logo4', name: 'Bolt', description: 'Fond noir, logo jaune', isPremium: true, image: null },
+  { id: 'logo5', name: 'Matrix', description: 'Fond noir, logo vert', isPremium: true, image: null },
+];
+
+export const getSelectedLogo = async (): Promise<LogoVariant> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.SELECTED_LOGO);
+    if (data) {
+      return data as LogoVariant;
+    }
+    return 'default';
+  } catch (error) {
+    console.error('Erreur chargement logo:', error);
+    return 'default';
+  }
+};
+
+export const saveSelectedLogo = async (logoId: LogoVariant): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_LOGO, logoId);
+  } catch (error) {
+    console.error('Erreur sauvegarde logo:', error);
+  }
+};
+
+// ============================================
+// HOME LAYOUT - Ordre des sections accueil
+// ============================================
+
+export type HomeSectionId =
+  | 'hero'
+  | 'composition'
+  | 'prediction'
+  | 'shortcuts'
+  | 'score_streak'
+  | 'quests'
+  | 'hydration'
+  | 'activity_chart'
+  | 'composition_chart'
+  | 'quote';
+
+export interface HomeSection {
+  id: HomeSectionId;
+  label: string;
+  visible: boolean;
+}
+
+export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
+  { id: 'hero', label: 'Poids actuel', visible: true },
+  { id: 'composition', label: 'Composition corporelle', visible: true },
+  { id: 'prediction', label: 'Prédiction', visible: true },
+  { id: 'shortcuts', label: 'Accès rapide', visible: true },
+  { id: 'score_streak', label: 'Mon parcours', visible: true },
+  { id: 'quests', label: 'Quêtes du jour', visible: true },
+  { id: 'hydration', label: 'Hydratation', visible: true },
+  { id: 'activity_chart', label: 'Activité semaine', visible: true },
+  { id: 'composition_chart', label: 'Graphique composition', visible: true },
+  { id: 'quote', label: 'Citation', visible: true },
+];
+
+export const getHomeLayout = async (): Promise<HomeSection[]> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.HOME_LAYOUT);
+    if (data) {
+      const saved = JSON.parse(data) as HomeSection[];
+      // Merge avec les sections par défaut pour ajouter les nouvelles sections
+      const merged = DEFAULT_HOME_SECTIONS.map(def => {
+        const found = saved.find(s => s.id === def.id);
+        return found || def;
+      });
+      // Réordonner selon l'ordre sauvegardé
+      const orderedIds = saved.map(s => s.id);
+      merged.sort((a, b) => {
+        const aIdx = orderedIds.indexOf(a.id);
+        const bIdx = orderedIds.indexOf(b.id);
+        if (aIdx === -1) return 1;
+        if (bIdx === -1) return -1;
+        return aIdx - bIdx;
+      });
+      return merged;
+    }
+    return DEFAULT_HOME_SECTIONS;
+  } catch (error) {
+    console.error('Erreur chargement home layout:', error);
+    return DEFAULT_HOME_SECTIONS;
+  }
+};
+
+export const saveHomeLayout = async (sections: HomeSection[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.HOME_LAYOUT, JSON.stringify(sections));
+  } catch (error) {
+    console.error('Erreur sauvegarde home layout:', error);
+  }
+};
 
 // ============================================
 // TYPES
@@ -76,9 +198,15 @@ export interface Measurement {
   id: string;
   date: string;
   weight: number;
+  // Niveau d'energie (1-5)
+  energyLevel?: number;
+  // Composition en % (les deux formats pour compatibilite)
   body_fat?: number;
+  bodyFat?: number;
   body_fat_kg?: number;
   muscle_mass?: number;
+  muscle?: number;
+  muscle_kg?: number;
   water?: number;
   water_kg?: number;
   visceral_fat?: number;
@@ -141,8 +269,8 @@ export interface UserSettings {
   target_date?: string;
   weight_unit: 'kg' | 'lbs';
   measurement_unit: 'cm' | 'in';
-  theme: 'light' | 'dark' | 'system';
-  colorTheme?: 'gold' | 'blue' | 'sakura';
+  // Système de thèmes
+  theme?: string;
   username?: string;
   reminder_enabled?: boolean;
   reminder_time?: string;
@@ -156,11 +284,23 @@ export interface UserSettings {
   goal?: 'lose_weight' | 'gain_muscle' | 'maintain' | 'improve_health' | 'lose' | 'gain';
   targetWeight?: number;
   onboardingCompleted?: boolean;
+  // Personnalisation citations
+  citationStyle?: 'motivation' | 'discipline' | 'mental' | 'warrior' | 'perseverance' | 'all';
+  // Avatar utilisateur
+  avatarUri?: string;
 }
 
 export interface UserBadge {
   badge_id: string;
   unlocked_at: string;
+}
+
+export interface MoodEntry {
+  id?: string;
+  date: string;
+  mood: string;
+  energy: number;
+  timestamp: string;
 }
 
 export interface BackupData {
@@ -478,16 +618,14 @@ export const getUserSettings = async (): Promise<UserSettings> => {
     return data ? JSON.parse(data) : {
       weight_unit: 'kg',
       measurement_unit: 'cm',
-      theme: 'dark',
-      colorTheme: 'gold',
+      theme: 'tiffany',
     };
   } catch (error) {
     console.error('❌ Erreur lecture paramètres:', error);
     return {
       weight_unit: 'kg',
       measurement_unit: 'cm',
-      theme: 'dark',
-      colorTheme: 'gold',
+      theme: 'tiffany',
     };
   }
 };
@@ -893,18 +1031,393 @@ export const importData = async (): Promise<boolean> => {
 
 export const resetAllData = async (): Promise<boolean> => {
   try {
+    // Supprimer d'abord les photos physiques
     await deleteAllPhotos();
-    await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.MEASUREMENTS),
-      AsyncStorage.removeItem(STORAGE_KEYS.WORKOUTS),
-      AsyncStorage.removeItem(STORAGE_KEYS.PHOTOS),
-      AsyncStorage.removeItem(STORAGE_KEYS.USER_SETTINGS),
-      AsyncStorage.removeItem(STORAGE_KEYS.USER_BADGES),
-    ]);
-    console.log('🗑️ Toutes les données ont été réinitialisées.');
+
+    // IMPORTANT: Supprimer aussi les données SQLite
+    try {
+      const { resetDatabase } = await import('./database');
+      await resetDatabase();
+      console.log('✅ Base SQLite réinitialisée');
+    } catch (dbError) {
+      console.warn('⚠️ Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+    }
+
+    // Récupérer TOUTES les clés AsyncStorage
+    const allKeys = await AsyncStorage.getAllKeys();
+
+    // Filtrer les clés YOROI (toutes les clés de l'app)
+    const yoroiKeys = allKeys.filter(key =>
+      key.startsWith('@yoroi') ||
+      key.startsWith('yoroi_') ||
+      key.includes('weight') ||
+      key.includes('training') ||
+      key.includes('hydration') ||
+      key.includes('composition') ||
+      key.includes('measurements') ||
+      key.includes('streak') ||
+      key.includes('xp') ||
+      key.includes('rank') ||
+      key.includes('badges') ||
+      key.includes('quests') ||
+      key.includes('avatar') ||
+      key.includes('theme') ||
+      key.includes('settings') ||
+      key.includes('profile') ||
+      key.includes('photos') ||
+      key.includes('clubs') ||
+      key.includes('gear') ||
+      key.includes('body') ||
+      key.includes('mood') ||
+      key.includes('home') ||
+      key.includes('onboarding') ||
+      key.includes('fasting') ||
+      key.includes('gamification') ||
+      key.includes('level') ||
+      key.includes('points')
+    );
+
+    // Supprimer toutes les clés trouvées
+    if (yoroiKeys.length > 0) {
+      await AsyncStorage.multiRemove(yoroiKeys);
+    }
+
+    console.log('✅ Toutes les données supprimées:', yoroiKeys.length, 'clés');
+    console.log('🔑 Clés supprimées:', yoroiKeys);
+
     return true;
   } catch (error) {
     console.error('❌ Erreur réinitialisation:', error);
     return false;
   }
 };
+
+// Fonction de debug pour voir toutes les données restantes
+export const debugShowAllData = async (): Promise<void> => {
+  try {
+    const allKeys = await AsyncStorage.getAllKeys();
+    console.log('📦 Clés restantes:', allKeys.length);
+
+    for (const key of allKeys) {
+      const value = await AsyncStorage.getItem(key);
+      console.log(`  ${key}:`, value?.substring(0, 100));
+    }
+  } catch (error) {
+    console.error('❌ Erreur debug:', error);
+  }
+};
+
+// ============================================
+// GESTION DE L'HYDRATATION
+// ============================================
+
+export interface HydrationEntry {
+  id: string;
+  date: string; // Format YYYY-MM-DD
+  amount: number; // en ml
+  timestamp: string; // ISO timestamp
+}
+
+export interface HydrationSettings {
+  dailyGoal: number; // en litres (par défaut calculé: poids × 0.033)
+  customGoal?: number; // objectif personnalisé si défini
+  reminderEnabled: boolean;
+  reminderInterval: number; // en minutes (par défaut 120)
+  trainingDayBonus: number; // en litres (par défaut 0.5)
+}
+
+export interface HydrationDayData {
+  date: string;
+  totalAmount: number; // en ml
+  goal: number; // en ml
+  entries: HydrationEntry[];
+  isTrainingDay: boolean;
+}
+
+/**
+ * Calcule l'objectif d'hydratation recommandé basé sur le poids
+ * Formule: poids × 0.033 = litres recommandés
+ */
+export const calculateRecommendedHydration = (weightKg: number): number => {
+  const liters = weightKg * 0.033;
+  // Arrondir à 0.5L près
+  return Math.round(liters * 2) / 2;
+};
+
+/**
+ * Obtient les paramètres d'hydratation
+ */
+export const getHydrationSettings = async (): Promise<HydrationSettings> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
+    if (data) {
+      return JSON.parse(data);
+    }
+    // Paramètres par défaut
+    return {
+      dailyGoal: 2.5, // Valeur par défaut, sera recalculée avec le poids
+      reminderEnabled: false,
+      reminderInterval: 120, // 2 heures
+      trainingDayBonus: 0.5,
+    };
+  } catch (error) {
+    console.error('❌ Erreur lecture paramètres hydratation:', error);
+    return {
+      dailyGoal: 2.5,
+      reminderEnabled: false,
+      reminderInterval: 120,
+      trainingDayBonus: 0.5,
+    };
+  }
+};
+
+/**
+ * Sauvegarde les paramètres d'hydratation
+ */
+export const saveHydrationSettings = async (settings: Partial<HydrationSettings>): Promise<boolean> => {
+  try {
+    const currentSettings = await getHydrationSettings();
+    const newSettings = { ...currentSettings, ...settings };
+    await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, JSON.stringify(newSettings));
+    console.log('✅ Paramètres hydratation sauvegardés');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres hydratation:', error);
+    return false;
+  }
+};
+
+/**
+ * Obtient toutes les entrées d'hydratation
+ */
+export const getAllHydrationEntries = async (): Promise<HydrationEntry[]> => {
+  try {
+    const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_LOG);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('❌ Erreur lecture hydratation:', error);
+    return [];
+  }
+};
+
+/**
+ * Obtient les entrées d'hydratation pour une date donnée
+ */
+export const getHydrationByDate = async (date: string): Promise<HydrationEntry[]> => {
+  const allEntries = await getAllHydrationEntries();
+  return allEntries.filter(e => e.date === date);
+};
+
+/**
+ * Obtient le total d'hydratation pour une date donnée (en ml)
+ */
+export const getTodayHydration = async (): Promise<number> => {
+  const today = new Date().toISOString().split('T')[0];
+  const entries = await getHydrationByDate(today);
+  return entries.reduce((sum, e) => sum + e.amount, 0);
+};
+
+/**
+ * Ajoute une entrée d'hydratation
+ */
+export const addHydrationEntry = async (amount: number, date?: string): Promise<HydrationEntry> => {
+  const entries = await getAllHydrationEntries();
+  const now = new Date();
+
+  const newEntry: HydrationEntry = {
+    id: generateId(),
+    date: date || now.toISOString().split('T')[0],
+    amount,
+    timestamp: now.toISOString(),
+  };
+
+  entries.push(newEntry);
+  await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(entries));
+  console.log('💧 Hydratation ajoutée:', amount, 'ml');
+  return newEntry;
+};
+
+/**
+ * Supprime une entrée d'hydratation
+ */
+export const deleteHydrationEntry = async (id: string): Promise<boolean> => {
+  try {
+    const entries = await getAllHydrationEntries();
+    const filtered = entries.filter(e => e.id !== id);
+    await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(filtered));
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur suppression hydratation:', error);
+    return false;
+  }
+};
+
+/**
+ * Obtient les données d'hydratation sur une période (en jours)
+ */
+export const getHydrationHistory = async (days: number): Promise<HydrationDayData[]> => {
+  const allEntries = await getAllHydrationEntries();
+  const settings = await getHydrationSettings();
+  const workouts = await getAllWorkouts();
+
+  const result: HydrationDayData[] = [];
+  const today = new Date();
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    const dayEntries = allEntries.filter(e => e.date === dateStr);
+    const isTrainingDay = workouts.some(w => w.date === dateStr);
+
+    // Objectif ajusté si jour d'entraînement
+    const baseGoal = (settings.customGoal || settings.dailyGoal) * 1000; // Convertir en ml
+    const goal = isTrainingDay ? baseGoal + (settings.trainingDayBonus * 1000) : baseGoal;
+
+    result.push({
+      date: dateStr,
+      totalAmount: dayEntries.reduce((sum, e) => sum + e.amount, 0),
+      goal,
+      entries: dayEntries,
+      isTrainingDay,
+    });
+  }
+
+  return result;
+};
+
+/**
+ * Calcule la moyenne d'hydratation sur N jours
+ */
+export const getAverageHydration = async (days: number): Promise<number> => {
+  const history = await getHydrationHistory(days);
+  if (history.length === 0) return 0;
+
+  const total = history.reduce((sum, day) => sum + day.totalAmount, 0);
+  return total / history.length;
+};
+
+/**
+ * Analyse la corrélation hydratation/poids (calcul local)
+ * Retourne l'impact moyen sur le poids les jours de bonne hydratation
+ */
+export const analyzeHydrationWeightCorrelation = async (): Promise<{
+  avgWeightLossHighHydration: number;
+  avgWeightLossLowHydration: number;
+  recommendation: string;
+} | null> => {
+  try {
+    const hydrationHistory = await getHydrationHistory(30);
+    const measurements = await getAllMeasurements();
+
+    if (measurements.length < 7 || hydrationHistory.length < 7) {
+      return null;
+    }
+
+    const settings = await getHydrationSettings();
+    const goalMl = (settings.customGoal || settings.dailyGoal) * 1000;
+
+    // Jours avec bonne hydratation (>= 80% objectif)
+    const highHydrationDays = hydrationHistory.filter(d => d.totalAmount >= goalMl * 0.8);
+    // Jours avec faible hydratation (< 80% objectif)
+    const lowHydrationDays = hydrationHistory.filter(d => d.totalAmount < goalMl * 0.8 && d.totalAmount > 0);
+
+    if (highHydrationDays.length < 3 || lowHydrationDays.length < 3) {
+      return null;
+    }
+
+    // Calculer la variation de poids moyenne
+    const sortedMeasurements = [...measurements].sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    let weightChangeHigh = 0;
+    let countHigh = 0;
+    let weightChangeLow = 0;
+    let countLow = 0;
+
+    for (let i = 1; i < sortedMeasurements.length; i++) {
+      const date = sortedMeasurements[i].date;
+      const weightChange = sortedMeasurements[i].weight - sortedMeasurements[i - 1].weight;
+
+      const hydrationDay = hydrationHistory.find(h => h.date === date);
+      if (hydrationDay) {
+        if (hydrationDay.totalAmount >= goalMl * 0.8) {
+          weightChangeHigh += weightChange;
+          countHigh++;
+        } else if (hydrationDay.totalAmount > 0) {
+          weightChangeLow += weightChange;
+          countLow++;
+        }
+      }
+    }
+
+    const avgHigh = countHigh > 0 ? weightChangeHigh / countHigh : 0;
+    const avgLow = countLow > 0 ? weightChangeLow / countLow : 0;
+
+    let recommendation = '';
+    if (avgHigh < avgLow) {
+      const diff = Math.abs(avgLow - avgHigh).toFixed(2);
+      recommendation = `Les jours où tu bois plus de ${(goalMl * 0.8 / 1000).toFixed(1)}L, tu perds en moyenne ${diff} kg de plus !`;
+    } else {
+      recommendation = 'Continue à bien t\'hydrater pour optimiser ta perte de poids.';
+    }
+
+    return {
+      avgWeightLossHighHydration: avgHigh,
+      avgWeightLossLowHydration: avgLow,
+      recommendation,
+    };
+  } catch (error) {
+    console.error('❌ Erreur analyse corrélation:', error);
+    return null;
+  }
+};
+
+
+// ============================================
+// GESTION DES RESSENTIS (MOOD)
+// ============================================
+
+export const saveMood = async (moodData: MoodEntry): Promise<boolean> => {
+  try {
+    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    const newMood: MoodEntry = {
+      ...moodData,
+      id: generateId(),
+    };
+    moods.push(newMood);
+    return await saveData(STORAGE_KEYS.MOOD_LOG, moods);
+  } catch (error) {
+    console.error("❌ Erreur sauvegarde mood:", error);
+    return false;
+  }
+};
+
+export const getMoods = async (days?: number): Promise<MoodEntry[]> => {
+  try {
+    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    if (!days) return moods;
+    
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    return moods.filter(m => new Date(m.date) >= cutoffDate);
+  } catch (error) {
+    console.error("❌ Erreur récupération moods:", error);
+    return [];
+  }
+};
+
+export const getTodayMood = async (): Promise<MoodEntry | null> => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const moods = await getData<MoodEntry>(STORAGE_KEYS.MOOD_LOG);
+    return moods.find(m => m.date === today) || null;
+  } catch (error) {
+    console.error("❌ Erreur récupération mood du jour:", error);
+    return null;
+  }
+};
+
