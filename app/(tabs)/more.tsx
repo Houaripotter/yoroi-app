@@ -28,6 +28,17 @@ import {
   Share2,
   FileText,
   LucideIcon,
+  // NOUVEAUX OUTILS
+  Utensils,
+  Timer,
+  Calculator,
+  Apple,
+  Lightbulb,
+  Activity,
+  Heart,
+  Focus,
+  Palette,
+  Sparkles,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -50,7 +61,10 @@ interface MenuItem {
   isComingSoon?: boolean;
 }
 
-const MENU_ITEMS: MenuItem[] = [
+// ============================================
+// SECTION 1 - MON PROFIL
+// ============================================
+const PROFILE_ITEMS: MenuItem[] = [
   {
     id: 'profile',
     label: 'Mon Profil Guerrier',
@@ -68,12 +82,42 @@ const MENU_ITEMS: MenuItem[] = [
     isGold: true,
   },
   {
+    id: 'appearance',
+    label: 'Apparence & Thèmes',
+    sublabel: 'Personnalise ton expérience',
+    Icon: Palette,
+    route: '/appearance',
+    isGold: true,
+  },
+  {
+    id: 'avatars',
+    label: 'Galerie d\'Avatars',
+    sublabel: 'Débloque de nouveaux guerriers',
+    Icon: Sparkles,
+    route: '/avatar-gallery',
+    isGold: true,
+  },
+  {
     id: 'share',
     label: 'Partager ma progression',
     sublabel: 'Instagram, Snapchat, Stories',
     Icon: Share2,
+    route: '/social-card',
     isGold: true,
-    isComingSoon: true,
+  },
+];
+
+// ============================================
+// SECTION 2 - OUTILS
+// ============================================
+const TOOLS_ITEMS: MenuItem[] = [
+  {
+    id: 'infirmary',
+    label: 'Infirmerie',
+    sublabel: '🩺 YOROI MEDIC - Suivi blessures',
+    Icon: Activity,
+    route: '/infirmary',
+    isGold: true,
   },
   {
     id: 'measurements',
@@ -84,11 +128,65 @@ const MENU_ITEMS: MenuItem[] = [
     isGold: true,
   },
   {
+    id: 'fasting',
+    label: 'Jeûne / OMAD',
+    sublabel: 'Intermittent fasting',
+    Icon: Utensils,
+    route: '/fasting',
+    isGold: true,
+  },
+  {
+    id: 'timer',
+    label: 'Timer Multi-Modes',
+    sublabel: 'Muscu, JJB, MMA, Tabata...',
+    Icon: Timer,
+    route: '/timer',
+    isGold: true,
+  },
+  {
+    id: 'calculator',
+    label: 'Calculateurs',
+    sublabel: 'BMR, TDEE, IMC, Macros',
+    Icon: Calculator,
+    route: '/calculators',
+    isGold: true,
+  },
+  {
+    id: 'nutrition',
+    label: 'Plan Nutritionnel',
+    sublabel: 'Calories et macros',
+    Icon: Apple,
+    route: '/nutrition-plan',
+    isGold: true,
+  },
+  {
+    id: 'ideas',
+    label: 'Boîte à Idées',
+    sublabel: 'Suggérer des améliorations',
+    Icon: Lightbulb,
+    route: '/ideas',
+    isGold: true,
+  },
+];
+
+// ============================================
+// SECTION 3 - COMMUNAUTÉ
+// ============================================
+const COMMUNITY_ITEMS: MenuItem[] = [
+  {
     id: 'clubs',
-    label: 'Mes Clubs',
-    sublabel: 'Salles et clubs de sport',
+    label: 'Mes Clubs & Coachs',
+    sublabel: 'Salles et partenaires',
     Icon: Building2,
-    route: '/clubs',
+    route: '/partners',
+    isGold: true,
+  },
+  {
+    id: 'health-pros',
+    label: 'Professionnels de Santé',
+    sublabel: 'Kinés, nutritionnistes',
+    Icon: Activity,
+    route: '/health-professionals',
     isGold: true,
   },
   {
@@ -101,10 +199,14 @@ const MENU_ITEMS: MenuItem[] = [
   },
 ];
 
+// ============================================
+// SECTION 4 - PARAMÈTRES
+// ============================================
 const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'settings',
     label: 'Reglages',
+    sublabel: 'Thèmes, notifications, santé',
     Icon: Settings,
     route: '/settings',
     isGold: false,
@@ -120,6 +222,7 @@ const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'export',
     label: 'Exporter mes donnees',
+    sublabel: 'JSON ou CSV',
     Icon: Download,
     onPress: () => {},
     isGold: false,
@@ -127,6 +230,7 @@ const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'import',
     label: 'Importer des donnees',
+    sublabel: 'Restaurer un backup',
     Icon: Upload,
     onPress: () => {},
     isGold: false,
@@ -134,6 +238,7 @@ const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'rate',
     label: "Noter l'App",
+    sublabel: 'Sur l\'App Store',
     Icon: Star,
     onPress: () => {},
     isGold: false,
@@ -141,6 +246,7 @@ const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'contact',
     label: 'Nous Contacter',
+    sublabel: 'Support et suggestions',
     Icon: MessageCircle,
     onPress: () => {},
     isGold: false,
@@ -318,15 +424,35 @@ export default function MoreScreen() {
           <Text style={[styles.title, { color: colors.textPrimary }]}>Plus</Text>
         </View>
 
-        {/* MENU PRINCIPAL */}
+        {/* SECTION 1 - MON PROFIL */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MON PROFIL</Text>
         <View style={styles.section}>
-          {MENU_ITEMS.map(renderMenuItem)}
+          {PROFILE_ITEMS.map(renderMenuItem)}
         </View>
 
         {/* SEPARATOR */}
         <View style={[styles.separator, { backgroundColor: colors.border }]} />
 
-        {/* SETTINGS */}
+        {/* SECTION 2 - OUTILS */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>OUTILS</Text>
+        <View style={styles.section}>
+          {TOOLS_ITEMS.map(renderMenuItem)}
+        </View>
+
+        {/* SEPARATOR */}
+        <View style={[styles.separator, { backgroundColor: colors.border }]} />
+
+        {/* SECTION 3 - COMMUNAUTÉ */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMMUNAUTÉ</Text>
+        <View style={styles.section}>
+          {COMMUNITY_ITEMS.map(renderMenuItem)}
+        </View>
+
+        {/* SEPARATOR */}
+        <View style={[styles.separator, { backgroundColor: colors.border }]} />
+
+        {/* SECTION 4 - PARAMÈTRES */}
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PARAMÈTRES</Text>
         <View style={styles.section}>
           {SETTINGS_ITEMS.map(renderMenuItem)}
         </View>
@@ -371,6 +497,13 @@ const styles = StyleSheet.create({
   },
 
   // SECTION
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 12,
+    marginTop: 4,
+  },
   section: {
     gap: 4,
   },
