@@ -17,7 +17,7 @@ export const RANKS: Rank[] = [
     id: 'recrue',
     name: 'Recrue',
     nameJp: '新兵',
-    icon: '🎯',
+    icon: 'target',
     minDays: 0,
     color: '#6B7280',
     description: 'Tu commences ton voyage',
@@ -26,7 +26,7 @@ export const RANKS: Rank[] = [
     id: 'ashigaru',
     name: 'Ashigaru',
     nameJp: '足軽',
-    icon: '⚔️',
+    icon: 'swords',
     minDays: 7,
     color: '#3B82F6',
     description: "Soldat d'infanterie",
@@ -35,7 +35,7 @@ export const RANKS: Rank[] = [
     id: 'samurai',
     name: 'Samouraï',
     nameJp: '侍',
-    icon: '🗡️',
+    icon: 'sword',
     minDays: 30,
     color: '#D4AF37',
     description: "Guerrier d'élite",
@@ -44,16 +44,25 @@ export const RANKS: Rank[] = [
     id: 'ronin',
     name: 'Rōnin',
     nameJp: '浪人',
-    icon: '🌙',
+    icon: 'moon',
     minDays: 90,
     color: '#A855F7',
     description: 'Maître sans maître',
   },
   {
+    id: 'sensei',
+    name: 'Sensei',
+    nameJp: '先生',
+    icon: 'graduation-cap',
+    minDays: 120,
+    color: '#EC4899',
+    description: 'Maître et guide',
+  },
+  {
     id: 'shogun',
     name: 'Shōgun',
     nameJp: '将軍',
-    icon: '👑',
+    icon: 'crown',
     minDays: 180,
     color: '#FFD700',
     description: 'Commandant suprême',
@@ -62,7 +71,7 @@ export const RANKS: Rank[] = [
     id: 'daimyo',
     name: 'Daimyō',
     nameJp: '大名',
-    icon: '🏯',
+    icon: 'castle',
     minDays: 365,
     color: '#DC2626',
     description: 'Seigneur légendaire',
@@ -87,6 +96,20 @@ export const getDaysToNextRank = (streakDays: number): number => {
   const nextRank = getNextRank(streakDays);
   if (!nextRank) return 0;
   return nextRank.minDays - streakDays;
+};
+
+// Obtenir l'avatar correspondant au rang
+export const getAvatarForRank = (rankId: string) => {
+  const avatarMap: Record<string, any> = {
+    recrue: require('@/assets/avatars/samurai/samurai_neutral.png'),
+    ashigaru: require('@/assets/avatars/samurai/samurai_neutral.png'),
+    samurai: require('@/assets/avatars/samurai/samurai_strong.png'),
+    ronin: require('@/assets/avatars/samurai/samurai_tired.png'),
+    sensei: require('@/assets/avatars/samurai/samurai_strong.png'),
+    shogun: require('@/assets/avatars/samurai/samurai_legendary.png'),
+    daimyo: require('@/assets/avatars/samurai/samurai_legendary.png'),
+  };
+  return avatarMap[rankId] || avatarMap.recrue;
 };
 
 // Progression vers le prochain rang (en %)

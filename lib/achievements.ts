@@ -2,10 +2,31 @@
 // ⚔️ YOROI - SYSTÈME DE BADGES/ACHIEVEMENTS
 // ============================================
 
+import type { LucideIcon } from 'lucide-react-native';
+import {
+  Award,
+  Medal,
+  Target,
+  Flame,
+  Calendar,
+  Dumbbell,
+  Infinity,
+  Sunrise,
+  Activity,
+  Bot,
+  Drama,
+  Sun,
+  Brain,
+  Camera,
+  BarChart3,
+  Droplet,
+  Swords,
+} from 'lucide-react-native';
+
 export interface Achievement {
   id: string;
   name: string;
-  icon: string;
+  iconComponent: LucideIcon;
   description: string;
   category: 'weight' | 'streak' | 'sport' | 'special';
   condition: string;
@@ -18,39 +39,39 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_kg',
     name: 'Premier Sang',
-    icon: '🩸',
-    description: 'Premier kilo conquis',
+    iconComponent: Droplet,
+    description: 'Premier kilo perdu',
     category: 'weight',
     condition: 'weightLost >= 1',
   },
   {
     id: 'five_kg',
     name: 'Guerrier',
-    icon: '⚔️',
-    description: '5 kg conquis',
+    iconComponent: Swords,
+    description: '5 kg perdus',
     category: 'weight',
     condition: 'weightLost >= 5',
   },
   {
     id: 'ten_kg',
     name: 'Vétéran',
-    icon: '🎖️',
-    description: '10 kg conquis',
+    iconComponent: Medal,
+    description: '10 kg perdus',
     category: 'weight',
     condition: 'weightLost >= 10',
   },
   {
     id: 'twenty_kg',
     name: 'Légende',
-    icon: '🏆',
-    description: '20 kg conquis',
+    iconComponent: Award,
+    description: '20 kg perdus',
     category: 'weight',
     condition: 'weightLost >= 20',
   },
   {
     id: 'goal_reached',
     name: 'Mission Accomplie',
-    icon: '🎯',
+    iconComponent: Target,
     description: 'Objectif de poids atteint',
     category: 'weight',
     condition: 'goalReached',
@@ -60,7 +81,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'week_streak',
     name: 'Discipline',
-    icon: '📅',
+    iconComponent: Calendar,
     description: '7 jours consécutifs',
     category: 'streak',
     condition: 'streak >= 7',
@@ -68,7 +89,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'month_streak',
     name: 'Détermination',
-    icon: '💪',
+    iconComponent: Dumbbell,
     description: '30 jours consécutifs',
     category: 'streak',
     condition: 'streak >= 30',
@@ -76,7 +97,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'quarter_streak',
     name: 'Implacable',
-    icon: '🔥',
+    iconComponent: Flame,
     description: '90 jours consécutifs',
     category: 'streak',
     condition: 'streak >= 90',
@@ -84,7 +105,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'year_streak',
     name: 'Immortel',
-    icon: '♾️',
+    iconComponent: Infinity,
     description: '365 jours consécutifs',
     category: 'streak',
     condition: 'streak >= 365',
@@ -94,7 +115,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'first_training',
     name: 'Éveil',
-    icon: '🌅',
+    iconComponent: Sunrise,
     description: 'Premier entraînement',
     category: 'sport',
     condition: 'trainings >= 1',
@@ -102,7 +123,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'ten_trainings',
     name: 'Régulier',
-    icon: '🏃',
+    iconComponent: Activity,
     description: '10 entraînements',
     category: 'sport',
     condition: 'trainings >= 10',
@@ -110,7 +131,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'fifty_trainings',
     name: 'Athlète',
-    icon: '🏅',
+    iconComponent: Medal,
     description: '50 entraînements',
     category: 'sport',
     condition: 'trainings >= 50',
@@ -118,7 +139,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'hundred_trainings',
     name: 'Machine',
-    icon: '🤖',
+    iconComponent: Bot,
     description: '100 entraînements',
     category: 'sport',
     condition: 'trainings >= 100',
@@ -126,7 +147,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'multi_sport',
     name: 'Polyvalent',
-    icon: '🎭',
+    iconComponent: Drama,
     description: '3 sports différents pratiqués',
     category: 'sport',
     condition: 'sportsCount >= 3',
@@ -136,7 +157,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'early_bird',
     name: 'Lève-tôt',
-    icon: '🌄',
+    iconComponent: Sun,
     description: 'Pesée avant 7h',
     category: 'special',
     condition: 'earlyWeighing',
@@ -144,7 +165,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'night_owl',
     name: 'Noctambule',
-    icon: '🦉',
+    iconComponent: Brain,
     description: 'Entraînement après 22h',
     category: 'special',
     condition: 'lateTraining',
@@ -152,7 +173,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'photo_warrior',
     name: 'Miroir',
-    icon: '📸',
+    iconComponent: Camera,
     description: '10 photos de progression',
     category: 'special',
     condition: 'photos >= 10',
@@ -160,7 +181,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'consistency',
     name: 'Régularité',
-    icon: '📊',
+    iconComponent: BarChart3,
     description: 'Pesée chaque jour pendant 30j',
     category: 'special',
     condition: 'dailyWeighing30',
