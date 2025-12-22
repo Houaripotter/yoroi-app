@@ -289,7 +289,7 @@ export const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
             transform: [{ scale: finalScale }],
             shadowColor: rarityColors.border,
             shadowOpacity: rarity === 'LEGENDARY' || rarity === 'SECRET' ? 0.6 : 0.3,
-            backgroundColor: colors.backgroundCard, // Adapté au thème
+            backgroundColor: '#FFFFFF', // Fond blanc pour cacher transition noir
           },
         ]}
       >

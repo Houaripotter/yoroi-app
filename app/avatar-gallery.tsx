@@ -100,14 +100,12 @@ export default function AvatarGalleryScreen() {
       return;
     }
 
+    // Rediriger vers la page de détail du pack
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      await avatarGalleryService.setSelectedPack(pack.id);
-      setSelectedPackState(pack.id);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.push(`/avatar-pack-detail?packId=${pack.id}`);
     } catch (error) {
-      console.error('[AvatarGallery] Erreur sélection:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner cet avatar');
+      console.error('[AvatarGallery] Erreur navigation:', error);
     }
   };
 
@@ -224,20 +222,27 @@ export default function AvatarGalleryScreen() {
                 onPress={() => handlePackSelect(pack)}
                 activeOpacity={0.7}
               >
-                {/* Image de prévisualisation */}
-                <View style={[
-                  styles.imageContainer,
-                  { backgroundColor: colors.backgroundElevated }
-                ]}>
-                  {images?.neutral ? (
-                    <Image
-                      source={images.neutral}
-                      style={styles.packImage}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Text style={styles.packIcon}>{pack.icon}</Text>
-                  )}
+                {/* Miniatures des 5 avatars */}
+                <View style={styles.avatarsRow}>
+                  {['legendary', 'strong', 'neutral', 'tired', 'down'].map((state) => (
+                    <View
+                      key={state}
+                      style={[
+                        styles.miniAvatar,
+                        { backgroundColor: '#FFFFFF' }
+                      ]}
+                    >
+                      {images?.[state as keyof typeof images] ? (
+                        <Image
+                          source={images[state as keyof typeof images]}
+                          style={styles.miniAvatarImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Text style={styles.miniAvatarIcon}>{pack.icon}</Text>
+                      )}
+                    </View>
+                  ))}
                 </View>
 
                 {/* Infos */}
@@ -378,21 +383,25 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     position: 'relative',
   },
-  imageContainer: {
-    width: '100%',
-    height: 120,
+  avatarsRow: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: SPACING.xs,
+  },
+  miniAvatar: {
+    flex: 1,
+    aspectRatio: 3/4,
+    borderRadius: 8,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.xs,
-    borderRadius: 12,
-    overflow: 'hidden',
   },
-  packImage: {
+  miniAvatarImage: {
     width: '100%',
     height: '100%',
   },
-  packIcon: {
-    fontSize: 60,
+  miniAvatarIcon: {
+    fontSize: 20,
   },
   packInfo: {
     marginTop: SPACING.xs,
