@@ -9,7 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Platform,
+  Image,
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -19,24 +19,28 @@ import {
   Sun,
   Moon,
   Smartphone,
-  CircleDot,
-  Square,
   Crown,
   Lock,
   ArrowLeft,
+  Image as ImageIcon,
+  Check,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { themeColors, ThemeMode } from '@/constants/themes';
-import { appearanceService, WARRIOR_THEMES, AvatarFormat } from '@/lib/appearanceService';
+import { ThemeMode } from '@/constants/themes';
+import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
+import { LOGO_OPTIONS, getSelectedLogo, setSelectedLogo } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-import { getProfile, getWeights, getTrainings, getPhotos } from '@/lib/database';
+import { getWeights, getTrainings, getPhotos } from '@/lib/database';
 import { POINTS_ACTIONS } from '@/lib/gamification';
 
+type Tab = 'themes' | 'logos';
+
 export default function AppearanceScreen() {
-  const { colors, themeColor, themeMode, setThemeColor, setThemeMode, isDark } = useTheme();
-  const [avatarFormat, setAvatarFormatState] = useState<AvatarFormat>('circle');
+  const { colors, themeColor, themeMode, setThemeColor, setThemeMode } = useTheme();
+  const [activeTab, setActiveTab] = useState<Tab>('themes');
   const [userXP, setUserXP] = useState(0);
+  const [selectedLogoId, setSelectedLogoId] = useState<string>('default');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,9 +49,9 @@ export default function AppearanceScreen() {
 
   const loadSettings = async () => {
     try {
-      // Charger les paramètres d'apparence
-      const settings = await appearanceService.loadSettings();
-      setAvatarFormatState(settings.avatarFormat);
+      // Charger le logo sélectionné
+      const logoId = await getSelectedLogo();
+      setSelectedLogoId(logoId);
 
       // Calculer l'XP basé sur l'activité de l'utilisateur
       const [weights, trainings, photos] = await Promise.all([
@@ -103,13 +107,15 @@ export default function AppearanceScreen() {
     }
   };
 
-  const handleAvatarFormatChange = async (format: AvatarFormat) => {
+  const handleLogoChange = async (logoId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setAvatarFormatState(format);
-      await appearanceService.setAvatarFormat(format);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      await setSelectedLogo(logoId as any);
+      setSelectedLogoId(logoId);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[Appearance] Erreur changement format:', error);
+      console.error('[Appearance] Erreur changement logo:', error);
+      Alert.alert('Erreur', 'Impossible de changer le logo');
     }
   };
 
@@ -159,7 +165,7 @@ export default function AppearanceScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Apparence & Thèmes
+                Apparence
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                 Personnalisez votre expérience
@@ -168,76 +174,11 @@ export default function AppearanceScreen() {
           </View>
         </View>
 
-        {/* Section: Thèmes Guerriers */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Thèmes Guerriers
-          </Text>
-          <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
-            {unlockedThemes.length}/{WARRIOR_THEMES.length} débloqués • {userXP} XP
-          </Text>
-
-          <View style={styles.themesGrid}>
-            {WARRIOR_THEMES.map((theme) => {
-              const isUnlocked = appearanceService.isWarriorThemeUnlocked(theme.id, userXP);
-              const isActive = currentWarriorTheme?.id === theme.id;
-
-              return (
-                <TouchableOpacity
-                  key={theme.id}
-                  style={[
-                    styles.themeCard,
-                    { backgroundColor: colors.backgroundCard },
-                    isActive && {
-                      borderColor: colors.accent,
-                      borderWidth: 2,
-                    },
-                    !isUnlocked && { opacity: 0.5 },
-                  ]}
-                  onPress={() => handleThemeChange(theme.id)}
-                  disabled={!isUnlocked}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.themeHeader}>
-                    <Text style={styles.themeIcon}>{theme.icon}</Text>
-                    {!isUnlocked && (
-                      <Lock size={14} color={colors.textMuted} style={styles.lockIcon} />
-                    )}
-                  </View>
-                  <Text style={[styles.themeName, { color: colors.textPrimary }]}>
-                    {theme.name}
-                  </Text>
-                  <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
-                    {isUnlocked ? theme.description : `${theme.unlockXP} XP`}
-                  </Text>
-                  {isActive && (
-                    <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
-                      <Text style={styles.activeText}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Prochain déblocage */}
-          {nextTheme && (
-            <View style={[styles.nextUnlock, { backgroundColor: colors.backgroundElevated }]}>
-              <Crown size={16} color={colors.accent} />
-              <Text style={[styles.nextUnlockText, { color: colors.textSecondary }]}>
-                Prochain: {nextTheme.name} {nextTheme.icon} dans{' '}
-                {nextTheme.unlockXP - userXP} XP
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Section: Mode Clair/Sombre */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+        {/* Mode d'affichage - TOUT EN HAUT */}
+        <View style={[styles.modeSection, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.modeSectionTitle, { color: colors.textPrimary }]}>
             Mode d'affichage
           </Text>
-
           <View style={styles.modesContainer}>
             {[
               { mode: 'dark' as ThemeMode, label: 'Sombre', icon: Moon },
@@ -250,7 +191,7 @@ export default function AppearanceScreen() {
                   key={mode}
                   style={[
                     styles.modeButton,
-                    { backgroundColor: colors.backgroundCard },
+                    { backgroundColor: colors.backgroundElevated },
                     isActive && { backgroundColor: colors.accent },
                   ]}
                   onPress={() => handleModeChange(mode)}
@@ -274,54 +215,188 @@ export default function AppearanceScreen() {
           </View>
         </View>
 
-        {/* Section: Format Avatar */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Format d'avatar
-          </Text>
+        {/* Onglets Thèmes / Logos */}
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              { backgroundColor: colors.backgroundCard },
+              activeTab === 'themes' && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setActiveTab('themes');
+            }}
+            activeOpacity={0.7}
+          >
+            <Palette size={18} color={activeTab === 'themes' ? '#FFFFFF' : colors.textPrimary} />
+            <Text
+              style={[
+                styles.tabLabel,
+                { color: activeTab === 'themes' ? '#FFFFFF' : colors.textPrimary },
+              ]}
+            >
+              Thèmes
+            </Text>
+          </TouchableOpacity>
 
-          <View style={styles.formatContainer}>
-            {[
-              { format: 'circle' as AvatarFormat, label: 'Cercle', icon: CircleDot },
-              { format: 'rounded' as AvatarFormat, label: 'Arrondi', icon: Square },
-            ].map(({ format, label, icon: Icon }) => {
-              const isActive = avatarFormat === format;
-              return (
-                <TouchableOpacity
-                  key={format}
-                  style={[
-                    styles.formatButton,
-                    { backgroundColor: colors.backgroundCard },
-                    isActive && { backgroundColor: colors.accent },
-                  ]}
-                  onPress={() => handleAvatarFormatChange(format)}
-                  activeOpacity={0.7}
-                >
-                  <Icon
-                    size={24}
-                    color={isActive ? '#FFFFFF' : colors.textPrimary}
-                  />
-                  <Text
-                    style={[
-                      styles.formatLabel,
-                      { color: isActive ? '#FFFFFF' : colors.textPrimary },
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              { backgroundColor: colors.backgroundCard },
+              activeTab === 'logos' && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setActiveTab('logos');
+            }}
+            activeOpacity={0.7}
+          >
+            <ImageIcon size={18} color={activeTab === 'logos' ? '#FFFFFF' : colors.textPrimary} />
+            <Text
+              style={[
+                styles.tabLabel,
+                { color: activeTab === 'logos' ? '#FFFFFF' : colors.textPrimary },
+              ]}
+            >
+              Logos
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Info iOS */}
-        {Platform.OS === 'ios' && (
-          <View style={[styles.iosInfo, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.iosInfoText, { color: colors.textMuted }]}>
-              💡 Les icônes alternatives d'app seront disponibles dans une prochaine version
-            </Text>
-          </View>
+        {/* Contenu selon l'onglet actif */}
+        {activeTab === 'themes' ? (
+          <>
+            {/* Section: Thèmes Guerriers */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Thèmes Guerriers
+              </Text>
+              <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+                {unlockedThemes.length}/{WARRIOR_THEMES.length} débloqués • {userXP} XP
+              </Text>
+
+              <View style={styles.themesGrid}>
+                {WARRIOR_THEMES.map((theme) => {
+                  const isUnlocked = appearanceService.isWarriorThemeUnlocked(theme.id, userXP);
+                  const isActive = currentWarriorTheme?.id === theme.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={theme.id}
+                      style={[
+                        styles.themeCard,
+                        { backgroundColor: colors.backgroundCard },
+                        isActive && {
+                          borderColor: colors.accent,
+                          borderWidth: 2,
+                        },
+                        !isUnlocked && { opacity: 0.5 },
+                      ]}
+                      onPress={() => handleThemeChange(theme.id)}
+                      disabled={!isUnlocked}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.themeHeader}>
+                        <Text style={styles.themeIcon}>{theme.icon}</Text>
+                        {!isUnlocked && (
+                          <Lock size={14} color={colors.textMuted} style={styles.lockIcon} />
+                        )}
+                      </View>
+                      <Text style={[styles.themeName, { color: colors.textPrimary }]}>
+                        {theme.name}
+                      </Text>
+                      <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
+                        {isUnlocked ? theme.description : `${theme.unlockXP} XP`}
+                      </Text>
+                      {isActive && (
+                        <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
+                          <Text style={styles.activeText}>✓</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Prochain déblocage */}
+              {nextTheme && (
+                <View style={[styles.nextUnlock, { backgroundColor: colors.backgroundElevated }]}>
+                  <Crown size={16} color={colors.accent} />
+                  <Text style={[styles.nextUnlockText, { color: colors.textSecondary }]}>
+                    Prochain: {nextTheme.name} {nextTheme.icon} dans{' '}
+                    {nextTheme.unlockXP - userXP} XP
+                  </Text>
+                </View>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Section: Logos d'App */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Logos d'App
+              </Text>
+              <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+                Choisissez votre logo préféré
+              </Text>
+
+              <View style={styles.logosGrid}>
+                {LOGO_OPTIONS.map((logo) => {
+                  const isSelected = selectedLogoId === logo.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={logo.id}
+                      style={[
+                        styles.logoCard,
+                        { backgroundColor: colors.backgroundCard },
+                        isSelected && {
+                          borderColor: colors.accent,
+                          borderWidth: 3,
+                        },
+                      ]}
+                      onPress={() => handleLogoChange(logo.id)}
+                      activeOpacity={0.7}
+                    >
+                      {logo.image ? (
+                        <Image
+                          source={logo.image}
+                          style={styles.logoImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <View style={[styles.logoPlaceholder, { backgroundColor: colors.backgroundElevated }]}>
+                          <ImageIcon size={40} color={colors.textMuted} />
+                        </View>
+                      )}
+                      <Text style={[styles.logoName, { color: colors.textPrimary }]}>
+                        {logo.name}
+                      </Text>
+                      <Text style={[styles.logoDescription, { color: colors.textMuted }]}>
+                        {logo.description}
+                      </Text>
+                      {logo.isPremium && (
+                        <View style={[styles.premiumBadge, { backgroundColor: '#FFD700' }]}>
+                          <Text style={styles.premiumText}>✨</Text>
+                        </View>
+                      )}
+                      {isSelected && (
+                        <View style={[styles.selectedBadge, { backgroundColor: colors.accent }]}>
+                          <Check size={16} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
         )}
       </ScrollView>
     </ScreenWrapper>
@@ -349,7 +424,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   iconContainer: {
     width: 56,
@@ -369,6 +444,50 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
+  },
+  modeSection: {
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.lg,
+  },
+  modeSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: SPACING.sm,
+  },
+  modesContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.xs,
+  },
+  modeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.xs,
+  },
+  tabLabel: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   section: {
     marginBottom: SPACING.xl,
@@ -444,47 +563,65 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  modesContainer: {
+  logosGrid: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    flexWrap: 'wrap',
+    gap: SPACING.md,
   },
-  modeButton: {
-    flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
+  logoCard: {
+    width: '48%',
     padding: SPACING.md,
     borderRadius: RADIUS.lg,
-    gap: SPACING.xs,
-  },
-  modeLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  formatContainer: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  formatButton: {
-    flex: 1,
-    flexDirection: 'column',
+    position: 'relative',
     alignItems: 'center',
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    gap: SPACING.sm,
   },
-  formatLabel: {
+  logoImage: {
+    width: 80,
+    height: 80,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.sm,
+  },
+  logoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoName: {
     fontSize: 14,
-    fontWeight: '600',
-  },
-  iosInfo: {
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    marginTop: SPACING.md,
-  },
-  iosInfoText: {
-    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
     textAlign: 'center',
-    lineHeight: 18,
+  },
+  logoDescription: {
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 14,
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  premiumText: {
+    fontSize: 12,
+  },
+  selectedBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingText: {
     fontSize: 16,
