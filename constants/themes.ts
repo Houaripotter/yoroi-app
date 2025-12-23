@@ -274,7 +274,7 @@ export const themes: Record<string, Theme> = {
     kanji: '雷',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#141412',
+      backgroundCard: '#0A0A08',
       backgroundElevated: '#1E1E1A',
       backgroundLight: '#282820',
       accent: '#FFE500',
@@ -327,7 +327,7 @@ export const themes: Record<string, Theme> = {
     kanji: '氷',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#0A1414',
+      backgroundCard: '#060C0C',
       backgroundElevated: '#121E1E',
       backgroundLight: '#1A2828',
       accent: '#0ABAB5',
@@ -380,7 +380,7 @@ export const themes: Record<string, Theme> = {
     kanji: '炎',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#140A0A',
+      backgroundCard: '#0C0606',
       backgroundElevated: '#1E1212',
       backgroundLight: '#281A1A',
       accent: '#FF3B30',
@@ -433,7 +433,7 @@ export const themes: Record<string, Theme> = {
     kanji: '桜',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#140A10',
+      backgroundCard: '#0C060A',
       backgroundElevated: '#1E1218',
       backgroundLight: '#281A22',
       accent: '#FF2D92',
@@ -486,7 +486,7 @@ export const themes: Record<string, Theme> = {
     kanji: '電',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#081008',
+      backgroundCard: '#050805',
       backgroundElevated: '#101810',
       backgroundLight: '#182018',
       accent: '#00FF41',
@@ -539,7 +539,7 @@ export const themes: Record<string, Theme> = {
     kanji: '火',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#140E08',
+      backgroundCard: '#0A0704',
       backgroundElevated: '#1E1610',
       backgroundLight: '#281E18',
       accent: '#FF9500',
@@ -592,7 +592,7 @@ export const themes: Record<string, Theme> = {
     kanji: '影',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#0E0A14',
+      backgroundCard: '#08050C',
       backgroundElevated: '#16101E',
       backgroundLight: '#1E1828',
       accent: '#BF5AF2',
@@ -645,7 +645,7 @@ export const themes: Record<string, Theme> = {
     kanji: '魂',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#0E0E0E',
+      backgroundCard: '#070707',
       backgroundElevated: '#181818',
       backgroundLight: '#222222',
       accent: '#FFFFFF',
@@ -698,7 +698,7 @@ export const themes: Record<string, Theme> = {
     kanji: '海',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#060E14',
+      backgroundCard: '#03070A',
       backgroundElevated: '#0C161E',
       backgroundLight: '#121E28',
       accent: '#00C8FF',
@@ -751,7 +751,7 @@ export const themes: Record<string, Theme> = {
     kanji: '墨',
     colors: createThemeColors({
       background: '#000000',
-      backgroundCard: '#0A0A0A',
+      backgroundCard: '#050505',
       backgroundElevated: '#141414',
       backgroundLight: '#1E1E1E',
       accent: '#FFFFFF',
@@ -834,7 +834,8 @@ export const premiumThemeColors: ThemeColor[] = ['volt', 'magma', 'sakura', 'mat
 export const freeThemeColors: ThemeColor[] = ['classic', 'tiffany'];
 
 export const isPremiumTheme = (colorId: ThemeColor): boolean => {
-  return premiumThemeColors.includes(colorId);
+  // Tous les thèmes sont maintenant gratuits
+  return false;
 };
 
 // ===================================================

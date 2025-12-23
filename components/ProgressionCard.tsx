@@ -6,6 +6,7 @@ import { Trophy, Star, Flame, TrendingUp, ChevronRight, Zap, Target } from 'luci
 import { useTheme } from '@/lib/ThemeContext';
 import { getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank, RANKS } from '@/lib/ranks';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Icon } from '@/components/Icon';
 
 // ============================================
 // PROGRESSION CARD - Gamification visible
@@ -63,7 +64,7 @@ export function ProgressionCard({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.rankContainer}>
-            <Text style={styles.rankIcon}>{rank.icon}</Text>
+            <Icon name={rank.icon as any} size={32} color={rank.color} />
             <View>
               <Text style={[styles.rankName, { color: rank.color }]}>{rank.name}</Text>
               <Text style={[styles.rankNameJp, { color: colors.textSecondary }]}>{rank.nameJp}</Text>
@@ -180,9 +181,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  rankIcon: {
-    fontSize: 36,
   },
   rankName: {
     fontSize: 18,

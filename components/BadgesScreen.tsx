@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { X, Award } from 'lucide-react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types/badges';
 import { BadgeItem } from './BadgeItem';
 import { useFocusEffect } from 'expo-router';
@@ -52,6 +52,9 @@ const calculateUnlockedBadges = async (): Promise<Set<BadgeId>> => {
 
 
 export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
+  const { colors, themeName } = useTheme();
+  const isWellness = false;
+
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeId>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,12 +99,26 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
   const totalCount = Object.keys(BADGES).length;
   const progress = totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0;
 
+  const cardShadow = isWellness ? {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  } : {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  };
+
   if (loading) {
     return (
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-        <View style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Chargement des badges...</Text>
+        <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.gold} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des badges...</Text>
         </View>
       </Modal>
     );
@@ -109,30 +126,30 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color={theme.colors.textPrimary} strokeWidth={2.5} />
+          <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.card }, cardShadow]}>
+            <X size={24} color={colors.textPrimary} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text style={styles.title}>Mes Badges</Text>
-          <View style={styles.iconContainer}>
-            <Award size={24} color={theme.colors.primary} strokeWidth={2.5} />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Mes Badges</Text>
+          <View style={[styles.iconContainer, { backgroundColor: colors.card }, cardShadow]}>
+            <Award size={24} color={colors.gold} strokeWidth={2.5} />
           </View>
         </View>
 
         {/* Progress */}
-        <View style={styles.progressCard}>
+        <View style={[styles.progressCard, { backgroundColor: colors.card }, cardShadow]}>
           <View style={styles.progressHeader}>
-            <Text style={styles.progressTitle}>Progression</Text>
-            <Text style={styles.progressCount}>
+            <Text style={[styles.progressTitle, { color: colors.textPrimary }]}>Progression</Text>
+            <Text style={[styles.progressCount, { color: colors.gold }]}>
               {unlockedCount} / {totalCount}
             </Text>
           </View>
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
+            <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.gold }]} />
           </View>
-          <Text style={styles.progressText}>{progress.toFixed(0)}% complété</Text>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>{progress.toFixed(0)}% complété</Text>
         </View>
 
         <ScrollView
@@ -143,8 +160,8 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.colors.primary}
-              colors={[theme.colors.primary]}
+              tintColor={colors.gold}
+              colors={[colors.gold]}
             />
           }
         >
@@ -157,7 +174,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
               <View key={category} style={styles.category}>
                 <View style={styles.categoryHeader}>
                   <View style={[styles.categoryDot, { backgroundColor: categoryInfo.color }]} />
-                  <Text style={styles.categoryTitle}>{categoryInfo.name}</Text>
+                  <Text style={[styles.categoryTitle, { color: colors.textPrimary }]}>{categoryInfo.name}</Text>
                 </View>
                 <View style={styles.badgesList}>
                   {categoryBadges.map((badge) => (
@@ -187,28 +204,28 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
               activeOpacity={1}
               onPress={() => setSelectedBadge(null)}
             >
-              <View style={styles.badgeDetailCard}>
+              <View style={[styles.badgeDetailCard, { backgroundColor: colors.card }, cardShadow]}>
                 <View
                   style={[
                     styles.badgeDetailIcon,
                     {
                       backgroundColor: unlockedBadges.has(selectedBadge.id)
                         ? selectedBadge.color
-                        : theme.colors.borderLight,
+                        : colors.border,
                     },
                   ]}
                 >
                   <Text style={styles.badgeDetailEmoji}>{selectedBadge.icon}</Text>
                 </View>
-                <Text style={styles.badgeDetailName}>{selectedBadge.name}</Text>
-                <Text style={styles.badgeDetailDescription}>{selectedBadge.description}</Text>
-                <View style={styles.badgeDetailRequirement}>
-                  <Text style={styles.requirementLabel}>Condition :</Text>
-                  <Text style={styles.requirementText}>{selectedBadge.requirement}</Text>
+                <Text style={[styles.badgeDetailName, { color: colors.textPrimary }]}>{selectedBadge.name}</Text>
+                <Text style={[styles.badgeDetailDescription, { color: colors.textSecondary }]}>{selectedBadge.description}</Text>
+                <View style={[styles.badgeDetailRequirement, { backgroundColor: colors.cardHover }]}>
+                  <Text style={[styles.requirementLabel, { color: colors.textSecondary }]}>Condition :</Text>
+                  <Text style={[styles.requirementText, { color: colors.textPrimary }]}>{selectedBadge.requirement}</Text>
                 </View>
                 {unlockedBadges.has(selectedBadge.id) && (
                   <View style={styles.unlockedBanner}>
-                    <Text style={styles.unlockedText}>✓ Badge débloqué</Text>
+                    <Text style={[styles.unlockedText, { color: colors.gold }]}>✓ Badge débloqué</Text>
                   </View>
                 )}
               </View>
@@ -223,58 +240,49 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   loadingText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 60,
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
   },
   closeButton: {
     width: 40,
     height: 40,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.sm,
   },
   title: {
-    fontSize: theme.fontSize.display,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.sm,
   },
   progressCard: {
-    marginHorizontal: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.xl,
-    gap: theme.spacing.md,
-    ...theme.shadow.sm,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderRadius: 24,
+    padding: 24,
+    gap: 12,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -282,47 +290,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressTitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
   },
   progressCount: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.primary,
+    fontSize: 20,
+    fontWeight: '800',
   },
   progressBarContainer: {
     height: 12,
-    backgroundColor: theme.colors.borderLight,
-    borderRadius: theme.radius.full,
+    borderRadius: 999,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.full,
+    borderRadius: 999,
   },
   progressText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xxl,
-    gap: theme.spacing.xl,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    gap: 24,
   },
   category: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   categoryDot: {
     width: 12,
@@ -330,31 +333,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   categoryTitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
     letterSpacing: -0.3,
     textTransform: 'uppercase',
   },
   badgesList: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
+    paddingHorizontal: 24,
   },
   badgeDetailCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.xxl,
+    borderRadius: 24,
+    padding: 28,
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
     width: '100%',
     maxWidth: 400,
-    ...theme.shadow.lg,
   },
   badgeDetailIcon: {
     width: 96,
@@ -362,56 +362,54 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   badgeDetailEmoji: {
     fontSize: 48,
   },
   badgeDetailName: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
     textAlign: 'center',
     letterSpacing: -0.5,
   },
   badgeDetailDescription: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '500',
     textAlign: 'center',
-    lineHeight: theme.fontSize.md * 1.5,
+    lineHeight: 22,
   },
   badgeDetailRequirement: {
-    backgroundColor: '#F0F3F5',
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    gap: theme.spacing.xs,
+    borderRadius: 16,
+    padding: 16,
+    gap: 4,
     width: '100%',
-    marginTop: theme.spacing.md,
+    marginTop: 12,
   },
   requirementLabel: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   requirementText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textPrimary,
-    lineHeight: theme.fontSize.sm * 1.4,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   unlockedBanner: {
     backgroundColor: '#E0F2F1',
-    borderRadius: theme.radius.full,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.lg,
-    marginTop: theme.spacing.sm,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
   },
   unlockedText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

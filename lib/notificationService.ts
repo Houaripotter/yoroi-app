@@ -1,194 +1,504 @@
-import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+// ============================================
+// YOROI - SERVICE DE NOTIFICATIONS
+// ============================================
+// Rappels d'entraînement, hydratation, pesée
+// ============================================
 
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// ============================================
+// TYPES
+// ============================================
+
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type ReminderType = 'weight' | 'workout' | 'both';
-export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0 = Dimanche, 6 = Samedi
 
 export interface ReminderSettings {
   enabled: boolean;
-  time: string; // Format "HH:mm" (ex: "07:00")
+  time: string;
   days: DayOfWeek[];
   type: ReminderType;
 }
 
-// Configuration des notifications
+export interface NotificationSettings {
+  enabled: boolean;
+  training: {
+    enabled: boolean;
+    time: string; // HH:mm format
+    days: number[]; // 0-6 (dimanche = 0)
+  };
+  hydration: {
+    enabled: boolean;
+    interval: number; // heures entre rappels
+    startTime: string; // HH:mm
+    endTime: string; // HH:mm
+  };
+  weighing: {
+    enabled: boolean;
+    time: string; // HH:mm
+    days: number[]; // jours de la semaine
+  };
+  streak: {
+    enabled: boolean;
+    time: string; // HH:mm - rappel si pas entraîné
+  };
+}
+
+// ============================================
+// CONSTANTES
+// ============================================
+
+const STORAGE_KEY = '@yoroi_notification_settings';
+
+const DEFAULT_SETTINGS: NotificationSettings = {
+  enabled: true,
+  training: {
+    enabled: true,
+    time: '18:00',
+    days: [1, 2, 3, 4, 5], // Lundi à vendredi
+  },
+  hydration: {
+    enabled: true,
+    interval: 2,
+    startTime: '08:00',
+    endTime: '22:00',
+  },
+  weighing: {
+    enabled: true,
+    time: '07:00',
+    days: [1, 3, 5], // Lundi, mercredi, vendredi
+  },
+  streak: {
+    enabled: true,
+    time: '20:00',
+  },
+};
+
+// Messages motivants
+const TRAINING_MESSAGES = [
+  { title: '🥋 C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
+  { title: '⚔️ Guerrier !', body: 'Le tatami t\'appelle. Es-tu prêt ?' },
+  { title: '💪 Go training !', body: 'Chaque séance compte. Fais-la maintenant !' },
+  { title: '🔥 On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
+  { title: '🎯 Objectif du jour', body: 'Une séance de plus vers ton but !' },
+];
+
+const HYDRATION_MESSAGES = [
+  { title: '💧 Hydratation', body: 'N\'oublie pas de boire de l\'eau !' },
+  { title: '🚰 Pause eau', body: 'Ton corps a besoin d\'eau. Bois un verre !' },
+  { title: '💦 Rappel hydratation', body: 'Reste hydraté pour performer !' },
+];
+
+const WEIGHING_MESSAGES = [
+  { title: '⚖️ Pesée du jour', body: 'Monte sur la balance pour suivre ta progression !' },
+  { title: '📊 Suivi poids', body: 'Une pesée régulière = meilleur suivi !' },
+];
+
+const STREAK_MESSAGES = [
+  { title: '🔥 Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
+  { title: '⚠️ Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
+  { title: '💔 Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
+];
+
+// ============================================
+// CONFIGURATION
+// ============================================
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
   }),
 });
 
-// Demander les permissions de notification
-export const requestNotificationPermissions = async (): Promise<boolean> => {
-  try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
+// ============================================
+// SERVICE
+// ============================================
 
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+class NotificationService {
+  private settings: NotificationSettings = DEFAULT_SETTINGS;
+  private isInitialized = false;
+
+  // ============================================
+  // INITIALISATION
+  // ============================================
+
+  async initialize(): Promise<boolean> {
+    try {
+      // Charger les paramètres sauvegardés
+      const saved = await AsyncStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        this.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+      }
+
+      // Demander les permissions
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) {
+        console.log('Permissions notifications refusées');
+        return false;
+      }
+
+      // Programmer les notifications
+      if (this.settings.enabled) {
+        await this.scheduleAllNotifications();
+      }
+
+      this.isInitialized = true;
+      console.log('NotificationService initialisé');
+      return true;
+    } catch (error) {
+      console.error('Erreur init notifications:', error);
+      return false;
     }
+  }
 
-    if (finalStatus !== 'granted') {
-      console.log('❌ Permission de notification refusée');
+  // ============================================
+  // PERMISSIONS
+  // ============================================
+
+  async requestPermissions(): Promise<boolean> {
+    if (!Device.isDevice) {
+      console.log('Notifications non supportées sur simulateur');
       return false;
     }
 
-    // Configuration du canal de notification pour Android
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('reminders', {
-        name: 'Rappels',
-        importance: Notifications.AndroidImportance.HIGH,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#34D399',
-        sound: 'default',
-      });
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        return false;
+      }
+
+      // Configuration Android
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'YOROI',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#D4AF37',
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Erreur permissions:', error);
+      return false;
+    }
+  }
+
+  // ============================================
+  // PROGRAMMATION
+  // ============================================
+
+  async scheduleAllNotifications(): Promise<void> {
+    // Annuler toutes les notifications existantes
+    await Notifications.cancelAllScheduledNotificationsAsync();
+
+    if (!this.settings.enabled) return;
+
+    // Programmer chaque type
+    if (this.settings.training.enabled) {
+      await this.scheduleTrainingNotifications();
+    }
+    if (this.settings.hydration.enabled) {
+      await this.scheduleHydrationNotifications();
+    }
+    if (this.settings.weighing.enabled) {
+      await this.scheduleWeighingNotifications();
+    }
+    if (this.settings.streak.enabled) {
+      await this.scheduleStreakNotification();
     }
 
-    console.log('✅ Permission de notification accordée');
-    return true;
-  } catch (error) {
-    console.error('❌ Erreur lors de la demande de permission:', error);
-    return false;
+    console.log('Notifications programmées');
   }
-};
 
-// Vérifier le statut des permissions
-export const checkNotificationPermissions = async (): Promise<boolean> => {
+  private async scheduleTrainingNotifications(): Promise<void> {
+    const { time, days } = this.settings.training;
+    const [hours, minutes] = time.split(':').map(Number);
+
+    for (const day of days) {
+      const message = TRAINING_MESSAGES[Math.floor(Math.random() * TRAINING_MESSAGES.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: message.title,
+          body: message.body,
+          data: { type: 'training' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday: day === 0 ? 1 : day + 1, // Expo utilise 1-7 (dimanche = 1)
+          hour: hours,
+          minute: minutes,
+        },
+      });
+    }
+  }
+
+  private async scheduleHydrationNotifications(): Promise<void> {
+    const { interval, startTime, endTime } = this.settings.hydration;
+    const [startHour] = startTime.split(':').map(Number);
+    const [endHour] = endTime.split(':').map(Number);
+
+    for (let hour = startHour; hour <= endHour; hour += interval) {
+      const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: message.title,
+          body: message.body,
+          data: { type: 'hydration' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: hour,
+          minute: 0,
+        },
+      });
+    }
+  }
+
+  private async scheduleWeighingNotifications(): Promise<void> {
+    const { time, days } = this.settings.weighing;
+    const [hours, minutes] = time.split(':').map(Number);
+
+    for (const day of days) {
+      const message = WEIGHING_MESSAGES[Math.floor(Math.random() * WEIGHING_MESSAGES.length)];
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: message.title,
+          body: message.body,
+          data: { type: 'weighing' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday: day === 0 ? 1 : day + 1,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+    }
+  }
+
+  private async scheduleStreakNotification(): Promise<void> {
+    const { time } = this.settings.streak;
+    const [hours, minutes] = time.split(':').map(Number);
+
+    const message = STREAK_MESSAGES[Math.floor(Math.random() * STREAK_MESSAGES.length)];
+    
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: message.title,
+        body: message.body,
+        data: { type: 'streak' },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: hours,
+        minute: minutes,
+      },
+    });
+  }
+
+  // ============================================
+  // NOTIFICATIONS INSTANTANÉES
+  // ============================================
+
+  async sendInstantNotification(title: string, body: string, data?: any): Promise<void> {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data: data || {},
+        sound: true,
+      },
+      trigger: null, // Immédiat
+    });
+  }
+
+  async sendTrainingReminder(): Promise<void> {
+    const message = TRAINING_MESSAGES[Math.floor(Math.random() * TRAINING_MESSAGES.length)];
+    await this.sendInstantNotification(message.title, message.body, { type: 'training' });
+  }
+
+  async sendHydrationReminder(): Promise<void> {
+    const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
+    await this.sendInstantNotification(message.title, message.body, { type: 'hydration' });
+  }
+
+  async sendStreakWarning(currentStreak: number): Promise<void> {
+    await this.sendInstantNotification(
+      '🔥 Protège ton streak !',
+      `Tu as ${currentStreak} jours consécutifs. Ne les perds pas aujourd'hui !`,
+      { type: 'streak' }
+    );
+  }
+
+  async sendCongratulation(message: string): Promise<void> {
+    await this.sendInstantNotification('🎉 Félicitations !', message, { type: 'achievement' });
+  }
+
+  // ============================================
+  // PARAMÈTRES
+  // ============================================
+
+  getSettings(): NotificationSettings {
+    return { ...this.settings };
+  }
+
+  async updateSettings(newSettings: Partial<NotificationSettings>): Promise<void> {
+    this.settings = { ...this.settings, ...newSettings };
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+    
+    // Reprogrammer les notifications
+    await this.scheduleAllNotifications();
+  }
+
+  async enableNotifications(): Promise<void> {
+    await this.updateSettings({ enabled: true });
+  }
+
+  async disableNotifications(): Promise<void> {
+    await this.updateSettings({ enabled: false });
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  }
+
+  // ============================================
+  // DEBUG
+  // ============================================
+
+  async getScheduledNotifications(): Promise<Notifications.NotificationRequest[]> {
+    return await Notifications.getAllScheduledNotificationsAsync();
+  }
+
+  async cancelAll(): Promise<void> {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  }
+}
+
+// ============================================
+// INSTANCE SINGLETON
+// ============================================
+
+export const notificationService = new NotificationService();
+
+export default notificationService;
+
+// ============================================
+// FONCTIONS D'EXPORT POUR ReminderSettings
+// ============================================
+
+export async function requestNotificationPermissions(): Promise<boolean> {
+  return await notificationService.requestPermissions();
+}
+
+export async function checkNotificationPermissions(): Promise<boolean> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
     return status === 'granted';
-  } catch (error) {
-    console.error('❌ Erreur lors de la vérification des permissions:', error);
+  } catch {
     return false;
   }
-};
+}
 
-// Obtenir les messages de notification
-const getNotificationMessage = (type: ReminderType): { title: string; body: string } => {
-  const messages = {
-    weight: {
-      title: '⚖️ Rappel de pesée',
-      body: "Bonjour Houari ! N'oublie pas de te peser 🛡️",
-    },
-    workout: {
-      title: '💪 Rappel d\'entraînement',
-      body: "C'est l'heure de s'entraîner ! Garde l'armure en forme 🛡️",
-    },
-    both: {
-      title: '🛡️ Rappel Yoroi',
-      body: "N'oublie pas de te peser et de t'entraîner aujourd'hui !",
-    },
-  };
-
-  return messages[type];
-};
-
-// Annuler toutes les notifications planifiées
-export const cancelAllNotifications = async (): Promise<void> => {
-  try {
+export async function scheduleNotifications(settings: ReminderSettings): Promise<void> {
+  if (!settings.enabled) {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('✅ Toutes les notifications ont été annulées');
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'annulation des notifications:', error);
+    return;
   }
-};
 
-// Planifier les notifications selon les paramètres
-export const scheduleNotifications = async (settings: ReminderSettings): Promise<void> => {
-  try {
-    // Annuler toutes les notifications existantes
-    await cancelAllNotifications();
+  // Annuler les notifications existantes
+  await Notifications.cancelAllScheduledNotificationsAsync();
 
-    if (!settings.enabled) {
-      console.log('ℹ️  Les rappels sont désactivés');
-      return;
+  const [hours, minutes] = settings.time.split(':').map(Number);
+
+  for (const day of settings.days) {
+    // Calculer la prochaine occurrence de ce jour
+    const now = new Date();
+    const scheduledDate = new Date();
+    scheduledDate.setHours(hours, minutes, 0, 0);
+
+    const currentDay = now.getDay();
+    let daysUntil = day - currentDay;
+    if (daysUntil < 0 || (daysUntil === 0 && now > scheduledDate)) {
+      daysUntil += 7;
     }
 
-    // Vérifier les permissions
-    const hasPermission = await checkNotificationPermissions();
-    if (!hasPermission) {
-      console.log('❌ Pas de permission pour les notifications');
-      return;
+    scheduledDate.setDate(now.getDate() + daysUntil);
+
+    // Message selon le type
+    let title = '🥋 YOROI';
+    let body = 'C\'est l\'heure !';
+
+    if (settings.type === 'weight') {
+      title = '⚖️ Pesée YOROI';
+      body = 'Monte sur la balance pour suivre ta progression !';
+    } else if (settings.type === 'workout') {
+      title = '💪 Entraînement YOROI';
+      body = 'C\'est l\'heure de t\'entraîner ! Le tatami t\'attend.';
+    } else {
+      title = '🛡️ YOROI';
+      body = 'N\'oublie pas ta pesée et ton entraînement !';
     }
-
-    // Parser l'heure
-    const [hours, minutes] = settings.time.split(':').map(Number);
-
-    // Message de notification
-    const { title, body } = getNotificationMessage(settings.type);
-
-    // Planifier une notification pour chaque jour sélectionné
-    for (const day of settings.days) {
-      const trigger: Notifications.NotificationTriggerInput = {
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-        hour: hours,
-        minute: minutes,
-        weekday: day + 1, // expo-notifications utilise 1-7 (1 = Dimanche, 7 = Samedi)
-        repeats: true,
-      };
-
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          data: { type: settings.type },
-        },
-        trigger,
-      });
-
-      console.log(`✅ Notification planifiée pour le jour ${day} à ${settings.time} (ID: ${notificationId})`);
-    }
-
-    console.log('✅ Toutes les notifications ont été planifiées');
-  } catch (error) {
-    console.error('❌ Erreur lors de la planification des notifications:', error);
-  }
-};
-
-// Obtenir toutes les notifications planifiées (pour debug)
-export const getAllScheduledNotifications = async () => {
-  try {
-    const notifications = await Notifications.getAllScheduledNotificationsAsync();
-    console.log('📅 Notifications planifiées:', notifications);
-    return notifications;
-  } catch (error) {
-    console.error('❌ Erreur lors de la récupération des notifications:', error);
-    return [];
-  }
-};
-
-// Tester immédiatement une notification
-export const testNotification = async (type: ReminderType = 'weight'): Promise<void> => {
-  try {
-    const hasPermission = await checkNotificationPermissions();
-    if (!hasPermission) {
-      console.log('❌ Pas de permission pour les notifications');
-      return;
-    }
-
-    const { title, body } = getNotificationMessage(type);
 
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
-        sound: 'default',
+        sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 2, // Dans 2 secondes
-      },
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour: hours,
+        minute: minutes,
+        repeats: true,
+        weekday: day + 1, // iOS utilise 1-7 au lieu de 0-6
+      } as Notifications.CalendarTriggerInput,
     });
-
-    console.log('✅ Notification de test envoyée');
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'envoi de la notification de test:', error);
   }
-};
+}
+
+export async function testNotification(type: ReminderType): Promise<void> {
+  let title = '🥋 YOROI Test';
+  let body = 'Notification de test !';
+
+  if (type === 'weight') {
+    title = '⚖️ Pesée YOROI';
+    body = 'Monte sur la balance pour suivre ta progression !';
+  } else if (type === 'workout') {
+    title = '💪 Entraînement YOROI';
+    body = 'C\'est l\'heure de t\'entraîner ! Le tatami t\'attend.';
+  }
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: true,
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 2,
+    } as Notifications.TimeIntervalTriggerInput,
+  });
+}

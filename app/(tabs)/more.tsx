@@ -7,15 +7,14 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   User,
   Camera,
-  Calendar,
-  Dumbbell,
-  BookOpen,
   Settings,
   MessageCircle,
   Star,
@@ -28,27 +27,42 @@ import {
   Share2,
   FileText,
   LucideIcon,
-  // NOUVEAUX OUTILS
   Utensils,
   Timer,
   Calculator,
   Apple,
   Lightbulb,
   Activity,
-  Heart,
-  Focus,
+  BookOpen,
   Palette,
   Sparkles,
+  Heart,
+  Shield,
+  Zap,
+  Crown,
+  Trophy,
+  Target,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { importAllData } from '@/lib/exportService';
-import { generateProgressPDF, ExportPeriod } from '@/lib/pdfExport';
+import { generateProgressPDF } from '@/lib/pdfExport';
 
 // ============================================
-// ECRAN PLUS - MENU GUERRIER
+// ECRAN PLUS - DESIGN MODERNE
 // ============================================
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+interface QuickAction {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+  route?: string;
+  onPress?: () => void;
+  gradient: readonly [string, string, ...string[]];
+}
 
 interface MenuItem {
   id: string;
@@ -57,204 +71,229 @@ interface MenuItem {
   Icon: LucideIcon;
   route?: string;
   onPress?: () => void;
-  isGold?: boolean;
-  isComingSoon?: boolean;
+  iconColor?: string;
+  iconBg?: string;
 }
 
 // ============================================
-// SECTION 1 - MON PROFIL
+// ACTIONS RAPIDES (Grille en haut)
 // ============================================
-const PROFILE_ITEMS: MenuItem[] = [
-  {
-    id: 'profile',
-    label: 'Mon Profil Guerrier',
-    sublabel: 'Rangs, badges et statistiques',
-    Icon: User,
-    route: '/profile',
-    isGold: true,
-  },
-  {
-    id: 'photos',
-    label: 'Ma Transformation',
-    sublabel: 'Photos avant/après',
-    Icon: Camera,
-    route: '/photos',
-    isGold: true,
-  },
-  {
-    id: 'appearance',
-    label: 'Apparence & Thèmes',
-    sublabel: 'Personnalise ton expérience',
-    Icon: Palette,
-    route: '/appearance',
-    isGold: true,
-  },
-  {
-    id: 'avatars',
-    label: 'Galerie d\'Avatars',
-    sublabel: 'Débloque de nouveaux guerriers',
-    Icon: Sparkles,
-    route: '/avatar-gallery',
-    isGold: true,
-  },
-  {
-    id: 'share',
-    label: 'Partager ma progression',
-    sublabel: 'Instagram, Snapchat, Stories',
-    Icon: Share2,
-    route: '/social-card',
-    isGold: true,
-  },
-];
-
-// ============================================
-// SECTION 2 - OUTILS
-// ============================================
-const TOOLS_ITEMS: MenuItem[] = [
+const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'infirmary',
     label: 'Infirmerie',
-    sublabel: '🩺 YOROI MEDIC - Suivi blessures',
     Icon: Activity,
     route: '/infirmary',
-    isGold: true,
-  },
-  {
-    id: 'measurements',
-    label: 'Mensurations',
-    sublabel: 'Suivi de tes mesures',
-    Icon: Ruler,
-    route: '/entry',
-    isGold: true,
-  },
-  {
-    id: 'fasting',
-    label: 'Jeûne / OMAD',
-    sublabel: 'Intermittent fasting',
-    Icon: Utensils,
-    route: '/fasting',
-    isGold: true,
+    gradient: ['#FF6B6B', '#EE5A5A'],
   },
   {
     id: 'timer',
-    label: 'Timer Multi-Modes',
-    sublabel: 'Muscu, JJB, MMA, Tabata...',
+    label: 'Timer',
     Icon: Timer,
     route: '/timer',
-    isGold: true,
+    gradient: ['#4ECDC4', '#3DBDB5'],
   },
   {
     id: 'calculator',
     label: 'Calculateurs',
-    sublabel: 'BMR, TDEE, IMC, Macros',
     Icon: Calculator,
     route: '/calculators',
-    isGold: true,
+    gradient: ['#A855F7', '#9333EA'],
   },
   {
-    id: 'nutrition',
-    label: 'Plan Nutritionnel',
-    sublabel: 'Calories et macros',
-    Icon: Apple,
-    route: '/nutrition-plan',
-    isGold: true,
-  },
-  {
-    id: 'ideas',
-    label: 'Boîte à Idées',
-    sublabel: 'Suggérer des améliorations',
-    Icon: Lightbulb,
-    route: '/ideas',
-    isGold: true,
+    id: 'fasting',
+    label: 'Jeûne',
+    Icon: Utensils,
+    route: '/fasting',
+    gradient: ['#F59E0B', '#D97706'],
   },
 ];
 
 // ============================================
-// SECTION 3 - COMMUNAUTÉ
+// SECTION PROFIL & APPARENCE
+// ============================================
+const PROFILE_ITEMS: MenuItem[] = [
+  {
+    id: 'profile',
+    label: 'Mon Profil',
+    sublabel: 'Statistiques et progression',
+    Icon: User,
+    route: '/profile',
+    iconColor: '#60A5FA',
+    iconBg: '#60A5FA20',
+  },
+  {
+    id: 'photos',
+    label: 'Transformation',
+    sublabel: 'Photos avant/après',
+    Icon: Camera,
+    route: '/photos',
+    iconColor: '#F472B6',
+    iconBg: '#F472B620',
+  },
+  {
+    id: 'appearance',
+    label: 'Apparence',
+    sublabel: 'Thèmes et personnalisation',
+    Icon: Palette,
+    route: '/appearance',
+    iconColor: '#A78BFA',
+    iconBg: '#A78BFA20',
+  },
+  {
+    id: 'avatars',
+    label: 'Avatars',
+    sublabel: 'Débloque des guerriers',
+    Icon: Sparkles,
+    route: '/avatar-gallery',
+    iconColor: '#FBBF24',
+    iconBg: '#FBBF2420',
+  },
+];
+
+// ============================================
+// SECTION OUTILS
+// ============================================
+const TOOLS_ITEMS: MenuItem[] = [
+  {
+    id: 'measurements',
+    label: 'Mensurations',
+    sublabel: 'Suivi corporel détaillé',
+    Icon: Ruler,
+    route: '/entry',
+    iconColor: '#34D399',
+    iconBg: '#34D39920',
+  },
+  {
+    id: 'nutrition',
+    label: 'Nutrition',
+    sublabel: 'Plan alimentaire',
+    Icon: Apple,
+    route: '/nutrition-plan',
+    iconColor: '#FB7185',
+    iconBg: '#FB718520',
+  },
+  {
+    id: 'share',
+    label: 'Partager',
+    sublabel: 'Stories et réseaux sociaux',
+    Icon: Share2,
+    route: '/social-card',
+    iconColor: '#38BDF8',
+    iconBg: '#38BDF820',
+  },
+  {
+    id: 'ideas',
+    label: 'Suggestions',
+    sublabel: 'Proposer des idées',
+    Icon: Lightbulb,
+    route: '/ideas',
+    iconColor: '#FCD34D',
+    iconBg: '#FCD34D20',
+  },
+];
+
+// ============================================
+// SECTION COMMUNAUTÉ
 // ============================================
 const COMMUNITY_ITEMS: MenuItem[] = [
   {
     id: 'clubs',
-    label: 'Mes Clubs & Coachs',
-    sublabel: 'Salles et partenaires',
+    label: 'Clubs & Coach',
+    sublabel: 'Partenaires et salles',
     Icon: Building2,
     route: '/partners',
-    isGold: true,
+    iconColor: '#818CF8',
+    iconBg: '#818CF820',
   },
   {
     id: 'health-pros',
-    label: 'Professionnels de Santé',
+    label: 'Pros de Santé',
     sublabel: 'Kinés, nutritionnistes',
-    Icon: Activity,
+    Icon: Heart,
     route: '/health-professionals',
-    isGold: true,
+    iconColor: '#F87171',
+    iconBg: '#F8717120',
   },
   {
     id: 'savoir',
-    label: 'Savoir (Labo)',
-    sublabel: 'Base de connaissances',
+    label: 'Base de Savoir',
+    sublabel: 'Articles et conseils',
     Icon: BookOpen,
     route: '/savoir',
-    isGold: true,
+    iconColor: '#22D3EE',
+    iconBg: '#22D3EE20',
   },
 ];
 
 // ============================================
-// SECTION 4 - PARAMÈTRES
+// SECTION PARAMÈTRES
 // ============================================
 const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'settings',
-    label: 'Reglages',
-    sublabel: 'Thèmes, notifications, santé',
+    label: 'Réglages',
+    sublabel: 'Notifications, unités, thème',
     Icon: Settings,
     route: '/settings',
-    isGold: false,
+    iconColor: '#94A3B8',
+    iconBg: '#94A3B820',
   },
   {
     id: 'exportPdf',
     label: 'Rapport PDF',
-    sublabel: 'Pour médecin/diététicien',
+    sublabel: 'Pour médecin ou coach',
     Icon: FileText,
     onPress: () => {},
-    isGold: true,
+    iconColor: '#F97316',
+    iconBg: '#F9731620',
   },
   {
     id: 'export',
-    label: 'Exporter mes donnees',
-    sublabel: 'JSON ou CSV',
+    label: 'Exporter',
+    sublabel: 'Sauvegarder tes données',
     Icon: Download,
     onPress: () => {},
-    isGold: false,
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
   },
   {
     id: 'import',
-    label: 'Importer des donnees',
+    label: 'Importer',
     sublabel: 'Restaurer un backup',
     Icon: Upload,
     onPress: () => {},
-    isGold: false,
+    iconColor: '#6366F1',
+    iconBg: '#6366F120',
   },
+];
+
+// ============================================
+// SECTION SUPPORT
+// ============================================
+const SUPPORT_ITEMS: MenuItem[] = [
   {
     id: 'rate',
     label: "Noter l'App",
-    sublabel: 'Sur l\'App Store',
+    sublabel: 'Laisse un avis sur l\'App Store',
     Icon: Star,
     onPress: () => {},
-    isGold: false,
+    iconColor: '#FBBF24',
+    iconBg: '#FBBF2420',
   },
   {
     id: 'contact',
-    label: 'Nous Contacter',
-    sublabel: 'Support et suggestions',
+    label: 'Contact',
+    sublabel: 'Questions ou suggestions',
     Icon: MessageCircle,
     onPress: () => {},
-    isGold: false,
+    iconColor: '#14B8A6',
+    iconBg: '#14B8A620',
   },
 ];
 
 export default function MoreScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const handleExport = async () => {
     Alert.alert(
@@ -271,7 +310,7 @@ export default function MoreScreen() {
   const handleImport = async () => {
     Alert.alert(
       'Importer des données',
-      'Cette action remplacera tes données actuelles. Assure-toi d\'avoir un export JSON valide.',
+      'Cette action remplacera tes données actuelles.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -279,7 +318,6 @@ export default function MoreScreen() {
           onPress: async () => {
             try {
               await importAllData(async (data) => {
-                // Ici on importerait les données - pour l'instant juste un log
                 console.log('Data to import:', data);
               });
             } catch (e) {
@@ -297,7 +335,6 @@ export default function MoreScreen() {
       if (isAvailable) {
         await StoreReview.requestReview();
       } else {
-        // Fallback vers l'App Store
         Alert.alert('Merci !', 'Tu peux nous noter sur l\'App Store');
       }
     } catch (e) {
@@ -322,7 +359,6 @@ export default function MoreScreen() {
               await generateProgressPDF('30j');
             } catch (e) {
               Alert.alert('Erreur', 'Impossible de générer le PDF');
-              console.log('PDF error:', e);
             }
           }
         },
@@ -333,7 +369,6 @@ export default function MoreScreen() {
               await generateProgressPDF('90j');
             } catch (e) {
               Alert.alert('Erreur', 'Impossible de générer le PDF');
-              console.log('PDF error:', e);
             }
           }
         },
@@ -341,18 +376,15 @@ export default function MoreScreen() {
     );
   };
 
-  const handlePress = (item: MenuItem) => {
-    // Gestion des items "coming soon"
-    if (item.isComingSoon) {
-      Alert.alert(
-        '📲 Bientôt disponible !',
-        'Le partage Instagram/Snapchat arrive très bientôt. Stay tuned Guerrier !',
-        [{ text: 'OK 💪' }]
-      );
-      return;
+  const handleQuickAction = (action: QuickAction) => {
+    if (action.route) {
+      router.push(action.route as any);
+    } else if (action.onPress) {
+      action.onPress();
     }
+  };
 
-    // Gestion spéciale pour certains items
+  const handleMenuItem = (item: MenuItem) => {
     if (item.id === 'export') {
       handleExport();
       return;
@@ -381,36 +413,72 @@ export default function MoreScreen() {
     }
   };
 
+  // Rendu d'une action rapide (grille)
+  const renderQuickAction = (action: QuickAction) => {
+    const IconComponent = action.Icon;
+    return (
+      <TouchableOpacity
+        key={action.id}
+        style={styles.quickActionContainer}
+        onPress={() => handleQuickAction(action)}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={action.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.quickActionGradient}
+        >
+          <IconComponent size={26} color="#FFFFFF" strokeWidth={2} />
+          <Text style={styles.quickActionLabel}>{action.label}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  };
+
+  // Rendu d'un item de menu
   const renderMenuItem = (item: MenuItem) => {
-    const iconColor = item.isGold ? colors.gold : colors.textSecondary;
     const IconComponent = item.Icon;
+    const iconColor = item.iconColor || colors.textSecondary;
+    const iconBg = item.iconBg || colors.cardHover;
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={() => handlePress(item)}
+        style={[styles.menuItem, { backgroundColor: colors.card }]}
+        onPress={() => handleMenuItem(item)}
         activeOpacity={0.7}
       >
-        <View style={[styles.menuItemIcon, { backgroundColor: item.isGold ? colors.goldMuted : colors.cardHover }]}>
-          <IconComponent size={22} color={iconColor} />
+        <View style={[styles.menuItemIcon, { backgroundColor: iconBg }]}>
+          <IconComponent size={20} color={iconColor} strokeWidth={2} />
         </View>
         <View style={styles.menuItemContent}>
           <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>{item.label}</Text>
           {item.sublabel && (
-            <Text style={[styles.menuItemSublabel, { color: colors.textSecondary }]}>{item.sublabel}</Text>
+            <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>{item.sublabel}</Text>
           )}
         </View>
-        {item.isComingSoon ? (
-          <View style={[styles.comingSoonBadge, { backgroundColor: colors.goldMuted }]}>
-            <Text style={[styles.comingSoonText, { color: colors.gold }]}>Bientôt</Text>
-          </View>
-        ) : (
-          <ChevronRight size={20} color={colors.textMuted} />
-        )}
+        <ChevronRight size={18} color={colors.textMuted} />
       </TouchableOpacity>
     );
   };
+
+  // Rendu d'une section
+  const renderSection = (title: string, items: MenuItem[]) => (
+    <View style={styles.sectionContainer}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{title}</Text>
+      <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {items.map((item, index) => (
+          <View key={item.id}>
+            {renderMenuItem(item)}
+            {index < items.length - 1 && (
+              <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+            )}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
     <ScreenWrapper noPadding>
@@ -421,52 +489,48 @@ export default function MoreScreen() {
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Plus</Text>
+          <View style={styles.headerTop}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Labo</Text>
+            <View style={[styles.versionBadge, { backgroundColor: colors.cardHover }]}>
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>v1.0.0</Text>
+            </View>
+          </View>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Outils et paramètres
+          </Text>
         </View>
 
-        {/* SECTION 1 - MON PROFIL */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MON PROFIL</Text>
-        <View style={styles.section}>
-          {PROFILE_ITEMS.map(renderMenuItem)}
+        {/* QUICK ACTIONS GRID */}
+        <View style={styles.quickActionsGrid}>
+          {QUICK_ACTIONS.map(renderQuickAction)}
         </View>
 
-        {/* SEPARATOR */}
-        <View style={[styles.separator, { backgroundColor: colors.border }]} />
-
-        {/* SECTION 2 - OUTILS */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>OUTILS</Text>
-        <View style={styles.section}>
-          {TOOLS_ITEMS.map(renderMenuItem)}
-        </View>
-
-        {/* SEPARATOR */}
-        <View style={[styles.separator, { backgroundColor: colors.border }]} />
-
-        {/* SECTION 3 - COMMUNAUTÉ */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMMUNAUTÉ</Text>
-        <View style={styles.section}>
-          {COMMUNITY_ITEMS.map(renderMenuItem)}
-        </View>
-
-        {/* SEPARATOR */}
-        <View style={[styles.separator, { backgroundColor: colors.border }]} />
-
-        {/* SECTION 4 - PARAMÈTRES */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PARAMÈTRES</Text>
-        <View style={styles.section}>
-          {SETTINGS_ITEMS.map(renderMenuItem)}
-        </View>
+        {/* SECTIONS */}
+        {renderSection('PROFIL & APPARENCE', PROFILE_ITEMS)}
+        {renderSection('OUTILS', TOOLS_ITEMS)}
+        {renderSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
+        {renderSection('PARAMÈTRES', SETTINGS_ITEMS)}
+        {renderSection('SUPPORT', SUPPORT_ITEMS)}
 
         {/* FOOTER */}
         <View style={styles.footer}>
-          <Text style={[styles.version, { color: colors.textMuted }]}>Version 1.0.0</Text>
-          <Text style={[styles.madeWith, { color: colors.textMuted }]}>Made with in France</Text>
-          <View style={[styles.privacyBadge, { backgroundColor: colors.successMuted }]}>
-            <Lock size={14} color={colors.success} />
-            <Text style={[styles.privacyText, { color: colors.success }]}>
-              Tes donnees restent sur TON telephone
-            </Text>
+          <View style={[styles.privacyCard, { backgroundColor: isDark ? '#1E293B' : '#F0FDF4' }]}>
+            <View style={styles.privacyIconContainer}>
+              <Shield size={20} color={isDark ? '#4ADE80' : '#16A34A'} />
+            </View>
+            <View style={styles.privacyContent}>
+              <Text style={[styles.privacyTitle, { color: isDark ? '#4ADE80' : '#16A34A' }]}>
+                100% Privé
+              </Text>
+              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
+                Tes données restent uniquement sur ton téléphone
+              </Text>
+            </View>
           </View>
+
+          <Text style={[styles.madeWith, { color: colors.textMuted }]}>
+            Made with ❤️ in France
+          </Text>
         </View>
 
         <View style={{ height: 120 }} />
@@ -475,8 +539,7 @@ export default function MoreScreen() {
   );
 }
 
-// Constantes non-thématiques
-const RADIUS = { lg: 16, full: 9999 };
+const QUICK_ACTION_SIZE = (SCREEN_WIDTH - 60) / 4;
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -491,36 +554,85 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-
-  // SECTION
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginBottom: 12,
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  versionBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  versionText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 15,
     marginTop: 4,
   },
-  section: {
-    gap: 4,
+
+  // QUICK ACTIONS
+  quickActionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  quickActionContainer: {
+    width: QUICK_ACTION_SIZE,
+    height: QUICK_ACTION_SIZE,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  quickActionGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  quickActionLabel: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  // SECTIONS
+  sectionContainer: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginLeft: 4,
+  },
+  sectionCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
   },
 
   // MENU ITEM
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: RADIUS.lg,
-    padding: 16,
-    gap: 16,
-    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 14,
   },
   menuItemIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -528,52 +640,54 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuItemLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
   },
   menuItemSublabel: {
-    fontSize: 13,
+    fontSize: 12,
     marginTop: 2,
   },
-
-  // SEPARATOR
-  separator: {
+  itemDivider: {
     height: 1,
-    marginVertical: 24,
+    marginLeft: 68,
   },
 
   // FOOTER
   footer: {
     alignItems: 'center',
-    paddingTop: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  version: {
-    fontSize: 13,
-  },
-  madeWith: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  privacyBadge: {
+  privacyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: RADIUS.full,
+    padding: 16,
+    borderRadius: 16,
+    width: '100%',
+    marginBottom: 20,
+    gap: 14,
+  },
+  privacyIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  privacyContent: {
+    flex: 1,
+  },
+  privacyTitle: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   privacyText: {
     fontSize: 12,
-    fontWeight: '600',
+    marginTop: 2,
   },
-  comingSoonBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  comingSoonText: {
-    fontSize: 11,
-    fontWeight: '700',
+  madeWith: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

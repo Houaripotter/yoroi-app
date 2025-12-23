@@ -1,8 +1,12 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Workout, WORKOUT_TYPES } from '@/types/workout';
-import { theme } from '@/lib/theme';
 import { useTheme } from '@/lib/ThemeContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CALENDAR_PADDING = 16 * 2; // padding container
+const DAY_MARGIN = 2 * 2; // margin per day (both sides)
+const DAY_SIZE = (SCREEN_WIDTH - CALENDAR_PADDING - (DAY_MARGIN * 7)) / 7;
 
 interface WorkoutCalendarProps {
   currentMonth: Date;
@@ -126,8 +130,8 @@ export function WorkoutCalendar({
                 style={[
                   styles.dayText,
                   { color: colors.textPrimary },
-                  today && { color: colors.success, fontWeight: theme.fontWeight.bold },
-                  selected && { color: colors.gold, fontWeight: theme.fontWeight.bold },
+                  today && { color: colors.success, fontWeight: '700' },
+                  selected && { color: colors.gold, fontWeight: '700' },
                 ]}
               >
                 {day.getDate()}
@@ -156,23 +160,23 @@ export function WorkoutCalendar({
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
+    gap: 16,
+    borderRadius: 16,
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: 8,
   },
   navButton: {
-    padding: theme.spacing.sm,
-    borderRadius: theme.radius.md,
+    padding: 8,
+    borderRadius: 12,
   },
   monthYear: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
+    fontSize: 20,
+    fontWeight: '800',
   },
   weekDays: {
     flexDirection: 'row',
@@ -180,11 +184,11 @@ const styles = StyleSheet.create({
   weekDayCell: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: 8,
   },
   weekDayText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: 14,
+    fontWeight: '700',
     textTransform: 'uppercase',
   },
   calendar: {
@@ -192,11 +196,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayCell: {
-    flex: 1,
-    aspectRatio: 1,
+    width: DAY_SIZE,
+    height: DAY_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     position: 'relative',
     margin: 2,
   },
@@ -204,8 +208,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   dayText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    fontSize: 18,
+    fontWeight: '600',
   },
   workoutLogos: {
     position: 'absolute',

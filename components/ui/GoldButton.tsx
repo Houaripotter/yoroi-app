@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { theme } from '@/lib/theme';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface GoldButtonProps {
@@ -80,9 +79,13 @@ export const GoldButton: React.FC<GoldButtonProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     overflow: 'hidden',
-    ...theme.shadows.gold,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   gradient: {
     flexDirection: 'row',

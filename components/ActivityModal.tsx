@@ -3,7 +3,7 @@ import { Modal, StyleSheet, Text, View, TouchableOpacity, Pressable } from 'reac
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { X } from 'lucide-react-native';
 import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ActivityModalProps {
   visible: boolean;
@@ -14,6 +14,8 @@ interface ActivityModalProps {
 }
 
 export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity, currentActivities = [] }: ActivityModalProps) {
+  const { colors, themeName } = useTheme();
+  const isWellness = false;
   const [selectedActivities, setSelectedActivities] = useState<WorkoutType[]>(currentActivities);
 
   // Synchroniser l'état interne avec les activités actuelles quand la modal s'ouvre
@@ -57,14 +59,24 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={[
+          styles.modalContainer,
+          { backgroundColor: colors.card },
+          isWellness && {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.15,
+            shadowRadius: 20,
+            elevation: 10,
+          }
+        ]} onPress={(e) => e.stopPropagation()}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Qu'as-tu fait le</Text>
-              <Text style={styles.dateText}>{formatDate(selectedDate)} ?</Text>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Qu'as-tu fait le</Text>
+              <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(selectedDate)} ?</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={20} color="#666666" strokeWidth={2.5} />
+              <X size={20} color={colors.textSecondary} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
 
@@ -72,6 +84,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
             <TouchableOpacity
               style={[
                 styles.activityButton,
+                { backgroundColor: colors.cardHover },
                 selectedActivities.includes('basic_fit') && styles.activityButtonSelected
               ]}
               onPress={() => handleActivityToggle('basic_fit')}
@@ -82,6 +95,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               </View>
               <Text style={[
                 styles.activityLabel,
+                { color: colors.textPrimary },
                 selectedActivities.includes('basic_fit') && styles.activityLabelSelected
               ]}>Musculation</Text>
             </TouchableOpacity>
@@ -89,6 +103,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
             <TouchableOpacity
               style={[
                 styles.activityButton,
+                { backgroundColor: colors.cardHover },
                 selectedActivities.includes('gracie_barra') && styles.activityButtonSelected
               ]}
               onPress={() => handleActivityToggle('gracie_barra')}
@@ -99,6 +114,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               </View>
               <Text style={[
                 styles.activityLabel,
+                { color: colors.textPrimary },
                 selectedActivities.includes('gracie_barra') && styles.activityLabelSelected
               ]}>JJB</Text>
             </TouchableOpacity>
@@ -106,6 +122,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
             <TouchableOpacity
               style={[
                 styles.activityButton,
+                { backgroundColor: colors.cardHover },
                 selectedActivities.includes('running') && styles.activityButtonSelected
               ]}
               onPress={() => handleActivityToggle('running')}
@@ -116,13 +133,14 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               </View>
               <Text style={[
                 styles.activityLabel,
+                { color: colors.textPrimary },
                 selectedActivities.includes('running') && styles.activityLabelSelected
               ]}>Running</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={styles.validateButton}
+            style={[styles.validateButton, { backgroundColor: colors.gold }]}
             onPress={handleValidate}
             activeOpacity={0.8}
           >
@@ -140,12 +158,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.xl,
+    padding: 24,
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.xl,
+    borderRadius: 16,
+    padding: 24,
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
@@ -159,36 +176,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.xl,
+    marginBottom: 24,
     width: '100%',
   },
   title: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: '#000000',
-    marginBottom: theme.spacing.xs,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   dateText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: '#666666',
+    fontSize: 15,
+    fontWeight: '600',
     textTransform: 'capitalize',
   },
   closeButton: {
-    padding: theme.spacing.sm,
+    padding: 8,
   },
   activitiesContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
+    gap: 12,
+    marginBottom: 24,
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
   activityButton: {
     alignItems: 'center',
-    padding: theme.spacing.lg,
-    backgroundColor: '#F8F8F8',
-    borderRadius: theme.radius.lg,
+    padding: 16,
+    borderRadius: 16,
     minWidth: 90,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -200,12 +214,11 @@ const styles = StyleSheet.create({
   activityLogo: {
     width: 36,
     height: 36,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
   },
   activityLabel: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: '#333333',
+    fontSize: 14,
+    fontWeight: '700',
     textAlign: 'center',
   },
   activityLabelSelected: {
@@ -214,7 +227,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 36,
     height: 36,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -222,16 +235,15 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   validateButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    borderRadius: theme.radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 16,
     width: '100%',
     alignItems: 'center',
   },
   validateButtonText: {
     color: '#FFFFFF',
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Pressable } from 'react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 import { Badge } from '@/types/badges';
 
 interface BadgeItemProps {
@@ -11,13 +11,15 @@ interface BadgeItemProps {
 }
 
 export function BadgeItem({ badge, unlocked, onPress, showAnimation = false }: BadgeItemProps) {
+  const { colors, isDark, themeName } = useTheme();
+  const isWellness = false;
+
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(unlocked ? 1 : 0.5)).current;
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (showAnimation && unlocked) {
-      // Animation de célébration quand le badge est débloqué
       Animated.sequence([
         Animated.parallel([
           Animated.spring(scale, {
@@ -68,8 +70,14 @@ export function BadgeItem({ badge, unlocked, onPress, showAnimation = false }: B
         style={[
           styles.container,
           {
+            backgroundColor: colors.card,
             transform: [{ scale }, { rotate: spin }],
             opacity,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: isWellness ? 4 : 2 },
+            shadowOpacity: isWellness ? 0.1 : (isDark ? 0.3 : 0.08),
+            shadowRadius: isWellness ? 8 : 4,
+            elevation: isWellness ? 6 : 3,
           },
         ]}
       >
@@ -77,16 +85,23 @@ export function BadgeItem({ badge, unlocked, onPress, showAnimation = false }: B
           style={[
             styles.badge,
             {
-              backgroundColor: unlocked ? badge.color : theme.colors.borderLight,
-              borderColor: unlocked ? badge.color : theme.colors.border,
+              backgroundColor: unlocked ? badge.color : colors.border,
+              borderColor: unlocked ? badge.color : colors.border,
+              shadowColor: badge.color,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: unlocked ? 0.3 : 0,
+              shadowRadius: 8,
+              elevation: unlocked ? 4 : 0,
             },
           ]}
         >
           <Text style={styles.icon}>{badge.icon}</Text>
         </View>
         <View style={styles.info}>
-          <Text style={[styles.name, !unlocked && styles.lockedText]}>{badge.name}</Text>
-          <Text style={[styles.description, !unlocked && styles.lockedText]}>
+          <Text style={[styles.name, { color: colors.textPrimary }, !unlocked && styles.lockedText]}>
+            {badge.name}
+          </Text>
+          <Text style={[styles.description, { color: colors.textSecondary }, !unlocked && styles.lockedText]}>
             {badge.description}
           </Text>
         </View>
@@ -104,11 +119,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.md,
-    gap: theme.spacing.md,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 12,
+    gap: 12,
     position: 'relative',
   },
   badge: {
@@ -118,7 +131,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    ...theme.shadow.md,
   },
   icon: {
     fontSize: 32,
@@ -128,24 +140,22 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   name: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   description: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    lineHeight: theme.fontSize.sm * 1.4,
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
   },
   lockedText: {
     opacity: 0.6,
   },
   lockOverlay: {
     position: 'absolute',
-    top: theme.spacing.md,
-    right: theme.spacing.md,
+    top: 12,
+    right: 12,
   },
   lockIcon: {
     fontSize: 20,

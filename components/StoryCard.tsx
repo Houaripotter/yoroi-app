@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { getCurrentRank } from '@/lib/ranks';
 import { TrendingDown, Trophy, Flame, Target } from 'lucide-react-native';
+import { Icon } from '@/components/Icon';
 
 // ============================================
 // STORY CARD - Pour partage Instagram/Snapchat
@@ -61,7 +62,7 @@ export const StoryCard = forwardRef<View, StoryCardProps>(({ type, data }, ref) 
             <Text style={[styles.mainStatValue, { color: colors.success }]}>
               -{data.weightLost.toFixed(1)} kg
             </Text>
-            <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>Conquis</Text>
+            <Text style={[styles.mainStatLabel, { color: colors.textSecondary }]}>Perdus</Text>
           </View>
         </View>
       )}
@@ -97,7 +98,7 @@ export const StoryCard = forwardRef<View, StoryCardProps>(({ type, data }, ref) 
           </View>
         )}
         <View style={[styles.badge, { backgroundColor: rank.color + '20' }]}>
-          <Text style={styles.badgeIcon}>{rank.icon}</Text>
+          <Icon name={rank.icon as any} size={16} color={rank.color} />
           <Text style={[styles.badgeText, { color: rank.color }]}>{rank.name}</Text>
         </View>
       </View>
@@ -152,7 +153,7 @@ export const StoryCard = forwardRef<View, StoryCardProps>(({ type, data }, ref) 
         <View style={[styles.resultBadge, { backgroundColor: colors.successMuted }]}>
           <Trophy size={20} color={colors.success} />
           <Text style={[styles.resultText, { color: colors.success }]}>
-            -{data.weightLost.toFixed(1)} kg conquis
+            -{data.weightLost.toFixed(1)} kg perdus
           </Text>
         </View>
       )}
@@ -289,9 +290,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 16,
-  },
-  badgeIcon: {
-    fontSize: 16,
   },
   badgeText: {
     fontSize: 13,

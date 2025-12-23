@@ -20,13 +20,17 @@ import {
   ChevronDown,
   Dumbbell,
   Check,
+  Home,
+  Plus,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
-import { addTraining, getClubs, Club } from '@/lib/database';
-import { SPORTS, MUSCLES, getSportIcon, getSportName } from '@/lib/sports';
+import { useBadges } from '@/lib/BadgeContext';
+import { addTraining, getClubs, Club, Exercise } from '@/lib/database';
+import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Constants for non-theme values
 const RADIUS = { sm: 8, md: 12 };
@@ -37,6 +41,7 @@ import { playSuccessSound } from '@/lib/soundManager';
 import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 
 // ============================================
 // NOUVEL ENTRAINEMENT
@@ -45,6 +50,7 @@ import { fr } from 'date-fns/locale';
 export default function AddTrainingScreen() {
   const { colors, gradients } = useTheme();
   const router = useRouter();
+  const { checkBadges } = useBadges();
   const params = useLocalSearchParams<{ date?: string }>();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +69,8 @@ export default function AddTrainingScreen() {
   const [duration, setDuration] = useState(60);
   const [notes, setNotes] = useState('');
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [showExerciseModal, setShowExerciseModal] = useState(false);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -120,6 +128,7 @@ export default function AddTrainingScreen() {
         start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         notes: notes || undefined,
         muscles: selectedMuscles.length > 0 ? selectedMuscles.join(',') : undefined,
+        exercises: exercises.length > 0 ? exercises : undefined,
       });
 
       successHaptic();
@@ -128,6 +137,9 @@ export default function AddTrainingScreen() {
       // Trigger review après une action positive
       await incrementReviewTrigger();
       await askForReview();
+
+      // Verifier les badges debloques
+      await checkBadges();
 
       Alert.alert(
         'Entrainement ajoute',
@@ -162,7 +174,7 @@ export default function AddTrainingScreen() {
         {/* MES CLUBS - EN PREMIER */}
         {clubs.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Mes Clubs</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Clubs & Coach</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -178,7 +190,7 @@ export default function AddTrainingScreen() {
                 onPress={() => setSelectedClub(null)}
               >
                 <View style={[styles.clubCardIcon, { backgroundColor: colors.cardHover }]}>
-                  <Text style={styles.clubCardEmoji}>🏠</Text>
+                  <Home size={24} color={!selectedClub ? colors.gold : colors.textSecondary} strokeWidth={2} />
                 </View>
                 <Text style={[styles.clubCardName, { color: !selectedClub ? colors.gold : colors.textSecondary }]}>
                   Libre
@@ -191,7 +203,8 @@ export default function AddTrainingScreen() {
                     styles.clubCard,
                     {
                       backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : colors.card,
-                      borderColor: selectedClub?.id === club.id ? colors.gold : (club.color || colors.border)
+                      borderColor: selectedClub?.id === club.id ? colors.gold : 'transparent',
+                      borderWidth: selectedClub?.id === club.id ? 2 : 0,
                     },
                   ]}
                   onPress={() => {
@@ -202,17 +215,27 @@ export default function AddTrainingScreen() {
                     }
                   }}
                 >
-                  {club.logo_uri ? (
-                    <Image
-                      source={{ uri: club.logo_uri }}
-                      style={styles.clubCardLogo}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.cardHover }]}>
-                      <Text style={styles.clubCardEmoji}>{getSportIcon(club.sport || 'autre')}</Text>
-                    </View>
-                  )}
+                  {(() => {
+                    const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
+                    if (logoSource) {
+                      return (
+                        <Image
+                          source={logoSource}
+                          style={styles.clubCardLogo}
+                          resizeMode="cover"
+                        />
+                      );
+                    }
+                    return (
+                      <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.cardHover }]}>
+                        <MaterialCommunityIcons
+                          name={getSportIcon(club.sport || 'autre') as any}
+                          size={24}
+                          color="#FFFFFF"
+                        />
+                      </View>
+                    );
+                  })()}
                   <Text
                     style={[
                       styles.clubCardName,
@@ -230,41 +253,86 @@ export default function AddTrainingScreen() {
 
         {/* SPORT */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Sport</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.sportsScroll}
-          contentContainerStyle={styles.sportsContainer}
-        >
-          {SPORTS.filter(s => s.id !== 'autre').map((sport) => (
-            <TouchableOpacity
-              key={sport.id}
-              style={[
-                styles.sportItem,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                selectedSport === sport.id && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
-              ]}
-              onPress={() => {
-                setSelectedSport(sport.id);
-                // Déselectionner le club si le sport ne correspond pas
-                if (selectedClub && selectedClub.sport !== sport.id) {
-                  setSelectedClub(null);
-                }
-              }}
-            >
-              <Text style={styles.sportIcon}>{sport.icon}</Text>
-              <Text
-                style={[
-                  styles.sportName,
-                  { color: colors.textSecondary },
-                  selectedSport === sport.id && { color: colors.gold },
-                ]}
-              >
-                {sport.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+
+        {/* Group sports by category */}
+        {(() => {
+          const categoryLabels: Record<string, string> = {
+            combat_striking: 'Combat (Pieds-Poings)',
+            combat_grappling: 'Combat (Grappling)',
+            fitness: 'Musculation',
+            cardio: 'Cardio',
+            collectif: 'Sports Collectifs',
+            raquettes: 'Raquettes',
+            autre: 'Autres',
+          };
+
+          const categories = ['combat_grappling', 'combat_striking', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];
+
+          return categories.map((category) => {
+            const sportsInCategory = SPORTS.filter(s => s.category === category);
+            if (sportsInCategory.length === 0) return null;
+
+            return (
+              <View key={category} style={styles.categorySection}>
+                <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
+                  {categoryLabels[category]}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.sportsContainer}
+                >
+                  {sportsInCategory.map((sport) => {
+                    const isSelected = selectedSport === sport.id;
+
+                    return (
+                      <TouchableOpacity
+                        key={sport.id}
+                        style={[
+                          styles.sportItem,
+                          { backgroundColor: colors.card, borderColor: 'transparent', borderWidth: 0 },
+                          isSelected && {
+                            borderColor: colors.gold,
+                            backgroundColor: colors.goldMuted,
+                            borderWidth: 2,
+                          },
+                        ]}
+                        onPress={() => {
+                          setSelectedSport(sport.id);
+                          if (selectedClub && selectedClub.sport !== sport.id) {
+                            setSelectedClub(null);
+                          }
+                        }}
+                      >
+                        <View style={styles.sportIconContainer}>
+                          <MaterialCommunityIcons
+                            name={sport.icon as any}
+                            size={24}
+                            color={isSelected ? colors.gold : sport.color}
+                          />
+                          {isSelected && (
+                            <View style={[styles.checkmarkBadge, { backgroundColor: colors.gold }]}>
+                              <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                            </View>
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.sportName,
+                            { color: colors.textSecondary },
+                            isSelected && { color: colors.gold, fontWeight: '700' },
+                          ]}
+                        >
+                          {sport.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            );
+          });
+        })()}
 
         {/* DATE */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date</Text>
@@ -377,6 +445,48 @@ export default function AddTrainingScreen() {
           </>
         )}
 
+        {/* EXERCICES (si musculation) */}
+        {showMuscles && (
+          <>
+            <View style={styles.exercisesHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>Exercices</Text>
+              <TouchableOpacity
+                style={[styles.addExerciseButton, { backgroundColor: colors.gold }]}
+                onPress={() => setShowExerciseModal(true)}
+              >
+                <Plus size={16} color="#FFF" strokeWidth={3} />
+                <Text style={styles.addExerciseText}>Ajouter</Text>
+              </TouchableOpacity>
+            </View>
+
+            {exercises.length > 0 && (
+              <View style={styles.exercisesList}>
+                {exercises.map((exercise, index) => (
+                  <View
+                    key={index}
+                    style={[styles.exerciseItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  >
+                    <View style={styles.exerciseInfo}>
+                      <Text style={[styles.exerciseName, { color: colors.textPrimary }]}>
+                        {exercise.name}
+                      </Text>
+                      <Text style={[styles.exerciseDetails, { color: colors.textMuted }]}>
+                        {exercise.sets} séries × {exercise.reps} reps @ {exercise.weight}kg
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => setExercises(prev => prev.filter((_, i) => i !== index))}
+                      style={styles.removeExerciseButton}
+                    >
+                      <X size={18} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+
         {/* NOTES */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
         <TextInput
@@ -408,6 +518,13 @@ export default function AddTrainingScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Exercise Picker Modal */}
+      <ExercisePickerModal
+        visible={showExerciseModal}
+        onClose={() => setShowExerciseModal(false)}
+        onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
+      />
     </ScreenWrapper>
   );
 }
@@ -454,6 +571,17 @@ const styles = StyleSheet.create({
     marginHorizontal: -20,
     marginBottom: SPACING.lg,
   },
+  categorySection: {
+    marginBottom: SPACING.lg,
+  },
+  categoryLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 8,
+    paddingHorizontal: 20,
+    textTransform: 'uppercase',
+  },
   sportsContainer: {
     paddingHorizontal: SPACING.xl,
     gap: 10,
@@ -468,6 +596,20 @@ const styles = StyleSheet.create({
   },
   sportItemActive: {
     // Colors applied inline
+  },
+  sportIconContainer: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+  checkmarkBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sportIcon: {
     fontSize: 28,
@@ -646,6 +788,54 @@ const styles = StyleSheet.create({
   },
   muscleNameActive: {
     // Colors applied inline
+  },
+
+  // EXERCISES
+  exercisesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  addExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.sm,
+  },
+  addExerciseText: {
+    color: '#FFF',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  exercisesList: {
+    gap: 10,
+    marginBottom: SPACING.lg,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+  },
+  exerciseInfo: {
+    flex: 1,
+  },
+  exerciseName: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  exerciseDetails: {
+    fontSize: FONT_SIZE.xs,
+  },
+  removeExerciseButton: {
+    padding: 4,
   },
 
   // NOTES

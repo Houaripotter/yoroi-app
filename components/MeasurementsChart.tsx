@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StyleSheet, ScrollView } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react-native';
 import { Measurement } from '@/lib/database';
@@ -15,8 +15,6 @@ interface MeasurementsChartProps {
   data: Measurement[];
   onPointPress?: (point: Measurement) => void;
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Configuration des mesures
 const MEASUREMENT_CONFIG: { key: keyof Measurement; label: string; shortLabel: string; color: string }[] = [
@@ -41,10 +39,13 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
   data,
   onPointPress,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [period, setPeriod] = useState<'7j' | '30j' | '90j' | 'tout'>('tout');
   const [selectedMeasures, setSelectedMeasures] = useState<string[]>(DEFAULT_SELECTED);
-  const chartWidth = SCREEN_WIDTH - 48;
+
+  const chartWidth = 300;
+  const chartHeight = 200;
+  const padding = 20;
 
   // Filtrer selon la periode
   const filteredData = useMemo(() => {
@@ -109,56 +110,42 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
     return result;
   }, [displayData, selectedMeasures]);
 
-  // Configuration du graphique
-  const chartConfig = {
-    backgroundColor: 'transparent',
-    backgroundGradientFrom: colors.card,
-    backgroundGradientTo: colors.card,
-    backgroundGradientFromOpacity: 0,
-    backgroundGradientToOpacity: 0,
-    decimalPlaces: 0,
-    color: () => colors.gold,
-    labelColor: () => colors.textMuted,
-    propsForBackgroundLines: {
-      stroke: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-      strokeDasharray: '5,5',
-    },
+  // Préparer les données pour chaque mesure
+  const prepareChartData = (key: string) => {
+    if (displayData.length === 0) return [];
+
+    const values = displayData.map(d => (d[key as keyof Measurement] as number) || 0);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const valueRange = maxValue - minValue || 1;
+
+    const xStep = (chartWidth - padding * 2) / Math.max(displayData.length - 1, 1);
+
+    return displayData.map((item, index) => ({
+      x: padding + index * xStep,
+      y: chartHeight - padding - (((item[key as keyof Measurement] as number) || 0) - minValue) / valueRange * (chartHeight - padding * 2),
+      value: (item[key as keyof Measurement] as number) || 0,
+      date: item.date,
+    }));
   };
 
-  // Formater les labels de date
-  const formatLabels = () => {
-    if (displayData.length === 0) return [''];
+  // Créer un path pour une courbe
+  const createPath = (chartData: Array<{ x: number; y: number; value: number; date: string }>) => {
+    if (chartData.length === 0) return '';
 
-    return displayData.map((d, i) => {
-      if (i === 0 || i === displayData.length - 1 || i === Math.floor(displayData.length / 2)) {
-        const date = new Date(d.date);
-        return `${date.getDate()}/${date.getMonth() + 1}`;
-      }
-      return '';
-    });
-  };
+    let path = `M ${chartData[0].x} ${chartData[0].y}`;
 
-  // Preparer les datasets
-  const prepareDatasets = () => {
-    const datasets = selectedMeasures.map(key => {
-      const config = MEASUREMENT_CONFIG.find(m => m.key === key);
-      return {
-        data: displayData.map(d => (d[key as keyof Measurement] as number) || 0),
-        color: () => config?.color || colors.gold,
-        strokeWidth: 3,
-      };
-    });
-
-    // Fallback si aucun dataset
-    if (datasets.length === 0 || displayData.length === 0) {
-      return [{
-        data: [0],
-        color: () => 'transparent',
-        strokeWidth: 0,
-      }];
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.y;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.y;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
     }
 
-    return datasets;
+    return path;
   };
 
   // Verifier si des donnees existent pour une mesure
@@ -168,6 +155,24 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
 
   // Mesures disponibles (avec donnees)
   const availableMeasures = MEASUREMENT_CONFIG.filter(m => hasMeasureData(m.key));
+
+  // Formater les labels de date
+  const getDateLabels = () => {
+    if (displayData.length === 0 || selectedMeasures.length === 0) return [];
+
+    const chartData = prepareChartData(selectedMeasures[0]);
+
+    return chartData.map((point, i) => {
+      if (i === 0 || i === chartData.length - 1 || i === Math.floor(chartData.length / 2)) {
+        const date = new Date(point.date);
+        return {
+          x: point.x,
+          label: `${date.getDate()}/${date.getMonth() + 1}`,
+        };
+      }
+      return null;
+    }).filter(Boolean);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -246,24 +251,50 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
       {/* Graphique */}
       {displayData.length > 1 && selectedMeasures.length > 0 ? (
         <View style={styles.chartContainer}>
-          <LineChart
-            data={{
-              labels: formatLabels(),
-              datasets: prepareDatasets(),
-            }}
-            width={chartWidth}
-            height={200}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-            withInnerLines={true}
-            withOuterLines={false}
-            withVerticalLabels={true}
-            withHorizontalLabels={true}
-            fromZero={false}
-            segments={4}
-            yAxisSuffix=" cm"
-          />
+          <Svg width={chartWidth} height={chartHeight}>
+            {/* Dessiner chaque courbe sélectionnée */}
+            {selectedMeasures.map(key => {
+              const config = MEASUREMENT_CONFIG.find(m => m.key === key);
+              if (!config) return null;
+
+              const chartData = prepareChartData(key);
+
+              return (
+                <React.Fragment key={key}>
+                  <Path
+                    d={createPath(chartData)}
+                    stroke={config.color}
+                    strokeWidth="3"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  {chartData.map((point, index) => (
+                    <Circle
+                      key={`${key}-${index}`}
+                      cx={point.x}
+                      cy={point.y}
+                      r="4"
+                      fill="#FFFFFF"
+                      stroke={config.color}
+                      strokeWidth="2"
+                    />
+                  ))}
+                </React.Fragment>
+              );
+            })}
+          </Svg>
+
+          {/* Labels des dates */}
+          <View style={styles.labelsContainer}>
+            {getDateLabels().map((item: any, index) => (
+              <Text
+                key={index}
+                style={[styles.dateLabel, { color: colors.textMuted, left: item.x - 20 }]}
+              >
+                {item.label}
+              </Text>
+            ))}
+          </View>
         </View>
       ) : (
         <View style={styles.noData}>
@@ -382,11 +413,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chartContainer: {
-    marginHorizontal: -10,
     alignItems: 'center',
+    marginBottom: 16,
   },
-  chart: {
-    borderRadius: 16,
+  labelsContainer: {
+    width: 300,
+    height: 20,
+    position: 'relative',
+    marginTop: 8,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
   },
   noData: {
     height: 200,

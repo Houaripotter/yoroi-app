@@ -7,7 +7,6 @@ import {
   TextStyle,
   ActivityIndicator,
 } from 'react-native';
-import { theme } from '@/lib/theme';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface DarkButtonProps {
@@ -100,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
   },
   label: {
     fontWeight: '600',

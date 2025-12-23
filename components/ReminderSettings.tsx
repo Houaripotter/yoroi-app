@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Bell, Clock, Calendar, Dumbbell } from 'lucide-react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ReminderSettings as ReminderSettingsType,
@@ -42,6 +42,9 @@ const REMINDER_TYPES: { label: string; value: ReminderType; icon: string }[] = [
 const STORAGE_KEY = '@yoroi_reminder_settings';
 
 export function ReminderSettingsComponent() {
+  const { colors, themeName } = useTheme();
+  const isWellness = false;
+
   const [settings, setSettings] = useState<ReminderSettingsType>({
     enabled: false,
     time: '07:00',
@@ -168,17 +171,31 @@ export function ReminderSettingsComponent() {
   const [hours, minutes] = settings.time.split(':').map(Number);
   timeDate.setHours(hours, minutes);
 
+  const cardShadow = isWellness ? {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  } : {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  };
+
   return (
     <View style={styles.container}>
       {/* Toggle principal */}
-      <View style={styles.mainToggle}>
+      <View style={[styles.mainToggle, { backgroundColor: colors.card }, cardShadow]}>
         <View style={styles.toggleLeft}>
           <View style={[styles.iconContainer, { backgroundColor: '#34D39920' }]}>
             <Bell size={20} color="#34D399" strokeWidth={2.5} />
           </View>
           <View style={styles.toggleText}>
-            <Text style={styles.toggleTitle}>Activer les rappels</Text>
-            <Text style={styles.toggleSubtitle}>
+            <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Activer les rappels</Text>
+            <Text style={[styles.toggleSubtitle, { color: colors.textSecondary }]}>
               {hasPermission ? 'Notifications autorisées' : 'Permissions requises'}
             </Text>
           </View>
@@ -196,9 +213,9 @@ export function ReminderSettingsComponent() {
         <View style={styles.settingsContent}>
           {/* Sélecteur d'heure */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>HEURE DU RAPPEL</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>HEURE DU RAPPEL</Text>
             <TouchableOpacity
-              style={styles.timeButton}
+              style={[styles.timeButton, { backgroundColor: colors.card }, cardShadow]}
               onPress={() => setShowTimePicker(true)}
               activeOpacity={0.7}
             >
@@ -206,9 +223,9 @@ export function ReminderSettingsComponent() {
                 <View style={[styles.iconContainer, { backgroundColor: '#3B82F620' }]}>
                   <Clock size={20} color="#3B82F6" strokeWidth={2.5} />
                 </View>
-                <Text style={styles.timeText}>{settings.time}</Text>
+                <Text style={[styles.timeText, { color: colors.textPrimary }]}>{settings.time}</Text>
               </View>
-              <Text style={styles.changeText}>Modifier</Text>
+              <Text style={[styles.changeText, { color: colors.gold }]}>Modifier</Text>
             </TouchableOpacity>
 
             {showTimePicker && (
@@ -224,23 +241,23 @@ export function ReminderSettingsComponent() {
 
           {/* Sélection des jours */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>JOURS DE LA SEMAINE</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>JOURS DE LA SEMAINE</Text>
 
             {/* Raccourcis */}
             <View style={styles.shortcutsRow}>
               <TouchableOpacity
-                style={styles.shortcutButton}
+                style={[styles.shortcutButton, { backgroundColor: colors.card }]}
                 onPress={selectAllDays}
                 activeOpacity={0.7}
               >
-                <Text style={styles.shortcutText}>Tous les jours</Text>
+                <Text style={[styles.shortcutText, { color: colors.textSecondary }]}>Tous les jours</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.shortcutButton}
+                style={[styles.shortcutButton, { backgroundColor: colors.card }]}
                 onPress={selectWeekdays}
                 activeOpacity={0.7}
               >
-                <Text style={styles.shortcutText}>Semaine</Text>
+                <Text style={[styles.shortcutText, { color: colors.textSecondary }]}>Semaine</Text>
               </TouchableOpacity>
             </View>
 
@@ -251,11 +268,19 @@ export function ReminderSettingsComponent() {
                 return (
                   <TouchableOpacity
                     key={day.value}
-                    style={[styles.dayButton, isSelected && styles.dayButtonActive]}
+                    style={[
+                      styles.dayButton,
+                      { backgroundColor: colors.card },
+                      isSelected && styles.dayButtonActive
+                    ]}
                     onPress={() => toggleDay(day.value)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.dayText, isSelected && styles.dayTextActive]}>
+                    <Text style={[
+                      styles.dayText,
+                      { color: colors.textSecondary },
+                      isSelected && styles.dayTextActive
+                    ]}>
                       {day.label}
                     </Text>
                   </TouchableOpacity>
@@ -266,19 +291,28 @@ export function ReminderSettingsComponent() {
 
           {/* Type de rappel */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>TYPE DE RAPPEL</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>TYPE DE RAPPEL</Text>
             <View style={styles.typesGrid}>
               {REMINDER_TYPES.map((type) => {
                 const isSelected = settings.type === type.value;
                 return (
                   <TouchableOpacity
                     key={type.value}
-                    style={[styles.typeButton, isSelected && styles.typeButtonActive]}
+                    style={[
+                      styles.typeButton,
+                      { backgroundColor: colors.card },
+                      cardShadow,
+                      isSelected && styles.typeButtonActive
+                    ]}
                     onPress={() => handleTypeChange(type.value)}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.typeIcon}>{type.icon}</Text>
-                    <Text style={[styles.typeText, isSelected && styles.typeTextActive]}>
+                    <Text style={[
+                      styles.typeText,
+                      { color: colors.textSecondary },
+                      isSelected && { color: colors.gold }
+                    ]}>
                       {type.label}
                     </Text>
                   </TouchableOpacity>
@@ -289,11 +323,11 @@ export function ReminderSettingsComponent() {
 
           {/* Bouton de test */}
           <TouchableOpacity
-            style={styles.testButton}
+            style={[styles.testButton, { backgroundColor: colors.cardHover }]}
             onPress={handleTestNotification}
             activeOpacity={0.7}
           >
-            <Text style={styles.testButtonText}>Tester la notification</Text>
+            <Text style={[styles.testButtonText, { color: colors.textSecondary }]}>Tester la notification</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -303,27 +337,25 @@ export function ReminderSettingsComponent() {
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.lg,
+    gap: 16,
   },
   mainToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 16,
   },
   toggleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
     flex: 1,
   },
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -331,27 +363,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toggleTitle: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   toggleSubtitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
     marginTop: 2,
   },
   settingsContent: {
-    gap: theme.spacing.xl,
+    gap: 24,
   },
   section: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   sectionTitle: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -359,84 +388,72 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 16,
   },
   timeButtonLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   timeText: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   changeText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   shortcutsRow: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   shortcutButton: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
-    paddingVertical: theme.spacing.sm,
+    borderRadius: 12,
+    paddingVertical: 8,
     alignItems: 'center',
-    ...theme.shadow.xs,
   },
   shortcutText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '600',
   },
   daysGrid: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   dayButton: {
     flex: 1,
     aspectRatio: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
-    ...theme.shadow.xs,
   },
   dayButtonActive: {
     backgroundColor: '#34D399',
     borderColor: '#34D399',
   },
   dayText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   dayTextActive: {
     color: '#FFFFFF',
   },
   typesGrid: {
-    gap: theme.spacing.sm,
+    gap: 8,
   },
   typeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
+    gap: 12,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 2,
     borderColor: 'transparent',
-    ...theme.shadow.xs,
   },
   typeButtonActive: {
     backgroundColor: '#34D39910',
@@ -446,23 +463,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   typeText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
-  },
-  typeTextActive: {
-    color: theme.colors.primary,
+    fontSize: 15,
+    fontWeight: '700',
   },
   testButton: {
-    backgroundColor: theme.colors.beigeLight,
-    borderRadius: theme.radius.xl,
-    paddingVertical: theme.spacing.md,
+    borderRadius: 16,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: 12,
   },
   testButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

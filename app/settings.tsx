@@ -13,14 +13,16 @@ import {
   Switch,
   Image,
   KeyboardAvoidingView,
+  Linking,
+  Animated,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   User,
   Target,
   Calendar,
   Scale,
   TrendingDown,
-  Palette,
   Trash2,
   ChevronRight,
   X,
@@ -33,20 +35,43 @@ import {
   Users,
   Lightbulb,
   Sparkles,
+  FileText,
+  Cloud,
+  RefreshCw,
+  Mail,
+  Watch,
+  Mic,
+  Heart,
+  Trophy,
+  Smartphone,
+  Moon,
+  Activity as ActivityIcon,
+  ShoppingBag,
+  Dumbbell as DumbbellIcon,
+  Shield,
+  Footprints,
+  CircleDot,
+  Building2,
+  Shirt,
+  type LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useDevMode } from '@/lib/DevModeContext';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { useFocusEffect, router } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { BadgesScreen } from '@/components/BadgesScreen'; 
 import { ReminderSettingsComponent } from '@/components/ReminderSettings';
 import { HealthSyncSettings } from '@/components/HealthSyncSettings';
+import { SmartRemindersSettings } from '@/components/SmartRemindersSettings';
+import { BriefingSettings } from '@/components/BriefingSettings';
 import { PartnersScreen } from '@/components/PartnersScreen';
 import * as ImagePicker from 'expo-image-picker';
-import { 
-  exportData, 
-  importData, 
-  resetAllData, 
-  getUserSettings, 
+import {
+  exportData,
+  importData,
+  resetAllData,
+  getUserSettings,
   saveUserSettings,
   getUserClubs,
   addUserClub,
@@ -57,10 +82,24 @@ import {
   updateUserGear,
   deleteUserGear,
 } from '@/lib/storage';
+import { CITATION_STYLE_OPTIONS, CitationStyle, setCitationStyle as saveCitationStyleToStorage } from '@/lib/citations';
 import type { UserClub, UserGear } from '@/lib/storage';
 import { exportDataToJSON, exportDataToCSV, shareProgress } from '@/lib/exportService';
+import { exportToPDF, previewPDFReport } from '@/lib/pdfExportService';
+import { isiCloudSyncFeatureEnabled, getiCloudUnavailableMessage, getSyncStatus, SyncStatus } from '@/lib/iCloudSyncService';
+import {
+  getRamadanSettings,
+  saveRamadanSettings,
+  toggleRamadanMode,
+  getRamadanDates,
+  isRamadanPeriod,
+  RamadanSettings,
+} from '@/lib/ramadanService';
 import { generateMockMeasurements } from '@/lib/generateMockData';
 import { insertDemoData, clearAllData } from '@/lib/demoData';
+import { getUserMode, setUserMode, getUserSport } from '@/lib/fighterModeService';
+import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
+import { resetAndGenerateDemoData, DemoDataResult } from '@/lib/generateDemoData';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 
@@ -74,7 +113,8 @@ interface SettingsScreenProps {
 }
 
 export default function SettingsScreen({ onClose }: SettingsScreenProps = { onClose: undefined }) {
-  const { themeMode, setThemeMode, colorTheme, setColorTheme, colorPalettes, colors, isDark } = useTheme();
+  const { themeName, colors, isDark } = useTheme();
+  const { isDevMode, handleSecretTap, disableDevMode } = useDevMode();
   const systemColorScheme = useColorScheme();
 
   // Use colors from theme context directly
@@ -87,11 +127,8 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
   const [targetDate, setTargetDate] = useState('');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [measurementUnit, setMeasurementUnit] = useState<'cm' | 'in'>('cm');
-  const appTheme = themeMode; // Utiliser le thème du contexte
 
   // Modals
-  const [themeModalVisible, setThemeModalVisible] = useState(false);
-  const [colorThemeModalVisible, setColorThemeModalVisible] = useState(false);
   const [weightUnitModalVisible, setWeightUnitModalVisible] = useState(false);
   const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
@@ -114,6 +151,23 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
   const [newGearBrand, setNewGearBrand] = useState('');
   const [newGearType, setNewGearType] = useState<'kimono' | 'chaussure' | 'gants' | 'protections' | 'autre'>('kimono');
   const [newGearPhoto, setNewGearPhoto] = useState<string | null>(null);
+  const [citationStyle, setCitationStyle] = useState<CitationStyle>('all');
+  const [citationModalVisible, setCitationModalVisible] = useState(false);
+
+  // Ramadan Mode
+  const [ramadanEnabled, setRamadanEnabled] = useState(false);
+  const [ramadanSettings, setRamadanSettingsState] = useState<RamadanSettings | null>(null);
+  const [ramadanModalVisible, setRamadanModalVisible] = useState(false);
+  const [ramadanFajrTime, setRamadanFajrTime] = useState('05:30');
+  const [ramadanMaghribTime, setRamadanMaghribTime] = useState('19:45');
+  const [ramadanHydrationGoal, setRamadanHydrationGoal] = useState('3');
+
+  // Hidden demo data generator (tap version 5 times)
+  const [showHiddenDemo, setShowHiddenDemo] = useState(false);
+
+  // Fighter Mode
+  const [userModeSetting, setUserModeSetting] = useState<UserMode>('loisir');
+  const [userSport, setUserSport] = useState<Sport | null>(null);
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -135,6 +189,27 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       // Charger les clubs utilisateur
       const clubs = await getUserClubs();
       setUserClubs(clubs);
+      // Charger le style de citation
+      if (settings.citationStyle) {
+        setCitationStyle(settings.citationStyle as CitationStyle);
+      }
+
+      // Charger les parametres Ramadan
+      const ramSettings = await getRamadanSettings();
+      setRamadanSettingsState(ramSettings);
+      setRamadanEnabled(ramSettings.enabled);
+      setRamadanFajrTime(ramSettings.fajrTime);
+      setRamadanMaghribTime(ramSettings.maghribTime);
+      setRamadanHydrationGoal(ramSettings.hydrationGoal.toString());
+
+      // Charger le mode utilisateur (loisir / competiteur)
+      const mode = await getUserMode();
+      setUserModeSetting(mode);
+
+      // Charger le sport (pour les compétiteurs)
+      const sport = await getUserSport();
+      setUserSport(sport);
+
       // Le thème est géré par le contexte, pas besoin de le mettre à jour ici
     } catch (e) {
       console.log("Erreur chargement settings", e);
@@ -146,6 +221,43 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       fetchSettings();
     }, [fetchSettings])
   );
+
+  const handleChangeUserMode = async (newMode: UserMode) => {
+    Alert.alert(
+      'Changer de mode',
+      newMode === 'competiteur'
+        ? 'Passer en mode compétiteur activera les fonctionnalités avancées pour les combattants (compétitions, palmarès, hydratation).'
+        : 'Passer en mode loisir désactivera les fonctionnalités spécifiques aux compétiteurs.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Confirmer',
+          onPress: async () => {
+            await setUserMode(newMode);
+            setUserModeSetting(newMode);
+
+            // Si passage en mode compétiteur et pas de sport défini, rediriger vers sélection de sport
+            if (newMode === 'competiteur' && !userSport) {
+              Alert.alert(
+                'Sport de combat',
+                'Pour profiter pleinement du mode compétiteur, veuillez sélectionner votre sport principal.',
+                [
+                  {
+                    text: 'Plus tard',
+                    style: 'cancel',
+                  },
+                  {
+                    text: 'Choisir',
+                    onPress: () => router.push('/sport-selection'),
+                  },
+                ]
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const removeClubLogo = async (clubKey: string) => {
     Alert.alert(
@@ -177,7 +289,7 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       target_date: targetDate,
       weight_unit: weightUnit,
       measurement_unit: measurementUnit,
-      theme: appTheme,
+      theme: themeName,
     });
   };
 
@@ -238,6 +350,28 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     }
   };
 
+  const handleResetOnboarding = async () => {
+    Alert.alert(
+      'Revoir l\'onboarding',
+      'Voulez-vous revoir l\'écran d\'accueil ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Oui',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('yoroi_onboarding_done');
+              router.replace('/onboarding');
+            } catch (error) {
+              console.error('Erreur reset onboarding:', error);
+              Alert.alert('Erreur', 'Impossible de réinitialiser l\'onboarding.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleGenerateMockData = async () => {
     Alert.alert(
       'Générer des données de démo',
@@ -258,6 +392,69 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
               router.replace('/(tabs)');
             } catch (error) {
               console.error('Erreur génération données:', error);
+              Alert.alert('Erreur', 'Impossible de générer les données.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle version tap - triggers Dev Mode secret code
+  const handleVersionTap = () => {
+    handleSecretTap();
+  };
+
+  // Toggle Dev Mode - allows user to disable it
+  const handleToggleDevMode = async () => {
+    Alert.alert(
+      '🔓 Mode Créateur',
+      isDevMode
+        ? 'Voulez-vous désactiver le Mode Créateur ? Toutes les fonctionnalités Premium seront à nouveau verrouillées.'
+        : 'Le Mode Créateur est actuellement activé. Toutes les fonctionnalités Premium sont débloquées.',
+      isDevMode
+        ? [
+            { text: 'Annuler', style: 'cancel' },
+            {
+              text: 'Désactiver',
+              style: 'destructive',
+              onPress: async () => {
+                await disableDevMode();
+                Alert.alert('🔒 Désactivé', 'Le Mode Créateur est désactivé.');
+              },
+            },
+          ]
+        : [{ text: 'OK', style: 'default' }]
+    );
+  };
+
+  // Hidden realistic demo data generator
+  const handleGenerateRealisticDemoData = async () => {
+    Alert.alert(
+      '🎌 Données Démo Complètes',
+      'Génère 6 mois de transformation réaliste :\n\n📊 95 kg → 77 kg (-18 kg)\n\n• ~150 pesées avec composition corporelle\n• ~26 mensurations (tour de taille: 98→82cm)\n• ~150 entraînements\n• 3 clubs avec logos :\n  - Gracie Barra (JJB)\n  - Basic Fit (Musculation)\n  - Marseille Fight Club (MMA)\n• Planning hebdomadaire\n• 11 badges débloqués\n\n⚠️ Toutes les données actuelles seront EFFACÉES !',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Générer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const result: DemoDataResult = await resetAndGenerateDemoData();
+
+              if (result.success) {
+                setShowHiddenDemo(false);
+                Alert.alert(
+                  '✅ Données générées !',
+                  `Transformation 95 kg → 77 kg créée :\n\n• ${result.weightsCount} pesées\n• ${result.measurementsCount} mensurations\n• ${result.trainingsCount} entraînements\n• ${result.achievementsCount} badges\n\n🥋 Gracie Barra + Basic Fit + MFC`
+                );
+                fetchSettings();
+                router.replace('/(tabs)');
+              } else {
+                Alert.alert('Erreur', result.error || 'Échec de la génération');
+              }
+            } catch (error) {
+              console.error('Erreur génération données réalistes:', error);
               Alert.alert('Erreur', 'Impossible de générer les données.');
             }
           },
@@ -287,262 +484,191 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       <Header title="Reglages" showBack onBack={onClose} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
 
-        {/* PROFIL */}
-        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>PROFIL</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <View style={styles.inputRow}>
-                <Text style={[styles.inputLabel, { color: textColor }]}>Taille (cm)</Text>
-                <TextInput 
-                    style={[styles.input, { color: textColor, backgroundColor: colors.cardHover, borderColor: colors.border }]} 
-                    value={height} 
-                    onChangeText={setHeight} 
-                    placeholder="175" 
-                    keyboardType="numeric"
-                    onBlur={handleSaveProfile}
-                />
-            </View>
-            <View style={styles.inputRow}>
-                <Text style={[styles.inputLabel, { color: textColor }]}>Poids Cible (kg)</Text>
-                <TextInput 
-                    style={[styles.input, { color: textColor, backgroundColor: colors.cardHover, borderColor: colors.border }]} 
-                    value={weightGoal} 
-                    onChangeText={setWeightGoal} 
-                    placeholder="75" 
-                    keyboardType="numeric"
-                    onBlur={handleSaveProfile}
-                />
-            </View>
-            <MenuRow
-                icon={User}
-                color={colors.gold}
-                label="Avatar"
-                value={avatarGender === 'male' ? 'Homme/Samouraï' : 'Femme/Onna-musha'}
-                onPress={() => {
-                  Alert.alert(
-                    'Genre de l\'Avatar',
-                    'Choisissez le genre de votre avatar',
-                    [
-                      { text: 'Homme/Samouraï', onPress: async () => {
-                        await saveUserSettings({ gender: 'male' });
-                        fetchSettings();
-                      }},
-                      { text: 'Femme/Onna-musha', onPress: async () => {
-                        await saveUserSettings({ gender: 'female' });
-                        fetchSettings();
-                      }},
-                      { text: 'Annuler', style: 'cancel' },
-                    ]
-                  );
-                }}
-            />
-        </View>
-
-        {/* GAMIFICATION */}
-        <Text style={styles.sectionHeader}>GAMIFICATION</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow 
-                icon={Award} 
-                color="#4CAF50" 
-                label="Mes badges" 
-                onPress={() => setBadgesModalVisible(true)} 
-            />
-        </View>
-
-        {/* MON CLAN / DOJO */}
-        <Text style={styles.sectionHeader}>MON CLAN / DOJO</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow
-                icon={Users}
-                color="#007AFF"
-                label="Mon Clan"
-                value={userClan === 'GB' ? 'Gracie Barra' : userClan === 'MFC' ? 'Marseille Fight Club' : userClan === 'Ronin' ? 'Ronin' : 'Non sélectionné'}
-                onPress={() => setClanModalVisible(true)}
-            />
-            <MenuRow
-                icon={Award}
-                color="#F59E0B"
-                label="Mes Équipements"
-                value={`${userGear.length} équipement${userGear.length > 1 ? 's' : ''}`}
-                onPress={() => setGearModalVisible(true)}
-            />
-            <TouchableOpacity
-                style={[styles.teamPhotoButton, { backgroundColor: colors.cardHover }]}
-                onPress={async () => {
-                    try {
-                        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                        if (status !== 'granted') {
-                            Alert.alert('Permission requise', 'Nous avons besoin de l\'accès à vos photos pour importer votre photo d\'équipe.');
-                            return;
-                        }
-                        const result = await ImagePicker.launchImageLibraryAsync({
-                            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                            allowsEditing: true,
-                            aspect: [4, 3],
-                            quality: 0.8,
-                        });
-                        if (!result.canceled && result.assets[0]) {
-                            Alert.alert('Photo importée', 'Votre photo d\'équipe a été importée avec succès !');
-                        }
-                    } catch (error) {
-                        console.error('Erreur import photo:', error);
-                        Alert.alert('Erreur', 'Impossible d\'importer la photo.');
-                    }
-                }}
-                activeOpacity={0.7}
-            >
-                <CloudUpload size={20} color={colors.gold} strokeWidth={2.5} />
-                <Text style={[styles.teamPhotoButtonText, { color: textColor }]}>Importer ma photo d'équipe</Text>
-            </TouchableOpacity>
-        </View>
-
-        {/* COMMUNAUTÉ */}
-        <Text style={styles.sectionHeader}>COMMUNAUTÉ</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow
-                icon={Users}
-                color="#9B59B6"
-                label="Club & Coachs"
-                value="Coachs et structures recommandés"
-                onPress={() => setPartnersModalVisible(true)}
-            />
-        </View>
-
-        {/* MES CLUBS / Q.G. */}
-        <Text style={[styles.sectionHeader, { color: colors.textSecondary }]}>MES CLUBS / Q.G.</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow
-                icon={Award}
-                color="#007AFF"
-                label="Mes Clubs"
-                value={`${userClubs.length} club${userClubs.length > 1 ? 's' : ''}`}
-                onPress={() => setClubsModalVisible(true)}
-            />
-            {/* Aperçu des clubs */}
-            {userClubs.length > 0 && (
-                <View style={styles.clubsPreview}>
-                    {userClubs.slice(0, 3).map((club) => (
-                        <View key={club.id} style={styles.clubPreviewItem}>
-                            {club.logoUri ? (
-                                <Image source={{ uri: club.logoUri }} style={styles.clubPreviewLogo} />
-                            ) : (
-                                <View style={[styles.clubPreviewLogo, styles.clubPreviewPlaceholder]}>
-                                    <Award size={20} color="#9CA3AF" />
-                                </View>
-                            )}
-                            <Text style={[styles.clubPreviewName, { color: textColor }]} numberOfLines={1}>
-                                {club.name}
-                            </Text>
-                        </View>
-                    ))}
-                    {userClubs.length > 3 && (
-                        <Text style={[styles.clubPreviewMore, { color: colors.textSecondary }]}>
-                          +{userClubs.length - 3}
-                        </Text>
-                    )}
-                </View>
-            )}
-        </View>
-
         {/* AFFICHAGE */}
         <Text style={styles.sectionHeader}>AFFICHAGE</Text>
+
+        {/* Sélecteur de langue */}
+        <LanguageSelector />
+
+        {/* Autres options d'affichage */}
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
             <MenuRow
-                icon={Palette}
-                color={colors.gold}
-                label="Thème"
-                value={appTheme === 'light' ? 'Clair' : appTheme === 'dark' ? 'Sombre' : 'Système'}
-                onPress={() => setThemeModalVisible(true)}
+                icon={Sparkles}
+                color={colors.accent || '#FFD700'}
+                label="Personnaliser le logo"
+                value="Premium"
+                onPress={() => router.push('/logo-selection')}
             />
             <MenuRow
-                icon={Sparkles}
-                color={colorPalettes[colorTheme].primary}
-                label="Couleur d'accent"
-                value={`${colorPalettes[colorTheme].emoji} ${colorPalettes[colorTheme].name}`}
-                onPress={() => setColorThemeModalVisible(true)}
+                icon={BookOpen}
+                color="#9B59B6"
+                label="Style de citations"
+                value={CITATION_STYLE_OPTIONS.find(o => o.id === citationStyle)?.label || 'Samourai'}
+                onPress={() => setCitationModalVisible(true)}
             />
-            <MenuRow 
-                icon={Scale} 
-                color={colors.gold} 
-                label="Unité de poids" 
+            <MenuRow
+                icon={Scale}
+                color={colors.gold}
+                label="Unité de poids"
                 value={weightUnit === 'kg' ? 'Kilogrammes' : 'Livres'}
                 onPress={() => setWeightUnitModalVisible(true)}
             />
-            <MenuRow 
-                icon={TrendingDown} 
-                color={colors.gold} 
-                label="Unité de mesure" 
+            <MenuRow
+                icon={TrendingDown}
+                color={colors.gold}
+                label="Unité de mesure"
                 value={measurementUnit === 'cm' ? 'Centimètres' : 'Pouces'}
                 onPress={() => setMeasurementUnitModalVisible(true)}
             />
+        </View>
+
+        {/* MODE UTILISATEUR */}
+        <Text style={styles.sectionHeader}>MODE UTILISATEUR</Text>
+        <View style={[styles.card, { backgroundColor: cardBackground }]}>
+          <TouchableOpacity
+            style={styles.modeRow}
+            onPress={() => handleChangeUserMode(userModeSetting === 'loisir' ? 'competiteur' : 'loisir')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.modeLeft}>
+              <View style={[styles.modeIconContainer, { backgroundColor: userModeSetting === 'competiteur' ? '#FF6B6B20' : '#4ECDC420' }]}>
+                {userModeSetting === 'competiteur' ? (
+                  <Trophy size={20} color="#FF6B6B" />
+                ) : (
+                  <Heart size={20} color="#4ECDC4" />
+                )}
+              </View>
+              <View style={styles.modeInfo}>
+                <Text style={[styles.modeLabel, { color: textColor }]}>
+                  {userModeSetting === 'competiteur' ? 'Mode Compétiteur' : 'Mode Loisir'}
+                </Text>
+                <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
+                  {userModeSetting === 'competiteur'
+                    ? 'Compétitions, palmarès, hydratation'
+                    : 'Bien-être et progression'}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={userModeSetting === 'competiteur'}
+              onValueChange={(value) => handleChangeUserMode(value ? 'competiteur' : 'loisir')}
+              trackColor={{ false: '#3e3e3e', true: '#FF6B6B' }}
+              thumbColor={'#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
+          </TouchableOpacity>
+
+          {/* Afficher le sport si mode compétiteur */}
+          {userModeSetting === 'competiteur' && (
+            <View style={styles.sportInfo}>
+              <View style={styles.sportInfoHeader}>
+                <Shield size={16} color={colors.gold} />
+                <Text style={[styles.sportInfoLabel, { color: colors.textSecondary }]}>
+                  Sport principal:
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push('/sport-selection')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sportInfoValue, { color: colors.accent }]}>
+                  {userSport ? SPORT_LABELS[userSport] : 'Non défini - Appuyez pour choisir'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* RAPPELS & NOTIFICATIONS */}
         <Text style={styles.sectionHeader}>RAPPELS & NOTIFICATIONS</Text>
         <ReminderSettingsComponent />
 
+        {/* RAPPELS INTELLIGENTS */}
+        <SmartRemindersSettings />
+
+        {/* BRIEFING DU MATIN */}
+        <BriefingSettings />
+
         {/* APPLE HEALTH */}
         <Text style={styles.sectionHeader}>APPLE HEALTH</Text>
         <HealthSyncSettings />
 
-
-        {/* EXPORT & PARTAGE */}
-        <Text style={styles.sectionHeader}>EXPORT & PARTAGE</Text>
+        {/* SYNCHRONISATION iCLOUD */}
+        <Text style={styles.sectionHeader}>SYNCHRONISATION iCLOUD</Text>
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow 
-                icon={CloudUpload} 
-                color="#8ecfe4" 
-                label="Exporter en JSON" 
-                value="Backup complet de vos données" 
-                onPress={handleExportJSON} 
-            />
-            <MenuRow 
-                icon={CloudUpload} 
-                color={colors.gold} 
-                label="Exporter en CSV" 
-                value="Format tableur (Excel, Numbers)" 
-                onPress={handleExportCSV} 
-            />
-            <MenuRow 
-                icon={Sparkles} 
-                color={colors.success} 
-                label="Partager ma progression" 
-                value="Partager mon parcours sur les réseaux" 
-                onPress={handleShareProgress} 
-            />
+          <View style={styles.icloudSection}>
+            <View style={styles.icloudHeader}>
+              <Cloud size={24} color={isiCloudSyncFeatureEnabled() ? colors.gold : '#888'} />
+              <View style={styles.icloudHeaderText}>
+                <Text style={[styles.icloudTitle, { color: colors.textPrimary }]}>
+                  Sync iCloud
+                </Text>
+                <Text style={[styles.icloudStatus, { color: '#888' }]}>
+                  {isiCloudSyncFeatureEnabled() ? 'Desactive' : 'Bientot disponible'}
+                </Text>
+              </View>
+              <Switch
+                value={false}
+                disabled={true}
+                trackColor={{ false: '#3e3e3e', true: colors.gold }}
+                thumbColor={'#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+              />
+            </View>
+
+            <View style={styles.icloudInfo}>
+              <Text style={[styles.icloudInfoText, { color: colors.textSecondary }]}>
+                {isiCloudSyncFeatureEnabled()
+                  ? 'Synchronise automatiquement tes donnees entre iPhone, iPad et Mac.'
+                  : 'La synchronisation iCloud sera disponible dans une prochaine mise a jour. Tes donnees seront synchronisees automatiquement entre tous tes appareils Apple.'}
+              </Text>
+            </View>
+
+            {!isiCloudSyncFeatureEnabled() && (
+              <View style={styles.icloudComingSoon}>
+                <Sparkles size={16} color={colors.gold} />
+                <Text style={[styles.icloudComingSoonText, { color: colors.gold }]}>
+                  Prochainement disponible
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
+
         {/* SÉCURITÉ DES DONNÉES */}
         <Text style={styles.sectionHeader}>SÉCURITÉ DES DONNÉES</Text>
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <MenuRow 
-                icon={CloudUpload} 
-                color={colors.gold} 
-                label="Sauvegarder mes données" 
-                value="Créer un fichier de backup JSON" 
-                onPress={handleExport} 
+            <MenuRow
+                icon={RefreshCw}
+                color={colors.accent}
+                label="Revoir l'onboarding"
+                value="Écran d'accueil"
+                onPress={handleResetOnboarding}
             />
-            <MenuRow 
-                icon={CloudDownload} 
-                color={colors.gold} 
-                label="Restaurer une sauvegarde" 
-                value="Importer un fichier de backup JSON" 
-                onPress={handleImport} 
-            />
-            <MenuRow 
-                icon={Sparkles} 
-                color="#F59E0B" 
-                label="Générer données de démo (6 mois)" 
-                value="180 jours : 100kg → 86kg" 
-                onPress={handleGenerateMockData} 
-            />
-            <MenuRow 
-                icon={Trash2} 
-                color="#D32F2F" 
-                label="Réinitialiser toutes les données" 
-                value="Supprimer définitivement tout" 
-                onPress={() => setResetModalVisible(true)} 
+            <MenuRow
+                icon={Trash2}
+                color="#D32F2F"
+                label="Réinitialiser toutes les données"
+                value="Supprimer définitivement tout"
+                onPress={() => setResetModalVisible(true)}
                 isDestructive={true}
             />
         </View>
+
+        {/* BOUTON DONNÉES DÉMO - VISIBLE */}
+        <Text style={styles.sectionHeader}>MODE DÉMO</Text>
+        <TouchableOpacity
+          style={[styles.demoButton, { backgroundColor: colors.accent }]}
+          onPress={handleGenerateRealisticDemoData}
+          activeOpacity={0.8}
+        >
+          <Sparkles size={22} color={colors.background} strokeWidth={2.5} />
+          <View style={styles.demoButtonContent}>
+            <Text style={[styles.demoButtonTitle, { color: colors.background }]}>Charger données de démo</Text>
+            <Text style={[styles.demoButtonSubtitle, { color: colors.background }]}>95kg → 77kg • 6 mois • 3 clubs</Text>
+          </View>
+          <ChevronRight size={22} color={colors.background} />
+        </TouchableOpacity>
 
         <View style={styles.offlineNotice}>
             <Text style={styles.offlineTitle}><ShieldCheck size={18} color="#4CAF50" /> Mode Confidentialité Totale</Text>
@@ -551,104 +677,190 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
             </Text>
           </View>
 
+        {/* BIENTOT DISPONIBLE */}
+        <Text style={[styles.sectionHeader, { color: colors.textSecondary, marginTop: 24 }]}>BIENTOT DISPONIBLE</Text>
+        <View style={[styles.comingSoonCard, { backgroundColor: colors.card }]}>
+          <View style={styles.comingSoonIntro}>
+            <View style={[styles.comingSoonIconContainer, { backgroundColor: colors.accent + '20' }]}>
+              <Sparkles size={24} color={colors.accent} strokeWidth={2} />
+            </View>
+            <Text style={[styles.comingSoonTitle, { color: colors.textPrimary }]}>
+              Ces fonctionnalites arrivent bientot :
+            </Text>
+          </View>
+
+          {/* iCloud */}
+          <View style={[styles.comingSoonItem, { borderBottomColor: colors.border }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: colors.info + '20' }]}>
+              <Cloud size={20} color={colors.info} strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Synchronisation iCloud
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                Sync automatique iPhone/iPad/Mac
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Apple Watch */}
+          <View style={[styles.comingSoonItem, { borderBottomColor: colors.border }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: '#FF2D55' + '20' }]}>
+              <Watch size={20} color="#FF2D55" strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Apple Watch
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                Ton poids et streak au poignet
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Siri */}
+          <View style={[styles.comingSoonItem, { borderBottomColor: colors.border }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: '#A855F7' + '20' }]}>
+              <Mic size={20} color="#A855F7" strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Commandes Siri
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                "Dis Siri, enregistre mon poids"
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Apple Health */}
+          <View style={[styles.comingSoonItem, { borderBottomColor: colors.border }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: '#22C55E' + '20' }]}>
+              <Heart size={20} color="#22C55E" strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Apple Health (ecriture)
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                Envoyer les donnees vers Sante
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Defis entre amis */}
+          <View style={[styles.comingSoonItem, { borderBottomColor: colors.border }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: '#F59E0B' + '20' }]}>
+              <Users size={20} color="#F59E0B" strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Defis entre amis
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                Affronte tes potes !
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Dynamic Island */}
+          <View style={[styles.comingSoonItem, { borderBottomWidth: 0 }]}>
+            <View style={[styles.comingSoonItemIcon, { backgroundColor: '#000000' + '30' }]}>
+              <Smartphone size={20} color={colors.textPrimary} strokeWidth={2} />
+            </View>
+            <View style={styles.comingSoonItemContent}>
+              <Text style={[styles.comingSoonItemTitle, { color: colors.textSecondary }]}>
+                Dynamic Island
+              </Text>
+              <Text style={[styles.comingSoonItemDesc, { color: colors.textMuted }]}>
+                Chrono toujours visible
+              </Text>
+            </View>
+            <View style={[styles.comingSoonBadge, { backgroundColor: colors.gold + '20' }]}>
+              <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
+            </View>
+          </View>
+
+          {/* Feedback */}
+          <View style={styles.comingSoonFeedback}>
+            <View style={[styles.feedbackIconContainer, { backgroundColor: colors.warning + '20' }]}>
+              <Lightbulb size={20} color={colors.warning} strokeWidth={2} />
+            </View>
+            <Text style={[styles.comingSoonFeedbackText, { color: colors.textSecondary }]}>
+              Une idee ? Contacte-nous !
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.feedbackButton, { backgroundColor: colors.gold }]}
+            activeOpacity={0.8}
+            onPress={() => {
+              const email = 'feedback@yoroi-app.com';
+              const subject = encodeURIComponent('Feedback Yoroi');
+              const body = encodeURIComponent('Bonjour,\n\nVoici mon feedback/suggestion pour Yoroi :\n\n');
+              Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
+            }}
+          >
+            <Mail size={18} color={colors.background} strokeWidth={2.5} />
+            <Text style={[styles.feedbackButtonText, { color: colors.background }]}>
+              Envoyer un feedback
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Version 1.0.0</Text>
+          <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.7}>
+            <Text style={styles.footerText}>Version 1.0.0</Text>
+          </TouchableOpacity>
           <Text style={styles.footerText}>Yoroi - Health Tracker Pro</Text>
+
+          {/* Badge Mode Créateur */}
+          {isDevMode && (
+            <TouchableOpacity
+              onPress={handleToggleDevMode}
+              style={[styles.devModeBadge, { backgroundColor: colors.accent }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.devModeBadgeText, { color: colors.background }]}>🛠️ Mode Créateur Activé</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Hidden Demo Data Button */}
+          {showHiddenDemo && (
+            <TouchableOpacity
+              style={styles.hiddenDemoButton}
+              onPress={handleGenerateRealisticDemoData}
+              activeOpacity={0.8}
+            >
+              <Sparkles size={18} color="#F59E0B" strokeWidth={2.5} />
+              <Text style={styles.hiddenDemoButtonText}>Charger donnees App Store</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
-
-      {/* Modal Thème */}
-      <Modal visible={themeModalVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setThemeModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choisir le thème</Text>
-              <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
-                <X size={24} color="#636E72" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.optionButton, appTheme === 'light' && styles.optionButtonActive]}
-              onPress={() => {
-                setThemeMode('light');
-                setThemeModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, appTheme === 'light' && styles.optionTextActive]}>Clair</Text>
-              {appTheme === 'light' && <Check size={20} color={colors.primary} strokeWidth={2.5} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, appTheme === 'dark' && styles.optionButtonActive]}
-              onPress={() => {
-                setThemeMode('dark');
-                setThemeModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, appTheme === 'dark' && styles.optionTextActive]}>🌙 Sombre</Text>
-              {appTheme === 'dark' && <Check size={20} color={colors.primary} strokeWidth={2.5} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, appTheme === 'system' && styles.optionButtonActive]}
-              onPress={() => {
-                setThemeMode('system');
-                setThemeModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, appTheme === 'system' && styles.optionTextActive]}>Automatique (Système)</Text>
-              {appTheme === 'system' && <Check size={20} color={colors.primary} strokeWidth={2.5} />}
-            </TouchableOpacity>
-
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Modal Couleur d'accent */}
-      <Modal visible={colorThemeModalVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setColorThemeModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Couleur d'accent</Text>
-              <TouchableOpacity onPress={() => setColorThemeModalVisible(false)}>
-                <X size={24} color="#636E72" strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
-
-            {Object.values(colorPalettes).map((palette) => (
-              <TouchableOpacity
-                key={palette.id}
-                style={[
-                  styles.colorOptionButton,
-                  colorTheme === palette.id && styles.colorOptionButtonActive,
-                  { borderColor: colorTheme === palette.id ? palette.primary : 'transparent' },
-                ]}
-                onPress={() => {
-                  setColorTheme(palette.id);
-                  setColorThemeModalVisible(false);
-                }}
-              >
-                <View style={[styles.colorPreview, { backgroundColor: palette.primary }]} />
-                <View style={styles.colorOptionInfo}>
-                  <Text style={[styles.colorOptionName, colorTheme === palette.id && { color: palette.primary }]}>
-                    {palette.emoji} {palette.name}
-                  </Text>
-                </View>
-                {colorTheme === palette.id && <Check size={20} color={palette.primary} strokeWidth={2.5} />}
-              </TouchableOpacity>
-            ))}
-
-          </Pressable>
-        </Pressable>
-      </Modal>
 
       {/* Modal Unité de poids */}
       <Modal visible={weightUnitModalVisible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setWeightUnitModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Unité de poids</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Unité de poids</Text>
               <TouchableOpacity onPress={() => setWeightUnitModalVisible(false)}>
                 <X size={24} color="#636E72" strokeWidth={2.5} />
               </TouchableOpacity>
@@ -684,9 +896,9 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       {/* Modal Unité de mesure */}
       <Modal visible={measurementUnitModalVisible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setMeasurementUnitModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Unité de mesure</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Unité de mesure</Text>
               <TouchableOpacity onPress={() => setMeasurementUnitModalVisible(false)}>
                 <X size={24} color="#636E72" strokeWidth={2.5} />
               </TouchableOpacity>
@@ -719,64 +931,50 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
         </Pressable>
       </Modal>
 
-      {/* Modal Sélection Clan */}
-      <Modal visible={clanModalVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setClanModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+      {/* Modal Style de Citations */}
+      <Modal visible={citationModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setCitationModalVisible(false)}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Choisir ton Clan</Text>
-              <TouchableOpacity onPress={() => setClanModalVisible(false)}>
-                <X size={24} color="#636E72" strokeWidth={2.5} />
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Style de citations</Text>
+              <TouchableOpacity onPress={() => setCitationModalVisible(false)}>
+                <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={[styles.optionButton, userClan === 'GB' && styles.optionButtonActive]}
-              onPress={async () => {
-                setUserClan('GB');
-                await saveUserSettings({ userClan: 'GB' });
-                setClanModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, userClan === 'GB' && styles.optionTextActive]}>Gracie Barra</Text>
-              {userClan === 'GB' && <Check size={20} color={colors.gold} strokeWidth={2.5} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, userClan === 'MFC' && styles.optionButtonActive]}
-              onPress={async () => {
-                setUserClan('MFC');
-                await saveUserSettings({ userClan: 'MFC' });
-                setClanModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, userClan === 'MFC' && styles.optionTextActive]}>Marseille Fight Club</Text>
-              {userClan === 'MFC' && <Check size={20} color={colors.gold} strokeWidth={2.5} />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, userClan === 'Ronin' && styles.optionButtonActive]}
-              onPress={async () => {
-                setUserClan('Ronin');
-                await saveUserSettings({ userClan: 'Ronin' });
-                setClanModalVisible(false);
-              }}
-            >
-              <Text style={[styles.optionText, userClan === 'Ronin' && styles.optionTextActive]}>Ronin</Text>
-              {userClan === 'Ronin' && <Check size={20} color={colors.gold} strokeWidth={2.5} />}
-            </TouchableOpacity>
+            {CITATION_STYLE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[styles.optionButton, citationStyle === option.id && styles.optionButtonActive]}
+                onPress={async () => {
+                  setCitationStyle(option.id);
+                  await saveCitationStyleToStorage(option.id);
+                  await saveUserSettings({ citationStyle: option.id });
+                  setCitationModalVisible(false);
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.optionText, citationStyle === option.id && styles.optionTextActive]}>
+                    {option.icon} {option.label}
+                  </Text>
+                  <Text style={[styles.rowValue, { marginTop: 2 }]}>{option.description}</Text>
+                </View>
+                {citationStyle === option.id && <Check size={20} color={colors.gold} strokeWidth={2.5} />}
+              </TouchableOpacity>
+            ))}
           </Pressable>
         </Pressable>
       </Modal>
 
+
       {/* Modal Réinitialisation */}
       <Modal visible={resetModalVisible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setResetModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Réinitialiser les données</Text>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Réinitialiser les données</Text>
               <TouchableOpacity onPress={() => setResetModalVisible(false)}>
-                <X size={24} color="#636E72" strokeWidth={2.5} />
+                <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
@@ -796,9 +994,78 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
                 style={styles.deleteButton}
                 onPress={handleResetData}
               >
-                <Text style={styles.deleteButtonText}>Supprimer</Text>
+                <Text style={[styles.deleteButtonText, { color: '#FFFFFF' }]}>Supprimer</Text>
               </TouchableOpacity>
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal Ramadan Configuration */}
+      <Modal visible={ramadanModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setRamadanModalVisible(false)}>
+          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Moon size={20} color={colors.accent} strokeWidth={2} />
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Horaires Ramadan</Text>
+              </View>
+              <TouchableOpacity onPress={() => setRamadanModalVisible(false)}>
+                <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.ramadanFormRow}>
+              <Text style={[styles.ramadanFormLabel, { color: textColor }]}>Fajr (debut jeune)</Text>
+              <TextInput
+                style={[styles.ramadanTimeInput, { color: textColor, backgroundColor: colors.cardHover }]}
+                value={ramadanFajrTime}
+                onChangeText={setRamadanFajrTime}
+                placeholder="05:30"
+                keyboardType="default"
+              />
+            </View>
+
+            <View style={styles.ramadanFormRow}>
+              <Text style={[styles.ramadanFormLabel, { color: textColor }]}>Maghrib (fin jeune)</Text>
+              <TextInput
+                style={[styles.ramadanTimeInput, { color: textColor, backgroundColor: colors.cardHover }]}
+                value={ramadanMaghribTime}
+                onChangeText={setRamadanMaghribTime}
+                placeholder="19:45"
+                keyboardType="default"
+              />
+            </View>
+
+            <View style={styles.ramadanFormRow}>
+              <Text style={[styles.ramadanFormLabel, { color: textColor }]}>Objectif hydratation (L)</Text>
+              <TextInput
+                style={[styles.ramadanTimeInput, { color: textColor, backgroundColor: colors.cardHover }]}
+                value={ramadanHydrationGoal}
+                onChangeText={setRamadanHydrationGoal}
+                placeholder="3"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <Text style={[styles.ramadanFormHint, { color: colors.textSecondary }]}>
+              Ces horaires sont utilises pour determiner les periodes de jeune et d'hydratation.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.ramadanSaveButton, { backgroundColor: colors.gold }]}
+              onPress={async () => {
+                await saveRamadanSettings({
+                  fajrTime: ramadanFajrTime,
+                  maghribTime: ramadanMaghribTime,
+                  hydrationGoal: parseFloat(ramadanHydrationGoal) || 3,
+                });
+                setRamadanModalVisible(false);
+                Alert.alert('Horaires sauvegardes', 'Les horaires ont ete mis a jour.');
+              }}
+            >
+              <Text style={styles.ramadanSaveButtonText}>Sauvegarder</Text>
+            </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>
@@ -907,13 +1174,13 @@ function GearManagementModal({
   const textColor = colors.textPrimary;
   const cardBackground = colors.card;
 
-  const GEAR_TYPES = [
-    { key: 'kimono', label: 'Kimono', icon: '🥋' },
-    { key: 'chaussure', label: 'Chaussures', icon: '👟' },
-    { key: 'gants', label: 'Gants', icon: '🥊' },
-    { key: 'protections', label: 'Protections', icon: '🛡️' },
-    { key: 'autre', label: 'Autre', icon: '🎒' },
-  ] as const;
+  const GEAR_TYPES: { key: string; label: string; iconComponent: LucideIcon }[] = [
+    { key: 'kimono', label: 'Kimono', iconComponent: Shirt },
+    { key: 'chaussure', label: 'Chaussures', iconComponent: Footprints },
+    { key: 'gants', label: 'Gants', iconComponent: ActivityIcon },
+    { key: 'protections', label: 'Protections', iconComponent: Shield },
+    { key: 'autre', label: 'Autre', iconComponent: ShoppingBag },
+  ];
 
   const pickGearPhoto = async () => {
     try {
@@ -1036,16 +1303,15 @@ function GearManagementModal({
             <View style={styles.clubsList}>
               {userGear.map((gear) => {
                 const gearType = GEAR_TYPES.find(t => t.key === gear.type);
+                const GearIcon = gearType?.iconComponent || ShoppingBag;
                 return (
                   <View key={gear.id} style={[styles.clubItem, { backgroundColor: colors.cardHover }]}>
                     <View style={styles.clubItemLeft}>
                       {gear.photoUri ? (
                         <Image source={{ uri: gear.photoUri }} style={styles.clubItemLogo} />
                       ) : (
-                        <View style={[styles.clubItemLogo, styles.clubItemLogoPlaceholder]}>
-                          <Text style={styles.clubItemLogoText}>
-                            {gearType?.icon || '🎒'}
-                          </Text>
+                        <View style={[styles.clubItemLogo, styles.clubItemLogoPlaceholder, { backgroundColor: colors.backgroundElevated }]}>
+                          <GearIcon size={24} color={colors.accent} strokeWidth={2} />
                         </View>
                       )}
                       <View style={styles.clubItemInfo}>
@@ -1098,25 +1364,29 @@ function GearManagementModal({
               {/* Sélecteur de type */}
               <Text style={[styles.clubFormLabel, { color: textColor, marginTop: 12 }]}>Type</Text>
               <View style={styles.clubTypesGrid}>
-                {GEAR_TYPES.map((type) => (
-                  <TouchableOpacity
-                    key={type.key}
-                    style={[
-                      styles.clubTypeButton,
-                      { backgroundColor: newGearType === type.key ? colors.gold : colors.card },
-                    ]}
-                    onPress={() => setNewGearType(type.key)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.clubTypeIcon}>{type.icon}</Text>
-                    <Text style={[
-                      styles.clubTypeLabel,
-                      { color: newGearType === type.key ? colors.background : textColor }
-                    ]}>
-                      {type.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {GEAR_TYPES.map((type) => {
+                  const TypeIcon = type.iconComponent;
+                  const isSelected = newGearType === type.key;
+                  return (
+                    <TouchableOpacity
+                      key={type.key}
+                      style={[
+                        styles.clubTypeButton,
+                        { backgroundColor: isSelected ? colors.gold : colors.card },
+                      ]}
+                      onPress={() => setNewGearType(type.key as any)}
+                      activeOpacity={0.7}
+                    >
+                      <TypeIcon size={20} color={isSelected ? colors.background : colors.accent} strokeWidth={2} />
+                      <Text style={[
+                        styles.clubTypeLabel,
+                        { color: isSelected ? colors.background : textColor }
+                      ]}>
+                        {type.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               {/* Photo */}
@@ -1205,14 +1475,14 @@ function ClubsManagementModal({
   const textColor = colors.textPrimary;
   const cardBackground = colors.card;
 
-  const CLUB_TYPES = [
-    { key: 'gracie_barra', label: 'JJB', icon: '🥋' },
-    { key: 'basic_fit', label: 'Muscu', icon: '🏋️' },
-    { key: 'running', label: 'Running', icon: '🏃' },
-    { key: 'mma', label: 'MMA', icon: '🥊' },
-    { key: 'foot', label: 'Foot', icon: '⚽' },
-    { key: 'other', label: 'Autre', icon: '🏟️' },
-  ] as const;
+  const CLUB_TYPES: { key: string; label: string; iconComponent: LucideIcon }[] = [
+    { key: 'gracie_barra', label: 'JJB', iconComponent: Shirt },
+    { key: 'basic_fit', label: 'Muscu', iconComponent: DumbbellIcon },
+    { key: 'running', label: 'Running', iconComponent: Footprints },
+    { key: 'mma', label: 'MMA', iconComponent: ActivityIcon },
+    { key: 'foot', label: 'Foot', iconComponent: CircleDot },
+    { key: 'other', label: 'Autre', iconComponent: Building2 },
+  ];
 
   const pickClubLogo = async () => {
     try {
@@ -1313,7 +1583,7 @@ function ClubsManagementModal({
             <TouchableOpacity onPress={onClose} style={styles.clubsModalCloseButton}>
               <X size={24} color={textColor} strokeWidth={2.5} />
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: textColor }]}>Mes Clubs / Q.G.</Text>
+            <Text style={[styles.modalTitle, { color: textColor }]}>Clubs & Coach</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -1327,16 +1597,15 @@ function ClubsManagementModal({
             <View style={styles.clubsList}>
               {userClubs.map((club) => {
                 const clubType = CLUB_TYPES.find(t => t.key === club.type);
+                const ClubIcon = clubType?.iconComponent || Building2;
                 return (
                   <View key={club.id} style={[styles.clubItem, { backgroundColor: colors.cardHover }]}>
                     <View style={styles.clubItemLeft}>
                       {club.logoUri ? (
                         <Image source={{ uri: club.logoUri }} style={styles.clubItemLogo} />
                       ) : (
-                        <View style={[styles.clubItemLogo, styles.clubItemLogoPlaceholder]}>
-                          <Text style={styles.clubItemLogoText}>
-                            {clubType?.icon || '🏟️'}
-                          </Text>
+                        <View style={[styles.clubItemLogo, styles.clubItemLogoPlaceholder, { backgroundColor: colors.backgroundElevated }]}>
+                          <ClubIcon size={24} color={colors.accent} strokeWidth={2} />
                         </View>
                       )}
                       <View style={styles.clubItemInfo}>
@@ -1381,25 +1650,29 @@ function ClubsManagementModal({
               {/* Sélecteur de type */}
               <Text style={[styles.clubFormLabel, { color: textColor }]}>Type</Text>
               <View style={styles.clubTypesGrid}>
-                {CLUB_TYPES.map((type) => (
-                  <TouchableOpacity
-                    key={type.key}
-                    style={[
-                      styles.clubTypeButton,
-                      { backgroundColor: newClubType === type.key ? colors.gold : colors.card },
-                    ]}
-                    onPress={() => setNewClubType(type.key)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.clubTypeIcon}>{type.icon}</Text>
-                    <Text style={[
-                      styles.clubTypeLabel,
-                      { color: newClubType === type.key ? colors.background : textColor }
-                    ]}>
-                      {type.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {CLUB_TYPES.map((type) => {
+                  const TypeIcon = type.iconComponent;
+                  const isSelected = newClubType === type.key;
+                  return (
+                    <TouchableOpacity
+                      key={type.key}
+                      style={[
+                        styles.clubTypeButton,
+                        { backgroundColor: isSelected ? colors.gold : colors.card },
+                      ]}
+                      onPress={() => setNewClubType(type.key as any)}
+                      activeOpacity={0.7}
+                    >
+                      <TypeIcon size={20} color={isSelected ? colors.background : colors.accent} strokeWidth={2} />
+                      <Text style={[
+                        styles.clubTypeLabel,
+                        { color: isSelected ? colors.background : textColor }
+                      ]}>
+                        {type.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               {/* Logo */}
@@ -1620,6 +1893,23 @@ const styles = StyleSheet.create({
     color: '#636E72',
     letterSpacing: 0.2,
   },
+  devModeBadge: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  devModeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -1628,14 +1918,16 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0A0A0A',
     borderRadius: 20,
     padding: 24,
     width: '85%',
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#1A1A1A',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 8,
   },
@@ -1648,7 +1940,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#000000',
+    color: '#FFFFFF',
     letterSpacing: -0.3,
   },
   modalDescription: {
@@ -2074,5 +2366,557 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
+  },
+  // Hidden Demo Button
+  hiddenDemoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1A1510',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  hiddenDemoButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Bouton démo visible
+  demoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.xl,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    gap: SPACING.md,
+  },
+  demoButtonContent: {
+    flex: 1,
+  },
+  demoButtonTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  demoButtonSubtitle: {
+    fontSize: FONT_SIZE.sm,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  // iCloud Sync Section
+  icloudSection: {
+    padding: 16,
+  },
+  icloudHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  icloudHeaderText: {
+    flex: 1,
+  },
+  icloudTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  icloudStatus: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  icloudInfo: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 8,
+  },
+  icloudInfoText: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  icloudComingSoon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 20,
+    alignSelf: 'center',
+  },
+  icloudComingSoonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Ramadan Mode Styles
+  ramadanSection: {
+    padding: 16,
+  },
+  ramadanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  ramadanIcon: {
+    fontSize: 28,
+  },
+  ramadanHeaderText: {
+    flex: 1,
+  },
+  ramadanTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  ramadanStatus: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  ramadanInfo: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 8,
+  },
+  ramadanInfoText: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  ramadanFeatures: {
+    gap: 4,
+  },
+  ramadanFeature: {
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  ramadanConfigButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  ramadanConfigText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  ramadanSuggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  ramadanSuggestionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  ramadanFormRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  ramadanFormLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  ramadanTimeInput: {
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
+    minWidth: 80,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  ramadanFormHint: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  ramadanSaveButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  ramadanSaveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+  },
+
+  // ============================================
+  // STYLES THEMES SPECIAUX
+  // ============================================
+  themeSectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  themeOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+  },
+  themeOptionButtonActive: {
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  themeOptionLocked: {
+    opacity: 0.7,
+  },
+  themePreviewContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginRight: 12,
+  },
+  themePreviewBg: {
+    flex: 1,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  themePreviewCard: {
+    width: '90%',
+    height: '70%',
+    borderRadius: 4,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 4,
+  },
+  themePreviewAccent: {
+    width: '60%',
+    height: 6,
+    borderRadius: 3,
+  },
+  themeOptionInfo: {
+    flex: 1,
+  },
+  themeOptionName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2D3436',
+  },
+  themeOptionDesc: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  themeLockedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  themeProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 8,
+  },
+  themeProgressBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  themeProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  themeProgressText: {
+    fontSize: 10,
+    fontWeight: '600',
+    minWidth: 30,
+  },
+  themeFullPreview: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  themeFullPreviewCard: {
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    width: '100%',
+  },
+  themeFullPreviewTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 16,
+  },
+  themeFullPreviewAccent: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  themeFullPreviewText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
+  // ============================================
+  // STYLES CELEBRATION DEBLOCAGE
+  // ============================================
+  celebrationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  celebrationContent: {
+    padding: 32,
+    borderRadius: 24,
+    alignItems: 'center',
+    width: '90%',
+    maxWidth: 340,
+    overflow: 'hidden',
+  },
+  confettiContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+  },
+  confetti: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+  },
+  celebrationEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  celebrationTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  celebrationName: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  celebrationDesc: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  celebrationPreview: {
+    width: 100,
+    height: 80,
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 24,
+  },
+  celebrationPreviewCard: {
+    flex: 1,
+    borderRadius: 8,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  celebrationPreviewAccent: {
+    width: '50%',
+    height: 8,
+    borderRadius: 4,
+  },
+  celebrationButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  celebrationButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // ============================================
+  // STYLES COMING SOON
+  // ============================================
+  comingSoonCard: {
+    marginHorizontal: 16,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  comingSoonIntro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  comingSoonIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  comingSoonTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  comingSoonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    opacity: 0.7,
+  },
+  comingSoonItemIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  comingSoonItemContent: {
+    flex: 1,
+  },
+  comingSoonItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  comingSoonItemDesc: {
+    fontSize: 12,
+    fontWeight: '400',
+  },
+  comingSoonBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  comingSoonBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  comingSoonFeedback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+    gap: 8,
+  },
+  feedbackIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  comingSoonFeedbackText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  feedbackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  feedbackButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  // Mode Switcher Styles
+  modeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  modeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  modeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeInfo: {
+    flex: 1,
+  },
+  modeLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  modeDescription: {
+    fontSize: 12,
+  },
+  sportInfo: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  sportInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  sportInfoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sportInfoValue: {
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

@@ -17,8 +17,9 @@ import { ArrowLeft, Plus, Activity, TrendingDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-import { BodyMap } from '@/components/BodyMap';
+import { BodyMap, BodyZone as BodyMapZone } from '@/components/BodyMap';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
+import { ZoneSelectionModal, Zone } from '@/components/ZoneSelectionModal';
 import {
   Injury,
   getActiveInjuries,
@@ -34,6 +35,8 @@ import {
 import {
   BodyZone,
   FIT_FOR_DUTY_STATUS,
+  getZoneById,
+  getZonesAtPoint,
 } from '@/constants/bodyZones';
 
 export default function InfirmaryScreen() {
@@ -42,6 +45,11 @@ export default function InfirmaryScreen() {
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+
+  // Zone selection modal state
+  const [showZoneModal, setShowZoneModal] = useState(false);
+  const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
+  const [currentView, setCurrentView] = useState<'front' | 'back'>('front');
 
   // Charger les données
   const loadData = async () => {
@@ -66,11 +74,52 @@ export default function InfirmaryScreen() {
     }, [])
   );
 
-  // Ouvrir le modal pour ajouter une blessure
-  const handleZonePress = (zone: BodyZone, view: 'front' | 'back') => {
+  // Ouvrir le modal pour ajouter/modifier une blessure
+  const handleZonePress = (zone: BodyMapZone, view: 'front' | 'back') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // TODO: Ouvrir modal d'évaluation EVA
-    router.push(`/injury-evaluation?zoneId=${zone.id}&zoneView=${view}&zoneName=${encodeURIComponent(zone.name)}`);
+
+    // Détecter toutes les zones qui se chevauchent à cet endroit (x, y en %)
+    const zonesAtPoint = getZonesAtPoint(zone.x, zone.y, view);
+
+    if (zonesAtPoint.length > 1) {
+      // Plusieurs zones détectées, formater pour le modal
+      const formattedZones = zonesAtPoint.map(z => ({
+        id: z.id,
+        name: z.name,
+      }));
+
+      setOverlappingZones(formattedZones);
+      setCurrentView(view);
+      setShowZoneModal(true);
+    } else {
+      // Une seule zone, aller directement à l'évaluation
+      navigateToEvaluation(zone.id, view, zone.label);
+    }
+  };
+
+  // Naviguer vers l'évaluation d'une zone
+  const navigateToEvaluation = (zoneId: string, view: 'front' | 'back', zoneName: string) => {
+    // Vérifier s'il y a déjà une blessure active pour cette zone
+    const existingInjury = injuries.find(
+      injury => injury.zone_id === zoneId && injury.zone_view === view
+    );
+
+    if (existingInjury) {
+      // Blessure existante, permettre de la modifier
+      router.push(
+        `/injury-evaluation?zoneId=${zoneId}&zoneView=${view}&zoneName=${encodeURIComponent(zoneName)}&injuryId=${existingInjury.id}&existingEva=${existingInjury.eva_score}&existingDuration=${existingInjury.estimated_recovery_days}`
+      );
+    } else {
+      // Nouvelle blessure
+      router.push(
+        `/injury-evaluation?zoneId=${zoneId}&zoneView=${view}&zoneName=${encodeURIComponent(zoneName)}`
+      );
+    }
+  };
+
+  // Callback quand une zone est sélectionnée dans le modal
+  const handleZoneSelected = (zone: { id: string; name: string }) => {
+    navigateToEvaluation(zone.id, currentView, zone.name);
   };
 
   // Préparer les zones blessées pour le BodyMap
@@ -228,6 +277,14 @@ export default function InfirmaryScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Modal de sélection de zone */}
+      <ZoneSelectionModal
+        visible={showZoneModal}
+        zones={overlappingZones}
+        onSelect={handleZoneSelected}
+        onClose={() => setShowZoneModal(false)}
+      />
     </ScreenWrapper>
   );
 }

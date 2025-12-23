@@ -98,7 +98,7 @@ export const generateWeightHistory = () => {
         bone_mass: 3.2,
         visceral_fat: Math.round(8 + (currentWeight - 86) * 0.5),
         date: date.toISOString().split('T')[0],
-        source: 'tanita' as const,
+        source: 'body_composition' as const,
       });
     }
   }

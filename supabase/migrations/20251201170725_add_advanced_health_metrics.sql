@@ -16,7 +16,7 @@
 
   2. Notes
     - All new fields are optional to maintain backward compatibility
-    - Supports data from TANITA BC-545N impedance scale
+    - Supports data from body composition scales (Withings, Xiaomi, Omron, etc.)
     - Uses JSONB for measurements to allow flexible schema
 */
 

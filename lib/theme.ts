@@ -11,13 +11,23 @@ import { Platform } from 'react-native';
 export const darkTheme = {
   mode: 'dark' as const,
   colors: {
-    // === BACKGROUNDS ===
-    background: '#0D0D0F',
-    backgroundLight: '#1A1A1F',
-    backgroundSecondary: '#1A1A1F',
-    card: '#1E1E24',
-    cardHover: '#252529',
-    cardDark: '#16161A',
+    // === BACKGROUNDS (LIQUID GLASS) ===
+    background: '#050508',
+    backgroundLight: '#0d0d12',
+    backgroundSecondary: '#0a0a0f',
+    card: '#12121a',
+    cardHover: '#1a1a24',
+    cardDark: '#0a0a0f',
+
+    // === GLASS EFFECT ===
+    glass: {
+      background: 'rgba(255, 255, 255, 0.03)',
+      backgroundElevated: 'rgba(255, 255, 255, 0.05)',
+      border: 'rgba(255, 255, 255, 0.08)',
+      borderLight: 'rgba(255, 255, 255, 0.05)',
+      highlight: 'rgba(255, 255, 255, 0.12)',
+      highlightStrong: 'rgba(255, 255, 255, 0.2)',
+    },
 
     // === OR (ACCENT PRINCIPAL) ===
     gold: '#D4AF37',
@@ -123,8 +133,9 @@ export const darkTheme = {
   gradients: {
     gold: ['#D4AF37', '#B8860B'] as [string, string],
     goldShine: ['#D4AF37', '#FFD700', '#D4AF37'] as [string, string, string],
-    card: ['#1E1E24', '#16161A'] as [string, string],
-    background: ['#0D0D0F', '#1A1A1F', '#0D0D0F'] as [string, string, string],
+    card: ['#12121a', '#0a0a0f'] as [string, string],
+    background: ['#050508', '#0a0a0f', '#0d0d12'] as [string, string, string],
+    backgroundGlass: ['#050508', '#0a0a0f', '#0d0d12'] as [string, string, string],
     success: ['#22C55E', '#16A34A'] as [string, string],
     danger: ['#EF4444', '#DC2626'] as [string, string],
   },
@@ -143,6 +154,16 @@ export const lightTheme = {
     card: '#FFFFFF',
     cardHover: '#F0F0F2',
     cardDark: '#E8E8EA',
+
+    // === GLASS EFFECT ===
+    glass: {
+      background: 'rgba(255, 255, 255, 0.7)',
+      backgroundElevated: 'rgba(255, 255, 255, 0.85)',
+      border: 'rgba(0, 0, 0, 0.06)',
+      borderLight: 'rgba(0, 0, 0, 0.04)',
+      highlight: 'rgba(255, 255, 255, 0.9)',
+      highlightStrong: 'rgba(255, 255, 255, 1)',
+    },
 
     // === OR (ACCENT PRINCIPAL - plus fonce pour contraste) ===
     gold: '#B8860B',
@@ -250,6 +271,7 @@ export const lightTheme = {
     goldShine: ['#B8860B', '#D4AF37', '#B8860B'] as [string, string, string],
     card: ['#FFFFFF', '#F5F5F7'] as [string, string],
     background: ['#F5F5F7', '#FFFFFF', '#F5F5F7'] as [string, string, string],
+    backgroundGlass: ['#F8F8FA', '#FFFFFF', '#F5F5F7'] as [string, string, string],
     success: ['#16A34A', '#15803D'] as [string, string],
     danger: ['#DC2626', '#B91C1C'] as [string, string],
   },
@@ -545,6 +567,256 @@ const hexToRgb = (hex: string): string => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return '0, 0, 0';
   return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+};
+
+// ═══════════════════════════════════════
+// FULL THEMES (DEBLOQUABLES)
+// ═══════════════════════════════════════
+
+export type FullThemeKey = 'default' | 'midnight' | 'dragon' | 'forest' | 'ocean' | 'neon';
+
+export interface UnlockCondition {
+  type: 'streak' | 'weight_loss' | 'trainings' | 'measurements' | 'rank';
+  value: number | string;
+  description: string;
+}
+
+export interface FullTheme {
+  id: FullThemeKey;
+  name: string;
+  emoji: string;
+  unlockCondition: UnlockCondition | null; // null = toujours debloque
+  background: string;
+  card: string;
+  primary: string;
+  primaryLight: string;
+  primaryDark: string;
+  secondary: string;
+  accent: string;
+  textPrimary: string;
+  textSecondary: string;
+  gradient: [string, string];
+}
+
+export const FULL_THEMES: Record<FullThemeKey, FullTheme> = {
+  // Theme par defaut (toujours debloque)
+  default: {
+    id: 'default',
+    name: 'Or Samourai',
+    emoji: '⚔️',
+    unlockCondition: null,
+    background: '#0D0D0F',
+    card: '#1E1E24',
+    primary: '#D4AF37',
+    primaryLight: '#FFD700',
+    primaryDark: '#B8860B',
+    secondary: '#999999',
+    accent: '#D4AF37',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#999999',
+    gradient: ['#D4AF37', '#B8860B'],
+  },
+
+  // MINUIT - Debloque a 30 jours de streak
+  midnight: {
+    id: 'midnight',
+    name: 'Minuit',
+    emoji: '🌙',
+    unlockCondition: {
+      type: 'streak',
+      value: 30,
+      description: '30 jours de streak',
+    },
+    background: '#000000',
+    card: '#0D0D0D',
+    primary: '#FFFFFF',
+    primaryLight: '#FFFFFF',
+    primaryDark: '#CCCCCC',
+    secondary: '#888888',
+    accent: '#FFFFFF',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#888888',
+    gradient: ['#FFFFFF', '#CCCCCC'],
+  },
+
+  // SANG DU DRAGON - Debloque a -10kg
+  dragon: {
+    id: 'dragon',
+    name: 'Sang du Dragon',
+    emoji: '🐉',
+    unlockCondition: {
+      type: 'weight_loss',
+      value: 10,
+      description: 'Perdre 10 kg',
+    },
+    background: '#0D0000',
+    card: '#1A0000',
+    primary: '#FF3333',
+    primaryLight: '#FF6666',
+    primaryDark: '#CC0000',
+    secondary: '#FF6666',
+    accent: '#FF0000',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#FF6666',
+    gradient: ['#FF3333', '#CC0000'],
+  },
+
+  // FORET - Debloque a 50 entrainements
+  forest: {
+    id: 'forest',
+    name: 'Foret',
+    emoji: '🌲',
+    unlockCondition: {
+      type: 'trainings',
+      value: 50,
+      description: '50 entrainements',
+    },
+    background: '#0D1A0D',
+    card: '#1A2A1A',
+    primary: '#4ADE80',
+    primaryLight: '#86EFAC',
+    primaryDark: '#22C55E',
+    secondary: '#22C55E',
+    accent: '#16A34A',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#86EFAC',
+    gradient: ['#4ADE80', '#22C55E'],
+  },
+
+  // OCEAN PROFOND - Debloque a 100 pesees
+  ocean: {
+    id: 'ocean',
+    name: 'Ocean Profond',
+    emoji: '🌊',
+    unlockCondition: {
+      type: 'measurements',
+      value: 100,
+      description: '100 pesees',
+    },
+    background: '#001A33',
+    card: '#002244',
+    primary: '#60A5FA',
+    primaryLight: '#93C5FD',
+    primaryDark: '#3B82F6',
+    secondary: '#3B82F6',
+    accent: '#2563EB',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#93C5FD',
+    gradient: ['#60A5FA', '#3B82F6'],
+  },
+
+  // NEON - Debloque rang Sensei
+  neon: {
+    id: 'neon',
+    name: 'Neon',
+    emoji: '💜',
+    unlockCondition: {
+      type: 'rank',
+      value: 'sensei',
+      description: 'Rang Sensei',
+    },
+    background: '#0D0D1A',
+    card: '#1A1A2E',
+    primary: '#A855F7',
+    primaryLight: '#C084FC',
+    primaryDark: '#9333EA',
+    secondary: '#7C3AED',
+    accent: '#6D28D9',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#C084FC',
+    gradient: ['#A855F7', '#7C3AED'],
+  },
+};
+
+// Fonction pour appliquer un full theme aux couleurs de base
+export const applyFullTheme = (
+  baseTheme: typeof darkTheme,
+  fullTheme: FullTheme
+): typeof darkTheme => {
+  return {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      // Backgrounds
+      background: fullTheme.background,
+      backgroundLight: fullTheme.card,
+      backgroundSecondary: fullTheme.card,
+      card: fullTheme.card,
+      cardHover: adjustBrightness(fullTheme.card, 10),
+      cardDark: adjustBrightness(fullTheme.card, -10),
+
+      // Primary colors
+      gold: fullTheme.primary,
+      goldLight: fullTheme.primaryLight,
+      goldDark: fullTheme.primaryDark,
+      goldMuted: `${fullTheme.primary}25`,
+
+      // Texts
+      textPrimary: fullTheme.textPrimary,
+      textSecondary: fullTheme.textSecondary,
+      textMuted: adjustBrightness(fullTheme.textSecondary, -20),
+      textOnGold: fullTheme.background,
+
+      // Borders
+      border: `${fullTheme.textSecondary}20`,
+      borderLight: `${fullTheme.textSecondary}10`,
+      borderGold: `${fullTheme.primary}50`,
+
+      // Tab bar
+      tabBar: `${fullTheme.card}F0`,
+      tabBarActive: fullTheme.primary,
+      tabBarInactive: fullTheme.textSecondary,
+
+      // Aliases
+      primary: fullTheme.primary,
+      primaryDark: fullTheme.primaryDark,
+      primaryLight: fullTheme.primaryLight,
+      secondary: fullTheme.primary,
+      accent: fullTheme.accent,
+
+      // Progress
+      progressTrack: `${fullTheme.textSecondary}20`,
+      progressFill: fullTheme.primary,
+
+      // Weight metric
+      weight: fullTheme.primary,
+
+      // Gradients
+      gradientStart: fullTheme.gradient[0],
+      gradientEnd: fullTheme.gradient[1],
+
+      // Surface
+      surface: fullTheme.card,
+      sheet: fullTheme.card,
+      statsBackground: fullTheme.card,
+      backgroundDark: fullTheme.background,
+      cardLight: adjustBrightness(fullTheme.card, 10),
+      secondaryLight: `${fullTheme.primary}25`,
+    },
+    gradients: {
+      ...baseTheme.gradients,
+      gold: fullTheme.gradient,
+      goldShine: [fullTheme.gradient[0], fullTheme.primaryLight, fullTheme.gradient[0]] as [string, string, string],
+      card: [fullTheme.card, adjustBrightness(fullTheme.card, -10)] as [string, string],
+      background: [fullTheme.background, fullTheme.card, fullTheme.background] as [string, string, string],
+    },
+  };
+};
+
+// Helper pour ajuster la luminosite d'une couleur hex
+const adjustBrightness = (hex: string, amount: number): string => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return hex;
+
+  let r = parseInt(result[1], 16);
+  let g = parseInt(result[2], 16);
+  let b = parseInt(result[3], 16);
+
+  r = Math.max(0, Math.min(255, r + amount));
+  g = Math.max(0, Math.min(255, g + amount));
+  b = Math.max(0, Math.min(255, b + amount));
+
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 };
 
 export default theme;

@@ -1,17 +1,20 @@
-import { Platform, View } from 'react-native';
+import { Platform, View, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { RADIUS, SHADOWS } from '@/constants/appTheme';
+
+// FAB size - plus petit pour être aligné avec les autres onglets
+const FAB_SIZE = 48;
+const FAB_BORDER_RADIUS = 16;
 
 // ============================================
-// TAB LAYOUT GUERRIER - 5 ONGLETS UNIQUEMENT
+// TAB LAYOUT - DYNAMIC THEME SUPPORT
 // ============================================
-// 1. Accueil - Dashboard principal
-// 2. Stats - Graphiques et evolution
-// 3. + Ajouter - Nouvelle mesure (bouton central OR)
-// 4. Planning - Ma semaine type
-// 5. Plus - Menu avec autres ecrans
+// Tab bar with dynamic colors from ThemeContext
+// FAB central with accent color glow
+// ============================================
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
@@ -22,33 +25,36 @@ const triggerHaptic = () => {
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
 
+  // Bouton FAB Central avec glow accent
+  const FABButton = () => (
+    <View style={styles.fabContainer}>
+      <View style={[
+        styles.fab,
+        {
+          backgroundColor: colors.accent,
+          shadowColor: colors.accent,
+        }
+      ]}>
+        <Plus size={24} color={colors.background} strokeWidth={2.5} />
+      </View>
+    </View>
+  );
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: colors.tabBarInactive,
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderRadius: 28,
-          marginHorizontal: 16,
-          marginBottom: 16,
-          paddingBottom: 0,
-          paddingTop: 10,
-          height: 70,
-          position: 'absolute',
-          borderTopWidth: 0,
-          shadowColor: isDark ? '#000' : 'rgba(0,0,0,0.1)',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: isDark ? 0.2 : 0.1,
-          shadowRadius: 12,
-          elevation: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 4,
-        },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            backgroundColor: colors.backgroundCard,
+            borderTopColor: colors.border,
+          }
+        ],
+        tabBarLabelStyle: styles.tabBarLabel,
+        tabBarItemStyle: styles.tabBarItem,
       }}
       screenListeners={{
         tabPress: () => {
@@ -60,9 +66,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Accueil',
-          tabBarIcon: ({ color }) => (
-            <Home size={24} color={color} strokeWidth={2} />
+          title: 'ACCUEIL',
+          tabBarIcon: ({ focused }) => (
+            <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
+              <Home
+                size={22}
+                color={focused ? colors.accent : colors.textMuted}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
@@ -71,36 +83,25 @@ export default function TabLayout() {
       <Tabs.Screen
         name="stats"
         options={{
-          title: 'Stats',
-          tabBarIcon: ({ color }) => (
-            <BarChart2 size={24} color={color} strokeWidth={2} />
+          title: 'STATS',
+          tabBarIcon: ({ focused }) => (
+            <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
+              <BarChart2
+                size={22}
+                color={focused ? colors.accent : colors.textMuted}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
 
-      {/* 3. AJOUTER - Bouton central OR */}
+      {/* 3. AJOUTER - FAB central flottant */}
       <Tabs.Screen
         name="add"
         options={{
           title: '',
-          tabBarIcon: () => (
-            <View style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: colors.gold,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: 20,
-              shadowColor: colors.gold,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4,
-              shadowRadius: 8,
-              elevation: 8,
-            }}>
-              <Plus size={28} color={colors.background} strokeWidth={2.5} />
-            </View>
-          ),
+          tabBarIcon: () => <FABButton />,
         }}
       />
 
@@ -108,9 +109,15 @@ export default function TabLayout() {
       <Tabs.Screen
         name="planning"
         options={{
-          title: 'Planning',
-          tabBarIcon: ({ color }) => (
-            <Calendar size={24} color={color} strokeWidth={2} />
+          title: 'PLANNING',
+          tabBarIcon: ({ focused }) => (
+            <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
+              <Calendar
+                size={22}
+                color={focused ? colors.accent : colors.textMuted}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
@@ -119,12 +126,64 @@ export default function TabLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: 'Plus',
-          tabBarIcon: ({ color }) => (
-            <Menu size={24} color={color} strokeWidth={2} />
+          title: 'PLUS',
+          tabBarIcon: ({ focused }) => (
+            <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
+              <Menu
+                size={22}
+                color={focused ? colors.accent : colors.textMuted}
+                strokeWidth={focused ? 2.5 : 2}
+              />
+            </View>
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 85,
+    paddingBottom: 25,
+    paddingTop: 12,
+    paddingHorizontal: 10,
+    borderTopWidth: 1,
+    elevation: 0,
+  },
+  tabBarLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    marginTop: 4,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  tabBarItem: {
+    paddingTop: 4,
+  },
+  iconActiveContainer: {
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+  },
+  fabContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fab: {
+    width: FAB_SIZE,
+    height: FAB_SIZE,
+    borderRadius: FAB_BORDER_RADIUS,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Glow effect
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+});

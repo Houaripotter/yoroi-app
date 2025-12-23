@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,23 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Animated,
+  PanResponder,
+  Share,
+  Alert,
 } from 'react-native';
-import { X, ArrowRight, ArrowLeft, ChevronLeft } from 'lucide-react-native';
-import { theme } from '@/lib/theme';
+import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import ViewShot from 'react-native-view-shot';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import { useTheme } from '@/lib/ThemeContext';
+import { successHaptic } from '@/lib/haptics';
 
 interface ProgressPhoto {
   id: string;
-  photo_url?: string; // Pour compatibilité
-  file_uri?: string; // Format réel utilisé dans storage.ts
+  photo_url?: string;
+  file_uri?: string;
   date: string;
   weight?: number | null;
   notes?: string | null;
@@ -28,10 +37,41 @@ interface BeforeAfterComparisonProps {
   photos: ProgressPhoto[];
 }
 
+const { width: screenWidth } = Dimensions.get('window');
+const SLIDER_WIDTH = screenWidth - 40;
+
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
+  const { colors } = useTheme();
   const [selectedBefore, setSelectedBefore] = useState<ProgressPhoto | null>(null);
   const [selectedAfter, setSelectedAfter] = useState<ProgressPhoto | null>(null);
   const [step, setStep] = useState<'before' | 'after' | 'compare'>('before');
+  const [viewMode, setViewMode] = useState<'sideBySide' | 'slider'>('slider');
+
+  // Slider state
+  const sliderPosition = useRef(new Animated.Value(0.5)).current;
+  const [currentPosition, setCurrentPosition] = useState(0.5);
+  const viewShotRef = useRef<ViewShot>(null);
+
+  // PanResponder pour le slider
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderMove: (_, gestureState) => {
+        const newPosition = Math.max(0.05, Math.min(0.95,
+          currentPosition + (gestureState.dx / SLIDER_WIDTH)
+        ));
+        sliderPosition.setValue(newPosition);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const newPosition = Math.max(0.05, Math.min(0.95,
+          currentPosition + (gestureState.dx / SLIDER_WIDTH)
+        ));
+        setCurrentPosition(newPosition);
+        sliderPosition.setValue(newPosition);
+      },
+    })
+  ).current;
 
   const handleBeforeSelect = (photo: ProgressPhoto) => {
     setSelectedBefore(photo);
@@ -41,12 +81,17 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   const handleAfterSelect = (photo: ProgressPhoto) => {
     setSelectedAfter(photo);
     setStep('compare');
+    // Reset slider position
+    sliderPosition.setValue(0.5);
+    setCurrentPosition(0.5);
   };
 
   const reset = () => {
     setSelectedBefore(null);
     setSelectedAfter(null);
     setStep('before');
+    sliderPosition.setValue(0.5);
+    setCurrentPosition(0.5);
   };
 
   const handleClose = () => {
@@ -54,15 +99,11 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
     onClose();
   };
 
-  // Calculer toutes les statistiques de progression
+  // Statistiques
   const weightDifference = selectedBefore && selectedAfter && selectedBefore.weight && selectedAfter.weight
     ? selectedAfter.weight - selectedBefore.weight
     : null;
-  
-  const weightDifferencePercent = selectedBefore && selectedAfter && selectedBefore.weight && selectedAfter.weight && selectedBefore.weight > 0
-    ? ((weightDifference! / selectedBefore.weight) * 100)
-    : null;
-  
+
   const daysDifference = selectedBefore && selectedAfter
     ? Math.abs(
         Math.floor(
@@ -70,10 +111,6 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
             (1000 * 60 * 60 * 24)
         )
       )
-    : null;
-  
-  const averageWeightLossPerWeek = daysDifference && daysDifference > 0 && weightDifference && weightDifference < 0
-    ? Math.abs((weightDifference / daysDifference) * 7)
     : null;
 
   const formatDate = (dateString: string) => {
@@ -84,19 +121,81 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
     });
   };
 
-  // Helper function to normalize image source (handle both file_uri and photo_url, and ensure proper URI format)
+  const formatDateShort = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
   const getImageSource = (photo: ProgressPhoto) => {
     const uri = photo.file_uri || photo.photo_url || '';
-    // If it's already a URI (starts with file://, http://, https://, or data:), use it directly
     if (uri.startsWith('file://') || uri.startsWith('http://') || uri.startsWith('https://') || uri.startsWith('data:')) {
       return { uri };
     }
-    // If it's a local path without file:// prefix, add it
     if (uri && !uri.startsWith('/')) {
       return { uri: `file://${uri}` };
     }
     return { uri };
   };
+
+  // Capturer et partager
+  const captureAndShare = async () => {
+    try {
+      if (!viewShotRef.current) return;
+      const uri = await viewShotRef.current.capture?.();
+      if (!uri) {
+        Alert.alert('Erreur', 'Impossible de capturer l\'image');
+        return;
+      }
+
+      successHaptic();
+
+      Alert.alert(
+        'Partager',
+        'Que veux-tu faire ?',
+        [
+          {
+            text: 'Partager',
+            onPress: async () => {
+              if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri);
+              } else {
+                await Share.share({ url: uri });
+              }
+            },
+          },
+          {
+            text: 'Sauvegarder',
+            onPress: async () => {
+              const { status } = await MediaLibrary.requestPermissionsAsync();
+              if (status === 'granted') {
+                await MediaLibrary.saveToLibraryAsync(uri);
+                Alert.alert('Sauvegardé !', 'Image enregistrée dans ta galerie');
+              } else {
+                Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie');
+              }
+            },
+          },
+          { text: 'Annuler', style: 'cancel' },
+        ]
+      );
+    } catch (error) {
+      console.error('Erreur capture:', error);
+      Alert.alert('Erreur', 'Impossible de créer l\'image');
+    }
+  };
+
+  // Interpolations pour le slider
+  const clipWidth = sliderPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, SLIDER_WIDTH],
+  });
+
+  const handlePosition = sliderPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, SLIDER_WIDTH],
+  });
 
   return (
     <Modal
@@ -105,37 +204,43 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={styles.header}>
           {step === 'before' ? (
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <X size={24} color={theme.colors.textPrimary} strokeWidth={2.5} />
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleClose} style={[styles.closeButton, { backgroundColor: colors.card }]}>
+              <X size={24} color={colors.textPrimary} strokeWidth={2.5} />
+            </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={() => {
-              if (step === 'after') {
-                setStep('before');
-                setSelectedBefore(null);
-              } else if (step === 'compare') {
-                setStep('after');
-                setSelectedAfter(null);
-              }
-            }} style={styles.backButton}>
-              <ChevronLeft size={24} color={theme.colors.textPrimary} strokeWidth={2.5} />
+            <TouchableOpacity
+              onPress={() => {
+                if (step === 'after') {
+                  setStep('before');
+                  setSelectedBefore(null);
+                } else if (step === 'compare') {
+                  setStep('after');
+                  setSelectedAfter(null);
+                }
+              }}
+              style={[styles.closeButton, { backgroundColor: colors.card }]}
+            >
+              <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
             </TouchableOpacity>
           )}
-          <Text style={styles.title}>
-            {step === 'before' && 'Choisir la photo AVANT'}
-            {step === 'after' && 'Choisir la photo APRÈS'}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
+            {step === 'before' && 'Photo AVANT'}
+            {step === 'after' && 'Photo APRÈS'}
             {step === 'compare' && 'Comparaison'}
           </Text>
-          {step !== 'before' && (
-            <TouchableOpacity onPress={reset} style={styles.resetButton}>
-              <Text style={styles.resetButtonText}>Réinitialiser</Text>
+          {step === 'compare' ? (
+            <TouchableOpacity onPress={captureAndShare} style={[styles.closeButton, { backgroundColor: colors.gold }]}>
+              <Share2 size={20} color={colors.background} strokeWidth={2.5} />
             </TouchableOpacity>
-          )}
-          {step === 'before' && (
+          ) : step !== 'before' ? (
+            <TouchableOpacity onPress={reset} style={styles.resetButton}>
+              <Text style={[styles.resetButtonText, { color: colors.gold }]}>Reset</Text>
+            </TouchableOpacity>
+          ) : (
             <View style={styles.placeholderButton} />
           )}
         </View>
@@ -146,155 +251,261 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
           showsVerticalScrollIndicator={false}
         >
           {step === 'compare' && selectedBefore && selectedAfter ? (
-            /* Vue de comparaison */
             <View style={styles.comparisonContainer}>
-              {/* Comparaison côte à côte */}
-              <View style={styles.comparisonRow}>
-                <View style={styles.comparisonCard}>
-                  <Text style={styles.comparisonLabel}>AVANT</Text>
-                  <View style={styles.comparisonImageContainer}>
-                  <Image
-                      source={getImageSource(selectedBefore)}
-                      style={[styles.comparisonImage, { height: '100%', width: '100%', backgroundColor: '#E1E1E1', borderRadius: 12 }]}
-                    resizeMode="cover"
+              {/* Mode Toggle */}
+              <View style={[styles.modeToggle, { backgroundColor: colors.card }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.modeButton,
+                    viewMode === 'slider' && { backgroundColor: colors.gold },
+                  ]}
+                  onPress={() => setViewMode('slider')}
+                  activeOpacity={0.7}
+                >
+                  <SlidersHorizontal
+                    size={18}
+                    color={viewMode === 'slider' ? colors.background : colors.textSecondary}
                   />
-                  </View>
-                  <View style={styles.comparisonInfo}>
-                    <Text style={styles.comparisonDate} numberOfLines={1}>
-                      {formatDate(selectedBefore.date)}
-                    </Text>
-                    {selectedBefore.weight ? (
-                      <Text style={styles.comparisonWeight}>
-                        {selectedBefore.weight.toFixed(1)} kg
-                      </Text>
-                    ) : (
-                      <Text style={[styles.comparisonWeight, { opacity: 0.5 }]}>
-                        Poids non renseigné
-                      </Text>
-                    )}
-                  </View>
-                </View>
-
-                <View style={styles.arrowContainer}>
-                  <ArrowRight size={32} color={theme.colors.primary} strokeWidth={2.5} />
-                </View>
-
-                <View style={styles.comparisonCard}>
-                  <Text style={styles.comparisonLabel}>APRÈS</Text>
-                  <View style={styles.comparisonImageContainer}>
-                  <Image
-                      source={getImageSource(selectedAfter)}
-                      style={[styles.comparisonImage, { height: '100%', width: '100%', backgroundColor: '#E1E1E1', borderRadius: 12 }]}
-                    resizeMode="cover"
+                  <Text style={[
+                    styles.modeButtonText,
+                    { color: viewMode === 'slider' ? colors.background : colors.textSecondary }
+                  ]}>
+                    Slider
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modeButton,
+                    viewMode === 'sideBySide' && { backgroundColor: colors.gold },
+                  ]}
+                  onPress={() => setViewMode('sideBySide')}
+                  activeOpacity={0.7}
+                >
+                  <Columns
+                    size={18}
+                    color={viewMode === 'sideBySide' ? colors.background : colors.textSecondary}
                   />
-                  </View>
-                  <View style={styles.comparisonInfo}>
-                    <Text style={styles.comparisonDate} numberOfLines={1}>
-                      {formatDate(selectedAfter.date)}
-                    </Text>
-                    {selectedAfter.weight ? (
-                      <Text style={styles.comparisonWeight}>
-                        {selectedAfter.weight.toFixed(1)} kg
-                      </Text>
-                    ) : (
-                      <Text style={[styles.comparisonWeight, { opacity: 0.5 }]}>
-                        Poids non renseigné
-                      </Text>
-                    )}
-                  </View>
-                </View>
+                  <Text style={[
+                    styles.modeButtonText,
+                    { color: viewMode === 'sideBySide' ? colors.background : colors.textSecondary }
+                  ]}>
+                    Côte à côte
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Statistiques de Progression - Toujours affichées */}
-              {selectedBefore && selectedAfter && (
-                <View style={styles.statsCard}>
-                  <Text style={styles.statsTitle}>📊 Progression</Text>
-                  
-                  {/* Ligne principale avec différence de poids et période */}
-                  <View style={styles.statsRow}>
-                    {weightDifference !== null ? (
-                      <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>Différence de poids</Text>
-                        <Text
-                          style={[
-                            styles.statValue,
-                            { color: weightDifference < 0 ? theme.colors.primary : theme.colors.secondary },
-                          ]}
-                        >
-                          {weightDifference > 0 ? '+' : ''}
-                          {weightDifference.toFixed(1)} kg
-                        </Text>
-                        {weightDifferencePercent !== null && (
-                          <Text style={[styles.statSubValue, { color: weightDifference < 0 ? theme.colors.primary : theme.colors.secondary }]}>
-                            ({weightDifferencePercent > 0 ? '+' : ''}{weightDifferencePercent.toFixed(1)}%)
-                          </Text>
-                        )}
+              {/* SLIDER MODE */}
+              {viewMode === 'slider' && (
+                <ViewShot
+                  ref={viewShotRef}
+                  options={{ format: 'png', quality: 1, width: 1080, height: 1920 }}
+                  style={[styles.sliderCaptureZone, { backgroundColor: colors.background }]}
+                >
+                  {/* Export Header */}
+                  <View style={[styles.exportHeader, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.exportTitle, { color: colors.gold }]}>MA TRANSFORMATION</Text>
+                    <Text style={[styles.exportSubtitle, { color: colors.textSecondary }]}>
+                      {formatDateShort(selectedBefore.date)} → {formatDateShort(selectedAfter.date)}
+                    </Text>
+                  </View>
+
+                  {/* Slider Container */}
+                  <View style={styles.sliderContainer}>
+                    {/* Image AVANT (en dessous) */}
+                    <Image
+                      source={getImageSource(selectedBefore)}
+                      style={styles.sliderImage}
+                      resizeMode="cover"
+                    />
+
+                    {/* Label AVANT */}
+                    <View style={[styles.sliderLabel, styles.sliderLabelLeft]}>
+                      <Text style={[styles.sliderLabelText, { color: colors.textPrimary }]}>AVANT</Text>
+                    </View>
+
+                    {/* Image APRÈS (clippée) */}
+                    <Animated.View
+                      style={[
+                        styles.afterContainer,
+                        { width: clipWidth },
+                      ]}
+                    >
+                      <Image
+                        source={getImageSource(selectedAfter)}
+                        style={[styles.sliderImage, styles.afterImage]}
+                        resizeMode="cover"
+                      />
+                      <View style={[styles.sliderLabel, styles.sliderLabelRight]}>
+                        <Text style={[styles.sliderLabelText, { color: colors.textPrimary }]}>APRÈS</Text>
                       </View>
-                    ) : (
-                      <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>Différence de poids</Text>
-                        <Text style={[styles.statValue, { color: theme.colors.textSecondary }]}>
-                          Non disponible
+                    </Animated.View>
+
+                    {/* Slider Handle */}
+                    <Animated.View
+                      style={[
+                        styles.sliderHandle,
+                        { transform: [{ translateX: Animated.subtract(handlePosition, 2) }] },
+                      ]}
+                      {...panResponder.panHandlers}
+                    >
+                      <View style={[styles.sliderLine, { backgroundColor: colors.textPrimary }]} />
+                      <View style={[styles.handleButton, { backgroundColor: colors.accent }]}>
+                        <ChevronLeft size={14} color={colors.background} style={{ marginRight: -6 }} />
+                        <ChevronRight size={14} color={colors.background} style={{ marginLeft: -6 }} />
+                      </View>
+                    </Animated.View>
+
+                    {/* Instructions */}
+                    <View style={styles.instructionsContainer}>
+                      <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.6)']}
+                        style={styles.instructionsGradient}
+                      >
+                        <Text style={styles.instructionsText}>← Glisse pour comparer →</Text>
+                      </LinearGradient>
+                    </View>
+                  </View>
+
+                  {/* Stats */}
+                  <View style={[styles.sliderStats, { backgroundColor: colors.background }]}>
+                    <View style={styles.sliderStatItem}>
+                      <Text style={[styles.sliderStatDate, { color: colors.textSecondary }]}>
+                        {formatDate(selectedBefore.date)}
+                      </Text>
+                      {selectedBefore.weight && (
+                        <Text style={[styles.sliderStatWeight, { color: colors.textPrimary }]}>
+                          {selectedBefore.weight.toFixed(1)} kg
                         </Text>
+                      )}
+                    </View>
+
+                    {weightDifference !== null && (
+                      <View style={styles.sliderStatDiff}>
+                        <Text style={[
+                          styles.sliderStatDiffValue,
+                          { color: weightDifference <= 0 ? colors.success : colors.danger }
+                        ]}>
+                          {weightDifference <= 0 ? '' : '+'}{weightDifference.toFixed(1)} kg
+                        </Text>
+                        {weightDifference < 0 && <Text style={styles.sliderStatEmoji}>🎉</Text>}
                       </View>
                     )}
-                    
-                    {daysDifference !== null ? (
-                      <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>Période</Text>
-                        <Text style={styles.statValue}>
-                          {daysDifference} {daysDifference === 1 ? 'jour' : 'jours'}
+
+                    <View style={[styles.sliderStatItem, styles.sliderStatItemRight]}>
+                      <Text style={[styles.sliderStatDate, { color: colors.textSecondary }]}>
+                        {formatDate(selectedAfter.date)}
+                      </Text>
+                      {selectedAfter.weight && (
+                        <Text style={[styles.sliderStatWeight, { color: colors.textPrimary }]}>
+                          {selectedAfter.weight.toFixed(1)} kg
                         </Text>
-                        {daysDifference >= 7 && (
-                          <Text style={styles.statSubValue}>
-                            ({Math.floor(daysDifference / 7)} {Math.floor(daysDifference / 7) === 1 ? 'semaine' : 'semaines'})
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Branding */}
+                  <View style={[styles.exportBranding, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.brandingText, { color: colors.gold }]}>YOROI</Text>
+                    <Text style={[styles.brandingSubtext, { color: colors.textMuted }]}>鎧</Text>
+                  </View>
+                </ViewShot>
+              )}
+
+              {/* SIDE BY SIDE MODE */}
+              {viewMode === 'sideBySide' && (
+                <View style={styles.sideBySideContainer}>
+                  <View style={styles.sideBySideRow}>
+                    {/* AVANT */}
+                    <View style={[styles.sideBySideCard, { backgroundColor: colors.card }]}>
+                      <View style={[styles.sideBySideLabelContainer, { backgroundColor: colors.danger }]}>
+                        <Text style={[styles.sideBySideLabelText, { color: '#FFFFFF' }]}>AVANT</Text>
+                      </View>
+                      <Image
+                        source={getImageSource(selectedBefore)}
+                        style={styles.sideBySideImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.sideBySideInfo}>
+                        <Text style={[styles.sideBySideDate, { color: colors.textSecondary }]}>
+                          {formatDate(selectedBefore.date)}
+                        </Text>
+                        {selectedBefore.weight && (
+                          <Text style={[styles.sideBySideWeight, { color: colors.textPrimary }]}>
+                            {selectedBefore.weight.toFixed(1)} kg
                           </Text>
                         )}
                       </View>
-                    ) : (
-                      <View style={styles.statItem}>
-                        <Text style={styles.statLabel}>Période</Text>
-                        <Text style={[styles.statValue, { color: theme.colors.textSecondary }]}>
-                          Non disponible
-                        </Text>
+                    </View>
+
+                    {/* Flèche */}
+                    <View style={styles.arrowContainer}>
+                      <ArrowRight size={24} color={colors.gold} strokeWidth={2.5} />
+                    </View>
+
+                    {/* APRÈS */}
+                    <View style={[styles.sideBySideCard, { backgroundColor: colors.card }]}>
+                      <View style={[styles.sideBySideLabelContainer, { backgroundColor: colors.success }]}>
+                        <Text style={[styles.sideBySideLabelText, { color: '#FFFFFF' }]}>APRÈS</Text>
                       </View>
+                      <Image
+                        source={getImageSource(selectedAfter)}
+                        style={styles.sideBySideImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.sideBySideInfo}>
+                        <Text style={[styles.sideBySideDate, { color: colors.textSecondary }]}>
+                          {formatDate(selectedAfter.date)}
+                        </Text>
+                        {selectedAfter.weight && (
+                          <Text style={[styles.sideBySideWeight, { color: colors.textPrimary }]}>
+                            {selectedAfter.weight.toFixed(1)} kg
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Stats Card */}
+              <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>📊 Progression</Text>
+
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Différence</Text>
+                    {weightDifference !== null ? (
+                      <Text style={[
+                        styles.statValue,
+                        { color: weightDifference <= 0 ? colors.success : colors.danger }
+                      ]}>
+                        {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
+                      </Text>
+                    ) : (
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>—</Text>
                     )}
                   </View>
 
-                  {/* Ligne supplémentaire avec statistiques avancées */}
-                  {(averageWeightLossPerWeek !== null || weightDifference !== null) && (
-                    <View style={styles.statsRow}>
-                      {averageWeightLossPerWeek !== null && (
-                        <View style={styles.statItem}>
-                          <Text style={styles.statLabel}>Perte moyenne / semaine</Text>
-                          <Text style={[styles.statValue, { color: theme.colors.primary }]}>
-                            {averageWeightLossPerWeek.toFixed(2)} kg
-                          </Text>
-                        </View>
-                      )}
-                      
-                      {selectedBefore.weight && selectedAfter.weight && (
-                        <View style={styles.statItem}>
-                          <Text style={styles.statLabel}>Poids initial → Final</Text>
-                          <Text style={styles.statValue}>
-                            {selectedBefore.weight.toFixed(1)} → {selectedAfter.weight.toFixed(1)} kg
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                  {/* Message motivationnel basé sur la progression */}
-                  {weightDifference !== null && weightDifference < 0 && daysDifference !== null && daysDifference > 0 && (
-                    <View style={styles.motivationCard}>
-                      <Text style={styles.motivationText}>
-                        🎯 Excellent travail ! Vous avez perdu {Math.abs(weightDifference).toFixed(1)} kg en {daysDifference} {daysDifference === 1 ? 'jour' : 'jours'}.
-                        {averageWeightLossPerWeek !== null && ` C'est une perte moyenne de ${averageWeightLossPerWeek.toFixed(2)} kg par semaine !`}
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Période</Text>
+                    {daysDifference !== null ? (
+                      <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                        {daysDifference} jours
                       </Text>
-                    </View>
-                  )}
+                    ) : (
+                      <Text style={[styles.statValue, { color: colors.textMuted }]}>—</Text>
+                    )}
+                  </View>
                 </View>
-              )}
+
+                {weightDifference !== null && weightDifference < 0 && (
+                  <View style={[styles.motivationCard, { backgroundColor: colors.successMuted }]}>
+                    <Text style={[styles.motivationText, { color: colors.success }]}>
+                      🎯 Excellent ! Tu as perdu {Math.abs(weightDifference).toFixed(1)} kg !
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           ) : (
             /* Grille de sélection */
@@ -302,19 +513,14 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
               {photos
                 .filter((photo) => {
                   if (step === 'after' && selectedBefore) {
-                    // Pour l'étape "après", montrer toutes les photos SAUF celle déjà sélectionnée en "before"
                     return photo.id !== selectedBefore.id;
-                  }
-                  if (step === 'before' && selectedAfter) {
-                    // Pour l'étape "before", ne pas montrer la photo déjà sélectionnée en "after"
-                    return photo.id !== selectedAfter.id;
                   }
                   return true;
                 })
                 .map((photo) => (
                   <TouchableOpacity
                     key={photo.id}
-                    style={styles.selectionCard}
+                    style={[styles.selectionCard, { backgroundColor: colors.card }]}
                     onPress={() => {
                       if (step === 'before') {
                         handleBeforeSelect(photo);
@@ -326,13 +532,17 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                   >
                     <Image
                       source={getImageSource(photo)}
-                      style={[styles.selectionImage, { height: 150, width: '100%', backgroundColor: '#E1E1E1', borderRadius: 10 }]}
+                      style={styles.selectionImage}
                       resizeMode="cover"
                     />
                     <View style={styles.selectionInfo}>
-                      <Text style={styles.selectionDate}>{formatDate(photo.date)}</Text>
+                      <Text style={[styles.selectionDate, { color: colors.textSecondary }]}>
+                        {formatDate(photo.date)}
+                      </Text>
                       {photo.weight && (
-                        <Text style={styles.selectionWeight}>{photo.weight.toFixed(1)} kg</Text>
+                        <Text style={[styles.selectionWeight, { color: colors.gold }]}>
+                          {photo.weight.toFixed(1)} kg
+                        </Text>
                       )}
                     </View>
                   </TouchableOpacity>
@@ -345,222 +555,336 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   );
 }
 
-const screenWidth = Dimensions.get('window').width;
 const selectionPhotoSize = (screenWidth - 64) / 2;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 60,
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadow.sm,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...theme.shadow.sm,
   },
   placeholderButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
   },
   title: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
     letterSpacing: -0.3,
   },
   resetButton: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   resetButtonText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingBottom: theme.spacing.xxl,
-  },
-  selectionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
-  },
-  selectionCard: {
-    width: selectionPhotoSize,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xxl,
-    overflow: 'hidden',
-    ...theme.shadow.sm,
-  },
-  selectionImage: {
-    width: '100%',
-    height: 150,
-    backgroundColor: '#E1E1E1',
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  selectionInfo: {
-    padding: theme.spacing.md,
-    gap: 4,
-  },
-  selectionDate: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-  },
-  selectionWeight: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
   comparisonContainer: {
-    gap: theme.spacing.xl,
-    width: '100%',
+    gap: 20,
   },
-  comparisonRow: {
+  // Mode Toggle
+  modeToggle: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-    width: '100%',
-    minHeight: 420,
+    borderRadius: 14,
+    padding: 4,
   },
-  comparisonCard: {
+  modeButton: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xxl,
-    overflow: 'visible',
-    ...theme.shadow.md,
-    minHeight: 380,
-    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  comparisonImageContainer: {
-    height: 280,
-    width: '100%',
-    backgroundColor: '#E1E1E1',
-    borderRadius: 12,
+  modeButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // Slider Mode
+  sliderCaptureZone: {
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  comparisonLabel: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
-    letterSpacing: 1,
-    textAlign: 'center',
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.borderLight,
-  },
-  comparisonImage: {
-    width: '100%',
-    height: '100%', // Hérite de la hauteur du conteneur parent (280px)
-    backgroundColor: '#E1E1E1',
-    borderRadius: 12,
-    resizeMode: 'cover',
-  },
-  comparisonInfo: {
+  exportHeader: {
     paddingVertical: 16,
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: 20,
-    paddingTop: 16,
-    gap: 6,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    minHeight: 60,
   },
-  comparisonDate: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+  exportTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
-  comparisonWeight: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+  exportSubtitle: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  sliderContainer: {
+    width: '100%',
+    height: 400,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  sliderImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  afterContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    overflow: 'hidden',
+  },
+  afterImage: {
+    width: SLIDER_WIDTH,
+  },
+  sliderLabel: {
+    position: 'absolute',
+    top: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  sliderLabelLeft: {
+    left: 16,
+  },
+  sliderLabelRight: {
+    right: 16,
+  },
+  sliderLabelText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  sliderHandle: {
+    position: 'absolute',
+    top: 0,
+    width: 44,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  sliderLine: {
+    position: 'absolute',
+    width: 4,
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  handleButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  instructionsContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  instructionsGradient: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  instructionsText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
+  },
+  sliderStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  sliderStatItem: {
+    flex: 1,
+  },
+  sliderStatItemRight: {
+    alignItems: 'flex-end',
+  },
+  sliderStatDate: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  sliderStatWeight: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  sliderStatDiff: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sliderStatDiffValue: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sliderStatEmoji: {
+    fontSize: 20,
+  },
+  exportBranding: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  brandingText: {
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 3,
+  },
+  brandingSubtext: {
+    fontSize: 14,
+  },
+  // Side by Side Mode
+  sideBySideContainer: {
+    gap: 16,
+  },
+  sideBySideRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sideBySideCard: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  sideBySideLabelContainer: {
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  sideBySideLabelText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  sideBySideImage: {
+    width: '100%',
+    height: 200,
+  },
+  sideBySideInfo: {
+    padding: 12,
+    alignItems: 'center',
+  },
+  sideBySideDate: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  sideBySideWeight: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   arrowContainer: {
-    paddingHorizontal: theme.spacing.xs,
+    paddingHorizontal: 4,
   },
+  // Stats
   statsCard: {
-    backgroundColor: theme.colors.mintPastel,
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.xl,
-    gap: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
   },
   statsTitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
     textAlign: 'center',
-    letterSpacing: -0.3,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    gap: theme.spacing.lg,
   },
   statItem: {
-    flex: 1,
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: 4,
   },
   statLabel: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    textAlign: 'center',
   },
   statValue: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-  statSubValue: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
+    fontSize: 24,
+    fontWeight: '800',
   },
   motivationCard: {
-    marginTop: theme.spacing.md,
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   motivationText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  // Selection Grid
+  selectionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  selectionCard: {
+    width: selectionPhotoSize,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  selectionImage: {
+    width: '100%',
+    height: 150,
+  },
+  selectionInfo: {
+    padding: 12,
+    gap: 4,
+  },
+  selectionDate: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  selectionWeight: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

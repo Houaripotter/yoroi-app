@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react-native';
 
@@ -15,16 +15,17 @@ interface WeightChartProps {
   onPeriodChange?: (period: '7j' | '30j' | '90j' | 'tout') => void;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export const WeightChart: React.FC<WeightChartProps> = ({
   data,
   onPointPress,
   onPeriodChange,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [period, setPeriod] = useState<'7j' | '30j' | '90j' | 'tout'>('30j');
-  const chartWidth = SCREEN_WIDTH - 48;
+
+  const chartWidth = 300;
+  const chartHeight = 180;
+  const padding = 20;
 
   // Filtrer selon la période
   const filteredData = useMemo(() => {
@@ -66,30 +67,53 @@ export const WeightChart: React.FC<WeightChartProps> = ({
     return { current, variation, average, direction };
   }, [displayData]);
 
-  // Configuration du graphique
-  const chartConfig = {
-    backgroundColor: 'transparent',
-    backgroundGradientFrom: colors.card,
-    backgroundGradientTo: colors.card,
-    backgroundGradientFromOpacity: 0,
-    backgroundGradientToOpacity: 0,
-    decimalPlaces: 1,
-    color: () => colors.gold,
-    labelColor: () => colors.textMuted,
-    propsForDots: {
-      r: '5',
-      strokeWidth: '2',
-      stroke: colors.gold,
-      fill: isDark ? colors.card : '#FFFFFF',
-    },
-    propsForBackgroundLines: {
-      stroke: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-      strokeDasharray: '5,5',
-    },
-    fillShadowGradientFrom: colors.gold,
-    fillShadowGradientTo: 'transparent',
-    fillShadowGradientFromOpacity: 0.3,
-    fillShadowGradientToOpacity: 0,
+  // Calculer les positions pour le graphique
+  const chartData = useMemo(() => {
+    if (displayData.length === 0) return [];
+
+    const weights = displayData.map(d => d.weight);
+    const minWeight = Math.min(...weights);
+    const maxWeight = Math.max(...weights);
+    const weightRange = maxWeight - minWeight || 1;
+
+    const xStep = (chartWidth - padding * 2) / Math.max(displayData.length - 1, 1);
+
+    return displayData.map((item, index) => ({
+      x: padding + index * xStep,
+      y: chartHeight - padding - ((item.weight - minWeight) / weightRange) * (chartHeight - padding * 2),
+      value: item.weight,
+      date: item.date,
+    }));
+  }, [displayData]);
+
+  // Créer le path avec courbes de Bézier
+  const createPath = () => {
+    if (chartData.length === 0) return '';
+
+    let path = `M ${chartData[0].x} ${chartData[0].y}`;
+
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.y;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.y;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+    }
+
+    return path;
+  };
+
+  // Path pour le gradient
+  const createAreaPath = () => {
+    if (chartData.length === 0) return '';
+
+    const linePath = createPath();
+    const lastPoint = chartData[chartData.length - 1];
+    const firstPoint = chartData[0];
+
+    return `${linePath} L ${lastPoint.x} ${chartHeight - padding} L ${firstPoint.x} ${chartHeight - padding} Z`;
   };
 
   // Changer de période
@@ -99,17 +123,20 @@ export const WeightChart: React.FC<WeightChartProps> = ({
   };
 
   // Formater les labels de date
-  const formatLabels = () => {
-    if (displayData.length === 0) return [''];
+  const getDateLabels = () => {
+    if (chartData.length === 0) return [];
 
-    return displayData.map((d, i) => {
+    return chartData.map((point, i) => {
       // Afficher seulement premier, milieu et dernier
-      if (i === 0 || i === displayData.length - 1 || i === Math.floor(displayData.length / 2)) {
-        const date = new Date(d.date);
-        return `${date.getDate()}/${date.getMonth() + 1}`;
+      if (i === 0 || i === chartData.length - 1 || i === Math.floor(chartData.length / 2)) {
+        const date = new Date(point.date);
+        return {
+          x: point.x,
+          label: `${date.getDate()}/${date.getMonth() + 1}`,
+        };
       }
-      return '';
-    });
+      return null;
+    }).filter(Boolean);
   };
 
   return (
@@ -128,15 +155,15 @@ export const WeightChart: React.FC<WeightChartProps> = ({
             style={[
               styles.periodButton,
               {
-                backgroundColor: period === p ? colors.gold : 'transparent',
-                borderColor: period === p ? colors.gold : colors.border,
+                backgroundColor: period === p ? colors.accent : 'transparent',
+                borderColor: period === p ? colors.accent : colors.border,
               },
             ]}
             activeOpacity={0.7}
           >
             <Text style={[
               styles.periodText,
-              { color: period === p ? colors.textOnGold : colors.textSecondary },
+              { color: period === p ? '#FFFFFF' : colors.textSecondary },
             ]}>
               {p === 'tout' ? 'Tout' : p}
             </Text>
@@ -147,31 +174,51 @@ export const WeightChart: React.FC<WeightChartProps> = ({
       {/* Graphique */}
       {displayData.length > 1 ? (
         <View style={styles.chartContainer}>
-          <LineChart
-            data={{
-              labels: formatLabels(),
-              datasets: [{
-                data: displayData.map(d => d.weight),
-                strokeWidth: 3,
-              }],
-            }}
-            width={chartWidth}
-            height={180}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-            withInnerLines={true}
-            withOuterLines={false}
-            withVerticalLabels={true}
-            withHorizontalLabels={true}
-            fromZero={false}
-            segments={4}
-            onDataPointClick={({ index }) => {
-              if (displayData[index]) {
-                onPointPress?.(displayData[index]);
-              }
-            }}
-          />
+          <Svg width={chartWidth} height={chartHeight}>
+            <Defs>
+              <LinearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={colors.accent} stopOpacity="0.3" />
+                <Stop offset="1" stopColor={colors.accent} stopOpacity="0.05" />
+              </LinearGradient>
+            </Defs>
+
+            {/* Gradient area */}
+            <Path d={createAreaPath()} fill="url(#weightGradient)" />
+
+            {/* Line */}
+            <Path
+              d={createPath()}
+              stroke={colors.accent}
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+            />
+
+            {/* Points */}
+            {chartData.map((point, index) => (
+              <Circle
+                key={index}
+                cx={point.x}
+                cy={point.y}
+                r="5"
+                fill="#FFFFFF"
+                stroke={colors.accent}
+                strokeWidth="3"
+              />
+            ))}
+          </Svg>
+
+          {/* Labels des dates */}
+          <View style={styles.labelsContainer}>
+            {getDateLabels().map((item: any, index) => (
+              <Text
+                key={index}
+                style={[styles.dateLabel, { color: colors.textMuted, left: item.x - 20 }]}
+              >
+                {item.label}
+              </Text>
+            ))}
+          </View>
         </View>
       ) : (
         <View style={styles.noData}>
@@ -264,11 +311,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chartContainer: {
-    marginHorizontal: -10,
     alignItems: 'center',
+    marginBottom: 16,
   },
-  chart: {
-    borderRadius: 16,
+  labelsContainer: {
+    width: 300,
+    height: 20,
+    position: 'relative',
+    marginTop: 8,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
   },
   noData: {
     height: 180,

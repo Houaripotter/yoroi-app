@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
 import { Percent, Activity, Droplet } from 'lucide-react-native';
 
 // ============================================
 // GRAPHIQUE COMPOSITION CORPORELLE
 // ============================================
-// Courbes: Graisse (orange), Muscle (vert), Eau (bleu)
-// Avec selecteur de periode et legende
+// Courbes SVG: Graisse (orange), Muscle (vert), Eau (bleu)
 
 interface CompositionDataPoint {
   date: string;
@@ -23,8 +22,6 @@ interface BodyCompositionChartProps {
   onPointPress?: (point: CompositionDataPoint) => void;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 // Couleurs des courbes
 const COLORS = {
   bodyFat: '#F59E0B', // Orange/Warning
@@ -36,7 +33,7 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
   data,
   onPointPress,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const [period, setPeriod] = useState<'7j' | '30j' | '90j' | 'tout'>('30j');
   const [displayMode, setDisplayMode] = useState<'percent' | 'kg'>('percent');
   const [visibleCurves, setVisibleCurves] = useState({
@@ -44,7 +41,10 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
     muscle: true,
     water: true,
   });
-  const chartWidth = SCREEN_WIDTH - 48;
+
+  const chartWidth = 300;
+  const chartHeight = 200;
+  const padding = 20;
 
   // Filtrer les donnees avec au moins bodyFat
   const validData = useMemo(() => {
@@ -87,6 +87,44 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
     return value;
   };
 
+  // Préparer les données pour chaque courbe
+  const prepareChartData = (key: 'bodyFat' | 'muscle' | 'water') => {
+    if (displayData.length === 0) return [];
+
+    const values = displayData.map(d => getDisplayValue(d, key));
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const valueRange = maxValue - minValue || 1;
+
+    const xStep = (chartWidth - padding * 2) / Math.max(displayData.length - 1, 1);
+
+    return displayData.map((item, index) => ({
+      x: padding + index * xStep,
+      y: chartHeight - padding - ((getDisplayValue(item, key) - minValue) / valueRange) * (chartHeight - padding * 2),
+      value: getDisplayValue(item, key),
+      date: item.date,
+    }));
+  };
+
+  // Créer un path pour une courbe
+  const createPath = (chartData: Array<{ x: number; y: number; value: number; date: string }>) => {
+    if (chartData.length === 0) return '';
+
+    let path = `M ${chartData[0].x} ${chartData[0].y}`;
+
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.y;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.y;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+    }
+
+    return path;
+  };
+
   // Stats actuelles
   const currentStats = useMemo(() => {
     if (displayData.length === 0) return null;
@@ -104,78 +142,27 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
     };
   }, [displayData]);
 
-  // Configuration du graphique
-  const chartConfig = {
-    backgroundColor: 'transparent',
-    backgroundGradientFrom: colors.card,
-    backgroundGradientTo: colors.card,
-    backgroundGradientFromOpacity: 0,
-    backgroundGradientToOpacity: 0,
-    decimalPlaces: 1,
-    color: () => colors.gold,
-    labelColor: () => colors.textMuted,
-    propsForBackgroundLines: {
-      stroke: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-      strokeDasharray: '5,5',
-    },
-  };
-
-  // Formater les labels de date
-  const formatLabels = () => {
-    if (displayData.length === 0) return [''];
-
-    return displayData.map((d, i) => {
-      if (i === 0 || i === displayData.length - 1 || i === Math.floor(displayData.length / 2)) {
-        const date = new Date(d.date);
-        return `${date.getDate()}/${date.getMonth() + 1}`;
-      }
-      return '';
-    });
-  };
-
-  // Preparer les datasets
-  const prepareDatasets = () => {
-    const datasets = [];
-
-    if (visibleCurves.bodyFat && displayData.some(d => d.bodyFat !== undefined)) {
-      datasets.push({
-        data: displayData.map(d => getDisplayValue(d, 'bodyFat')),
-        color: () => COLORS.bodyFat,
-        strokeWidth: 3,
-      });
-    }
-
-    if (visibleCurves.muscle && displayData.some(d => d.muscle !== undefined)) {
-      datasets.push({
-        data: displayData.map(d => getDisplayValue(d, 'muscle')),
-        color: () => COLORS.muscle,
-        strokeWidth: 3,
-      });
-    }
-
-    if (visibleCurves.water && displayData.some(d => d.water !== undefined)) {
-      datasets.push({
-        data: displayData.map(d => getDisplayValue(d, 'water')),
-        color: () => COLORS.water,
-        strokeWidth: 3,
-      });
-    }
-
-    // Fallback si aucun dataset
-    if (datasets.length === 0) {
-      datasets.push({
-        data: [0],
-        color: () => 'transparent',
-        strokeWidth: 0,
-      });
-    }
-
-    return datasets;
-  };
-
   // Toggle une courbe
   const toggleCurve = (key: 'bodyFat' | 'muscle' | 'water') => {
     setVisibleCurves(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Formater les labels de date
+  const getDateLabels = () => {
+    if (displayData.length === 0) return [];
+
+    const chartData = prepareChartData('bodyFat');
+
+    return chartData.map((point, i) => {
+      if (i === 0 || i === chartData.length - 1 || i === Math.floor(chartData.length / 2)) {
+        const date = new Date(point.date);
+        return {
+          x: point.x,
+          label: `${date.getDate()}/${date.getMonth() + 1}`,
+        };
+      }
+      return null;
+    }).filter(Boolean);
   };
 
   return (
@@ -245,23 +232,91 @@ export const BodyCompositionChart: React.FC<BodyCompositionChartProps> = ({
       {/* Graphique */}
       {displayData.length > 1 ? (
         <View style={styles.chartContainer}>
-          <LineChart
-            data={{
-              labels: formatLabels(),
-              datasets: prepareDatasets(),
-            }}
-            width={chartWidth}
-            height={200}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.chart}
-            withInnerLines={true}
-            withOuterLines={false}
-            withVerticalLabels={true}
-            withHorizontalLabels={true}
-            fromZero={false}
-            segments={4}
-          />
+          <Svg width={chartWidth} height={chartHeight}>
+            {/* Courbe Graisse */}
+            {visibleCurves.bodyFat && displayData.some(d => d.bodyFat !== undefined) && (
+              <>
+                <Path
+                  d={createPath(prepareChartData('bodyFat'))}
+                  stroke={COLORS.bodyFat}
+                  strokeWidth="3"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                {prepareChartData('bodyFat').map((point, index) => (
+                  <Circle
+                    key={`bodyFat-${index}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill="#FFFFFF"
+                    stroke={COLORS.bodyFat}
+                    strokeWidth="2"
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Courbe Muscle */}
+            {visibleCurves.muscle && displayData.some(d => d.muscle !== undefined) && (
+              <>
+                <Path
+                  d={createPath(prepareChartData('muscle'))}
+                  stroke={COLORS.muscle}
+                  strokeWidth="3"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                {prepareChartData('muscle').map((point, index) => (
+                  <Circle
+                    key={`muscle-${index}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill="#FFFFFF"
+                    stroke={COLORS.muscle}
+                    strokeWidth="2"
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Courbe Eau */}
+            {visibleCurves.water && displayData.some(d => d.water !== undefined) && (
+              <>
+                <Path
+                  d={createPath(prepareChartData('water'))}
+                  stroke={COLORS.water}
+                  strokeWidth="3"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                {prepareChartData('water').map((point, index) => (
+                  <Circle
+                    key={`water-${index}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill="#FFFFFF"
+                    stroke={COLORS.water}
+                    strokeWidth="2"
+                  />
+                ))}
+              </>
+            )}
+          </Svg>
+
+          {/* Labels des dates */}
+          <View style={styles.labelsContainer}>
+            {getDateLabels().map((item: any, index) => (
+              <Text
+                key={index}
+                style={[styles.dateLabel, { color: colors.textMuted, left: item.x - 20 }]}
+              >
+                {item.label}
+              </Text>
+            ))}
+          </View>
         </View>
       ) : (
         <View style={styles.noData}>
@@ -425,11 +480,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   chartContainer: {
-    marginHorizontal: -10,
     alignItems: 'center',
+    marginBottom: 16,
   },
-  chart: {
-    borderRadius: 16,
+  labelsContainer: {
+    width: 300,
+    height: 20,
+    position: 'relative',
+    marginTop: 8,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
   },
   noData: {
     height: 200,

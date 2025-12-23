@@ -119,6 +119,9 @@ export const saveSelectedLogo = async (logoId: LogoVariant): Promise<void> => {
   }
 };
 
+// Alias pour compatibilité
+export const setSelectedLogo = saveSelectedLogo;
+
 // ============================================
 // HOME LAYOUT - Ordre des sections accueil
 // ============================================
@@ -233,6 +236,7 @@ export interface Workout {
   id: string;
   date: string;
   type: 'musculation' | 'jjb' | 'running' | 'autre' | 'basic_fit' | 'gracie_barra';
+  club_id?: string; // Lien avec un club spécifique (optionnel)
   created_at: string;
 }
 

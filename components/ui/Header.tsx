@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, X } from 'lucide-react-native';
+import { ChevronLeft, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '@/lib/ThemeContext';
+import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
+
+// ============================================
+// HEADER - DESIGN SIMPLE ET PROPRE
+// ============================================
 
 interface HeaderProps {
   title?: string;
@@ -12,7 +16,7 @@ interface HeaderProps {
   onBack?: () => void;
   onClose?: () => void;
   rightElement?: React.ReactNode;
-  transparent?: boolean;
+  transparent?: boolean; // Kept for compatibility, not used
 }
 
 export function Header({
@@ -22,11 +26,9 @@ export function Header({
   onBack,
   onClose,
   rightElement,
-  transparent = false,
 }: HeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
 
   const handleBack = () => {
     if (onBack) {
@@ -49,53 +51,43 @@ export function Header({
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top + 8,
-          backgroundColor: transparent ? 'transparent' : colors.background,
-        },
-      ]}
-    >
-      <View style={styles.content}>
-        {/* Left Button */}
-        <View style={styles.leftContainer}>
-          {showBack && (
-            <TouchableOpacity
-              onPress={handleBack}
-              style={[styles.button, { backgroundColor: colors.card }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              activeOpacity={0.7}
-            >
-              <ArrowLeft size={22} color={colors.textPrimary} strokeWidth={2.5} />
-            </TouchableOpacity>
-          )}
-          {showClose && (
-            <TouchableOpacity
-              onPress={handleClose}
-              style={[styles.button, { backgroundColor: colors.card }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              activeOpacity={0.7}
-            >
-              <X size={22} color={colors.textPrimary} strokeWidth={2.5} />
-            </TouchableOpacity>
-          )}
-        </View>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+      {/* Left Button */}
+      <View style={styles.leftContainer}>
+        {showBack && (
+          <TouchableOpacity
+            onPress={handleBack}
+            style={styles.backButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+          >
+            <ChevronLeft size={24} color={COLORS.text} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
+        {showClose && (
+          <TouchableOpacity
+            onPress={handleClose}
+            style={styles.closeButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+          >
+            <X size={22} color={COLORS.text} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
+      </View>
 
-        {/* Title */}
-        <View style={styles.titleContainer}>
-          {title && (
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-              {title}
-            </Text>
-          )}
-        </View>
+      {/* Title */}
+      <View style={styles.titleContainer}>
+        {title && (
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+        )}
+      </View>
 
-        {/* Right Element */}
-        <View style={styles.rightContainer}>
-          {rightElement}
-        </View>
+      {/* Right Element */}
+      <View style={styles.rightContainer}>
+        {rightElement}
       </View>
     </View>
   );
@@ -104,14 +96,11 @@ export function Header({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    zIndex: 100,
-  },
-  content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
     minHeight: 44,
   },
   leftContainer: {
@@ -121,22 +110,34 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
   },
   rightContainer: {
     width: 44,
     alignItems: 'flex-end',
   },
-  button: {
+  backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.sm,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.sm,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.text,
     textAlign: 'center',
   },
 });

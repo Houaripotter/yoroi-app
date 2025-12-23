@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Activity, Download, Upload, Check, X } from 'lucide-react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   isAppleHealthAvailable,
@@ -25,6 +25,9 @@ import {
 const LAST_SYNC_KEY = '@yoroi_last_health_sync';
 
 export function HealthSyncSettings() {
+  const { colors, themeName } = useTheme();
+  const isWellness = false;
+
   const [autoExportEnabled, setAutoExportEnabled] = useState(false);
   const [hasPermission, setHasPermission] = useState(false);
   const [lastSync, setLastSync] = useState<Date | null>(null);
@@ -151,14 +154,28 @@ export function HealthSyncSettings() {
     }
   };
 
+  const cardShadow = isWellness ? {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  } : {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  };
+
   // Si Apple Health n'est pas disponible (Android ou web)
   if (!available) {
     return (
-      <View style={styles.unavailableContainer}>
+      <View style={[styles.unavailableContainer, { backgroundColor: colors.card }, cardShadow]}>
         <View style={[styles.iconContainer, { backgroundColor: '#94A3B820' }]}>
           <X size={20} color="#94A3B8" strokeWidth={2.5} />
         </View>
-        <Text style={styles.unavailableText}>
+        <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
           Apple Health n'est disponible que sur iOS
         </Text>
       </View>
@@ -168,7 +185,7 @@ export function HealthSyncSettings() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color={theme.colors.primary} />
+        <ActivityIndicator size="small" color={colors.gold} />
       </View>
     );
   }
@@ -176,7 +193,7 @@ export function HealthSyncSettings() {
   return (
     <View style={styles.container}>
       {/* Statut de permission */}
-      <View style={styles.permissionStatus}>
+      <View style={[styles.permissionStatus, { backgroundColor: colors.card }, cardShadow]}>
         <View style={styles.permissionLeft}>
           <View
             style={[
@@ -190,21 +207,21 @@ export function HealthSyncSettings() {
               <X size={20} color="#F87171" strokeWidth={2.5} />
             )}
           </View>
-          <Text style={styles.permissionText}>
+          <Text style={[styles.permissionText, { color: colors.textPrimary }]}>
             {hasPermission ? 'Autorisé' : 'Permission requise'}
           </Text>
         </View>
       </View>
 
       {/* Export automatique */}
-      <View style={styles.toggleRow}>
+      <View style={[styles.toggleRow, { backgroundColor: colors.card }, cardShadow]}>
         <View style={styles.toggleLeft}>
           <View style={[styles.iconContainer, { backgroundColor: '#3B82F620' }]}>
             <Upload size={20} color="#3B82F6" strokeWidth={2.5} />
           </View>
           <View style={styles.toggleText}>
-            <Text style={styles.toggleTitle}>Export automatique</Text>
-            <Text style={styles.toggleSubtitle}>
+            <Text style={[styles.toggleTitle, { color: colors.textPrimary }]}>Export automatique</Text>
+            <Text style={[styles.toggleSubtitle, { color: colors.textSecondary }]}>
               Envoyer chaque nouvelle mesure
             </Text>
           </View>
@@ -220,7 +237,7 @@ export function HealthSyncSettings() {
 
       {/* Import depuis Apple Health */}
       <TouchableOpacity
-        style={styles.actionButton}
+        style={[styles.actionButton, { backgroundColor: colors.card }, cardShadow]}
         onPress={handleImport}
         activeOpacity={0.7}
         disabled={syncing}
@@ -234,8 +251,8 @@ export function HealthSyncSettings() {
             )}
           </View>
           <View>
-            <Text style={styles.actionButtonTitle}>Importer depuis Apple Health</Text>
-            <Text style={styles.actionButtonSubtitle}>
+            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Importer depuis Apple Health</Text>
+            <Text style={[styles.actionButtonSubtitle, { color: colors.textSecondary }]}>
               Récupérer l'historique de poids (365 jours)
             </Text>
           </View>
@@ -244,7 +261,7 @@ export function HealthSyncSettings() {
 
       {/* Synchronisation */}
       <TouchableOpacity
-        style={styles.actionButton}
+        style={[styles.actionButton, { backgroundColor: colors.card }, cardShadow]}
         onPress={handleSync}
         activeOpacity={0.7}
         disabled={syncing}
@@ -258,8 +275,8 @@ export function HealthSyncSettings() {
             )}
           </View>
           <View>
-            <Text style={styles.actionButtonTitle}>Synchroniser</Text>
-            <Text style={styles.actionButtonSubtitle}>
+            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Synchroniser</Text>
+            <Text style={[styles.actionButtonSubtitle, { color: colors.textSecondary }]}>
               Dernière sync: {formatLastSync()}
             </Text>
           </View>
@@ -271,62 +288,54 @@ export function HealthSyncSettings() {
 
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.md,
+    gap: 12,
   },
   loadingContainer: {
-    padding: theme.spacing.xl,
+    padding: 24,
     alignItems: 'center',
   },
   unavailableContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    gap: 12,
+    borderRadius: 16,
+    padding: 16,
   },
   unavailableText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
     flex: 1,
   },
   permissionStatus: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 16,
   },
   permissionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   permissionText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 16,
   },
   toggleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
     flex: 1,
   },
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: theme.radius.md,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -334,38 +343,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   toggleTitle: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   toggleSubtitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
     marginTop: 2,
   },
   actionButton: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    ...theme.shadow.sm,
+    borderRadius: 16,
+    padding: 16,
   },
   actionButtonLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: 12,
   },
   actionButtonTitle: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   actionButtonSubtitle: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '500',
     marginTop: 2,
   },
 });

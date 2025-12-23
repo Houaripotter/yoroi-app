@@ -764,9 +764,9 @@ export default function HistoryScreen() {
               ))}
             </View>
 
-            {/* SECTION 1: Composition (Tanita) */}
+            {/* SECTION 1: Composition Corporelle */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: themeColors.textPrimary }]}>Composition (Tanita)</Text>
+              <Text style={[styles.sectionTitle, { color: themeColors.textPrimary }]}>Composition Corporelle</Text>
 
               <View style={[styles.chartCard, { backgroundColor: themeColors.card }]}>
                 <View style={styles.selectorContainer}>
@@ -852,7 +852,7 @@ export default function HistoryScreen() {
                     >
                       <Text style={[
                         styles.measurementChipText,
-                        { color: selectedMeasurement === metric.key ? '#FFFFFF' : themeColors.textPrimary }
+                        { color: selectedMeasurement === metric.key ? themeColors.background : themeColors.textPrimary }
                       ]}>
                         {metric.label}
                       </Text>

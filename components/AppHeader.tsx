@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, Text } from 'react-native';
 import { UserAvatar } from '@/components/UserAvatar';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
 
 // ============================================
@@ -23,6 +23,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onAvatarPress,
   showGreeting = true
 }) => {
+  const { colors } = useTheme();
+
   const handleAvatarPress = () => {
     if (onAvatarPress) {
       onAvatarPress();
@@ -59,7 +61,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           style={styles.rightSection}
         >
           <View style={styles.greetingContainer}>
-            <Text style={styles.greeting}>
+            <Text style={[styles.greeting, { color: colors.textPrimary }]}>
               {getGreeting()}, {username}
             </Text>
           </View>
@@ -112,7 +114,6 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.textPrimary,
   },
 
   avatarButton: {

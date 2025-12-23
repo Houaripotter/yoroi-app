@@ -159,33 +159,59 @@ export const AVATAR_PACKS: AvatarPack[] = [
     icon: '👻',
     category: 'special',
   },
-  {
-    id: 'pack_combat',
-    name: 'Guerrier Ultime',
-    description: 'Le combattant parfait',
-    folder: 'pack_combat',
-    unlockXP: 20000,
-    unlockAchievement: 'year_streak',
-    icon: '⚔️',
-    category: 'special',
-  },
+  // === PACK FEMMES (5 avatars dans le pack) ===
   {
     id: 'pack_femmes',
-    name: 'Guerrière',
-    description: 'La force féminine',
+    name: 'Pack Femmes',
+    description: '5 guerrières puissantes',
     folder: 'pack_femmes',
-    unlockXP: 0, // Accessible dès le début
+    unlockXP: 0, // GRATUIT
     icon: '👩‍🦰',
     category: 'special',
   },
+
+  // === PACK COMBAT (5 avatars dans le pack) ===
+  {
+    id: 'pack_combat',
+    name: 'Pack Combat',
+    description: '5 styles de combat',
+    folder: 'pack_combat',
+    unlockXP: 10000,
+    icon: '⚔️',
+    category: 'special',
+  },
+
+  // === PACK MONSTRES (5 avatars dans le pack) ===
   {
     id: 'pack_monstres',
-    name: 'Monstre',
-    description: 'Beast mode',
+    name: 'Pack Monstres',
+    description: '5 créatures légendaires',
     folder: 'pack_monstres',
-    unlockXP: 25000,
-    icon: '🦍',
+    unlockXP: 15000,
+    icon: '👹',
     category: 'special',
+  },
+
+  // === PACK BJJ HOMMES (5 avatars) ===
+  {
+    id: 'BJJ_Male',
+    name: 'BJJ Hommes',
+    description: 'Jiu-Jitsu Brésilien masculin',
+    folder: 'BJJ_Male',
+    unlockXP: 0, // GRATUIT
+    icon: '🥋',
+    category: 'martial',
+  },
+
+  // === PACK BJJ FEMMES (5 avatars) ===
+  {
+    id: 'BJJ_Female',
+    name: 'BJJ Femmes',
+    description: 'Jiu-Jitsu Brésilien féminin',
+    folder: 'BJJ_Female',
+    unlockXP: 0, // GRATUIT
+    icon: '🥋',
+    category: 'martial',
   },
 ];
 
@@ -215,6 +241,10 @@ class AvatarGalleryService {
   async setSelectedPack(packId: string): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, packId);
+
+      // Synchroniser avec AvatarService pour que l'avatar s'affiche partout
+      const { equipAvatar } = require('@/services/AvatarService');
+      await equipAvatar(packId);
     } catch (error) {
       console.error('[AvatarGallery] Erreur sauvegarde pack:', error);
       throw error;
@@ -225,26 +255,17 @@ class AvatarGalleryService {
   isPackUnlocked(
     packId: string,
     userXP: number,
-    unlockedAchievements: string[]
+    unlockedAchievements: string[],
+    isPro: boolean = false
   ): boolean {
-    const pack = AVATAR_PACKS.find((p) => p.id === packId);
-    if (!pack) return false;
-
-    // Vérifier l'XP
-    if (userXP < pack.unlockXP) return false;
-
-    // Vérifier l'achievement si requis
-    if (pack.unlockAchievement && !unlockedAchievements.includes(pack.unlockAchievement)) {
-      return false;
-    }
-
+    // Tous les packs sont maintenant gratuits et débloqués
     return true;
   }
 
   // Obtenir tous les packs débloqués
-  getUnlockedPacks(userXP: number, unlockedAchievements: string[]): AvatarPack[] {
+  getUnlockedPacks(userXP: number, unlockedAchievements: string[], isPro: boolean = false): AvatarPack[] {
     return AVATAR_PACKS.filter((pack) =>
-      this.isPackUnlocked(pack.id, userXP, unlockedAchievements)
+      this.isPackUnlocked(pack.id, userXP, unlockedAchievements, isPro)
     );
   }
 
@@ -254,9 +275,12 @@ class AvatarGalleryService {
   }
 
   // Obtenir le prochain pack à débloquer
-  getNextPackToUnlock(userXP: number, unlockedAchievements: string[]): AvatarPack | null {
+  getNextPackToUnlock(userXP: number, unlockedAchievements: string[], isPro: boolean = false): AvatarPack | null {
+    // Si Mode Créateur activé, tout est débloqué
+    if (isPro) return null;
+
     const locked = AVATAR_PACKS.filter(
-      (pack) => !this.isPackUnlocked(pack.id, userXP, unlockedAchievements)
+      (pack) => !this.isPackUnlocked(pack.id, userXP, unlockedAchievements, isPro)
     );
 
     if (locked.length === 0) return null;
@@ -361,28 +385,50 @@ class AvatarGalleryService {
         tired: require('@/assets/avatars/ghost/ghost_tired.png'),
         down: require('@/assets/avatars/ghost/ghost_down.png'),
       },
-      // Note: pack_combat, pack_femmes, pack_monstres use single avatars, not state-based
-      // Using samurai as fallback for preview
-      pack_combat: {
-        legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
-        strong: require('@/assets/avatars/samurai/samurai_strong.png'),
-        neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
-        tired: require('@/assets/avatars/samurai/samurai_tired.png'),
-        down: require('@/assets/avatars/samurai/samurai_down.png'),
-      },
+
+      // === PACK FEMMES - 5 guerrières différentes ===
       pack_femmes: {
-        legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
-        strong: require('@/assets/avatars/samurai/samurai_strong.png'),
-        neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
-        tired: require('@/assets/avatars/samurai/samurai_tired.png'),
-        down: require('@/assets/avatars/samurai/samurai_down.png'),
+        legendary: require('@/assets/avatars/pack_femmes/amazon.png'),
+        strong: require('@/assets/avatars/pack_femmes/boxer_woman.png'),
+        neutral: require('@/assets/avatars/pack_femmes/kunoichi.png'),
+        tired: require('@/assets/avatars/pack_femmes/mma_woman.png'),
+        down: require('@/assets/avatars/pack_femmes/valkyrie.png'),
       },
+
+      // === PACK COMBAT - 5 styles de combat différents ===
+      pack_combat: {
+        legendary: require('@/assets/avatars/pack_combat/capoeira.png'),
+        strong: require('@/assets/avatars/pack_combat/kravmaga.png'),
+        neutral: require('@/assets/avatars/pack_combat/muaythai.png'),
+        tired: require('@/assets/avatars/pack_combat/sumo.png'),
+        down: require('@/assets/avatars/pack_combat/taekwondo.png'),
+      },
+
+      // === PACK MONSTRES - 5 créatures légendaires différentes ===
       pack_monstres: {
-        legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
-        strong: require('@/assets/avatars/samurai/samurai_strong.png'),
-        neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
-        tired: require('@/assets/avatars/samurai/samurai_tired.png'),
-        down: require('@/assets/avatars/samurai/samurai_down.png'),
+        legendary: require('@/assets/avatars/pack_monstres/dragon.png'),
+        strong: require('@/assets/avatars/pack_monstres/kappa.png'),
+        neutral: require('@/assets/avatars/pack_monstres/oni_blue.png'),
+        tired: require('@/assets/avatars/pack_monstres/tengu.png'),
+        down: require('@/assets/avatars/pack_monstres/yokai.png'),
+      },
+
+      // === PACK BJJ HOMMES ===
+      BJJ_Male: {
+        legendary: require('@/assets/avatars/BJJ_Male/char_bjj_m_victory_champion.png'),
+        strong: require('@/assets/avatars/BJJ_Male/char_bjj_m_powered_up.png'),
+        neutral: require('@/assets/avatars/BJJ_Male/char_bjj_m_idle_stand.png'),
+        tired: require('@/assets/avatars/BJJ_Male/char_bjj_m_tired_stool.png'),
+        down: require('@/assets/avatars/BJJ_Male/char_bjj_m_defeated_ground.png'),
+      },
+
+      // === PACK BJJ FEMMES ===
+      BJJ_Female: {
+        legendary: require('@/assets/avatars/BJJ_Female/char_bjj_f_victory_champion.png'),
+        strong: require('@/assets/avatars/BJJ_Female/char_bjj_f_powered_up.png'),
+        neutral: require('@/assets/avatars/BJJ_Female/char_bjj_f_idle_stand.png'),
+        tired: require('@/assets/avatars/BJJ_Female/char_bjj_f_tired_stool.png'),
+        down: require('@/assets/avatars/BJJ_Female/char_bjj_f_defeated_ground.png'),
       },
     };
 

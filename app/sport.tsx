@@ -606,7 +606,7 @@ export default function SportScreen() {
 
                   {/* Clubs Selector */}
                   <View style={styles.clubsSelector}>
-                    <Text style={styles.clubsSelectorTitle}>Mes Clubs</Text>
+                    <Text style={styles.clubsSelectorTitle}>Clubs & Coach</Text>
                     <View style={styles.clubsGrid}>
                       {getAvailableClubs().map((club) => {
                         const clubLogo = getClubLogoById(club.id);

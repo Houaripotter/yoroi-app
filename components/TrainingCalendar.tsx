@@ -9,13 +9,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, getDay, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { theme } from '@/lib/theme';
 import { useTheme } from '@/lib/ThemeContext';
 import { Club } from '@/lib/database';
 import { Workout } from '@/types/workout';
-import { getSportIcon, getSportColor } from '@/lib/sports';
+import { getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CALENDAR_PADDING = 8; // Réduit pour plus d'espace
@@ -87,20 +87,22 @@ export function TrainingCalendar({
   // Render club logo or emoji
   const renderClubIndicator = (workout: Workout, size: number = 18) => {
     const club = getClub(workout.club_id);
+    
+    // Vérifier si le club a un logo
+    const logoSource = club?.logo_uri ? getClubLogoSource(club.logo_uri) : null;
 
-    if (club?.logo_uri) {
+    if (logoSource) {
       return (
         <Image
-          source={{ uri: club.logo_uri }}
+          source={logoSource}
           style={[styles.workoutLogo, { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.card }]}
           resizeMode="cover"
         />
       );
     }
 
-    // Fallback to color dot or emoji
+    // Fallback to color dot or icon
     const color = club?.color || getSportColor(workout.type);
-    const emoji = getSportIcon(workout.type);
 
     return (
       <View
@@ -114,7 +116,11 @@ export function TrainingCalendar({
           },
         ]}
       >
-        <Text style={[styles.workoutEmoji, { fontSize: size * 0.6 }]}>{emoji}</Text>
+        <MaterialCommunityIcons
+          name={getSportIcon(workout.type) as any}
+          size={size * 0.6}
+          color="#FFFFFF"
+        />
       </View>
     );
   };

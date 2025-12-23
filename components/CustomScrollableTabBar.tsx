@@ -4,7 +4,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 // ============================================
 // ⚔️ TAB BAR GUERRIER - FLOTTANTE
@@ -15,6 +15,8 @@ import { theme } from '@/lib/theme';
 
 export function CustomScrollableTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors, themeName } = useTheme();
+  const isWellness = false;
 
   return (
     <View
@@ -23,7 +25,17 @@ export function CustomScrollableTabBar({ state, descriptors, navigation }: Botto
         { paddingBottom: Math.max(insets.bottom - 8, 8) },
       ]}
     >
-      <View style={styles.tabBar}>
+      <View style={[
+        styles.tabBar,
+        { backgroundColor: colors.tabBar },
+        isWellness && {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.2,
+          shadowRadius: 16,
+          elevation: 12,
+        }
+      ]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label =
@@ -61,12 +73,21 @@ export function CustomScrollableTabBar({ state, descriptors, navigation }: Botto
                 style={styles.centerButtonContainer}
               >
                 <LinearGradient
-                  colors={[theme.colors.gold, theme.colors.goldDark]}
-                  style={styles.centerButton}
+                  colors={[colors.gold, colors.goldDark]}
+                  style={[
+                    styles.centerButton,
+                    {
+                      shadowColor: colors.gold,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 8,
+                      elevation: 8,
+                    }
+                  ]}
                 >
                   {Icon && Icon({
                     focused: isFocused,
-                    color: theme.colors.background,
+                    color: colors.background,
                     size: 28,
                   })}
                 </LinearGradient>
@@ -87,7 +108,7 @@ export function CustomScrollableTabBar({ state, descriptors, navigation }: Botto
               <View style={styles.iconWrapper}>
                 {Icon && Icon({
                   focused: isFocused,
-                  color: isFocused ? theme.colors.gold : theme.colors.tabBarInactive,
+                  color: isFocused ? colors.gold : colors.tabBarInactive,
                   size: 24,
                 })}
               </View>
@@ -95,7 +116,7 @@ export function CustomScrollableTabBar({ state, descriptors, navigation }: Botto
                 <Text
                   style={[
                     styles.label,
-                    { color: isFocused ? theme.colors.gold : theme.colors.tabBarInactive },
+                    { color: isFocused ? colors.gold : colors.tabBarInactive },
                   ]}
                   numberOfLines={1}
                 >
@@ -122,11 +143,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    backgroundColor: theme.colors.tabBar,
-    borderRadius: theme.radius.xxl,
+    borderRadius: 24,
     height: 70,
     paddingHorizontal: 8,
-    ...theme.shadows.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
   },
@@ -157,7 +181,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadows.gold,
   },
 });
 

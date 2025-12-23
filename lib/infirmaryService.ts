@@ -90,6 +90,7 @@ export const createInjury = async (data: {
   cause: string;
   eva_score: number;
   notes?: string;
+  estimated_recovery_days?: number;
 }): Promise<number> => {
   const today = new Date().toISOString().split('T')[0];
 

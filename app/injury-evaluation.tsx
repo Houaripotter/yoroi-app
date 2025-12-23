@@ -32,6 +32,7 @@ import {
   getEVAColor,
   getEVAEmoji,
 } from '@/lib/infirmaryService';
+import { updateInjury } from '@/lib/database';
 
 export default function InjuryEvaluationScreen() {
   const { colors } = useTheme();
@@ -41,14 +42,23 @@ export default function InjuryEvaluationScreen() {
   const zoneView = params.zoneView as 'front' | 'back';
   const zoneName = decodeURIComponent(params.zoneName as string);
 
+  // Mode édition si injuryId est présent
+  const injuryId = params.injuryId ? parseInt(params.injuryId as string) : null;
+  const isEditMode = injuryId !== null;
+
   const [painType, setPainType] = useState<PainType | null>(null);
   const [cause, setCause] = useState<InjuryCause | null>(null);
-  const [evaScore, setEvaScore] = useState(5);
+  const [evaScore, setEvaScore] = useState(
+    params.existingEva ? parseInt(params.existingEva as string) : 5
+  );
+  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState(
+    params.existingDuration ? parseInt(params.existingDuration as string) : 7
+  );
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!painType || !cause) {
+    if (!isEditMode && (!painType || !cause)) {
       Alert.alert('Champs requis', 'Veuillez sélectionner le type de douleur et la cause');
       return;
     }
@@ -56,53 +66,68 @@ export default function InjuryEvaluationScreen() {
     setIsSubmitting(true);
 
     try {
-      // Créer la blessure
-      const injuryId = await createInjury({
-        zone_id: zoneId,
-        zone_view: zoneView,
-        pain_type: painType,
-        cause: cause,
-        eva_score: evaScore,
-        notes: notes || undefined,
-      });
+      if (isEditMode) {
+        // Mode édition - mettre à jour la blessure existante
+        await updateInjury(injuryId, {
+          eva_score: evaScore,
+          estimated_recovery_days: estimatedRecoveryDays,
+          notes: notes || undefined,
+        });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Vérifier récurrence
-      const recurrence = await checkZoneRecurrence(zoneId, zoneView);
-      if (recurrence.isRecurring) {
-        Alert.alert(
-          '⚠️ Récurrence détectée',
-          `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours. Consultez un médecin si la douleur persiste.`,
-          [{ text: 'OK' }]
-        );
-      }
-
-      // Vérifier protocole RICE
-      if (shouldRecommendRICE(evaScore)) {
-        const protocol = getRICEProtocol();
-        const protocolText = protocol
-          .map(step => `${step.letter} - ${step.title}: ${step.description}`)
-          .join('\n\n');
-
-        Alert.alert(
-          '🧊 Protocole RICE Recommandé',
-          `Douleur sévère détectée (EVA ${evaScore}/10).\n\nAppliquez immédiatement :\n\n${protocolText}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                router.back();
-              },
-            },
-          ]
-        );
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('✅ Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
       } else {
-        router.back();
+        // Mode création - créer une nouvelle blessure
+        const newInjuryId = await createInjury({
+          zone_id: zoneId,
+          zone_view: zoneView,
+          pain_type: painType!,
+          cause: cause!,
+          eva_score: evaScore,
+          estimated_recovery_days: estimatedRecoveryDays,
+          notes: notes || undefined,
+        });
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        // Vérifier récurrence
+        const recurrence = await checkZoneRecurrence(zoneId, zoneView);
+        if (recurrence.isRecurring) {
+          Alert.alert(
+            '⚠️ Récurrence détectée',
+            `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours. Consultez un médecin si la douleur persiste.`,
+            [{ text: 'OK' }]
+          );
+        }
+
+        // Vérifier protocole RICE
+        if (shouldRecommendRICE(evaScore)) {
+          const protocol = getRICEProtocol();
+          const protocolText = protocol
+            .map(step => `${step.letter} - ${step.title}: ${step.description}`)
+            .join('\n\n');
+
+          Alert.alert(
+            '🧊 Protocole RICE Recommandé',
+            `Douleur sévère détectée (EVA ${evaScore}/10).\n\nAppliquez immédiatement :\n\n${protocolText}`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  router.back();
+                },
+              },
+            ]
+          );
+        } else {
+          router.back();
+        }
       }
     } catch (error) {
       console.error('[InjuryEvaluation] Erreur:', error);
-      Alert.alert('Erreur', 'Impossible d\'enregistrer la blessure');
+      Alert.alert('Erreur', `Impossible d'${isEditMode ? 'mettre à jour' : 'enregistrer'} la blessure`);
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +159,7 @@ export default function InjuryEvaluationScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Nouvelle blessure
+                {isEditMode ? 'Modifier blessure' : 'Nouvelle blessure'}
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                 {zoneName}
@@ -296,6 +321,79 @@ export default function InjuryEvaluationScreen() {
           />
         </View>
 
+        {/* Durée de récupération estimée */}
+        <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Durée de récupération estimée
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+            Nombre de jours pour guérison complète
+          </Text>
+
+          <View style={styles.durationContainer}>
+            <TouchableOpacity
+              style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEstimatedRecoveryDays(Math.max(1, estimatedRecoveryDays - 1));
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.durationButtonText, { color: colors.textPrimary }]}>-</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.durationDisplay, { backgroundColor: colors.backgroundElevated }]}>
+              <Text style={[styles.durationValue, { color: colors.accent }]}>
+                {estimatedRecoveryDays}
+              </Text>
+              <Text style={[styles.durationLabel, { color: colors.textSecondary }]}>
+                jours
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setEstimatedRecoveryDays(estimatedRecoveryDays + 1);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.durationButtonText, { color: colors.textPrimary }]}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Boutons de raccourci */}
+          <View style={styles.durationPresets}>
+            {[3, 7, 14, 21, 30].map((days) => (
+              <TouchableOpacity
+                key={days}
+                style={[
+                  styles.presetButton,
+                  { backgroundColor: colors.backgroundElevated },
+                  estimatedRecoveryDays === days && { backgroundColor: colors.accent },
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setEstimatedRecoveryDays(days);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.presetButtonText,
+                    {
+                      color: estimatedRecoveryDays === days ? '#FFFFFF' : colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {days}j
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {/* Bouton enregistrer */}
         <TouchableOpacity
           style={[
@@ -309,7 +407,13 @@ export default function InjuryEvaluationScreen() {
         >
           <Save size={20} color="#FFFFFF" />
           <Text style={styles.submitButtonText}>
-            {isSubmitting ? 'Enregistrement...' : 'Enregistrer la blessure'}
+            {isSubmitting
+              ? isEditMode
+                ? 'Modification...'
+                : 'Enregistrement...'
+              : isEditMode
+              ? 'Modifier la blessure'
+              : 'Enregistrer la blessure'}
           </Text>
         </TouchableOpacity>
 
@@ -440,6 +544,55 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: 15,
     minHeight: 100,
+  },
+  // Duration
+  durationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  durationButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  durationButtonText: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  durationDisplay: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  durationValue: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  durationLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  durationPresets: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  presetButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+  },
+  presetButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   // Submit Button
   submitButton: {

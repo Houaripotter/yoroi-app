@@ -1,0 +1,258 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Attention",
+    "info": "Info",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "start": "Démarrer",
+    "stop": "Arrêter",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "reset": "Réinitialiser",
+    "restart": "Recommencer",
+    "skip": "Passer",
+    "finish": "Terminer"
+  },
+  "time": {
+    "seconds": "secondes",
+    "minutes": "minutes",
+    "hours": "heures",
+    "days": "jours",
+    "weeks": "semaines",
+    "months": "mois",
+    "years": "années",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "tomorrow": "Demain",
+    "morning": "Matin",
+    "afternoon": "Après-midi",
+    "evening": "Soir",
+    "night": "Nuit"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "theme": "Thème",
+    "notifications": "Notifications",
+    "account": "Compte",
+    "privacy": "Confidentialité",
+    "about": "À propos",
+    "version": "Version",
+    "logout": "Déconnexion"
+  },
+  "profile": {
+    "title": "Profil",
+    "edit": "Modifier le profil",
+    "name": "Nom",
+    "weight": "Poids",
+    "height": "Taille",
+    "age": "Âge",
+    "gender": "Sexe",
+    "goal": "Objectif"
+  },
+  "training": {
+    "title": "Entraînement",
+    "addSession": "Ajouter une séance",
+    "history": "Historique",
+    "duration": "Durée",
+    "calories": "Calories",
+    "exercises": "Exercices",
+    "sets": "Séries",
+    "reps": "Répétitions",
+    "rest": "Repos",
+    "notes": "Notes"
+  },
+  "timer": {
+    "title": "Minuteur",
+    "round": "Round",
+    "rounds": "Rounds",
+    "work": "Travail",
+    "preparation": "Préparation",
+    "finished": "Terminé",
+    "excellent": "Excellent travail !",
+    "keepGoing": "Continue comme ça"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "overview": "Vue d'ensemble",
+    "progress": "Progression",
+    "total": "Total",
+    "average": "Moyenne",
+    "best": "Meilleur",
+    "current": "Actuel"
+  },
+  "badges": {
+    "title": "Badges",
+    "unlocked": "Débloqué",
+    "locked": "Verrouillé",
+    "progress": "Progression",
+    "earned": "Obtenu le",
+    "description": "Description"
+  },
+  "health": {
+    "weight": "Poids",
+    "height": "Taille",
+    "bmi": "IMC",
+    "bodyFat": "Masse grasse",
+    "muscleMass": "Masse musculaire",
+    "water": "Eau",
+    "hydration": "Hydration"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "planning": "Planning",
+    "add": "Ajouter",
+    "stats": "Statistiques",
+    "more": "Plus"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue",
+    "network": "Erreur de connexion",
+    "notFound": "Non trouvé",
+    "unauthorized": "Non autorisé",
+    "validation": "Erreur de validation"
+  },
+  "messages": {
+    "saveSuccess": "Enregistré avec succès",
+    "deleteSuccess": "Supprimé avec succès",
+    "updateSuccess": "Mis à jour avec succès",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ?",
+    "noData": "Aucune donnée disponible",
+    "comingSoon": "Bientôt disponible"
+  },
+  "infirmary": {
+    "title": "L'Infirmerie",
+    "injuries": "Blessures",
+    "addInjury": "Ajouter une blessure",
+    "bodyMap": "Carte du corps",
+    "face": "Face",
+    "back": "Dos",
+    "selectZone": "Sélectionne une zone",
+    "injuryType": "Type de blessure",
+    "painLevel": "Niveau de douleur (EVA)",
+    "evaScale": "Échelle EVA 0-10",
+    "noPain": "Aucune",
+    "severePain": "Insupportable",
+    "status": {
+      "active": "Active",
+      "healing": "En guérison",
+      "healed": "Guérie"
+    },
+    "fitForDuty": {
+      "operational": "OPÉRATIONNEL",
+      "restricted": "RESTREINT",
+      "unfit": "INAPTE",
+      "operationalDesc": "Aucune blessure active",
+      "restrictedDesc": "Blessure légère : Entraînement adapté conseillé",
+      "unfitDesc": "Blessure sévère : Repos obligatoire recommandé"
+    },
+    "treatments": {
+      "title": "Soins",
+      "ice": "Glaçage",
+      "heat": "Chaleur",
+      "medication": "Médicament",
+      "physio": "Kinésithérapie",
+      "rest": "Repos",
+      "compression": "Compression",
+      "elevation": "Élévation"
+    },
+    "evolution": "Évolution de la douleur",
+    "trend": "Tendance",
+    "improving": "En amélioration",
+    "stable": "Stable",
+    "worsening": "En aggravation",
+    "archive": "Archives",
+    "recurringWarning": "Zone à risque détectée",
+    "riceProtocol": "Protocole RICE recommandé",
+    "consultProfessional": "Consulter un professionnel de santé",
+    "disclaimer": "Ces suggestions ne remplacent pas un avis médical professionnel"
+  },
+  "photos": {
+    "title": "Photos de Progrès",
+    "beforeAfter": "Avant/Après",
+    "addPhoto": "Ajouter une photo",
+    "comparison": "Comparaison",
+    "ghostOverlay": "Grille de guidage",
+    "alignYourself": "Aligne-toi sur le fantôme",
+    "poses": {
+      "front": "Face",
+      "left": "Profil gauche",
+      "right": "Profil droit",
+      "back": "Dos"
+    },
+    "watermark": "Filigrane",
+    "share": "Partager",
+    "gallery": "Galerie",
+    "selectDate": "Sélectionner une date",
+    "progress": "Progression"
+  },
+  "roninMode": {
+    "title": "Mode Ronin",
+    "subtitle": "Focus absolu",
+    "activating": "Activation du mode Ronin...",
+    "activated": "Mode Ronin activé",
+    "tapToContinue": "Tap pour série suivante",
+    "minimalMode": "Mode minimaliste",
+    "exitMode": "Quitter le mode"
+  },
+  "briefing": {
+    "morning": "Briefing du matin",
+    "hello": "Bonjour",
+    "weightStable": "Poids stable",
+    "weightUp": "Poids en hausse",
+    "weightDown": "Poids en baisse",
+    "streak": "Série",
+    "days": "jours consécutifs",
+    "scheduledWorkout": "Entraînement prévu",
+    "restDay": "Jour de repos",
+    "calorieGoal": "Objectif du jour",
+    "goodDay": "Bonne journée, champion !",
+    "injuries": "Blessures actives",
+    "rememberTreatment": "N'oublie pas tes soins"
+  },
+  "social": {
+    "shareCard": "Carte de partage",
+    "myStats": "Mes Stats",
+    "workouts": "entraînements",
+    "kgLost": "kg perdus",
+    "shareOnSocial": "Partager sur les réseaux"
+  },
+  "units": {
+    "kg": "kg",
+    "lbs": "lbs",
+    "cm": "cm",
+    "inches": "pouces",
+    "kcal": "kcal",
+    "percent": "%"
+  },
+  "empty": {
+    "noValue": "--",
+    "noData": "Aucune donnée",
+    "notSet": "Non défini",
+    "undefined": "--"
+  },
+  "gamification": {
+    "streak": "Série",
+    "rank": "Grade",
+    "crown": "Couronne",
+    "xp": "XP",
+    "level": "Niveau",
+    "achievements": "Succès",
+    "legend": "Légende",
+    "warrior": "Guerrier"
+  }
+}

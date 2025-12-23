@@ -209,6 +209,13 @@ export const SPORTS: Sport[] = [
 
   // === SPORTS COLLECTIFS ===
   {
+    id: 'futsal',
+    name: 'Futsal / Foot en salle',
+    icon: 'soccer',
+    color: '#14B8A6',
+    category: 'collectif',
+  },
+  {
     id: 'football',
     name: 'Football',
     icon: 'soccer',
@@ -353,6 +360,38 @@ export const getSportName = (id: string): string => {
 
 export const getSportCategory = (id: string): string => {
   return getSportById(id)?.category || 'autre';
+};
+
+// ============================================
+// LOGOS DES CLUBS
+// ============================================
+
+// Mappage des identifiants de logos vers les images locales
+const CLUB_LOGOS: { [key: string]: any } = {
+  'gracie-barra': require('@/assets/images/gracie-barra.png'),
+  'basic-fit': require('@/assets/images/basic-fit.png'),
+  'marseille-fight-club': require('@/assets/images/marseille-fight-club.jpg'),
+};
+
+/**
+ * Récupère la source d'image pour un logo de club
+ * @param logoUri Identifiant du logo (ex: 'gracie-barra') ou URI externe
+ * @returns Source d'image utilisable dans <Image source={...} />
+ */
+export const getClubLogoSource = (logoUri?: string): any => {
+  if (!logoUri) return null;
+  
+  // Si c'est un identifiant connu, retourner l'image locale
+  if (CLUB_LOGOS[logoUri]) {
+    return CLUB_LOGOS[logoUri];
+  }
+  
+  // Si c'est une URI externe (commence par http ou file)
+  if (logoUri.startsWith('http') || logoUri.startsWith('file')) {
+    return { uri: logoUri };
+  }
+  
+  return null;
 };
 
 export default SPORTS;

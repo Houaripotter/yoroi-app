@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View, Animated } from 'react-native';
 import { TrendingDown, TrendingUp } from 'lucide-react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface WeightTrendCardProps {
   period: string;
@@ -10,10 +10,12 @@ interface WeightTrendCardProps {
 }
 
 export function WeightTrendCard({ period, change, isPositive = true }: WeightTrendCardProps) {
+  const { colors, isDark, themeName } = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
+  const isWellness = false;
 
-  const backgroundColor = isPositive ? theme.colors.mintPastel : theme.colors.orangePastel;
-  const textColor = isPositive ? theme.colors.primary : theme.colors.secondary;
+  const backgroundColor = isPositive ? colors.successLight : colors.warningLight;
+  const textColor = isPositive ? colors.success : colors.warning;
   const Icon = isPositive ? TrendingDown : TrendingUp;
 
   return (
@@ -31,14 +33,25 @@ export function WeightTrendCard({ period, change, isPositive = true }: WeightTre
         }).start();
       }}
     >
-      <Animated.View style={[styles.container, { backgroundColor, transform: [{ scale }] }]}>
-        <Text style={styles.period}>{period}</Text>
+      <Animated.View style={[
+        styles.container,
+        {
+          backgroundColor,
+          transform: [{ scale }],
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: isWellness ? 4 : 2 },
+          shadowOpacity: isWellness ? 0.1 : (isDark ? 0.3 : 0.08),
+          shadowRadius: isWellness ? 8 : 4,
+          elevation: isWellness ? 6 : 3,
+        }
+      ]}>
+        <Text style={[styles.period, { color: colors.textSecondary }]}>{period}</Text>
         <View style={styles.changeRow}>
           <Icon size={20} color={textColor} strokeWidth={2.5} />
           <Text style={[styles.change, { color: textColor }]}>
             {change > 0 ? '+' : ''}{change.toFixed(1)}
           </Text>
-          <Text style={styles.unit}>kg</Text>
+          <Text style={[styles.unit, { color: colors.textSecondary }]}>kg</Text>
         </View>
       </Animated.View>
     </Pressable>
@@ -49,17 +62,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     aspectRatio: 1,
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.lg,
+    borderRadius: 24,
+    padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.sm, // Ajout d'un gap pour l'espacement vertical
-    ...theme.shadow.sm,
+    gap: 8,
   },
   period: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.extrabold,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
     textAlign: 'center',
@@ -72,13 +83,12 @@ const styles = StyleSheet.create({
   },
   change: {
     fontSize: 28,
-    fontWeight: theme.fontWeight.black,
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   unit: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

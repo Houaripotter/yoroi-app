@@ -24,12 +24,13 @@ import {
   Camera,
   Image as ImageIcon,
 } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getClubs, addClub, updateClub, deleteClub, Club } from '@/lib/database';
-import { SPORTS, getSportIcon, getSportColor, getSportName } from '@/lib/sports';
+import { SPORTS, getSportIcon, getSportColor, getSportName, getClubLogoSource } from '@/lib/sports';
 
 // ============================================
 // GESTION DES CLUBS / SALLES
@@ -209,10 +210,11 @@ export default function ClubsScreen() {
   };
 
   const renderClubLogo = (club: Club, size: number = 50) => {
-    if (club.logo_uri) {
+    const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
+    if (logoSource) {
       return (
         <Image
-          source={{ uri: club.logo_uri }}
+          source={logoSource}
           style={[styles.clubLogoImage, { width: size, height: size, borderRadius: size / 2 }]}
           resizeMode="cover"
         />
@@ -230,7 +232,11 @@ export default function ClubsScreen() {
           },
         ]}
       >
-        <Text style={[styles.clubEmoji, { fontSize: size * 0.48 }]}>{getSportIcon(club.sport)}</Text>
+        <MaterialCommunityIcons
+          name={getSportIcon(club.sport) as any}
+          size={size * 0.48}
+          color="#FFFFFF"
+        />
       </View>
     );
   };
@@ -238,7 +244,7 @@ export default function ClubsScreen() {
   return (
     <ScreenWrapper noPadding>
       <Header
-        title="Mes Clubs"
+        title="Clubs & Coach"
         showBack
         rightElement={
           <TouchableOpacity
@@ -339,7 +345,7 @@ export default function ClubsScreen() {
           <ScrollView style={styles.modalContent}>
             {/* LOGO */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Logo du club</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Logo du club</Text>
               <View style={styles.logoSection}>
                 <TouchableOpacity
                   style={styles.logoPreview}
@@ -354,9 +360,11 @@ export default function ClubsScreen() {
                     />
                   ) : (
                     <View style={[styles.logoPlaceholder, { backgroundColor: selectedColor }]}>
-                      <Text style={styles.logoPlaceholderEmoji}>
-                        {getSportIcon(selectedSport)}
-                      </Text>
+                      <MaterialCommunityIcons
+                        name={getSportIcon(selectedSport) as any}
+                        size={32}
+                        color="#FFFFFF"
+                      />
                     </View>
                   )}
                   <View style={styles.logoEditBadge}>
@@ -365,18 +373,18 @@ export default function ClubsScreen() {
                 </TouchableOpacity>
                 <View style={styles.logoButtons}>
                   <TouchableOpacity
-                    style={styles.logoButton}
+                    style={[styles.logoButton, { borderColor: colors.border }]}
                     onPress={pickImageFromGallery}
                   >
                     <ImageIcon size={18} color={colors.gold} />
-                    <Text style={styles.logoButtonText}>Galerie</Text>
+                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>Galerie</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.logoButton}
+                    style={[styles.logoButton, { borderColor: colors.border }]}
                     onPress={takePhoto}
                   >
                     <Camera size={18} color={colors.gold} />
-                    <Text style={styles.logoButtonText}>Camera</Text>
+                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>Camera</Text>
                   </TouchableOpacity>
                   {logoUri && (
                     <TouchableOpacity
@@ -395,9 +403,13 @@ export default function ClubsScreen() {
 
             {/* NOM */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nom du club</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom du club</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, {
+                  color: colors.textPrimary,
+                  backgroundColor: colors.backgroundCard,
+                  borderColor: colors.border
+                }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Ex: Gracie Barra, Basic Fit..."
@@ -405,36 +417,72 @@ export default function ClubsScreen() {
               />
             </View>
 
-            {/* SPORT */}
+            {/* SPORT - PAR CATÉGORIE */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Sport</Text>
-              <View style={styles.sportsGrid}>
-                {SPORTS.map((sport) => (
-                  <TouchableOpacity
-                    key={sport.id}
-                    style={[
-                      styles.sportItem,
-                      selectedSport === sport.id && styles.sportItemActive,
-                    ]}
-                    onPress={() => setSelectedSport(sport.id)}
-                  >
-                    <Text style={styles.sportIcon}>{sport.icon}</Text>
-                    <Text
-                      style={[
-                        styles.sportName,
-                        selectedSport === sport.id && styles.sportNameActive,
-                      ]}
-                    >
-                      {sport.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Sport</Text>
+
+              {(() => {
+                const categoryLabels: Record<string, string> = {
+                  combat_striking: '🥊 Sports de Frappe',
+                  combat_grappling: '🤼 Sports de Préhension',
+                  fitness: '🏋️ Musculation',
+                  cardio: '🏃 Cardio',
+                  collectif: '⚽ Collectifs',
+                  raquettes: '🎾 Raquettes',
+                  autre: '🎯 Autres',
+                };
+
+                const categories = ['combat_striking', 'combat_grappling', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];
+
+                return categories.map((category) => {
+                  const sportsInCategory = SPORTS.filter(s => s.category === category);
+                  if (sportsInCategory.length === 0) return null;
+
+                  return (
+                    <View key={category} style={styles.categoryBlock}>
+                      <Text style={[styles.categoryTitle, { color: colors.textMuted }]}>
+                        {categoryLabels[category]}
+                      </Text>
+                      <View style={styles.sportsGrid}>
+                        {sportsInCategory.map((sport) => (
+                          <TouchableOpacity
+                            key={sport.id}
+                            style={[
+                              styles.sportItem,
+                              {
+                                backgroundColor: selectedSport === sport.id ? colors.cardHover : colors.backgroundCard,
+                                borderColor: selectedSport === sport.id ? colors.gold : colors.border,
+                              },
+                            ]}
+                            onPress={() => setSelectedSport(sport.id)}
+                          >
+                            <MaterialCommunityIcons
+                              name={sport.icon as any}
+                              size={24}
+                              color={selectedSport === sport.id ? colors.gold : colors.textPrimary}
+                            />
+                            <Text
+                              style={[
+                                styles.sportName,
+                                {
+                                  color: selectedSport === sport.id ? colors.gold : colors.textPrimary,
+                                },
+                              ]}
+                            >
+                              {sport.name}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
             </View>
 
             {/* COULEUR */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Couleur (si pas de logo)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Couleur (si pas de logo)</Text>
               <View style={styles.colorsGrid}>
                 {CLUB_COLORS.map((color) => (
                   <TouchableOpacity
@@ -686,6 +734,16 @@ const styles = StyleSheet.create({
   },
 
   // SPORTS GRID
+  categoryBlock: {
+    marginBottom: 16,
+  },
+  categoryTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
   sportsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

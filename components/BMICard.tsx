@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Circle, G } from 'react-native-svg';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface BMICardProps {
   weight: number;
@@ -8,13 +8,16 @@ interface BMICardProps {
 }
 
 export function BMICard({ weight, height }: BMICardProps) {
+  const { colors, isDark, themeName } = useTheme();
+  const isWellness = false;
+
   const bmi = weight / ((height / 100) ** 2);
 
   const getBMICategory = (bmiValue: number) => {
-    if (bmiValue < 18.5) return { label: 'Insuffisance pondérale', color: theme.colors.tertiary };
-    if (bmiValue < 25) return { label: 'Poids normal', color: theme.colors.primary };
-    if (bmiValue < 30) return { label: 'Surpoids', color: theme.colors.secondary };
-    return { label: 'Obésité', color: theme.colors.error };
+    if (bmiValue < 18.5) return { label: 'Insuffisance pondérale', color: colors.textMuted };
+    if (bmiValue < 25) return { label: 'Poids normal', color: colors.success };
+    if (bmiValue < 30) return { label: 'Surpoids', color: colors.warning };
+    return { label: 'Obésité', color: colors.error };
   };
 
   const category = getBMICategory(bmi);
@@ -22,7 +25,6 @@ export function BMICard({ weight, height }: BMICardProps) {
   const size = 200;
   const strokeWidth = 20;
   const radius = (size - strokeWidth) / 2;
-  const circumference = Math.PI * radius;
 
   const startAngle = -180;
   const endAngle = 0;
@@ -56,16 +58,24 @@ export function BMICard({ weight, height }: BMICardProps) {
   const targetAngle = getBMIAngle(bmi);
   const progressPath = createArc(startAngle, targetAngle);
 
+  const getCategoryPastel = (color: string): string => {
+    if (color === colors.textMuted) return isWellness ? '#E0E7EC' : `${colors.textMuted}20`;
+    if (color === colors.success) return isWellness ? '#E8F9EF' : `${colors.success}20`;
+    if (color === colors.warning) return isWellness ? '#FFF7ED' : `${colors.warning}20`;
+    if (color === colors.error) return isWellness ? '#FEE2E2' : `${colors.error}20`;
+    return colors.cardHover;
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>INDICE DE MASSE CORPORELLE</Text>
+      <Text style={[styles.title, { color: colors.textSecondary }]}>INDICE DE MASSE CORPORELLE</Text>
 
       <View style={styles.gaugeContainer}>
         <Svg width={size} height={size / 2 + 40}>
           <G>
             <Path
               d={backgroundPath}
-              stroke={theme.colors.borderLight}
+              stroke={colors.border}
               strokeWidth={strokeWidth}
               fill="none"
               strokeLinecap="round"
@@ -92,58 +102,47 @@ export function BMICard({ weight, height }: BMICardProps) {
           <Text style={[styles.bmiValue, { color: category.color }]}>
             {bmi.toFixed(1)}
           </Text>
-          <Text style={styles.bmiLabel}>IMC</Text>
+          <Text style={[styles.bmiLabel, { color: colors.textSecondary }]}>IMC</Text>
         </View>
       </View>
 
       <View style={styles.categoryContainer}>
         <View style={[styles.categoryBadge, { backgroundColor: getCategoryPastel(category.color) }]}>
-          <Text style={[styles.categoryText, { color: theme.colors.textPrimary }]}>
+          <Text style={[styles.categoryText, { color: colors.textPrimary }]}>
             {category.label}
           </Text>
         </View>
       </View>
 
-      <View style={styles.legend}>
+      <View style={[styles.legend, { borderTopColor: colors.border }]}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.tertiary }]} />
-          <Text style={styles.legendText}>{'<'}18.5</Text>
+          <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{'<'}18.5</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.primary }]} />
-          <Text style={styles.legendText}>18.5-25</Text>
+          <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>18.5-25</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.secondary }]} />
-          <Text style={styles.legendText}>25-30</Text>
+          <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>25-30</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: theme.colors.error }]} />
-          <Text style={styles.legendText}>{'>'}30</Text>
+          <View style={[styles.legendDot, { backgroundColor: colors.error }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{'>'}30</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function getCategoryPastel(color: string): string {
-  const colorMap: { [key: string]: string } = {
-    [theme.colors.tertiary]: theme.colors.turquoisePastel,
-    [theme.colors.primary]: theme.colors.mintPastel,
-    [theme.colors.secondary]: theme.colors.orangePastel,
-    [theme.colors.error]: '#FEE2E2',
-  };
-  return colorMap[color] || theme.colors.beigeLight;
-}
-
 const styles = StyleSheet.create({
   container: {
-    gap: theme.spacing.xl,
+    gap: 20,
   },
   title: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.black,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 1,
   },
   gaugeContainer: {
@@ -159,34 +158,32 @@ const styles = StyleSheet.create({
   },
   bmiValue: {
     fontSize: 48,
-    fontWeight: theme.fontWeight.black,
+    fontWeight: '800',
     letterSpacing: -1,
   },
   bmiLabel: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   categoryContainer: {
     alignItems: 'center',
   },
   categoryBadge: {
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.radius.full,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
   },
   categoryText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: 16,
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: theme.spacing.md,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.borderLight,
   },
   legendItem: {
     flexDirection: 'row',
@@ -199,8 +196,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    fontSize: theme.fontSize.xs,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

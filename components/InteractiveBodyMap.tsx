@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Svg, { Path, G, Circle } from 'react-native-svg';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const BODY_WIDTH = width * 0.7;
@@ -15,37 +15,52 @@ interface InteractiveBodyMapProps {
 }
 
 export function InteractiveBodyMap({ onSelectZone, selectedZone }: InteractiveBodyMapProps) {
+  const { colors, isDark, themeName } = useTheme();
+  const isWellness = false;
+
   const getFillColor = (zone: BodyZone) => {
     if (selectedZone === zone) {
-      return theme.colors.primary; // Couleur d'accentuation quand sélectionné
+      return colors.gold; // Couleur d'accentuation quand sélectionné
     } else {
-      return theme.colors.surface; // Couleur neutre
+      return colors.card; // Couleur neutre
     }
   };
 
   const getStrokeColor = (zone: BodyZone) => {
     if (selectedZone === zone) {
-      return theme.colors.primary; // Bordure accentuée
+      return colors.gold; // Bordure accentuée
     } else {
-      return theme.colors.border; // Bordure neutre
+      return colors.border; // Bordure neutre
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.instructionText}>Touchez une zone pour saisir la mesure</Text>
+    <View style={[
+      styles.container,
+      { backgroundColor: colors.card },
+      isWellness && {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 6,
+      }
+    ]}>
+      <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+        Touchez une zone pour saisir la mesure
+      </Text>
       <Svg width={BODY_WIDTH} height={BODY_HEIGHT} viewBox="0 0 200 360">
         <G scale={BODY_WIDTH / 200}> {/* Ajuster l'échelle du groupe pour s'adapter à BODY_WIDTH */}
           {/* Corps principal (torse et bassin) */}
           <Path
             d="M100 0 C120 0, 130 20, 120 40 L120 100 C130 120, 130 160, 120 180 L120 250 C110 280, 90 280, 80 250 L80 180 C70 160, 70 120, 80 100 L80 40 C70 20, 80 0, 100 0 Z"
             fill={getFillColor(null)} // Corps de base, non cliquable directement
-            stroke={theme.colors.border}
+            stroke={colors.border}
             strokeWidth="2"
           />
 
           {/* Tête - Pour la démo, non cliquable, juste visuel */}
-          <Circle cx="100" cy="20" r="15" fill={theme.colors.textSecondary} stroke={theme.colors.border} strokeWidth="2" />
+          <Circle cx="100" cy="20" r="15" fill={colors.textSecondary} stroke={colors.border} strokeWidth="2" />
 
           {/* Cou */}
           <Path
@@ -128,16 +143,18 @@ export function InteractiveBodyMap({ onSelectZone, selectedZone }: InteractiveBo
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    paddingVertical: theme.spacing.lg,
-    ...theme.shadow.sm,
+    marginBottom: 24,
+    borderRadius: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   instructionText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 12,
   },
 });

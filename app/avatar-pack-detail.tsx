@@ -13,10 +13,12 @@ import {
   Image,
   Alert,
   Dimensions,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Check, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Check, Sparkles, X, ZoomIn } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { avatarGalleryService, AvatarPack } from '@/lib/avatarGalleryService';
 import { AvatarState } from '@/lib/avatarState';
@@ -40,6 +42,8 @@ export default function AvatarPackDetailScreen() {
 
   const [pack, setPack] = useState<AvatarPack | null>(null);
   const [selectedState, setSelectedState] = useState<AvatarState>('neutral');
+  const [zoomedImage, setZoomedImage] = useState<any>(null);
+  const [zoomedState, setZoomedState] = useState<string>('');
 
   useEffect(() => {
     // Trouver le pack
@@ -63,13 +67,44 @@ export default function AvatarPackDetailScreen() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setSelectedState(state);
-
-      // TODO: Sauvegarder la sélection de l'état préféré
-      // await avatarGalleryService.setPreferredState(packId, state);
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('[AvatarPackDetail] Erreur sélection:', error);
+    }
+  };
+
+  const handleZoomAvatar = (image: any, stateLabel: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setZoomedImage(image);
+    setZoomedState(stateLabel);
+  };
+
+  const handleCloseZoom = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setZoomedImage(null);
+    setZoomedState('');
+  };
+
+  const handleUsePack = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Sauvegarder le pack sélectionné
+      await avatarGalleryService.setSelectedPack(packId);
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        '✅ Avatar mis à jour',
+        `Le pack ${pack?.name || packId} est maintenant votre avatar !`,
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('[AvatarPackDetail] Erreur sauvegarde:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder le pack');
     }
   };
 
@@ -141,10 +176,14 @@ export default function AvatarPackDetailScreen() {
                 activeOpacity={0.7}
               >
                 {/* Image de l'avatar */}
-                <View style={[
-                  styles.avatarImageContainer,
-                  { backgroundColor: '#FFFFFF' }
-                ]}>
+                <TouchableOpacity
+                  style={[
+                    styles.avatarImageContainer,
+                    { backgroundColor: '#FFFFFF' }
+                  ]}
+                  onPress={() => handleZoomAvatar(avatarImage, `${icon} ${label}`)}
+                  activeOpacity={0.7}
+                >
                   {avatarImage ? (
                     <Image
                       source={avatarImage}
@@ -154,7 +193,10 @@ export default function AvatarPackDetailScreen() {
                   ) : (
                     <Text style={styles.avatarPlaceholder}>{icon}</Text>
                   )}
-                </View>
+                  <View style={[styles.zoomIcon, { backgroundColor: colors.accent }]}>
+                    <ZoomIn size={14} color="#FFFFFF" />
+                  </View>
+                </TouchableOpacity>
 
                 {/* Infos */}
                 <View style={styles.avatarInfo}>
@@ -183,7 +225,61 @@ export default function AvatarPackDetailScreen() {
             💡 L'avatar s'adapte automatiquement à votre forme en fonction de votre progression et activité.
           </Text>
         </View>
+
+        {/* Bouton Utiliser ce pack */}
+        <TouchableOpacity
+          style={[styles.useButton, { backgroundColor: colors.accent }]}
+          onPress={handleUsePack}
+          activeOpacity={0.8}
+        >
+          <Check size={24} color="#FFFFFF" strokeWidth={2.5} />
+          <Text style={styles.useButtonText}>
+            Utiliser ce pack d'avatars
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Modal de zoom */}
+      <Modal
+        visible={zoomedImage !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseZoom}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={handleCloseZoom}
+        >
+          <View style={styles.modalContent}>
+            {/* Bouton fermer */}
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={handleCloseZoom}
+              activeOpacity={0.7}
+            >
+              <X size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+
+            {/* Label */}
+            <View style={[styles.zoomLabel, { backgroundColor: colors.backgroundCard }]}>
+              <Text style={[styles.zoomLabelText, { color: colors.textPrimary }]}>
+                {zoomedState}
+              </Text>
+            </View>
+
+            {/* Image agrandie */}
+            <View style={styles.zoomedImageContainer}>
+              {zoomedImage && (
+                <Image
+                  source={zoomedImage}
+                  style={styles.zoomedImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </ScreenWrapper>
   );
 }
@@ -291,5 +387,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 100,
+  },
+
+  // Button
+  useButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 18,
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+  useButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Icône de zoom
+  zoomIcon: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Modal de zoom
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: SCREEN_WIDTH,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  zoomLabel: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    zIndex: 10,
+  },
+  zoomLabelText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  zoomedImageContainer: {
+    width: SCREEN_WIDTH * 0.9,
+    height: SCREEN_WIDTH * 1.3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  zoomedImage: {
+    width: '100%',
+    height: '100%',
   },
 });

@@ -42,7 +42,6 @@ const partnersData: PartnerData[] = [
     role: "Expert Performance & International",
     description: "Ancien combattant Pro, Coach MMA et Personal Trainer avec une expérience internationale. Une double expertise rare : diplômé par le diplôme et par le terrain. N'hésitez pas à visiter son Instagram pour découvrir son travail.",
     images: [
-      require('../assets/images/fouad.jpg'),
       require('../assets/images/fouad_action.jpg')
     ],
     location: "Marseille Fight Club (MFC)",
@@ -50,28 +49,39 @@ const partnersData: PartnerData[] = [
   },
   {
     id: '2',
+    name: "Sander (Bodygator)",
+    role: "Personal Trainer & YouTuber",
+    description: "Coach sportif connu sous le nom de Bodygator. Retrouvez ses vidéos sur YouTube (Captain Sander) pour des conseils d'entraînement et de coaching.",
+    images: [
+      require('../assets/images/bodygator.jpg')
+    ],
+    location: "International",
+    instagram: 'bodygator'
+  },
+  {
+    id: '3',
     name: "Gracie Barra Les Olives",
     role: "Académie & Famille - JJB",
     description: "Une académie, une famille. Dirigée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d'une section féminine dynamique. La porte est grande ouverte à tout le monde : n'hésitez pas à venir faire un cours d'essai !",
     images: [
-      require('../assets/images/melissa_venimo.jpg')
+      require('../assets/images/gracie-barra-olives.jpg')
     ],
     location: "52 Av. Frédéric Mistral, Marseille",
     instagram: ['veninjr', 'melissa_lcomb']
   },
   {
-    id: '3',
+    id: '4',
     name: "Marseille Fight Club (MFC)",
     role: "Club de MMA",
     description: "Le club de référence à Marseille pour le MMA et le Striking. Une structure d'élite pour progresser.",
     images: [
-      require('../assets/images/mfa_logo.png')
+      require('../assets/images/marseille-fight-club.jpg')
     ],
     location: "Marseille",
     instagram: 'fouad_loko' // MFC utilise le même Instagram que Fouad
   },
   {
-    id: '4',
+    id: '5',
     name: "Younes - Kiné & Hijama",
     role: "Expert Médical & Pratiquant JJB",
     description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.",

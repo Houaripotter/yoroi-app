@@ -222,6 +222,72 @@ export const initDatabase = async () => {
     );
   `);
 
+  // ============================================
+  // TABLES MODE FIGHTER / COMPETITEUR
+  // ============================================
+
+  // Table Competitions
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS competitions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT NOT NULL,
+      date TEXT NOT NULL,
+      lieu TEXT,
+      sport TEXT NOT NULL,
+      categorie_poids TEXT,
+      poids_max REAL,
+      statut TEXT DEFAULT 'a_venir',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Table Combats
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS combats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      competition_id INTEGER,
+      date TEXT NOT NULL,
+      resultat TEXT NOT NULL,
+      methode TEXT,
+      technique TEXT,
+      round INTEGER,
+      temps TEXT,
+      adversaire_nom TEXT,
+      adversaire_club TEXT,
+      poids_pesee REAL,
+      poids_jour_j REAL,
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (competition_id) REFERENCES competitions(id)
+    );
+  `);
+
+  // Table Hydratation
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS hydratation (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      heure TEXT NOT NULL,
+      quantite_ml INTEGER NOT NULL,
+      type TEXT DEFAULT 'eau',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Table Objectifs Poids
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS objectifs_poids (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      competition_id INTEGER,
+      poids_depart REAL NOT NULL,
+      poids_cible REAL NOT NULL,
+      date_pesee TEXT NOT NULL,
+      statut TEXT DEFAULT 'en_cours',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (competition_id) REFERENCES competitions(id)
+    );
+  `);
+
   console.log('Database initialized successfully');
 };
 
@@ -353,6 +419,7 @@ export interface Injury {
   fit_for_duty: 'operational' | 'restricted' | 'unfit';
   healed_at?: string;
   created_at?: string;
+  estimated_recovery_days?: number;
   // Joined fields
   zone_name?: string;
 }

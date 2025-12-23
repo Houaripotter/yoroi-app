@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { theme } from '@/lib/theme';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface SoftCardProps {
   children: ReactNode;
@@ -8,9 +8,24 @@ interface SoftCardProps {
   backgroundColor?: string;
 }
 
-export function SoftCard({ children, style, backgroundColor = theme.colors.surface }: SoftCardProps) {
+export function SoftCard({ children, style, backgroundColor }: SoftCardProps) {
+  const { colors, isDark, themeName } = useTheme();
+  const bgColor = backgroundColor || colors.card;
+  const isWellness = false;
+
   return (
-    <View style={[styles.container, { backgroundColor }, style]}>
+    <View style={[
+      styles.container,
+      { backgroundColor: bgColor },
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: isWellness ? 6 : 4 },
+        shadowOpacity: isWellness ? 0.15 : (isDark ? 0.3 : 0.1),
+        shadowRadius: isWellness ? 16 : 12,
+        elevation: isWellness ? 10 : 6,
+      },
+      style
+    ]}>
       {children}
     </View>
   );
@@ -18,9 +33,7 @@ export function SoftCard({ children, style, backgroundColor = theme.colors.surfa
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: theme.radius.xxl,
-    padding: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
-    ...theme.shadow.sm,
+    borderRadius: 24,
+    padding: 20,
   },
 });

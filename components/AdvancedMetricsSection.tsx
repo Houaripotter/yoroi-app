@@ -88,7 +88,7 @@ export function AdvancedMetricsSection({
               <Activity size={20} color="#007AFF" strokeWidth={2.5} />
             </View>
             <View>
-              <Text style={styles.headerTitle}>Données Tanita & Mensurations</Text>
+              <Text style={styles.headerTitle}>Composition Corporelle & Mensurations</Text>
               <Text style={styles.headerSubtitle}>Optionnel • Balance impédancemètre</Text>
             </View>
           </View>
@@ -123,7 +123,7 @@ export function AdvancedMetricsSection({
         ]}
       >
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>TANITA BC-545N</Text>
+          <Text style={styles.sectionTitle}>COMPOSITION CORPORELLE</Text>
 
           <View style={styles.row}>
             <View style={styles.field}>

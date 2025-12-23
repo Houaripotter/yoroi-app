@@ -488,6 +488,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.xl,
+    backgroundColor: '#D4AF37', // Gold/Primary color
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -509,6 +510,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.xl,
     borderWidth: 2,
+    borderColor: '#636E72',
   },
   blurButtonActive: {
     backgroundColor: '#636E72',

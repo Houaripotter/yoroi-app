@@ -10,692 +10,61 @@ export interface BodyZone {
   name: string;
   x: number; // Position X en % (0-100)
   y: number; // Position Y en % (0-100)
-  radius: number; // Rayon de la zone en %
+  size: number; // Taille de la zone en %
   injuries?: string[]; // Blessures courantes
 }
 
 // ============================================
-// VUE DE FACE - COORDONNÉES CALIBRÉES
+// VUE DE FACE - COORDONNÉES CALIBRÉES MANUELLEMENT
 // ============================================
 
 export const BODY_ZONES_FRONT: BodyZone[] = [
-  // ============================================
-  // TÊTE
-  // ============================================
-  {
-    id: 'head',
-    name: 'Tête',
-    x: 50,   // Centre
-    y: 6,    // Haut de la tête
-    radius: 4,
-    injuries: ['Commotion', 'Coupure', 'Contusion']
-  },
-
-  // ============================================
-  // COU
-  // ============================================
-  {
-    id: 'neck',
-    name: 'Cou',
-    x: 50,   // Centre
-    y: 12,   // Sous la tête
-    radius: 3,
-    injuries: ['Torticolis', 'Contracture', 'Cervicales']
-  },
-
-  // ============================================
-  // ÉPAULES
-  // ============================================
-  {
-    id: 'shoulder_left',
-    name: 'Épaule gauche',
-    x: 35,   // Gauche du corps
-    y: 16,   // Niveau des épaules
-    radius: 4,
-    injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion']
-  },
-  {
-    id: 'shoulder_right',
-    name: 'Épaule droite',
-    x: 65,   // Droite du corps
-    y: 16,
-    radius: 4,
-    injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion']
-  },
-
-  // ============================================
-  // PECTORAUX
-  // ============================================
-  {
-    id: 'pec_left',
-    name: 'Pectoral gauche',
-    x: 42,   // Sur le pec gauche
-    y: 20,   // Niveau des pecs
-    radius: 4,
-    injuries: ['Contracture', 'Déchirure', 'Contusion']
-  },
-  {
-    id: 'pec_right',
-    name: 'Pectoral droit',
-    x: 58,   // Sur le pec droit
-    y: 20,
-    radius: 4,
-    injuries: ['Contracture', 'Déchirure', 'Contusion']
-  },
-
-  // ============================================
-  // BICEPS
-  // ============================================
-  {
-    id: 'biceps_left',
-    name: 'Biceps gauche',
-    x: 30,   // Sur le bras gauche
-    y: 24,   // Niveau biceps
-    radius: 3,
-    injuries: ['Contracture', 'Élongation', 'Déchirure']
-  },
-  {
-    id: 'biceps_right',
-    name: 'Biceps droit',
-    x: 70,   // Sur le bras droit
-    y: 24,
-    radius: 3,
-    injuries: ['Contracture', 'Élongation', 'Déchirure']
-  },
-
-  // ============================================
-  // CÔTES
-  // ============================================
-  {
-    id: 'ribs_left',
-    name: 'Côtes gauches',
-    x: 38,
-    y: 27,
-    radius: 3,
-    injuries: ['Contusion', 'Fissure', 'Fracture']
-  },
-  {
-    id: 'ribs_right',
-    name: 'Côtes droites',
-    x: 62,
-    y: 27,
-    radius: 3,
-    injuries: ['Contusion', 'Fissure', 'Fracture']
-  },
-
-  // ============================================
-  // COUDES
-  // ============================================
-  {
-    id: 'elbow_left',
-    name: 'Coude gauche',
-    x: 26,   // Coude gauche
-    y: 32,   // Niveau coude
-    radius: 3,
-    injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion']
-  },
-  {
-    id: 'elbow_right',
-    name: 'Coude droit',
-    x: 74,
-    y: 32,
-    radius: 3,
-    injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion']
-  },
-
-  // ============================================
-  // ABDOMINAUX
-  // ============================================
-  {
-    id: 'abs',
-    name: 'Abdominaux',
-    x: 50,   // Centre
-    y: 33,   // Sous les pecs
-    radius: 5,
-    injuries: ['Contracture', 'Déchirure', 'Contusion']
-  },
-
-  // ============================================
-  // AVANT-BRAS
-  // ============================================
-  {
-    id: 'forearm_left',
-    name: 'Avant-bras gauche',
-    x: 23,
-    y: 38,
-    radius: 3,
-    injuries: ['Tendinite', 'Contracture', 'Contusion']
-  },
-  {
-    id: 'forearm_right',
-    name: 'Avant-bras droit',
-    x: 77,
-    y: 38,
-    radius: 3,
-    injuries: ['Tendinite', 'Contracture', 'Contusion']
-  },
-
-  // ============================================
-  // HANCHES
-  // ============================================
-  {
-    id: 'hip_left',
-    name: 'Hanche gauche',
-    x: 40,
-    y: 42,
-    radius: 3,
-    injuries: ['Tendinite', 'Bursite', 'Contusion']
-  },
-  {
-    id: 'hip_right',
-    name: 'Hanche droite',
-    x: 60,
-    y: 42,
-    radius: 3,
-    injuries: ['Tendinite', 'Bursite', 'Contusion']
-  },
-
-  // ============================================
-  // POIGNETS
-  // ============================================
-  {
-    id: 'wrist_left',
-    name: 'Poignet gauche',
-    x: 20,
-    y: 44,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-  {
-    id: 'wrist_right',
-    name: 'Poignet droit',
-    x: 80,
-    y: 44,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-
-  // ============================================
-  // AINES / ADDUCTEURS
-  // ============================================
-  {
-    id: 'groin_left',
-    name: 'Aine gauche',
-    x: 45,
-    y: 47,
-    radius: 3,
-    injuries: ['Pubalgie', 'Élongation adducteurs', 'Tendinite']
-  },
-  {
-    id: 'groin_right',
-    name: 'Aine droite',
-    x: 55,
-    y: 47,
-    radius: 3,
-    injuries: ['Pubalgie', 'Élongation adducteurs', 'Tendinite']
-  },
-
-  // ============================================
-  // MAINS
-  // ============================================
-  {
-    id: 'hand_left',
-    name: 'Main gauche',
-    x: 18,
-    y: 50,
-    radius: 3,
-    injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion']
-  },
-  {
-    id: 'hand_right',
-    name: 'Main droite',
-    x: 82,
-    y: 50,
-    radius: 3,
-    injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion']
-  },
-
-  // ============================================
-  // QUADRICEPS
-  // ============================================
-  {
-    id: 'quad_left',
-    name: 'Quadriceps gauche',
-    x: 43,
-    y: 55,
-    radius: 4,
-    injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion']
-  },
-  {
-    id: 'quad_right',
-    name: 'Quadriceps droit',
-    x: 57,
-    y: 55,
-    radius: 4,
-    injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion']
-  },
-
-  // ============================================
-  // GENOUX
-  // ============================================
-  {
-    id: 'knee_left',
-    name: 'Genou gauche',
-    x: 43,
-    y: 66,
-    radius: 3,
-    injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne']
-  },
-  {
-    id: 'knee_right',
-    name: 'Genou droit',
-    x: 57,
-    y: 66,
-    radius: 3,
-    injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne']
-  },
-
-  // ============================================
-  // TIBIAS
-  // ============================================
-  {
-    id: 'shin_left',
-    name: 'Tibia gauche',
-    x: 44,
-    y: 75,
-    radius: 3,
-    injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue']
-  },
-  {
-    id: 'shin_right',
-    name: 'Tibia droit',
-    x: 56,
-    y: 75,
-    radius: 3,
-    injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue']
-  },
-
-  // ============================================
-  // CHEVILLES
-  // ============================================
-  {
-    id: 'ankle_left',
-    name: 'Cheville gauche',
-    x: 44,
-    y: 85,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-  {
-    id: 'ankle_right',
-    name: 'Cheville droite',
-    x: 56,
-    y: 85,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-
-  // ============================================
-  // PIEDS
-  // ============================================
-  {
-    id: 'foot_left',
-    name: 'Pied gauche',
-    x: 44,
-    y: 92,
-    radius: 3,
-    injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil']
-  },
-  {
-    id: 'foot_right',
-    name: 'Pied droit',
-    x: 56,
-    y: 92,
-    radius: 3,
-    injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil']
-  },
+  { id: 'head', name: 'Tête / Visage', x: 50, y: 6, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
+  { id: 'neck', name: 'Cou', x: 50, y: 15, size: 10, injuries: ['Torticolis', 'Contracture', 'Cervicales'] },
+  { id: 'shoulder_l', name: 'Épaule G', x: 74, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },
+  { id: 'shoulder_r', name: 'Épaule D', x: 26, y: 20, size: 12, injuries: ['Luxation', 'Tendinite', 'Bursite', 'Contusion'] },
+  { id: 'chest', name: 'Thorax / Pectoraux', x: 50, y: 26, size: 18, injuries: ['Contracture', 'Déchirure', 'Contusion', 'Fissure'] },
+  { id: 'arm_l', name: 'Bras G', x: 82, y: 32, size: 10, injuries: ['Contracture', 'Élongation', 'Déchirure'] },
+  { id: 'arm_r', name: 'Bras D', x: 18, y: 32, size: 10, injuries: ['Contracture', 'Élongation', 'Déchirure'] },
+  { id: 'abdomen', name: 'Abdomen', x: 50, y: 40, size: 14, injuries: ['Contracture', 'Déchirure', 'Contusion'] },
+  { id: 'elbow_l', name: 'Coude G', x: 85, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
+  { id: 'elbow_r', name: 'Coude D', x: 15, y: 42, size: 8, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
+  { id: 'forearm_l', name: 'Avant-bras G', x: 90, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
+  { id: 'forearm_r', name: 'Avant-bras D', x: 10, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
+  { id: 'pubis', name: 'Pubis / Bassin', x: 50, y: 53, size: 14, injuries: ['Pubalgie', 'Tendinite', 'Bursite'] },
+  { id: 'hand_l', name: 'Main G', x: 92, y: 62, size: 8, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'hand_r', name: 'Main D', x: 8, y: 62, size: 8, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'thigh_l', name: 'Cuisse G', x: 62, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
+  { id: 'thigh_r', name: 'Cuisse D', x: 38, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
+  { id: 'knee_l', name: 'Genou G', x: 63, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
+  { id: 'knee_r', name: 'Genou D', x: 37, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
+  { id: 'shin_l', name: 'Tibia G', x: 64, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
+  { id: 'shin_r', name: 'Tibia D', x: 36, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
+  { id: 'foot_l', name: 'Pied G', x: 66, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
+  { id: 'foot_r', name: 'Pied D', x: 34, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
 ];
 
 // ============================================
-// VUE DE DOS - COORDONNÉES CALIBRÉES
+// VUE DE DOS - COORDONNÉES CALIBRÉES MANUELLEMENT
 // ============================================
 
 export const BODY_ZONES_BACK: BodyZone[] = [
-  // ============================================
-  // TÊTE (arrière)
-  // ============================================
-  {
-    id: 'head_back',
-    name: 'Tête',
-    x: 50,
-    y: 6,
-    radius: 4,
-    injuries: ['Commotion', 'Coupure', 'Contusion']
-  },
-
-  // ============================================
-  // NUQUE
-  // ============================================
-  {
-    id: 'neck_back',
-    name: 'Nuque',
-    x: 50,
-    y: 12,
-    radius: 3,
-    injuries: ['Torticolis', 'Contracture', 'Raideur']
-  },
-
-  // ============================================
-  // TRAPÈZES
-  // ============================================
-  {
-    id: 'trap_left',
-    name: 'Trapèze gauche',
-    x: 42,
-    y: 15,
-    radius: 4,
-    injuries: ['Contracture', 'Tension', 'Trigger point']
-  },
-  {
-    id: 'trap_right',
-    name: 'Trapèze droit',
-    x: 58,
-    y: 15,
-    radius: 4,
-    injuries: ['Contracture', 'Tension', 'Trigger point']
-  },
-
-  // ============================================
-  // ÉPAULES ARRIÈRE
-  // ============================================
-  {
-    id: 'shoulder_back_left',
-    name: 'Épaule gauche',
-    x: 33,
-    y: 17,
-    radius: 4,
-    injuries: ['Tendinite', 'Bursite', 'Contusion']
-  },
-  {
-    id: 'shoulder_back_right',
-    name: 'Épaule droite',
-    x: 67,
-    y: 17,
-    radius: 4,
-    injuries: ['Tendinite', 'Bursite', 'Contusion']
-  },
-
-  // ============================================
-  // HAUT DU DOS (Rhomboïdes)
-  // ============================================
-  {
-    id: 'upper_back_left',
-    name: 'Haut du dos gauche',
-    x: 42,
-    y: 23,
-    radius: 4,
-    injuries: ['Contracture', 'Point douloureux', 'Tension']
-  },
-  {
-    id: 'upper_back_right',
-    name: 'Haut du dos droit',
-    x: 58,
-    y: 23,
-    radius: 4,
-    injuries: ['Contracture', 'Point douloureux', 'Tension']
-  },
-
-  // ============================================
-  // TRICEPS
-  // ============================================
-  {
-    id: 'triceps_left',
-    name: 'Triceps gauche',
-    x: 28,
-    y: 25,
-    radius: 3,
-    injuries: ['Contracture', 'Tendinite', 'Élongation']
-  },
-  {
-    id: 'triceps_right',
-    name: 'Triceps droit',
-    x: 72,
-    y: 25,
-    radius: 3,
-    injuries: ['Contracture', 'Tendinite', 'Élongation']
-  },
-
-  // ============================================
-  // DORSAUX (Grand dorsal)
-  // ============================================
-  {
-    id: 'lat_left',
-    name: 'Dorsal gauche',
-    x: 38,
-    y: 30,
-    radius: 4,
-    injuries: ['Contracture', 'Élongation', 'Déchirure']
-  },
-  {
-    id: 'lat_right',
-    name: 'Dorsal droit',
-    x: 62,
-    y: 30,
-    radius: 4,
-    injuries: ['Contracture', 'Élongation', 'Déchirure']
-  },
-
-  // ============================================
-  // COUDES (arrière)
-  // ============================================
-  {
-    id: 'elbow_back_left',
-    name: 'Coude gauche',
-    x: 25,
-    y: 32,
-    radius: 3,
-    injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion']
-  },
-  {
-    id: 'elbow_back_right',
-    name: 'Coude droit',
-    x: 75,
-    y: 32,
-    radius: 3,
-    injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion']
-  },
-
-  // ============================================
-  // AVANT-BRAS (arrière)
-  // ============================================
-  {
-    id: 'forearm_back_left',
-    name: 'Avant-bras gauche',
-    x: 22,
-    y: 38,
-    radius: 3,
-    injuries: ['Tendinite', 'Contracture', 'Contusion']
-  },
-  {
-    id: 'forearm_back_right',
-    name: 'Avant-bras droit',
-    x: 78,
-    y: 38,
-    radius: 3,
-    injuries: ['Tendinite', 'Contracture', 'Contusion']
-  },
-
-  // ============================================
-  // LOMBAIRES
-  // ============================================
-  {
-    id: 'lower_back',
-    name: 'Lombaires',
-    x: 50,
-    y: 38,
-    radius: 5,
-    injuries: ['Lumbago', 'Hernie discale', 'Contracture', 'Sciatique']
-  },
-
-  // ============================================
-  // POIGNETS (arrière)
-  // ============================================
-  {
-    id: 'wrist_back_left',
-    name: 'Poignet gauche',
-    x: 19,
-    y: 44,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-  {
-    id: 'wrist_back_right',
-    name: 'Poignet droit',
-    x: 81,
-    y: 44,
-    radius: 2,
-    injuries: ['Entorse', 'Tendinite', 'Fracture']
-  },
-
-  // ============================================
-  // FESSIERS
-  // ============================================
-  {
-    id: 'glute_left',
-    name: 'Fessier gauche',
-    x: 43,
-    y: 47,
-    radius: 4,
-    injuries: ['Contracture', 'Syndrome piriforme', 'Contusion']
-  },
-  {
-    id: 'glute_right',
-    name: 'Fessier droit',
-    x: 57,
-    y: 47,
-    radius: 4,
-    injuries: ['Contracture', 'Syndrome piriforme', 'Contusion']
-  },
-
-  // ============================================
-  // MAINS (arrière)
-  // ============================================
-  {
-    id: 'hand_back_left',
-    name: 'Main gauche',
-    x: 17,
-    y: 50,
-    radius: 3,
-    injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion']
-  },
-  {
-    id: 'hand_back_right',
-    name: 'Main droite',
-    x: 83,
-    y: 50,
-    radius: 3,
-    injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion']
-  },
-
-  // ============================================
-  // ISCHIO-JAMBIERS
-  // ============================================
-  {
-    id: 'hamstring_left',
-    name: 'Ischio-jambier gauche',
-    x: 43,
-    y: 57,
-    radius: 4,
-    injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture']
-  },
-  {
-    id: 'hamstring_right',
-    name: 'Ischio-jambier droit',
-    x: 57,
-    y: 57,
-    radius: 4,
-    injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture']
-  },
-
-  // ============================================
-  // ARRIÈRE DU GENOU
-  // ============================================
-  {
-    id: 'knee_back_left',
-    name: 'Creux poplité gauche',
-    x: 43,
-    y: 66,
-    radius: 3,
-    injuries: ['Kyste poplité', 'Tendinite', 'Raideur']
-  },
-  {
-    id: 'knee_back_right',
-    name: 'Creux poplité droit',
-    x: 57,
-    y: 66,
-    radius: 3,
-    injuries: ['Kyste poplité', 'Tendinite', 'Raideur']
-  },
-
-  // ============================================
-  // MOLLETS
-  // ============================================
-  {
-    id: 'calf_left',
-    name: 'Mollet gauche',
-    x: 43,
-    y: 74,
-    radius: 4,
-    injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe']
-  },
-  {
-    id: 'calf_right',
-    name: 'Mollet droit',
-    x: 57,
-    y: 74,
-    radius: 4,
-    injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe']
-  },
-
-  // ============================================
-  // TENDONS D'ACHILLE
-  // ============================================
-  {
-    id: 'achilles_left',
-    name: "Tendon d'Achille gauche",
-    x: 43,
-    y: 84,
-    radius: 2,
-    injuries: ['Tendinite', 'Rupture partielle', 'Rupture totale']
-  },
-  {
-    id: 'achilles_right',
-    name: "Tendon d'Achille droit",
-    x: 57,
-    y: 84,
-    radius: 2,
-    injuries: ['Tendinite', 'Rupture partielle', 'Rupture totale']
-  },
-
-  // ============================================
-  // TALONS
-  // ============================================
-  {
-    id: 'heel_left',
-    name: 'Talon gauche',
-    x: 43,
-    y: 92,
-    radius: 3,
-    injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite']
-  },
-  {
-    id: 'heel_right',
-    name: 'Talon droit',
-    x: 57,
-    y: 92,
-    radius: 3,
-    injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite']
-  },
+  { id: 'head_back', name: 'Crâne (Arr)', x: 50, y: 7, size: 12, injuries: ['Commotion', 'Coupure', 'Contusion'] },
+  { id: 'neck_back', name: 'Nuque', x: 50, y: 15, size: 10, injuries: ['Torticolis', 'Contracture', 'Raideur'] },
+  { id: 'scapula_l', name: 'Omoplate G', x: 30, y: 25, size: 12, injuries: ['Contracture', 'Tension', 'Point douloureux'] },
+  { id: 'scapula_r', name: 'Omoplate D', x: 70, y: 25, size: 12, injuries: ['Contracture', 'Tension', 'Point douloureux'] },
+  { id: 'spine_upper', name: 'Colonne Thoracique', x: 50, y: 30, size: 10, injuries: ['Contracture', 'Tension', 'Point douloureux'] },
+  { id: 'spine_lower', name: 'Lombaires', x: 50, y: 45, size: 12, injuries: ['Lumbago', 'Hernie discale', 'Contracture', 'Sciatique'] },
+  { id: 'elbow_back_l', name: 'Coude G', x: 12, y: 42, size: 9, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
+  { id: 'elbow_back_r', name: 'Coude D', x: 88, y: 42, size: 9, injuries: ['Tennis elbow', 'Golf elbow', 'Bursite', 'Contusion'] },
+  { id: 'glute_l', name: 'Fessier G', x: 38, y: 55, size: 12, injuries: ['Contracture', 'Syndrome piriforme', 'Contusion'] },
+  { id: 'glute_r', name: 'Fessier D', x: 62, y: 55, size: 12, injuries: ['Contracture', 'Syndrome piriforme', 'Contusion'] },
+  { id: 'hamstring_l', name: 'Ischio G', x: 38, y: 68, size: 10, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture'] },
+  { id: 'hamstring_r', name: 'Ischio D', x: 62, y: 68, size: 10, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture'] },
+  { id: 'calf_l', name: 'Mollet G', x: 37, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
+  { id: 'calf_r', name: 'Mollet D', x: 63, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
+  { id: 'heel_l', name: 'Talon G', x: 35, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
+  { id: 'heel_r', name: 'Talon D', x: 65, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
 ];
 
 // ============================================
@@ -827,4 +196,21 @@ export const searchZonesByName = (query: string): BodyZone[] => {
   return allZones.filter(zone =>
     zone.name.toLowerCase().includes(lowerQuery)
   );
+};
+
+// Détecter les zones qui se chevauchent à un point donné (x, y en %)
+export const getZonesAtPoint = (x: number, y: number, view: 'front' | 'back'): BodyZone[] => {
+  const zones = view === 'front' ? BODY_ZONES_FRONT : BODY_ZONES_BACK;
+  return zones.filter(zone => {
+    // Calculer le rayon de la zone
+    const radius = zone.size / 2;
+
+    // Calculer la distance entre le point cliqué et le centre de la zone
+    const dx = x - zone.x;
+    const dy = y - zone.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Vérifier si le point est dans la zone (avec une petite tolérance)
+    return distance <= radius + 2; // +2% de tolérance
+  });
 };

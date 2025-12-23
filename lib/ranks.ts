@@ -1,80 +1,107 @@
 // ============================================
-// ⚔️ YOROI - SYSTÈME DE RANGS GUERRIER
+// ⚔️ YOROI - SYSTÈME DE RANGS SAMOURAÏ
 // ============================================
 
 export interface Rank {
   id: string;
   name: string;
+  nameFemale: string; // Version féminine
   nameJp: string;
-  icon: string;
+  icon: 'target' | 'swords' | 'sword' | 'moon' | 'graduation-cap' | 'crown' | 'castle' | 'shield' | 'star';
   minDays: number;
   color: string;
   description: string;
+  descriptionFemale: string;
 }
 
 export const RANKS: Rank[] = [
   {
     id: 'recrue',
     name: 'Recrue',
-    nameJp: '新兵',
+    nameFemale: 'Recrue',
+    nameJp: '新兵 (Shinpei)',
     icon: 'target',
     minDays: 0,
     color: '#6B7280',
-    description: 'Tu commences ton voyage',
+    description: 'Le voyage commence. Tu fais tes premiers pas.',
+    descriptionFemale: 'Le voyage commence. Tu fais tes premiers pas.',
   },
   {
     id: 'ashigaru',
     name: 'Ashigaru',
-    nameJp: '足軽',
+    nameFemale: 'Ashigaru',
+    nameJp: '足軽 (Ashigaru)',
     icon: 'swords',
     minDays: 7,
-    color: '#3B82F6',
-    description: "Soldat d'infanterie",
+    color: '#60A5FA',
+    description: "Fantassin loyal. Tu as prouvé ta détermination.",
+    descriptionFemale: "Fantassine loyale. Tu as prouvé ta détermination.",
+  },
+  {
+    id: 'bushi',
+    name: 'Bushi',
+    nameFemale: 'Onna-Bugeisha',
+    nameJp: '武士 (Bushi)',
+    icon: 'shield',
+    minDays: 21,
+    color: '#34D399',
+    description: "Guerrier discipliné. L'honneur guide tes pas.",
+    descriptionFemale: "Guerrière disciplinée. L'honneur guide tes pas.",
   },
   {
     id: 'samurai',
     name: 'Samouraï',
-    nameJp: '侍',
+    nameFemale: 'Onna-Musha',
+    nameJp: '侍 (Samurai)',
     icon: 'sword',
-    minDays: 30,
+    minDays: 45,
     color: '#D4AF37',
-    description: "Guerrier d'élite",
+    description: "Guerrier d'élite. La voie du bushido est la tienne.",
+    descriptionFemale: "Guerrière d'élite. La voie du bushido est la tienne.",
   },
   {
     id: 'ronin',
     name: 'Rōnin',
-    nameJp: '浪人',
+    nameFemale: 'Rōnin',
+    nameJp: '浪人 (Rōnin)',
     icon: 'moon',
     minDays: 90,
     color: '#A855F7',
-    description: 'Maître sans maître',
+    description: 'Maître vagabond. Tu forges ta propre voie.',
+    descriptionFemale: 'Maître vagabonde. Tu forges ta propre voie.',
   },
   {
     id: 'sensei',
     name: 'Sensei',
-    nameJp: '先生',
+    nameFemale: 'Sensei',
+    nameJp: '先生 (Sensei)',
     icon: 'graduation-cap',
-    minDays: 120,
+    minDays: 150,
     color: '#EC4899',
-    description: 'Maître et guide',
+    description: 'Maître et guide. Tu inspires les autres.',
+    descriptionFemale: 'Maître et guide. Tu inspires les autres.',
   },
   {
     id: 'shogun',
     name: 'Shōgun',
-    nameJp: '将軍',
+    nameFemale: 'Onna-Shōgun',
+    nameJp: '将軍 (Shōgun)',
     icon: 'crown',
-    minDays: 180,
+    minDays: 250,
     color: '#FFD700',
-    description: 'Commandant suprême',
+    description: 'Commandant suprême. Légende vivante.',
+    descriptionFemale: 'Commandante suprême. Légende vivante.',
   },
   {
     id: 'daimyo',
     name: 'Daimyō',
-    nameJp: '大名',
+    nameFemale: 'Onna-Daimyō',
+    nameJp: '大名 (Daimyō)',
     icon: 'castle',
     minDays: 365,
     color: '#DC2626',
-    description: 'Seigneur légendaire',
+    description: 'Seigneur légendaire. Immortel.',
+    descriptionFemale: 'Dame légendaire. Immortelle.',
   },
 ];
 
@@ -103,6 +130,7 @@ export const getAvatarForRank = (rankId: string) => {
   const avatarMap: Record<string, any> = {
     recrue: require('@/assets/avatars/samurai/samurai_neutral.png'),
     ashigaru: require('@/assets/avatars/samurai/samurai_neutral.png'),
+    bushi: require('@/assets/avatars/samurai/samurai_neutral.png'),
     samurai: require('@/assets/avatars/samurai/samurai_strong.png'),
     ronin: require('@/assets/avatars/samurai/samurai_tired.png'),
     sensei: require('@/assets/avatars/samurai/samurai_strong.png'),
@@ -123,6 +151,12 @@ export const getRankProgress = (streakDays: number): number => {
   const progressDays = streakDays - currentRank.minDays;
 
   return Math.min(100, Math.max(0, (progressDays / totalDays) * 100));
+};
+
+// Couleur du rang
+export const getRankColor = (rankId: string): string => {
+  const rank = RANKS.find(r => r.id === rankId);
+  return rank?.color || '#6B7280';
 };
 
 export default RANKS;

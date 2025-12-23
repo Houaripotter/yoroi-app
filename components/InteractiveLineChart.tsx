@@ -1,11 +1,6 @@
-import { useState } from 'react';
-import {
-  Dimensions,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
+import { useState, useMemo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 interface DataPoint {
   value: number;
@@ -22,7 +17,7 @@ interface InteractiveLineChartProps {
 
 export function InteractiveLineChart({
   data,
-  width,
+  width = 300,
   height = 220,
   color = '#007AFF',
   unit = 'kg',
@@ -35,91 +30,147 @@ export function InteractiveLineChart({
     y: number;
   } | null>(null);
 
-  const screenWidth = width || Dimensions.get('window').width - 88;
+  const chartWidth = width;
+  const chartHeight = height;
+  const padding = 20;
 
-  const chartData = {
-    labels: data.map((entry, index) => {
+  // Calculer les positions
+  const chartData = useMemo(() => {
+    if (data.length === 0) return [];
+
+    const values = data.map(d => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const valueRange = maxValue - minValue || 1;
+
+    const xStep = (chartWidth - padding * 2) / Math.max(data.length - 1, 1);
+
+    return data.map((item, index) => ({
+      x: padding + index * xStep,
+      y: chartHeight - padding - ((item.value - minValue) / valueRange) * (chartHeight - padding * 2),
+      value: item.value,
+      date: item.date,
+    }));
+  }, [data, chartWidth, chartHeight, padding]);
+
+  // Créer le path avec courbes de Bézier
+  const createPath = () => {
+    if (chartData.length === 0) return '';
+
+    let path = `M ${chartData[0].x} ${chartData[0].y}`;
+
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.y;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.y;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.y}`;
+    }
+
+    return path;
+  };
+
+  // Path pour le gradient
+  const createAreaPath = () => {
+    if (chartData.length === 0) return '';
+
+    const linePath = createPath();
+    const lastPoint = chartData[chartData.length - 1];
+    const firstPoint = chartData[0];
+
+    return `${linePath} L ${lastPoint.x} ${chartHeight - padding} L ${firstPoint.x} ${chartHeight - padding} Z`;
+  };
+
+  // Formater les labels de date
+  const getDateLabels = () => {
+    if (chartData.length === 0) return [];
+
+    return chartData.map((point, i) => {
+      // Afficher seulement certains labels selon la longueur
       if (data.length <= 5) {
-        const date = new Date(entry.date);
-        return `${date.getDate()}/${date.getMonth() + 1}`;
+        const date = new Date(point.date);
+        return {
+          x: point.x,
+          label: `${date.getDate()}/${date.getMonth() + 1}`,
+        };
       }
-      if (index % 5 !== 0 && index !== data.length - 1) return '';
-      const date = new Date(entry.date);
-      return `${date.getDate()}/${date.getMonth() + 1}`;
-    }),
-    datasets: [
-      {
-        data: data.map((entry) => entry.value),
-      },
-    ],
+
+      if (i % 5 === 0 || i === data.length - 1) {
+        const date = new Date(point.date);
+        return {
+          x: point.x,
+          label: `${date.getDate()}/${date.getMonth() + 1}`,
+        };
+      }
+
+      return null;
+    }).filter(Boolean);
   };
 
   return (
     <View style={styles.container}>
-      <LineChart
-        data={chartData}
-        width={screenWidth}
-        height={height}
-        chartConfig={{
-          backgroundColor: 'transparent',
-          backgroundGradientFrom: 'rgba(255, 255, 255, 0)',
-          backgroundGradientTo: 'rgba(255, 255, 255, 0)',
-          decimalPlaces: 1,
-          color: (opacity = 1) => {
-            const rgb = hexToRgb(color);
-            return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
-          },
-          labelColor: (opacity = 1) => `rgba(45, 52, 54, ${opacity * 0.6})`,
-          style: {
-            borderRadius: 16,
-          },
-          propsForDots: {
-            r: '6',
-            strokeWidth: '3',
-            stroke: color,
-            fill: '#FFFFFF',
-          },
-          propsForBackgroundLines: {
-            strokeWidth: 0,
-          },
-          fillShadowGradient: color,
-          fillShadowGradientOpacity: 0.25,
-          fillShadowGradientFrom: color,
-          fillShadowGradientFromOpacity: 0.4,
-          fillShadowGradientTo: '#FFF9F0',
-          fillShadowGradientToOpacity: 0.05,
-          propsForLabels: {
-            fontSize: 11,
-          },
-        }}
-        bezier
-        style={styles.chart}
-        withInnerLines={false}
-        withOuterLines={false}
-        withVerticalLines={false}
-        withHorizontalLines={false}
-        withShadow
-        withVerticalLabels={true}
-        withHorizontalLabels={true}
-        horizontalLabelRotation={0}
-        verticalLabelRotation={0}
-        formatXLabel={(label) => label}
-        onDataPointClick={(clickData) => {
-          const index = clickData.index;
-          setSelectedPoint({
-            index,
-            value: data[index].value,
-            date: data[index].date,
-            x: clickData.x,
-            y: clickData.y,
-          });
+      <Svg width={chartWidth} height={chartHeight}>
+        <Defs>
+          <LinearGradient id="interactiveGradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={color} stopOpacity="0.4" />
+            <Stop offset="1" stopColor={color} stopOpacity="0.05" />
+          </LinearGradient>
+        </Defs>
 
-          setTimeout(() => {
-            setSelectedPoint(null);
-          }, 3000);
-        }}
-      />
+        {/* Gradient area */}
+        <Path d={createAreaPath()} fill="url(#interactiveGradient)" />
 
+        {/* Line */}
+        <Path
+          d={createPath()}
+          stroke={color}
+          strokeWidth="3"
+          fill="none"
+          strokeLinecap="round"
+        />
+
+        {/* Points */}
+        {chartData.map((point, index) => (
+          <Circle
+            key={index}
+            cx={point.x}
+            cy={point.y}
+            r="6"
+            fill="#FFFFFF"
+            stroke={color}
+            strokeWidth="3"
+            onPress={() => {
+              setSelectedPoint({
+                index,
+                value: point.value,
+                date: point.date,
+                x: point.x,
+                y: point.y,
+              });
+
+              setTimeout(() => {
+                setSelectedPoint(null);
+              }, 3000);
+            }}
+          />
+        ))}
+      </Svg>
+
+      {/* Labels des dates */}
+      <View style={styles.labelsContainer}>
+        {getDateLabels().map((item: any, index) => (
+          <Text
+            key={index}
+            style={[styles.dateLabel, { left: item.x - 20, color: 'rgba(45, 52, 54, 0.6)' }]}
+          >
+            {item.label}
+          </Text>
+        ))}
+      </View>
+
+      {/* Tooltip */}
       {selectedPoint && (
         <View
           style={[
@@ -151,11 +202,20 @@ export function InteractiveLineChart({
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    alignItems: 'center',
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
-    paddingRight: 20,
+  labelsContainer: {
+    width: 300,
+    height: 20,
+    position: 'relative',
+    marginTop: 8,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
   },
   tooltip: {
     position: 'absolute',
@@ -196,14 +256,3 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
 });
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
-    : { r: 0, g: 122, b: 255 };
-}

@@ -1,38 +1,90 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useColorScheme, Appearance } from 'react-native';
-import { getUserSettings, saveUserSettings } from './storage';
-import { theme as baseTheme, darkTheme, lightTheme, ThemeType, ColorThemeKey, COLOR_THEMES, applyColorTheme } from './theme';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  themes,
+  themeColors,
+  getTheme,
+  ThemeColor,
+  ThemeMode,
+  Theme,
+  ThemeColors,
+  defaultThemeColor,
+  defaultThemeMode,
+  GRADIENTS,
+} from '@/constants/themes';
 
-// ============================================
-// YOROI THEME CONTEXT
-// Mode Clair / Sombre / Automatique
-// + Palettes de couleurs (Or / Bleu / Sakura)
-// ============================================
+// ===================================================
+// YOROI THEME CONTEXT - 18 THÈMES PREMIUM
+// 9 couleurs × 2 modes (Dark/Light) + Auto
+// ===================================================
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+const STORAGE_KEY_COLOR = 'yoroi_theme_color_v5';
+const STORAGE_KEY_MODE = 'yoroi_theme_mode_v5';
 
 interface ThemeContextType {
-  isDark: boolean;
+  // Thème actuel complet
+  theme: Theme;
+  // Couleurs du thème pour accès direct
+  colors: ThemeColors;
+  // Couleur sélectionnée (volt, tiffany, etc.)
+  themeColor: ThemeColor;
+  // Mode sélectionné (dark, light, auto)
   themeMode: ThemeMode;
-  colorTheme: ColorThemeKey;
-  colors: ThemeType['colors'];
-  gradients: ThemeType['gradients'];
-  setThemeMode: (mode: ThemeMode) => void;
-  setColorTheme: (colorTheme: ColorThemeKey) => void;
-  toggleTheme: () => void;
-  colorPalettes: typeof COLOR_THEMES;
+  // Mode réel appliqué (dark ou light, après résolution de auto)
+  actualMode: 'dark' | 'light';
+  // Si le mode sombre est actif
+  isDark: boolean;
+  // Changer la couleur du thème
+  setThemeColor: (color: ThemeColor) => Promise<void>;
+  // Changer le mode (dark/light/auto)
+  setThemeMode: (mode: ThemeMode) => Promise<void>;
+  // Liste des couleurs disponibles pour le sélecteur
+  themeColors: typeof themeColors;
+  // Couleurs de fond raccourcies
+  screenBackground: string;
+  containerBackground: string;
+  // Glow shadow style
+  glowShadow: {
+    shadowColor: string;
+    shadowOffset: { width: number; height: number };
+    shadowOpacity: number;
+    shadowRadius: number;
+    elevation: number;
+  };
+  // Gradients (compatibilité)
+  gradients: typeof GRADIENTS;
+  // Nom du thème (compatibilité avec ancien code)
+  themeName: string;
+  // Chargement terminé
+  isLoaded: boolean;
 }
 
+// Valeurs par défaut
+const defaultTheme = getTheme(defaultThemeColor, 'dark');
+
 const ThemeContext = createContext<ThemeContextType>({
+  theme: defaultTheme,
+  colors: defaultTheme.colors,
+  themeColor: defaultThemeColor,
+  themeMode: defaultThemeMode,
+  actualMode: 'dark',
   isDark: true,
-  themeMode: 'dark',
-  colorTheme: 'gold',
-  colors: darkTheme.colors,
-  gradients: darkTheme.gradients,
-  setThemeMode: () => {},
-  setColorTheme: () => {},
-  toggleTheme: () => {},
-  colorPalettes: COLOR_THEMES,
+  setThemeColor: async () => {},
+  setThemeMode: async () => {},
+  themeColors,
+  screenBackground: defaultTheme.colors.background,
+  containerBackground: defaultTheme.colors.backgroundCard,
+  glowShadow: {
+    shadowColor: defaultTheme.colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  gradients: GRADIENTS,
+  themeName: `${defaultThemeColor}_dark`,
+  isLoaded: false,
 });
 
 export const useTheme = () => useContext(ThemeContext);
@@ -43,81 +95,98 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const systemColorScheme = useColorScheme();
-  // Mode sombre par defaut pour le theme Guerrier
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
-  const [colorTheme, setColorThemeState] = useState<ColorThemeKey>('gold');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [themeColor, setThemeColorState] = useState<ThemeColor>(defaultThemeColor);
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(defaultThemeMode);
 
-  // Charger le theme sauvegarde
+  // Déterminer le mode réel (résolution de auto)
+  const actualMode: 'dark' | 'light' = themeMode === 'auto'
+    ? (systemColorScheme === 'light' ? 'light' : 'dark')
+    : themeMode;
+
+  // Obtenir le thème actuel
+  const theme = getTheme(themeColor, actualMode);
+  const colors = theme.colors;
+
+  // Charger les préférences au démarrage
   useEffect(() => {
     const loadTheme = async () => {
       try {
-        const settings = await getUserSettings();
-        if (settings.theme) {
-          setThemeModeState(settings.theme as ThemeMode);
+        const [savedColor, savedMode] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEY_COLOR),
+          AsyncStorage.getItem(STORAGE_KEY_MODE),
+        ]);
+
+        if (savedColor && Object.keys(themes).some(k => k.startsWith(savedColor))) {
+          setThemeColorState(savedColor as ThemeColor);
         }
-        if (settings.colorTheme) {
-          setColorThemeState(settings.colorTheme as ColorThemeKey);
+
+        if (savedMode && ['dark', 'light', 'auto'].includes(savedMode)) {
+          setThemeModeState(savedMode as ThemeMode);
         }
       } catch (error) {
-        console.error('Erreur chargement theme:', error);
+        console.error('Erreur chargement thème:', error);
       }
       setIsLoaded(true);
     };
+
     loadTheme();
   }, []);
 
-  // Ecouter les changements du systeme
-  useEffect(() => {
-    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
-      if (themeMode === 'system') {
-        // Force re-render
-        setThemeModeState('system');
-      }
-    });
-    return () => subscription.remove();
-  }, [themeMode]);
+  // Changer la couleur du thème
+  const setThemeColor = useCallback(async (color: ThemeColor) => {
+    try {
+      setThemeColorState(color);
+      await AsyncStorage.setItem(STORAGE_KEY_COLOR, color);
+    } catch (error) {
+      console.error('Erreur sauvegarde couleur:', error);
+    }
+  }, []);
 
-  const setThemeMode = async (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    await saveUserSettings({ theme: mode });
+  // Changer le mode du thème
+  const setThemeMode = useCallback(async (mode: ThemeMode) => {
+    try {
+      setThemeModeState(mode);
+      await AsyncStorage.setItem(STORAGE_KEY_MODE, mode);
+    } catch (error) {
+      console.error('Erreur sauvegarde mode:', error);
+    }
+  }, []);
+
+  // Générer le style de glow basé sur l'accent
+  const glowShadow = {
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   };
 
-  const setColorTheme = async (newColorTheme: ColorThemeKey) => {
-    setColorThemeState(newColorTheme);
-    await saveUserSettings({ colorTheme: newColorTheme });
-  };
-
-  const toggleTheme = async () => {
-    const newMode = themeMode === 'dark' ? 'light' : 'dark';
-    await setThemeMode(newMode);
-  };
-
-  // Determiner si on est en mode sombre
-  const isDark = themeMode === 'dark' || (themeMode === 'system' && systemColorScheme === 'dark');
-
-  // Selectionner les couleurs et gradients selon le mode + palette de couleur
-  const baseThemeSelected = isDark ? darkTheme : lightTheme;
-  const currentTheme = applyColorTheme(baseThemeSelected, colorTheme);
-  const colors = currentTheme.colors;
-  const gradients = currentTheme.gradients;
-
+  // Attendre le chargement avant de rendre
   if (!isLoaded) {
     return null;
   }
 
   return (
-    <ThemeContext.Provider value={{
-      isDark,
-      themeMode,
-      colorTheme,
-      colors,
-      gradients,
-      setThemeMode,
-      setColorTheme,
-      toggleTheme,
-      colorPalettes: COLOR_THEMES,
-    }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        colors,
+        themeColor,
+        themeMode,
+        actualMode,
+        isDark: actualMode === 'dark',
+        setThemeColor,
+        setThemeMode,
+        themeColors,
+        screenBackground: colors.background,
+        containerBackground: colors.backgroundCard,
+        glowShadow,
+        gradients: GRADIENTS,
+        themeName: `${themeColor}_${actualMode}`,
+        isLoaded,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

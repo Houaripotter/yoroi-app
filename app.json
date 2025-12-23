@@ -13,10 +13,18 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.houari.yoroi",
+      "bundleIdentifier": "com.tonnom.yoroi",
       "infoPlist": {
-        "NSHealthShareUsageDescription": "Yoroi a besoin de lire vos données de poids pour suivre votre progression.",
-        "NSHealthUpdateUsageDescription": "Yoroi a besoin d'écrire votre poids pour synchroniser vos données."
+        "NSHealthShareUsageDescription": "YOROI synchronise vos données de santé (poids, sommeil, pas, fréquence cardiaque) pour un suivi complet de votre progression.",
+        "NSHealthUpdateUsageDescription": "YOROI enregistre vos données d'entraînement et vos pesées dans Apple Santé.",
+        "NSSupportsLiveActivities": true
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.background-delivery": true,
+        "com.apple.developer.healthkit.access": [
+          "health-records"
+        ]
       }
     },
     "web": {
@@ -28,10 +36,19 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
+      "@react-native-community/datetimepicker",
       [
-        "react-native-health",
+        "@kingstinct/react-native-healthkit",
         {
-          "isClinicalDataEnabled": false
+          "NSHealthShareUsageDescription": "YOROI synchronise vos données de santé pour un suivi complet.",
+          "NSHealthUpdateUsageDescription": "YOROI enregistre vos données dans Apple Santé.",
+          "background": true
+        }
+      ],
+      [
+        "expo-health-connect",
+        {
+          "requestPermissionsOnFirstLaunch": false
         }
       ]
     ],
@@ -39,7 +56,17 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.houari.yoroi"
+      "package": "com.houari.yoroi",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_TOTAL_CALORIES_BURNED",
+        "android.permission.health.WRITE_WEIGHT",
+        "android.permission.health.WRITE_STEPS"
+      ]
     },
     "extra": {
       "router": {},

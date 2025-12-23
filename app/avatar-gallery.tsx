@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Lock, Check, Crown, Sparkles, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useDevMode } from '@/lib/DevModeContext';
 import {
   avatarGalleryService,
   AVATAR_PACKS,
@@ -34,6 +35,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.sm) / 2;
 
 export default function AvatarGalleryScreen() {
   const { colors } = useTheme();
+  const { isPro } = useDevMode();
   const [selectedPack, setSelectedPackState] = useState('samurai');
   const [userXP, setUserXP] = useState(0);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
@@ -89,14 +91,15 @@ export default function AvatarGalleryScreen() {
 
   const handlePackSelect = async (pack: AvatarPack) => {
     // Vérifier si débloqué
-    if (!avatarGalleryService.isPackUnlocked(pack.id, userXP, unlockedAchievements)) {
+    if (!avatarGalleryService.isPackUnlocked(pack.id, userXP, unlockedAchievements, isPro)) {
       let message = `Débloquez cet avatar en atteignant ${pack.unlockXP} XP.`;
       if (pack.unlockAchievement) {
         message += `\nAchievement requis: ${pack.unlockAchievement}`;
       }
       message += `\n\nVous avez actuellement ${userXP} XP.`;
+      message += '\n\nMode Créateur : Tapez 5 fois sur "Version 1.0.0" dans les Réglages et entrez le code 2412.';
 
-      Alert.alert('Avatar verrouillé', message, [{ text: 'OK' }]);
+      Alert.alert('🔒 Avatar verrouillé', message, [{ text: 'OK' }]);
       return;
     }
 
@@ -125,8 +128,8 @@ export default function AvatarGalleryScreen() {
     ? AVATAR_PACKS
     : avatarGalleryService.getPacksByCategory(filter as any);
 
-  const unlockedPacks = avatarGalleryService.getUnlockedPacks(userXP, unlockedAchievements);
-  const nextPack = avatarGalleryService.getNextPackToUnlock(userXP, unlockedAchievements);
+  const unlockedPacks = avatarGalleryService.getUnlockedPacks(userXP, unlockedAchievements, isPro);
+  const nextPack = avatarGalleryService.getNextPackToUnlock(userXP, unlockedAchievements, isPro);
 
   return (
     <ScreenWrapper>
@@ -202,7 +205,8 @@ export default function AvatarGalleryScreen() {
             const isUnlocked = avatarGalleryService.isPackUnlocked(
               pack.id,
               userXP,
-              unlockedAchievements
+              unlockedAchievements,
+              isPro
             );
             const isSelected = selectedPack === pack.id;
             const images = avatarGalleryService.getPackImages(pack.id);
