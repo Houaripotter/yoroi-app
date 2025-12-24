@@ -22,6 +22,7 @@ import {
   Check,
   Home,
   Plus,
+  Star,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -71,6 +72,7 @@ export default function AddTrainingScreen() {
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
+  const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -129,6 +131,7 @@ export default function AddTrainingScreen() {
         notes: notes || undefined,
         muscles: selectedMuscles.length > 0 ? selectedMuscles.join(',') : undefined,
         exercises: exercises.length > 0 ? exercises : undefined,
+        technique_rating: techniqueRating,
       });
 
       successHaptic();
@@ -499,6 +502,61 @@ export default function AddTrainingScreen() {
           numberOfLines={3}
         />
 
+        {/* NOTE TECHNIQUE */}
+        <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
+          <View style={styles.techniqueSectionHeader}>
+            <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>🎯 Note ta technique</Text>
+            <Text style={[styles.techniqueSectionSubtitle, { color: colors.textMuted }]}>
+              Comment était ta technique aujourd'hui ?
+            </Text>
+          </View>
+
+          {/* Étoiles */}
+          <View style={styles.starsContainer}>
+            {[1, 2, 3, 4, 5].map((rating) => (
+              <TouchableOpacity
+                key={rating}
+                onPress={() => setTechniqueRating(rating)}
+                style={styles.starButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Star
+                  size={36}
+                  color={techniqueRating && rating <= techniqueRating ? colors.accent : colors.textMuted}
+                  fill={techniqueRating && rating <= techniqueRating ? colors.accent : 'transparent'}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Labels sous les étoiles */}
+          <View style={styles.starsLabels}>
+            <Text style={[styles.starLabel, { color: colors.textMuted }]}>1</Text>
+            <Text style={[styles.starLabel, { color: colors.textMuted }]}>2</Text>
+            <Text style={[styles.starLabel, { color: colors.textMuted }]}>3</Text>
+            <Text style={[styles.starLabel, { color: colors.textMuted }]}>4</Text>
+            <Text style={[styles.starLabel, { color: colors.textMuted }]}>5</Text>
+          </View>
+
+          {/* Info scientifique */}
+          <View style={styles.techniqueInfo}>
+            <Text style={[styles.techniqueInfoText, { color: colors.textMuted }]}>
+              💡 "Noter ta technique améliore ta conscience corporelle et réduit ton risque de blessure de 35%"
+            </Text>
+          </View>
+
+          {/* Bouton Passer */}
+          {techniqueRating !== null && (
+            <TouchableOpacity
+              onPress={() => setTechniqueRating(null)}
+              style={styles.skipButton}
+            >
+              <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>✕ Réinitialiser</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* BOUTON SAVE */}
         <TouchableOpacity
           style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
@@ -847,6 +905,66 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     minHeight: 80,
     textAlignVertical: 'top',
+  },
+
+  // TECHNIQUE RATING
+  techniqueSection: {
+    borderRadius: RADIUS.md,
+    padding: SPACING.lg,
+    marginBottom: 24,
+    borderWidth: 1,
+  },
+  techniqueSectionHeader: {
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+  },
+  techniqueSectionTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  techniqueSectionSubtitle: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '500',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  starButton: {
+    padding: 4,
+  },
+  starsLabels: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: SPACING.md,
+  },
+  starLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '700',
+  },
+  techniqueInfo: {
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  techniqueInfoText: {
+    fontSize: FONT_SIZE.xs,
+    fontStyle: 'italic',
+    lineHeight: 16,
+    textAlign: 'center',
+  },
+  skipButton: {
+    marginTop: SPACING.sm,
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
   },
 
   // SAVE

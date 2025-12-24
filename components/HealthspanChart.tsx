@@ -76,29 +76,56 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
   // Générer les paths pour les courbes
   const generatePath = (values: number[]) => {
     if (values.length < 2) return '';
-    
+
     let path = `M ${xScale(0)} ${yScale(values[0])}`;
-    
+
     for (let i = 1; i < values.length; i++) {
       // Courbe de Bézier pour lisser
       const prevX = xScale(i - 1);
       const prevY = yScale(values[i - 1]);
       const currX = xScale(i);
       const currY = yScale(values[i]);
-      
+
       const cp1x = prevX + (currX - prevX) / 2;
       const cp1y = prevY;
       const cp2x = prevX + (currX - prevX) / 2;
       const cp2y = currY;
-      
+
       path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${currX} ${currY}`;
     }
-    
+
+    return path;
+  };
+
+  // Générer les paths d'aire (avec fill) pour les gradients
+  const generateAreaPath = (values: number[]) => {
+    if (values.length < 2) return '';
+
+    const bottomY = chartHeight - padding.bottom;
+    let path = `M ${xScale(0)} ${bottomY} L ${xScale(0)} ${yScale(values[0])}`;
+
+    for (let i = 1; i < values.length; i++) {
+      const prevX = xScale(i - 1);
+      const prevY = yScale(values[i - 1]);
+      const currX = xScale(i);
+      const currY = yScale(values[i]);
+
+      const cp1x = prevX + (currX - prevX) / 2;
+      const cp1y = prevY;
+      const cp2x = prevX + (currX - prevX) / 2;
+      const cp2y = currY;
+
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${currX} ${currY}`;
+    }
+
+    path += ` L ${xScale(values.length - 1)} ${bottomY} Z`;
     return path;
   };
 
   const sleepPath = generatePath(data.map(d => d.sleep));
   const stressPath = generatePath(data.map(d => d.stress));
+  const sleepAreaPath = generateAreaPath(data.map(d => d.sleep));
+  const stressAreaPath = generateAreaPath(data.map(d => d.stress));
 
   // Moyennes
   const avgSleep = Math.round(data.reduce((sum, d) => sum + d.sleep, 0) / data.length);
@@ -161,13 +188,26 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
             />
           ))}
 
+          {/* Aire remplie stress (calme) - avec gradient */}
+          <Path
+            d={stressAreaPath}
+            fill="url(#stressGrad)"
+          />
+
+          {/* Aire remplie sommeil - avec gradient */}
+          <Path
+            d={sleepAreaPath}
+            fill="url(#sleepGrad)"
+          />
+
           {/* Courbe stress (calme) */}
           <Path
             d={stressPath}
             fill="none"
             stroke="#22D3EE"
-            strokeWidth={2.5}
+            strokeWidth={3}
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
           {/* Courbe sommeil */}
@@ -175,8 +215,9 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
             d={sleepPath}
             fill="none"
             stroke="#8B5CF6"
-            strokeWidth={2.5}
+            strokeWidth={3}
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
 
           {/* Points sur les courbes */}

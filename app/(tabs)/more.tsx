@@ -42,6 +42,7 @@ import {
   Crown,
   Trophy,
   Target,
+  FlaskConical,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -163,6 +164,15 @@ const TOOLS_ITEMS: MenuItem[] = [
     route: '/entry',
     iconColor: '#34D399',
     iconBg: '#34D39920',
+  },
+  {
+    id: 'lab',
+    label: 'LABO',
+    sublabel: 'Articles & protocoles scientifiques',
+    Icon: FlaskConical,
+    route: '/lab',
+    iconColor: '#3B82F6',
+    iconBg: '#3B82F620',
   },
   {
     id: 'nutrition',
@@ -490,7 +500,7 @@ export default function MoreScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Labo</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Plus</Text>
             <View style={[styles.versionBadge, { backgroundColor: colors.cardHover }]}>
               <Text style={[styles.versionText, { color: colors.textMuted }]}>v1.0.0</Text>
             </View>

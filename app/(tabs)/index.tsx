@@ -96,7 +96,8 @@ import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/li
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
-const HYDRATION_GOAL = 2500;
+const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
+const DEFAULT_HYDRATION_GOAL = 2500;
 
 // ============================================
 // ÉCRAN ACCUEIL - VERSION COMPLÈTE YOROI
@@ -121,6 +122,7 @@ export default function HomeScreen() {
 
   // Hydratation
   const [hydration, setHydration] = useState(0);
+  const [hydrationGoal, setHydrationGoal] = useState(DEFAULT_HYDRATION_GOAL);
   const waterAnim = useRef(new Animated.Value(0)).current;
 
   // Nouveaux états
@@ -142,11 +144,22 @@ export default function HomeScreen() {
   const loadHydration = useCallback(async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const stored = await AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`);
+      const [stored, goalStored] = await Promise.all([
+        AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`),
+        AsyncStorage.getItem(HYDRATION_GOAL_KEY),
+      ]);
+
+      // Charger l'objectif (ou utiliser la valeur par défaut)
+      if (goalStored) {
+        const goal = parseFloat(goalStored) * 1000; // Convertir L en ml
+        setHydrationGoal(goal);
+      }
+
+      // Charger la valeur actuelle
       if (stored) {
         const value = parseInt(stored, 10);
         setHydration(value);
-        animateWater(value);
+        animateWater(value, goalStored ? parseFloat(goalStored) * 1000 : DEFAULT_HYDRATION_GOAL);
       }
     } catch (error) {
       console.error('Erreur hydratation:', error);
@@ -158,9 +171,9 @@ export default function HomeScreen() {
     await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
   };
 
-  const animateWater = (value: number) => {
+  const animateWater = (value: number, goal: number = DEFAULT_HYDRATION_GOAL) => {
     Animated.spring(waterAnim, {
-      toValue: Math.min(value / HYDRATION_GOAL, 1),
+      toValue: Math.min(value / goal, 1),
       tension: 30,
       friction: 8,
       useNativeDriver: false,
@@ -172,7 +185,7 @@ export default function HomeScreen() {
     const newValue = Math.max(0, hydration + amount);
     setHydration(newValue);
     saveHydration(newValue);
-    animateWater(newValue);
+    animateWater(newValue, hydrationGoal);
   };
 
   // Chargement des données
@@ -250,7 +263,7 @@ export default function HomeScreen() {
   const calculateBatteryPercent = () => {
     let score = 50;
     score += Math.min(streak * 2, 20);
-    score += (hydration / HYDRATION_GOAL) * 15;
+    score += (hydration / hydrationGoal) * 15;
     if (sleepStats && sleepStats.averageDuration >= 420) score += 15;
     else if (sleepStats && sleepStats.averageDuration >= 360) score += 5;
     if (trainings.length > 0) {
@@ -262,37 +275,7 @@ export default function HomeScreen() {
     return Math.max(0, Math.min(100, score));
   };
 
-  // Radar Performance - Adapté à tous les sports
-  const calculateRadarData = () => {
-    const last30Days = new Date();
-    last30Days.setDate(last30Days.getDate() - 30);
-    const recentTrainings = trainings.filter(t => new Date(t.date) >= last30Days);
-    
-    const counts = { force: 0, cardio: 0, technique: 0, souplesse: 0 };
-    recentTrainings.forEach(t => {
-      const sport = t.sport?.toLowerCase() || '';
-      // Force : Musculation, CrossFit, Haltérophilie, etc.
-      if (['musculation', 'crossfit', 'muscu', 'haltero', 'powerlifting', 'force'].some(s => sport.includes(s))) counts.force++;
-      // Cardio : Running, Natation, Foot, Padel, Tennis, Vélo, etc.
-      if (['running', 'hiit', 'cardio', 'natation', 'futsal', 'foot', 'football', 'padel', 'tennis', 'velo', 'cycling', 'basket', 'rugby', 'hand'].some(s => sport.includes(s))) counts.cardio++;
-      // Technique : Arts martiaux, Sports de raquette, etc.
-      if (['jjb', 'boxe', 'mma', 'judo', 'karate', 'lutte', 'grappling', 'kickboxing', 'muay', 'padel', 'tennis', 'golf', 'escalade'].some(s => sport.includes(s))) counts.technique++;
-      // Souplesse : Yoga, Stretching, Mobilité, Pilates, etc.
-      if (['yoga', 'stretch', 'mobilite', 'pilates', 'gym', 'danse', 'dance'].some(s => sport.includes(s))) counts.souplesse++;
-    });
-
-    const maxSessions = 12;
-    return {
-      force: Math.min(100, (counts.force / maxSessions) * 100),
-      cardio: Math.min(100, (counts.cardio / maxSessions) * 100),
-      technique: Math.min(100, (counts.technique / maxSessions) * 100),
-      souplesse: Math.min(100, (counts.souplesse / maxSessions) * 100),
-      mental: Math.min(100, 40 + streak * 2 + (hydration / HYDRATION_GOAL) * 30),
-    };
-  };
-
   const batteryPercent = calculateBatteryPercent();
-  const radarData = calculateRadarData();
   const last7Weights = weightHistory.slice(0, 7).reverse();
 
   // Partager le rapport
@@ -657,7 +640,7 @@ export default function HomeScreen() {
             {/* Carte Hydratation */}
             <HydrationLottieCard
               currentMl={hydration}
-              goalMl={HYDRATION_GOAL}
+              goalMl={hydrationGoal}
               onAddMl={(amountMl) => addWater(amountMl)}
             />
           </View>
@@ -731,9 +714,7 @@ export default function HomeScreen() {
 
         {/* RADAR DE PERFORMANCE */}
         <AnimatedCard index={2}>
-        <TouchableOpacity onPress={() => router.push('/stats?tab=radar')} activeOpacity={0.8}>
-          <PerformanceRadar data={radarData} />
-        </TouchableOpacity>
+          <PerformanceRadar />
         </AnimatedCard>
 
         {/* COURBE HEALTHSPAN */}
@@ -752,12 +733,35 @@ export default function HomeScreen() {
               <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RAPPORT DE MISSION</Text>
               </View>
             <View style={styles.reportContent}>
-              <View style={[styles.gradeBadge, { backgroundColor: colors.accent }]}>
+              <View style={[styles.gradeBadge, {
+                backgroundColor: colors.accent,
+                shadowColor: colors.accent,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 6,
+              }]}>
                 <Text style={styles.gradeText}>{weeklyReport.verdict.grade}</Text>
             </View>
               <View style={styles.reportInfo}>
                 <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport.verdict.title}</Text>
-                <Text style={[styles.reportScore, { color: colors.textMuted }]}>Score: {weeklyReport.overallScore}/100</Text>
+                <View style={styles.scoreContainer}>
+                  <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
+                    Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
+                  </Text>
+                  {/* Progress Bar */}
+                  <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${weeklyReport.overallScore}%`,
+                          backgroundColor: weeklyReport.overallScore > 70 ? '#10B981' : weeklyReport.overallScore > 50 ? '#F59E0B' : '#EF4444'
+                        }
+                      ]}
+                    />
+                  </View>
+                </View>
               </View>
               <ChevronRight size={16} color={colors.textMuted} />
             </View>
@@ -1074,14 +1078,34 @@ const styles = StyleSheet.create({
   rewardText: { fontSize: 10, fontWeight: '700' },
 
   // Report
-  reportCard: { padding: 14, borderRadius: 14, marginBottom: 12 },
+  reportCard: {
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   reportHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   reportContent: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   gradeBadge: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   gradeText: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
   reportInfo: { flex: 1 },
-  reportTitle: { fontSize: 13, fontWeight: '700' },
-  reportScore: { fontSize: 11, marginTop: 2 },
+  reportTitle: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  scoreContainer: { gap: 6 },
+  reportScore: { fontSize: 12, fontWeight: '600' },
+  progressBarBg: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
   shareBtn: { fontSize: 20 },
 
   // Section

@@ -119,6 +119,10 @@ export const initDatabase = async () => {
     await database.execAsync(`ALTER TABLE profile ADD COLUMN profile_photo TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technique_rating INTEGER DEFAULT NULL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -373,6 +377,7 @@ export interface Training {
   notes?: string;
   muscles?: string;
   exercises?: Exercise[]; // For musculation workouts
+  technique_rating?: number | null; // 1-5 stars rating
   created_at?: string;
   // Joined fields
   club_name?: string;
@@ -567,11 +572,11 @@ export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
-     data.notes || null, data.muscles || null, exercisesJson]
+     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null]
   );
   return result.lastInsertRowId;
 };

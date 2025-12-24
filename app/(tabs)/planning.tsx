@@ -256,7 +256,7 @@ export default function PlanningScreen() {
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>Clique sur un jour pour voir/ajouter</Text>
         </View>
 
-        {/* VIEW MODE TOGGLE - 4 ONGLETS (Scroll horizontal) */}
+        {/* VIEW MODE TOGGLE - Design moderne comme Stats */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -264,38 +264,105 @@ export default function PlanningScreen() {
           contentContainerStyle={styles.toggleScrollContent}
         >
           <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'calendar' && { backgroundColor: colors.accent }]}
-            onPress={() => setViewMode('calendar')}
+            style={styles.tabItemWrapper}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setViewMode('calendar');
+            }}
+            activeOpacity={0.7}
           >
-            <Calendar size={16} color={viewMode === 'calendar' ? '#FFFFFF' : colors.textMuted} />
-            <Text style={[styles.toggleText, { color: colors.textMuted }, viewMode === 'calendar' && styles.toggleTextActive]}>
+            <View style={[
+              styles.tabIconCircle,
+              {
+                backgroundColor: viewMode === 'calendar' ? colors.accent : colors.backgroundCard,
+                borderColor: viewMode === 'calendar' ? colors.accent : colors.border,
+              }
+            ]}>
+              <Calendar size={20} color={viewMode === 'calendar' ? '#FFF' : colors.textMuted} />
+            </View>
+            <Text style={[
+              styles.tabLabel,
+              { color: viewMode === 'calendar' ? colors.accent : colors.textMuted },
+              viewMode === 'calendar' && styles.tabLabelActive
+            ]}>
               Calendrier
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'programme' && { backgroundColor: colors.accent }]}
-            onPress={() => setViewMode('programme')}
+            style={styles.tabItemWrapper}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setViewMode('programme');
+            }}
+            activeOpacity={0.7}
           >
-            <List size={16} color={viewMode === 'programme' ? '#FFFFFF' : colors.textMuted} />
-            <Text style={[styles.toggleText, { color: colors.textMuted }, viewMode === 'programme' && styles.toggleTextActive]}>
+            <View style={[
+              styles.tabIconCircle,
+              {
+                backgroundColor: viewMode === 'programme' ? '#8B5CF6' : colors.backgroundCard,
+                borderColor: viewMode === 'programme' ? '#8B5CF6' : colors.border,
+              }
+            ]}>
+              <List size={20} color={viewMode === 'programme' ? '#FFF' : colors.textMuted} />
+            </View>
+            <Text style={[
+              styles.tabLabel,
+              { color: viewMode === 'programme' ? '#8B5CF6' : colors.textMuted },
+              viewMode === 'programme' && styles.tabLabelActive
+            ]}>
               Programme
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'clubs' && { backgroundColor: colors.accent }]}
-            onPress={() => setViewMode('clubs')}
+            style={styles.tabItemWrapper}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setViewMode('clubs');
+            }}
+            activeOpacity={0.7}
           >
-            <Dumbbell size={16} color={viewMode === 'clubs' ? '#FFFFFF' : colors.textMuted} />
-            <Text style={[styles.toggleText, { color: colors.textMuted }, viewMode === 'clubs' && styles.toggleTextActive]}>
+            <View style={[
+              styles.tabIconCircle,
+              {
+                backgroundColor: viewMode === 'clubs' ? '#10B981' : colors.backgroundCard,
+                borderColor: viewMode === 'clubs' ? '#10B981' : colors.border,
+              }
+            ]}>
+              <Dumbbell size={20} color={viewMode === 'clubs' ? '#FFF' : colors.textMuted} />
+            </View>
+            <Text style={[
+              styles.tabLabel,
+              { color: viewMode === 'clubs' ? '#10B981' : colors.textMuted },
+              viewMode === 'clubs' && styles.tabLabelActive
+            ]}>
               Clubs
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'competitions' && { backgroundColor: '#F59E0B' }]}
-            onPress={() => setViewMode('competitions')}
+            style={styles.tabItemWrapper}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setViewMode('competitions');
+            }}
+            activeOpacity={0.7}
           >
-            <Trophy size={16} color={viewMode === 'competitions' ? '#FFFFFF' : '#F59E0B'} />
-            <Text style={[styles.toggleText, { color: '#F59E0B' }, viewMode === 'competitions' && styles.toggleTextActive]}>
+            <View style={[
+              styles.tabIconCircle,
+              {
+                backgroundColor: viewMode === 'competitions' ? '#F59E0B' : colors.backgroundCard,
+                borderColor: viewMode === 'competitions' ? '#F59E0B' : colors.border,
+              }
+            ]}>
+              <Trophy size={20} color={viewMode === 'competitions' ? '#FFF' : colors.textMuted} />
+            </View>
+            <Text style={[
+              styles.tabLabel,
+              { color: viewMode === 'competitions' ? '#F59E0B' : colors.textMuted },
+              viewMode === 'competitions' && styles.tabLabelActive
+            ]}>
               Compétitions
             </Text>
           </TouchableOpacity>
@@ -998,22 +1065,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     // backgroundColor et borderColor définis dynamiquement
   },
-  toggleButton: {
-    flex: 1,
-    flexDirection: 'row',
+  // Nouveaux styles pour les onglets (comme Stats)
+  tabItemWrapper: {
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: 4,
+  },
+  tabIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: 14,
-    borderRadius: RADIUS.lg,
+    borderWidth: 2,
   },
-  toggleText: {
-    fontSize: 15,
-    fontWeight: FONT.weight.semibold,
-    color: COLORS.textMuted,
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
   },
-  toggleTextActive: {
-    color: '#FFFFFF',
+  tabLabelActive: {
+    fontWeight: '700',
   },
 
   // CALENDAR HEADER
@@ -1332,13 +1404,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   
-  // Toggle scroll pour 4 onglets
+  // Toggle scroll pour 4 onglets - Style moderne
   toggleScroll: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   toggleScrollContent: {
-    paddingHorizontal: SPACING.xl,
-    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    gap: 12,
   },
 
   // COMPÉTITIONS
