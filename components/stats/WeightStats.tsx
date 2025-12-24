@@ -24,6 +24,13 @@ type Period = '7d' | '30d' | '90d' | 'all';
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   const { colors } = useTheme();
   const [period, setPeriod] = useState<Period>('30d');
+  const [selectedPoint, setSelectedPoint] = useState<{
+    index: number;
+    weight: number;
+    date: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Filtrer les données selon la période
   const getFilteredData = (): Weight[] => {
@@ -260,6 +267,19 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                     cy={point.y}
                     r={4}
                     fill={colors.accent}
+                    onPress={() => {
+                      setSelectedPoint({
+                        index,
+                        weight: point.weight,
+                        date: point.date,
+                        x: point.x,
+                        y: point.y,
+                      });
+
+                      setTimeout(() => {
+                        setSelectedPoint(null);
+                      }, 3000);
+                    }}
                   />
                 </React.Fragment>
               ))}
@@ -301,6 +321,29 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                 </Text>
               </View>
             ))}
+
+            {/* Tooltip */}
+            {selectedPoint && (
+              <View
+                style={[
+                  styles.tooltip,
+                  {
+                    left: selectedPoint.x - 60,
+                    top: selectedPoint.y - 80,
+                  },
+                ]}
+              >
+                <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
+                  <Text style={styles.tooltipValue}>
+                    {selectedPoint.weight.toFixed(1)} kg
+                  </Text>
+                  <Text style={styles.tooltipDate}>
+                    {format(parseISO(selectedPoint.date), 'd MMMM yyyy', { locale: fr })}
+                  </Text>
+                </View>
+                <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -469,5 +512,45 @@ const styles = StyleSheet.create({
   historyValue: {
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Tooltip
+  tooltip: {
+    position: 'absolute',
+    zIndex: 1000,
+  },
+  tooltipContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tooltipValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  tooltipDate: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 2,
+  },
+  tooltipArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    alignSelf: 'center',
   },
 });

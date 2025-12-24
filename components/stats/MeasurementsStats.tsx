@@ -5,6 +5,7 @@ import { Ruler, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { BodySilhouette } from '@/components/BodySilhouette';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -141,6 +142,16 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
 
   return (
     <View style={styles.container}>
+      {/* Silhouette corporelle */}
+      <View style={[styles.silhouetteCard, { backgroundColor: colors.backgroundElevated }]}>
+        <BodySilhouette
+          highlightedZone={selectedMetric}
+          zoneColor={currentMetric.color}
+          width={100}
+          height={180}
+        />
+      </View>
+
       {/* Stats rapides */}
       <View style={[styles.statsCard, { backgroundColor: colors.backgroundElevated }]}>
         <View style={styles.statItem}>
@@ -347,6 +358,14 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingBottom: 40,
+  },
+
+  // Silhouette
+  silhouetteCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
   },
 
   // Stats

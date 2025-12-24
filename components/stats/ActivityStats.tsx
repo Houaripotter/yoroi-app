@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
@@ -6,6 +6,7 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { getSportIcon } from '@/constants/sportIcons';
+import { getClubLogoSource } from '@/lib/sports';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -21,6 +22,14 @@ interface ActivityStatsProps {
 
 export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   const { colors } = useTheme();
+  const [selectedPoint, setSelectedPoint] = useState<{
+    index: number;
+    count: number;
+    weekStart: Date;
+    weekEnd: Date;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Calculer stats par semaine
   const getWeeklyData = () => {
@@ -220,6 +229,20 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                     cy={point.y}
                     r={4}
                     fill={colors.accent}
+                    onPress={() => {
+                      setSelectedPoint({
+                        index,
+                        count: point.count,
+                        weekStart: point.weekStart,
+                        weekEnd: point.weekEnd,
+                        x: point.x,
+                        y: point.y,
+                      });
+
+                      setTimeout(() => {
+                        setSelectedPoint(null);
+                      }, 3000);
+                    }}
                   />
                 </React.Fragment>
               ))}
@@ -256,6 +279,29 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                 </Text>
               </View>
             ))}
+
+            {/* Tooltip */}
+            {selectedPoint && (
+              <View
+                style={[
+                  styles.tooltip,
+                  {
+                    left: selectedPoint.x - 60,
+                    top: selectedPoint.y - 85,
+                  },
+                ]}
+              >
+                <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
+                  <Text style={styles.tooltipValue}>
+                    {selectedPoint.count} {selectedPoint.count > 1 ? 'entraînements' : 'entraînement'}
+                  </Text>
+                  <Text style={styles.tooltipDate}>
+                    {format(selectedPoint.weekStart, 'd MMM', { locale: fr })} - {format(selectedPoint.weekEnd, 'd MMM', { locale: fr })}
+                  </Text>
+                </View>
+                <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -330,17 +376,20 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
               >
                 <View style={styles.typeNameContainer}>
                   {/* Logo du club si disponible, sinon icône du sport */}
-                  {mostCommonLogo ? (
-                    <Image
-                      source={{ uri: mostCommonLogo }}
-                      style={styles.clubLogo}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.sportIconBg, { backgroundColor: sportInfo.color + '20' }]}>
-                      <Text style={styles.sportIcon}>{sportInfo.icon}</Text>
-                    </View>
-                  )}
+                  {(() => {
+                    const logoSource = mostCommonLogo ? getClubLogoSource(mostCommonLogo) : null;
+                    return logoSource ? (
+                      <Image
+                        source={logoSource}
+                        style={styles.clubLogo}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.sportIconBg, { backgroundColor: sportInfo.color + '20' }]}>
+                        <Text style={styles.sportIcon}>{sportInfo.icon}</Text>
+                      </View>
+                    );
+                  })()}
                   <View style={styles.sportTextContainer}>
                     <Text style={[styles.typeName, { color: colors.textPrimary }]}>
                       {formatSportName(sport)}
@@ -516,5 +565,45 @@ const styles = StyleSheet.create({
   typeCount: {
     fontSize: 18,
     fontWeight: '700',
+  },
+
+  // Tooltip
+  tooltip: {
+    position: 'absolute',
+    zIndex: 1000,
+  },
+  tooltipContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  tooltipValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  tooltipDate: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 2,
+  },
+  tooltipArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    alignSelf: 'center',
   },
 });

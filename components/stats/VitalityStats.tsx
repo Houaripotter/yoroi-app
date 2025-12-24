@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Moon, Droplets, Heart, TrendingUp, TrendingDown, Clock, Lightbulb } from 'lucide-react-native';
@@ -23,9 +24,21 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
   const [hydrationWeek, setHydrationWeek] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [vitalityScore, setVitalityScore] = useState(0);
 
+  // Animation du score
+  const animatedScore = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     loadData();
   }, []);
+
+  // Animer le score quand il change
+  useEffect(() => {
+    Animated.timing(animatedScore, {
+      toValue: vitalityScore,
+      duration: 1000,
+      useNativeDriver: false,
+    }).start();
+  }, [vitalityScore]);
 
   const loadData = async () => {
     try {
@@ -98,9 +111,13 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
         </View>
         <View style={styles.scoreCircle}>
           <View style={[styles.scoreRing, { borderColor: getScoreColor(vitalityScore) }]}>
-            <Text style={[styles.scoreValue, { color: getScoreColor(vitalityScore) }]}>
-              {vitalityScore}
-            </Text>
+            <Animated.Text style={[styles.scoreValue, { color: getScoreColor(vitalityScore) }]}>
+              {animatedScore.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0', '100'],
+                extrapolate: 'clamp',
+              })}
+            </Animated.Text>
             <Text style={[styles.scoreMax, { color: colors.textMuted }]}>/100</Text>
           </View>
         </View>

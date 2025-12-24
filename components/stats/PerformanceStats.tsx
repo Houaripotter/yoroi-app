@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame } from 'lucide-react-native';
@@ -21,6 +22,12 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
   const { colors } = useTheme();
   const [trainings, setTrainings] = useState<Training[]>(propTrainings || []);
   const [sleepHours, setSleepHours] = useState<number[]>([7, 6.5, 8, 7, 6, 7.5, 8]);
+  const [selectedDay, setSelectedDay] = useState<{
+    index: number;
+    day: string;
+    trainingLoad: number;
+    sleepHours: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!propTrainings) {
@@ -169,13 +176,29 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
         <View style={styles.workRestChart}>
           {days.map((day, index) => (
-            <View key={day} style={styles.chartColumn}>
+            <TouchableOpacity
+              key={day}
+              style={styles.chartColumn}
+              onPress={() => {
+                setSelectedDay({
+                  index,
+                  day,
+                  trainingLoad: weeklyTrainingData[index],
+                  sleepHours: sleepHours[index],
+                });
+
+                setTimeout(() => {
+                  setSelectedDay(null);
+                }, 3000);
+              }}
+              activeOpacity={0.7}
+            >
               {/* Barre entraînement */}
               <View style={styles.barWrapper}>
-                <View 
+                <View
                   style={[
                     styles.workoutBar,
-                    { 
+                    {
                       height: `${(weeklyTrainingData[index] / maxWorkout) * 100}%`,
                       backgroundColor: '#8B5CF6',
                     }
@@ -183,7 +206,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
                 />
               </View>
               {/* Ligne sommeil */}
-              <View 
+              <View
                 style={[
                   styles.sleepDot,
                   {
@@ -193,7 +216,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
                 ]}
               />
               <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{day}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -207,6 +230,25 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
             <Text style={[styles.legendText, { color: colors.textMuted }]}>Sommeil</Text>
           </View>
         </View>
+
+        {/* Tooltip */}
+        {selectedDay && (
+          <View style={[styles.workRestTooltip, { backgroundColor: '#1F2937' }]}>
+            <Text style={styles.tooltipDay}>{selectedDay.day}</Text>
+            <View style={styles.tooltipRow}>
+              <View style={styles.tooltipItem}>
+                <View style={[styles.tooltipDot, { backgroundColor: '#8B5CF6' }]} />
+                <Text style={styles.tooltipLabel}>Charge : </Text>
+                <Text style={styles.tooltipValue}>{selectedDay.trainingLoad.toFixed(1)} pts</Text>
+              </View>
+              <View style={styles.tooltipItem}>
+                <View style={[styles.tooltipDot, { backgroundColor: '#10B981' }]} />
+                <Text style={styles.tooltipLabel}>Sommeil : </Text>
+                <Text style={styles.tooltipValue}>{selectedDay.sleepHours.toFixed(1)}h</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {hasAlert && (
           <View style={[styles.alertCard, { backgroundColor: '#EF444415' }]}>
@@ -466,6 +508,43 @@ const styles = StyleSheet.create({
   insightText: {
     fontSize: 13,
     lineHeight: 20,
+  },
+  // Work/Rest Tooltip
+  workRestTooltip: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  tooltipDay: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  tooltipRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  tooltipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  tooltipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  tooltipLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  tooltipValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
 

@@ -107,8 +107,8 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
 
   // Couleur principale : Bleu Cyan adaptatif
   const primaryColor = '#06B6D4';
-  // Fond écran digital adaptatif au thème
-  const screenBg = isDark ? '#0F172A' : '#E0F2FE'; // Noir en sombre, bleu clair en clair
+  // Fond écran digital adaptatif au thème - éclairci pour meilleure lisibilité
+  const screenBg = isDark ? '#1E293B' : '#F0F9FF'; // Gris bleuté en sombre, bleu très clair en clair
 
   return (
     <Animated.View style={[
@@ -164,7 +164,7 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* Indicateur de stabilité */}
           <View style={styles.stabilityIndicator}>
             <View style={[styles.stabilityDot, { backgroundColor: weight > 0 ? primaryColor : '#6B7280' }]} />
-            <Text style={[styles.stabilityText, { color: `${primaryColor}60` }]}>
+            <Text style={[styles.stabilityText, { color: weight > 0 ? primaryColor : '#6B7280' }]}>
               {weight > 0 ? 'STABLE' : 'ATTENTE'}
             </Text>
           </View>
@@ -190,10 +190,10 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* Min/Max labels */}
           <View style={styles.sparklineHeader}>
             <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Min {Math.min(...history.slice(0, 7)).toFixed(1)}
+              Min <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.min(...history.slice(0, 7)).toFixed(1)}</Text>
             </Text>
             <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Max {Math.max(...history.slice(0, 7)).toFixed(1)}
+              Max <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.max(...history.slice(0, 7)).toFixed(1)}</Text>
             </Text>
           </View>
 
@@ -335,6 +335,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 2,
+    paddingBottom: 2,
   },
   weightValueLED: {
     fontSize: 24,
@@ -362,15 +363,15 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   stabilityText: {
-    fontSize: 6,
-    fontWeight: '600',
+    fontSize: 7,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   platform: {
     marginTop: 4,
   },
   sparklineContainer: {
-    marginTop: 8,
+    marginTop: 4,
     gap: 4,
   },
   sparklineHeader: {
@@ -378,9 +379,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 2,
+    marginBottom: 2,
   },
   sparkMinMax: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: '700',
   },
   sparklineChart: {

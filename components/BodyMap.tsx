@@ -233,15 +233,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
     if (debug) {
       setSelectedId(zone.id);
     } else {
-      // Affiche le nom de la zone cliquée
-      Alert.alert(
-        `🎯 ${zone.label}`,
-        `Tu as sélectionné : ${zone.label}\n\nBlessures possibles :\n• ${zone.injuries?.join('\n• ') || 'Non défini'}`,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Signaler blessure', onPress: () => onZonePress(zone, view) }
-        ]
-      );
+      // Appeler directement onZonePress pour gérer la détection des chevauchements
+      onZonePress(zone, view);
     }
   };
 
@@ -385,7 +378,14 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
                     zIndex: isSelected ? 100 : 10,
                   },
                 ]}
-              />
+              >
+                {/* Cercle au centre pour les zones blessées */}
+                {hasInjury && !debug && (
+                  <View style={styles.injuryMarker}>
+                    <View style={[styles.injuryCircle, { backgroundColor: zoneColor, borderColor: '#FFF' }]} />
+                  </View>
+                )}
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -519,6 +519,25 @@ const styles = StyleSheet.create({
   imageFrame: { width: '100%', maxWidth: 500, position: 'relative' },
   image: { width: '100%', height: '100%' },
   zone: { position: 'absolute', borderRadius: 4 },
+  // Marqueur de blessure
+  injuryMarker: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -8 }, { translateY: -8 }],
+    zIndex: 20,
+  },
+  injuryCircle: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 5,
+  },
   // Control Panel
   controlPanel: {
     padding: SPACING.xs,

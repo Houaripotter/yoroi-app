@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Activity, Zap, AlertTriangle, CheckCircle, TrendingUp, Coffee } from 'lucide-react-native';
+import { Activity, Zap } from 'lucide-react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 // paddingHorizontal 8*2 = 16, gap 12 = total 28
@@ -15,6 +15,62 @@ interface ChargeLottieCardProps {
   maxLoad?: number;
   sessions?: number;
 }
+
+// Composant éclair animé - VERSION COMPATIBLE EXPO GO
+const AnimatedZap: React.FC<{ color: string; speed: number; size: number }> = ({ color, speed, size }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const scaleAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: speed / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: speed / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const opacityAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacityAnim, {
+          toValue: 0.6,
+          duration: speed / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: speed / 2,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    scaleAnimation.start();
+    opacityAnimation.start();
+
+    return () => {
+      scaleAnimation.stop();
+      opacityAnimation.stop();
+    };
+  }, [speed]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
+      <Zap size={size} color={color} fill={color} />
+    </Animated.View>
+  );
+};
 
 export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
   level = 'optimal',
@@ -45,53 +101,46 @@ export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
 
   const normalizedLevel = normalizeLevel(level);
 
-  // Configuration par niveau - SANS EMOJIS
+  // Configuration par niveau - Éclair animé pour tous
   const configs: Record<string, {
     label: string;
     color: string;
-    icon: React.ElementType;
     description: string;
     pulseSpeed: number;
   }> = {
     leger: {
       label: 'Léger',
       color: '#0EA5E9',
-      icon: Coffee,
       description: 'Repos actif',
-      pulseSpeed: 2000,
+      pulseSpeed: 1000,
     },
     modere: {
       label: 'Modéré',
       color: '#10B981',
-      icon: CheckCircle,
       description: 'Bonne récup',
-      pulseSpeed: 1500,
+      pulseSpeed: 700,
     },
     optimal: {
       label: 'Optimal',
       color: '#10B981',
-      icon: TrendingUp,
       description: 'Zone idéale',
-      pulseSpeed: 1200,
+      pulseSpeed: 700,
     },
     eleve: {
       label: 'Élevé',
       color: '#F59E0B',
-      icon: Zap,
       description: 'Attention fatigue',
-      pulseSpeed: 800,
+      pulseSpeed: 500,
     },
     danger: {
       label: 'Danger',
       color: '#EF4444',
-      icon: AlertTriangle,
       description: 'Risque blessure',
-      pulseSpeed: 500,
+      pulseSpeed: 300,
     },
   };
 
   const config = configs[normalizedLevel] || configs.optimal;
-  const ConfigIcon = config.icon;
   const percentage = maxLoad > 0 ? Math.min((totalLoad / maxLoad) * 100, 100) : 0;
 
   useEffect(() => {
@@ -152,7 +201,7 @@ export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
           <Activity size={12} color={config.color} />
           <Text style={[styles.title, { color: config.color }]}>CHARGE</Text>
         </View>
-        <ConfigIcon size={14} color={config.color} />
+        <Zap size={14} color={config.color} />
       </View>
 
       {/* Zone animation - Cercle pulsant */}
@@ -171,7 +220,7 @@ export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
             transform: [{ scale: pulseAnim }],
           }
         ]}>
-          <ConfigIcon size={24} color="#FFFFFF" />
+          <AnimatedZap color="#FFFFFF" speed={config.pulseSpeed} size={28} />
         </Animated.View>
         
         {/* Barre de progression circulaire simplifiée */}

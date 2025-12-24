@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		10447BEE236DC26404AF7166 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5CD23B94EE66550116358A87 /* PrivacyInfo.xcprivacy */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		897BF1832A76D809590C0223 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A17645E2E484515557FE10C /* ExpoModulesProvider.swift */; };
+		41DEDA2FD816C93604D02BE3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5EA73E77E171E054EF8E3B1C /* PrivacyInfo.xcprivacy */; };
+		6D1BD402792D181429A4EE95 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D65A364C1E95459480307B37 /* libPods-Yoroi.a */; };
+		90BF5B49C98790BA43373FC4 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A72366C9AE47921B7974C4 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E15688BCB8727F76C4BF1B69 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 919ED80BC2E51893C8722616 /* libPods-Yoroi.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -20,16 +20,16 @@
 		13B07F961A680F5B00A75B9A /* Yoroi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yoroi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Yoroi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Yoroi/Info.plist; sourceTree = "<group>"; };
-		38667F933CC53031F3EEE79D /* Pods-Yoroi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.debug.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.debug.xcconfig"; sourceTree = "<group>"; };
-		5CD23B94EE66550116358A87 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		7A17645E2E484515557FE10C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		8FAB1EF42A344F3D6E68A206 /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
-		919ED80BC2E51893C8722616 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EA73E77E171E054EF8E3B1C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Yoroi/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B5AB3EA8AABBDA54F23880B6 /* Pods-Yoroi.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.release.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.release.xcconfig"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C49F6E0FA4DA507BC6549A86 /* Pods-Yoroi.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Yoroi.debug.xcconfig"; path = "Target Support Files/Pods-Yoroi/Pods-Yoroi.debug.xcconfig"; sourceTree = "<group>"; };
+		D65A364C1E95459480307B37 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Yoroi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
+		F5A72366C9AE47921B7974C4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E15688BCB8727F76C4BF1B69 /* libPods-Yoroi.a in Frameworks */,
+				6D1BD402792D181429A4EE95 /* libPods-Yoroi.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,36 +53,34 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				5CD23B94EE66550116358A87 /* PrivacyInfo.xcprivacy */,
+				5EA73E77E171E054EF8E3B1C /* PrivacyInfo.xcprivacy */,
 			);
 			name = Yoroi;
-			sourceTree = "<group>";
-		};
-		1E18BDEA92C7126ED20208F7 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				38667F933CC53031F3EEE79D /* Pods-Yoroi.debug.xcconfig */,
-				8FAB1EF42A344F3D6E68A206 /* Pods-Yoroi.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				919ED80BC2E51893C8722616 /* libPods-Yoroi.a */,
+				D65A364C1E95459480307B37 /* libPods-Yoroi.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		4D65676119D4A64023B34AD8 /* Yoroi */ = {
+		54ED11FF9F22F1F00EB149CB /* Yoroi */ = {
 			isa = PBXGroup;
 			children = (
-				7A17645E2E484515557FE10C /* ExpoModulesProvider.swift */,
+				F5A72366C9AE47921B7974C4 /* ExpoModulesProvider.swift */,
 			);
 			name = Yoroi;
+			sourceTree = "<group>";
+		};
+		822D2DBBBE56BCF145EB5634 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				54ED11FF9F22F1F00EB149CB /* Yoroi */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -99,8 +97,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				1E18BDEA92C7126ED20208F7 /* Pods */,
-				9E4252378D8E7FAFBC483418 /* ExpoModulesProviders */,
+				96909ECAACBC1A3A40A6DFED /* Pods */,
+				822D2DBBBE56BCF145EB5634 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -115,12 +113,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		9E4252378D8E7FAFBC483418 /* ExpoModulesProviders */ = {
+		96909ECAACBC1A3A40A6DFED /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				4D65676119D4A64023B34AD8 /* Yoroi */,
+				C49F6E0FA4DA507BC6549A86 /* Pods-Yoroi.debug.xcconfig */,
+				B5AB3EA8AABBDA54F23880B6 /* Pods-Yoroi.release.xcconfig */,
 			);
-			name = ExpoModulesProviders;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -140,13 +139,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Yoroi" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				D144D8372E79F17F71740927 /* [Expo] Configure project */,
+				A6DCDAF247F6344BA5D6F1A6 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				EC8D665D84E2BAB9A5B13CB6 /* [CP] Embed Pods Frameworks */,
+				79F2F07D47B385BA34DFD54B /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +195,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				10447BEE236DC26404AF7166 /* PrivacyInfo.xcprivacy in Resources */,
+				41DEDA2FD816C93604D02BE3 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,6 +239,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		79F2F07D47B385BA34DFD54B /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -290,7 +311,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		D144D8372E79F17F71740927 /* [Expo] Configure project */ = {
+		A6DCDAF247F6344BA5D6F1A6 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -314,28 +335,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Yoroi/expo-configure-project.sh\"\n";
 		};
-		EC8D665D84E2BAB9A5B13CB6 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -344,7 +343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				897BF1832A76D809590C0223 /* ExpoModulesProvider.swift in Sources */,
+				90BF5B49C98790BA43373FC4 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,12 +352,13 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 38667F933CC53031F3EEE79D /* Pods-Yoroi.debug.xcconfig */;
+			baseConfigurationReference = C49F6E0FA4DA507BC6549A86 /* Pods-Yoroi.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GWYC6KCKHR;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -389,12 +389,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8FAB1EF42A344F3D6E68A206 /* Pods-Yoroi.release.xcconfig */;
+			baseConfigurationReference = B5AB3EA8AABBDA54F23880B6 /* Pods-Yoroi.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = Yoroi/Yoroi.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = GWYC6KCKHR;
 				INFOPLIST_FILE = Yoroi/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -137,12 +137,10 @@ export default function InfirmaryScreen() {
     );
 
     if (existingInjury) {
-      // Blessure existante, permettre de la modifier
-      router.push(
-        `/injury-evaluation?zoneId=${zoneId}&zoneView=${view}&zoneName=${encodeURIComponent(zoneName)}&injuryId=${existingInjury.id}&existingEva=${existingInjury.eva_score}&existingDuration=${existingInjury.estimated_recovery_days}`
-      );
+      // Blessure existante, aller directement à l'écran de détail pour la modifier
+      router.push(`/injury-detail?id=${existingInjury.id}`);
     } else {
-      // Nouvelle blessure
+      // Nouvelle blessure, aller à l'écran d'évaluation
       router.push(
         `/injury-evaluation?zoneId=${zoneId}&zoneView=${view}&zoneName=${encodeURIComponent(zoneName)}`
       );
