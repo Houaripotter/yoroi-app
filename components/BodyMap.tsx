@@ -52,7 +52,7 @@ interface BodyMapProps {
 // DONNÉES CALIBRÉES - VUE DE FACE (42 zones)
 // ============================================
 
-const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
+export const INITIAL_DATA: { front: BodyZone[]; back: BodyZone[] } = {
   front: [
     // === TÊTE & COU ===
     { id: 'head', label: 'Tête / Visage', x: 50, y: 6, w: 15, h: 8, injuries: ['Commotion', 'Coupure arcade', 'Contusion', 'Fracture nez'] },

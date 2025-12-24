@@ -161,6 +161,90 @@ export const getNextCompetition = async (): Promise<Competition | null> => {
   }
 };
 
+/**
+ * Formate le nom de la compétition selon le sport
+ * Ex: "IBJJF" pour JJB, "UFC" pour MMA, etc.
+ */
+const formatCompetitionName = (name: string, sport?: Sport): string => {
+  if (!sport) return name;
+  
+  // Raccourcir les noms connus selon le sport
+  const nameUpper = name.toUpperCase();
+  
+  // JJB / BJJ
+  if (sport === 'jjb') {
+    if (nameUpper.includes('IBJJF')) return 'IBJJF';
+    if (nameUpper.includes('CFJJB')) return 'CFJJB';
+    if (nameUpper.includes('ADCC')) return 'ADCC';
+    if (nameUpper.includes('WORLDS')) return 'Worlds';
+    if (nameUpper.includes('PAN')) return 'Pans';
+    if (nameUpper.includes('EUROPEAN')) return 'European';
+  }
+  
+  // MMA
+  if (sport === 'mma') {
+    if (nameUpper.includes('UFC')) return 'UFC';
+    if (nameUpper.includes('KSW')) return 'KSW';
+    if (nameUpper.includes('BELLATOR')) return 'Bellator';
+    if (nameUpper.includes('ONE')) return 'ONE';
+  }
+  
+  // Boxe
+  if (sport === 'boxe') {
+    if (nameUpper.includes('WBC')) return 'WBC';
+    if (nameUpper.includes('WBA')) return 'WBA';
+    if (nameUpper.includes('IBF')) return 'IBF';
+    if (nameUpper.includes('WBO')) return 'WBO';
+  }
+  
+  // Si le nom est trop long, le raccourcir
+  if (name.length > 12) {
+    return name.substring(0, 10) + '...';
+  }
+  
+  return name;
+};
+
+/**
+ * Récupère le prochain événement (compétition ou combat) à venir
+ * Retourne l'événement le plus proche avec le nombre de jours restants
+ */
+export const getNextEvent = async (): Promise<{
+  type: 'competition' | 'combat' | null;
+  name: string;
+  daysLeft: number;
+  date: string;
+  sport?: Sport;
+} | null> => {
+  try {
+    const nextCompetition = await getNextCompetition();
+    
+    if (nextCompetition) {
+      const eventDate = new Date(nextCompetition.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      
+      const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysLeft >= 0) {
+        return {
+          type: 'competition',
+          name: formatCompetitionName(nextCompetition.nom, nextCompetition.sport),
+          daysLeft,
+          date: nextCompetition.date,
+          sport: nextCompetition.sport,
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error getting next event:', error);
+    return null;
+  }
+};
+
 export const getCompetitionById = async (id: number): Promise<Competition | null> => {
   try {
     const result = db.getFirstSync<Competition>(
@@ -485,4 +569,5 @@ export default {
   getCurrentObjectifPoids,
   addObjectifPoids,
   updateObjectifPoids,
+  getNextEvent,
 };

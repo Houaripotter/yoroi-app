@@ -10,6 +10,7 @@ import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
+import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 
 // Couleurs pour le loading screen (avant que ThemeProvider soit monte)
 const LOADING_COLORS = {
@@ -106,9 +107,14 @@ export default function RootLayout() {
     const init = async () => {
       try {
         console.log('⚔️ Yoroi - Initialisation...');
+
         // Initialiser la base de donnees SQLite
         await initDatabase();
         console.log('✅ Base de donnees initialisee');
+
+        // Auto-import des compétitions IBJJF et CFJJB au premier lancement
+        await autoImportCompetitionsOnFirstLaunch();
+
       } catch (error) {
         console.error('❌ Erreur initialisation:', error);
       }

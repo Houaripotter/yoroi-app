@@ -179,15 +179,19 @@ class AppearanceService {
   }
 
   // Vérifier si un thème guerrier est débloqué
+  // 🎁 TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
   isWarriorThemeUnlocked(themeId: string, userXP: number): boolean {
-    const theme = WARRIOR_THEMES.find((t) => t.id === themeId);
-    if (!theme) return false;
-    return userXP >= theme.unlockXP;
+    // 🎁 Pendant le développement, tous les thèmes sont débloqués
+    // Plus tard, remplacer par: return userXP >= theme.unlockXP;
+    return true;
   }
 
   // Obtenir tous les thèmes guerriers débloqués
+  // 🎁 TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
   getUnlockedWarriorThemes(userXP: number): WarriorTheme[] {
-    return WARRIOR_THEMES.filter((theme) => userXP >= theme.unlockXP);
+    // 🎁 Pendant le développement, tous les thèmes sont débloqués
+    // Plus tard, remplacer par: return WARRIOR_THEMES.filter((theme) => userXP >= theme.unlockXP);
+    return WARRIOR_THEMES;
   }
 
   // Obtenir le prochain thème à débloquer

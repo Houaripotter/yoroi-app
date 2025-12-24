@@ -112,7 +112,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
       <View style={styles.stats}>
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {(totalToday / 1000).toFixed(1)} L
+            {(totalToday / 1000).toFixed(2)} L
           </Text>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>
             Aujourd'hui
@@ -123,7 +123,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
 
         <View style={styles.statItem}>
           <Text style={[styles.statValue, { color: colors.textMuted }]}>
-            {(DAILY_GOAL_ML / 1000).toFixed(1)} L
+            {(DAILY_GOAL_ML / 1000).toFixed(2)} L
           </Text>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>
             Objectif

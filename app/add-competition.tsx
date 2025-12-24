@@ -59,8 +59,13 @@ export default function AddCompetitionScreen() {
     }
 
     // Mettre à jour la date si une date a été sélectionnée
-    if (selectedDate && event.type !== 'dismissed') {
+    if (selectedDate) {
       setDate(selectedDate);
+    }
+
+    // Sur Android, si l'utilisateur annule, fermer le picker
+    if (Platform.OS === 'android' && event.type === 'dismissed') {
+      setShowDatePicker(false);
     }
   };
 
@@ -161,11 +166,46 @@ export default function AddCompetitionScreen() {
           </TouchableOpacity>
         </View>
 
-        {showDatePicker && (
+        {showDatePicker && Platform.OS === 'ios' && (
+          <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.datePickerHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                style={styles.datePickerButton}
+              >
+                <Text style={[styles.datePickerButtonText, { color: colors.textMuted }]}>
+                  Annuler
+                </Text>
+              </TouchableOpacity>
+              <Text style={[styles.datePickerTitle, { color: colors.textPrimary }]}>
+                Sélectionner la date
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowDatePicker(false)}
+                style={styles.datePickerButton}
+              >
+                <Text style={[styles.datePickerButtonText, { color: colors.accent }]}>
+                  OK
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+              minimumDate={new Date()}
+              textColor={colors.textPrimary}
+              style={styles.datePicker}
+            />
+          </View>
+        )}
+
+        {showDatePicker && Platform.OS === 'android' && (
           <DateTimePicker
             value={date}
             mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display="default"
             onChange={handleDateChange}
             minimumDate={new Date()}
           />
@@ -357,5 +397,38 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
+  },
+  datePickerContainer: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+  },
+  datePickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  datePickerButton: {
+    padding: SPACING.sm,
+  },
+  datePickerButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  datePicker: {
+    height: 200,
   },
 });

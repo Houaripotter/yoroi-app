@@ -12,7 +12,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight } from 'lucide-react-native';
+import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight, Download } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -20,6 +20,8 @@ import { Header } from '@/components/ui/Header';
 import { getCompetitions, getUpcomingCompetitions } from '@/lib/fighterModeService';
 import { Competition, calculateDaysUntil, SPORT_ICONS } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import { importAllCompetitions, getAvailableCompetitionsCount } from '@/lib/importCompetitionsService';
+import { Alert } from 'react-native';
 
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
@@ -27,6 +29,7 @@ export default function CompetitionsScreen() {
   const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
   const [pastCompetitions, setPastCompetitions] = useState<Competition[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const loadCompetitions = async () => {
     try {
@@ -56,6 +59,49 @@ export default function CompetitionsScreen() {
     setRefreshing(true);
     await loadCompetitions();
     setRefreshing(false);
+  };
+
+  const handleImportCompetitions = async () => {
+    try {
+      const available = getAvailableCompetitionsCount();
+
+      Alert.alert(
+        'Importer les compétitions',
+        `Voulez-vous importer ${available.total} compétitions IBJJF et CFJJB ?\n\n` +
+        `• ${available.ibjjf} compétitions IBJJF (2025-2026)\n` +
+        `• ${available.cfjjb} compétitions CFJJB (2026)`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Importer',
+            onPress: async () => {
+              setImporting(true);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+              try {
+                const result = await importAllCompetitions();
+
+                await loadCompetitions();
+
+                Alert.alert(
+                  'Import terminé !',
+                  `${result.total} compétitions ajoutées\n\n` +
+                  `IBJJF : ${result.ibjjf.imported} importées, ${result.ibjjf.skipped} déjà présentes\n` +
+                  `CFJJB : ${result.cfjjb.imported} importées, ${result.cfjjb.skipped} déjà présentes`,
+                  [{ text: 'OK' }]
+                );
+              } catch (error) {
+                Alert.alert('Erreur', 'Impossible d\'importer les compétitions');
+              } finally {
+                setImporting(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Une erreur est survenue');
+    }
   };
 
   const handleAddCompetition = () => {
@@ -229,6 +275,30 @@ export default function CompetitionsScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Import Button */}
+        <TouchableOpacity
+          style={[
+            styles.importCard,
+            { backgroundColor: colors.backgroundCard, borderColor: colors.accent }
+          ]}
+          onPress={handleImportCompetitions}
+          disabled={importing}
+          activeOpacity={0.7}
+        >
+          <View style={styles.importIcon}>
+            <Download size={24} color={importing ? colors.textMuted : colors.accent} />
+          </View>
+          <View style={styles.importContent}>
+            <Text style={[styles.importTitle, { color: colors.textPrimary }]}>
+              {importing ? 'Import en cours...' : 'Importer les compétitions IBJJF & CFJJB'}
+            </Text>
+            <Text style={[styles.importSubtitle, { color: colors.textMuted }]}>
+              {getAvailableCompetitionsCount().total} compétitions disponibles (2025-2026)
+            </Text>
+          </View>
+          {!importing && <ChevronRight size={20} color={colors.textMuted} />}
+        </TouchableOpacity>
 
         {/* Upcoming Competitions */}
         {upcomingCompetitions.length > 0 && (
@@ -422,6 +492,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  importCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.xl,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: SPACING.md,
+  },
+  importIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  importContent: {
+    flex: 1,
+  },
+  importTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  importSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   fab: {
     position: 'absolute',

@@ -177,156 +177,58 @@ export const AVATARS: Record<string, AvatarData> = {
     hasStates: true,
   },
 
-  // PACK COMBAT (pas d'etats, image unique)
-  muaythai: {
-    id: 'muaythai',
-    name: 'Muay Thai',
+  // PACKS BJJ
+  BJJ_Male: {
+    id: 'BJJ_Male',
+    name: 'BJJ Hommes',
     rarity: 'RARE',
-    pack: 'combat',
-    folder: 'pack_combat',
-    hasStates: false,
+    condition: 'default',
+    folder: 'BJJ_Male',
+    hasStates: true,
   },
-  taekwondo: {
-    id: 'taekwondo',
-    name: 'Taekwondo',
+  BJJ_Female: {
+    id: 'BJJ_Female',
+    name: 'BJJ Femmes',
     rarity: 'RARE',
-    pack: 'combat',
-    folder: 'pack_combat',
-    hasStates: false,
-  },
-  capoeira: {
-    id: 'capoeira',
-    name: 'Capoeira',
-    rarity: 'RARE',
-    pack: 'combat',
-    folder: 'pack_combat',
-    hasStates: false,
-  },
-  kravmaga: {
-    id: 'kravmaga',
-    name: 'Krav Maga',
-    rarity: 'RARE',
-    pack: 'combat',
-    folder: 'pack_combat',
-    hasStates: false,
-  },
-  sumo: {
-    id: 'sumo',
-    name: 'Sumo',
-    rarity: 'RARE',
-    pack: 'combat',
-    folder: 'pack_combat',
-    hasStates: false,
+    condition: 'default',
+    folder: 'BJJ_Female',
+    hasStates: true,
   },
 
-  // PACK FEMMES
-  kunoichi: {
-    id: 'kunoichi',
-    name: 'Kunoichi',
+  // AUTRES PACKS AVEC ETATS
+  pack_femmes: {
+    id: 'pack_femmes',
+    name: 'Pack Femmes',
     rarity: 'RARE',
-    pack: 'femmes',
+    condition: 'default',
     folder: 'pack_femmes',
-    hasStates: false,
+    hasStates: true,
   },
-  valkyrie: {
-    id: 'valkyrie',
-    name: 'Valkyrie',
+  pack_combat: {
+    id: 'pack_combat',
+    name: 'Pack Combat',
+    rarity: 'RARE',
+    condition: 'default',
+    folder: 'pack_combat',
+    hasStates: true,
+  },
+  pack_monstres: {
+    id: 'pack_monstres',
+    name: 'Pack Monstres',
     rarity: 'EPIC',
-    pack: 'femmes',
-    folder: 'pack_femmes',
-    hasStates: false,
-  },
-  amazon: {
-    id: 'amazon',
-    name: 'Amazone',
-    rarity: 'RARE',
-    pack: 'femmes',
-    folder: 'pack_femmes',
-    hasStates: false,
-  },
-  boxer_woman: {
-    id: 'boxer_woman',
-    name: 'Boxeuse',
-    rarity: 'RARE',
-    pack: 'femmes',
-    folder: 'pack_femmes',
-    hasStates: false,
-  },
-  mma_woman: {
-    id: 'mma_woman',
-    name: 'MMA Fighter',
-    rarity: 'RARE',
-    pack: 'femmes',
-    folder: 'pack_femmes',
-    hasStates: false,
-  },
-
-  // PACK MONSTRES
-  oni_blue: {
-    id: 'oni_blue',
-    name: 'Oni Bleu',
-    rarity: 'EPIC',
-    pack: 'monstres',
+    condition: 'default',
     folder: 'pack_monstres',
-    hasStates: false,
-  },
-  tengu: {
-    id: 'tengu',
-    name: 'Tengu',
-    rarity: 'EPIC',
-    pack: 'monstres',
-    folder: 'pack_monstres',
-    hasStates: false,
-  },
-  kappa: {
-    id: 'kappa',
-    name: 'Kappa',
-    rarity: 'RARE',
-    pack: 'monstres',
-    folder: 'pack_monstres',
-    hasStates: false,
-  },
-  dragon: {
-    id: 'dragon',
-    name: 'Dragon',
-    rarity: 'LEGENDARY',
-    pack: 'monstres',
-    folder: 'pack_monstres',
-    hasStates: false,
-  },
-  yokai: {
-    id: 'yokai',
-    name: 'Yokai',
-    rarity: 'SECRET',
-    pack: 'monstres',
-    folder: 'pack_monstres',
-    hasStates: false,
+    hasStates: true,
   },
 };
 
 // ============================================
 // PACKS PREMIUM
 // ============================================
+// Note: Les packs sont maintenant des avatars avec états disponibles gratuitement
 
 export const PACKS: Record<string, PackData> = {
-  combat: {
-    id: 'combat',
-    name: 'Pack Combat',
-    price: 1.99,
-    avatars: ['muaythai', 'taekwondo', 'capoeira', 'kravmaga', 'sumo'],
-  },
-  femmes: {
-    id: 'femmes',
-    name: 'Pack Femmes Guerrieres',
-    price: 1.99,
-    avatars: ['kunoichi', 'valkyrie', 'amazon', 'boxer_woman', 'mma_woman'],
-  },
-  monstres: {
-    id: 'monstres',
-    name: 'Pack Monstres',
-    price: 2.99,
-    avatars: ['oni_blue', 'tengu', 'kappa', 'dragon', 'yokai'],
-  },
+  // Vide - les packs ne sont plus vendus individuellement
 };
 
 // ============================================
@@ -426,28 +328,52 @@ const AVATAR_STATE_IMAGES: Record<string, Record<AvatarState, any>> = {
     tired: require('@/assets/avatars/champion/champion_tired.png'),
     down: require('@/assets/avatars/champion/champion_down.png'),
   },
+  // PACK BJJ HOMMES
+  BJJ_Male: {
+    legendary: require('@/assets/avatars/BJJ_Male/char_bjj_m_victory_champion.png'),
+    strong: require('@/assets/avatars/BJJ_Male/char_bjj_m_powered_up.png'),
+    neutral: require('@/assets/avatars/BJJ_Male/char_bjj_m_idle_stand.png'),
+    tired: require('@/assets/avatars/BJJ_Male/char_bjj_m_tired_stool.png'),
+    down: require('@/assets/avatars/BJJ_Male/char_bjj_m_defeated_ground.png'),
+  },
+  // PACK BJJ FEMMES
+  BJJ_Female: {
+    legendary: require('@/assets/avatars/BJJ_Female/char_bjj_f_victory_champion.png'),
+    strong: require('@/assets/avatars/BJJ_Female/char_bjj_f_powered_up.png'),
+    neutral: require('@/assets/avatars/BJJ_Female/char_bjj_f_idle_stand.png'),
+    tired: require('@/assets/avatars/BJJ_Female/char_bjj_f_tired_stool.png'),
+    down: require('@/assets/avatars/BJJ_Female/char_bjj_f_defeated_ground.png'),
+  },
+  // PACK FEMMES
+  pack_femmes: {
+    legendary: require('@/assets/avatars/pack_femmes/amazon.png'),
+    strong: require('@/assets/avatars/pack_femmes/boxer_woman.png'),
+    neutral: require('@/assets/avatars/pack_femmes/kunoichi.png'),
+    tired: require('@/assets/avatars/pack_femmes/mma_woman.png'),
+    down: require('@/assets/avatars/pack_femmes/valkyrie.png'),
+  },
+  // PACK COMBAT
+  pack_combat: {
+    legendary: require('@/assets/avatars/pack_combat/capoeira.png'),
+    strong: require('@/assets/avatars/pack_combat/kravmaga.png'),
+    neutral: require('@/assets/avatars/pack_combat/muaythai.png'),
+    tired: require('@/assets/avatars/pack_combat/sumo.png'),
+    down: require('@/assets/avatars/pack_combat/taekwondo.png'),
+  },
+  // PACK MONSTRES
+  pack_monstres: {
+    legendary: require('@/assets/avatars/pack_monstres/dragon.png'),
+    strong: require('@/assets/avatars/pack_monstres/kappa.png'),
+    neutral: require('@/assets/avatars/pack_monstres/oni_blue.png'),
+    tired: require('@/assets/avatars/pack_monstres/tengu.png'),
+    down: require('@/assets/avatars/pack_monstres/yokai.png'),
+  },
 };
 
 // Avatars sans etats (packs) - image unique
+// Note: Les packs pack_combat, pack_femmes, pack_monstres ont été déplacés vers AVATAR_STATE_IMAGES
 const AVATAR_SINGLE_IMAGES: Record<string, any> = {
-  // Pack Combat
-  muaythai: require('@/assets/avatars/pack_combat/muaythai.png'),
-  taekwondo: require('@/assets/avatars/pack_combat/taekwondo.png'),
-  capoeira: require('@/assets/avatars/pack_combat/capoeira.png'),
-  kravmaga: require('@/assets/avatars/pack_combat/kravmaga.png'),
-  sumo: require('@/assets/avatars/pack_combat/sumo.png'),
-  // Pack Femmes
-  kunoichi: require('@/assets/avatars/pack_femmes/kunoichi.png'),
-  valkyrie: require('@/assets/avatars/pack_femmes/valkyrie.png'),
-  amazon: require('@/assets/avatars/pack_femmes/amazon.png'),
-  boxer_woman: require('@/assets/avatars/pack_femmes/boxer_woman.png'),
-  mma_woman: require('@/assets/avatars/pack_femmes/mma_woman.png'),
-  // Pack Monstres
-  oni_blue: require('@/assets/avatars/pack_monstres/oni_blue.png'),
-  tengu: require('@/assets/avatars/pack_monstres/tengu.png'),
-  kappa: require('@/assets/avatars/pack_monstres/kappa.png'),
-  dragon: require('@/assets/avatars/pack_monstres/dragon.png'),
-  yokai: require('@/assets/avatars/pack_monstres/yokai.png'),
+  // Les anciens avatars individuels ne sont plus utilisés car ils font partie des packs avec états
 };
 
 // Image fallback

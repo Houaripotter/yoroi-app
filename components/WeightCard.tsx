@@ -1,366 +1,206 @@
-// ============================================
-// YOROI - WEIGHT CARD PREMIUM
-// ============================================
-// Card spectaculaire affichant le poids et la progression
-// Design Wellness Premium avec fond blanc et ombres fortes
-
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Target,
-  TrendingDown,
-  TrendingUp,
-  Calendar,
-  Scale,
-  CheckCircle,
-  Clock,
-} from 'lucide-react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Scale, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import {
-  calculateWeightProgress,
-  formatWeightChange,
-} from '@/utils/weightEstimation';
-
-// ============================================
-// TYPES
-// ============================================
+import AnimatedSparkline from './AnimatedSparkline';
 
 interface WeightCardProps {
   currentWeight: number;
-  targetWeight: number;
-  startWeight: number;
-  previousWeight: number | null;
-  weeklyAverage: number;
-  onAddWeight: () => void;
+  targetWeight?: number;
+  date?: string;
+  onPress?: () => void;
+  history?: number[]; // Array of weight values for sparkline
 }
-
-// ============================================
-// ANIMATED PROGRESS BAR
-// ============================================
-
-interface AnimatedProgressBarProps {
-  progress: number;
-  colors: any;
-}
-
-const AnimatedProgressBar: React.FC<AnimatedProgressBarProps> = ({
-  progress,
-  colors,
-}) => {
-  const animatedWidth = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(animatedWidth, {
-      toValue: progress,
-      duration: 1500,
-      useNativeDriver: false,
-    }).start();
-  }, [progress]);
-
-  const widthInterpolated = animatedWidth.interpolate({
-    inputRange: [0, 100],
-    outputRange: ['0%', '100%'],
-  });
-
-  return (
-    <View style={styles.progressBarContainer}>
-      <View style={[styles.progressBarBg, { backgroundColor: `${colors.gold}20` }]}>
-        <Animated.View style={{ width: widthInterpolated, height: '100%' }}>
-          <LinearGradient
-            colors={[colors.gold, '#B8942F']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.progressBarFill}
-          />
-        </Animated.View>
-      </View>
-      <Text style={[styles.progressPercent, { color: colors.gold }]}>
-        {Math.round(progress)}%
-      </Text>
-    </View>
-  );
-};
-
-// ============================================
-// MAIN COMPONENT
-// ============================================
 
 export const WeightCard: React.FC<WeightCardProps> = ({
   currentWeight,
   targetWeight,
-  startWeight,
-  previousWeight,
-  weeklyAverage,
-  onAddWeight,
+  date,
+  onPress,
+  history,
 }) => {
-  const { colors, isDark, themeName } = useTheme();
-  const isWellness = false;
+  const { colors } = useTheme();
+  
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const weightScaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeInAnim = useRef(new Animated.Value(0)).current;
 
-  // Calculate all progress
-  const progress = calculateWeightProgress(
-    currentWeight,
-    targetWeight,
-    startWeight,
-    previousWeight,
-    weeklyAverage
-  );
+  useEffect(() => {
+    // Animation d'entrée du poids (scale + fade)
+    Animated.parallel([
+      Animated.spring(weightScaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeInAnim, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-  // Daily variation
-  const dailyChange = previousWeight ? currentWeight - previousWeight : 0;
-  const isLoss = dailyChange < 0;
-  const hasChange = dailyChange !== 0;
+    // Animation de remplissage au démarrage avec easing smooth
+    if (targetWeight && currentWeight) {
+      const progress = Math.min(100, Math.abs((targetWeight - currentWeight) / targetWeight) * 100);
+      Animated.timing(progressAnim, {
+        toValue: progress,
+        duration: 1500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [currentWeight, targetWeight]);
 
-  // Premium card shadow
-  const cardShadow = {
-    shadowColor: '#1A1A2E',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: isWellness ? 0.15 : (isDark ? 0.4 : 0.1),
-    shadowRadius: 20,
-    elevation: 10,
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  const remaining = targetWeight && currentWeight ? Math.abs(targetWeight - currentWeight) : null;
+
+  // Calculer la tendance
+  const getTrend = () => {
+    if (!history || history.length < 2) return null;
+    const recent = history[0];
+    const older = history[history.length - 1];
+    const diff = recent - older;
+    if (diff > 0.1) return 'up';
+    if (diff < -0.1) return 'down';
+    return 'stable';
+  };
+
+  const trend = getTrend();
+
+  // Rendu de l'icône de tendance
+  const renderTrendIcon = () => {
+    if (!trend) return null;
+    const iconSize = 12;
+    if (trend === 'up') return <TrendingUp size={iconSize} color={colors.warning} />;
+    if (trend === 'down') return <TrendingDown size={iconSize} color={colors.success} />;
+    return <Minus size={iconSize} color={colors.textMuted} />;
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card }, cardShadow]}>
-      {/* Current Weight - BIG */}
-      <View style={styles.mainWeightContainer}>
-        <Text style={[styles.mainWeight, { color: colors.textPrimary }]}>
-          {currentWeight.toFixed(1)}
-        </Text>
-        <Text style={[styles.weightUnit, { color: colors.textSecondary }]}>kg</Text>
+    <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Scale size={14} color={colors.accent} />
+        <Text style={[styles.title, { color: colors.textMuted }]}>POIDS</Text>
+        {renderTrendIcon()}
       </View>
 
-      {/* Daily Change Pill */}
-      {hasChange && (
-        <View style={[
-          styles.dailyChange,
-          { backgroundColor: isLoss ? '#DCFCE7' : '#FEE2E2' }
-        ]}>
-          {isLoss ? (
-            <TrendingDown size={14} color="#22C55E" />
-          ) : (
-            <TrendingUp size={14} color="#EF4444" />
-          )}
-          <Text style={[
-            styles.dailyChangeText,
-            { color: isLoss ? '#22C55E' : '#EF4444' }
-          ]}>
-            {formatWeightChange(dailyChange)} aujourd'hui
-          </Text>
+      {/* Poids principal - gros, centré, en gras avec animation */}
+      <Animated.View style={[styles.mainContent, {
+        opacity: fadeInAnim,
+        transform: [{ scale: weightScaleAnim }],
+      }]}>
+        <Text style={[styles.weight, { color: colors.textPrimary }]}>
+          {currentWeight.toFixed(1)}
+        </Text>
+        <Text style={[styles.unit, { color: colors.textMuted }]}>kg</Text>
+      </Animated.View>
+
+      {/* Sparkline - Mini graphique d'évolution */}
+      {history && history.length > 1 && (
+        <View style={styles.sparklineContainer}>
+          <AnimatedSparkline
+            data={history}
+            width={130}
+            height={40}
+            color={currentWeight > (targetWeight || currentWeight) ? colors.warning : colors.success}
+          />
         </View>
       )}
 
-      {/* Goal */}
-      <View style={styles.targetContainer}>
-        <Target size={16} color={colors.gold} />
-        <Text style={[styles.targetText, { color: colors.textSecondary }]}>
-          Objectif : <Text style={{ color: colors.gold, fontWeight: '700' }}>{targetWeight} kg</Text>
-        </Text>
-      </View>
-
-      {/* Progress Bar */}
-      <AnimatedProgressBar progress={progress.progressPercent} colors={colors} />
-
-      {/* Stats Row */}
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <CheckCircle size={14} color="#22C55E" />
-          <Text style={[styles.statValue, { color: '#22C55E' }]}>
-            {progress.isGaining ? '+' : '-'}{Math.abs(progress.weightLost).toFixed(1)} kg
-          </Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-            {progress.isGaining ? 'pris' : 'perdus'}
+      {/* Objectif et progression */}
+      {targetWeight && remaining !== null ? (
+        <View style={styles.progressSection}>
+          <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  backgroundColor: currentWeight > targetWeight ? colors.warning : colors.success,
+                  width: progressWidth,
+                },
+              ]}
+            />
+          </View>
+          <Text style={[styles.remaining, { color: colors.textMuted }]}>
+            Objectif: {targetWeight} kg ({currentWeight > targetWeight ? '+' : ''}{remaining.toFixed(1)})
           </Text>
         </View>
-
-        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.statItem}>
-          <Clock size={14} color="#F97316" />
-          <Text style={[styles.statValue, { color: '#F97316' }]}>
-            {progress.isGaining ? '+' : '-'}{Math.abs(progress.weightRemaining).toFixed(1)} kg
+      ) : (
+        date && (
+          <Text style={[styles.date, { color: colors.textMuted }]}>
+            {date}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>restants</Text>
-        </View>
-      </View>
-
-      {/* Estimated Date */}
-      <View style={[styles.estimationContainer, { backgroundColor: `${colors.gold}15` }]}>
-        <Calendar size={14} color={colors.gold} />
-        <Text style={[styles.estimationText, { color: colors.textSecondary }]}>
-          Estimation :{' '}
-          <Text style={{ color: colors.gold, fontWeight: '700' }}>
-            {progress.estimatedDate}
-          </Text>
-        </Text>
-      </View>
-
-      {/* Add Weight Button */}
-      <TouchableOpacity
-        onPress={onAddWeight}
-        activeOpacity={0.8}
-        style={styles.addButtonContainer}
-      >
-        <LinearGradient
-          colors={['#00D9FF', '#0099CC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.addButton}
-        >
-          <Scale size={20} color="#FFFFFF" />
-          <Text style={styles.addButtonText}>NOUVELLE PESEE</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+        )
+      )}
     </View>
   );
 };
 
-// ============================================
-// STYLES - PREMIUM WELLNESS DESIGN
-// ============================================
-
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 12,
+    flex: 1,
+    borderRadius: 14,
+    padding: 16,
+    height: '100%',
+    justifyContent: 'space-between',
   },
-
-  // Main Weight
-  mainWeightContainer: {
+  header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 8,
   },
-  mainWeight: {
-    fontSize: 56,
-    fontWeight: '800',
-    letterSpacing: -2,
+  title: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
-  weightUnit: {
+  mainContent: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+    marginBottom: 4,
+  },
+  weight: {
+    fontSize: 42,
+    fontWeight: '900',
+  },
+  unit: {
     fontSize: 24,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-
-  // Daily Change
-  dailyChange: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  dailyChangeText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // Target
-  targetContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  targetText: {
-    fontSize: 15,
-  },
-
-  // Progress Bar
-  progressBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-  },
-  progressBarBg: {
-    flex: 1,
-    height: 12,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  progressPercent: {
-    fontSize: 16,
-    fontWeight: '800',
-    minWidth: 45,
-    textAlign: 'right',
-  },
-
-  // Stats
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    gap: 24,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 16,
     fontWeight: '700',
   },
-  statLabel: {
-    fontSize: 12,
+  date: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginBottom: 4,
   },
-  statDivider: {
-    width: 1,
-    height: 24,
-  },
-
-  // Estimation
-  estimationContainer: {
-    flexDirection: 'row',
+  sparklineContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    marginBottom: 20,
+    marginBottom: 8,
+    height: 40,
   },
-  estimationText: {
-    fontSize: 14,
+  progressSection: {
+    gap: 4,
   },
-
-  // Button
-  addButtonContainer: {
-    borderRadius: 16,
+  progressBar: {
+    height: 4,
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  remaining: {
+    fontSize: 9,
+    fontWeight: '600',
   },
 });
-
-export default WeightCard;

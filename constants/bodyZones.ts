@@ -32,16 +32,31 @@ export const BODY_ZONES_FRONT: BodyZone[] = [
   { id: 'forearm_l', name: 'Avant-bras G', x: 90, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
   { id: 'forearm_r', name: 'Avant-bras D', x: 10, y: 52, size: 8, injuries: ['Tendinite', 'Contracture', 'Contusion'] },
   { id: 'pubis', name: 'Pubis / Bassin', x: 50, y: 53, size: 14, injuries: ['Pubalgie', 'Tendinite', 'Bursite'] },
-  { id: 'hand_l', name: 'Main G', x: 92, y: 62, size: 8, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
-  { id: 'hand_r', name: 'Main D', x: 8, y: 62, size: 8, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
+
+  // MAINS DÉTAILLÉES (zones qui se chevauchent)
+  { id: 'wrist_l', name: 'Poignet G', x: 90, y: 57, size: 7, injuries: ['Entorse', 'Tendinite', 'Syndrome canal carpien', 'Fracture'] },
+  { id: 'wrist_r', name: 'Poignet D', x: 10, y: 57, size: 7, injuries: ['Entorse', 'Tendinite', 'Syndrome canal carpien', 'Fracture'] },
+  { id: 'hand_l', name: 'Main G', x: 92, y: 62, size: 9, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'hand_r', name: 'Main D', x: 8, y: 62, size: 9, injuries: ['Entorse doigt', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'thumb_l', name: 'Pouce G', x: 94, y: 64, size: 5, injuries: ['Entorse', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'thumb_r', name: 'Pouce D', x: 6, y: 64, size: 5, injuries: ['Entorse', 'Luxation', 'Fracture', 'Contusion'] },
+  { id: 'fingers_l', name: 'Doigts G', x: 92, y: 66, size: 6, injuries: ['Entorse', 'Luxation', 'Fracture', 'Coupure'] },
+  { id: 'fingers_r', name: 'Doigts D', x: 8, y: 66, size: 6, injuries: ['Entorse', 'Luxation', 'Fracture', 'Coupure'] },
+
   { id: 'thigh_l', name: 'Cuisse G', x: 62, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
   { id: 'thigh_r', name: 'Cuisse D', x: 38, y: 65, size: 12, injuries: ['Contracture', 'Élongation', 'Déchirure', 'Contusion'] },
   { id: 'knee_l', name: 'Genou G', x: 63, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
   { id: 'knee_r', name: 'Genou D', x: 37, y: 78, size: 9, injuries: ['Entorse LCA', 'Entorse LCL', 'Ménisque', 'Tendinite rotulienne'] },
   { id: 'shin_l', name: 'Tibia G', x: 64, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
   { id: 'shin_r', name: 'Tibia D', x: 36, y: 88, size: 9, injuries: ['Périostite (shin splints)', 'Contusion', 'Fracture de fatigue'] },
+
+  // PIEDS DÉTAILLÉS (zones qui se chevauchent)
+  { id: 'ankle_l', name: 'Cheville G', x: 65, y: 92, size: 7, injuries: ['Entorse', 'Fracture', 'Tendinite', 'Contusion'] },
+  { id: 'ankle_r', name: 'Cheville D', x: 35, y: 92, size: 7, injuries: ['Entorse', 'Fracture', 'Tendinite', 'Contusion'] },
   { id: 'foot_l', name: 'Pied G', x: 66, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
   { id: 'foot_r', name: 'Pied D', x: 34, y: 96, size: 8, injuries: ['Fasciite plantaire', 'Entorse', 'Fracture orteil'] },
+  { id: 'toes_l', name: 'Orteils G', x: 66, y: 98, size: 5, injuries: ['Fracture', 'Luxation', 'Ongle incarné', 'Contusion'] },
+  { id: 'toes_r', name: 'Orteils D', x: 34, y: 98, size: 5, injuries: ['Fracture', 'Luxation', 'Ongle incarné', 'Contusion'] },
 ];
 
 // ============================================
@@ -63,6 +78,16 @@ export const BODY_ZONES_BACK: BodyZone[] = [
   { id: 'hamstring_r', name: 'Ischio D', x: 62, y: 68, size: 10, injuries: ['Élongation', 'Déchirure', 'Claquage', 'Contracture'] },
   { id: 'calf_l', name: 'Mollet G', x: 37, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
   { id: 'calf_r', name: 'Mollet D', x: 63, y: 82, size: 10, injuries: ['Contracture', 'Claquage', 'Déchirure', 'Crampe'] },
+
+  // MAINS DOS (zones qui se chevauchent)
+  { id: 'wrist_back_l', name: 'Poignet G (Dos)', x: 8, y: 57, size: 7, injuries: ['Entorse', 'Tendinite', 'Contusion'] },
+  { id: 'wrist_back_r', name: 'Poignet D (Dos)', x: 92, y: 57, size: 7, injuries: ['Entorse', 'Tendinite', 'Contusion'] },
+  { id: 'hand_back_l', name: 'Main G (Dos)', x: 6, y: 62, size: 8, injuries: ['Contusion', 'Fracture', 'Luxation'] },
+  { id: 'hand_back_r', name: 'Main D (Dos)', x: 94, y: 62, size: 8, injuries: ['Contusion', 'Fracture', 'Luxation'] },
+
+  // PIEDS DOS (zones qui se chevauchent)
+  { id: 'ankle_back_l', name: 'Cheville G (Dos)', x: 35, y: 92, size: 7, injuries: ['Entorse', 'Tendon Achille'] },
+  { id: 'ankle_back_r', name: 'Cheville D (Dos)', x: 65, y: 92, size: 7, injuries: ['Entorse', 'Tendon Achille'] },
   { id: 'heel_l', name: 'Talon G', x: 35, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
   { id: 'heel_r', name: 'Talon D', x: 65, y: 95, size: 8, injuries: ['Épine calcanéenne', 'Contusion', 'Fasciite'] },
 ];

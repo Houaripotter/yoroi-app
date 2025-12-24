@@ -118,8 +118,8 @@ export const QuickHydration: React.FC<QuickHydrationProps> = ({
 
   // Calculs
   const progress = Math.min((currentMl / targetMl) * 100, 100);
-  const currentL = (currentMl / 1000).toFixed(1);
-  const targetL = (targetMl / 1000).toFixed(1);
+  const currentL = (currentMl / 1000).toFixed(2);
+  const targetL = (targetMl / 1000).toFixed(2);
 
   // Animation de la barre
   useEffect(() => {

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Polygon, Line, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Polygon, Line, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import {
   Scale,
@@ -45,13 +45,17 @@ import {
   Waves,
   Bed,
   Bell,
+  Stethoscope,
+  Scissors,
   Settings,
 } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings, Profile, Weight, Training } from '@/lib/database';
+import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getDailyQuote, Citation } from '@/lib/citations';
 import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
@@ -59,17 +63,33 @@ import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { RanksModal } from '@/components/RanksModal';
 import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
-import { getUserMode } from '@/lib/fighterModeService';
+import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
+import { HydrationLottieCard } from '@/components/cards/HydrationLottieCard';
+import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
+import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
+import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
+import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 
+// Composants animés premium
+import AnimatedAvatar from '@/components/AnimatedAvatar';
+import AnimatedCounter from '@/components/AnimatedCounter';
+import AnimatedProgressBar from '@/components/AnimatedProgressBar';
+import { AnimatedCard } from '@/components/AnimatedCard';
+import AnimatedRing from '@/components/AnimatedRing';
+import PulsingBadge from '@/components/PulsingBadge';
+import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
+import AnimatedSleepWave from '@/components/AnimatedSleepWave';
+import AnimatedRank from '@/components/AnimatedRank';
+
 // Services
-import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats } from '@/lib/sleepService';
+import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSleepGoal } from '@/lib/sleepService';
 import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
@@ -108,6 +128,15 @@ export default function HomeScreen() {
   const [loadStats, setLoadStats] = useState<WeeklyLoadStats | null>(null);
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
   const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
+  const [bodyComposition, setBodyComposition] = useState<any>(null);
+  const [sleepGoal, setSleepGoal] = useState(480); // 8h par défaut
+  const [nextEvent, setNextEvent] = useState<{
+    type: 'competition' | 'combat' | null;
+    name: string;
+    daysLeft: number;
+    date: string;
+    sport?: string;
+  } | null>(null);
 
   // Hydratation functions
   const loadHydration = useCallback(async () => {
@@ -149,7 +178,7 @@ export default function HomeScreen() {
   // Chargement des données
   const loadData = useCallback(async () => {
     try {
-      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report] = await Promise.all([
+      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event] = await Promise.all([
         getProfile(),
         getLatestWeight(),
         getWeights(30),
@@ -161,6 +190,7 @@ export default function HomeScreen() {
         getWeeklyLoadStats(),
         getDailyChallenges(),
         generateWeeklyReport(),
+        getNextEvent(),
       ]);
 
       setProfile(profileData);
@@ -174,6 +204,13 @@ export default function HomeScreen() {
       setLoadStats(load);
       setDailyChallenges(challenges);
       setWeeklyReport(report);
+      setNextEvent(event);
+
+      const bodyComp = await getLatestBodyComposition();
+      setBodyComposition(bodyComp);
+
+      const goal = await getSleepGoal();
+      setSleepGoal(goal);
 
       setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
       loadHydration();
@@ -189,7 +226,11 @@ export default function HomeScreen() {
   const level = getLevel(totalPoints);
   const currentWeight = latestWeight?.weight || null;
   const startWeight = profile?.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1]?.weight : null);
+  const targetWeight = profile?.target_weight || null;
   const weightLost = currentWeight && startWeight ? startWeight - currentWeight : 0;
+  const totalToLose = startWeight && targetWeight ? Math.max(0, startWeight - targetWeight) : null;
+  const remainingToLose = currentWeight && targetWeight ? Math.max(0, currentWeight - targetWeight) : null;
+  const weightProgress = totalToLose && currentWeight ? Math.min(1, Math.max(0, (startWeight! - currentWeight) / totalToLose)) : 0;
 
   // Tendance
   const avgWeeklyLoss = weightHistory.length >= 7
@@ -275,6 +316,15 @@ export default function HomeScreen() {
 
   // Animation batterie
   const batteryAnim = useRef(new Animated.Value(0)).current;
+  const weightPulseAnim = useRef(new Animated.Value(1)).current;
+  const streakFlameAnim = useRef(new Animated.Value(1)).current;
+  const weightProgressAnim = useRef(new Animated.Value(0)).current;
+  const sleepDebtAnim = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim1 = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim2 = useRef(new Animated.Value(0)).current;
+  const sleepZzzAnim3 = useRef(new Animated.Value(0)).current;
+  const chargePulseAnim = useRef(new Animated.Value(1)).current;
+  const chargeWaveAnim = useRef(new Animated.Value(0)).current;
   
   // Animer la batterie quand le pourcentage change
   React.useEffect(() => {
@@ -284,6 +334,90 @@ export default function HomeScreen() {
       useNativeDriver: false,
     }).start();
   }, [batteryPercent]);
+
+  // Animation progress poids
+  React.useEffect(() => {
+    Animated.timing(weightProgressAnim, {
+      toValue: weightProgress,
+      duration: 600,
+      useNativeDriver: false,
+    }).start();
+  }, [weightProgress]);
+
+  // Animation pulse poids
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(weightPulseAnim, { toValue: 1.02, duration: 2000, useNativeDriver: true }),
+        Animated.timing(weightPulseAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // Animation flamme streak
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(streakFlameAnim, { toValue: 1.1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(streakFlameAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // Animation dette sommeil
+  React.useEffect(() => {
+    if (sleepStats) {
+      const debtPercent = Math.min(100, (sleepStats.sleepDebtHours / 10) * 100);
+      Animated.timing(sleepDebtAnim, {
+        toValue: debtPercent / 100,
+        duration: 800,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [sleepStats]);
+
+  // Animation Zzz sommeil (apparition/disparition)
+  React.useEffect(() => {
+    const createZzzAnimation = (anim: Animated.Value, delay: number) => {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+    };
+    
+    createZzzAnimation(sleepZzzAnim1, 0).start();
+    createZzzAnimation(sleepZzzAnim2, 300).start();
+    createZzzAnimation(sleepZzzAnim3, 600).start();
+  }, []);
+
+  // Animation charge (pulsation + vague)
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(chargePulseAnim, { toValue: 1.08, duration: 1500, useNativeDriver: true }),
+        Animated.timing(chargePulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    ).start();
+    
+    Animated.loop(
+      Animated.timing(chargeWaveAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: false,
+      })
+    ).start();
+  }, []);
 
   // Rendu icône batterie status
   const renderBatteryIcon = () => {
@@ -329,63 +463,152 @@ export default function HomeScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setLogoViewerVisible(true)}>
-            <Image source={require('@/assets/images/logo2010.png')} style={styles.logo} resizeMode="contain" />
-              </TouchableOpacity>
+            <Image source={require('@/assets/logo d\'app/logo1.png')} style={styles.logo} resizeMode="contain" />
+          </TouchableOpacity>
           <View style={styles.headerText}>
             <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
             <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
-            </View>
+            {/* Citation juste en dessous */}
+            {dailyQuote && (
+              <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
+                <Sparkles size={12} color={colors.accent} />
+                <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={1}>"{dailyQuote.text}"</Text>
+                </View>
+                  )}
+                </View>
           <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} style={[styles.avatarBtn, { borderColor: rank.color }]}>
-            <AvatarDisplay size="medium" refreshTrigger={Date.now()} showBorder={false} />
+            <AnimatedAvatar size={70}>
+              <AvatarDisplay size="medium" refreshTrigger={Date.now()} showBorder={false} />
+            </AnimatedAvatar>
           </TouchableOpacity>
                 </View>
 
-        {/* DÉCORATION JAPONAISE */}
-        <View style={[styles.japaneseDecor, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={styles.decorLeft}>🌸</Text>
-          <Text style={styles.decorTorii}>⛩️</Text>
-          <View style={styles.decorCenter}>
-            <Text style={[styles.decorText, { color: colors.textMuted }]}>武士道</Text>
-            <Text style={[styles.decorSubtext, { color: colors.textMuted }]}>La Voie du Guerrier</Text>
-                </View>
-          <Text style={styles.decorTorii}>⛩️</Text>
-          <Text style={styles.decorRight}>🌸</Text>
-              </View>
-
-        {/* Citation */}
-        {dailyQuote && (
-          <View style={[styles.quoteCard, { backgroundColor: colors.backgroundCard }]}>
-            <Sparkles size={14} color={colors.accent} />
-            <Text style={[styles.quoteText, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
-                </View>
-        )}
-
-        {/* Stats rapides */}
-        <View style={styles.statsRow}>
-          <TouchableOpacity style={[styles.statCard, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
-            <Flame size={16} color="#F97316" />
-            <Text style={[styles.statValue, { color: '#F97316' }]}>{streak}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>jours</Text>
+        {/* Stats rapides (réduites) - Juste sous la citation */}
+        <View style={styles.statsRowCompact}>
+          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
+            <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
+              <Flame size={10} color="#F97316" />
+            </Animated.View>
+            <AnimatedCounter value={streak} style={[styles.statValueCompact, { color: '#F97316' }]} duration={800} />
+            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
               </TouchableOpacity>
-          <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Zap size={16} color={colors.accent} />
-            <Text style={[styles.statValue, { color: colors.accent }]}>{level.level}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>niveau</Text>
+          <View style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]}>
+            <Zap size={10} color={colors.accent} />
+            <AnimatedCounter value={level.level} style={[styles.statValueCompact, { color: colors.accent }]} duration={800} />
+            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
                 </View>
-          <TouchableOpacity style={[styles.statCard, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
-            <Trophy size={16} color={rank.color} />
-            <Text style={[styles.statValue, { color: rank.color }]} numberOfLines={1}>{rank.name.split(' ')[0]}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>rang</Text>
+          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
+            <Trophy size={10} color={rank.color} />
+            <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompact} delay={300} />
+            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
               </TouchableOpacity>
                 </View>
 
-        {/* BATTERIE ÉNERGIE - Horizontale */}
+        {/* ACTIONS RAPIDES : Timer, Compétition, Infirmerie, Photo */}
+        <View style={styles.actionsRowTop}>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
+            <Timer size={22} color={colors.accent} />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Timer</Text>
+            <View style={styles.timerFractionMini}>
+              <Text style={[styles.timerFractionTop, { color: colors.textSecondary }]}>Round</Text>
+              <View style={[styles.timerFractionLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.timerFractionBottom, { color: colors.textMuted }]}>Temps de repos</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => router.push(nextEvent ? '/competitions' : '/add-competition')}
+            activeOpacity={0.85}
+          >
+            {nextEvent ? (
+              <>
+                {/* Icône selon le sport avec cibles */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <MaterialCommunityIcons
+                    name="target"
+                    size={16}
+                    color="#EF4444"
+                  />
+                  {nextEvent.sport === 'jjb' || nextEvent.sport === 'judo' || nextEvent.sport === 'karate' ? (
+                    <MaterialCommunityIcons
+                      name="karate"
+                      size={26}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  ) : nextEvent.sport === 'mma' || nextEvent.sport === 'boxe' || nextEvent.sport === 'muay_thai' ? (
+                    <MaterialCommunityIcons
+                      name="boxing-glove"
+                      size={26}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  ) : (
+                    <Trophy
+                      size={26}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  )}
+                  <MaterialCommunityIcons
+                    name="target"
+                    size={16}
+                    color="#EF4444"
+                  />
+                </View>
+                {/* J-XX avec couleur selon échéance */}
+                <Text style={[
+                  styles.actionLabelSquare,
+                  {
+                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981',
+                    fontSize: 13,
+                    fontWeight: '900'
+                  }
+                ]}>
+                  J-{nextEvent.daysLeft}
+                </Text>
+                {/* Nom abrégé */}
+                <Text
+                  style={[
+                    styles.actionLabelSquare,
+                    {
+                      color: colors.textPrimary,
+                      fontSize: nextEvent.name.length > 12 ? 9 : 11,
+                      fontWeight: '600',
+                      marginTop: -2,
+                    }
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {nextEvent.name}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Trophy size={22} color={colors.accent} />
+                <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Compét</Text>
+                <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 9, marginTop: -2 }]}>Ajouter</Text>
+              </>
+            )}
+              </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
+            <MaterialCommunityIcons name="hospital-box" size={26} color="#EF4444" />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Infirmerie</Text>
+              </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
+            <Camera size={22} color="#10B981" />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Photo</Text>
+            <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 9, marginTop: -2 }]}>Avant/Après</Text>
+              </TouchableOpacity>
+                </View>
+
+        {/* BATTERIE ÉNERGIE - Horizontale (Sous les actions, au-dessus de poids/hydratation) */}
+        <AnimatedCard index={0}>
         <TouchableOpacity style={[styles.batteryCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/energy')} activeOpacity={0.8}>
           <View style={styles.batteryHeader}>
+            <AnimatedRing progress={batteryPercent / 100} size={32} strokeWidth={3} color={batteryStatus.color} backgroundColor={`${batteryStatus.color}20`} />
             <Battery size={16} color={batteryStatus.color} />
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ÉNERGIE DU JOUR</Text>
-            <Text style={[styles.batteryPercentSmall, { color: batteryStatus.color }]}>{Math.round(batteryPercent)}%</Text>
-                </View>
+            <AnimatedCounter value={Math.round(batteryPercent)} suffix="%" style={[styles.batteryPercentSmall, { color: batteryStatus.color }]} duration={1000} />
+            </View>
           
           {/* Batterie horizontale large */}
           <View style={styles.batteryHorizontal}>
@@ -401,7 +624,7 @@ export default function HomeScreen() {
                           />
               {/* Effet brillance */}
               <View style={styles.batteryShine} />
-              </View>
+                  </View>
             {/* Tête de la batterie (à droite) */}
             <View style={[styles.batteryHHead, { backgroundColor: colors.border }]} />
                 </View>
@@ -411,146 +634,76 @@ export default function HomeScreen() {
             <View style={[styles.batteryStatusBadge, { backgroundColor: `${batteryStatus.color}15` }]}>
               {renderBatteryIcon()}
               <Text style={[styles.batteryLabel, { color: batteryStatus.color }]}>{batteryStatus.label}</Text>
-                </View>
+              </View>
             <ChevronRight size={14} color={colors.textMuted} />
                 </View>
               </TouchableOpacity>
+        </AnimatedCard>
 
-        {/* GRILLE : Poids + Hydratation */}
-        <View style={styles.grid2}>
-          {/* Poids */}
-          <TouchableOpacity style={[styles.gridCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/body-composition')}>
-            <View style={styles.cardHeader}>
-              <Scale size={14} color={colors.accent} />
-              <Text style={[styles.cardTitle, { color: colors.textMuted }]}>POIDS</Text>
-              {trend === 'down' && <TrendingDown size={12} color={colors.success} />}
-              {trend === 'up' && <TrendingUp size={12} color={colors.warning} />}
-                </View>
-            <Text style={[styles.bigValue, { color: colors.textPrimary }]}>
-              {currentWeight || '--'}<Text style={[styles.unit, { color: colors.textMuted }]}> kg</Text>
-                    </Text>
-            {weightLost > 0 && <Text style={[styles.subValue, { color: colors.success }]}>-{weightLost.toFixed(1)} kg</Text>}
-            <View style={styles.miniChart}>
-              {last7Weights.map((w, i) => {
-                const max = Math.max(...last7Weights.map(x => x.weight || 0));
-                const min = Math.min(...last7Weights.map(x => x.weight || 0));
-                const range = max - min || 1;
-                const h = ((w.weight || min) - min) / range * 20 + 4;
-                return <View key={i} style={[styles.miniBar, { height: h, backgroundColor: i === last7Weights.length - 1 ? colors.accent : colors.border }]} />;
-              })}
-                </View>
-              </TouchableOpacity>
-
-          {/* Hydratation - Bidon de sport */}
-          <View style={[styles.gridCard, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.cardHeader}>
-              <Droplets size={14} color="#06B6D4" />
-              <Text style={[styles.cardTitle, { color: colors.textMuted }]}>HYDRATATION</Text>
-                  </View>
-            <TouchableOpacity onPress={() => router.push('/hydration')} style={styles.bidonWrap}>
-              {/* Bidon de sport */}
-              <View style={styles.bidon}>
-                {/* Bouchon */}
-                <View style={[styles.bidonCap, { backgroundColor: '#0891B2' }]}>
-                  <View style={[styles.bidonCapTop, { backgroundColor: '#06B6D4' }]} />
-                </View>
-                {/* Corps du bidon */}
-                <View style={[styles.bidonBody, { borderColor: colors.border }]}>
-                  {/* Eau animée */}
-                  <Animated.View 
-                            style={[
-                      styles.bidonWater, 
-                              {
-                        height: waterAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                              }
-                            ]}
-                          />
-                  {/* Reflet */}
-                  <View style={styles.bidonShine} />
-                  {/* Graduations */}
-                  <View style={styles.bidonGrads}>
-                    <View style={[styles.bidonGrad, { backgroundColor: colors.border }]} />
-                    <View style={[styles.bidonGrad, { backgroundColor: colors.border }]} />
-                    <View style={[styles.bidonGrad, { backgroundColor: colors.border }]} />
-                        </View>
-                </View>
-              </View>
-              {/* Valeur */}
-              <Text style={[styles.hydroValue, { color: colors.textPrimary }]}>{(hydration / 1000).toFixed(1)}L</Text>
-              <Text style={[styles.hydroGoal, { color: colors.textMuted }]}>/ 2.5L</Text>
-            </TouchableOpacity>
-            <View style={styles.hydroBtns}>
-              <TouchableOpacity style={[styles.hydroBtn, { backgroundColor: '#EF444420' }]} onPress={() => addWater(-250)}>
-                <Minus size={12} color="#EF4444" />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.hydroBtn, { backgroundColor: '#06B6D420' }]} onPress={() => addWater(250)}>
-                <Text style={styles.hydroBtnTxt}>+250</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.hydroBtn, { backgroundColor: '#06B6D430' }]} onPress={() => addWater(500)}>
-                <Text style={styles.hydroBtnTxt}>+500</Text>
-              </TouchableOpacity>
-                  </View>
-                  </View>
-                </View>
-
-        {/* GRILLE : Sommeil + Charge */}
-        <View style={styles.grid2}>
-          {/* Dette de Sommeil */}
-          <TouchableOpacity style={[styles.gridCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/sleep')}>
-            <View style={styles.cardHeader}>
-              <Moon size={14} color="#8B5CF6" />
-              <Text style={[styles.cardTitle, { color: colors.textMuted }]}>SOMMEIL</Text>
-              </View>
-            <Text style={[styles.bigValue, { color: colors.textPrimary }]}>
-              {sleepStats ? formatSleepDuration(sleepStats.lastNightDuration) : '--'}
-            </Text>
-            <Text style={[styles.subValue, { color: sleepStats && sleepStats.sleepDebtHours > 5 ? '#EF4444' : colors.textMuted }]}>
-              Dette: {sleepStats?.sleepDebtHours || 0}h
-            </Text>
-            {sleepStats && sleepStats.sleepDebtHours > 5 && (
-              <View style={[styles.alertBadge, { backgroundColor: '#EF444420' }]}>
-                <AlertTriangle size={10} color="#EF4444" />
-                <Text style={styles.alertText}>Fatigue</Text>
-                </View>
-              )}
+        {/* GRID 2x2 LOTTIE : Poids + Hydratation (haut), Sommeil + Charge (bas) */}
+        <View style={styles.gridLottieContainer}>
+          {/* Ligne 1 : Poids + Hydratation */}
+          <View style={styles.gridLottieRow}>
+            {/* Carte Poids - Vers les stats poids */}
+            <TouchableOpacity onPress={() => router.push('/stats?tab=poids')} activeOpacity={0.9}>
+              <WeightLottieCard
+                weight={currentWeight || 0}
+                target={targetWeight || undefined}
+                trend={trend}
+                history={last7Weights.map(w => w.weight)}
+              />
             </TouchableOpacity>
 
-          {/* Charge d'Entraînement */}
-          <TouchableOpacity style={[styles.gridCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/stats')}>
-            <View style={styles.cardHeader}>
-              <Activity size={14} color={loadStats ? getRiskColor(loadStats.riskLevel) : colors.textMuted} />
-              <Text style={[styles.cardTitle, { color: colors.textMuted }]}>CHARGE</Text>
-                </View>
-            <Text style={[styles.bigValue, { color: loadStats ? getRiskColor(loadStats.riskLevel) : colors.textPrimary }]}>
-              {loadStats ? formatLoad(loadStats.totalLoad) : '0'}
-            </Text>
-            <Text style={[styles.subValue, { color: colors.textMuted }]}>
-              {loadStats?.sessionsCount || 0} séances
-            </Text>
-            {loadStats && loadStats.riskLevel !== 'safe' && (
-              <View style={[styles.alertBadge, { backgroundColor: `${getRiskColor(loadStats.riskLevel)}20` }]}>
-                <AlertTriangle size={10} color={getRiskColor(loadStats.riskLevel)} />
-                <Text style={[styles.alertText, { color: getRiskColor(loadStats.riskLevel) }]}>
-                  {loadStats.riskLevel === 'danger' ? 'Danger' : 'Attention'}
-                </Text>
-                </View>
-            )}
-          </TouchableOpacity>
-              </View>
+            {/* Carte Hydratation */}
+            <HydrationLottieCard
+              currentMl={hydration}
+              goalMl={HYDRATION_GOAL}
+              onAddMl={(amountMl) => addWater(amountMl)}
+            />
+          </View>
+
+          {/* Ligne 2 : Sommeil + Charge */}
+          <View style={styles.gridLottieRow}>
+            {/* Carte Sommeil */}
+            <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
+              <SleepLottieCard
+                hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+                quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
+                debt={sleepStats?.sleepDebtHours || 0}
+                goal={sleepGoal / 60}
+              />
+            </TouchableOpacity>
+
+            {/* Carte Charge */}
+            <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
+              <ChargeLottieCard
+                level={loadStats?.riskLevel || 'optimal'}
+                totalLoad={loadStats?.totalLoad || 0}
+                maxLoad={2000}
+                sessions={trainings.filter(t => {
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return new Date(t.date) >= weekAgo;
+                }).length}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* DÉFIS DU JOUR */}
+        <AnimatedCard index={1}>
         <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
           <View style={styles.challengesHeader}>
             <Target size={16} color={colors.accent} />
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>DÉFIS DU JOUR</Text>
             <ChevronRight size={14} color={colors.textMuted} />
-                  </View>
+            </View>
           <View style={styles.challengesList}>
             {dailyChallenges.slice(0, 3).map((challenge) => (
               <View key={challenge.id} style={styles.challengeItem}>
                 <View style={styles.challengeIconWrap}>
                   {renderChallengeIcon(challenge.icon)}
-                  </View>
+            </View>
                 <View style={styles.challengeInfo}>
                   <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
                   <View style={[styles.challengeProgress, { backgroundColor: colors.border }]}>
@@ -558,43 +711,58 @@ export default function HomeScreen() {
                       width: `${Math.min(100, (challenge.progress.current / challenge.progress.target) * 100)}%`,
                       backgroundColor: challenge.progress.completed ? colors.success : colors.accent 
                     }]} />
-                </View>
-              </View>
-                <View style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}>
+        </View>
+          </View>
+                <PulsingBadge
+                  color={challenge.progress.completed ? colors.success : colors.accent}
+                  enabled={challenge.progress.completed}
+                  style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
+                >
                   <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
                   <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : colors.accent }]}>
                     +{challenge.reward.xp}
-            </Text>
-      </View>
+                  </Text>
+                </PulsingBadge>
       </View>
           ))}
-      </View>
-          </TouchableOpacity>
+        </View>
+                </TouchableOpacity>
+        </AnimatedCard>
 
         {/* RADAR DE PERFORMANCE */}
-        <PerformanceRadar data={radarData} />
+        <AnimatedCard index={2}>
+        <TouchableOpacity onPress={() => router.push('/stats?tab=radar')} activeOpacity={0.8}>
+          <PerformanceRadar data={radarData} />
+        </TouchableOpacity>
+        </AnimatedCard>
 
         {/* COURBE HEALTHSPAN */}
-        <HealthspanChart />
+        <AnimatedCard index={3}>
+        <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
+          <HealthspanChart />
+        </TouchableOpacity>
+        </AnimatedCard>
 
         {/* RAPPORT DE MISSION */}
         {weeklyReport && (
+          <AnimatedCard index={4}>
           <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
             <View style={styles.reportHeader}>
               <FileText size={16} color={colors.accent} />
               <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RAPPORT DE MISSION</Text>
-          </View>
+              </View>
             <View style={styles.reportContent}>
               <View style={[styles.gradeBadge, { backgroundColor: colors.accent }]}>
                 <Text style={styles.gradeText}>{weeklyReport.verdict.grade}</Text>
-          </View>
+            </View>
               <View style={styles.reportInfo}>
                 <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport.verdict.title}</Text>
                 <Text style={[styles.reportScore, { color: colors.textMuted }]}>Score: {weeklyReport.overallScore}/100</Text>
-        </View>
+              </View>
               <ChevronRight size={16} color={colors.textMuted} />
-          </View>
-          </TouchableOpacity>
+            </View>
+                    </TouchableOpacity>
+          </AnimatedCard>
         )}
 
         {/* ACTIONS RAPIDES */}
@@ -603,7 +771,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/entry')}>
             <Scale size={20} color={colors.accent} />
             <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Pesée</Text>
-          </TouchableOpacity>
+              </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/add-training')}>
             <Dumbbell size={20} color="#8B5CF6" />
             <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Training</Text>
@@ -615,8 +783,8 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')}>
             <Timer size={20} color="#F59E0B" />
             <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Timer</Text>
-          </TouchableOpacity>
-        </View>
+                    </TouchableOpacity>
+                  </View>
 
         {/* OUTILS */}
         <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>OUTILS</Text>
@@ -624,7 +792,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/measurements')}>
             <Ruler size={16} color={colors.accent} />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Mesures</Text>
-                </TouchableOpacity>
+                  </TouchableOpacity>
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')}>
             <Heart size={16} color="#EF4444" />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Infirmerie</Text>
@@ -636,13 +804,13 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/notifications')}>
             <Bell size={16} color="#F59E0B" />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Notifs</Text>
-          </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          </View>
         <View style={styles.toolsRow}>
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/appearance')}>
             <Palette size={16} color={colors.accent} />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Thèmes</Text>
-          </TouchableOpacity>
+              </TouchableOpacity>
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')}>
             <Target size={16} color="#EF4444" />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Cut</Text>
@@ -650,7 +818,7 @@ export default function HomeScreen() {
           <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/settings')}>
             <Settings size={16} color={colors.textMuted} />
             <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Réglages</Text>
-          </TouchableOpacity>
+              </TouchableOpacity>
         </View>
 
         {/* CALENDRIER STREAK */}
@@ -664,16 +832,16 @@ export default function HomeScreen() {
               <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')}>
                 <Scale size={16} color="#EF4444" />
                 <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Mode Cut</Text>
-              </TouchableOpacity>
+                    </TouchableOpacity>
               <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')}>
                 <Trophy size={16} color={colors.accent} />
                 <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Compétitions</Text>
-              </TouchableOpacity>
+                    </TouchableOpacity>
               <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')}>
                 <Medal size={16} color={colors.accent} />
                 <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Palmarès</Text>
-              </TouchableOpacity>
-            </View>
+                    </TouchableOpacity>
+                  </View>
           </>
         )}
 
@@ -697,80 +865,196 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16 },
 
   // Header
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  logo: { width: 44, height: 44, borderRadius: 12 },
-  headerText: { flex: 1, marginLeft: 10 },
-  greeting: { fontSize: 12, fontWeight: '500' },
-  userName: { fontSize: 18, fontWeight: '800' },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  logo: { width: 56, height: 56, borderRadius: 14 },
+  headerText: { flex: 1, marginLeft: 12 },
+  greeting: { fontSize: 14, fontWeight: '600' },
+  userName: { fontSize: 22, fontWeight: '900' },
   avatarBtn: { borderWidth: 3, borderRadius: 16, overflow: 'hidden', backgroundColor: '#FFFFFF' },
 
-  // Décoration japonaise
-  japaneseDecor: { 
+  // Décoration japonaise inline (dans le header)
+  japaneseDecorInline: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10, 
-    paddingHorizontal: 16,
-    borderRadius: 12, 
-    marginBottom: 12,
     gap: 4,
+    marginTop: 2,
   },
-  decorLeft: { fontSize: 16 },
-  decorRight: { fontSize: 16 },
-  decorTorii: { fontSize: 18 },
-  decorCenter: { alignItems: 'center', marginHorizontal: 6 },
-  decorText: { fontSize: 14, fontWeight: '800' },
-  decorSubtext: { fontSize: 9, fontStyle: 'italic', marginTop: 1 },
+  decorEmoji: { fontSize: 12 },
+  decorTorii: { fontSize: 14 },
+
+  // Actions rapides en haut (carrés)
+  actionsRowTop: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  actionBtnSquare: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20, paddingHorizontal: 15, borderRadius: 12, gap: 6, minHeight: 88 },
+  actionLabelSquare: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  timerFractionMini: {
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
+  },
+  timerFractionTop: {
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  timerFractionLine: {
+    width: 40,
+    height: 1,
+    marginVertical: 1,
+  },
+  timerFractionBottom: {
+    fontSize: 8,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
 
   // Quote
   quoteCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, marginBottom: 12, gap: 6 },
   quoteText: { flex: 1, fontSize: 11, fontStyle: 'italic', lineHeight: 16 },
+  quoteCardInline: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginTop: 4, gap: 4 },
+  quoteTextInline: { flex: 1, fontSize: 10, fontStyle: 'italic', lineHeight: 14 },
 
   // Stats
+  // Carte poids principale
+  weightCard: { padding: 16, borderRadius: 14, marginBottom: 12 },
+  weightHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  weightTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1 },
+  weightMain: { marginBottom: 12 },
+  weightValue: { fontSize: 36, fontWeight: '900' },
+  weightUnit: { fontSize: 20, fontWeight: '600' },
+  weightInfo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  weightChange: { fontSize: 13, fontWeight: '700' },
+  weightDate: { fontSize: 11 },
+  weightCompactValue: { fontSize: 28, fontWeight: '900' },
+  weightUnitSmall: { fontSize: 14, fontWeight: '700' },
+  weightSub: { fontSize: 11, marginTop: 2 },
+  progressBar: { height: 8, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 8 },
+  progressFill: { height: '100%', borderRadius: 6 },
+  remainingText: { fontSize: 11, fontWeight: '700', marginTop: 4 },
+  compRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  compItem: { alignItems: 'center', gap: 2 },
+  compLabel: { fontSize: 9, fontWeight: '600' },
+  compValue: { fontSize: 14, fontWeight: '800' },
+  compPlaceholder: { alignItems: 'center', justifyContent: 'center', marginTop: 8, paddingVertical: 12, gap: 4 },
+  compPlaceholderText: { fontSize: 10, fontWeight: '600' },
+  debtProgressWrapper: { marginTop: 6, position: 'relative' },
+  debtProgressBar: { height: 6, borderRadius: 3, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden' },
+  debtProgressFill: { height: '100%', borderRadius: 3 },
+  sleepZzzContainer: { flexDirection: 'row', alignItems: 'center', gap: 1, position: 'absolute', right: 4, top: -12 },
+  sleepZzz: { fontSize: 14, fontWeight: '900', color: '#8B5CF6', textShadowColor: 'rgba(255,255,255,0.8)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
+  sleepQualityRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  sleepDot: { width: 6, height: 6, borderRadius: 3 },
+  sleepQualityText: { fontSize: 9, fontWeight: '600' },
+  sleepDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  sleepDetailItem: { alignItems: 'center', gap: 2 },
+  sleepDetailLabel: { fontSize: 8, fontWeight: '600' },
+  sleepDetailValue: { fontSize: 11, fontWeight: '700' },
+  sleepQualityStars: { flexDirection: 'row', gap: 2 },
+  sleepInfoRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
+  sleepInfoBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  sleepInfoText: { fontSize: 9, fontWeight: '700' },
+  sleepTrendBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  sleepTrendText: { fontSize: 9, fontWeight: '700' },
+  sleepWeekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 6, height: 24, width: '100%', overflow: 'hidden' },
+  sleepWeekBar: { flex: 1, justifyContent: 'flex-end', height: '100%', maxWidth: '14%' },
+  sleepWeekBarFill: { borderRadius: 2, minHeight: 3, width: '100%' },
+  sleepCircleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8, gap: 12 },
+  sleepCircleInfo: { alignItems: 'center', gap: 2 },
+  sleepCircleValue: { fontSize: 18, fontWeight: '900' },
+  sleepCircleLabel: { fontSize: 9, fontWeight: '600' },
+  sleepWaveContainer: { alignItems: 'center', marginVertical: 4 },
+  sleepWaveInfo: { alignItems: 'center', gap: 2, marginTop: -15 },
+  sleepOverlayInfo: { position: 'absolute', top: 10, left: 10, zIndex: 10 },
+  sleepValue: { fontSize: 20, fontWeight: '900', marginBottom: 2 },
+  sleepLabel: { fontSize: 11, fontWeight: '600' },
+  chargeGaugeContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8, gap: 12 },
+  chargeGaugeInfo: { alignItems: 'center', gap: 2 },
+  chargeGaugeValue: { fontSize: 18, fontWeight: '900' },
+  chargeGaugeLabel: { fontSize: 9, fontWeight: '600' },
+  loadProgressBar: { height: 8, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.06)', overflow: 'hidden', marginTop: 6, position: 'relative' },
+  loadProgressFill: { height: '100%', borderRadius: 4, position: 'relative', overflow: 'hidden' },
+  loadWave: { position: 'absolute', top: 0, bottom: 0, width: '50%', backgroundColor: 'rgba(255,255,255,0.3)', transform: [{ skewX: '-20deg' }] },
+  loadIndicatorRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  loadDot: { width: 6, height: 6, borderRadius: 3 },
+  loadIndicatorText: { fontSize: 9, fontWeight: '600' },
+  loadDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
+  loadDetailItem: { alignItems: 'center', gap: 2 },
+  loadDetailLabel: { fontSize: 8, fontWeight: '600' },
+  loadDetailValue: { fontSize: 11, fontWeight: '700' },
+  loadInfoRow: { flexDirection: 'row', gap: 4, marginTop: 6 },
+  loadInfoBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  loadInfoText: { fontSize: 9, fontWeight: '700' },
+  loadTrendBadge: { paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6 },
+  loadTrendText: { fontSize: 9, fontWeight: '700' },
+  loadWeekChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 6, height: 24, width: '100%', overflow: 'hidden' },
+  loadWeekBar: { flex: 1, justifyContent: 'flex-end', height: '100%', maxWidth: '14%' },
+  loadWeekBarFill: { borderRadius: 2, minHeight: 3, width: '100%' },
+  loadAdvice: { fontSize: 8, fontWeight: '500', marginTop: 4, fontStyle: 'italic' },
+
   statsRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
-  statCard: { flex: 1, alignItems: 'center', padding: 8, borderRadius: 12 },
-  statValue: { fontSize: 18, fontWeight: '800', marginTop: 2 },
-  statLabel: { fontSize: 8, fontWeight: '600' },
+  statCard: { flex: 1, alignItems: 'center', padding: 6, borderRadius: 10 },
+  statValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
+  statLabel: { fontSize: 7, fontWeight: '600' },
+  statsRowCompact: { flexDirection: 'row', gap: 4, marginBottom: 10, marginTop: 4 },
+  statCardCompact: { flex: 1, alignItems: 'center', padding: 4, borderRadius: 8 },
+  statValueCompact: { fontSize: 12, fontWeight: '800', marginTop: 1 },
+  statLabelCompact: { fontSize: 6, fontWeight: '600' },
 
   // Battery horizontale
-  batteryCard: { padding: 14, borderRadius: 14, marginBottom: 12 },
-  batteryHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  batteryPercentSmall: { fontSize: 16, fontWeight: '900', marginLeft: 'auto' },
-  batteryHorizontal: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  batteryHBody: { flex: 1, height: 36, borderWidth: 3, borderRadius: 8, overflow: 'hidden', position: 'relative' },
-  batteryHLevel: { height: '100%', borderRadius: 4 },
-  batteryShine: { position: 'absolute', top: 4, left: 8, right: 8, height: 6, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 3 },
-  batteryHHead: { width: 8, height: 18, borderTopRightRadius: 4, borderBottomRightRadius: 4, marginLeft: -2 },
+  batteryCard: { padding: 6, borderRadius: 12, marginBottom: 8 },
+  batteryHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
+  batteryPercentSmall: { fontSize: 13, fontWeight: '900', marginLeft: 'auto' },
+  batteryHorizontal: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 },
+  batteryHBody: { flex: 1, height: 16, borderWidth: 1.5, borderRadius: 5, overflow: 'hidden', position: 'relative' },
+  batteryHLevel: { height: '100%', borderRadius: 3 },
+  batteryShine: { position: 'absolute', top: 1, left: 3, right: 3, height: 3, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 1.5 },
+  batteryHHead: { width: 5, height: 10, borderTopRightRadius: 2, borderBottomRightRadius: 2, marginLeft: -1.5 },
   batteryFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  batteryStatusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, gap: 5 },
-  batteryLabel: { fontSize: 11, fontWeight: '600' },
+  batteryStatusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, gap: 4 },
+  batteryLabel: { fontSize: 10, fontWeight: '600' },
 
-  // Grid
-  grid2: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  gridCard: { flex: 1, padding: 12, borderRadius: 14 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  // Grid 2x2
+  gridContainer: { gap: 12, marginBottom: 10, width: '100%' },
+  gridRow: { flexDirection: 'row', gap: 12 },
+  squareCard: { flex: 1, aspectRatio: 1, borderRadius: 14, overflow: 'hidden' },
+
+  // Grid Lottie - Layout simplifié pour cartes uniformes
+  gridLottieContainer: { marginBottom: 12, paddingHorizontal: 8 },
+  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  gridCard: { flex: 1, padding: 16, borderRadius: 14, minHeight: 180, overflow: 'hidden' },
+  gridCardLarge: { flex: 1, padding: 16, borderRadius: 14, minHeight: 160 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
   cardTitle: { fontSize: 8, fontWeight: '700', letterSpacing: 1, flex: 1 },
+  cardTitleLarge: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1 },
   bigValue: { fontSize: 26, fontWeight: '900' },
+  bigValueLarge: { fontSize: 32, fontWeight: '900', marginTop: 4 },
   unit: { fontSize: 12, fontWeight: '600' },
   subValue: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  subValueLarge: { fontSize: 12, fontWeight: '600', marginTop: 4 },
   miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 8, height: 24 },
   miniBar: { flex: 1, borderRadius: 2, minHeight: 3 },
+  weightTrendContainer: { marginTop: 6, width: '100%', overflow: 'hidden' },
+  weightTrendChart: { height: 35, width: '100%', overflow: 'hidden' },
+  weightTrendInfo: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  weightTrendLabel: { fontSize: 8, fontWeight: '600' },
 
   // Hydration - Bidon de sport
-  bidonWrap: { alignItems: 'center', marginVertical: 4 },
+  bidonWrap: { alignItems: 'center', justifyContent: 'center', flex: 1, marginVertical: 8 },
+  bidonContainer: { alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   bidon: { alignItems: 'center' },
-  bidonCap: { width: 20, height: 10, borderTopLeftRadius: 6, borderTopRightRadius: 6 },
-  bidonCapTop: { width: 12, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 2 },
-  bidonBody: { width: 44, height: 70, borderWidth: 2, borderRadius: 10, borderTopLeftRadius: 4, borderTopRightRadius: 4, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(6,182,212,0.08)', position: 'relative' },
-  bidonWater: { width: '100%', backgroundColor: '#06B6D4', borderBottomLeftRadius: 8, borderBottomRightRadius: 8, opacity: 0.85 },
-  bidonShine: { position: 'absolute', top: 6, left: 4, width: 6, height: 40, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 3 },
-  bidonGrads: { position: 'absolute', right: 4, top: 8, bottom: 8, justifyContent: 'space-between' },
-  bidonGrad: { width: 8, height: 1 },
-  hydroValue: { fontSize: 16, fontWeight: '900', marginTop: 4 },
-  hydroGoal: { fontSize: 10, fontWeight: '500', marginTop: -2 },
-  hydroBtns: { flexDirection: 'row', gap: 4, marginTop: 6 },
-  hydroBtn: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 6 },
-  hydroBtnTxt: { fontSize: 10, fontWeight: '700', color: '#06B6D4' },
+  bidonCap: { width: 18, height: 8, borderTopLeftRadius: 5, borderTopRightRadius: 5 },
+  bidonCapTop: { width: 10, height: 3, borderRadius: 2, alignSelf: 'center', marginTop: 2 },
+  bidonBody: { width: 40, height: 55, borderWidth: 2, borderRadius: 8, borderTopLeftRadius: 3, borderTopRightRadius: 3, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(6,182,212,0.08)', position: 'relative' },
+  bidonWater: { width: '100%', backgroundColor: '#06B6D4', borderBottomLeftRadius: 6, borderBottomRightRadius: 6, opacity: 0.85 },
+  bidonShine: { position: 'absolute', top: 4, left: 3, width: 5, height: 30, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 2 },
+  bidonGrads: { position: 'absolute', right: 3, top: 6, bottom: 6, justifyContent: 'space-between' },
+  bidonGrad: { width: 6, height: 1 },
+  hydroValueContainer: { alignItems: 'center', marginTop: 4 },
+  hydroValue: { fontSize: 18, fontWeight: '900' },
+  hydroGoal: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  hydroBtns: { flexDirection: 'row', gap: 4, marginTop: 4 },
+  hydroBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minWidth: 50 },
+  hydroBtnTxt: { fontSize: 14, fontWeight: '700', color: '#06B6D4' },
 
   // Alert
   alertBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, gap: 3, marginTop: 4 },

@@ -11,10 +11,13 @@ import {
   StyleSheet,
   Linking,
   Image,
+  Modal,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, ExternalLink, Mail, MapPin, Star } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ExternalLink, Mail, MapPin, Star, X } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import {
   COACHES,
@@ -44,6 +47,7 @@ export default function PartnersScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'coaches' | 'clubs'>('coaches');
+  const [selectedPartner, setSelectedPartner] = useState<Coach | Club | null>(null);
 
   const openInstagram = (handle: string) => {
     const cleanHandle = handle.replace('@', '');
@@ -133,15 +137,7 @@ export default function PartnersScreen() {
                 key={coach.id}
                 coach={coach}
                 colors={colors}
-                onPress={() => {
-                  if (coach.instagram) {
-                    openInstagram(coach.instagram);
-                  } else if (coach.youtube) {
-                    openYoutube(coach.youtube);
-                  } else if (coach.website) {
-                    openWebsite(coach.website);
-                  }
-                }}
+                onPress={() => setSelectedPartner(coach)}
               />
             ))}
           </View>
@@ -155,13 +151,7 @@ export default function PartnersScreen() {
                 key={club.id}
                 club={club}
                 colors={colors}
-                onPress={() => {
-                  if (club.instagram) {
-                    openInstagram(club.instagram);
-                  } else if (club.website) {
-                    openWebsite(club.website);
-                  }
-                }}
+                onPress={() => setSelectedPartner(club)}
               />
             ))}
           </View>
@@ -196,6 +186,172 @@ export default function PartnersScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modal Détail Partenaire */}
+      {selectedPartner && (
+        <Modal
+          visible={!!selectedPartner}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setSelectedPartner(null)}
+        >
+          <View style={styles.detailContainer}>
+            {/* Header avec photo en grand */}
+            <View style={styles.detailHeader}>
+              <TouchableOpacity
+                onPress={() => setSelectedPartner(null)}
+                style={styles.detailCloseButton}
+              >
+                <X size={28} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              {/* Grande photo */}
+              {selectedPartner.imageUrl && (
+                <Image
+                  source={selectedPartner.imageUrl}
+                  style={styles.detailHeaderImage}
+                  resizeMode="cover"
+                />
+              )}
+
+              {/* Gradient overlay */}
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                style={styles.detailHeaderGradient}
+              />
+
+              {/* Nom et titre en overlay */}
+              <View style={styles.detailHeaderContent}>
+                <Text style={styles.detailName}>{selectedPartner.name}</Text>
+                <Text style={styles.detailRole}>
+                  {'title' in selectedPartner ? selectedPartner.title : selectedPartner.type}
+                </Text>
+              </View>
+            </View>
+
+            {/* Contenu scrollable */}
+            <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+              {/* Bio / Description */}
+              {selectedPartner.bio && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    À propos
+                  </Text>
+                  <Text style={[styles.detailBio, { color: colors.textPrimary }]}>
+                    {selectedPartner.bio}
+                  </Text>
+                </View>
+              )}
+
+              {/* Spécialités (pour les coachs) */}
+              {'specialties' in selectedPartner && selectedPartner.specialties && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    Spécialités
+                  </Text>
+                  <View style={styles.specialtiesContainer}>
+                    {selectedPartner.specialties.map((spec, i) => (
+                      <View
+                        key={i}
+                        style={[styles.specialtyBadge, { backgroundColor: colors.backgroundCard }]}
+                      >
+                        <Text style={[styles.specialtyBadgeText, { color: colors.textPrimary }]}>
+                          {spec}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Entraîneurs (pour les clubs) */}
+              {'trainers' in selectedPartner && selectedPartner.trainers && selectedPartner.trainers.length > 0 && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    Entraîneurs
+                  </Text>
+                  {selectedPartner.trainers.map((trainer, i) => (
+                    <Text key={i} style={[styles.trainerText, { color: colors.textPrimary }]}>
+                      • {trainer}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              {/* Localisation */}
+              {selectedPartner.location && (
+                <TouchableOpacity
+                  style={[styles.detailLocationCard, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    const address = selectedPartner.location!;
+                    const encodedAddress = encodeURIComponent(address);
+                    const url = Platform.select({
+                      ios: `maps://maps.apple.com/?q=${encodedAddress}`,
+                      android: `geo:0,0?q=${encodedAddress}`,
+                    });
+                    if (url) Linking.openURL(url);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MapPin size={20} color={colors.accent} strokeWidth={2} />
+                  <Text style={[styles.detailLocationText, { color: colors.accent }]}>
+                    {selectedPartner.location}
+                  </Text>
+                  <ExternalLink size={16} color={colors.accent} />
+                </TouchableOpacity>
+              )}
+
+              {/* Instagram */}
+              {selectedPartner.instagram && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    Réseaux sociaux
+                  </Text>
+                  {Array.isArray(selectedPartner.instagram) ? (
+                    selectedPartner.instagram.map((handle, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.detailInstagramButton}
+                        onPress={() => openInstagram(handle)}
+                        activeOpacity={0.7}
+                      >
+                        <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
+                        <Text style={styles.detailInstagramText}>{handle}</Text>
+                        <ExternalLink size={18} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.detailInstagramButton}
+                      onPress={() => openInstagram(selectedPartner.instagram as string)}
+                      activeOpacity={0.7}
+                    >
+                      <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.detailInstagramText}>{selectedPartner.instagram}</Text>
+                      <ExternalLink size={18} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* YouTube (pour les coachs) */}
+              {'youtube' in selectedPartner && selectedPartner.youtube && (
+                <TouchableOpacity
+                  style={[styles.detailYoutubeButton, { backgroundColor: '#FF0000' }]}
+                  onPress={() => openYoutube(selectedPartner.youtube!)}
+                  activeOpacity={0.7}
+                >
+                  <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={styles.detailYoutubeText}>YouTube</Text>
+                  <ExternalLink size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              )}
+
+              <View style={{ height: 60 }} />
+            </ScrollView>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -290,9 +446,13 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
     onPress={onPress}
     activeOpacity={0.7}
   >
-    {/* Icon */}
-    <View style={[styles.clubIcon, { backgroundColor: colors.accent }]}>
-      <Text style={styles.clubIconText}>{getClubIcon(club.type)}</Text>
+    {/* Photo - Même style que les coachs */}
+    <View style={[styles.clubPhoto, { backgroundColor: colors.backgroundLight }]}>
+      {club.imageUrl ? (
+        <Image source={club.imageUrl} style={styles.clubImage} />
+      ) : (
+        <Text style={styles.clubPhotoPlaceholder}>{getClubIcon(club.type)}</Text>
+      )}
     </View>
 
     {/* Info */}
@@ -300,36 +460,45 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
       <View style={styles.clubHeader}>
         <Text style={[styles.clubName, { color: colors.textPrimary }]}>{club.name}</Text>
         {club.featured && (
-          <View style={[styles.featuredBadgeSmall, { backgroundColor: colors.accent }]}>
-            <Star size={10} color={colors.textOnAccent} fill={colors.textOnAccent} />
+          <View style={[styles.featuredBadge, { backgroundColor: colors.accent }]}>
+            <Star size={10} color={colors.textOnAccent} />
+            <Text style={[styles.featuredText, { color: colors.textOnAccent }]}>Recommandé</Text>
           </View>
         )}
       </View>
+
       <View style={styles.clubLocation}>
         <MapPin size={12} color={colors.textMuted} />
-        <Text style={[styles.clubType, { color: colors.textMuted }]}>
+        <Text style={[styles.clubType, { color: colors.textSecondary }]}>
           {club.type} • {club.location}
         </Text>
       </View>
-{club.trainers && club.trainers.length > 0 && (
-        <Text style={[styles.clubTrainers, { color: colors.textMuted }]} numberOfLines={1}>
+
+      {club.trainers && club.trainers.length > 0 && (
+        <Text style={[styles.clubTrainers, { color: colors.textMuted }]} numberOfLines={2}>
           {club.trainers.join(' • ')}
         </Text>
       )}
-      {club.instagram && (
-        <View style={styles.clubInstagramRow}>
-          <ExternalLink size={12} color={colors.accent} />
-          <Text style={[styles.clubInstagram, { color: colors.accent }]}>{club.instagram}</Text>
-        </View>
-      )}
-      {club.website && !club.instagram && (
-        <View style={styles.clubInstagramRow}>
-          <ExternalLink size={12} color={colors.accent} />
-          <Text style={[styles.clubInstagram, { color: colors.accent }]} numberOfLines={1}>
-            Site web
-          </Text>
-        </View>
-      )}
+
+      <View style={styles.clubFooter}>
+        {club.instagram && (
+          <View style={styles.instagramRow}>
+            <ExternalLink size={14} color={colors.accent} />
+            <Text style={[styles.instagramHandle, { color: colors.accent }]}>
+              {Array.isArray(club.instagram)
+                ? `${club.instagram.length} comptes`
+                : club.instagram}
+            </Text>
+          </View>
+        )}
+        {club.featured && (
+          <View style={styles.ratingRow}>
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={12} color="#FFD700" fill="#FFD700" />
+            ))}
+          </View>
+        )}
+      </View>
     </View>
 
     {/* Arrow */}
@@ -496,16 +665,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
   },
-  clubIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
+  clubPhoto: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
-  clubIconText: {
-    fontSize: 24,
+  clubImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  clubPhotoPlaceholder: {
+    fontSize: 32,
   },
   clubInfo: {
     flex: 1,
@@ -516,37 +690,26 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   clubName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-  },
-  featuredBadgeSmall: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   clubLocation: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 4,
+    marginBottom: 8,
   },
   clubType: {
     fontSize: 13,
   },
   clubTrainers: {
     fontSize: 12,
-    marginTop: 4,
+    marginBottom: 8,
   },
-  clubInstagramRow: {
+  clubFooter: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  clubInstagram: {
-    fontSize: 12,
   },
 
   // Become partner
@@ -591,5 +754,161 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     fontStyle: 'italic',
+  },
+
+  // Detail Modal
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#E8EDF2',
+  },
+  detailHeader: {
+    height: 400,
+    position: 'relative',
+  },
+  detailCloseButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  detailHeaderImage: {
+    width: '100%',
+    height: '100%',
+  },
+  detailHeaderGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+  },
+  detailHeaderContent: {
+    position: 'absolute',
+    bottom: 32,
+    left: 24,
+    right: 24,
+  },
+  detailName: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  detailRole: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  detailScroll: {
+    flex: 1,
+  },
+  detailSection: {
+    padding: 24,
+  },
+  detailSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 16,
+  },
+  detailBio: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  specialtyBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  specialtyBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  trainerText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  detailLocationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailLocationText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  detailInstagramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#E1306C',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  detailInstagramText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+  },
+  detailYoutubeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    marginHorizontal: 24,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  detailYoutubeText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
   },
 });

@@ -12,6 +12,7 @@ export interface Coach {
   type: ProfessionalType;
   specialties: string[];
   location: string;
+  bio?: string; // Biographie / Description
   instagram?: string;
   youtube?: string;
   website?: string;
@@ -25,7 +26,8 @@ export interface Club {
   type: string;
   location: string;
   trainers?: string[];
-  instagram?: string;
+  bio?: string; // Description du club
+  instagram?: string | string[]; // Peut être un seul ou plusieurs comptes
   website?: string;
   imageUrl?: any;
   featured: boolean;
@@ -63,35 +65,38 @@ export const COACHES: Coach[] = [
   {
     id: 'fouad-loko',
     name: 'Fouad Loko',
-    title: 'Coach MMA & Personal Trainer',
+    title: 'Ex-Combattant Pro MMA & Coach',
     type: 'coach',
-    specialties: ['MMA', 'Préparation Physique', 'Personal Training', 'Transformation physique'],
+    specialties: ['MMA', 'Préparation Physique Combat', 'Personal Training', 'Coaching Pro'],
     location: 'Marseille Fight Club (MFC)',
+    bio: 'Ancien combattant Pro, Coach MMA et Personal Trainer avec une expérience internationale. Une double expertise rare : diplômé par le diplôme et par le terrain. N\'hésitez pas à visiter son Instagram pour découvrir son travail.',
     instagram: '@fouad_loko',
-    imageUrl: require('../assets/images/fouad_action.jpg'),
+    imageUrl: require('@/assets/partenaires/coachs/fouad_action.jpg'),
     featured: true,
   },
   {
     id: 'sander-bodygator',
-    name: 'Sander (Bodygator)',
-    title: 'Personal Trainer & YouTuber',
+    name: 'Sander',
+    title: 'Personal Trainer & Athlète Sports Extrêmes',
     type: 'coach',
-    specialties: ['Musculation', 'Coaching Online', 'YouTube', 'Préparation physique'],
-    location: 'International',
+    specialties: ['Personal Training', 'Sports Extrêmes', 'Préparation Physique', 'Coaching Online'],
+    location: 'Marseille',
+    bio: 'Coach sportif connu sous le nom de Bodygator. Retrouvez ses vidéos sur YouTube (Captain Sander) pour des conseils d\'entraînement et de coaching.',
     instagram: '@bodygator',
-    youtube: 'Captain Sander',
-    imageUrl: require('../assets/images/bodygator.jpg'),
+    youtube: 'https://www.youtube.com/@thesanderstalk',
+    imageUrl: require('@/assets/partenaires/coachs/bodygator.jpg'),
     featured: true,
   },
   {
     id: 'younes-kine',
     name: 'Younes',
-    title: 'Kinésithérapeute & Pratiquant JJB',
+    title: 'Kinésithérapeute du Sport & Spécialiste Hijama',
     type: 'kine',
-    specialties: ['Kinésithérapie', 'Récupération', 'Sports de Combat', 'Hijama'],
+    specialties: ['Kinésithérapie du Sport', 'Hijama Cupping', 'Rééducation Combat', 'JJB'],
     location: 'Marseille',
+    bio: 'Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.',
     instagram: '@kinesantesport16',
-    imageUrl: require('../assets/images/younes.jpg'),
+    imageUrl: require('@/assets/partenaires/kines/younes.jpg'),
     featured: true,
   },
 ];
@@ -107,11 +112,12 @@ export const CLUBS: Club[] = [
     type: 'Jiu-Jitsu Brésilien',
     location: 'Marseille - Les Olives',
     trainers: [
-      'Venimo JR',
-      'Melissa Icomb (Championne d\'Europe)',
+      'Venimo JR (Fondateur)',
+      'Melissa Icomb (Fondatrice & Championne d\'Europe)',
     ],
-    instagram: '@graciebarra_lesolives',
-    imageUrl: require('../assets/images/gracie-barra-olives.jpg'),
+    bio: 'Une académie, une famille. Créée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d\'une section féminine dynamique. La porte est grande ouverte à tout le monde : n\'hésitez pas à venir faire un cours d\'essai !',
+    instagram: ['@veninjr', '@melissa_lcomb'],
+    imageUrl: require('@/assets/partenaires/clubs/gracie-barra-olives.jpg'),
     featured: true,
   },
   {
@@ -119,8 +125,22 @@ export const CLUBS: Club[] = [
     name: 'Marseille Fight Club',
     type: 'MMA / Boxe / Sports de Combat',
     location: 'Marseille',
+    bio: 'Le club de référence à Marseille pour le MMA et le Striking. Une structure d\'élite pour progresser.',
     instagram: '@marseillefightclub',
-    imageUrl: require('../assets/images/marseille-fight-club.jpg'),
+    imageUrl: require('@/assets/partenaires/clubs/marseille-fight-club.jpg'),
+    featured: true,
+  },
+  {
+    id: 'team-sorel',
+    name: 'Team Sorel',
+    type: 'JJB / Grappling / MMA',
+    location: 'Marseille',
+    trainers: [
+      'Yvan Sorel (Head Coach)',
+    ],
+    bio: 'Club emblématique de Marseille dirigé par Yvan Sorel. Une équipe soudée qui pratique le JJB, le Grappling et le MMA. Un esprit de famille et une ambiance de guerriers.',
+    instagram: '@teamsorel',
+    imageUrl: require('@/assets/partenaires/clubs/teamsorel.jpg'),
     featured: true,
   },
 ];

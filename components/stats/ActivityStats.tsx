@@ -5,6 +5,7 @@ import { Training } from '@/lib/database';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { getSportIcon } from '@/constants/sportIcons';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -313,6 +314,9 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
             });
             const mostCommonClubName = Object.entries(clubNameCount).sort(([, a], [, b]) => b - a)[0]?.[0];
 
+            // Obtenir l'icône et la couleur du sport
+            const sportInfo = getSportIcon(sport);
+
             return (
               <View
                 key={sport}
@@ -325,12 +329,17 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                 ]}
               >
                 <View style={styles.typeNameContainer}>
-                  {mostCommonLogo && (
+                  {/* Logo du club si disponible, sinon icône du sport */}
+                  {mostCommonLogo ? (
                     <Image
                       source={{ uri: mostCommonLogo }}
                       style={styles.clubLogo}
                       resizeMode="cover"
                     />
+                  ) : (
+                    <View style={[styles.sportIconBg, { backgroundColor: sportInfo.color + '20' }]}>
+                      <Text style={styles.sportIcon}>{sportInfo.icon}</Text>
+                    </View>
                   )}
                   <View style={styles.sportTextContainer}>
                     <Text style={[styles.typeName, { color: colors.textPrimary }]}>
@@ -338,7 +347,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                     </Text>
                     {mostCommonClubName && (
                       <Text style={[styles.clubNameText, { color: colors.textMuted }]}>
-                        ({mostCommonClubName})
+                        {mostCommonClubName}
                       </Text>
                     )}
                   </View>
@@ -482,6 +491,16 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+  },
+  sportIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sportIcon: {
+    fontSize: 18,
   },
   sportTextContainer: {
     flex: 1,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -42,7 +42,7 @@ const partnersData: PartnerData[] = [
     role: "Expert Performance & International",
     description: "Ancien combattant Pro, Coach MMA et Personal Trainer avec une expérience internationale. Une double expertise rare : diplômé par le diplôme et par le terrain. N'hésitez pas à visiter son Instagram pour découvrir son travail.",
     images: [
-      require('../assets/images/fouad_action.jpg')
+      require('@/assets/partenaires/coachs/fouad_action.jpg')
     ],
     location: "Marseille Fight Club (MFC)",
     instagram: 'fouad_loko'
@@ -53,7 +53,7 @@ const partnersData: PartnerData[] = [
     role: "Personal Trainer & YouTuber",
     description: "Coach sportif connu sous le nom de Bodygator. Retrouvez ses vidéos sur YouTube (Captain Sander) pour des conseils d'entraînement et de coaching.",
     images: [
-      require('../assets/images/bodygator.jpg')
+      require('@/assets/partenaires/coachs/bodygator.jpg')
     ],
     location: "International",
     instagram: 'bodygator'
@@ -64,7 +64,7 @@ const partnersData: PartnerData[] = [
     role: "Académie & Famille - JJB",
     description: "Une académie, une famille. Dirigée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d'une section féminine dynamique. La porte est grande ouverte à tout le monde : n'hésitez pas à venir faire un cours d'essai !",
     images: [
-      require('../assets/images/gracie-barra-olives.jpg')
+      require('@/assets/partenaires/clubs/gracie-barra-olives.jpg')
     ],
     location: "52 Av. Frédéric Mistral, Marseille",
     instagram: ['veninjr', 'melissa_lcomb']
@@ -75,18 +75,29 @@ const partnersData: PartnerData[] = [
     role: "Club de MMA",
     description: "Le club de référence à Marseille pour le MMA et le Striking. Une structure d'élite pour progresser.",
     images: [
-      require('../assets/images/marseille-fight-club.jpg')
+      require('@/assets/partenaires/clubs/marseille-fight-club.jpg')
     ],
     location: "Marseille",
     instagram: 'fouad_loko' // MFC utilise le même Instagram que Fouad
   },
   {
     id: '5',
+    name: "Team Sorel",
+    role: "Club Multi-Disciplines",
+    description: "Club emblématique de Marseille dirigé par Yvan Sorel. Une équipe soudée qui pratique le JJB, le Grappling et le MMA. Un esprit de famille et une ambiance de guerriers.",
+    images: [
+      require('@/assets/partenaires/clubs/teamsorel.jpg')
+    ],
+    location: "Marseille",
+    instagram: 'teamsorel'
+  },
+  {
+    id: '6',
     name: "Younes - Kiné & Hijama",
     role: "Expert Médical & Pratiquant JJB",
     description: "Expert dans le domaine Kiné du Sport et Cupping (Hijama). Il connait les besoins des combattants car il est lui-même pratiquant de JJB. Le partenaire idéal pour la récupération.",
     images: [
-      require('../assets/images/younes.jpg')
+      require('@/assets/partenaires/kines/younes.jpg')
     ],
     location: "Cabinet Kiné Santé Sport",
     instagram: 'kinesantesport16'
@@ -94,6 +105,8 @@ const partnersData: PartnerData[] = [
 ];
 
 export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
+  const [selectedPartner, setSelectedPartner] = useState<PartnerData | null>(null);
+
   const handleCall = (phone: string) => {
     Linking.openURL(`tel:${phone}`);
   };
@@ -113,6 +126,14 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
 
   const handleInstagram = (username: string) => {
     Linking.openURL(`https://instagram.com/${username}`);
+  };
+
+  const handlePartnerPress = (partner: PartnerData) => {
+    setSelectedPartner(partner);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedPartner(null);
   };
 
   return (
@@ -146,7 +167,12 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
 
           {/* Partners Cards */}
           {partnersData.map((partner) => (
-            <View key={partner.id} style={styles.partnerCard}>
+            <TouchableOpacity
+              key={partner.id}
+              style={styles.partnerCard}
+              onPress={() => handlePartnerPress(partner)}
+              activeOpacity={0.9}
+            >
               {/* Image Section - Support for multiple images */}
               {partner.images.length === 1 ? (
                 <Image
@@ -219,7 +245,7 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
                   </View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
 
           {/* Footer */}
@@ -230,6 +256,101 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
           </View>
         </ScrollView>
       </View>
+
+      {/* Modal Détail Partenaire */}
+      {selectedPartner && (
+        <Modal
+          visible={!!selectedPartner}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleCloseDetail}
+        >
+          <View style={styles.detailContainer}>
+            {/* Header avec photo en grand */}
+            <View style={styles.detailHeader}>
+              <TouchableOpacity onPress={handleCloseDetail} style={styles.detailCloseButton}>
+                <X size={28} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              {/* Grande photo */}
+              {selectedPartner.images.length > 0 && (
+                <Image
+                  source={selectedPartner.images[0]}
+                  style={styles.detailHeaderImage}
+                  resizeMode="cover"
+                />
+              )}
+
+              {/* Gradient overlay */}
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                style={styles.detailHeaderGradient}
+              />
+
+              {/* Nom et rôle en overlay */}
+              <View style={styles.detailHeaderContent}>
+                <Text style={styles.detailName}>{selectedPartner.name}</Text>
+                <Text style={styles.detailRole}>{selectedPartner.role}</Text>
+              </View>
+            </View>
+
+            {/* Contenu scrollable */}
+            <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+              {/* Description */}
+              <View style={styles.detailSection}>
+                <Text style={styles.detailSectionTitle}>À propos</Text>
+                <Text style={styles.detailDescription}>{selectedPartner.description}</Text>
+              </View>
+
+              {/* Localisation */}
+              {selectedPartner.location && (
+                <TouchableOpacity
+                  style={styles.detailLocationCard}
+                  onPress={() => handleGPS(selectedPartner.location!)}
+                  activeOpacity={0.7}
+                >
+                  <MapPin size={20} color="#007AFF" strokeWidth={2} />
+                  <Text style={styles.detailLocationText}>{selectedPartner.location}</Text>
+                  <ExternalLink size={16} color="#007AFF" />
+                </TouchableOpacity>
+              )}
+
+              {/* Instagram */}
+              {selectedPartner.instagram && (
+                <View style={styles.detailSection}>
+                  <Text style={styles.detailSectionTitle}>Réseaux sociaux</Text>
+                  {Array.isArray(selectedPartner.instagram) ? (
+                    selectedPartner.instagram.map((username, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.detailInstagramButton}
+                        onPress={() => handleInstagram(username)}
+                        activeOpacity={0.7}
+                      >
+                        <Instagram size={22} color="#FFFFFF" strokeWidth={2.5} />
+                        <Text style={styles.detailInstagramText}>@{username}</Text>
+                        <ExternalLink size={18} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.detailInstagramButton}
+                      onPress={() => handleInstagram(selectedPartner.instagram as string)}
+                      activeOpacity={0.7}
+                    >
+                      <Instagram size={22} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.detailInstagramText}>@{selectedPartner.instagram}</Text>
+                      <ExternalLink size={18} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              <View style={{ height: 60 }} />
+            </ScrollView>
+          </View>
+        </Modal>
+      )}
     </Modal>
   );
 }
@@ -643,6 +764,125 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#B2BEC3',
+    textAlign: 'center',
+  },
+
+  // Detail Modal
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#E8EDF2',
+  },
+  detailHeader: {
+    height: 400,
+    position: 'relative',
+  },
+  detailCloseButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  detailHeaderImage: {
+    width: '100%',
+    height: '100%',
+  },
+  detailHeaderGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+  },
+  detailHeaderContent: {
+    position: 'absolute',
+    bottom: 32,
+    left: 24,
+    right: 24,
+  },
+  detailName: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  detailRole: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  detailScroll: {
+    flex: 1,
+  },
+  detailSection: {
+    padding: 24,
+  },
+  detailSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#636E72',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 16,
+  },
+  detailDescription: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#2D3436',
+    lineHeight: 24,
+  },
+  detailLocationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 24,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailLocationText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  detailInstagramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#E1306C',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  detailInstagramText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
     textAlign: 'center',
   },
 });

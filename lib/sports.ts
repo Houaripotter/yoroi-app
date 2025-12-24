@@ -369,8 +369,10 @@ export const getSportCategory = (id: string): string => {
 // Mappage des identifiants de logos vers les images locales
 const CLUB_LOGOS: { [key: string]: any } = {
   'gracie-barra': require('@/assets/images/gracie-barra.png'),
+  // 'gracie-barra-olives': require('@/assets/images/gracie-barra-olives.jpg'), // Image non disponible
   'basic-fit': require('@/assets/images/basic-fit.png'),
-  'marseille-fight-club': require('@/assets/images/marseille-fight-club.jpg'),
+  // 'marseille-fight-club': require('@/assets/images/marseille-fight-club.jpg'), // Image non disponible
+  // 'bodygator': require('@/assets/images/bodygator.jpg'), // Image non disponible
 };
 
 /**
@@ -380,18 +382,35 @@ const CLUB_LOGOS: { [key: string]: any } = {
  */
 export const getClubLogoSource = (logoUri?: string): any => {
   if (!logoUri) return null;
-  
+
   // Si c'est un identifiant connu, retourner l'image locale
   if (CLUB_LOGOS[logoUri]) {
     return CLUB_LOGOS[logoUri];
   }
-  
+
   // Si c'est une URI externe (commence par http ou file)
   if (logoUri.startsWith('http') || logoUri.startsWith('file')) {
     return { uri: logoUri };
   }
-  
+
   return null;
+};
+
+/**
+ * Récupère le nom du club à partir de son identifiant
+ * @param logoUri Identifiant du logo
+ * @returns Nom du club pour affichage dans un placeholder
+ */
+export const getClubName = (logoUri?: string): string | null => {
+  if (!logoUri) return null;
+
+  const clubNames: { [key: string]: string } = {
+    'gracie-barra': 'GB',
+    'basic-fit': 'BF',
+    'marseille-fight-club': 'MFC',
+  };
+
+  return clubNames[logoUri] || logoUri.substring(0, 2).toUpperCase();
 };
 
 export default SPORTS;

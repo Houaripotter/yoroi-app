@@ -17,7 +17,7 @@ import { ArrowLeft, Plus, Activity, TrendingDown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
-import { BodyMap, BodyZone as BodyMapZone } from '@/components/BodyMap';
+import { BodyMap, BodyZone as BodyMapZone, INITIAL_DATA } from '@/components/BodyMap';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { ZoneSelectionModal, Zone } from '@/components/ZoneSelectionModal';
 import {
@@ -36,7 +36,6 @@ import {
   BodyZone,
   FIT_FOR_DUTY_STATUS,
   getZoneById,
-  getZonesAtPoint,
 } from '@/constants/bodyZones';
 
 export default function InfirmaryScreen() {
@@ -74,25 +73,58 @@ export default function InfirmaryScreen() {
     }, [])
   );
 
+  // Détecter les zones rectangulaires qui se chevauchent
+  const getOverlappingZones = (zone: BodyMapZone, view: 'front' | 'back'): BodyMapZone[] => {
+    const allZones = view === 'front' ? INITIAL_DATA.front : INITIAL_DATA.back;
+
+    // Calculer les limites du rectangle de la zone cliquée
+    const zone1Left = zone.x - zone.w / 2;
+    const zone1Right = zone.x + zone.w / 2;
+    const zone1Top = zone.y - zone.h / 2;
+    const zone1Bottom = zone.y + zone.h / 2;
+
+    return allZones.filter(z => {
+      // Calculer les limites du rectangle de chaque zone
+      const zone2Left = z.x - z.w / 2;
+      const zone2Right = z.x + z.w / 2;
+      const zone2Top = z.y - z.h / 2;
+      const zone2Bottom = z.y + z.h / 2;
+
+      // Vérifier si les rectangles se chevauchent
+      const overlaps =
+        zone1Left < zone2Right &&
+        zone1Right > zone2Left &&
+        zone1Top < zone2Bottom &&
+        zone1Bottom > zone2Top;
+
+      return overlaps;
+    });
+  };
+
   // Ouvrir le modal pour ajouter/modifier une blessure
   const handleZonePress = (zone: BodyMapZone, view: 'front' | 'back') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Détecter toutes les zones qui se chevauchent à cet endroit (x, y en %)
-    const zonesAtPoint = getZonesAtPoint(zone.x, zone.y, view);
+    // Détecter toutes les zones qui se chevauchent avec la zone cliquée
+    const overlapping = getOverlappingZones(zone, view);
 
-    if (zonesAtPoint.length > 1) {
+    console.log('🎯 Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
+    console.log('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
+
+    if (overlapping.length > 1) {
       // Plusieurs zones détectées, formater pour le modal
-      const formattedZones = zonesAtPoint.map(z => ({
+      const formattedZones = overlapping.map(z => ({
         id: z.id,
-        name: z.name,
+        name: z.label, // Utiliser 'label' au lieu de 'name'
       }));
 
+      console.log('✅ AFFICHAGE MODAL avec zones:', formattedZones);
       setOverlappingZones(formattedZones);
       setCurrentView(view);
       setShowZoneModal(true);
     } else {
       // Une seule zone, aller directement à l'évaluation
+      console.log('⚠️ Une seule zone, pas de modal');
       navigateToEvaluation(zone.id, view, zone.label);
     }
   };
@@ -150,8 +182,12 @@ export default function InfirmaryScreen() {
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-              <Activity size={24} color={colors.accent} />
+            <View style={[styles.iconContainer, { backgroundColor: '#EF444420' }]}>
+              {/* Croix rouge */}
+              <View style={styles.redCross}>
+                <View style={[styles.crossVertical, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontal, { backgroundColor: '#EF4444' }]} />
+              </View>
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -319,6 +355,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.md,
+  },
+  redCross: {
+    width: 28,
+    height: 28,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVertical: {
+    position: 'absolute',
+    width: 10,
+    height: 28,
+    borderRadius: 2,
+  },
+  crossHorizontal: {
+    position: 'absolute',
+    width: 28,
+    height: 10,
+    borderRadius: 2,
   },
   headerText: {
     flex: 1,

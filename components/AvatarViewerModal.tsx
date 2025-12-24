@@ -26,15 +26,15 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
   onClose,
 }) => {
   const { colors } = useTheme();
-  const [isZoomed, setIsZoomed] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [isZoomed, setIsZoomed] = useState(true); // Démarrer en mode zoomé
+  const scaleAnim = useRef(new Animated.Value(3.5)).current; // Démarrer à 3.5x
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.parallel([
         Animated.spring(scaleAnim, {
-          toValue: 1,
+          toValue: 3.5, // Directement en TRÈS GRAND
           tension: 50,
           friction: 8,
           useNativeDriver: true,
@@ -46,17 +46,17 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
         }),
       ]).start();
     } else {
-      scaleAnim.setValue(0.8);
+      scaleAnim.setValue(3.5);
       fadeAnim.setValue(0);
-      setIsZoomed(false);
+      setIsZoomed(true);
     }
   }, [visible]);
 
   const handleZoom = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const toValue = isZoomed ? 1 : 1.5;
+    const toValue = isZoomed ? 1 : 3.5;
     setIsZoomed(!isZoomed);
-    
+
     Animated.spring(scaleAnim, {
       toValue,
       tension: 50,
@@ -115,7 +115,11 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
           </View>
 
           {/* Avatar Display */}
-          <View style={styles.avatarContainer}>
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={handleZoom}
+            activeOpacity={0.95}
+          >
             <Animated.View
               style={[
                 styles.avatarWrapper,
@@ -126,11 +130,11 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
             >
               <AvatarDisplay size="xlarge" refreshTrigger={Date.now()} showBorder={true} />
             </Animated.View>
-          </View>
+          </TouchableOpacity>
 
           {/* Footer hint */}
           <Text style={[styles.hint, { color: colors.textMuted }]}>
-            {isZoomed ? 'Pince pour zoomer' : 'Tape pour zoomer'}
+            {isZoomed ? 'Tape pour dézoomer' : 'Tape pour agrandir'}
           </Text>
         </View>
       </Animated.View>
@@ -186,8 +190,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarContainer: {
-    width: SCREEN_WIDTH * 0.85,
-    height: SCREEN_WIDTH * 0.85,
+    width: SCREEN_WIDTH * 0.98,
+    height: SCREEN_WIDTH * 0.98,
     alignItems: 'center',
     justifyContent: 'center',
   },

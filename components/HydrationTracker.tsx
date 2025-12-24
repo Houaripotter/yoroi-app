@@ -116,8 +116,8 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
   };
 
   const progress = Math.min((todayAmount / dailyGoal) * 100, 100);
-  const litersConsumed = (todayAmount / 1000).toFixed(1);
-  const litersGoal = (dailyGoal / 1000).toFixed(1);
+  const litersConsumed = (todayAmount / 1000).toFixed(2);
+  const litersGoal = (dailyGoal / 1000).toFixed(2);
 
   // VERSION COMPACTE (pour le dashboard)
   if (compact) {

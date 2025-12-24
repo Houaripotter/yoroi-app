@@ -1,641 +1,654 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  RefreshControl,
-  Switch,
+  Dimensions,
+  Animated,
+  Easing,
   TextInput,
   Alert,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
-import { NumericInput } from '@/components/NumericInput';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
-  Droplet,
-  ChevronLeft,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
+  ArrowLeft,
+  Droplets,
   Target,
-  Activity,
-  Bell,
-  Settings,
+  TrendingUp,
+  Calendar,
   Check,
-  X,
-  Lightbulb,
-  Dumbbell,
+  Plus,
+  Minus,
+  Settings,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
-import { Card } from '@/components/ui/Card';
-import { HydrationTracker } from '@/components/HydrationTracker';
-import { useTheme } from '@/lib/ThemeContext';
-import {
-  getHydrationHistory,
-  getHydrationSettings,
-  saveHydrationSettings,
-  getAverageHydration,
-  analyzeHydrationWeightCorrelation,
-  calculateRecommendedHydration,
-  getLatestMeasurement,
-  HydrationDayData,
-  HydrationSettings,
-} from '@/lib/storage';
-import { toggleHydrationReminders } from '@/lib/hydrationNotifications';
 
-// ============================================
-// ECRAN HYDRATATION DETAILLE
-// ============================================
+const { width: screenWidth } = Dimensions.get('window');
+const HYDRATION_KEY = '@yoroi_hydration_today';
+const HYDRATION_GOAL_KEY = '@yoroi_hydration_goal';
+const HYDRATION_HISTORY_KEY = '@yoroi_hydration_history';
 
-const DAYS_OF_WEEK = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+interface DayData {
+  date: string;
+  amount: number;
+  goal: number;
+}
 
 export default function HydrationScreen() {
-  const { colors } = useTheme();
-  const [refreshing, setRefreshing] = useState(false);
-  const [history, setHistory] = useState<HydrationDayData[]>([]);
-  const [settings, setSettings] = useState<HydrationSettings | null>(null);
-  const [average7Days, setAverage7Days] = useState(0);
-  const [correlation, setCorrelation] = useState<{
-    avgWeightLossHighHydration: number;
-    avgWeightLossLowHydration: number;
-    recommendation: string;
-  } | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [editingGoal, setEditingGoal] = useState('');
-  const [currentWeight, setCurrentWeight] = useState<number | null>(null);
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  const loadData = useCallback(async () => {
+  const [currentAmount, setCurrentAmount] = useState(0);
+  const [goal, setGoal] = useState(2.5);
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState('2.5');
+  const [history, setHistory] = useState<DayData[]>([]);
+
+  // Animations
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+
+  useEffect(() => {
+    loadData();
+
+    // Animation vague
+    const wave = Animated.loop(
+      Animated.sequence([
+        Animated.timing(waveAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(waveAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    wave.start();
+
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      damping: 12,
+      useNativeDriver: true,
+    }).start();
+
+    return () => wave.stop();
+  }, []);
+
+  const loadData = async () => {
     try {
-      const [historyData, settingsData, avgData, correlationData, measurement] = await Promise.all([
-        getHydrationHistory(7),
-        getHydrationSettings(),
-        getAverageHydration(7),
-        analyzeHydrationWeightCorrelation(),
-        getLatestMeasurement(),
+      const [amountStr, goalStr, historyStr] = await Promise.all([
+        AsyncStorage.getItem(HYDRATION_KEY),
+        AsyncStorage.getItem(HYDRATION_GOAL_KEY),
+        AsyncStorage.getItem(HYDRATION_HISTORY_KEY),
       ]);
 
-      setHistory(historyData);
-      setSettings(settingsData);
-      setAverage7Days(avgData);
-      setCorrelation(correlationData);
-      if (measurement) {
-        setCurrentWeight(measurement.weight);
+      if (amountStr) {
+        const data = JSON.parse(amountStr);
+        const today = new Date().toDateString();
+        if (data.date === today) {
+          setCurrentAmount(data.amount);
+        }
+      }
+
+      if (goalStr) {
+        setGoal(parseFloat(goalStr));
+        setGoalInput(goalStr);
+      }
+
+      if (historyStr) {
+        setHistory(JSON.parse(historyStr));
       }
     } catch (error) {
       console.error('Erreur chargement hydratation:', error);
     }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }, [loadData]);
-
-  const handleSaveGoal = async () => {
-    const goal = parseFloat(editingGoal);
-    if (isNaN(goal) || goal <= 0 || goal > 10) {
-      Alert.alert('Erreur', 'Veuillez entrer un objectif valide (0.5 - 10 L)');
-      return;
-    }
-
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await saveHydrationSettings({ customGoal: goal, dailyGoal: goal });
-    setSettings(prev => prev ? { ...prev, customGoal: goal, dailyGoal: goal } : null);
-    setEditingGoal('');
   };
 
-  const toggleReminder = async () => {
-    if (!settings) return;
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newValue = !settings.reminderEnabled;
-
-    const success = await toggleHydrationReminders(newValue);
-    if (success) {
-      setSettings(prev => prev ? { ...prev, reminderEnabled: newValue } : null);
-      if (newValue) {
-        Alert.alert(
-          'Rappels actives',
-          `Tu recevras un rappel toutes les ${settings.reminderInterval} minutes pour t'hydrater.`
-        );
-      }
-    } else {
-      Alert.alert(
-        'Permission requise',
-        'Active les notifications dans les parametres de ton telephone pour recevoir les rappels.'
-      );
+  const saveAmount = async (amount: number) => {
+    try {
+      const today = new Date().toDateString();
+      await AsyncStorage.setItem(HYDRATION_KEY, JSON.stringify({ date: today, amount }));
+      
+      // Mettre à jour l'historique
+      const todayISO = new Date().toISOString().split('T')[0];
+      const newHistory = history.filter(d => d.date !== todayISO);
+      newHistory.unshift({ date: todayISO, amount, goal });
+      setHistory(newHistory.slice(0, 30)); // Garder 30 jours
+      await AsyncStorage.setItem(HYDRATION_HISTORY_KEY, JSON.stringify(newHistory.slice(0, 30)));
+    } catch (error) {
+      console.error('Erreur sauvegarde hydratation:', error);
     }
   };
 
-  const getStatusIcon = (day: HydrationDayData) => {
-    const percentage = (day.totalAmount / day.goal) * 100;
-    if (percentage >= 100) return { icon: Check, color: colors.success };
-    if (percentage >= 70) return { icon: TrendingUp, color: colors.warning };
-    return { icon: X, color: colors.danger };
+  const saveGoal = async (newGoal: number) => {
+    try {
+      await AsyncStorage.setItem(HYDRATION_GOAL_KEY, newGoal.toString());
+      setGoal(newGoal);
+      setEditingGoal(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Erreur sauvegarde objectif:', error);
+    }
   };
 
-  const formatDayLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    if (dateStr === today.toISOString().split('T')[0]) return "Auj.";
-    if (dateStr === yesterday.toISOString().split('T')[0]) return "Hier";
-    return DAYS_OF_WEEK[date.getDay()];
+  const addWater = (amountL: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newAmount = Math.max(0, currentAmount + amountL);
+    setCurrentAmount(newAmount);
+    saveAmount(newAmount);
   };
 
-  const recommendedGoal = currentWeight ? calculateRecommendedHydration(currentWeight) : 2.5;
+  const percentage = Math.min((currentAmount / goal) * 100, 100);
+  const waveTranslate = waveAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-5, 5],
+  });
+
+  // Statistiques
+  const last7Days = history.slice(0, 7);
+  const successDays = last7Days.filter(d => d.amount >= d.goal).length;
+  const successRate = last7Days.length > 0 ? Math.round((successDays / last7Days.length) * 100) : 0;
+  const avgAmount = last7Days.length > 0
+    ? last7Days.reduce((acc, d) => acc + d.amount, 0) / last7Days.length
+    : 0;
 
   return (
-    <ScreenWrapper>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ArrowLeft size={24} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Hydratation</Text>
+        <TouchableOpacity onPress={() => setEditingGoal(!editingGoal)} style={styles.settingsButton}>
+          <Settings size={22} color={colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.info}
-            colors={[colors.info]}
-          />
-        }
       >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.card }]}
-            onPress={() => router.back()}
-          >
-            <ChevronLeft size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Hydratation
-          </Text>
-          <TouchableOpacity
-            style={[styles.settingsButton, { backgroundColor: colors.card }]}
-            onPress={() => setShowSettings(!showSettings)}
-          >
-            <Settings size={20} color={colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* TRACKER PRINCIPAL */}
-        <HydrationTracker
-          currentWeight={currentWeight || undefined}
-          onUpdate={loadData}
-        />
-
-        {/* PARAMETRES (toggle) */}
-        {showSettings && (
-          <Card style={styles.settingsCard}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Parametres
-            </Text>
-
-            {/* Objectif personnalise */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Target size={18} color={colors.gold} />
-                <View>
-                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                    Objectif journalier
-                  </Text>
-                  {currentWeight && (
-                    <Text style={[styles.settingHint, { color: colors.textMuted }]}>
-                      Recommande: {recommendedGoal}L (base sur {currentWeight}kg)
+        {/* Grande bouteille animée */}
+        <Animated.View style={[styles.bottleCard, { backgroundColor: colors.backgroundCard, transform: [{ scale: scaleAnim }] }]}>
+          <View style={styles.bigBottle}>
+            {/* Bouchon */}
+            <View style={[styles.bottleCap, { backgroundColor: '#0EA5E9' }]} />
+            
+            {/* Corps */}
+            <View style={[styles.bottleBody, { borderColor: '#0EA5E9' }]}>
+              {/* Eau animée */}
+              <Animated.View
+                style={[
+                  styles.water,
+                  {
+                    height: `${percentage}%`,
+                    transform: [{ translateX: waveTranslate }],
+                  }
+                ]}
+              >
+                <View style={styles.waterWave} />
+              </Animated.View>
+              
+              {/* Graduations */}
+              <View style={styles.graduations}>
+                {[0.25, 0.5, 0.75].map((ratio) => (
+                  <View key={ratio} style={styles.graduation}>
+                    <View style={[styles.gradLine, { backgroundColor: '#0EA5E930' }]} />
+                    <Text style={[styles.gradLabel, { color: '#0EA5E950' }]}>
+                      {(goal * ratio).toFixed(2)}L
                     </Text>
-                  )}
-                </View>
-              </View>
-              <View style={styles.goalInput}>
-                <NumericInput
-                  value={editingGoal || settings?.dailyGoal?.toString() || ''}
-                  onValueChange={setEditingGoal}
-                  placeholder={settings?.dailyGoal?.toString() || '2.5'}
-                  unit="L"
-                  allowDecimal={true}
-                  maxDecimals={1}
-                  maxLength={4}
-                  color={colors.textPrimary}
-                  backgroundColor={colors.background}
-                  inputStyle={[
-                    styles.input,
-                    {
-                      borderColor: colors.border,
-                    },
-                  ]}
-                />
-                {editingGoal && (
-                  <TouchableOpacity
-                    style={[styles.saveButton, { backgroundColor: colors.success }]}
-                    onPress={handleSaveGoal}
-                  >
-                    <Check size={16} color="#FFF" />
-                  </TouchableOpacity>
-                )}
+                  </View>
+                ))}
               </View>
             </View>
-
-            {/* Rappels */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Bell size={18} color={colors.info} />
-                <View>
-                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                    Rappels d'hydratation
-                  </Text>
-                  <Text style={[styles.settingHint, { color: colors.textMuted }]}>
-                    Notification toutes les {settings?.reminderInterval || 120} min
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={settings?.reminderEnabled || false}
-                onValueChange={toggleReminder}
-                trackColor={{ false: colors.border, true: colors.infoMuted }}
-                thumbColor={settings?.reminderEnabled ? colors.info : colors.textMuted}
-              />
-            </View>
-
-            {/* Bonus jour training */}
-            <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
-              <View style={styles.settingInfo}>
-                <Dumbbell size={18} color={colors.success} />
-                <View>
-                  <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>
-                    Bonus jours d'entrainement
-                  </Text>
-                  <Text style={[styles.settingHint, { color: colors.textMuted }]}>
-                    +{settings?.trainingDayBonus || 0.5}L les jours d'entrainement
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </Card>
-        )}
-
-        {/* HISTORIQUE 7 JOURS */}
-        <Card style={styles.historyCard}>
-          <View style={styles.sectionHeader}>
-            <Calendar size={20} color={colors.gold} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Historique
-            </Text>
           </View>
 
-          <View style={styles.historyGrid}>
-            {history.slice(0, 7).reverse().map(day => {
-              const status = getStatusIcon(day);
-              const StatusIcon = status.icon;
-              const percentage = Math.round((day.totalAmount / day.goal) * 100);
+          {/* Valeur centrale */}
+          <View style={styles.valueOverlay}>
+            <Text style={[styles.bigValue, { color: percentage >= 100 ? '#10B981' : colors.textPrimary }]}>
+              {currentAmount.toFixed(2)}
+            </Text>
+            <Text style={[styles.bigUnit, { color: colors.textMuted }]}>/ {goal}L</Text>
+          </View>
+
+          {/* Indicateur succès */}
+          {percentage >= 100 && (
+            <View style={styles.successBadge}>
+              <Check size={20} color="#FFFFFF" />
+              <Text style={styles.successText}>Objectif atteint !</Text>
+            </View>
+          )}
+        </Animated.View>
+
+        {/* Boutons d'ajout */}
+        <View style={[styles.buttonsCard, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Ajouter de l'eau</Text>
+          
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: '#EF444420' }]}
+              onPress={() => addWater(-0.25)}
+            >
+              <Minus size={20} color="#EF4444" />
+              <Text style={[styles.addButtonLabel, { color: '#EF4444' }]}>-250ml</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: '#0EA5E920' }]}
+              onPress={() => addWater(0.25)}
+            >
+              <Plus size={20} color="#0EA5E9" />
+              <Text style={[styles.addButtonLabel, { color: '#0EA5E9' }]}>+250ml</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: '#0EA5E9' }]}
+              onPress={() => addWater(0.5)}
+            >
+              <Droplets size={20} color="#FFFFFF" />
+              <Text style={[styles.addButtonLabel, { color: '#FFFFFF' }]}>+500ml</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick buttons */}
+          <View style={styles.quickRow}>
+            {[0.1, 0.33, 0.75, 1].map((amount) => (
+              <TouchableOpacity
+                key={amount}
+                style={[styles.quickButton, { backgroundColor: colors.background }]}
+                onPress={() => addWater(amount)}
+              >
+                <Text style={[styles.quickLabel, { color: '#0EA5E9' }]}>
+                  +{(amount * 1000).toFixed(0)}ml
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Modifier l'objectif */}
+        {editingGoal && (
+          <View style={[styles.goalCard, { backgroundColor: colors.backgroundCard }]}>
+            <View style={styles.goalHeader}>
+              <Target size={18} color="#F59E0B" />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Objectif quotidien</Text>
+            </View>
+            
+            <View style={styles.goalInputRow}>
+              <TouchableOpacity
+                style={[styles.goalAdjust, { backgroundColor: colors.background }]}
+                onPress={() => {
+                  const newGoal = Math.max(0.5, parseFloat(goalInput) - 0.25);
+                  setGoalInput(newGoal.toFixed(2));
+                }}
+              >
+                <Minus size={20} color={colors.textPrimary} />
+              </TouchableOpacity>
+
+              <View style={styles.goalInputContainer}>
+                <TextInput
+                  style={[styles.goalInput, { color: colors.textPrimary }]}
+                  value={goalInput}
+                  onChangeText={setGoalInput}
+                  keyboardType="decimal-pad"
+                  textAlign="center"
+                />
+                <Text style={[styles.goalInputUnit, { color: colors.textMuted }]}>litres</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.goalAdjust, { backgroundColor: colors.background }]}
+                onPress={() => {
+                  const newGoal = Math.min(5, parseFloat(goalInput) + 0.25);
+                  setGoalInput(newGoal.toFixed(2));
+                }}
+              >
+                <Plus size={20} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveButton, { backgroundColor: '#0EA5E9' }]}
+              onPress={() => saveGoal(parseFloat(goalInput))}
+            >
+              <Check size={18} color="#FFFFFF" />
+              <Text style={styles.saveButtonText}>Enregistrer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Statistiques */}
+        <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Cette semaine</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <TrendingUp size={18} color="#10B981" />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{successRate}%</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Réussite</Text>
+            </View>
+
+            <View style={styles.statItem}>
+              <Droplets size={18} color="#0EA5E9" />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(2)}L</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moyenne/jour</Text>
+            </View>
+
+            <View style={styles.statItem}>
+              <Calendar size={18} color="#8B5CF6" />
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>{successDays}/7</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Jours réussis</Text>
+            </View>
+          </View>
+
+          {/* Barres 7 jours */}
+          <View style={styles.weekBars}>
+            {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, i) => {
+              const dayData = last7Days[6 - i];
+              const dayPercentage = dayData ? Math.min((dayData.amount / dayData.goal) * 100, 100) : 0;
+              const isToday = i === 6;
 
               return (
-                <View key={day.date} style={styles.historyDay}>
-                  <Text style={[styles.historyDayLabel, { color: colors.textSecondary }]}>
-                    {formatDayLabel(day.date)}
+                <View key={i} style={styles.dayColumn}>
+                  <View style={[styles.barBg, { backgroundColor: colors.background }]}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        {
+                          height: `${dayPercentage}%`,
+                          backgroundColor: dayPercentage >= 100 ? '#10B981' : '#0EA5E9',
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Text style={[
+                    styles.dayLabel,
+                    { color: isToday ? '#0EA5E9' : colors.textMuted },
+                    isToday && styles.dayLabelActive
+                  ]}>
+                    {day}
                   </Text>
-                  <View
-                    style={[
-                      styles.historyDayCircle,
-                      {
-                        backgroundColor: status.color + '20',
-                        borderColor: status.color,
-                      },
-                    ]}
-                  >
-                    <Text style={[styles.historyDayAmount, { color: status.color }]}>
-                      {(day.totalAmount / 1000).toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={styles.historyDayStatus}>
-                    <StatusIcon size={14} color={status.color} />
-                    {day.isTrainingDay && (
-                      <Dumbbell size={10} color={colors.success} style={{ marginLeft: 2 }} />
-                    )}
-                  </View>
                 </View>
               );
             })}
           </View>
-
-          {/* Moyenne */}
-          <View style={[styles.averageRow, { borderTopColor: colors.border }]}>
-            <Activity size={18} color={colors.info} />
-            <Text style={[styles.averageLabel, { color: colors.textSecondary }]}>
-              Moyenne 7 jours :
-            </Text>
-            <Text style={[styles.averageValue, { color: colors.textPrimary }]}>
-              {(average7Days / 1000).toFixed(1)} L
-            </Text>
-          </View>
-        </Card>
-
-        {/* ANALYSE CORRELATION POIDS */}
-        {correlation && (
-          <Card style={styles.insightCard}>
-            <View style={styles.sectionHeader}>
-              <Lightbulb size={20} color={colors.warning} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Analyse
-              </Text>
-            </View>
-
-            <View style={[styles.insightBox, { backgroundColor: colors.warningMuted }]}>
-              <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-                {correlation.recommendation}
-              </Text>
-            </View>
-
-            <View style={styles.insightStats}>
-              <View style={styles.insightStat}>
-                <View style={[styles.insightIcon, { backgroundColor: colors.successMuted }]}>
-                  <TrendingDown size={16} color={colors.success} />
-                </View>
-                <Text style={[styles.insightStatLabel, { color: colors.textSecondary }]}>
-                  Bonne hydratation
-                </Text>
-                <Text style={[styles.insightStatValue, { color: colors.success }]}>
-                  {correlation.avgWeightLossHighHydration > 0 ? '+' : ''}
-                  {correlation.avgWeightLossHighHydration.toFixed(2)} kg/jour
-                </Text>
-              </View>
-              <View style={styles.insightStat}>
-                <View style={[styles.insightIcon, { backgroundColor: colors.dangerMuted }]}>
-                  <TrendingUp size={16} color={colors.danger} />
-                </View>
-                <Text style={[styles.insightStatLabel, { color: colors.textSecondary }]}>
-                  Faible hydratation
-                </Text>
-                <Text style={[styles.insightStatValue, { color: colors.danger }]}>
-                  {correlation.avgWeightLossLowHydration > 0 ? '+' : ''}
-                  {correlation.avgWeightLossLowHydration.toFixed(2)} kg/jour
-                </Text>
-              </View>
-            </View>
-          </Card>
-        )}
-
-        {/* MESSAGE SI PAS ASSEZ DE DONNEES */}
-        {!correlation && (
-          <Card style={styles.insightCard}>
-            <View style={styles.sectionHeader}>
-              <Lightbulb size={20} color={colors.warning} />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Conseils
-              </Text>
-            </View>
-            <View style={[styles.insightBox, { backgroundColor: colors.infoMuted }]}>
-              <Text style={[styles.insightText, { color: colors.textPrimary }]}>
-                Continue a enregistrer ton hydratation et ton poids. Apres 7 jours, tu verras l'impact de ton hydratation sur ta perte de poids !
-              </Text>
-            </View>
-          </Card>
-        )}
-
-        {/* CONSEILS */}
-        <Card style={styles.tipsCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Astuces
-          </Text>
-          <View style={styles.tipsList}>
-            {[
-              'Bois un verre d\'eau des le reveil',
-              'Garde une bouteille toujours visible',
-              'Bois avant chaque repas',
-              'Les jours d\'entrainement, augmente de 0.5L',
-              'Prefere l\'eau aux boissons sucrees',
-            ].map((tip, index) => (
-              <View key={index} style={styles.tipItem}>
-                <Droplet size={14} color={colors.info} />
-                <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-                  {tip}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Card>
+        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </ScreenWrapper>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
+  container: {
     flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
-    paddingTop: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 8,
   },
   headerTitle: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  settingsButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // PARAMETRES
-  settingsCard: {
-    marginTop: 16,
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  settingInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  settingHint: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  goalInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  input: {
-    width: 60,
-    height: 40,
-    borderRadius: 10,
-    borderWidth: 1,
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  inputUnit: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  saveButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // HISTORIQUE
-  historyCard: {
-    marginTop: 16,
-    padding: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-  },
-  historyGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  historyDay: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  historyDayLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  historyDayCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  historyDayAmount: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  historyDayStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  averageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-  },
-  averageLabel: {
-    fontSize: 14,
-    flex: 1,
-  },
-  averageValue: {
     fontSize: 18,
     fontWeight: '700',
   },
-
-  // ANALYSE
-  insightCard: {
-    marginTop: 16,
-    padding: 20,
+  settingsButton: {
+    padding: 8,
   },
-  insightBox: {
+  scrollContent: {
     padding: 16,
-    borderRadius: 12,
+  },
+  bottleCard: {
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
     marginBottom: 16,
   },
-  insightText: {
-    fontSize: 14,
-    lineHeight: 20,
+  bigBottle: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  insightStats: {
+  bottleCap: {
+    width: 50,
+    height: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  bottleBody: {
+    width: 120,
+    height: 180,
+    borderWidth: 4,
+    borderRadius: 20,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: 'rgba(14, 165, 233, 0.05)',
+  },
+  water: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0EA5E9',
+    opacity: 0.7,
+  },
+  waterWave: {
+    position: 'absolute',
+    top: -5,
+    left: -10,
+    right: -10,
+    height: 15,
+    backgroundColor: '#0EA5E9',
+    borderRadius: 10,
+    opacity: 0.9,
+  },
+  graduations: {
+    position: 'absolute',
+    right: 8,
+    top: 10,
+    bottom: 10,
+    justifyContent: 'space-around',
+  },
+  graduation: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: 4,
   },
-  insightStat: {
-    flex: 1,
+  gradLine: {
+    width: 15,
+    height: 2,
+    borderRadius: 1,
+  },
+  gradLabel: {
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  valueOverlay: {
     alignItems: 'center',
   },
-  insightIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  bigValue: {
+    fontSize: 48,
+    fontWeight: '900',
+  },
+  bigUnit: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: -4,
+  },
+  successBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+    gap: 8,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 16,
   },
-  insightStatLabel: {
-    fontSize: 11,
-    textAlign: 'center',
-    marginBottom: 4,
+  successText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
-  insightStatValue: {
+  buttonsCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
+    marginBottom: 12,
   },
-
-  // CONSEILS
-  tipsCard: {
-    marginTop: 16,
-    padding: 20,
-  },
-  tipsList: {
-    gap: 12,
-  },
-  tipItem: {
+  buttonsRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: 10,
   },
-  tipText: {
-    fontSize: 13,
+  addButton: {
     flex: 1,
-    lineHeight: 18,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
+  addButtonLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  quickRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  quickButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  quickLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  goalCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  goalInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  goalAdjust: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalInputContainer: {
+    alignItems: 'center',
+  },
+  goalInput: {
+    fontSize: 36,
+    fontWeight: '900',
+    minWidth: 100,
+  },
+  goalInputUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: -4,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  statsCard: {
+    borderRadius: 16,
+    padding: 16,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  weekBars: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 80,
+  },
+  dayColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  barBg: {
+    width: 20,
+    height: 60,
+    borderRadius: 10,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  barFill: {
+    width: '100%',
+    borderRadius: 10,
+  },
+  dayLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  dayLabelActive: {
+    fontWeight: '900',
   },
 });

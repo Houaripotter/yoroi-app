@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
   <uses-permission android:name="android.permission.CAMERA"/>
   <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
@@ -10,6 +11,14 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+  <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
+  <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
+  <uses-permission android:name="android.permission.health.READ_SLEEP"/>
+  <uses-permission android:name="android.permission.health.READ_STEPS"/>
+  <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
+  <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
+  <uses-permission android:name="android.permission.health.WRITE_STEPS"/>
+  <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -32,6 +41,15 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
       </intent-filter>
+      <intent-filter>
+        <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE"/>
+      </intent-filter>
     </activity>
+    <activity-alias android:name="ViewPermissionUsageActivity" android:exported="true" android:targetActivity=".MainActivity" android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW_PERMISSION_USAGE"/>
+        <category android:name="android.intent.category.HEALTH_PERMISSIONS"/>
+      </intent-filter>
+    </activity-alias>
   </application>
 </manifest>

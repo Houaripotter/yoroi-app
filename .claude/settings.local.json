@@ -35,7 +35,16 @@
       "Bash(git reset:*)",
       "Bash(kill:*)",
       "Bash(curl:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(tee:*)",
+      "Bash(npx pod-install)",
+      "Bash(pod install)",
+      "Bash(watchman watch-del-all:*)",
+      "Bash(xargs:*)",
+      "Bash(timeout 30 npx expo export:*)",
+      "Bash(npx expo:*)"
     ],
     "deny": [],
     "ask": []

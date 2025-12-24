@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Settings,
   SkipForward,
+  Target,
 } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
@@ -846,13 +847,13 @@ export default function TimerScreen() {
       contentContainerStyle={styles.modeTabsContent}
     >
       {[
-        { id: 'musculation' as TimerMode, icon: Dumbbell, label: 'Muscu', emoji: '🏋️' },
-        { id: 'combat' as TimerMode, icon: Swords, label: 'Combat', emoji: '🥋' },
-        { id: 'tabata' as TimerMode, icon: Zap, label: 'Tabata', emoji: '⚡' },
-        { id: 'emom' as TimerMode, icon: RefreshCw, label: 'EMOM', emoji: '🔄' },
-        { id: 'amrap' as TimerMode, icon: Timer, label: 'AMRAP', emoji: '🔥' },
-        { id: 'fortime' as TimerMode, icon: Timer, label: 'For Time', emoji: '⏱️' },
-      ].map(({ id, icon: Icon, label, emoji }) => (
+        { id: 'musculation' as TimerMode, icon: Dumbbell, label: 'Muscu' },
+        { id: 'combat' as TimerMode, icon: Swords, label: 'Combat' },
+        { id: 'tabata' as TimerMode, icon: Zap, label: 'Tabata' },
+        { id: 'emom' as TimerMode, icon: RefreshCw, label: 'EMOM' },
+        { id: 'amrap' as TimerMode, icon: Timer, label: 'AMRAP' },
+        { id: 'fortime' as TimerMode, icon: Timer, label: 'For Time' },
+      ].map(({ id, icon: Icon, label }) => (
         <TouchableOpacity
           key={id}
           style={[
@@ -863,7 +864,7 @@ export default function TimerScreen() {
           onPress={() => changeMode(id)}
           disabled={timerState !== 'idle'}
         >
-          <Text style={styles.modeTabEmoji}>{emoji}</Text>
+          <Icon size={22} color={mode === id ? '#FFFFFF' : colors.textMuted} />
           <Text style={[
             styles.modeTabLabel,
             { color: colors.textMuted },
@@ -1414,9 +1415,11 @@ export default function TimerScreen() {
             }
           ]}
         >
-          <Text style={[styles.roninButtonText, { color: isRoninMode ? '#FFFFFF' : colors.textMuted }]}>
-            {isRoninMode ? '⚔️' : '🎯'}
-          </Text>
+          {isRoninMode ? (
+            <Swords size={20} color="#FFFFFF" />
+          ) : (
+            <Target size={20} color={colors.textMuted} />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -1473,18 +1476,44 @@ export default function TimerScreen() {
               ]}>
                 {formatTime(timeRemaining)}
               </Text>
-              <Text style={[
-                styles.statusText,
-                { color: statusColor },
-                isRoninMode && {
-                  fontSize: RONIN_THEME.phase.fontSize,
-                  fontWeight: RONIN_THEME.phase.fontWeight as any,
-                  letterSpacing: RONIN_THEME.phase.letterSpacing,
-                  color: RONIN_THEME.phase.color,
-                }
-              ]}>
-                {getStatusText()}
-              </Text>
+              {/* Format fraction pour le mode combat */}
+              {mode === 'combat' ? (
+                <View style={styles.fractionDisplay}>
+                  <Text style={[
+                    styles.statusText,
+                    { color: statusColor },
+                    isRoninMode && {
+                      fontSize: RONIN_THEME.phase.fontSize,
+                      fontWeight: RONIN_THEME.phase.fontWeight as any,
+                      letterSpacing: RONIN_THEME.phase.letterSpacing,
+                      color: RONIN_THEME.phase.color,
+                    }
+                  ]}>
+                    {isInRest ? 'REPOS' : `ROUND ${currentRound}/${totalRounds}`}
+                  </Text>
+                  <View style={[styles.fractionLine, { backgroundColor: statusColor }]} />
+                  <Text style={[
+                    styles.fractionBottom,
+                    { color: colors.textMuted },
+                    isRoninMode && { color: RONIN_THEME.textSecondary }
+                  ]}>
+                    {isInRest ? `Prochain round : ${currentRound + 1}/${totalRounds}` : `Temps de repos : ${formatTime(restDuration)}`}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={[
+                  styles.statusText,
+                  { color: statusColor },
+                  isRoninMode && {
+                    fontSize: RONIN_THEME.phase.fontSize,
+                    fontWeight: RONIN_THEME.phase.fontWeight as any,
+                    letterSpacing: RONIN_THEME.phase.letterSpacing,
+                    color: RONIN_THEME.phase.color,
+                  }
+                ]}>
+                  {getStatusText()}
+                </Text>
+              )}
               {timeRemaining <= 10 && timerState === 'running' && (
                 <Text style={[styles.warningText, { color: '#EF4444' }]}>
                   PREPARE-TOI !
@@ -1795,6 +1824,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: SPACING.md,
     letterSpacing: 8,
+    textTransform: 'uppercase',
+  },
+  fractionDisplay: {
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
+  },
+  fractionLine: {
+    width: 120,
+    height: 2,
+    borderRadius: 1,
+  },
+  fractionBottom: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 2,
     textTransform: 'uppercase',
   },
   warningText: {

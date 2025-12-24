@@ -237,6 +237,8 @@ export const initDatabase = async () => {
       categorie_poids TEXT,
       poids_max REAL,
       statut TEXT DEFAULT 'a_venir',
+      lien_inscription TEXT,
+      rappels_actifs INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -346,6 +348,9 @@ export interface Club {
   sport: string;
   logo_uri?: string;
   color?: string;
+  bio?: string;
+  address?: string;
+  links?: string; // JSON string of PartnerLink[]
   created_at?: string;
 }
 
@@ -452,6 +457,20 @@ export interface TreatmentReminder {
   time?: string;
   next_reminder_date: string;
   enabled: boolean;
+  created_at?: string;
+}
+
+export interface Competition {
+  id?: number;
+  nom: string;
+  date: string;
+  lieu?: string;
+  sport: string;
+  categorie_poids?: string;
+  poids_max?: number;
+  statut?: 'a_venir' | 'en_cours' | 'termine';
+  lien_inscription?: string;
+  rappels_actifs?: boolean;
   created_at?: string;
 }
 
@@ -593,7 +612,7 @@ export const getTrainingsByMonth = async (year: number, month: number): Promise<
   }));
 };
 
-export const getTrainingStats = async (): Promise<{ sport: string; count: number; club_name?: string; club_color?: string; club_id?: number }[]> => {
+export const getTrainingStats = async (): Promise<{ sport: string; count: number; club_name?: string; club_color?: string; club_logo?: string; club_id?: number }[]> => {
   const database = await openDatabase();
   // On groupe par nom de club OU sport (pas par club_id pour éviter les doublons)
   // Si club_name existe, on l'utilise comme identifiant unique, sinon on utilise le sport
@@ -603,6 +622,7 @@ export const getTrainingStats = async (): Promise<{ sport: string; count: number
        MAX(t.club_id) as club_id,
        COALESCE(c.name, t.sport) as club_name,
        MAX(c.color) as club_color,
+       MAX(c.logo_uri) as club_logo,
        SUM(cnt) as count
      FROM (
        SELECT
@@ -1245,6 +1265,72 @@ export const importData = async (jsonString: string): Promise<void> => {
       }
     }
   }
+};
+
+// ============================================
+// COMPETITIONS CRUD
+// ============================================
+
+export const getCompetitions = async (): Promise<Competition[]> => {
+  const database = await openDatabase();
+  const results = await database.getAllAsync<Competition>(
+    'SELECT * FROM competitions ORDER BY date ASC'
+  );
+  return results;
+};
+
+export const addCompetition = async (competition: Omit<Competition, 'id' | 'created_at'>): Promise<number> => {
+  const database = await openDatabase();
+  const result = await database.runAsync(
+    `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, poids_max, statut, lien_inscription)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      competition.nom,
+      competition.date,
+      competition.lieu || null,
+      competition.sport,
+      competition.categorie_poids || null,
+      competition.poids_max || null,
+      competition.statut || 'a_venir',
+      competition.lien_inscription || null,
+    ]
+  );
+  return result.lastInsertRowId;
+};
+
+export const updateCompetition = async (id: number, competition: Partial<Competition>): Promise<void> => {
+  const database = await openDatabase();
+  const fields: string[] = [];
+  const values: any[] = [];
+
+  if (competition.nom !== undefined) { fields.push('nom = ?'); values.push(competition.nom); }
+  if (competition.date !== undefined) { fields.push('date = ?'); values.push(competition.date); }
+  if (competition.lieu !== undefined) { fields.push('lieu = ?'); values.push(competition.lieu); }
+  if (competition.sport !== undefined) { fields.push('sport = ?'); values.push(competition.sport); }
+  if (competition.categorie_poids !== undefined) { fields.push('categorie_poids = ?'); values.push(competition.categorie_poids); }
+  if (competition.poids_max !== undefined) { fields.push('poids_max = ?'); values.push(competition.poids_max); }
+  if (competition.statut !== undefined) { fields.push('statut = ?'); values.push(competition.statut); }
+  if (competition.lien_inscription !== undefined) { fields.push('lien_inscription = ?'); values.push(competition.lien_inscription); }
+
+  if (fields.length > 0) {
+    values.push(id);
+    await database.runAsync(`UPDATE competitions SET ${fields.join(', ')} WHERE id = ?`, values);
+  }
+};
+
+export const deleteCompetition = async (id: number): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync('DELETE FROM competitions WHERE id = ?', [id]);
+};
+
+export const getNextCompetition = async (): Promise<Competition | null> => {
+  const database = await openDatabase();
+  const today = new Date().toISOString().split('T')[0];
+  const result = await database.getFirstAsync<Competition>(
+    `SELECT * FROM competitions WHERE date >= ? AND statut = 'a_venir' ORDER BY date ASC LIMIT 1`,
+    [today]
+  );
+  return result || null;
 };
 
 // ============================================

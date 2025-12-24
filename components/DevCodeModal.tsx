@@ -1,62 +1,50 @@
-// ============================================
-// 🔐 MODAL DE SAISIE DU CODE CRÉATEUR
-// ============================================
-
 import React, { useState } from 'react';
 import {
-  Modal,
   View,
   Text,
+  Modal,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { X, Unlock, Lock } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
-export const DevCodeModal = () => {
+const DevCodeModal: React.FC = () => {
   const { colors } = useTheme();
   const { showCodeInput, setShowCodeInput, verifyCode } = useDevMode();
   const [code, setCode] = useState('');
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async () => {
-    if (code.length !== 4) {
-      setError(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setTimeout(() => setError(false), 2000);
-      return;
-    }
-
-    setLoading(true);
-    const success = await verifyCode(code);
-    setLoading(false);
-
-    if (success) {
+    if (!verifyCode) return;
+    
+    const isValid = await verifyCode(code);
+    if (isValid) {
+      setSuccess(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        '🎉 Mode Créateur activé !',
-        'Toutes les fonctionnalités Premium sont débloquées.\n\n• Tous les avatars\n• Tous les thèmes\n• Toutes les icônes d\'app\n• Fonctionnalités Pro',
-        [{ text: 'Super !', style: 'default' }]
-      );
-      setCode('');
+      setTimeout(() => {
+        setCode('');
+        setSuccess(false);
+        setShowCodeInput(false);
+      }, 1500);
     } else {
       setError(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setTimeout(() => setError(false), 2000);
+      setTimeout(() => setError(false), 1000);
     }
   };
 
   const handleClose = () => {
-    setShowCodeInput(false);
     setCode('');
     setError(false);
+    setSuccess(false);
+    setShowCodeInput(false);
   };
 
   return (
@@ -67,78 +55,79 @@ export const DevCodeModal = () => {
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={handleClose}
-        />
-
-        <View style={[styles.modal, { backgroundColor: colors.backgroundElevated }]}>
-          <Text style={[styles.title, { color: colors.accent }]}>🔐 Code Créateur</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Entrez le code secret pour débloquer toutes les fonctionnalités
-          </Text>
-
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.backgroundCard,
-                color: colors.textPrimary,
-                borderColor: error ? '#F44336' : colors.accent,
-              },
-            ]}
-            value={code}
-            onChangeText={(text) => {
-              setCode(text);
-              if (error) setError(false);
-            }}
-            keyboardType="number-pad"
-            maxLength={4}
-            placeholder="••••"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry
-            autoFocus
-          />
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>❌ Code incorrect</Text>
-            </View>
-          )}
-
-          <View style={styles.buttons}>
-            <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: colors.backgroundCard }]}
-              onPress={handleClose}
-              disabled={loading}
-            >
-              <Text style={[styles.cancelText, { color: colors.textPrimary }]}>
-                Annuler
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent },
-                loading && { opacity: 0.5 },
-              ]}
-              onPress={handleSubmit}
-              disabled={loading}
-            >
-              <Text style={styles.submitText}>
-                {loading ? 'Vérification...' : 'Valider'}
-              </Text>
+        <View style={[styles.modal, { backgroundColor: colors.backgroundCard }]}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              🔐 Mode Créateur
+            </Text>
+            <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <X size={24} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>
-            💡 Astuce : Le code a 4 chiffres
+          {/* Description */}
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            Entrez le code secret pour débloquer toutes les fonctionnalités Pro.
           </Text>
+
+          {/* Input */}
+          <View style={[
+            styles.inputContainer,
+            { 
+              borderColor: error ? '#EF4444' : success ? '#10B981' : colors.border,
+              backgroundColor: error ? '#EF444410' : success ? '#10B98110' : colors.background
+            }
+          ]}>
+            {success ? (
+              <Unlock size={20} color="#10B981" />
+            ) : (
+              <Lock size={20} color={error ? '#EF4444' : colors.textMuted} />
+            )}
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary }]}
+              value={code}
+              onChangeText={setCode}
+              placeholder="Code secret..."
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+              autoFocus
+            />
+          </View>
+
+          {/* Error message */}
+          {error && (
+            <Text style={styles.errorText}>
+              ❌ Code incorrect
+            </Text>
+          )}
+
+          {/* Success message */}
+          {success && (
+            <Text style={styles.successText}>
+              ✅ Mode Créateur activé !
+            </Text>
+          )}
+
+          {/* Button */}
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: success ? '#10B981' : colors.accent },
+              code.length < 4 && styles.buttonDisabled
+            ]}
+            onPress={handleSubmit}
+            disabled={code.length < 4 || success}
+          >
+            <Text style={styles.buttonText}>
+              {success ? 'Débloqué !' : 'Vérifier'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -148,90 +137,73 @@ export const DevCodeModal = () => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 20,
   },
   modal: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
-    width: '85%',
-    maxWidth: 400,
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 20,
+    padding: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
+    fontSize: 18,
+    fontWeight: '700',
   },
-  subtitle: {
+  description: {
     fontSize: 14,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
     lineHeight: 20,
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    marginBottom: 12,
   },
   input: {
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    width: '100%',
-    letterSpacing: 16,
-    borderWidth: 3,
-    marginBottom: SPACING.md,
-  },
-  errorContainer: {
-    marginBottom: SPACING.md,
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 8,
   },
   errorText: {
-    color: '#F44336',
+    color: '#EF4444',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  buttons: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: SPACING.md,
-    marginTop: SPACING.md,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-  },
-  cancelText: {
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  submitButton: {
-    flex: 1,
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    alignItems: 'center',
-  },
-  submitText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  hint: {
-    fontSize: 12,
-    marginTop: SPACING.md,
     textAlign: 'center',
+    marginBottom: 12,
+  },
+  successText: {
+    color: '#10B981',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+    fontWeight: '600',
+  },
+  button: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

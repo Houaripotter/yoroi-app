@@ -13,6 +13,8 @@ import {
   Image,
   Linking,
   Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +25,9 @@ import {
   Mail,
   MapPin,
   Star,
+  X,
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { COACHES, NUTRITIONISTS, OSTEOPATHS, Coach, Nutritionist, Osteopath } from '@/data/partners';
@@ -32,6 +36,7 @@ export default function HealthProfessionalsScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'kines' | 'nutritionists' | 'osteos'>('kines');
+  const [selectedProfessional, setSelectedProfessional] = useState<Coach | Nutritionist | Osteopath | null>(null);
 
   // Filtrer les kinés depuis COACHES
   const kines = COACHES.filter(c => c.type === 'kine');
@@ -136,13 +141,7 @@ export default function HealthProfessionalsScreen() {
                 key={kine.id}
                 professional={kine}
                 colors={colors}
-                onPress={() => {
-                  if (kine.instagram) {
-                    openInstagram(kine.instagram);
-                  } else if (kine.website) {
-                    openWebsite(kine.website);
-                  }
-                }}
+                onPress={() => setSelectedProfessional(kine)}
               />
             ))}
           </View>
@@ -157,13 +156,7 @@ export default function HealthProfessionalsScreen() {
                   key={nutritionist.id}
                   professional={nutritionist}
                   colors={colors}
-                  onPress={() => {
-                    if (nutritionist.instagram) {
-                      openInstagram(nutritionist.instagram);
-                    } else if (nutritionist.website) {
-                      openWebsite(nutritionist.website);
-                    }
-                  }}
+                  onPress={() => setSelectedProfessional(nutritionist)}
                 />
               ))
             ) : (
@@ -188,13 +181,7 @@ export default function HealthProfessionalsScreen() {
                   key={osteopath.id}
                   professional={osteopath}
                   colors={colors}
-                  onPress={() => {
-                    if (osteopath.instagram) {
-                      openInstagram(osteopath.instagram);
-                    } else if (osteopath.website) {
-                      openWebsite(osteopath.website);
-                    }
-                  }}
+                  onPress={() => setSelectedProfessional(osteopath)}
                 />
               ))
             ) : (
@@ -239,6 +226,141 @@ export default function HealthProfessionalsScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modal Détail Professionnel */}
+      {selectedProfessional && (
+        <Modal
+          visible={!!selectedProfessional}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setSelectedProfessional(null)}
+        >
+          <View style={styles.detailContainer}>
+            {/* Header avec photo en grand */}
+            <View style={styles.detailHeader}>
+              <TouchableOpacity
+                onPress={() => setSelectedProfessional(null)}
+                style={styles.detailCloseButton}
+              >
+                <X size={28} color="#FFFFFF" strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              {/* Grande photo */}
+              {selectedProfessional.imageUrl && (
+                <Image
+                  source={selectedProfessional.imageUrl}
+                  style={styles.detailHeaderImage}
+                  resizeMode="cover"
+                />
+              )}
+
+              {/* Gradient overlay */}
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                style={styles.detailHeaderGradient}
+              />
+
+              {/* Nom et titre en overlay */}
+              <View style={styles.detailHeaderContent}>
+                <Text style={styles.detailName}>{selectedProfessional.name}</Text>
+                <Text style={styles.detailRole}>{selectedProfessional.title}</Text>
+              </View>
+            </View>
+
+            {/* Contenu scrollable */}
+            <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+              {/* Bio / Description */}
+              {selectedProfessional.bio && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    À propos
+                  </Text>
+                  <Text style={[styles.detailBio, { color: colors.textPrimary }]}>
+                    {selectedProfessional.bio}
+                  </Text>
+                </View>
+              )}
+
+              {/* Spécialités */}
+              {selectedProfessional.specialties && selectedProfessional.specialties.length > 0 && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    Spécialités
+                  </Text>
+                  <View style={styles.specialtiesContainer}>
+                    {selectedProfessional.specialties.map((spec, i) => (
+                      <View
+                        key={i}
+                        style={[styles.specialtyBadge, { backgroundColor: colors.backgroundCard }]}
+                      >
+                        <Text style={[styles.specialtyBadgeText, { color: colors.textPrimary }]}>
+                          {spec}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Localisation */}
+              {selectedProfessional.location && (
+                <TouchableOpacity
+                  style={[styles.detailLocationCard, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    const address = selectedProfessional.location!;
+                    const encodedAddress = encodeURIComponent(address);
+                    const url = Platform.select({
+                      ios: `maps://maps.apple.com/?q=${encodedAddress}`,
+                      android: `geo:0,0?q=${encodedAddress}`,
+                    });
+                    if (url) Linking.openURL(url);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <MapPin size={20} color={colors.accent} strokeWidth={2} />
+                  <Text style={[styles.detailLocationText, { color: colors.accent }]}>
+                    {selectedProfessional.location}
+                  </Text>
+                  <ExternalLink size={16} color={colors.accent} />
+                </TouchableOpacity>
+              )}
+
+              {/* Instagram */}
+              {selectedProfessional.instagram && (
+                <View style={styles.detailSection}>
+                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                    Réseaux sociaux
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.detailInstagramButton}
+                    onPress={() => openInstagram(selectedProfessional.instagram!)}
+                    activeOpacity={0.7}
+                  >
+                    <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={styles.detailInstagramText}>{selectedProfessional.instagram}</Text>
+                    <ExternalLink size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Website */}
+              {selectedProfessional.website && (
+                <TouchableOpacity
+                  style={[styles.detailWebsiteButton, { backgroundColor: colors.accent }]}
+                  onPress={() => openWebsite(selectedProfessional.website!)}
+                  activeOpacity={0.7}
+                >
+                  <ExternalLink size={22} color={colors.textOnAccent} strokeWidth={2.5} />
+                  <Text style={[styles.detailWebsiteText, { color: colors.textOnAccent }]}>Site web</Text>
+                  <ExternalLink size={18} color={colors.textOnAccent} />
+                </TouchableOpacity>
+              )}
+
+              <View style={{ height: 60 }} />
+            </ScrollView>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -527,5 +649,155 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     fontStyle: 'italic',
+  },
+
+  // Detail Modal
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#E8EDF2',
+  },
+  detailHeader: {
+    height: 400,
+    position: 'relative',
+  },
+  detailCloseButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  detailHeaderImage: {
+    width: '100%',
+    height: '100%',
+  },
+  detailHeaderGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+  },
+  detailHeaderContent: {
+    position: 'absolute',
+    bottom: 32,
+    left: 24,
+    right: 24,
+  },
+  detailName: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  detailRole: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  detailScroll: {
+    flex: 1,
+  },
+  detailSection: {
+    padding: 24,
+  },
+  detailSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 16,
+  },
+  detailBio: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
+  },
+  specialtiesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  specialtyBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  specialtyBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  detailLocationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 24,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailLocationText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  detailInstagramButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#E1306C',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  detailInstagramText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+  },
+  detailWebsiteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    marginHorizontal: 24,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  detailWebsiteText: {
+    fontSize: 17,
+    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
   },
 });

@@ -30,7 +30,7 @@ export const LogoViewer: React.FC<LogoViewerProps> = ({ visible, onClose }) => {
         </TouchableOpacity>
 
         <Image
-          source={require('../assets/images/logo2010.png')}
+          source={require('../assets/logo d\'app/logo1.png')}
           style={styles.fullImage}
           resizeMode="contain"
         />
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   fullImage: {
-    width: width * 0.85,
-    height: height * 0.6,
+    width: width * 0.98,
+    height: height * 0.85,
   },
 });

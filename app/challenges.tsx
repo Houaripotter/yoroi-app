@@ -40,6 +40,7 @@ import {
   getTotalChallengeXP,
   ActiveChallenge,
 } from '@/lib/challengesService';
+import { ChallengeConfetti } from '@/components/ChallengeConfetti';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -51,6 +52,8 @@ export default function ChallengesScreen() {
   const [weeklyChallenges, setWeeklyChallenges] = useState<ActiveChallenge[]>([]);
   const [totalXP, setTotalXP] = useState(0);
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [confettiVisible, setConfettiVisible] = useState(false);
+  const [completedChallengeId, setCompletedChallengeId] = useState<string | null>(null);
 
   // Rendu icône défi
   const renderChallengeIcon = (iconName: string) => {
@@ -95,11 +98,18 @@ export default function ChallengesScreen() {
     const xp = await claimChallengeReward(challenge.id);
     
     if (xp > 0) {
-      Alert.alert(
-        '🎁 Récompense réclamée !',
-        `Tu as gagné +${xp} XP !`,
-        [{ text: 'Super !', style: 'default' }]
-      );
+      setCompletedChallengeId(challenge.id);
+      setConfettiVisible(true);
+      
+      // Alert après l'animation
+      setTimeout(() => {
+        Alert.alert(
+          'Récompense réclamée !',
+          `Tu as gagné +${xp} XP !`,
+          [{ text: 'Super !', style: 'default' }]
+        );
+      }, 500);
+      
       loadData();
     }
   };
@@ -154,6 +164,15 @@ export default function ChallengesScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Confetti animé */}
+        <ChallengeConfetti
+          visible={confettiVisible}
+          onComplete={() => {
+            setConfettiVisible(false);
+            setCompletedChallengeId(null);
+          }}
+        />
+        
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
           <Target size={16} color={colors.accent} />

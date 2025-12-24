@@ -40,7 +40,7 @@ export default function OnboardingScreen() {
     {
       id: 'welcome',
       icon: <Sparkles size={64} color={colors.accent} />,
-      title: 'Bienvenue Guerrier',
+      title: 'Bienvenue Guerrier(e)',
       description: 'YOROI est ton armure digitale pour devenir la meilleure version de toi-même.',
       color: colors.accent,
     },

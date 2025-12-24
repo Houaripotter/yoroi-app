@@ -9,6 +9,7 @@ import {
   StatusBar,
   Image,
   Alert,
+  Linking,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,14 +24,20 @@ import {
   ChevronLeft,
   Moon,
   TrendingUp,
+  Trophy,
+  MapPin,
+  Bell,
+  ExternalLink,
 } from 'lucide-react-native';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT } from '@/constants/appTheme';
-import { getTrainings, getClubs, addTraining, deleteTraining, Club, Training } from '@/lib/database';
+import { getTrainings, getClubs, addTraining, deleteTraining, Club, Training, getCompetitions, Competition } from '@/lib/database';
+import { getSportIcon } from '@/constants/sportIcons';
 import { DayDetailModal, AddSessionModal } from '@/components/calendar';
 import { getClubLogoSource } from '@/lib/sports';
+import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
 
 // ============================================
 // PLANNING SCREEN - CALENDRIER INTERACTIF
@@ -42,9 +49,10 @@ const DAYS_FR = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [viewMode, setViewMode] = useState<'calendar' | 'week' | 'programme'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'programme' | 'clubs' | 'competitions'>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Modals state
@@ -52,6 +60,10 @@ export default function PlanningScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showProgrammeEditModal, setShowProgrammeEditModal] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [selectedSport, setSelectedSport] = useState<string>('jjb');
+  const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
 
   // Fonction pour obtenir la prochaine date d'un jour de la semaine (0=Lundi, 6=Dimanche)
   const getNextDateForDayOfWeek = (dayIndex: number): Date => {
@@ -94,14 +106,43 @@ export default function PlanningScreen() {
     return program;
   }, [workouts]);
 
+  // Fonction pour extraire l'organisateur du nom de la compétition
+  const getOrganizer = (competitionName: string): string => {
+    if (competitionName.includes('IBJJF')) return 'IBJJF';
+    if (competitionName.includes('CFJJB')) return 'CFJJB';
+    return 'Autres';
+  };
+
+  // Grouper les compétitions par organisateur
+  const groupedCompetitions = useMemo(() => {
+    const upcoming = competitions
+      .filter(c => new Date(c.date) >= new Date())
+      .filter(c => c.sport === selectedSport)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const groups: { [key: string]: Competition[] } = {};
+
+    upcoming.forEach(comp => {
+      const organizer = getOrganizer(comp.nom);
+      if (!groups[organizer]) {
+        groups[organizer] = [];
+      }
+      groups[organizer].push(comp);
+    });
+
+    return groups;
+  }, [competitions, selectedSport]);
+
   const loadData = useCallback(async () => {
     try {
-      const [trainingsData, clubsData] = await Promise.all([
+      const [trainingsData, clubsData, competitionsData] = await Promise.all([
         getTrainings(),
         getClubs(),
+        getCompetitions ? getCompetitions() : Promise.resolve([]),
       ]);
       setWorkouts(trainingsData);
       setClubs(clubsData);
+      setCompetitions(competitionsData);
     } catch (error) {
       console.error('Erreur chargement planning:', error);
     }
@@ -215,10 +256,15 @@ export default function PlanningScreen() {
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>Clique sur un jour pour voir/ajouter</Text>
         </View>
 
-        {/* VIEW MODE TOGGLE - 3 ONGLETS */}
-        <View style={[styles.toggleContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+        {/* VIEW MODE TOGGLE - 4 ONGLETS (Scroll horizontal) */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.toggleScroll}
+          contentContainerStyle={styles.toggleScrollContent}
+        >
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'calendar' && { backgroundColor: colors.accent }]}
+            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'calendar' && { backgroundColor: colors.accent }]}
             onPress={() => setViewMode('calendar')}
           >
             <Calendar size={16} color={viewMode === 'calendar' ? '#FFFFFF' : colors.textMuted} />
@@ -227,7 +273,7 @@ export default function PlanningScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'programme' && { backgroundColor: colors.accent }]}
+            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'programme' && { backgroundColor: colors.accent }]}
             onPress={() => setViewMode('programme')}
           >
             <List size={16} color={viewMode === 'programme' ? '#FFFFFF' : colors.textMuted} />
@@ -236,15 +282,24 @@ export default function PlanningScreen() {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'week' && { backgroundColor: colors.accent }]}
-            onPress={() => setViewMode('week')}
+            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'clubs' && { backgroundColor: colors.accent }]}
+            onPress={() => setViewMode('clubs')}
           >
-            <Dumbbell size={16} color={viewMode === 'week' ? '#FFFFFF' : colors.textMuted} />
-            <Text style={[styles.toggleText, { color: colors.textMuted }, viewMode === 'week' && styles.toggleTextActive]}>
+            <Dumbbell size={16} color={viewMode === 'clubs' ? '#FFFFFF' : colors.textMuted} />
+            <Text style={[styles.toggleText, { color: colors.textMuted }, viewMode === 'clubs' && styles.toggleTextActive]}>
               Clubs
             </Text>
           </TouchableOpacity>
-        </View>
+          <TouchableOpacity
+            style={[styles.toggleButton, { backgroundColor: colors.backgroundCard }, viewMode === 'competitions' && { backgroundColor: '#F59E0B' }]}
+            onPress={() => setViewMode('competitions')}
+          >
+            <Trophy size={16} color={viewMode === 'competitions' ? '#FFFFFF' : '#F59E0B'} />
+            <Text style={[styles.toggleText, { color: '#F59E0B' }, viewMode === 'competitions' && styles.toggleTextActive]}>
+              Compétitions
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
 
         {viewMode === 'calendar' ? (
           <>
@@ -474,10 +529,10 @@ export default function PlanningScreen() {
               </View>
             </View>
           </>
-        ) : (
+        ) : viewMode === 'clubs' ? (
           <>
-            {/* CLUBS & COACH VIEW */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Clubs & Coach</Text>
+            {/* CLUBS VIEW */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mes Clubs</Text>
 
             {clubs.length === 0 ? (
               <View style={[styles.emptyClubsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -505,8 +560,20 @@ export default function PlanningScreen() {
                       style={[styles.clubCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setSelectedDate(new Date());
-                        setShowAddModal(true);
+                        // Ouvrir le modal de détail du club
+                        const partnerData: Partner = {
+                          id: club.id || 0,
+                          type: 'club',
+                          name: club.name,
+                          sport: club.sport,
+                          photo: club.logo_uri ? { uri: club.logo_uri } : undefined,
+                          color: club.color,
+                          bio: club.bio,
+                          address: club.address,
+                          links: club.links ? JSON.parse(club.links) : undefined,
+                        };
+                        setSelectedPartner(partnerData);
+                        setShowPartnerModal(true);
                       }}
                     >
                       <View style={[styles.clubLogoBg, { backgroundColor: display.type === 'color' ? `${display.color}20` : colors.backgroundElevated }]}>
@@ -558,6 +625,306 @@ export default function PlanningScreen() {
               </>
             )}
           </>
+        ) : (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              📅 MES COMPÉTITIONS
+            </Text>
+
+            {/* Sélecteur de sport */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sportFilterContainer}
+            >
+              <TouchableOpacity
+                style={[
+                  styles.sportChip,
+                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                  selectedSport === 'jjb' && { backgroundColor: '#0ABAB5', borderColor: '#0ABAB5' }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedSport('jjb');
+                }}
+              >
+                <Text style={[
+                  styles.sportChipText,
+                  { color: colors.textPrimary },
+                  selectedSport === 'jjb' && { color: '#FFFFFF', fontWeight: '700' }
+                ]}>
+                  🥋 JJB
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sportChip,
+                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                  selectedSport === 'mma' && { backgroundColor: '#EF4444', borderColor: '#EF4444' }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedSport('mma');
+                }}
+              >
+                <Text style={[
+                  styles.sportChipText,
+                  { color: colors.textPrimary },
+                  selectedSport === 'mma' && { color: '#FFFFFF', fontWeight: '700' }
+                ]}>
+                  🥊 MMA
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sportChip,
+                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                  selectedSport === 'boxe' && { backgroundColor: '#F59E0B', borderColor: '#F59E0B' }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedSport('boxe');
+                }}
+              >
+                <Text style={[
+                  styles.sportChipText,
+                  { color: colors.textPrimary },
+                  selectedSport === 'boxe' && { color: '#FFFFFF', fontWeight: '700' }
+                ]}>
+                  🥊 Boxe
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sportChip,
+                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                  selectedSport === 'running' && { backgroundColor: '#10B981', borderColor: '#10B981' }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedSport('running');
+                }}
+              >
+                <Text style={[
+                  styles.sportChipText,
+                  { color: colors.textPrimary },
+                  selectedSport === 'running' && { color: '#FFFFFF', fontWeight: '700' }
+                ]}>
+                  🏃 Running
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {Object.keys(groupedCompetitions).length === 0 ? (
+              <View style={[styles.emptyClubsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <Trophy size={48} color="#F59E0B" />
+                <Text style={[styles.emptyClubsTitle, { color: colors.textPrimary }]}>Aucune compétition</Text>
+                <Text style={[styles.emptyClubsText, { color: colors.textMuted }]}>
+                  Ajoute ta prochaine compétition pour suivre ta préparation
+                </Text>
+                <TouchableOpacity
+                  style={[styles.addClubButton, { backgroundColor: '#F59E0B' }]}
+                  onPress={() => router.push('/add-competition')}
+                >
+                  <Plus size={18} color="#FFFFFF" />
+                  <Text style={styles.addClubButtonText}>Ajouter une compétition</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {/* Groupement par organisateur */}
+                {Object.entries(groupedCompetitions).map(([organizer, comps]) => {
+                  const isExpanded = expandedOrganizers[organizer];
+                  const displayedComps = isExpanded ? comps : comps.slice(0, 2);
+                  const hasMore = comps.length > 2;
+
+                  // Couleur de l'organisateur
+                  const organizerColor = organizer === 'IBJJF' ? '#E53935' : organizer === 'CFJJB' ? '#1E88E5' : '#6B7280';
+
+                  return (
+                    <View key={organizer} style={styles.organizerGroup}>
+                      {/* Header organisateur */}
+                      <View style={[styles.organizerHeader, { borderLeftColor: organizerColor }]}>
+                        <Text style={[styles.organizerName, { color: organizerColor }]}>
+                          {organizer}
+                        </Text>
+                        <View style={[styles.organizerBadge, { backgroundColor: organizerColor + '20' }]}>
+                          <Text style={[styles.organizerCount, { color: organizerColor }]}>
+                            {comps.length}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Compétitions */}
+                      {displayedComps.map((competition) => {
+                        const eventDate = new Date(competition.date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        eventDate.setHours(0, 0, 0, 0);
+                        const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                        const sportInfo = getSportIcon(competition.sport || 'default');
+                        const urgencyColor = daysLeft <= 7 ? '#EF4444' : daysLeft <= 30 ? '#F59E0B' : '#10B981';
+
+                        return (
+                          <TouchableOpacity
+                            key={competition.id}
+                            style={[styles.competitionCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                            onPress={() => router.push('/competitions')}
+                            activeOpacity={0.8}
+                          >
+                            <View style={styles.competitionHeader}>
+                              <View style={[styles.sportIconBg, { backgroundColor: sportInfo.color + '20' }]}>
+                                <Text style={styles.sportIconText}>{sportInfo.icon}</Text>
+                              </View>
+                              <View style={styles.competitionInfo}>
+                                <Text style={[styles.competitionName, { color: colors.textPrimary }]} numberOfLines={1}>
+                                  {competition.nom}
+                                </Text>
+                                <View style={styles.competitionMeta}>
+                                  <Calendar size={12} color={colors.textMuted} />
+                                  <Text style={[styles.competitionDate, { color: colors.textMuted }]}>
+                                    {format(eventDate, 'd MMMM yyyy', { locale: fr })}
+                                  </Text>
+                                </View>
+                                {competition.lieu && (
+                                  <View style={styles.competitionMeta}>
+                                    <MapPin size={12} color={colors.textMuted} />
+                                    <Text style={[styles.competitionLocation, { color: colors.textMuted }]}>
+                                      {competition.lieu}
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                              <View style={[styles.countdownBadge, { backgroundColor: urgencyColor + '20' }]}>
+                                <Text style={[styles.countdownText, { color: urgencyColor }]}>
+                                  J-{daysLeft}
+                                </Text>
+                              </View>
+                            </View>
+
+                            {competition.categorie_poids && (
+                              <View style={[styles.weightCategory, { backgroundColor: colors.background }]}>
+                                <Text style={[styles.weightCategoryText, { color: colors.textPrimary }]}>
+                                  ⚖️ {competition.categorie_poids}
+                                </Text>
+                              </View>
+                            )}
+
+                            <View style={styles.competitionActions}>
+                              {competition.lien_inscription && (
+                                <TouchableOpacity
+                                  style={[styles.competitionAction, { backgroundColor: sportInfo.color + '20' }]}
+                                  onPress={() => Linking.openURL(competition.lien_inscription!)}
+                                >
+                                  <ExternalLink size={14} color={sportInfo.color} />
+                                  <Text style={[styles.competitionActionText, { color: sportInfo.color }]}>Inscription</Text>
+                                </TouchableOpacity>
+                              )}
+                              <TouchableOpacity
+                                style={[styles.competitionAction, { backgroundColor: '#8B5CF620' }]}
+                                onPress={() => {
+                                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                  Alert.alert('Rappels', 'Les rappels J-30, J-7, J-1 et H-2 sont activés !');
+                                }}
+                              >
+                                <Bell size={14} color="#8B5CF6" />
+                                <Text style={[styles.competitionActionText, { color: '#8B5CF6' }]}>Rappels</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+
+                      {/* Bouton "Voir plus" */}
+                      {hasMore && (
+                        <TouchableOpacity
+                          style={[styles.seeMoreButton, { backgroundColor: `${organizerColor}15`, borderColor: organizerColor }]}
+                          onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setExpandedOrganizers(prev => ({
+                              ...prev,
+                              [organizer]: !prev[organizer]
+                            }));
+                          }}
+                        >
+                          <Text style={[styles.seeMoreText, { color: organizerColor }]}>
+                            {isExpanded ? `Voir moins` : `Voir plus (${comps.length - 2} autres)`}
+                          </Text>
+                          <ChevronRight
+                            size={16}
+                            color={organizerColor}
+                            style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })}
+
+                {/* Ajouter une compétition */}
+                <TouchableOpacity
+                  style={[styles.addClubButtonFixed, { backgroundColor: '#F59E0B' }]}
+                  onPress={() => router.push('/add-competition')}
+                  activeOpacity={0.8}
+                >
+                  <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={styles.addClubButtonFixedText}>Ajouter une compétition</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* CALENDRIERS OFFICIELS */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 24 }]}>
+              🌐 CALENDRIERS OFFICIELS
+            </Text>
+            <View style={styles.officialCalendars}>
+              <TouchableOpacity
+                style={[styles.officialCalendarCard, { backgroundColor: colors.backgroundCard, borderColor: '#1E88E5' }]}
+                onPress={() => Linking.openURL('https://cfjjb.com/competitions/calendrier-competitions')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.officialCalendarIcon, { backgroundColor: '#1E88E520' }]}>
+                  <Text style={styles.officialCalendarEmoji}>🥋</Text>
+                </View>
+                <View style={styles.officialCalendarInfo}>
+                  <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>CFJJB</Text>
+                  <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>Confédération Française JJB</Text>
+                </View>
+                <ExternalLink size={18} color="#1E88E5" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.officialCalendarCard, { backgroundColor: colors.backgroundCard, borderColor: '#E53935' }]}
+                onPress={() => Linking.openURL('https://ibjjf.com/events/calendar')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.officialCalendarIcon, { backgroundColor: '#E5393520' }]}>
+                  <Text style={styles.officialCalendarEmoji}>🏆</Text>
+                </View>
+                <View style={styles.officialCalendarInfo}>
+                  <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>IBJJF</Text>
+                  <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>International Brazilian JJF</Text>
+                </View>
+                <ExternalLink size={18} color="#E53935" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.officialCalendarCard, { backgroundColor: colors.backgroundCard, borderColor: '#FF6F00' }]}
+                onPress={() => Linking.openURL('https://www.ufc.com/events')}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.officialCalendarIcon, { backgroundColor: '#FF6F0020' }]}>
+                  <Text style={styles.officialCalendarEmoji}>🥊</Text>
+                </View>
+                <View style={styles.officialCalendarInfo}>
+                  <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>UFC / MMA</Text>
+                  <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>Événements MMA</Text>
+                </View>
+                <ExternalLink size={18} color="#FF6F00" />
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
         <View style={{ height: 120 }} />
@@ -580,6 +947,16 @@ export default function PlanningScreen() {
         clubs={clubs}
         onClose={() => setShowAddModal(false)}
         onSave={handleSaveSession}
+      />
+
+      {/* Modal détail partenaire (Club/Coach) */}
+      <PartnerDetailModal
+        visible={showPartnerModal}
+        partner={selectedPartner}
+        onClose={() => {
+          setShowPartnerModal(false);
+          setSelectedPartner(null);
+        }}
       />
     </View>
   );
@@ -954,6 +1331,95 @@ const styles = StyleSheet.create({
     fontWeight: FONT.weight.bold,
     color: '#FFFFFF',
   },
+  
+  // Toggle scroll pour 4 onglets
+  toggleScroll: {
+    marginBottom: SPACING.md,
+  },
+  toggleScrollContent: {
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.sm,
+  },
+
+  // COMPÉTITIONS
+  competitionCard: {
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+  },
+  competitionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.md,
+  },
+  sportIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sportIconText: {
+    fontSize: 24,
+  },
+  competitionInfo: {
+    flex: 1,
+  },
+  competitionName: {
+    fontSize: FONT.size.lg,
+    fontWeight: FONT.weight.bold,
+    marginBottom: 4,
+  },
+  competitionMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  competitionDate: {
+    fontSize: FONT.size.sm,
+  },
+  competitionLocation: {
+    fontSize: FONT.size.sm,
+  },
+  countdownBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+  },
+  countdownText: {
+    fontSize: FONT.size.lg,
+    fontWeight: FONT.weight.bold,
+  },
+  weightCategory: {
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    alignSelf: 'flex-start',
+  },
+  weightCategoryText: {
+    fontSize: FONT.size.sm,
+    fontWeight: FONT.weight.semibold,
+  },
+  competitionActions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+  },
+  competitionAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+  },
+  competitionActionText: {
+    fontSize: FONT.size.sm,
+    fontWeight: FONT.weight.semibold,
+  },
 
   // TOTAL STATS
   totalStatsCard: {
@@ -1095,5 +1561,100 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
     backgroundColor: COLORS.border,
+  },
+  
+  // Calendriers officiels
+  officialCalendars: {
+    gap: SPACING.md,
+  },
+  officialCalendarCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.xl,
+    borderLeftWidth: 4,
+    gap: SPACING.md,
+  },
+  officialCalendarIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  officialCalendarEmoji: {
+    fontSize: 22,
+  },
+  officialCalendarInfo: {
+    flex: 1,
+  },
+  officialCalendarName: {
+    fontSize: FONT.size.md,
+    fontWeight: FONT.weight.bold,
+  },
+  officialCalendarDesc: {
+    fontSize: FONT.size.xs,
+    marginTop: 2,
+  },
+
+  // Filtre sport
+  sportFilterContainer: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+    paddingRight: SPACING.lg,
+  },
+  sportChip: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.full,
+    borderWidth: 2,
+  },
+  sportChipText: {
+    fontSize: FONT.size.sm,
+    fontWeight: FONT.weight.semibold,
+  },
+
+  // Groupement par organisateur
+  organizerGroup: {
+    marginBottom: SPACING.xl,
+  },
+  organizerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: SPACING.md,
+    paddingRight: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.md,
+    borderLeftWidth: 4,
+  },
+  organizerName: {
+    fontSize: FONT.size.lg,
+    fontWeight: FONT.weight.bold,
+    letterSpacing: 0.5,
+  },
+  organizerBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+  },
+  organizerCount: {
+    fontSize: FONT.size.sm,
+    fontWeight: FONT.weight.bold,
+  },
+  seeMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: SPACING.sm,
+  },
+  seeMoreText: {
+    fontSize: FONT.size.sm,
+    fontWeight: FONT.weight.semibold,
   },
 });
