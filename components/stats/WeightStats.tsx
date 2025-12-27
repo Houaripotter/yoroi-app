@@ -25,7 +25,7 @@ type Period = '7j' | '30j' | '90j' | 'all';
 
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   const { colors } = useTheme();
-  const [period, setPeriod] = useState<Period>('30j');
+  const [period, setPeriod] = useState<Period>('7j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
     weight: number;
@@ -146,8 +146,8 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
   const yLabels = getYLabels();
 
-  // Préparer les données sparkline (derniers 30 points)
-  const sparklineData = data.slice(-30).map(entry => ({ value: entry.weight }));
+  // Préparer les données sparkline (SEULEMENT 3 dernières prises)
+  const sparklineData = data.slice(-3).map(entry => ({ value: entry.weight }));
 
   // Objectif de poids (simulé - devrait venir de la DB)
   const goalWeight = stats.end > 0 ? stats.end - 2 : 75; // Exemple : objectif = -2kg du poids actuel
@@ -274,6 +274,8 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                     color={card.color}
                     showGradient={true}
                     thickness={1.5}
+                    showLastValues={sparklineData.length}
+                    valueUnit={card.unit}
                   />
                 </View>
               )}
@@ -326,8 +328,9 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
               <Defs>
                 <LinearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={colors.accent} stopOpacity="0.3" />
-                  <Stop offset="1" stopColor={colors.accent} stopOpacity="0.05" />
+                  <Stop offset="0" stopColor={colors.accent} stopOpacity="0.4" />
+                  <Stop offset="0.5" stopColor={colors.accent} stopOpacity="0.2" />
+                  <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
                 </LinearGradient>
               </Defs>
 
@@ -371,27 +374,28 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
               <Path
                 d={createPath()}
                 stroke={colors.accent}
-                strokeWidth={3}
+                strokeWidth={4}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
 
-              {/* Points sur la courbe */}
+              {/* Points sur la courbe - Design moderne */}
               {chartData.map((point, index) => (
                 <React.Fragment key={index}>
-                  {/* Cercle extérieur blanc */}
+                  {/* Cercle extérieur avec ombre */}
                   <Circle
                     cx={point.x}
                     cy={point.y}
-                    r={6}
+                    r={8}
                     fill="#FFFFFF"
+                    opacity={0.95}
                   />
                   {/* Cercle intérieur avec couleur d'accent */}
                   <Circle
                     cx={point.x}
                     cy={point.y}
-                    r={4}
+                    r={5}
                     fill={colors.accent}
                     onPress={() => {
                       setSelectedPoint({
@@ -435,17 +439,19 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
               ))}
             </View>
 
-            {/* Valeurs au-dessus des points (espacées pour éviter chevauchement) */}
+            {/* Valeurs au-dessus des points - Design amélioré */}
             {chartData.filter((_, index) => {
               // Afficher tous les points si moins de 7, sinon espacer intelligemment
               if (chartData.length <= 7) return true;
               const step = Math.max(1, Math.floor(chartData.length / 7));
               return index % step === 0 || index === chartData.length - 1;
             }).map((point, index) => (
-              <View key={index} style={[styles.valueLabel, { left: point.x - 20, top: point.y - 28 }]}>
-                <Text style={[styles.valueLabelText, { color: colors.accent, backgroundColor: 'rgba(255,255,255,0.85)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 }]}>
-                  {point.weight.toFixed(1)}
-                </Text>
+              <View key={index} style={[styles.valueLabel, { left: point.x - 24, top: point.y - 36 }]}>
+                <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
+                  <Text style={styles.valueBadgeText}>
+                    {point.weight.toFixed(1)} kg
+                  </Text>
+                </View>
               </View>
             ))}
 
@@ -587,8 +593,8 @@ const styles = StyleSheet.create({
   },
   expandIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 14,
+    left: 48,
     zIndex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
@@ -711,6 +717,21 @@ const styles = StyleSheet.create({
   valueLabelText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  valueBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  valueBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   goalLabel: {
     position: 'absolute',

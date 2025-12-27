@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { View, Text, StyleSheet } from 'react-native';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 // import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface DataPoint {
@@ -17,6 +17,8 @@ interface SparklineChartProps {
   showGradient?: boolean;
   trend?: TrendType;
   thickness?: number;
+  showLastValues?: number;
+  valueUnit?: string;
 }
 
 export const SparklineChart: React.FC<SparklineChartProps> = ({
@@ -26,8 +28,12 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   color,
   showGradient = true,
   trend,
-  thickness = 2,
+  thickness = 2.5,
+  showLastValues = 0,
+  valueUnit = '',
 }) => {
+  const gradientId = React.useMemo(() => `sparkline-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
+
   if (data.length < 2) return null;
 
   // Auto-detect trend
@@ -53,14 +59,15 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   const minValue = Math.min(...data.map(d => d.value));
   const range = maxValue - minValue || 1;
 
+  // Créer les points pour le graphique
+  const points = data.map((d, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((d.value - minValue) / range) * height;
+    return { x, y, value: d.value };
+  });
+
   // Créer le path
   const createPath = (): string => {
-    const points = data.map((d, i) => {
-      const x = (i / (data.length - 1)) * width;
-      const y = height - ((d.value - minValue) / range) * height;
-      return { x, y };
-    });
-
     let path = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const current = points[i];
@@ -74,18 +81,27 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   const linePath = createPath();
   const gradientPath = linePath + ` L ${width} ${height} L 0 ${height} Z`;
 
+  // Obtenir les derniers points à afficher
+  const lastPoints = showLastValues > 0
+    ? points.slice(-showLastValues).map((point, index) => ({
+        ...point,
+        dataIndex: data.length - showLastValues + index
+      }))
+    : [];
+
   return (
-    <View  style={[styles.container, { width, height }]}>
+    <View style={[styles.container, { width, height }]}>
       <Svg width={width} height={height}>
         <Defs>
-          <LinearGradient id={`sparkline-gradient-${Math.random()}`} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={chartColor} stopOpacity="0.25" />
-            <Stop offset="1" stopColor={chartColor} stopOpacity="0.05" />
+          <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={chartColor} stopOpacity="0.4" />
+            <Stop offset="0.5" stopColor={chartColor} stopOpacity="0.2" />
+            <Stop offset="1" stopColor={chartColor} stopOpacity="0.02" />
           </LinearGradient>
         </Defs>
 
         {showGradient && (
-          <Path d={gradientPath} fill={`url(#sparkline-gradient-${Math.random()})`} />
+          <Path d={gradientPath} fill={`url(#${gradientId})`} />
         )}
 
         <Path
@@ -96,13 +112,73 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+
+        {/* Points sur les dernières valeurs */}
+        {lastPoints.map((point, index) => (
+          <React.Fragment key={index}>
+            <Circle
+              cx={point.x}
+              cy={point.y}
+              r={5}
+              fill="#FFFFFF"
+              opacity={0.95}
+            />
+            <Circle
+              cx={point.x}
+              cy={point.y}
+              r={3}
+              fill={chartColor}
+            />
+          </React.Fragment>
+        ))}
       </Svg>
+
+      {/* Valeurs au-dessus des points */}
+      {lastPoints.map((point, index) => {
+        const displayValue = valueUnit === 'kg' || valueUnit === 'L'
+          ? point.value.toFixed(1)
+          : Math.round(point.value);
+
+        return (
+          <View
+            key={index}
+            style={[
+              styles.valueLabel,
+              {
+                left: point.x - 12,
+                top: Math.max(point.y - 18, 0),
+              }
+            ]}
+          >
+            <Text style={[styles.valueLabelText, { color: chartColor }]}>
+              {displayValue}{valueUnit}
+            </Text>
+          </View>
+        );
+      })}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
+    overflow: 'visible',
+    position: 'relative',
+  },
+  valueLabel: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  valueLabelText: {
+    fontSize: 9,
+    fontWeight: '800',
   },
 });

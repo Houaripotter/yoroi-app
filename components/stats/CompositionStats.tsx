@@ -25,9 +25,9 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
   const latest = data.length > 0 ? data[data.length - 1] : null;
   const previous = data.length > 1 ? data[data.length - 2] : null;
 
-  // Préparer les données pour les sparklines (derniers 30 jours)
+  // Préparer les données pour les sparklines (SEULEMENT 3 dernières prises)
   const getSparklineData = (key: keyof Weight) => {
-    return data.slice(-30).map(entry => ({
+    return data.slice(-3).map(entry => ({
       value: (entry[key] as number) || 0,
     }));
   };
@@ -194,7 +194,9 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
                     height={40}
                     color={metric.color}
                     showGradient={true}
-                    thickness={1.5}
+                    thickness={2.5}
+                    showLastValues={sparklineData.length}
+                    valueUnit={metric.unit}
                   />
                 </View>
               )}
@@ -281,11 +283,16 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 140,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   expandIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 14,
+    left: 48,
     zIndex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
@@ -323,13 +330,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
     marginBottom: 8,
+    letterSpacing: -0.5,
   },
   metricUnit: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   sparklineContainer: {
     marginTop: 'auto',

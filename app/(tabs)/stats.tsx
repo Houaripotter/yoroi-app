@@ -81,7 +81,7 @@ export default function StatsScreen() {
     { key: 'compo', label: 'Compo', icon: PieChart, color: '#8B5CF6' },
     { key: 'mesures', label: 'Mesures', icon: Ruler, color: '#0EA5E9' },
     { key: 'vitalite', label: 'Vitalité', icon: Heart, color: '#EF4444' },
-    { key: 'performance', label: 'Performances', icon: Activity, color: '#EC4899' },
+    { key: 'performance', label: 'Perf', icon: Activity, color: '#EC4899' },
   ];
 
   const activeIndex = tabs.findIndex(t => t.key === activeTab);
@@ -102,7 +102,7 @@ export default function StatsScreen() {
   const TAB_WIDTH = 56;
   const indicatorTranslateX = indicatorAnim.interpolate({
     inputRange: tabs.map((_, i) => i),
-    outputRange: tabs.map((_, i) => i * (TAB_WIDTH + 8)),
+    outputRange: tabs.map((_, i) => i * (TAB_WIDTH + 6)),
   });
 
   return (
@@ -249,11 +249,14 @@ const styles = StyleSheet.create({
   // Modern Tab Bar
   tabBarWrapper: {
     paddingVertical: SPACING.md,
+    alignItems: 'center',
   },
   tabBarContent: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
-    gap: 8,
+    gap: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabItemWrapper: {
     alignItems: 'center',
@@ -274,9 +277,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
     textAlign: 'center',
+    width: '100%',
   },
   tabLabelActive: {
     fontWeight: '700',

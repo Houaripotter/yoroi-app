@@ -245,7 +245,24 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
       </View>
 
       {/* Section Sommeil */}
-      <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
+      <TouchableOpacity
+        style={[styles.section, { backgroundColor: colors.backgroundCard }]}
+        activeOpacity={0.9}
+        onPress={() => sleepHistory.length > 0 && setSelectedStat({
+          key: 'sleep_detail',
+          label: 'Sommeil Détaillé',
+          color: '#8B5CF6',
+          unit: 'h',
+          icon: <Moon size={24} color="#8B5CF6" />,
+        })}
+      >
+        {/* Expand icon */}
+        {sleepHistory.length > 0 && (
+          <View style={styles.expandIconSection}>
+            <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+          </View>
+        )}
+
         <View style={styles.sectionHeader}>
           <Moon size={18} color="#8B5CF6" />
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Sommeil</Text>
@@ -282,8 +299,9 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
             <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
               <Defs>
                 <LinearGradient id="sleepGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor="#8B5CF6" stopOpacity="0.3" />
-                  <Stop offset="1" stopColor="#8B5CF6" stopOpacity="0.05" />
+                  <Stop offset="0" stopColor="#8B5CF6" stopOpacity="0.4" />
+                  <Stop offset="0.5" stopColor="#8B5CF6" stopOpacity="0.2" />
+                  <Stop offset="1" stopColor="#8B5CF6" stopOpacity="0.02" />
                 </LinearGradient>
               </Defs>
 
@@ -374,9 +392,12 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                 return (
                   <>
                     <Path d={areaPath} fill="url(#sleepGradient)" />
-                    <Path d={path} stroke="#8B5CF6" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    <Path d={path} stroke="#8B5CF6" strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />
                     {chartData.map((point, index) => (
-                      <Circle key={index} cx={point.x} cy={point.y} r={4} fill="#8B5CF6" />
+                      <React.Fragment key={index}>
+                        <Circle cx={point.x} cy={point.y} r={6} fill="#FFFFFF" opacity={0.95} />
+                        <Circle cx={point.x} cy={point.y} r={4} fill="#8B5CF6" />
+                      </React.Fragment>
                     ))}
                   </>
                 );
@@ -472,10 +493,25 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
               : '✅ Aucune dette !'}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Section Hydratation */}
-      <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
+      <TouchableOpacity
+        style={[styles.section, { backgroundColor: colors.backgroundCard }]}
+        activeOpacity={0.9}
+        onPress={() => setSelectedStat({
+          key: 'hydration_detail',
+          label: 'Hydratation Détaillée',
+          color: '#0EA5E9',
+          unit: 'L',
+          icon: <Droplets size={24} color="#0EA5E9" />,
+        })}
+      >
+        {/* Expand icon */}
+        <View style={styles.expandIconSection}>
+          <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+        </View>
+
         <View style={styles.sectionHeader}>
           <Droplets size={18} color="#0EA5E9" />
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Hydratation</Text>
@@ -529,7 +565,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
             des jours validés ({daysReached}/7)
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Insight Expert */}
       <View style={[styles.insightCard, { backgroundColor: colors.backgroundCard, borderLeftColor: '#F59E0B' }]}>
@@ -544,7 +580,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
       </View>
 
       {/* Modal de détail */}
-      {selectedStat && (
+      {selectedStat && (selectedStat.key === 'sleep' || selectedStat.key === 'hydration') && (
         <StatsDetailModal
           visible={selectedStat !== null}
           onClose={() => setSelectedStat(null)}
@@ -562,6 +598,41 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                   label: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'][index],
                 }))
           }
+          color={selectedStat.color}
+          unit={selectedStat.unit}
+          icon={selectedStat.icon}
+        />
+      )}
+
+      {/* Modal détaillé pour sommeil */}
+      {selectedStat && selectedStat.key === 'sleep_detail' && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle="7 derniers jours - Zones optimales"
+          data={sleepHistory.map((entry, index) => ({
+            value: entry.duration,
+            label: format(new Date(entry.date), 'd MMM', { locale: fr }),
+            date: entry.date,
+          }))}
+          color={selectedStat.color}
+          unit={selectedStat.unit}
+          icon={selectedStat.icon}
+        />
+      )}
+
+      {/* Modal détaillé pour hydratation */}
+      {selectedStat && selectedStat.key === 'hydration_detail' && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle={`Objectif: 2.5L/jour - ${Math.round((hydrationWeek.filter(h => h >= 2.5).length / 7) * 100)}% de réussite`}
+          data={hydrationWeek.map((value, index) => ({
+            value,
+            label: ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'][index],
+          }))}
           color={selectedStat.color}
           unit={selectedStat.unit}
           icon={selectedStat.icon}
@@ -594,11 +665,16 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 120,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   expandIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 14,
+    left: 48,
     zIndex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
@@ -618,19 +694,25 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   cardUnit: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   scoreCard: {
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   scoreHeader: {
     flexDirection: 'row',
@@ -668,6 +750,21 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+    position: 'relative',
+  },
+  expandIconSection: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
   },
   sectionHeader: {
     flexDirection: 'row',

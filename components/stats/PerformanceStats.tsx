@@ -6,19 +6,487 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame, Sun, Dumbbell, Target, Clock, Maximize2 } from 'lucide-react-native';
+import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame, Sun, Dumbbell, Target, Clock, Maximize2, X } from 'lucide-react-native';
 import { getTrainings, Training } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MODAL_CHART_HEIGHT = 300;
+const MODAL_PADDING_LEFT = 50;
+const MODAL_PADDING_RIGHT = 20;
+const MODAL_PADDING_TOP = 40;
+const MODAL_PADDING_BOTTOM = 50;
 
 interface PerformanceStatsProps {
   trainings?: Training[];
 }
+
+// ============================================
+// Modal Work/Rest avec les deux courbes
+// ============================================
+interface WorkRestModalProps {
+  visible: boolean;
+  onClose: () => void;
+  trainingData: number[];
+  sleepData: number[];
+}
+
+const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainingData, sleepData }) => {
+  const { colors } = useTheme();
+  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+  // Calculer les stats
+  const totalTraining = trainingData.reduce((a, b) => a + b, 0);
+  const avgTraining = totalTraining / trainingData.length;
+  const maxTraining = Math.max(...trainingData);
+  const minTraining = Math.min(...trainingData);
+
+  const totalSleep = sleepData.reduce((a, b) => a + b, 0);
+  const avgSleep = totalSleep / sleepData.length;
+  const maxSleep = Math.max(...sleepData);
+  const minSleep = Math.min(...sleepData);
+
+  // Préparer les données pour le graphique
+  const chartWidth = SCREEN_WIDTH - 48;
+  const maxValue = Math.max(maxTraining, maxSleep);
+
+  const chartData = trainingData.map((training, index) => {
+    const x = MODAL_PADDING_LEFT + ((chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT) * index) / Math.max(trainingData.length - 1, 1);
+    const trainingY = MODAL_CHART_HEIGHT - MODAL_PADDING_BOTTOM - ((training / maxValue) * (MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM));
+    const sleepY = MODAL_CHART_HEIGHT - MODAL_PADDING_BOTTOM - ((sleepData[index] / maxValue) * (MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM));
+    return { x, trainingY, sleepY, training, sleep: sleepData[index] };
+  });
+
+  // Créer le path pour la ligne d'entraînement
+  const createTrainingPath = () => {
+    if (chartData.length === 0) return '';
+    let path = `M ${chartData[0].x} ${chartData[0].trainingY}`;
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.trainingY;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.trainingY;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.trainingY}`;
+    }
+    return path;
+  };
+
+  // Créer le path pour la ligne de sommeil
+  const createSleepPath = () => {
+    if (chartData.length === 0) return '';
+    let path = `M ${chartData[0].x} ${chartData[0].sleepY}`;
+    for (let i = 1; i < chartData.length; i++) {
+      const prev = chartData[i - 1];
+      const curr = chartData[i];
+      const cp1x = prev.x + (curr.x - prev.x) / 3;
+      const cp1y = prev.sleepY;
+      const cp2x = prev.x + 2 * (curr.x - prev.x) / 3;
+      const cp2y = curr.sleepY;
+      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${curr.x} ${curr.sleepY}`;
+    }
+    return path;
+  };
+
+  // Générer les labels Y
+  const yLabels = [];
+  for (let i = 0; i < 5; i++) {
+    const value = (maxValue * (4 - i)) / 4;
+    yLabels.push(value.toFixed(1));
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.content, { backgroundColor: colors.background }]}>
+          {/* Header */}
+          <View style={modalStyles.header}>
+            <View style={modalStyles.titleRow}>
+              <Activity size={24} color="#8B5CF6" />
+              <View style={modalStyles.titleContainer}>
+                <Text style={[modalStyles.title, { color: colors.textPrimary }]}>
+                  Charge vs Récupération
+                </Text>
+                <Text style={[modalStyles.subtitle, { color: colors.textMuted }]}>
+                  7 derniers jours
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
+              <X size={24} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Stats Cards */}
+            <View style={modalStyles.statsGrid}>
+              <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[modalStyles.statLabel, { color: colors.textMuted }]}>Charge Moy.</Text>
+                <Text style={[modalStyles.statValue, { color: '#8B5CF6' }]}>
+                  {avgTraining.toFixed(1)}
+                </Text>
+              </View>
+              <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[modalStyles.statLabel, { color: colors.textMuted }]}>Sommeil Moy.</Text>
+                <Text style={[modalStyles.statValue, { color: '#10B981' }]}>
+                  {avgSleep.toFixed(1)}h
+                </Text>
+              </View>
+            </View>
+
+            {/* Graphique combiné */}
+            <View style={[modalStyles.chartCard, { backgroundColor: colors.backgroundCard }]}>
+              <Text style={[modalStyles.chartTitle, { color: colors.textPrimary }]}>
+                Évolution sur 7 jours
+              </Text>
+
+              <View style={modalStyles.chart}>
+                <Svg width={chartWidth} height={MODAL_CHART_HEIGHT}>
+                  <Defs>
+                    <LinearGradient id="trainingGradient" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor="#8B5CF6" stopOpacity="0.3" />
+                      <Stop offset="1" stopColor="#8B5CF6" stopOpacity="0.05" />
+                    </LinearGradient>
+                    <LinearGradient id="sleepGradient" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor="#10B981" stopOpacity="0.3" />
+                      <Stop offset="1" stopColor="#10B981" stopOpacity="0.05" />
+                    </LinearGradient>
+                  </Defs>
+
+                  {/* Lignes de grille */}
+                  {[0, 1, 2, 3, 4].map((i) => {
+                    const y = MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * i) / 4;
+                    return (
+                      <Rect
+                        key={i}
+                        x={MODAL_PADDING_LEFT}
+                        y={y}
+                        width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                        height={1}
+                        fill={colors.border}
+                        opacity={0.3}
+                      />
+                    );
+                  })}
+
+                  {/* Ligne d'entraînement */}
+                  <Path
+                    d={createTrainingPath()}
+                    stroke="#8B5CF6"
+                    strokeWidth={3}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Ligne de sommeil */}
+                  <Path
+                    d={createSleepPath()}
+                    stroke="#10B981"
+                    strokeWidth={3}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Points d'entraînement */}
+                  {chartData.map((point, index) => (
+                    <React.Fragment key={`training-${index}`}>
+                      <Circle cx={point.x} cy={point.trainingY} r={6} fill="#FFFFFF" />
+                      <Circle cx={point.x} cy={point.trainingY} r={4} fill="#8B5CF6" />
+                    </React.Fragment>
+                  ))}
+
+                  {/* Points de sommeil */}
+                  {chartData.map((point, index) => (
+                    <React.Fragment key={`sleep-${index}`}>
+                      <Circle cx={point.x} cy={point.sleepY} r={6} fill="#FFFFFF" />
+                      <Circle cx={point.x} cy={point.sleepY} r={4} fill="#10B981" />
+                    </React.Fragment>
+                  ))}
+                </Svg>
+
+                {/* Labels Y */}
+                <View style={modalStyles.yLabels}>
+                  {yLabels.map((label, index) => (
+                    <Text key={index} style={[modalStyles.yLabel, { color: colors.textMuted }]}>
+                      {label}
+                    </Text>
+                  ))}
+                </View>
+
+                {/* Labels X */}
+                <View style={modalStyles.xLabels}>
+                  {chartData.map((point, index) => (
+                    <View key={index} style={[modalStyles.xLabel, { left: point.x - 30 }]}>
+                      <Text style={[modalStyles.xLabelText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {days[index].substring(0, 3)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Valeurs au-dessus des points d'entraînement */}
+                {chartData.map((point, index) => (
+                  point.training > 0 && (
+                    <View key={`training-value-${index}`} style={[modalStyles.valueLabel, { left: point.x - 20, top: point.trainingY - 28 }]}>
+                      <Text style={[modalStyles.valueLabelText, { color: '#8B5CF6', backgroundColor: 'rgba(255,255,255,0.95)' }]}>
+                        {point.training.toFixed(1)}
+                      </Text>
+                    </View>
+                  )
+                ))}
+
+                {/* Valeurs au-dessus des points de sommeil */}
+                {chartData.map((point, index) => (
+                  point.sleep > 0 && (
+                    <View key={`sleep-value-${index}`} style={[modalStyles.valueLabel, { left: point.x - 20, top: point.sleepY + 12 }]}>
+                      <Text style={[modalStyles.valueLabelText, { color: '#10B981', backgroundColor: 'rgba(255,255,255,0.95)' }]}>
+                        {point.sleep.toFixed(1)}h
+                      </Text>
+                    </View>
+                  )
+                ))}
+              </View>
+
+              {/* Légende */}
+              <View style={modalStyles.legend}>
+                <View style={modalStyles.legendItem}>
+                  <View style={[modalStyles.legendDot, { backgroundColor: '#8B5CF6' }]} />
+                  <Text style={[modalStyles.legendText, { color: colors.textMuted }]}>Charge d'effort</Text>
+                </View>
+                <View style={modalStyles.legendItem}>
+                  <View style={[modalStyles.legendDot, { backgroundColor: '#10B981' }]} />
+                  <Text style={[modalStyles.legendText, { color: colors.textMuted }]}>Heures de repos</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Liste détaillée */}
+            <View style={[modalStyles.listCard, { backgroundColor: colors.backgroundCard }]}>
+              <Text style={[modalStyles.listTitle, { color: colors.textPrimary }]}>
+                Détails par jour
+              </Text>
+              {days.map((day, index) => (
+                <View
+                  key={index}
+                  style={[
+                    modalStyles.listItem,
+                    index < days.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
+                  ]}
+                >
+                  <Text style={[modalStyles.listDay, { color: colors.textSecondary }]}>{day}</Text>
+                  <View style={modalStyles.listValues}>
+                    <View style={modalStyles.listValueItem}>
+                      <Text style={[modalStyles.listValueLabel, { color: colors.textMuted }]}>Charge:</Text>
+                      <Text style={[modalStyles.listValue, { color: '#8B5CF6' }]}>
+                        {trainingData[index].toFixed(1)}
+                      </Text>
+                    </View>
+                    <View style={modalStyles.listValueItem}>
+                      <Text style={[modalStyles.listValueLabel, { color: colors.textMuted }]}>Repos:</Text>
+                      <Text style={[modalStyles.listValue, { color: '#10B981' }]}>
+                        {sleepData[index].toFixed(1)}h
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  content: {
+    height: SCREEN_HEIGHT * 0.9,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  subtitle: {
+    fontSize: 14,
+    marginTop: 2,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  chartCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 16,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  chart: {
+    height: MODAL_CHART_HEIGHT,
+    position: 'relative',
+  },
+  yLabels: {
+    position: 'absolute',
+    left: 0,
+    top: MODAL_PADDING_TOP,
+    height: MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM,
+    justifyContent: 'space-between',
+  },
+  yLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  xLabels: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: MODAL_PADDING_BOTTOM,
+  },
+  xLabel: {
+    position: 'absolute',
+    width: 60,
+    alignItems: 'center',
+    top: 8,
+  },
+  xLabelText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  valueLabel: {
+    position: 'absolute',
+    width: 40,
+    alignItems: 'center',
+  },
+  valueLabelText: {
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  listCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 16,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  listItem: {
+    paddingVertical: 12,
+  },
+  listDay: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  listValues: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  listValueItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  listValueLabel: {
+    fontSize: 12,
+  },
+  listValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});
 
 export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: propTrainings }) => {
   const { colors } = useTheme();
@@ -172,7 +640,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
     },
     {
       key: 'ratio',
-      label: 'Équilibre Effort/Repos',
+      label: 'Ratio Effort/Repos',
       icon: <Activity size={18} color="#8B5CF6" />,
       color: '#8B5CF6',
       value: parseFloat(workRestRatio),
@@ -277,7 +745,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
           {/* Work/Rest Ratio */}
           <View style={[styles.summaryItem, { backgroundColor: colors.background }]}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Équilibre Effort/Repos</Text>
+            <Text style={[styles.summaryLabel, { color: colors.textMuted }]} numberOfLines={2}>Ratio Effort/Repos</Text>
             <Text style={[styles.summaryValue, { color: '#8B5CF6' }]}>
               {workRestRatio}:1
             </Text>
@@ -319,8 +787,8 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
           icon: <Activity size={24} color="#8B5CF6" />,
         })}
       >
-        {/* Expand icon */}
-        <View style={styles.expandIcon}>
+        {/* Expand icon - À DROITE */}
+        <View style={styles.expandIconWorkRest}>
           <Maximize2 size={16} color="#1F2937" opacity={0.9} />
         </View>
 
@@ -502,18 +970,11 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
       {/* Modal pour Work/Rest avec graphique double */}
       {selectedStat && selectedStat.key === 'workrest' && (
-        <StatsDetailModal
+        <WorkRestModal
           visible={selectedStat !== null}
           onClose={() => setSelectedStat(null)}
-          title={selectedStat.label}
-          subtitle="7 derniers jours - Charge (barres) vs Sommeil (points)"
-          data={weeklyTrainingData.map((value, index) => ({
-            value,
-            label: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'][index],
-          }))}
-          color={selectedStat.color}
-          unit="pts"
-          icon={selectedStat.icon}
+          trainingData={weeklyTrainingData}
+          sleepData={sleepHours}
         />
       )}
     </ScrollView>
@@ -536,11 +997,16 @@ const styles = StyleSheet.create({
     padding: 14,
     minHeight: 120,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   expandIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 14,
+    left: 48,
     zIndex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
@@ -560,18 +1026,24 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   cardUnit: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   chargeCard: {
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   chargeHeader: {
     marginBottom: 16,
@@ -617,6 +1089,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -664,6 +1141,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -688,6 +1170,20 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  expandIconWorkRest: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
   },
   modernWorkRestChart: {
     flexDirection: 'row',
@@ -856,14 +1352,18 @@ const styles = StyleSheet.create({
   },
   intensityBarContainer: {
     flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 5,
     overflow: 'hidden',
   },
   intensityBar: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
   },
   intensityPercent: {
     width: 40,

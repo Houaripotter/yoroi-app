@@ -7,6 +7,8 @@ import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { getSportIcon } from '@/constants/sportIcons';
 import { getClubLogoSource } from '@/lib/sports';
+import { Maximize2, Dumbbell as DumbbellIcon } from 'lucide-react-native';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -20,8 +22,11 @@ interface ActivityStatsProps {
   data: Training[];
 }
 
+type Period = '7j' | '30j' | '90j' | 'year';
+
 export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   const { colors } = useTheme();
+  const [period, setPeriod] = useState<Period>('7j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
     count: number;
@@ -30,22 +35,46 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
     x: number;
     y: number;
   } | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
-  // Calculer stats par semaine
+  // Calculer stats par semaine selon la période
   const getWeeklyData = () => {
     const weeks: { [week: string]: number } = {};
+    const now = new Date();
+    let cutoffDate: Date;
+    let numberOfWeeks: number;
+
+    switch (period) {
+      case '7j':
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        numberOfWeeks = 2; // Afficher 2 semaines pour avoir plus de contexte
+        break;
+      case '30j':
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        numberOfWeeks = 5;
+        break;
+      case '90j':
+        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        numberOfWeeks = 13;
+        break;
+      case 'year':
+        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        numberOfWeeks = 52;
+        break;
+    }
 
     data.forEach((training) => {
       const d = new Date(training.date);
-      const weekStart = startOfWeek(d, { weekStartsOn: 1 });
-      const weekKey = format(weekStart, 'yyyy-MM-dd');
-
-      weeks[weekKey] = (weeks[weekKey] || 0) + 1;
+      if (d >= cutoffDate) {
+        const weekStart = startOfWeek(d, { weekStartsOn: 1 });
+        const weekKey = format(weekStart, 'yyyy-MM-dd');
+        weeks[weekKey] = (weeks[weekKey] || 0) + 1;
+      }
     });
 
     return Object.entries(weeks)
       .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-8)
+      .slice(-numberOfWeeks)
       .map(([week, count]) => ({
         week,
         count,
@@ -265,13 +294,42 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
       </View>
 
       {/* Graphique moderne avec courbe */}
-      <View style={[styles.chartCard, { backgroundColor: colors.backgroundElevated }]}>
+      <TouchableOpacity
+        style={[styles.chartCard, { backgroundColor: colors.backgroundElevated }]}
+        activeOpacity={0.9}
+        onPress={() => weeklyData.length > 0 && setShowModal(true)}
+      >
+        {/* Expand icon */}
+        {weeklyData.length > 0 && (
+          <View style={styles.expandIcon}>
+            <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+          </View>
+        )}
+
         <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
           Entraînements par semaine
         </Text>
-        <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-          8 dernières semaines
-        </Text>
+
+        {/* Période */}
+        <View style={styles.periodRow}>
+          {(['7j', '30j', '90j', 'year'] as Period[]).map((p) => (
+            <TouchableOpacity
+              key={p}
+              style={[
+                styles.periodButton,
+                { backgroundColor: period === p ? colors.accent : colors.backgroundElevated },
+              ]}
+              onPress={() => setPeriod(p)}
+            >
+              <Text style={[
+                styles.periodText,
+                { color: period === p ? '#FFF' : colors.textPrimary },
+              ]}>
+                {p === 'year' ? 'Année' : p}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {weeklyData.length === 0 ? (
           <View style={styles.emptyChart}>
@@ -414,95 +472,175 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
             )}
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
-      {/* Séances de la semaine par club */}
-      <View style={[styles.typesCard, { backgroundColor: colors.backgroundElevated }]}>
-        <Text style={[styles.typesTitle, { color: colors.textPrimary }]}>
-          Cette semaine
-        </Text>
+      {/* CETTE SEMAINE */}
+      {(() => {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const thisWeekTrainings = data.filter(t => new Date(t.date) >= weekAgo);
+        const clubData: { [key: string]: { count: number; logo: string | null; sport: string } } = {};
 
-        {(() => {
-          // Filtrer les entraînements de la semaine actuelle
-          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          const thisWeekTrainings = data.filter(t => new Date(t.date) >= weekAgo);
-
-          // Grouper par club (ou sport si pas de club)
-          const clubData: { [key: string]: { count: number; logo: string | null; sport: string } } = {};
-
-          thisWeekTrainings.forEach((training) => {
-            const key = training.club_name || training.sport || 'Autre';
-            if (!clubData[key]) {
-              clubData[key] = {
-                count: 0,
-                logo: training.club_logo || null,
-                sport: training.sport || 'Autre',
-              };
-            }
-            clubData[key].count += 1;
-          });
-
-          const sorted = Object.entries(clubData)
-            .sort(([, a], [, b]) => b.count - a.count);
-
-          if (sorted.length === 0) {
-            return (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Aucun entraînement cette semaine
-              </Text>
-            );
+        thisWeekTrainings.forEach((training) => {
+          const key = training.club_name || training.sport || 'Autre';
+          if (!clubData[key]) {
+            clubData[key] = { count: 0, logo: training.club_logo || null, sport: training.sport || 'Autre' };
           }
+          clubData[key].count += 1;
+        });
 
-          return sorted.map(([name, { count, logo, sport }], index) => {
-            const logoSource = logo ? getClubLogoSource(logo) : null;
-            const sportInfo = getSportIcon(sport);
+        const sorted = Object.entries(clubData).sort(([, a], [, b]) => b.count - a.count);
 
-            return (
-              <View
-                key={name}
-                style={[
-                  styles.clubItem,
-                  index < sorted.length - 1 && {
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
-                  },
-                ]}
-              >
-                {/* Logo du club (grand format) */}
-                {logoSource ? (
-                  <Image
-                    source={logoSource}
-                    style={styles.clubLogoBig}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.sportIconBigBg, { backgroundColor: sportInfo.color + '20' }]}>
-                    <Text style={styles.sportIconBig}>{sportInfo.icon}</Text>
+        return (
+          <View style={[styles.typesCard, { backgroundColor: colors.backgroundElevated }]}>
+            <Text style={[styles.typesTitle, { color: colors.textPrimary }]}>Cette semaine</Text>
+            {sorted.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucun entraînement</Text>
+            ) : (
+              sorted.map(([name, { count, logo, sport }], index) => {
+                const logoSource = logo ? getClubLogoSource(logo) : null;
+                const sportInfo = getSportIcon(sport);
+                return (
+                  <View key={name} style={[styles.clubItem, index < sorted.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                    {logoSource ? (
+                      <Image source={logoSource} style={styles.clubLogoBig} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.sportIconBigBg, { backgroundColor: sportInfo.color + '20' }]}>
+                        <Text style={styles.sportIconBig}>{sportInfo.icon}</Text>
+                      </View>
+                    )}
+                    <View style={styles.clubInfoContainer}>
+                      <Text style={[styles.clubName, { color: colors.textPrimary }]}>{name}</Text>
+                      {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
+                    </View>
+                    <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
+                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                    </View>
                   </View>
-                )}
+                );
+              })
+            )}
+          </View>
+        );
+      })()}
 
-                {/* Nom et sport */}
-                <View style={styles.clubInfoContainer}>
-                  <Text style={[styles.clubName, { color: colors.textPrimary }]}>
-                    {name}
-                  </Text>
-                  {logo && sport && (
-                    <Text style={[styles.clubSport, { color: colors.textMuted }]}>
-                      {sport.toUpperCase()}
-                    </Text>
-                  )}
-                </View>
+      {/* CE MOIS */}
+      {(() => {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const thisMonthTrainings = data.filter(t => new Date(t.date) >= monthAgo);
+        const clubData: { [key: string]: { count: number; logo: string | null; sport: string } } = {};
 
-                {/* Compteur avec ×N */}
-                <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
-                  <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
-                  <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
-                </View>
-              </View>
-            );
-          });
-        })()}
-      </View>
+        thisMonthTrainings.forEach((training) => {
+          const key = training.club_name || training.sport || 'Autre';
+          if (!clubData[key]) {
+            clubData[key] = { count: 0, logo: training.club_logo || null, sport: training.sport || 'Autre' };
+          }
+          clubData[key].count += 1;
+        });
+
+        const sorted = Object.entries(clubData).sort(([, a], [, b]) => b.count - a.count);
+
+        return (
+          <View style={[styles.typesCard, { backgroundColor: colors.backgroundElevated }]}>
+            <Text style={[styles.typesTitle, { color: colors.textPrimary }]}>Ce mois</Text>
+            {sorted.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucun entraînement</Text>
+            ) : (
+              sorted.map(([name, { count, logo, sport }], index) => {
+                const logoSource = logo ? getClubLogoSource(logo) : null;
+                const sportInfo = getSportIcon(sport);
+                return (
+                  <View key={name} style={[styles.clubItem, index < sorted.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                    {logoSource ? (
+                      <Image source={logoSource} style={styles.clubLogoBig} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.sportIconBigBg, { backgroundColor: sportInfo.color + '20' }]}>
+                        <Text style={styles.sportIconBig}>{sportInfo.icon}</Text>
+                      </View>
+                    )}
+                    <View style={styles.clubInfoContainer}>
+                      <Text style={[styles.clubName, { color: colors.textPrimary }]}>{name}</Text>
+                      {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
+                    </View>
+                    <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
+                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        );
+      })()}
+
+      {/* CETTE ANNÉE */}
+      {(() => {
+        const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        const thisYearTrainings = data.filter(t => new Date(t.date) >= yearAgo);
+        const clubData: { [key: string]: { count: number; logo: string | null; sport: string } } = {};
+
+        thisYearTrainings.forEach((training) => {
+          const key = training.club_name || training.sport || 'Autre';
+          if (!clubData[key]) {
+            clubData[key] = { count: 0, logo: training.club_logo || null, sport: training.sport || 'Autre' };
+          }
+          clubData[key].count += 1;
+        });
+
+        const sorted = Object.entries(clubData).sort(([, a], [, b]) => b.count - a.count);
+
+        return (
+          <View style={[styles.typesCard, { backgroundColor: colors.backgroundElevated }]}>
+            <Text style={[styles.typesTitle, { color: colors.textPrimary }]}>Cette année</Text>
+            {sorted.length === 0 ? (
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Aucun entraînement</Text>
+            ) : (
+              sorted.map(([name, { count, logo, sport }], index) => {
+                const logoSource = logo ? getClubLogoSource(logo) : null;
+                const sportInfo = getSportIcon(sport);
+                return (
+                  <View key={name} style={[styles.clubItem, index < sorted.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+                    {logoSource ? (
+                      <Image source={logoSource} style={styles.clubLogoBig} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.sportIconBigBg, { backgroundColor: sportInfo.color + '20' }]}>
+                        <Text style={styles.sportIconBig}>{sportInfo.icon}</Text>
+                      </View>
+                    )}
+                    <View style={styles.clubInfoContainer}>
+                      <Text style={[styles.clubName, { color: colors.textPrimary }]}>{name}</Text>
+                      {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
+                    </View>
+                    <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
+                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        );
+      })()}
+
+      {/* Modal de détail */}
+      {showModal && (
+        <StatsDetailModal
+          visible={showModal}
+          onClose={() => setShowModal(false)}
+          title="Entraînements par semaine"
+          subtitle={period === '7j' ? '7 derniers jours' : period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Année complète'}
+          data={weeklyData.map((entry) => ({
+            value: entry.count,
+            label: format(entry.weekStart, 'd MMM', { locale: fr }),
+            date: format(entry.weekStart, 'yyyy-MM-dd'),
+          }))}
+          color={colors.accent}
+          unit="séances"
+          icon={<DumbbellIcon size={24} color={colors.accent} />}
+        />
+      )}
 
     </ScrollView>
   );
@@ -593,6 +731,31 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    position: 'relative',
+  },
+  expandIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  periodRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  periodButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+  },
+  periodText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   chartTitle: {
     fontSize: 18,
@@ -720,11 +883,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     letterSpacing: -0.5,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    paddingVertical: 20,
   },
 
   // Tooltip
