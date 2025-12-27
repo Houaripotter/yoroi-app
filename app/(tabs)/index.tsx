@@ -359,7 +359,7 @@ export default function HomeScreen() {
   };
 
   const batteryPercent = useMemo(() => calculateBatteryPercent(), [streak, hydration, hydrationGoal, sleepStats, trainings]);
-  const last7Weights = weightHistory.slice(0, 7).reverse();
+  const last7Weights = useMemo(() => weightHistory.slice(0, 7).reverse(), [weightHistory]);
 
   // Partager le rapport
   const shareReport = async () => {
@@ -515,7 +515,7 @@ export default function HomeScreen() {
     }
   };
 
-  const batteryStatus = getBatteryStatus();
+  const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
 
         return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>

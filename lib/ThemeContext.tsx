@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -153,40 +153,41 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   }, []);
 
-  // Générer le style de glow basé sur l'accent
-  const glowShadow = {
+  // Générer le style de glow basé sur l'accent (mémoïsé pour éviter re-renders)
+  const glowShadow = useMemo(() => ({
     shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
-  };
+  }), [colors.accent]);
 
   // Attendre le chargement avant de rendre
   if (!isLoaded) {
     return null;
   }
 
+  // Mémoïser la value du Provider pour éviter les re-renders en cascade
+  const contextValue = useMemo(() => ({
+    theme,
+    colors,
+    themeColor,
+    themeMode,
+    actualMode,
+    isDark: actualMode === 'dark',
+    setThemeColor,
+    setThemeMode,
+    themeColors,
+    screenBackground: colors.background,
+    containerBackground: colors.backgroundCard,
+    glowShadow,
+    gradients: GRADIENTS,
+    themeName: `${themeColor}_${actualMode}`,
+    isLoaded,
+  }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, isLoaded]);
+
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        colors,
-        themeColor,
-        themeMode,
-        actualMode,
-        isDark: actualMode === 'dark',
-        setThemeColor,
-        setThemeMode,
-        themeColors,
-        screenBackground: colors.background,
-        containerBackground: colors.backgroundCard,
-        glowShadow,
-        gradients: GRADIENTS,
-        themeName: `${themeColor}_${actualMode}`,
-        isLoaded,
-      }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
