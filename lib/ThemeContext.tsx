@@ -162,12 +162,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     elevation: 10,
   }), [colors.accent]);
 
-  // Attendre le chargement avant de rendre
-  if (!isLoaded) {
-    return null;
-  }
-
   // Mémoïser la value du Provider pour éviter les re-renders en cascade
+  // IMPORTANT: Doit être AVANT le return conditionnel (Rules of Hooks)
   const contextValue = useMemo(() => ({
     theme,
     colors,
@@ -185,6 +181,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     themeName: `${themeColor}_${actualMode}`,
     isLoaded,
   }), [theme, colors, themeColor, themeMode, actualMode, setThemeColor, setThemeMode, glowShadow, isLoaded]);
+
+  // Attendre le chargement avant de rendre
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={contextValue}>
