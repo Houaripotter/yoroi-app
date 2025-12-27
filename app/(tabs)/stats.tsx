@@ -81,7 +81,7 @@ export default function StatsScreen() {
     { key: 'compo', label: 'Compo', icon: PieChart, color: '#8B5CF6' },
     { key: 'mesures', label: 'Mesures', icon: Ruler, color: '#0EA5E9' },
     { key: 'vitalite', label: 'Vitalité', icon: Heart, color: '#EF4444' },
-    { key: 'performance', label: 'Perf.', icon: Activity, color: '#EC4899' },
+    { key: 'performance', label: 'Performances', icon: Activity, color: '#EC4899' },
   ];
 
   const activeIndex = tabs.findIndex(t => t.key === activeTab);

@@ -1,9 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { SparklineChart } from '../charts/SparklineChart';
+import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2 } from 'lucide-react-native';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 interface CompositionStatsProps {
   data: Weight[];
@@ -11,246 +14,333 @@ interface CompositionStatsProps {
 
 export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
   const { colors } = useTheme();
+  const [selectedMetric, setSelectedMetric] = useState<{
+    key: string;
+    label: string;
+    color: string;
+    unit: string;
+    icon: React.ReactNode;
+  } | null>(null);
 
   const latest = data.length > 0 ? data[data.length - 1] : null;
   const previous = data.length > 1 ? data[data.length - 2] : null;
 
+  // Préparer les données pour les sparklines (derniers 30 jours)
+  const getSparklineData = (key: keyof Weight) => {
+    return data.slice(-30).map(entry => ({
+      value: (entry[key] as number) || 0,
+    }));
+  };
+
+  // Calculer la tendance
+  const getTrend = (current: number | undefined, prev: number | undefined): 'up' | 'down' | 'stable' => {
+    if (!current || !prev) return 'stable';
+    const diff = current - prev;
+    const percentChange = Math.abs(diff / prev) * 100;
+    if (percentChange < 2) return 'stable';
+    return diff > 0 ? 'up' : 'down';
+  };
+
   const getChange = (current: number | undefined, prev: number | undefined): string => {
     if (!current || !prev) return '';
     const diff = current - prev;
-    return diff > 0 ? `+${diff.toFixed(1)}%` : `${diff.toFixed(1)}%`;
+    return diff > 0 ? `+${diff.toFixed(1)}` : `${diff.toFixed(1)}`;
   };
 
-  const categories = [
+  const metrics = [
     {
       key: 'fat_percent',
-      label: 'Graisse',
-      color: '#FF6B6B',
+      label: 'Masse Grasse',
+      icon: <Flame size={18} color="#EF4444" />,
+      color: '#EF4444',
       value: latest?.fat_percent,
-      change: getChange(latest?.fat_percent, previous?.fat_percent),
+      unit: '%',
       isGoodWhenLow: true,
     },
     {
       key: 'muscle_percent',
-      label: 'Muscle',
-      color: '#4ECDC4',
+      label: 'Masse Musculaire',
+      icon: <Dumbbell size={18} color="#3B82F6" />,
+      color: '#3B82F6',
       value: latest?.muscle_percent,
-      change: getChange(latest?.muscle_percent, previous?.muscle_percent),
+      unit: '%',
       isGoodWhenLow: false,
     },
     {
       key: 'water_percent',
-      label: 'Eau',
-      color: '#45B7D1',
+      label: 'Hydratation',
+      icon: <Droplets size={18} color="#06B6D4" />,
+      color: '#06B6D4',
       value: latest?.water_percent,
-      change: getChange(latest?.water_percent, previous?.water_percent),
+      unit: '%',
       isGoodWhenLow: false,
     },
     {
       key: 'bone_mass',
-      label: 'Os',
-      color: '#A78BFA',
+      label: 'Masse Osseuse',
+      icon: <Bone size={18} color="#8B5CF6" />,
+      color: '#8B5CF6',
       value: latest?.bone_mass,
-      change: '',
       unit: 'kg',
       isGoodWhenLow: false,
+    },
+    {
+      key: 'visceral_fat',
+      label: 'Graisse Viscérale',
+      icon: <Target size={18} color="#F97316" />,
+      color: '#F97316',
+      value: latest?.visceral_fat,
+      unit: '',
+      isGoodWhenLow: true,
+    },
+    {
+      key: 'bmr',
+      label: 'Métabolisme Basal',
+      icon: <Flame size={18} color="#F59E0B" />,
+      color: '#F59E0B',
+      value: latest?.bmr,
+      unit: 'kcal',
+      isGoodWhenLow: false,
+    },
+    {
+      key: 'metabolic_age',
+      label: 'Âge Métabolique',
+      icon: <Calendar size={18} color="#EC4899" />,
+      color: '#EC4899',
+      value: latest?.metabolic_age,
+      unit: 'ans',
+      isGoodWhenLow: true,
     },
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Graphique circulaire simplifié */}
-      <View style={[styles.chartCard, { backgroundColor: colors.backgroundElevated }]}>
-        <View style={styles.circleChart}>
-          {categories.slice(0, 3).map((cat) => (
-            <View key={cat.key} style={styles.circleItem}>
-              <View style={[styles.circleOuter, { borderColor: colors.border }]}>
-                <View
-                  style={[
-                    styles.circleInner,
-                    {
-                      backgroundColor: cat.color,
-                      transform: [{ scale: (cat.value || 0) / 100 + 0.3 }],
-                    },
-                  ]}
-                />
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Grille des 7 métriques */}
+      <View style={styles.metricsGrid}>
+        {metrics.map((metric) => {
+          const sparklineData = getSparklineData(metric.key as keyof Weight);
+          const trend = getTrend(metric.value, previous?.[metric.key as keyof Weight] as number);
+          const change = getChange(metric.value, previous?.[metric.key as keyof Weight] as number);
+          const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
+
+          // Calculer min/max pour les indicateurs
+          const minValue = hasData ? Math.min(...sparklineData.map(d => d.value)) : 0;
+          const maxValue = hasData ? Math.max(...sparklineData.map(d => d.value)) : 0;
+
+          return (
+            <TouchableOpacity
+              key={metric.key}
+              style={[styles.metricCard, { backgroundColor: colors.backgroundCard }]}
+              activeOpacity={0.7}
+              onPress={() => setSelectedMetric({
+                key: metric.key,
+                label: metric.label,
+                color: metric.color,
+                unit: metric.unit,
+                icon: metric.icon,
+              })}
+            >
+              {/* Expand icon */}
+              <View style={styles.expandIcon}>
+                <Maximize2 size={16} color="#1F2937" opacity={0.9} />
               </View>
-              <Text style={[styles.circleValue, { color: colors.textPrimary }]}>
-                {cat.value ? `${cat.value.toFixed(1)}%` : '--%'}
+
+              {/* Header */}
+              <View style={styles.metricHeader}>
+                <View style={[styles.metricIconContainer, { backgroundColor: metric.color + '20' }]}>
+                  {metric.icon}
+                </View>
+                {trend !== 'stable' && change && (
+                  <View style={styles.trendBadge}>
+                    {trend === 'up' ? (
+                      <TrendingUp size={12} color={metric.isGoodWhenLow ? '#EF4444' : '#10B981'} />
+                    ) : (
+                      <TrendingDown size={12} color={metric.isGoodWhenLow ? '#10B981' : '#EF4444'} />
+                    )}
+                    <Text
+                      style={[
+                        styles.changeText,
+                        { color: trend === 'up'
+                          ? (metric.isGoodWhenLow ? '#EF4444' : '#10B981')
+                          : (metric.isGoodWhenLow ? '#10B981' : '#EF4444')
+                        },
+                      ]}
+                    >
+                      {change}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Label */}
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {metric.label}
               </Text>
-              <Text style={[styles.circleLabel, { color: colors.textMuted }]}>
-                {cat.label}
+
+              {/* Value */}
+              <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                {metric.value ? `${metric.value.toFixed(metric.unit === 'kg' ? 1 : 0)}` : '--'}
+                <Text style={[styles.metricUnit, { color: colors.textMuted }]}>
+                  {metric.unit && ' '}{metric.unit}
+                </Text>
               </Text>
+
+              {/* Sparkline */}
+              {hasData && (
+                <View style={styles.sparklineContainer}>
+                  <SparklineChart
+                    data={sparklineData}
+                    width={140}
+                    height={40}
+                    color={metric.color}
+                    showGradient={true}
+                    thickness={1.5}
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Historique détaillé */}
+      {data.length > 0 && (
+        <View style={[styles.historyCard, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>
+            Historique
+          </Text>
+
+          {data.slice(-7).reverse().map((entry, index) => (
+            <View
+              key={index}
+              style={[
+                styles.historyItem,
+                index < Math.min(data.length, 7) - 1 && {
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
+                {format(new Date(entry.date), 'd MMM', { locale: fr })}
+              </Text>
+              <View style={styles.historyValues}>
+                <Text style={[styles.historyValue, { color: '#EF4444' }]}>
+                  G:{entry.fat_percent?.toFixed(1) || '--'}%
+                </Text>
+                <Text style={[styles.historyValue, { color: '#3B82F6' }]}>
+                  M:{entry.muscle_percent?.toFixed(1) || '--'}%
+                </Text>
+                <Text style={[styles.historyValue, { color: '#06B6D4' }]}>
+                  E:{entry.water_percent?.toFixed(1) || '--'}%
+                </Text>
+              </View>
             </View>
           ))}
         </View>
-      </View>
+      )}
 
-      {/* Détails */}
-      <View style={[styles.detailsCard, { backgroundColor: colors.backgroundElevated }]}>
-        <Text style={[styles.detailsTitle, { color: colors.textPrimary }]}>
-          Détails
-        </Text>
-
-        {categories.map((cat) => (
-          <View key={cat.key} style={styles.detailRow}>
-            <View style={styles.detailLeft}>
-              <View style={[styles.detailDot, { backgroundColor: cat.color }]} />
-              <Text style={[styles.detailLabel, { color: colors.textPrimary }]}>
-                {cat.label}
-              </Text>
-            </View>
-            <View style={styles.detailRight}>
-              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                {cat.value ? `${cat.value.toFixed(1)}${cat.unit || '%'}` : '--'}
-              </Text>
-              {cat.change && (
-                <Text style={[
-                  styles.detailChange,
-                  {
-                    color: cat.change.startsWith('+')
-                      ? (cat.isGoodWhenLow ? '#E53935' : '#4CAF50')
-                      : (cat.isGoodWhenLow ? '#4CAF50' : '#E53935'),
-                  },
-                ]}>
-                  {cat.change}
-                </Text>
-              )}
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Historique */}
-      <View style={[styles.historyCard, { backgroundColor: colors.backgroundElevated }]}>
-        <Text style={[styles.historyTitle, { color: colors.textPrimary }]}>
-          Historique
-        </Text>
-
-        {data.slice(-5).reverse().map((entry, index) => (
-          <View
-            key={index}
-            style={[
-              styles.historyItem,
-              index < Math.min(data.length, 5) - 1 && {
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
-              {format(new Date(entry.date), 'd MMM', { locale: fr })}
-            </Text>
-            <View style={styles.historyValues}>
-              <Text style={[styles.historyValue, { color: '#FF6B6B' }]}>
-                G:{entry.fat_percent?.toFixed(1) || '--'}%
-              </Text>
-              <Text style={[styles.historyValue, { color: '#4ECDC4' }]}>
-                M:{entry.muscle_percent?.toFixed(1) || '--'}%
-              </Text>
-              <Text style={[styles.historyValue, { color: '#45B7D1' }]}>
-                E:{entry.water_percent?.toFixed(1) || '--'}%
-              </Text>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
+      {/* Modal de détail */}
+      {selectedMetric && (
+        <StatsDetailModal
+          visible={selectedMetric !== null}
+          onClose={() => setSelectedMetric(null)}
+          title={selectedMetric.label}
+          subtitle="Derniers 30 jours"
+          data={data.slice(-30).map((entry, index) => ({
+            value: (entry as any)[selectedMetric.key] || 0,
+            label: format(new Date(entry.date), 'd MMM', { locale: fr }),
+            date: entry.date,
+          })).filter(d => d.value > 0)}
+          color={selectedMetric.color}
+          unit={selectedMetric.unit}
+          icon={selectedMetric.icon}
+        />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
 
-  // Circle chart
-  chartCard: {
-    borderRadius: 16,
-    padding: 20,
+  // Grille des métriques
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
     marginBottom: 16,
   },
-  circleChart: {
+  metricCard: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 14,
+    minHeight: 140,
+    position: 'relative',
+  },
+  expandIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  metricHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
   },
-  circleItem: {
-    alignItems: 'center',
-  },
-  circleOuter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
+  metricIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  circleInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  circleValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 10,
-  },
-  circleLabel: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  // Details
-  detailsCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  detailsTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  detailLeft: {
+  trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  detailDot: {
-    width: 12,
-    height: 12,
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     borderRadius: 6,
   },
-  detailLabel: {
-    fontSize: 15,
-  },
-  detailRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  detailValue: {
-    fontSize: 16,
+  changeText: {
+    fontSize: 11,
     fontWeight: '700',
   },
-  detailChange: {
-    fontSize: 13,
+  metricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  metricUnit: {
+    fontSize: 14,
     fontWeight: '600',
   },
+  sparklineContainer: {
+    marginTop: 'auto',
+    marginHorizontal: -6,
+  },
 
-  // History
+  // Historique
   historyCard: {
     borderRadius: 16,
     padding: 16,
+    marginTop: 4,
   },
   historyTitle: {
     fontSize: 16,
@@ -264,7 +354,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   historyDate: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
   },
   historyValues: {
     flexDirection: 'row',
@@ -272,6 +363,6 @@ const styles = StyleSheet.create({
   },
   historyValue: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

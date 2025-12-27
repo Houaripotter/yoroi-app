@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Training } from '@/lib/database';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { getSportIcon } from '@/constants/sportIcons';
 import { getClubLogoSource } from '@/lib/sports';
+import { SparklineChart } from '../charts/SparklineChart';
+import { TrendingUp, Calendar as CalendarIcon, Target, Flame, Maximize2 } from 'lucide-react-native';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -29,6 +32,13 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
     weekEnd: Date;
     x: number;
     y: number;
+  } | null>(null);
+  const [selectedStat, setSelectedStat] = useState<{
+    key: string;
+    label: string;
+    color: string;
+    unit: string;
+    icon: React.ReactNode;
   } | null>(null);
 
   // Calculer stats par semaine
@@ -57,21 +67,121 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   const weeklyData = getWeeklyData();
   const maxCount = Math.max(...weeklyData.map(w => w.count), 1);
 
-  // Total du mois
+  // Stats globales
   const now = new Date();
-  const monthTotal = data.filter((training) => {
-    const d = new Date(training.date);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
+  const totalSessions = data.length;
 
-  // Total de l'année
-  const yearTotal = data.filter((training) => {
-    const d = new Date(training.date);
-    return d.getFullYear() === now.getFullYear();
-  }).length;
+  // Moyenne par semaine (sur les 8 dernières semaines)
+  const avgPerWeek = weeklyData.length > 0
+    ? (weeklyData.reduce((sum, w) => sum + w.count, 0) / weeklyData.length).toFixed(1)
+    : '0';
 
-  // Jours d'entraînement uniques
-  const uniqueDays = new Set(data.map(t => t.date)).size;
+  // Jours actifs (jours uniques avec entraînement)
+  const activeDays = new Set(data.map(t => t.date)).size;
+
+  // Streak actuel (jours consécutifs)
+  const calculateStreak = (): number => {
+    if (data.length === 0) return 0;
+
+    const sortedDates = [...new Set(data.map(t => t.date))].sort().reverse();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let streak = 0;
+    let currentDate = today;
+
+    for (const dateStr of sortedDates) {
+      const trainingDate = new Date(dateStr);
+      trainingDate.setHours(0, 0, 0, 0);
+
+      const daysDiff = differenceInDays(currentDate, trainingDate);
+
+      if (daysDiff === 0 || daysDiff === 1) {
+        streak++;
+        currentDate = trainingDate;
+      } else if (streak > 0) {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const currentStreak = calculateStreak();
+
+  // Préparer les données sparkline pour chaque métrique (derniers 30 jours)
+  const getSparklineDataForMetric = (metricType: 'total' | 'weekly' | 'days' | 'streak') => {
+    const last30Days: { value: number }[] = [];
+
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+
+      switch (metricType) {
+        case 'total':
+          // Nombre cumulé jusqu'à cette date
+          const totalUpToDate = data.filter(t => t.date <= dateStr).length;
+          last30Days.push({ value: totalUpToDate });
+          break;
+        case 'weekly':
+          // Moyenne mobile sur 7 jours
+          const weekData = data.filter(t => {
+            const tDate = new Date(t.date);
+            const daysDiff = differenceInDays(date, tDate);
+            return daysDiff >= 0 && daysDiff < 7;
+          });
+          last30Days.push({ value: weekData.length });
+          break;
+        case 'days':
+          // Jours actifs cumulés
+          const daysUpToDate = new Set(data.filter(t => t.date <= dateStr).map(t => t.date)).size;
+          last30Days.push({ value: daysUpToDate });
+          break;
+        case 'streak':
+          // Streak à cette date (simplifié)
+          last30Days.push({ value: currentStreak });
+          break;
+      }
+    }
+
+    return last30Days;
+  };
+
+  const statCards = [
+    {
+      key: 'total',
+      label: 'Total Sessions',
+      icon: <TrendingUp size={18} color="#8B5CF6" />,
+      color: '#8B5CF6',
+      value: totalSessions,
+      unit: '',
+    },
+    {
+      key: 'weekly',
+      label: 'Moy./Semaine',
+      icon: <CalendarIcon size={18} color="#3B82F6" />,
+      color: '#3B82F6',
+      value: parseFloat(avgPerWeek),
+      unit: '',
+    },
+    {
+      key: 'days',
+      label: 'Jours Actifs',
+      icon: <Target size={18} color="#22C55E" />,
+      color: '#22C55E',
+      value: activeDays,
+      unit: '',
+    },
+    {
+      key: 'streak',
+      label: 'Streak Actuel',
+      icon: <Flame size={18} color="#F97316" />,
+      color: '#F97316',
+      value: currentStreak,
+      unit: 'j',
+    },
+  ];
 
   // Préparer les points pour le graphique
   const chartData = weeklyData.map((entry, index) => {
@@ -115,45 +225,73 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Stats résumé */}
-      <View style={[styles.summaryCard, { backgroundColor: colors.backgroundElevated }]}>
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: colors.accent }]}>
-            {monthTotal}
-          </Text>
-          <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-            Entraînements
-          </Text>
-          <Text style={[styles.summaryLabel, { color: colors.textMuted, fontSize: 10 }]}>
-            ce mois
-          </Text>
-        </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Grille des 4 stats avec sparklines */}
+      <View style={styles.statsGrid}>
+        {statCards.map((stat) => {
+          const sparklineData = getSparklineDataForMetric(stat.key as 'total' | 'weekly' | 'days' | 'streak');
+          const hasData = sparklineData.some(d => d.value > 0);
 
-        <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+          // Calculer min/max
+          const minValue = hasData ? Math.min(...sparklineData.map(d => d.value)) : 0;
+          const maxValue = hasData ? Math.max(...sparklineData.map(d => d.value)) : 0;
 
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-            {yearTotal}
-          </Text>
-          <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-            Entraînements
-          </Text>
-          <Text style={[styles.summaryLabel, { color: colors.textMuted, fontSize: 10 }]}>
-            cette année
-          </Text>
-        </View>
+          return (
+            <TouchableOpacity
+              key={stat.key}
+              style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}
+              activeOpacity={0.7}
+              onPress={() => hasData && setSelectedStat({
+                key: stat.key,
+                label: stat.label,
+                color: stat.color,
+                unit: stat.unit,
+                icon: stat.icon,
+              })}
+            >
+              {/* Expand icon */}
+              {hasData && (
+                <View style={styles.expandIcon}>
+                  <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+                </View>
+              )}
 
-        <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+              {/* Icon */}
+              <View style={[styles.statIconContainer, { backgroundColor: stat.color + '20' }]}>
+                {stat.icon}
+              </View>
 
-        <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-            {uniqueDays}
-          </Text>
-          <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-            Jours actifs
-          </Text>
-        </View>
+              {/* Label */}
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {stat.label}
+              </Text>
+
+              {/* Value */}
+              <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                {stat.value.toFixed(stat.key === 'weekly' ? 1 : 0)}
+                {stat.unit && (
+                  <Text style={[styles.statUnit, { color: colors.textMuted }]}>
+                    {' '}{stat.unit}
+                  </Text>
+                )}
+              </Text>
+
+              {/* Sparkline */}
+              {hasData && (
+                <View style={styles.sparklineContainer}>
+                  <SparklineChart
+                    data={sparklineData}
+                    width={140}
+                    height={40}
+                    color={stat.color}
+                    showGradient={true}
+                    thickness={1.5}
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Graphique moderne avec courbe */}
@@ -409,39 +547,82 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
           });
         })()}
       </View>
-    </View>
+
+      {/* Modal de détail */}
+      {selectedStat && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle="Derniers 30 jours"
+          data={getSparklineDataForMetric(selectedStat.key as 'total' | 'weekly' | 'days' | 'streak').map((entry, index) => ({
+            value: entry.value,
+            label: `Jour ${30 - index}`,
+          }))}
+          color={selectedStat.color}
+          unit={selectedStat.unit}
+          icon={selectedStat.icon}
+        />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
 
-  // Summary
-  summaryCard: {
+  // Stats Grid
+  statsGrid: {
     flexDirection: 'row',
-    borderRadius: 16,
-    padding: 20,
+    flexWrap: 'wrap',
+    gap: 12,
     marginBottom: 16,
   },
-  summaryItem: {
-    flex: 1,
+  statCard: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 14,
+    minHeight: 140,
+    position: 'relative',
+  },
+  expandIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  statIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  summaryValue: {
-    fontSize: 32,
-    fontWeight: '800',
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
   },
-  summaryLabel: {
-    fontSize: 12,
-    marginTop: 4,
+  statValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 8,
   },
-  summaryDivider: {
-    width: 1,
-    alignSelf: 'stretch',
-    marginVertical: 8,
+  statUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  sparklineContainer: {
+    marginTop: 'auto',
+    marginHorizontal: -6,
   },
 
   // Chart

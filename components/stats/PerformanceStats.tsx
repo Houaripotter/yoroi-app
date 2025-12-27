@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame } from 'lucide-react-native';
+import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame, Sun, Dumbbell, Target, Clock, Maximize2 } from 'lucide-react-native';
 import { getTrainings, Training } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
+import { SparklineChart } from '../charts/SparklineChart';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -27,6 +29,13 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
     day: string;
     trainingLoad: number;
     sleepHours: number;
+  } | null>(null);
+  const [selectedStat, setSelectedStat] = useState<{
+    key: string;
+    label: string;
+    color: string;
+    unit: string;
+    icon: React.ReactNode;
   } | null>(null);
 
   useEffect(() => {
@@ -104,19 +113,37 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
   const intensityDistribution = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const weeklyTrainings = trainings.filter(t => new Date(t.date) >= weekAgo);
-    
+
     const light = weeklyTrainings.filter(t => (t.intensity || 5) <= 4).length;
     const moderate = weeklyTrainings.filter(t => (t.intensity || 5) >= 5 && (t.intensity || 5) <= 7).length;
     const intense = weeklyTrainings.filter(t => (t.intensity || 5) >= 8).length;
-    
+
     const total = light + moderate + intense || 1;
-    
+
     return {
       light: Math.round((light / total) * 100),
       moderate: Math.round((moderate / total) * 100),
       intense: Math.round((intense / total) * 100),
+      lightCount: light,
+      moderateCount: moderate,
+      intenseCount: intense,
+      totalSessions: total,
     };
   }, [trainings]);
+
+  // Calcul du ratio Work/Rest
+  const workRestRatio = useMemo(() => {
+    const totalTrainingLoad = weeklyTrainingData.reduce((sum, val) => sum + val, 0);
+    const totalSleep = sleepHours.reduce((sum, val) => sum + val, 0);
+    const avgSleep = totalSleep / 7;
+
+    // Ratio = Charge totale / Sommeil moyen
+    // Si sommeil > 0, sinon retourner 0
+    if (avgSleep > 0) {
+      return (totalTrainingLoad / avgSleep).toFixed(1);
+    }
+    return '0.0';
+  }, [weeklyTrainingData, sleepHours]);
 
   // Détecter les alertes Work/Rest
   const hasAlert = useMemo(() => {
@@ -134,8 +161,74 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
   const maxWorkout = Math.max(...weeklyTrainingData, 1);
   const maxSleep = Math.max(...sleepHours, 8);
 
+  const performanceCards = [
+    {
+      key: 'charge',
+      label: 'Charge Totale',
+      icon: <Flame size={18} color="#F59E0B" />,
+      color: '#F59E0B',
+      value: totalCharge,
+      unit: 'pts',
+    },
+    {
+      key: 'ratio',
+      label: 'Équilibre Effort/Repos',
+      icon: <Activity size={18} color="#8B5CF6" />,
+      color: '#8B5CF6',
+      value: parseFloat(workRestRatio),
+      unit: ':1',
+    },
+  ];
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Cards cliquables */}
+      <View style={styles.performanceCardsGrid}>
+        {performanceCards.map((card) => {
+          const hasData = card.value > 0;
+
+          return (
+            <TouchableOpacity
+              key={card.key}
+              style={[styles.performanceCard, { backgroundColor: colors.backgroundCard }]}
+              activeOpacity={0.7}
+              onPress={() => hasData && setSelectedStat({
+                key: card.key,
+                label: card.label,
+                color: card.color,
+                unit: card.unit,
+                icon: card.icon,
+              })}
+            >
+              {/* Expand icon */}
+              {hasData && (
+                <View style={styles.expandIcon}>
+                  <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+                </View>
+              )}
+
+              {/* Icon */}
+              <View style={[styles.cardIconContainer, { backgroundColor: card.color + '20' }]}>
+                {card.icon}
+              </View>
+
+              {/* Label */}
+              <Text style={[styles.cardLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {card.label}
+              </Text>
+
+              {/* Value */}
+              <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
+                {card.value > 0 ? card.value.toFixed(card.key === 'ratio' ? 1 : 0) : '--'}
+                <Text style={[styles.cardUnit, { color: colors.textMuted }]}>
+                  {' '}{card.unit}
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       {/* Charge d'entraînement */}
       <View style={[styles.chargeCard, { backgroundColor: colors.backgroundCard }]}>
         <View style={styles.chargeHeader}>
@@ -166,99 +259,161 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
         </View>
       </View>
 
-      {/* Work/Rest Ratio */}
-      <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
+      {/* Résumé de la semaine */}
+      <View style={[styles.summaryCard, { backgroundColor: colors.backgroundCard }]}>
+        <View style={styles.summaryHeader}>
+          <Target size={18} color="#3B82F6" />
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Résumé de la semaine</Text>
+        </View>
+
+        <View style={styles.summaryGrid}>
+          {/* Total séances */}
+          <View style={[styles.summaryItem, { backgroundColor: colors.background }]}>
+            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Total séances</Text>
+            <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
+              {intensityDistribution.totalSessions}
+            </Text>
+          </View>
+
+          {/* Work/Rest Ratio */}
+          <View style={[styles.summaryItem, { backgroundColor: colors.background }]}>
+            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Équilibre Effort/Repos</Text>
+            <Text style={[styles.summaryValue, { color: '#8B5CF6' }]}>
+              {workRestRatio}:1
+            </Text>
+          </View>
+        </View>
+
+        {/* Détail par intensité */}
+        <View style={styles.intensityDetails}>
+          <View style={styles.intensityDetailItem}>
+            <Sun size={14} color="#10B981" />
+            <Text style={[styles.intensityDetailText, { color: colors.textSecondary }]}>
+              Légère : {intensityDistribution.lightCount} séance{intensityDistribution.lightCount > 1 ? 's' : ''}
+            </Text>
+          </View>
+          <View style={styles.intensityDetailItem}>
+            <Dumbbell size={14} color="#F59E0B" />
+            <Text style={[styles.intensityDetailText, { color: colors.textSecondary }]}>
+              Modérée : {intensityDistribution.moderateCount} séance{intensityDistribution.moderateCount > 1 ? 's' : ''}
+            </Text>
+          </View>
+          <View style={styles.intensityDetailItem}>
+            <Flame size={14} color="#EF4444" />
+            <Text style={[styles.intensityDetailText, { color: colors.textSecondary }]}>
+              Intense : {intensityDistribution.intenseCount} séance{intensityDistribution.intenseCount > 1 ? 's' : ''}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Charge vs Récupération - Version professionnelle */}
+      <TouchableOpacity
+        style={[styles.workRestCard, { backgroundColor: colors.backgroundCard }]}
+        activeOpacity={0.7}
+        onPress={() => setSelectedStat({
+          key: 'workrest',
+          label: 'Charge vs Récupération',
+          color: '#8B5CF6',
+          unit: '',
+          icon: <Activity size={24} color="#8B5CF6" />,
+        })}
+      >
+        {/* Expand icon */}
+        <View style={styles.expandIcon}>
+          <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+        </View>
+
         <View style={styles.sectionHeader}>
           <Activity size={18} color="#8B5CF6" />
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Work / Rest Ratio</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Charge vs Récupération</Text>
           {hasAlert && <AlertTriangle size={16} color="#EF4444" />}
         </View>
 
-        <View style={styles.workRestChart}>
-          {days.map((day, index) => (
-            <TouchableOpacity
-              key={day}
-              style={styles.chartColumn}
-              onPress={() => {
-                setSelectedDay({
-                  index,
-                  day,
-                  trainingLoad: weeklyTrainingData[index],
-                  sleepHours: sleepHours[index],
-                });
+        <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+          Équilibre entre tes efforts (barres violettes) et ton repos (ligne verte)
+        </Text>
 
-                setTimeout(() => {
-                  setSelectedDay(null);
-                }, 3000);
-              }}
-              activeOpacity={0.7}
-            >
-              {/* Barre entraînement */}
-              <View style={styles.barWrapper}>
-                <View
-                  style={[
-                    styles.workoutBar,
-                    {
-                      height: `${(weeklyTrainingData[index] / maxWorkout) * 100}%`,
-                      backgroundColor: '#8B5CF6',
-                    }
-                  ]}
-                />
+        {/* Graphique moderne simplifié */}
+        <View style={styles.modernWorkRestChart}>
+          {days.map((day, index) => {
+            const chargeHeight = Math.min((weeklyTrainingData[index] / Math.max(...weeklyTrainingData, 1)) * 100, 100);
+            const sleepHeight = Math.min((sleepHours[index] / 12) * 100, 100);
+
+            return (
+              <View key={day} style={styles.modernChartDay}>
+                {/* Valeur de charge au-dessus */}
+                {weeklyTrainingData[index] > 0 && (
+                  <Text style={[styles.chargeValueText, { color: '#8B5CF6' }]}>
+                    {weeklyTrainingData[index].toFixed(1)}
+                  </Text>
+                )}
+
+                {/* Barre de charge (fond clair + rempli) */}
+                <View style={styles.modernBarContainer}>
+                  <View style={[styles.modernBarBg, { backgroundColor: '#8B5CF620' }]}>
+                    <View
+                      style={[
+                        styles.modernBarFill,
+                        {
+                          height: `${chargeHeight}%`,
+                          backgroundColor: '#8B5CF6',
+                        }
+                      ]}
+                    />
+                  </View>
+
+                  {/* Point de sommeil sur la barre + valeur */}
+                  {sleepHours[index] > 0 && (
+                    <View
+                      style={[
+                        styles.sleepPointContainer,
+                        { bottom: `${sleepHeight}%` }
+                      ]}
+                    >
+                      <View style={styles.sleepPointOuter}>
+                        <View style={styles.sleepPointInner} />
+                      </View>
+                      {/* Valeur de sommeil à droite du point */}
+                      <Text style={[styles.sleepValueText, { color: '#10B981' }]}>
+                        {sleepHours[index].toFixed(1)}h
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Label jour */}
+                <Text style={[styles.modernDayLabel, { color: colors.textMuted }]}>{day}</Text>
               </View>
-              {/* Ligne sommeil */}
-              <View
-                style={[
-                  styles.sleepDot,
-                  {
-                    bottom: `${(sleepHours[index] / maxSleep) * 100}%`,
-                    backgroundColor: '#10B981',
-                  }
-                ]}
-              />
-              <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{day}</Text>
-            </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
 
-        <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#8B5CF6' }]} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Entraînement</Text>
+        {/* Légende moderne */}
+        <View style={styles.modernLegend}>
+          <View style={styles.modernLegendItem}>
+            <View style={[styles.modernLegendBar, { backgroundColor: '#8B5CF6' }]} />
+            <Text style={[styles.modernLegendText, { color: colors.textMuted }]}>Charge d'effort</Text>
           </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: '#10B981', borderRadius: 10 }]} />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Sommeil</Text>
-          </View>
-        </View>
-
-        {/* Tooltip */}
-        {selectedDay && (
-          <View style={[styles.workRestTooltip, { backgroundColor: '#1F2937' }]}>
-            <Text style={styles.tooltipDay}>{selectedDay.day}</Text>
-            <View style={styles.tooltipRow}>
-              <View style={styles.tooltipItem}>
-                <View style={[styles.tooltipDot, { backgroundColor: '#8B5CF6' }]} />
-                <Text style={styles.tooltipLabel}>Charge : </Text>
-                <Text style={styles.tooltipValue}>{selectedDay.trainingLoad.toFixed(1)} pts</Text>
-              </View>
-              <View style={styles.tooltipItem}>
-                <View style={[styles.tooltipDot, { backgroundColor: '#10B981' }]} />
-                <Text style={styles.tooltipLabel}>Sommeil : </Text>
-                <Text style={styles.tooltipValue}>{selectedDay.sleepHours.toFixed(1)}h</Text>
+          <View style={styles.modernLegendItem}>
+            <View style={styles.modernLegendPoint}>
+              <View style={styles.modernLegendPointOuter}>
+                <View style={styles.modernLegendPointInner} />
               </View>
             </View>
+            <Text style={[styles.modernLegendText, { color: colors.textMuted }]}>Heures de repos</Text>
           </View>
-        )}
+        </View>
 
         {hasAlert && (
           <View style={[styles.alertCard, { backgroundColor: '#EF444415' }]}>
             <AlertTriangle size={14} color="#EF4444" />
             <Text style={styles.alertText}>
-              ⚠️ Charge en hausse + Sommeil en baisse = Risque fatigue !
+              ⚠️ Attention : Tu t'entraînes plus mais tu dors moins. Risque de surmenage !
             </Text>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       {/* Répartition par intensité */}
       <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
@@ -270,7 +425,9 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
         <View style={styles.intensityBars}>
           <View style={styles.intensityRow}>
             <View style={styles.intensityLabel}>
-              <Text style={[styles.intensityEmoji]}>😌</Text>
+              <View style={styles.intensityIcon}>
+                <Sun size={16} color="#10B981" />
+              </View>
               <Text style={[styles.intensityText, { color: colors.textSecondary }]}>Légère (RPE 1-4)</Text>
             </View>
             <View style={styles.intensityBarContainer}>
@@ -281,7 +438,9 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
           <View style={styles.intensityRow}>
             <View style={styles.intensityLabel}>
-              <Text style={[styles.intensityEmoji]}>💪</Text>
+              <View style={styles.intensityIcon}>
+                <Dumbbell size={16} color="#F59E0B" />
+              </View>
               <Text style={[styles.intensityText, { color: colors.textSecondary }]}>Modérée (RPE 5-7)</Text>
             </View>
             <View style={styles.intensityBarContainer}>
@@ -292,7 +451,9 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
           <View style={styles.intensityRow}>
             <View style={styles.intensityLabel}>
-              <Text style={[styles.intensityEmoji]}>🔥</Text>
+              <View style={styles.intensityIcon}>
+                <Flame size={16} color="#EF4444" />
+              </View>
               <Text style={[styles.intensityText, { color: colors.textSecondary }]}>Intense (RPE 8-10)</Text>
             </View>
             <View style={styles.intensityBarContainer}>
@@ -314,6 +475,47 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
           La charge (RPE × durée) mesure ton vrai volume d'entraînement.
         </Text>
       </View>
+
+      {/* Modal de détail */}
+      {selectedStat && selectedStat.key !== 'workrest' && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle="7 derniers jours"
+          data={
+            selectedStat.key === 'charge'
+              ? weeklyTrainingData.map((value, index) => ({
+                  value,
+                  label: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'][index],
+                }))
+              : weeklyTrainingData.map((value, index) => ({
+                  value: sleepHours[index] > 0 ? value / sleepHours[index] : 0,
+                  label: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'][index],
+                }))
+          }
+          color={selectedStat.color}
+          unit={selectedStat.unit}
+          icon={selectedStat.icon}
+        />
+      )}
+
+      {/* Modal pour Work/Rest avec graphique double */}
+      {selectedStat && selectedStat.key === 'workrest' && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle="7 derniers jours - Charge (barres) vs Sommeil (points)"
+          data={weeklyTrainingData.map((value, index) => ({
+            value,
+            label: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'][index],
+          }))}
+          color={selectedStat.color}
+          unit="pts"
+          icon={selectedStat.icon}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -322,6 +524,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  performanceCardsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  performanceCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 14,
+    minHeight: 120,
+    position: 'relative',
+  },
+  expandIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  cardIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  cardValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  cardUnit: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   chargeCard: {
     borderRadius: 16,
@@ -368,6 +613,53 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 2,
   },
+  summaryCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  summaryItem: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  summaryValue: {
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  intensityDetails: {
+    gap: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  intensityDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  intensityDetailText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   section: {
     borderRadius: 16,
     padding: 16,
@@ -384,59 +676,146 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
   },
-  workRestChart: {
+  sectionDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+
+  // Nouveau graphique moderne Work/Rest
+  workRestCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    position: 'relative',
+  },
+  modernWorkRestChart: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    height: 100,
-    marginBottom: 12,
-    position: 'relative',
+    alignItems: 'flex-end',
+    height: 140,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+    gap: 8,
   },
-  chartColumn: {
+  modernChartDay: {
     flex: 1,
     alignItems: 'center',
-    position: 'relative',
-  },
-  barWrapper: {
-    flex: 1,
-    width: 16,
     justifyContent: 'flex-end',
   },
-  workoutBar: {
+  modernBarContainer: {
+    flex: 1,
     width: '100%',
-    borderRadius: 4,
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  modernBarBg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  modernBarFill: {
+    width: '100%',
+    borderRadius: 8,
     minHeight: 4,
   },
-  sleepDot: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    left: '50%',
-    marginLeft: -4,
-  },
-  dayLabel: {
+  chargeValueText: {
     fontSize: 10,
-    marginTop: 4,
-    fontWeight: '600',
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  legend: {
+  sleepPointContainer: {
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -10,
+    zIndex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sleepValueText: {
+    fontSize: 9,
+    fontWeight: '700',
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  sleepPointOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  sleepPointInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+  },
+  modernDayLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+
+  // Nouvelle légende moderne
+  modernLegend: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 24,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
     marginTop: 8,
   },
-  legendItem: {
+  modernLegendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
+  modernLegendBar: {
+    width: 16,
+    height: 16,
+    borderRadius: 4,
   },
-  legendText: {
-    fontSize: 11,
+  modernLegendPoint: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modernLegendPointOuter: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modernLegendPointInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  modernLegendText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   alertCard: {
     flexDirection: 'row',
@@ -466,8 +845,11 @@ const styles = StyleSheet.create({
     gap: 6,
     width: 130,
   },
-  intensityEmoji: {
-    fontSize: 16,
+  intensityIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   intensityText: {
     fontSize: 12,
@@ -508,43 +890,6 @@ const styles = StyleSheet.create({
   insightText: {
     fontSize: 13,
     lineHeight: 20,
-  },
-  // Work/Rest Tooltip
-  workRestTooltip: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  tooltipDay: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 8,
-  },
-  tooltipRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  tooltipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  tooltipDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  tooltipLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  tooltipValue: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 });
 

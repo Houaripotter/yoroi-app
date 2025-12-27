@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { TrendingDown, TrendingUp } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { TrendingDown, TrendingUp, Weight as WeightIcon, Target, ArrowDown, ArrowUp, Maximize2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { SparklineChart } from '../charts/SparklineChart';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 const { width } = Dimensions.get('window');
 const CHART_WIDTH = width - 64;
@@ -19,17 +21,24 @@ interface WeightStatsProps {
   data: Weight[];
 }
 
-type Period = '7d' | '30d' | '90d' | 'all';
+type Period = '7j' | '30j' | '90j' | 'all';
 
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   const { colors } = useTheme();
-  const [period, setPeriod] = useState<Period>('30d');
+  const [period, setPeriod] = useState<Period>('30j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
     weight: number;
     date: string;
     x: number;
     y: number;
+  } | null>(null);
+  const [selectedStat, setSelectedStat] = useState<{
+    key: string;
+    label: string;
+    color: string;
+    unit: string;
+    icon: React.ReactNode;
   } | null>(null);
 
   // Filtrer les données selon la période
@@ -40,9 +49,9 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
     let daysBack = 30;
 
     switch (period) {
-      case '7d': daysBack = 7; break;
-      case '30d': daysBack = 30; break;
-      case '90d': daysBack = 90; break;
+      case '7j': daysBack = 7; break;
+      case '30j': daysBack = 30; break;
+      case '90j': daysBack = 90; break;
       case 'all': return data;
     }
 
@@ -137,11 +146,63 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
   const yLabels = getYLabels();
 
+  // Préparer les données sparkline (derniers 30 points)
+  const sparklineData = data.slice(-30).map(entry => ({ value: entry.weight }));
+
+  // Objectif de poids (simulé - devrait venir de la DB)
+  const goalWeight = stats.end > 0 ? stats.end - 2 : 75; // Exemple : objectif = -2kg du poids actuel
+
+  // Calculer la position Y de la ligne d'objectif
+  const getGoalLineY = () => {
+    const range = stats.max - stats.min;
+    const paddedMin = stats.min - range * 0.05;
+    const paddedMax = stats.max + range * 0.05;
+    const paddedRange = paddedMax - paddedMin || 1;
+    return CHART_HEIGHT - PADDING_BOTTOM - ((goalWeight - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
+  };
+
+  const goalLineY = getGoalLineY();
+
+  const weightCards = [
+    {
+      key: 'current',
+      label: 'Poids Actuel',
+      icon: <WeightIcon size={18} color="#22C55E" />,
+      color: '#22C55E',
+      value: stats.end,
+      unit: 'kg',
+    },
+    {
+      key: 'goal',
+      label: 'Objectif',
+      icon: <Target size={18} color="#3B82F6" />,
+      color: '#3B82F6',
+      value: goalWeight,
+      unit: 'kg',
+    },
+    {
+      key: 'min',
+      label: 'Minimum',
+      icon: <ArrowDown size={18} color="#10B981" />,
+      color: '#10B981',
+      value: stats.min,
+      unit: 'kg',
+    },
+    {
+      key: 'max',
+      label: 'Maximum',
+      icon: <ArrowUp size={18} color="#EF4444" />,
+      color: '#EF4444',
+      value: stats.max,
+      unit: 'kg',
+    },
+  ];
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Période */}
       <View style={styles.periodRow}>
-        {(['7d', '30d', '90d', 'all'] as Period[]).map((p) => (
+        {(['7j', '30j', '90j', 'all'] as Period[]).map((p) => (
           <TouchableOpacity
             key={p}
             style={[
@@ -160,38 +221,65 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
         ))}
       </View>
 
-      {/* Stats résumé */}
-      <View style={[styles.statsCard, { backgroundColor: colors.backgroundElevated }]}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Début</Text>
-          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {stats.start ? `${stats.start.toFixed(1)} kg` : '-- kg'}
-          </Text>
-        </View>
+      {/* Grille des 4 stats avec sparklines */}
+      <View style={styles.statsGrid}>
+        {weightCards.map((card) => {
+          const hasData = sparklineData.length > 0;
 
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Fin</Text>
-          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-            {stats.end ? `${stats.end.toFixed(1)} kg` : '-- kg'}
-          </Text>
-        </View>
+          return (
+            <TouchableOpacity
+              key={card.key}
+              style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}
+              activeOpacity={0.7}
+              onPress={() => hasData && card.key === 'current' && setSelectedStat({
+                key: card.key,
+                label: card.label,
+                color: card.color,
+                unit: card.unit,
+                icon: card.icon,
+              })}
+            >
+              {/* Expand icon */}
+              {hasData && card.key === 'current' && (
+                <View style={styles.expandIcon}>
+                  <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+                </View>
+              )}
 
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Évolution</Text>
-          <View style={styles.changeRow}>
-            {stats.change < 0 ? (
-              <TrendingDown size={16} color="#4CAF50" />
-            ) : stats.change > 0 ? (
-              <TrendingUp size={16} color="#E53935" />
-            ) : null}
-            <Text style={[
-              styles.statValue,
-              { color: stats.change <= 0 ? '#4CAF50' : '#E53935' },
-            ]}>
-              {stats.change > 0 ? '+' : ''}{stats.change.toFixed(1)} kg
-            </Text>
-          </View>
-        </View>
+              {/* Icon */}
+              <View style={styles.statIconContainer}>
+                {card.icon}
+              </View>
+
+              {/* Label */}
+              <Text style={[styles.statCardLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {card.label}
+              </Text>
+
+              {/* Value */}
+              <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>
+                {card.value > 0 ? card.value.toFixed(1) : '--'}
+                <Text style={[styles.statCardUnit, { color: colors.textMuted }]}>
+                  {' '}{card.unit}
+                </Text>
+              </Text>
+
+              {/* Sparkline */}
+              {hasData && (
+                <View style={styles.sparklineContainer}>
+                  <SparklineChart
+                    data={sparklineData}
+                    width={140}
+                    height={40}
+                    color={card.color}
+                    showGradient={true}
+                    thickness={1.5}
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Graphique en ligne moderne */}
@@ -200,8 +288,32 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
           Évolution du poids
         </Text>
         <Text style={[styles.chartSubtitle, { color: colors.textMuted }]}>
-          {period === '7d' ? '7 derniers jours' : period === '30d' ? '30 derniers jours' : period === '90d' ? '90 derniers jours' : 'Toutes les données'}
+          {period === '7j' ? '7 derniers jours' : period === '30j' ? '30 derniers jours' : period === '90j' ? '90 derniers jours' : 'Toutes les données'}
         </Text>
+
+        {/* Résumé Actuel/Objectif/Reste */}
+        {stats.end > 0 && (
+          <View style={styles.weightSummary}>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Actuel</Text>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
+                {stats.end.toFixed(1)} kg
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Objectif</Text>
+              <Text style={[styles.summaryValue, { color: '#3B82F6' }]}>
+                {goalWeight.toFixed(1)} kg
+              </Text>
+            </View>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Reste</Text>
+              <Text style={[styles.summaryValue, { color: '#F59E0B' }]}>
+                {(stats.end - goalWeight).toFixed(1)} kg
+              </Text>
+            </View>
+          </View>
+        )}
 
         {chartData.length === 0 ? (
           <View style={styles.emptyChart}>
@@ -234,6 +346,20 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                   />
                 );
               })}
+
+              {/* Ligne d'objectif en pointillé */}
+              {stats.end > 0 && (
+                <>
+                  <Path
+                    d={`M ${PADDING_LEFT} ${goalLineY} L ${CHART_WIDTH - PADDING_RIGHT} ${goalLineY}`}
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                    fill="none"
+                    opacity={0.7}
+                  />
+                </>
+              )}
 
               {/* Zone sous la courbe avec gradient */}
               <Path
@@ -309,18 +435,28 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
               ))}
             </View>
 
-            {/* Valeurs au-dessus des points */}
+            {/* Valeurs au-dessus des points (espacées pour éviter chevauchement) */}
             {chartData.filter((_, index) => {
-              // Afficher les valeurs tous les N points pour éviter le chevauchement
-              const step = Math.max(1, Math.floor(chartData.length / 6));
+              // Afficher tous les points si moins de 7, sinon espacer intelligemment
+              if (chartData.length <= 7) return true;
+              const step = Math.max(1, Math.floor(chartData.length / 7));
               return index % step === 0 || index === chartData.length - 1;
             }).map((point, index) => (
-              <View key={index} style={[styles.valueLabel, { left: point.x - 20, top: point.y - 30 }]}>
-                <Text style={[styles.valueLabelText, { color: colors.accent }]}>
+              <View key={index} style={[styles.valueLabel, { left: point.x - 20, top: point.y - 28 }]}>
+                <Text style={[styles.valueLabelText, { color: colors.accent, backgroundColor: 'rgba(255,255,255,0.85)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4 }]}>
                   {point.weight.toFixed(1)}
                 </Text>
               </View>
             ))}
+
+            {/* Label de l'objectif */}
+            {stats.end > 0 && (
+              <View style={[styles.goalLabel, { left: CHART_WIDTH - PADDING_RIGHT - 50, top: goalLineY - 12 }]}>
+                <Text style={[styles.goalLabelText, { color: '#3B82F6' }]}>
+                  Obj: {goalWeight.toFixed(1)}
+                </Text>
+              </View>
+            )}
 
             {/* Tooltip */}
             {selectedPoint && (
@@ -342,6 +478,22 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                   </Text>
                 </View>
                 <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Légende du graphique */}
+        {chartData.length > 0 && (
+          <View style={styles.chartLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
+              <Text style={[styles.legendText, { color: colors.textMuted }]}>Poids</Text>
+            </View>
+            {stats.end > 0 && (
+              <View style={styles.legendItem}>
+                <View style={[styles.legendLine, { backgroundColor: '#3B82F6' }]} />
+                <Text style={[styles.legendText, { color: colors.textMuted }]}>Objectif</Text>
               </View>
             )}
           </View>
@@ -374,12 +526,31 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
           </View>
         ))}
       </View>
-    </View>
+
+      {/* Modal de détail */}
+      {selectedStat && (
+        <StatsDetailModal
+          visible={selectedStat !== null}
+          onClose={() => setSelectedStat(null)}
+          title={selectedStat.label}
+          subtitle="Évolution du poids"
+          data={filteredData.map((entry, index) => ({
+            value: entry.weight,
+            label: format(parseISO(entry.date), 'd MMM', { locale: fr }),
+            date: entry.date,
+          }))}
+          color={selectedStat.color}
+          unit={selectedStat.unit}
+          icon={selectedStat.icon}
+        />
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 40,
   },
@@ -400,7 +571,58 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Stats card
+  // Stats grid
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 14,
+    minHeight: 140,
+    position: 'relative',
+  },
+  expandIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 12,
+    padding: 4,
+  },
+  statIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statCardLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  statCardValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  statCardUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  sparklineContainer: {
+    marginTop: 'auto',
+    marginHorizontal: -6,
+  },
+
+  // Old stats card (keeping for compatibility)
   statsCard: {
     flexDirection: 'row',
     borderRadius: 16,
@@ -490,6 +712,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+  goalLabel: {
+    position: 'absolute',
+    width: 60,
+    alignItems: 'center',
+  },
+  goalLabelText: {
+    fontSize: 11,
+    fontWeight: '700',
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
 
   // History
   historyCard: {
@@ -552,5 +789,61 @@ const styles = StyleSheet.create({
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     alignSelf: 'center',
+  },
+
+  // Weight Summary
+  weightSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // Chart Legend
+  chartLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendLine: {
+    width: 20,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.7,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
