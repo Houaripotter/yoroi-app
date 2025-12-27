@@ -43,6 +43,9 @@ import {
   Trophy,
   Target,
   FlaskConical,
+  LayoutDashboard,
+  Sliders,
+  Info,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -142,6 +145,15 @@ const PROFILE_ITEMS: MenuItem[] = [
     iconBg: '#A78BFA20',
   },
   {
+    id: 'customize-home',
+    label: 'Personnaliser l\'Accueil',
+    sublabel: 'Ordre et visibilité des sections',
+    Icon: LayoutDashboard,
+    route: '/customize-home',
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
+  {
     id: 'avatars',
     label: 'Avatars',
     sublabel: 'Débloque des guerriers',
@@ -157,18 +169,9 @@ const PROFILE_ITEMS: MenuItem[] = [
 // ============================================
 const TOOLS_ITEMS: MenuItem[] = [
   {
-    id: 'measurements',
-    label: 'Mensurations',
-    sublabel: 'Suivi corporel détaillé',
-    Icon: Ruler,
-    route: '/entry',
-    iconColor: '#34D399',
-    iconBg: '#34D39920',
-  },
-  {
     id: 'lab',
-    label: 'LABO',
-    sublabel: 'Articles & protocoles scientifiques',
+    label: 'Savoir',
+    sublabel: 'Dormir moins bête · Études peer-reviewed',
     Icon: FlaskConical,
     route: '/lab',
     iconColor: '#3B82F6',
@@ -225,15 +228,6 @@ const COMMUNITY_ITEMS: MenuItem[] = [
     iconColor: '#F87171',
     iconBg: '#F8717120',
   },
-  {
-    id: 'savoir',
-    label: 'Base de Savoir',
-    sublabel: 'Articles et conseils',
-    Icon: BookOpen,
-    route: '/savoir',
-    iconColor: '#22D3EE',
-    iconBg: '#22D3EE20',
-  },
 ];
 
 // ============================================
@@ -243,11 +237,29 @@ const SETTINGS_ITEMS: MenuItem[] = [
   {
     id: 'settings',
     label: 'Réglages',
-    sublabel: 'Notifications, unités, thème',
+    sublabel: 'Notifications, rappels, thème',
     Icon: Settings,
     route: '/settings',
     iconColor: '#94A3B8',
     iconBg: '#94A3B820',
+  },
+  {
+    id: 'preferences',
+    label: 'Préférences',
+    sublabel: 'Unités de poids et mesures',
+    Icon: Sliders,
+    route: '/preferences',
+    iconColor: '#F59E0B',
+    iconBg: '#F59E0B20',
+  },
+  {
+    id: 'tutorial',
+    label: 'Revoir le Tutoriel',
+    sublabel: 'Découvre toutes les fonctionnalités',
+    Icon: Info,
+    onPress: () => {},
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
   },
   {
     id: 'exportPdf',
@@ -304,6 +316,14 @@ const SUPPORT_ITEMS: MenuItem[] = [
 
 export default function MoreScreen() {
   const { colors, isDark } = useTheme();
+
+  const handleShowTutorial = async () => {
+    Alert.alert(
+      'Tutoriel',
+      'La fonctionnalité de tutoriel sera bientôt disponible.',
+      [{ text: 'OK' }]
+    );
+  };
 
   const handleExport = async () => {
     Alert.alert(
@@ -413,6 +433,10 @@ export default function MoreScreen() {
     }
     if (item.id === 'exportPdf') {
       handleExportPDF();
+      return;
+    }
+    if (item.id === 'tutorial') {
+      handleShowTutorial();
       return;
     }
 
@@ -538,9 +562,11 @@ export default function MoreScreen() {
             </View>
           </View>
 
-          <Text style={[styles.madeWith, { color: colors.textMuted }]}>
-            Made with ❤️ in France
-          </Text>
+          <View style={[styles.madeWith, { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }]}>
+            <Text style={{ color: colors.textMuted }}>Made with</Text>
+            <Heart size={14} color="#EF4444" fill="#EF4444" />
+            <Text style={{ color: colors.textMuted }}>in France</Text>
+          </View>
         </View>
 
         <View style={{ height: 120 }} />

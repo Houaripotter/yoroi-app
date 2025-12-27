@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Animated,
   Share,
   Alert,
+  Platform,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,7 @@ import {
   Timer,
   Ruler,
   Heart,
+  HeartPulse,
   TrendingDown,
   TrendingUp,
   Minus,
@@ -48,6 +50,9 @@ import {
   Stethoscope,
   Scissors,
   Settings,
+  FlaskConical,
+  Calculator,
+  Apple,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -77,12 +82,19 @@ import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircl
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 
+// Mode Essentiel
+import { useViewMode } from '@/hooks/useViewMode';
+import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
+import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
+import ObjectiveSwitch from '@/components/home/ObjectiveSwitch';
+
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import AnimatedProgressBar from '@/components/AnimatedProgressBar';
 import { AnimatedCard } from '@/components/AnimatedCard';
 import AnimatedRing from '@/components/AnimatedRing';
+import { AnimatedBattery } from '@/components/AnimatedBattery';
 import PulsingBadge from '@/components/PulsingBadge';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 import AnimatedSleepWave from '@/components/AnimatedSleepWave';
@@ -93,6 +105,7 @@ import { getSleepStats, getSleepAdvice, formatSleepDuration, SleepStats, getSlee
 import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@/lib/trainingLoadService';
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
+import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -107,6 +120,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
+  // Mode d'affichage (Guerrier / Essentiel)
+  const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
+
   // États de base
   const [profile, setProfile] = useState<Profile | null>(null);
   const [latestWeight, setLatestWeight] = useState<Weight | null>(null);
@@ -118,6 +134,57 @@ export default function HomeScreen() {
   const [ranksModalVisible, setRanksModalVisible] = useState(false);
   const [logoViewerVisible, setLogoViewerVisible] = useState(false);
   const [avatarViewerVisible, setAvatarViewerVisible] = useState(false);
+
+  // Mode Compétiteur - Toggle ON/OFF
+  const [isCompetitorMode, setIsCompetitorMode] = useState(false);
+
+
+  // État nextEvent pour afficher les compétitions
+  const [nextEvent, setNextEvent] = useState<{
+    type: 'competition' | 'combat' | null;
+    name: string;
+    daysLeft: number;
+    date: string;
+    sport?: string;
+  } | null>(null);
+
+  // Animation toggle compétiteur
+  const toggleAnim = useRef(new Animated.Value(isCompetitorMode ? 1 : 0)).current;
+  const toggleScaleAnim = useRef(new Animated.Value(1)).current;
+  const toggleGlowAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Animation du slide avec bounce
+    Animated.spring(toggleAnim, {
+      toValue: isCompetitorMode ? 1 : 0,
+      friction: 5,
+      tension: 50,
+      useNativeDriver: true,
+    }).start();
+
+    // Animation glow pulsant quand activé
+    if (isCompetitorMode) {
+      const glowLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(toggleGlowAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(toggleGlowAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      glowLoop.start();
+      return () => glowLoop.stop();
+    } else {
+      toggleGlowAnim.setValue(0);
+    }
+  }, [isCompetitorMode]);
+
   const [userMode, setUserMode] = useState<UserMode>('loisir');
 
   // Hydratation
@@ -132,13 +199,9 @@ export default function HomeScreen() {
   const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null);
   const [bodyComposition, setBodyComposition] = useState<any>(null);
   const [sleepGoal, setSleepGoal] = useState(480); // 8h par défaut
-  const [nextEvent, setNextEvent] = useState<{
-    type: 'competition' | 'combat' | null;
-    name: string;
-    daysLeft: number;
-    date: string;
-    sport?: string;
-  } | null>(null);
+
+  // Personnalisation de l'accueil
+  const [homeSections, setHomeSections] = useState<HomeSection[]>([]);
 
   // Hydratation functions
   const loadHydration = useCallback(async () => {
@@ -191,7 +254,7 @@ export default function HomeScreen() {
   // Chargement des données
   const loadData = useCallback(async () => {
     try {
-      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event] = await Promise.all([
+      const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event, sections] = await Promise.all([
         getProfile(),
         getLatestWeight(),
         getWeights(30),
@@ -204,6 +267,7 @@ export default function HomeScreen() {
         getDailyChallenges(),
         generateWeeklyReport(),
         getNextEvent(),
+        getHomeCustomization(),
       ]);
 
       setProfile(profileData);
@@ -218,6 +282,7 @@ export default function HomeScreen() {
       setDailyChallenges(challenges);
       setWeeklyReport(report);
       setNextEvent(event);
+      setHomeSections(sections);
 
       const bodyComp = await getLatestBodyComposition();
       setBodyComposition(bodyComp);
@@ -233,6 +298,21 @@ export default function HomeScreen() {
   }, [loadHydration]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  // Helper pour vérifier la visibilité d'une section
+  const isSectionVisible = (sectionId: string): boolean => {
+    return checkSectionVisible(homeSections, sectionId);
+  };
+
+  // Rotation automatique des citations toutes les 5 minutes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const newQuote = await getDailyQuote();
+      setDailyQuote(newQuote);
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Calculs
   const rank = getCurrentRank(streak);
@@ -404,7 +484,7 @@ export default function HomeScreen() {
 
   // Rendu icône batterie status
   const renderBatteryIcon = () => {
-    const iconSize = 14;
+    const iconSize = 12;
     switch (batteryStatus.iconType) {
       case 'flame': return <Flame size={iconSize} color={batteryStatus.color} />;
       case 'zap': return <Zap size={iconSize} color={batteryStatus.color} />;
@@ -444,186 +524,59 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* HEADER */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setLogoViewerVisible(true)}>
-            <Image source={require('@/assets/logo d\'app/logo1.png')} style={styles.logo} resizeMode="contain" />
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
-            {/* Citation juste en dessous */}
-            {dailyQuote && (
-              <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
-                <Sparkles size={12} color={colors.accent} />
-                <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={1}>"{dailyQuote.text}"</Text>
-                </View>
-                  )}
-                </View>
-          <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} style={[styles.avatarBtn, { borderColor: rank.color }]}>
-            <AnimatedAvatar size={70}>
+        {isSectionVisible('header') && (
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => setLogoViewerVisible(true)}>
+              <Image source={require('@/assets/logo d\'app/logo1.png')} style={styles.logo} resizeMode="contain" />
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+              <View style={styles.userNameRow}>
+                <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
+                <ViewModeSwitch mode={mode} onToggle={toggleMode} />
+              </View>
+              {/* Citation juste en dessous - SEULEMENT en Mode Guerrier */}
+              {dailyQuote && mode === 'guerrier' && (
+                <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
+                  <Sparkles size={12} color={colors.accent} />
+                  <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
+                  </View>
+                    )}
+                  </View>
+            <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} style={styles.avatarBtn}>
               <AvatarDisplay size="medium" refreshTrigger={Date.now()} showBorder={false} />
-            </AnimatedAvatar>
-          </TouchableOpacity>
-                </View>
+            </TouchableOpacity>
+                  </View>
+        )}
 
+        {/* MODE GUERRIER - Contenu complet actuel */}
+        {mode === 'guerrier' && (
+          <>
         {/* Stats rapides (réduites) - Juste sous la citation */}
+        {isSectionVisible('stats_compact') && (
         <View style={styles.statsRowCompact}>
-          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
+          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
             <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
-              <Flame size={10} color="#F97316" />
+              <Flame size={18} color="#F97316" />
             </Animated.View>
             <AnimatedCounter value={streak} style={[styles.statValueCompact, { color: '#F97316' }]} duration={800} />
             <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
               </TouchableOpacity>
-          <View style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]}>
-            <Zap size={10} color={colors.accent} />
+          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <Zap size={18} color={colors.accent} />
             <AnimatedCounter value={level.level} style={[styles.statValueCompact, { color: colors.accent }]} duration={800} />
             <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
-                </View>
-          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => setRanksModalVisible(true)}>
-            <Trophy size={10} color={rank.color} />
+                </TouchableOpacity>
+          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <Trophy size={18} color={rank.color} />
             <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompact} delay={300} />
             <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
               </TouchableOpacity>
                 </View>
+        )}
 
-        {/* ACTIONS RAPIDES : Timer, Compétition, Infirmerie, Photo */}
-        <View style={styles.actionsRowTop}>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
-            <Timer size={22} color={colors.accent} />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Timer</Text>
-            <View style={styles.timerFractionMini}>
-              <Text style={[styles.timerFractionTop, { color: colors.textSecondary }]}>Round</Text>
-              <View style={[styles.timerFractionLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.timerFractionBottom, { color: colors.textMuted }]}>Temps de repos</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => router.push(nextEvent ? '/competitions' : '/add-competition')}
-            activeOpacity={0.85}
-          >
-            {nextEvent ? (
-              <>
-                {/* Icône selon le sport avec cibles */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <MaterialCommunityIcons
-                    name="target"
-                    size={16}
-                    color="#EF4444"
-                  />
-                  {nextEvent.sport === 'jjb' || nextEvent.sport === 'judo' || nextEvent.sport === 'karate' ? (
-                    <MaterialCommunityIcons
-                      name="karate"
-                      size={26}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  ) : nextEvent.sport === 'mma' || nextEvent.sport === 'boxe' || nextEvent.sport === 'muay_thai' ? (
-                    <MaterialCommunityIcons
-                      name="boxing-glove"
-                      size={26}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  ) : (
-                    <Trophy
-                      size={26}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  )}
-                  <MaterialCommunityIcons
-                    name="target"
-                    size={16}
-                    color="#EF4444"
-                  />
-                </View>
-                {/* J-XX avec couleur selon échéance */}
-                <Text style={[
-                  styles.actionLabelSquare,
-                  {
-                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981',
-                    fontSize: 13,
-                    fontWeight: '900'
-                  }
-                ]}>
-                  J-{nextEvent.daysLeft}
-                </Text>
-                {/* Nom abrégé */}
-                <Text
-                  style={[
-                    styles.actionLabelSquare,
-                    {
-                      color: colors.textPrimary,
-                      fontSize: nextEvent.name.length > 12 ? 9 : 11,
-                      fontWeight: '600',
-                      marginTop: -2,
-                    }
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {nextEvent.name}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Trophy size={22} color={colors.accent} />
-                <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Compét</Text>
-                <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 9, marginTop: -2 }]}>Ajouter</Text>
-              </>
-            )}
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
-            <MaterialCommunityIcons name="hospital-box" size={26} color="#EF4444" />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Infirmerie</Text>
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <Camera size={22} color="#10B981" />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 13, fontWeight: '700' }]}>Photo</Text>
-            <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 9, marginTop: -2 }]}>Avant/Après</Text>
-              </TouchableOpacity>
-                </View>
-
-        {/* BATTERIE ÉNERGIE - Horizontale (Sous les actions, au-dessus de poids/hydratation) */}
-        <AnimatedCard index={0}>
-        <TouchableOpacity style={[styles.batteryCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/energy')} activeOpacity={0.8}>
-          <View style={styles.batteryHeader}>
-            <AnimatedRing progress={batteryPercent / 100} size={32} strokeWidth={3} color={batteryStatus.color} backgroundColor={`${batteryStatus.color}20`} />
-            <Battery size={16} color={batteryStatus.color} />
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ÉNERGIE DU JOUR</Text>
-            <AnimatedCounter value={Math.round(batteryPercent)} suffix="%" style={[styles.batteryPercentSmall, { color: batteryStatus.color }]} duration={1000} />
-            </View>
-          
-          {/* Batterie horizontale large */}
-          <View style={styles.batteryHorizontal}>
-            <View style={[styles.batteryHBody, { borderColor: colors.border, backgroundColor: `${colors.border}30` }]}>
-              <Animated.View 
-                            style={[
-                  styles.batteryHLevel, 
-                              {
-                    width: batteryAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                    backgroundColor: batteryStatus.color,
-                              }
-                            ]}
-                          />
-              {/* Effet brillance */}
-              <View style={styles.batteryShine} />
-                  </View>
-            {/* Tête de la batterie (à droite) */}
-            <View style={[styles.batteryHHead, { backgroundColor: colors.border }]} />
-                </View>
-          
-          {/* Status en dessous */}
-          <View style={styles.batteryFooterRow}>
-            <View style={[styles.batteryStatusBadge, { backgroundColor: `${batteryStatus.color}15` }]}>
-              {renderBatteryIcon()}
-              <Text style={[styles.batteryLabel, { color: batteryStatus.color }]}>{batteryStatus.label}</Text>
-              </View>
-            <ChevronRight size={14} color={colors.textMuted} />
-                </View>
-              </TouchableOpacity>
-        </AnimatedCard>
-
-        {/* GRID 2x2 LOTTIE : Poids + Hydratation (haut), Sommeil + Charge (bas) */}
+        {/* GRID 2x2 LOTTIE : Poids + Hydratation (haut), Sommeil + Charge (bas) - EN HAUT */}
+        {isSectionVisible('weight_hydration') && (
         <View style={styles.gridLottieContainer}>
           {/* Ligne 1 : Poids + Hydratation */}
           <View style={styles.gridLottieRow}>
@@ -645,40 +598,276 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Ligne 2 : Sommeil + Charge */}
-          <View style={styles.gridLottieRow}>
-            {/* Carte Sommeil */}
-            <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
-              <SleepLottieCard
-                hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
-                quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
-                debt={sleepStats?.sleepDebtHours || 0}
-                goal={sleepGoal / 60}
-              />
+        </View>
+        )}
+
+        {/* BATTERIE + SAVOIR & OUTILS - Une seule ligne de 4 cartes */}
+        {isSectionVisible('battery_tools') && (
+        <AnimatedCard index={0}>
+          <View style={styles.batteryToolsRowSingle}>
+            {/* Batterie compacte avec animation horizontale */}
+            <TouchableOpacity
+              style={[styles.batteryCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => router.push('/energy')}
+              activeOpacity={0.8}
+            >
+              <Battery size={24} color={batteryStatus.color} />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
+
+              {/* Batterie horizontale animée */}
+              <View style={styles.batteryHorizontalSmall}>
+                <View style={[styles.batteryHBodySmall, { borderColor: batteryStatus.color, backgroundColor: `${batteryStatus.color}10` }]}>
+                  <Animated.View
+                    style={[
+                      styles.batteryHLevelSmall,
+                      {
+                        width: batteryAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                        backgroundColor: batteryStatus.color,
+                      }
+                    ]}
+                  >
+                    <View style={styles.batteryShineSmall} />
+                  </Animated.View>
+                </View>
+                <View style={[styles.batteryHHeadSmall, { backgroundColor: batteryStatus.color }]} />
+              </View>
+
+              <Text style={[styles.batteryPercentSmall, { color: batteryStatus.color }]}>{Math.round(batteryPercent)}%</Text>
             </TouchableOpacity>
 
-            {/* Carte Charge */}
-            <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
-              <ChargeLottieCard
-                level={loadStats?.riskLevel || 'optimal'}
-                totalLoad={loadStats?.totalLoad || 0}
-                maxLoad={2000}
-                sessions={trainings.filter(t => {
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  return new Date(t.date) >= weekAgo;
-                }).length}
-              />
+            {/* Savoir */}
+            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
+              <FlaskConical size={28} color="#3B82F6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Dormir moins bête</Text>
+            </TouchableOpacity>
+
+            {/* Outils */}
+            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/calculators')} activeOpacity={0.85}>
+              <Calculator size={28} color="#10B981" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Outils</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Calculatrice</Text>
+            </TouchableOpacity>
+
+            {/* Composition */}
+            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/stats?tab=composition')} activeOpacity={0.85}>
+              <Apple size={28} color="#F59E0B" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Composition</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Corporelle</Text>
             </TouchableOpacity>
           </View>
+        </AnimatedCard>
+        )}
+
+        {/* LIGNE 2 : Infirmerie, Timer, Toggle Compétiteur, Photo - 4 CARTES */}
+        {isSectionVisible('actions_row') && (
+        <View style={styles.actionsRow4}>
+          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
+            <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
+            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
+            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
+            <Timer size={28} color={colors.accent} />
+            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
+            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
+            <Camera size={28} color="#10B981" />
+            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
+            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
+          </TouchableOpacity>
+
+          {/* Toggle Mode Compétition avec compte à rebours */}
+          {userMode === 'competiteur' ? (
+            <TouchableOpacity
+              style={[styles.actionBtn4, {
+                backgroundColor: isCompetitorMode ? (nextEvent ? (nextEvent.daysLeft < 7 ? '#FEE2E2' : nextEvent.daysLeft < 30 ? '#FFF7ED' : colors.backgroundCard) : colors.backgroundCard) : colors.backgroundCard,
+                borderWidth: isCompetitorMode ? 2 : 0,
+                borderColor: isCompetitorMode ? (nextEvent ? (nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent) : colors.accent) : 'transparent',
+              }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setIsCompetitorMode(!isCompetitorMode);
+              }}
+              activeOpacity={0.85}
+            >
+              {isCompetitorMode && nextEvent ? (
+                <>
+                  {/* Icône avec cibles */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                    <Target size={10} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
+                    <Trophy size={24} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2} />
+                    <Target size={10} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
+                  </View>
+                  <Text style={[styles.actionLabel4, {
+                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
+                    fontWeight: '900',
+                    fontSize: 16,
+                  }]}>
+                    J-{nextEvent.daysLeft}
+                  </Text>
+                  <Text style={[styles.actionSubLabel4, { color: colors.textPrimary, fontWeight: '600' }]} numberOfLines={1}>
+                    {nextEvent.name}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Trophy size={28} color={isCompetitorMode ? colors.accent : colors.textMuted} strokeWidth={2} />
+                  <Text style={[styles.actionLabel4, { color: isCompetitorMode ? colors.accent : colors.textPrimary, fontWeight: isCompetitorMode ? '700' : '600' }]}>
+                    {isCompetitorMode ? 'Compétition' : 'Mode Compét'}
+                  </Text>
+                  <Text style={[styles.actionSubLabel4, { color: colors.textMuted, fontSize: 10 }]}>
+                    {isCompetitorMode ? 'Activé' : 'Désactivé'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
+              <FlaskConical size={28} color="#3B82F6" />
+              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Savoir</Text>
+              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Études & Conseils</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        )}
+
+
+        {/* LIGNE 3 : Sommeil + Charge */}
+        {isSectionVisible('sleep_charge') && (
+        <View style={styles.gridLottieRow}>
+          {/* Carte Sommeil */}
+          <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
+            <SleepLottieCard
+              hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+              quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
+              debt={sleepStats?.sleepDebtHours || 0}
+              goal={sleepGoal / 60}
+            />
+          </TouchableOpacity>
+
+          {/* Carte Charge */}
+          <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
+            <ChargeLottieCard
+              level={loadStats?.riskLevel || 'optimal'}
+              totalLoad={loadStats?.totalLoad || 0}
+              maxLoad={2000}
+              sessions={trainings.filter(t => {
+                const weekAgo = new Date();
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                return new Date(t.date) >= weekAgo;
+              }).length}
+            />
+          </TouchableOpacity>
+        </View>
+        )}
+
+        {/* ANCIENNES ACTIONS RAPIDES - CACHÉES */}
+        <View style={{ display: 'none' }}>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
+            <Timer size={20} color={colors.accent} />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Timer</Text>
+            <View style={styles.timerFractionMini}>
+              <Text style={[styles.timerFractionTop, { color: colors.textSecondary }]}>Round</Text>
+              <View style={[styles.timerFractionLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.timerFractionBottom, { color: colors.textMuted }]}>Repos</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => router.push(nextEvent ? '/competitions' : '/add-competition')}
+            activeOpacity={0.85}
+          >
+            {nextEvent ? (
+              <>
+                {/* Icône selon le sport avec cibles */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <MaterialCommunityIcons
+                    name="target"
+                    size={12}
+                    color="#EF4444"
+                  />
+                  {nextEvent.sport === 'jjb' || nextEvent.sport === 'judo' || nextEvent.sport === 'karate' ? (
+                    <MaterialCommunityIcons
+                      name="karate"
+                      size={22}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  ) : nextEvent.sport === 'mma' || nextEvent.sport === 'boxe' || nextEvent.sport === 'muay_thai' ? (
+                    <MaterialCommunityIcons
+                      name="boxing-glove"
+                      size={22}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  ) : (
+                    <Trophy
+                      size={22}
+                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
+                    />
+                  )}
+                  <MaterialCommunityIcons
+                    name="target"
+                    size={12}
+                    color="#EF4444"
+                  />
+                </View>
+                {/* J-XX avec couleur selon échéance */}
+                <Text style={[
+                  styles.actionLabelSquare,
+                  {
+                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981',
+                    fontSize: 11,
+                    fontWeight: '900'
+                  }
+                ]}>
+                  J-{nextEvent.daysLeft}
+                </Text>
+                {/* Nom abrégé */}
+                <Text
+                  style={[
+                    styles.actionLabelSquare,
+                    {
+                      color: colors.textPrimary,
+                      fontSize: nextEvent.name.length > 12 ? 8 : 9,
+                      fontWeight: '600',
+                      marginTop: -2,
+                    }
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {nextEvent.name}
+                </Text>
+              </>
+            ) : (
+              <>
+                <Trophy size={20} color={colors.accent} />
+                <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Compét</Text>
+                <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 8, marginTop: -2 }]}>Ajouter</Text>
+              </>
+            )}
+              </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
+            <MaterialCommunityIcons name="hospital-box" size={22} color="#EF4444" />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Infirmerie</Text>
+              </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
+            <Camera size={20} color="#10B981" />
+            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Photo</Text>
+            <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 8, marginTop: -2 }]}>Avant/Après</Text>
+              </TouchableOpacity>
+                </View>
 
         {/* DÉFIS DU JOUR */}
+        {isSectionVisible('challenges') && (
         <AnimatedCard index={1}>
         <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
           <View style={styles.challengesHeader}>
             <Target size={16} color={colors.accent} />
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>DÉFIS DU JOUR</Text>
+            <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
             <ChevronRight size={14} color={colors.textMuted} />
             </View>
           <View style={styles.challengesList}>
@@ -711,26 +900,33 @@ export default function HomeScreen() {
         </View>
                 </TouchableOpacity>
         </AnimatedCard>
+        )}
 
         {/* RADAR DE PERFORMANCE */}
+        {isSectionVisible('performance_radar') && (
         <AnimatedCard index={2}>
+        <TouchableOpacity onPress={() => router.push('/radar-performance')} activeOpacity={0.8}>
           <PerformanceRadar />
+        </TouchableOpacity>
         </AnimatedCard>
+        )}
 
         {/* COURBE HEALTHSPAN */}
+        {isSectionVisible('healthspan') && (
         <AnimatedCard index={3}>
         <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
           <HealthspanChart />
         </TouchableOpacity>
         </AnimatedCard>
+        )}
 
         {/* RAPPORT DE MISSION */}
-        {weeklyReport && (
+        {isSectionVisible('weekly_report') && weeklyReport && (
           <AnimatedCard index={4}>
           <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
             <View style={styles.reportHeader}>
               <FileText size={16} color={colors.accent} />
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RAPPORT DE MISSION</Text>
+              <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
               </View>
             <View style={styles.reportContent}>
               <View style={[styles.gradeBadge, {
@@ -769,87 +965,236 @@ export default function HomeScreen() {
           </AnimatedCard>
         )}
 
-        {/* ACTIONS RAPIDES */}
-        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>ACTIONS</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/entry')}>
-            <Scale size={20} color={colors.accent} />
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Pesée</Text>
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/add-training')}>
-            <Dumbbell size={20} color="#8B5CF6" />
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Training</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/transformation')}>
-            <Camera size={20} color="#EC4899" />
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Photos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')}>
-            <Timer size={20} color="#F59E0B" />
-            <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>Timer</Text>
-                    </TouchableOpacity>
-                  </View>
-
-        {/* OUTILS */}
-        <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>OUTILS</Text>
-        <View style={styles.toolsRow}>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/measurements')}>
-            <Ruler size={16} color={colors.accent} />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Mesures</Text>
-                  </TouchableOpacity>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')}>
-            <Heart size={16} color="#EF4444" />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Infirmerie</Text>
-                </TouchableOpacity>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/health-connect')}>
-            <Activity size={16} color="#10B981" />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Santé</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/notifications')}>
-            <Bell size={16} color="#F59E0B" />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Notifs</Text>
-            </TouchableOpacity>
-          </View>
-        <View style={styles.toolsRow}>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/appearance')}>
-            <Palette size={16} color={colors.accent} />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Thèmes</Text>
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')}>
-            <Target size={16} color="#EF4444" />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Cut</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.toolBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/settings')}>
-            <Settings size={16} color={colors.textMuted} />
-            <Text style={[styles.toolLabel, { color: colors.textPrimary }]}>Réglages</Text>
-              </TouchableOpacity>
-        </View>
-
         {/* CALENDRIER STREAK */}
+        {isSectionVisible('streak_calendar') && (
         <StreakCalendar weeks={12} />
+        )}
 
-        {/* Mode Compétiteur */}
-        {userMode === 'competiteur' && (
-          <>
-            <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>COMPÉTITEUR</Text>
-            <View style={styles.fighterRow}>
-              <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')}>
-                <Scale size={16} color="#EF4444" />
-                <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Mode Cut</Text>
-                    </TouchableOpacity>
-              <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')}>
-                <Trophy size={16} color={colors.accent} />
-                <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Compétitions</Text>
-                    </TouchableOpacity>
-              <TouchableOpacity style={[styles.fighterBtn, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')}>
-                <Medal size={16} color={colors.accent} />
-                <Text style={[styles.fighterBtnText, { color: colors.textPrimary }]}>Palmarès</Text>
-                    </TouchableOpacity>
+        {/* MODE COMPÉTITEUR - Actions spécifiques */}
+        {isSectionVisible('fighter_mode') && userMode === 'competiteur' && (
+        <AnimatedCard>
+          <View style={[styles.modeCompetContainer, { backgroundColor: colors.backgroundCard }]}>
+            <View style={styles.modeCompetHeader}>
+              <View style={[styles.modeCompetIconContainer, { backgroundColor: colors.accent + '20' }]}>
+                <Trophy size={20} color={colors.accent} strokeWidth={2} />
+              </View>
+              <Text style={[styles.modeCompetTitle, { color: colors.textPrimary }]}>
+                Mode Compétition
+              </Text>
+
+              {/* Toggle Activé/Désactivé */}
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity
+                style={[styles.competToggleSwitch, {
+                  backgroundColor: isCompetitorMode ? colors.accent : colors.backgroundElevated,
+                  borderColor: isCompetitorMode ? colors.accent : colors.border,
+                }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsCompetitorMode(!isCompetitorMode);
+                }}
+                activeOpacity={0.8}
+              >
+                <Animated.View
+                  style={[styles.competToggleThumb, {
+                    backgroundColor: '#FFFFFF',
+                    transform: [{
+                      translateX: toggleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [2, 26],
+                      }),
+                    }],
+                  }]}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Message mode désactivé */}
+            {!isCompetitorMode && (
+              <View style={[styles.competModeOffCard, { backgroundColor: colors.backgroundElevated }]}>
+                <Trophy size={20} color={colors.textMuted} strokeWidth={2} />
+                <Text style={[styles.competModeOffText, { color: colors.textMuted }]}>
+                  Active le mode compétition pour accéder aux fonctionnalités
+                </Text>
+              </View>
+            )}
+
+            {/* Compte à rebours prochaine compétition - Seulement si mode activé */}
+            {isCompetitorMode && nextEvent ? (
+              <TouchableOpacity
+                style={[styles.competCountdownCard, {
+                  backgroundColor: colors.backgroundElevated,
+                  borderColor: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
+                }]}
+                onPress={() => router.push('/competitions')}
+                activeOpacity={0.85}
+              >
+                <View style={styles.competCountdownLeft}>
+                  <View style={[styles.competCountdownIconWrapper, {
+                    backgroundColor: nextEvent.daysLeft < 7 ? '#EF444420' : nextEvent.daysLeft < 30 ? '#F9731620' : colors.accent + '20',
+                  }]}>
+                    <Target size={20} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
                   </View>
+                  <View style={styles.competCountdownInfo}>
+                    <Text style={[styles.competCountdownName, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {nextEvent.name}
+                    </Text>
+                    <Text style={[styles.competCountdownDate, { color: colors.textMuted }]}>
+                      {new Date(nextEvent.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </Text>
+                  </View>
+                </View>
+                <View style={[styles.competCountdownBadge, {
+                  backgroundColor: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
+                }]}>
+                  <Text style={[styles.competCountdownDays, { color: '#FFFFFF' }]}>
+                    J-{nextEvent.daysLeft}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : isCompetitorMode ? (
+              <TouchableOpacity
+                style={[styles.competNoEventCard, {
+                  backgroundColor: colors.backgroundElevated,
+                  borderColor: colors.border,
+                }]}
+                onPress={() => router.push('/add-competition')}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.competNoEventIcon, { backgroundColor: colors.textMuted + '20' }]}>
+                  <Trophy size={20} color={colors.textMuted} strokeWidth={2} />
+                </View>
+                <View style={styles.competNoEventContent}>
+                  <Text style={[styles.competNoEventTitle, { color: colors.textPrimary }]}>
+                    Aucune compétition prévue
+                  </Text>
+                  <Text style={[styles.competNoEventDesc, { color: colors.textMuted }]}>
+                    Ajoute un événement pour activer le compte à rebours
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
+
+            {isCompetitorMode && (
+            <View style={styles.modeCompetActions}>
+              <TouchableOpacity
+                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+                onPress={() => router.push('/cut-mode')}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.modeCompetBtnIcon, { backgroundColor: '#EF444420' }]}>
+                  <Scale size={24} color="#EF4444" strokeWidth={2} />
+                </View>
+                <View style={styles.modeCompetBtnContent}>
+                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Mode Cut</Text>
+                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Gestion du poids</Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+                onPress={() => router.push('/competitions')}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.modeCompetBtnIcon, { backgroundColor: colors.accent + '20' }]}>
+                  <Trophy size={24} color={colors.accent} strokeWidth={2} />
+                </View>
+                <View style={styles.modeCompetBtnContent}>
+                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Compétitions</Text>
+                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Tes événements à venir</Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+                onPress={() => router.push('/palmares')}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.modeCompetBtnIcon, { backgroundColor: colors.gold + '20' }]}>
+                  <Medal size={24} color={colors.gold} strokeWidth={2} />
+                </View>
+                <View style={styles.modeCompetBtnContent}>
+                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Palmarès</Text>
+                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Tes victoires et médailles</Text>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            )}
+          </View>
+        </AnimatedCard>
+        )}
+
+        {/* Bouton personnaliser l'accueil */}
+        <TouchableOpacity
+          style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/customize-home');
+          }}
+          activeOpacity={0.7}
+        >
+          <Palette size={20} color={colors.accent} strokeWidth={2} />
+          <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
+            Personnaliser l'Accueil
+          </Text>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={{ height: 120 }} />
           </>
         )}
 
-        <View style={{ height: 120 }} />
+        {/* MODE ESSENTIEL - Vue simplifiée */}
+        {mode === 'essentiel' && (
+          <>
+            <HomeEssentielContent
+              currentWeight={currentWeight ?? undefined}
+              targetWeight={targetWeight ?? undefined}
+              weightHistory={weightHistory.map(w => w.weight)}
+              weightTrend={trend}
+              hydration={hydration}
+              hydrationGoal={hydrationGoal}
+              onAddWater={(ml) => addWater(ml)}
+              sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+              sleepDebt={sleepStats?.sleepDebtHours || 0}
+              sleepGoal={sleepGoal / 60}
+              steps={2450}
+              stepsGoal={5000}
+              calories={180}
+              caloriesGoal={300}
+              weekWeightChange={
+                weightHistory.length >= 7
+                  ? (weightHistory[0]?.weight || 0) - (weightHistory[6]?.weight || 0)
+                  : 0
+              }
+              weekHydrationRate={85}
+              weekAvgSleep={sleepStats?.avgSleepDuration ? sleepStats.avgSleepDuration / 60 : 0}
+            />
+
+            {/* Bouton personnaliser l'accueil */}
+            <TouchableOpacity
+              style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/customize-home');
+              }}
+              activeOpacity={0.7}
+            >
+              <Palette size={20} color={colors.accent} strokeWidth={2} />
+              <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
+                Personnaliser l'Accueil
+              </Text>
+              <ChevronRight size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={{ height: 120 }} />
+          </>
+        )}
+
             </ScrollView>
 
       <RanksModal visible={ranksModalVisible} onClose={() => setRanksModalVisible(false)} currentStreak={streak} />
@@ -869,12 +1214,23 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16 },
 
   // Header
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  logo: { width: 56, height: 56, borderRadius: 14 },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  logo: { width: 70, height: 70, borderRadius: 14 },
   headerText: { flex: 1, marginLeft: 12 },
   greeting: { fontSize: 14, fontWeight: '600' },
+  userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
-  avatarBtn: { borderWidth: 3, borderRadius: 16, overflow: 'hidden', backgroundColor: '#FFFFFF' },
+  avatarBtn: {
+    overflow: 'visible',
+    height: 70,
+    justifyContent: 'flex-start',
+    marginTop: -15,
+  },
+  avatarContainer: {
+    height: 70,
+    width: 70,
+    overflow: 'visible',
+  },
 
   // Décoration japonaise inline (dans le header)
   japaneseDecorInline: {
@@ -887,10 +1243,83 @@ const styles = StyleSheet.create({
   decorEmoji: { fontSize: 12 },
   decorTorii: { fontSize: 14 },
 
-  // Actions rapides en haut (carrés)
+  // Ligne de 5 actions : Infirmerie, Timer, Compétiteur?, Photo, Savoir
+  actionsRow5: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  actionBtn5: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  actionLabel5: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  actionSubLabel5: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -1,
+  },
+  actionBtn5Toggle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  toggleLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  toggleTrack: {
+    width: 42,
+    height: 22,
+    borderRadius: 11,
+    padding: 2,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  toggleThumb: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  toggleDays: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  // Actions rapides en haut (carrés) - RÉDUITES
   actionsRowTop: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  actionBtnSquare: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20, paddingHorizontal: 15, borderRadius: 12, gap: 6, minHeight: 88 },
-  actionLabelSquare: { fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  actionBtnSquare: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 12, gap: 4, minHeight: 78 },
+  actionLabelSquare: { fontSize: 10, fontWeight: '700', textAlign: 'center' },
   timerFractionMini: {
     alignItems: 'center',
     gap: 2,
@@ -915,8 +1344,8 @@ const styles = StyleSheet.create({
   // Quote
   quoteCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, marginBottom: 12, gap: 6 },
   quoteText: { flex: 1, fontSize: 11, fontStyle: 'italic', lineHeight: 16 },
-  quoteCardInline: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginTop: 4, gap: 4 },
-  quoteTextInline: { flex: 1, fontSize: 10, fontStyle: 'italic', lineHeight: 14 },
+  quoteCardInline: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, marginTop: 4, gap: 6 },
+  quoteTextInline: { fontSize: 11, fontStyle: 'italic', lineHeight: 16, flex: 1 },
 
   // Stats
   // Carte poids principale
@@ -999,23 +1428,90 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, alignItems: 'center', padding: 6, borderRadius: 10 },
   statValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
   statLabel: { fontSize: 7, fontWeight: '600' },
-  statsRowCompact: { flexDirection: 'row', gap: 4, marginBottom: 10, marginTop: 4 },
-  statCardCompact: { flex: 1, alignItems: 'center', padding: 4, borderRadius: 8 },
-  statValueCompact: { fontSize: 12, fontWeight: '800', marginTop: 1 },
-  statLabelCompact: { fontSize: 6, fontWeight: '600' },
+  statsRowCompact: { flexDirection: 'row', gap: 6, marginBottom: 8, marginTop: 4 },
+  statCardCompact: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 8, gap: 4 },
+  statTextContainer: { flexDirection: 'column', alignItems: 'flex-start' },
+  statValueCompact: { fontSize: 20, fontWeight: '900', marginTop: 0 },
+  statLabelCompact: { fontSize: 10, fontWeight: '600' },
 
-  // Battery horizontale
-  batteryCard: { padding: 6, borderRadius: 12, marginBottom: 8 },
-  batteryHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
-  batteryPercentSmall: { fontSize: 13, fontWeight: '900', marginLeft: 'auto' },
-  batteryHorizontal: { flexDirection: 'row', alignItems: 'center', marginBottom: 3 },
-  batteryHBody: { flex: 1, height: 16, borderWidth: 1.5, borderRadius: 5, overflow: 'hidden', position: 'relative' },
-  batteryHLevel: { height: '100%', borderRadius: 3 },
-  batteryShine: { position: 'absolute', top: 1, left: 3, right: 3, height: 3, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 1.5 },
-  batteryHHead: { width: 5, height: 10, borderTopRightRadius: 2, borderBottomRightRadius: 2, marginLeft: -1.5 },
-  batteryFooterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  batteryStatusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, gap: 4 },
-  batteryLabel: { fontSize: 10, fontWeight: '600' },
+  // Battery + Tools - UNE SEULE LIGNE DE 4 CARTES
+  batteryToolsRowSingle: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+
+  // Batterie compacte (quart de largeur)
+  batteryCardSmall: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    minHeight: 105,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  batteryHorizontalSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
+    width: '100%',
+  },
+  batteryHBodySmall: {
+    flex: 1,
+    height: 18,
+    borderWidth: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  batteryHLevelSmall: {
+    height: '100%',
+    borderRadius: 2,
+    position: 'relative',
+  },
+  batteryShineSmall: {
+    position: 'absolute',
+    top: 1,
+    left: 2,
+    right: 2,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 1,
+  },
+  batteryHHeadSmall: {
+    width: 6,
+    height: 12,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  batteryPercentSmall: {
+    fontSize: 16,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+
+  // Tool cards small (quart de largeur)
+  toolCardSmall: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 105,
+  },
+  toolCardTitleSmall: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+  },
+  toolCardSubtitleSmall: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    width: '100%',
+  },
 
   // Grid 2x2
   gridContainer: { gap: 12, marginBottom: 10, width: '100%' },
@@ -1023,24 +1519,24 @@ const styles = StyleSheet.create({
   squareCard: { flex: 1, aspectRatio: 1, borderRadius: 14, overflow: 'hidden' },
 
   // Grid Lottie - Layout simplifié pour cartes uniformes
-  gridLottieContainer: { marginBottom: 12, paddingHorizontal: 8 },
-  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  gridLottieContainer: { marginBottom: 8, paddingHorizontal: 8 },
+  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
   gridCard: { flex: 1, padding: 16, borderRadius: 14, minHeight: 180, overflow: 'hidden' },
   gridCardLarge: { flex: 1, padding: 16, borderRadius: 14, minHeight: 160 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
-  cardTitle: { fontSize: 8, fontWeight: '700', letterSpacing: 1, flex: 1 },
-  cardTitleLarge: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1 },
-  bigValue: { fontSize: 26, fontWeight: '900' },
-  bigValueLarge: { fontSize: 32, fontWeight: '900', marginTop: 4 },
-  unit: { fontSize: 12, fontWeight: '600' },
-  subValue: { fontSize: 10, fontWeight: '600', marginTop: 2 },
-  subValueLarge: { fontSize: 12, fontWeight: '600', marginTop: 4 },
+  cardTitle: { fontSize: 8, fontWeight: '700', letterSpacing: 1, flex: 1, textAlign: 'center', width: '100%' },
+  cardTitleLarge: { fontSize: 10, fontWeight: '700', letterSpacing: 1, flex: 1, textAlign: 'center', width: '100%' },
+  bigValue: { fontSize: 26, fontWeight: '900', textAlign: 'center', width: '100%' },
+  bigValueLarge: { fontSize: 32, fontWeight: '900', marginTop: 4, textAlign: 'center', width: '100%' },
+  unit: { fontSize: 12, fontWeight: '600', textAlign: 'center', width: '100%' },
+  subValue: { fontSize: 10, fontWeight: '600', marginTop: 2, textAlign: 'center', width: '100%' },
+  subValueLarge: { fontSize: 12, fontWeight: '600', marginTop: 4, textAlign: 'center', width: '100%' },
   miniChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginTop: 8, height: 24 },
   miniBar: { flex: 1, borderRadius: 2, minHeight: 3 },
   weightTrendContainer: { marginTop: 6, width: '100%', overflow: 'hidden' },
   weightTrendChart: { height: 35, width: '100%', overflow: 'hidden' },
   weightTrendInfo: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  weightTrendLabel: { fontSize: 8, fontWeight: '600' },
+  weightTrendLabel: { fontSize: 8, fontWeight: '600', textAlign: 'center' },
 
   // Hydration - Bidon de sport
   bidonWrap: { alignItems: 'center', justifyContent: 'center', flex: 1, marginVertical: 8 },
@@ -1054,8 +1550,8 @@ const styles = StyleSheet.create({
   bidonGrads: { position: 'absolute', right: 3, top: 6, bottom: 6, justifyContent: 'space-between' },
   bidonGrad: { width: 6, height: 1 },
   hydroValueContainer: { alignItems: 'center', marginTop: 4 },
-  hydroValue: { fontSize: 18, fontWeight: '900' },
-  hydroGoal: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  hydroValue: { fontSize: 18, fontWeight: '900', textAlign: 'center' },
+  hydroGoal: { fontSize: 11, fontWeight: '600', marginTop: 2, textAlign: 'center' },
   hydroBtns: { flexDirection: 'row', gap: 4, marginTop: 4 },
   hydroBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, minWidth: 50 },
   hydroBtnTxt: { fontSize: 14, fontWeight: '700', color: '#06B6D4' },
@@ -1109,13 +1605,37 @@ const styles = StyleSheet.create({
   shareBtn: { fontSize: 20 },
 
   // Section
-  sectionTitle: { fontSize: 9, fontWeight: '700', letterSpacing: 1 },
-  sectionHeader: { fontSize: 9, fontWeight: '700', letterSpacing: 2, marginBottom: 8, marginTop: 4 },
+  sectionTitle: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: '#6B7280' },
+  sectionHeader: { fontSize: 9, fontWeight: '700', letterSpacing: 1, color: '#6B7280', marginBottom: 8, marginTop: 4 },
 
   // Actions
   actionsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  actionBtn: { flex: 1, alignItems: 'center', padding: 10, borderRadius: 12, gap: 3 },
-  actionLabel: { fontSize: 9, fontWeight: '600' },
+  actionBtn: { flex: 1, alignItems: 'center', padding: 12, borderRadius: 12, gap: 3 },
+  actionLabel: { fontSize: 10, fontWeight: '700' },
+  actionSubLabel: { fontSize: 8, fontWeight: '500', textAlign: 'center', marginTop: -1 },
+
+  // Actions Row 4 cartes - MÊME DIMENSION QUE LIGNE ÉNERGIE
+  actionsRow4: { flexDirection: 'row', gap: 6, marginBottom: 8 },
+  actionBtn4: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  actionBtn4Toggle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+  },
+  actionLabel4: { fontSize: 11, fontWeight: '700', textAlign: 'center', width: '100%' },
+  actionSubLabel4: { fontSize: 9, fontWeight: '500', textAlign: 'center', marginTop: -1, width: '100%' },
 
   // Tools
   toolsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
@@ -1126,4 +1646,296 @@ const styles = StyleSheet.create({
   fighterRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   fighterBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 10, gap: 6 },
   fighterBtnText: { fontSize: 11, fontWeight: '600' },
+
+  // Mode Compétiteur
+  modeCompetContainer: {
+    padding: 16,
+    borderRadius: 16,
+  },
+  modeCompetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  modeCompetIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeCompetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  // Toggle switch mode compétition
+  competToggleSwitch: {
+    width: 52,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  competToggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+
+  // Mode compétition désactivé
+  competModeOffCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  competModeOffText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+
+  // Compte à rebours compétition
+  competCountdownCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    marginBottom: 16,
+  },
+  competCountdownLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  competCountdownIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  competCountdownInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  competCountdownName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  competCountdownDate: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  competCountdownBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  competCountdownDays: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+
+  // Pas de compétition
+  competNoEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: 12,
+    marginBottom: 16,
+  },
+  competNoEventIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  competNoEventContent: {
+    flex: 1,
+    gap: 3,
+  },
+  competNoEventTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  competNoEventDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  modeCompetActions: {
+    gap: 10,
+  },
+  modeCompetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    gap: 12,
+    borderWidth: 1,
+  },
+  modeCompetBtnIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeCompetBtnContent: {
+    flex: 1,
+    gap: 2,
+  },
+  modeCompetBtnLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modeCompetBtnDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  // Bouton personnaliser
+  customizeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 24,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  customizeButtonText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
+
+  // Competition Toggle - État actif (avec compétition)
+  competToggleActive: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  competIconGlow: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  competCountdown: {
+    alignItems: 'center',
+    gap: 1,
+    marginTop: 2,
+  },
+  competDaysLabel: {
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  competDaysNumber: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  competDaysUnit: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  // Competition Toggle - État inactif (pas de compétition)
+  competToggleInactive: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  competInactiveText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  competInactiveSubtext: {
+    fontSize: 8,
+    fontWeight: '500',
+  },
+
+  // Section Compétiteur - Apparaît quand le toggle est ON
+  competitorSection: {
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 8,
+    gap: 12,
+  },
+  competitorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  competitorTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  competEventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 10,
+  },
+  competEventInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  competEventName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  competEventDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  competEventCountdown: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  competEventDays: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  competAddBtn: {
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderStyle: 'dashed',
+  },
+  competAddText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });

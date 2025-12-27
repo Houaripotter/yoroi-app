@@ -38,14 +38,14 @@ const AnimatedSleepWave = ({
 
   return (
     <View style={[styles.container, { height }]}>
-      <Animated.View
+      <View
         style={[
           styles.wave,
           { backgroundColor: color, width: width * 2, height: height * 0.6 },
           animatedStyle,
         ]}
       />
-      <Animated.View
+      <View
         style={[
           styles.wave,
           styles.wave2,

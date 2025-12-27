@@ -13,7 +13,7 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/logo d'app/logo1.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
     "ios": {
