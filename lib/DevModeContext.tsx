@@ -4,7 +4,7 @@
 // Code secret : 2412
 // Débloque TOUTES les fonctionnalités Premium
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================
@@ -65,8 +65,8 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Gérer les taps secrets
-  const handleSecretTap = () => {
+  // Gérer les taps secrets (mémoïsé)
+  const handleSecretTap = useCallback(() => {
     const newCount = tapCount + 1;
     setTapCount(newCount);
 
@@ -88,10 +88,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     }, TAP_TIMEOUT);
 
     setTapTimeoutId(timeoutId);
-  };
+  }, [tapCount, tapTimeoutId]);
 
-  // Vérifier le code
-  const verifyCode = async (code: string): Promise<boolean> => {
+  // Vérifier le code (mémoïsé)
+  const verifyCode = useCallback(async (code: string): Promise<boolean> => {
     if (code === DEV_CODE) {
       setIsDevMode(true);
       setShowCodeInput(false);
@@ -101,14 +101,14 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     }
     console.log('❌ Code incorrect');
     return false;
-  };
+  }, []);
 
-  // Désactiver le mode dev
-  const disableDevMode = async () => {
+  // Désactiver le mode dev (mémoïsé)
+  const disableDevMode = useCallback(async () => {
     setIsDevMode(false);
     await AsyncStorage.removeItem(STORAGE_KEY);
     console.log('🔒 Mode Créateur désactivé');
-  };
+  }, []);
 
   // Mémoïser la value pour éviter les re-renders en cascade
   const contextValue = useMemo(() => ({
@@ -120,7 +120,7 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     setShowCodeInput,
     verifyCode,
     disableDevMode,
-  }), [isDevMode, tapCount, showCodeInput]);
+  }), [isDevMode, tapCount, showCodeInput, handleSecretTap, verifyCode, disableDevMode]);
 
   return (
     <DevModeContext.Provider value={contextValue}>

@@ -28,13 +28,14 @@ function RootLayoutContent() {
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        const onboardingDone = await AsyncStorage.getItem('yoroi_onboarding_done');
+        // Vérifier le nouveau système de carrousel d'onboarding
+        const carouselDone = await AsyncStorage.getItem('@yoroi_onboarding_complete');
 
-        // Si l'onboarding n'est pas fait et qu'on n'est pas déjà sur onboarding/setup
-        if (onboardingDone !== 'true') {
-          const inOnboarding = segments[0] === 'onboarding' || segments[0] === 'setup';
+        // Si le nouveau carrousel n'a pas été vu
+        if (carouselDone !== 'true') {
+          const inOnboarding = segments[0] === 'onboarding-carousel';
           if (!inOnboarding) {
-            router.replace('/onboarding');
+            router.replace('/onboarding-carousel');
           }
         }
       } catch (error) {
@@ -62,6 +63,7 @@ function RootLayoutContent() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="onboarding-carousel" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="mode-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="sport-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
@@ -103,6 +105,14 @@ export default function RootLayout() {
   useFrameworkReady();
   const [isReady, setIsReady] = useState(false);
 
+  // DEBUG: Tracer les remounts du RootLayout
+  useEffect(() => {
+    console.log('🔴 [DEBUG] RootLayout MOUNTED');
+    return () => {
+      console.log('🔴 [DEBUG] RootLayout UNMOUNTED');
+    };
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -118,6 +128,7 @@ export default function RootLayout() {
       } catch (error) {
         console.error('❌ Erreur initialisation:', error);
       }
+      console.log('🔴 [DEBUG] setIsReady(true)');
       setIsReady(true);
     };
 
@@ -125,6 +136,7 @@ export default function RootLayout() {
   }, []);
 
   if (!isReady) {
+    console.log('🔴 [DEBUG] Affichage écran de chargement (isReady = false)');
     return (
       <View style={{
         flex: 1,
@@ -144,6 +156,8 @@ export default function RootLayout() {
       </View>
     );
   }
+
+  console.log('🔴 [DEBUG] Rendu des Providers (isReady = true)');
 
   return (
     <I18nProvider>

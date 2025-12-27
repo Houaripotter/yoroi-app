@@ -104,9 +104,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     ? (systemColorScheme === 'light' ? 'light' : 'dark')
     : themeMode;
 
-  // Obtenir le thème actuel
-  const theme = getTheme(themeColor, actualMode);
-  const colors = theme.colors;
+  // Obtenir le thème actuel (MÉMOÏSÉ pour éviter re-calcul)
+  const theme = useMemo(() => getTheme(themeColor, actualMode), [themeColor, actualMode]);
+  const colors = useMemo(() => theme.colors, [theme]);
 
   // Charger les préférences au démarrage
   useEffect(() => {
