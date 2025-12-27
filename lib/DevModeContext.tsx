@@ -4,7 +4,7 @@
 // Code secret : 2412
 // Débloque TOUTES les fonctionnalités Premium
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================
@@ -110,19 +110,20 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     console.log('🔒 Mode Créateur désactivé');
   };
 
+  // Mémoïser la value pour éviter les re-renders en cascade
+  const contextValue = useMemo(() => ({
+    isDevMode,
+    isPro: true, // 🎁 TOUT GRATUIT POUR LES TESTS !
+    tapCount,
+    showCodeInput,
+    handleSecretTap,
+    setShowCodeInput,
+    verifyCode,
+    disableDevMode,
+  }), [isDevMode, tapCount, showCodeInput]);
+
   return (
-    <DevModeContext.Provider
-      value={{
-        isDevMode,
-        isPro: true, // 🎁 TOUT GRATUIT POUR LES TESTS !
-        tapCount,
-        showCodeInput,
-        handleSecretTap,
-        setShowCodeInput,
-        verifyCode,
-        disableDevMode,
-      }}
-    >
+    <DevModeContext.Provider value={contextValue}>
       {children}
     </DevModeContext.Provider>
   );

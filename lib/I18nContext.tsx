@@ -3,7 +3,7 @@
 // ============================================
 // Fournit les traductions et le changement de langue à toute l'app
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { loadLanguage, changeLanguage, getCurrentLanguage, t, SupportedLanguage } from './i18n';
 
 interface I18nContextType {
@@ -50,12 +50,13 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     }
   };
 
-  const value: I18nContextType = {
+  // Mémoïser la value pour éviter les re-renders en cascade
+  const value: I18nContextType = useMemo(() => ({
     language,
     setLanguage: handleSetLanguage,
     t,
     isLoading,
-  };
+  }), [language, isLoading]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };

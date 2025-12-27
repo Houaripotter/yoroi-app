@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
 import { Badge, checkAndUnlockBadges, setFirstUseDate } from './badges';
 import { Celebration } from '@/components/Celebration';
 
@@ -84,15 +84,16 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
     }
   }, [badgeQueue, processQueue]);
 
+  // Mémoïser la value pour éviter les re-renders en cascade
+  const contextValue = useMemo(() => ({
+    checkBadges,
+    celebratingBadge,
+    closeCelebration,
+    badgeQueue,
+  }), [checkBadges, celebratingBadge, closeCelebration, badgeQueue]);
+
   return (
-    <BadgeContext.Provider
-      value={{
-        checkBadges,
-        celebratingBadge,
-        closeCelebration,
-        badgeQueue,
-      }}
-    >
+    <BadgeContext.Provider value={contextValue}>
       {children}
 
       {/* Celebration automatique */}
