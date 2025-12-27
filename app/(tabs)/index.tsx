@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -323,7 +323,10 @@ export default function HomeScreen() {
   const weightLost = currentWeight && startWeight ? startWeight - currentWeight : 0;
   const totalToLose = startWeight && targetWeight ? Math.max(0, startWeight - targetWeight) : null;
   const remainingToLose = currentWeight && targetWeight ? Math.max(0, currentWeight - targetWeight) : null;
-  const weightProgress = totalToLose && currentWeight ? Math.min(1, Math.max(0, (startWeight! - currentWeight) / totalToLose)) : 0;
+  const weightProgress = useMemo(() =>
+    totalToLose && currentWeight ? Math.min(1, Math.max(0, (startWeight! - currentWeight) / totalToLose)) : 0,
+    [totalToLose, currentWeight, startWeight]
+  );
 
   // Tendance
   const avgWeeklyLoss = weightHistory.length >= 7
@@ -355,7 +358,7 @@ export default function HomeScreen() {
     return Math.max(0, Math.min(100, score));
   };
 
-  const batteryPercent = calculateBatteryPercent();
+  const batteryPercent = useMemo(() => calculateBatteryPercent(), [streak, hydration, hydrationGoal, sleepStats, trainings]);
   const last7Weights = weightHistory.slice(0, 7).reverse();
 
   // Partager le rapport
