@@ -21,36 +21,9 @@ const LOADING_COLORS = {
 
 function RootLayoutContent() {
   const { isDark, colors } = useTheme();
-  const router = useRouter();
-  const segments = useSegments();
-  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 
-  useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        // Vérifier le nouveau système de carrousel d'onboarding
-        const carouselDone = await AsyncStorage.getItem('@yoroi_onboarding_complete');
-
-        // Si le nouveau carrousel n'a pas été vu
-        if (carouselDone !== 'true') {
-          const inOnboarding = segments[0] === 'onboarding-carousel';
-          if (!inOnboarding) {
-            router.replace('/onboarding-carousel');
-          }
-        }
-      } catch (error) {
-        console.error('Erreur vérification onboarding:', error);
-      } finally {
-        setIsCheckingOnboarding(false);
-      }
-    };
-
-    checkOnboarding();
-  }, []);
-
-  if (isCheckingOnboarding) {
-    return null;
-  }
+  // ⚠️ SUPPRIMÉ: Le useEffect qui redirigeait vers onboarding-carousel (route inexistante)
+  // Cela causait une erreur et forçait le remount en boucle de RootLayout
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -63,7 +36,6 @@ function RootLayoutContent() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="onboarding-carousel" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="mode-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="sport-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
@@ -77,7 +49,6 @@ function RootLayoutContent() {
         <Stack.Screen name="settings" options={{ presentation: 'card' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
         <Stack.Screen name="sport" options={{ presentation: 'card' }} />
-        <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="chrono" options={{ presentation: 'card' }} />
         <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
@@ -94,8 +65,6 @@ function RootLayoutContent() {
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
-
-      {/* Modal de saisie du code créateur */}
       <DevCodeModal />
     </View>
   );
@@ -104,14 +73,6 @@ function RootLayoutContent() {
 export default function RootLayout() {
   useFrameworkReady();
   const [isReady, setIsReady] = useState(false);
-
-  // DEBUG: Tracer les remounts du RootLayout
-  useEffect(() => {
-    console.log('🔴 [DEBUG] RootLayout MOUNTED');
-    return () => {
-      console.log('🔴 [DEBUG] RootLayout UNMOUNTED');
-    };
-  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -128,7 +89,6 @@ export default function RootLayout() {
       } catch (error) {
         console.error('❌ Erreur initialisation:', error);
       }
-      console.log('🔴 [DEBUG] setIsReady(true)');
       setIsReady(true);
     };
 
@@ -136,7 +96,6 @@ export default function RootLayout() {
   }, []);
 
   if (!isReady) {
-    console.log('🔴 [DEBUG] Affichage écran de chargement (isReady = false)');
     return (
       <View style={{
         flex: 1,
@@ -156,8 +115,6 @@ export default function RootLayout() {
       </View>
     );
   }
-
-  console.log('🔴 [DEBUG] Rendu des Providers (isReady = true)');
 
   return (
     <I18nProvider>
