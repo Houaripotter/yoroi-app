@@ -22,6 +22,12 @@ import {
   BarChart,
   Calendar,
   Cake,
+  Droplet,
+  Moon,
+  Zap,
+  Star,
+  Medal,
+  Mountain,
 } from 'lucide-react-native';
 import {
   getAllMeasurements,
@@ -92,6 +98,15 @@ export const STREAK_BADGES: Badge[] = [
     xpReward: 50,
   },
   {
+    id: 'fortnight_warrior',
+    name: 'Guerrier quinzaine',
+    iconComponent: Flame,
+    description: '14 jours de streak consecutifs',
+    category: 'streak',
+    requirement: 14,
+    xpReward: 100,
+  },
+  {
     id: 'on_fire',
     name: 'En feu',
     iconComponent: Flame,
@@ -99,6 +114,15 @@ export const STREAK_BADGES: Badge[] = [
     category: 'streak',
     requirement: 30,
     xpReward: 150,
+  },
+  {
+    id: 'fifty_days',
+    name: 'Cinquante jours',
+    iconComponent: Flame,
+    description: '50 jours de streak consecutifs',
+    category: 'streak',
+    requirement: 50,
+    xpReward: 250,
   },
   {
     id: 'inferno',
@@ -110,6 +134,15 @@ export const STREAK_BADGES: Badge[] = [
     xpReward: 500,
   },
   {
+    id: 'double_century',
+    name: 'Double centenaire',
+    iconComponent: Gem,
+    description: '200 jours de streak consecutifs',
+    category: 'streak',
+    requirement: 200,
+    xpReward: 1000,
+  },
+  {
     id: 'legendary_streak',
     name: 'Legendaire',
     iconComponent: Gem,
@@ -117,6 +150,15 @@ export const STREAK_BADGES: Badge[] = [
     category: 'streak',
     requirement: 365,
     xpReward: 2000,
+  },
+  {
+    id: 'centurion',
+    name: 'Centurion',
+    iconComponent: Star,
+    description: '150 jours de streak consecutifs',
+    category: 'streak',
+    requirement: 150,
+    xpReward: 750,
   },
 ];
 
@@ -130,6 +172,15 @@ export const WEIGHT_BADGES: Badge[] = [
     category: 'weight',
     requirement: 1,
     xpReward: 25,
+  },
+  {
+    id: 'first_three',
+    name: 'Premiers kilos',
+    iconComponent: TrendingDown,
+    description: '3 kg perdus au total',
+    category: 'weight',
+    requirement: 3,
+    xpReward: 75,
   },
   {
     id: 'launched',
@@ -150,6 +201,15 @@ export const WEIGHT_BADGES: Badge[] = [
     xpReward: 250,
   },
   {
+    id: 'halfway_hero',
+    name: 'Heros mi-parcours',
+    iconComponent: Target,
+    description: '15 kg perdus au total',
+    category: 'weight',
+    requirement: 15,
+    xpReward: 400,
+  },
+  {
     id: 'transformed',
     name: 'Transforme',
     iconComponent: Trophy,
@@ -157,6 +217,24 @@ export const WEIGHT_BADGES: Badge[] = [
     category: 'weight',
     requirement: 20,
     xpReward: 500,
+  },
+  {
+    id: 'super_transformed',
+    name: 'Super transforme',
+    iconComponent: Trophy,
+    description: '25 kg perdus au total',
+    category: 'weight',
+    requirement: 25,
+    xpReward: 750,
+  },
+  {
+    id: 'ultimate_warrior',
+    name: 'Guerrier ultime',
+    iconComponent: Crown,
+    description: '30 kg perdus au total',
+    category: 'weight',
+    requirement: 30,
+    xpReward: 1000,
   },
   {
     id: 'goal_reached',
@@ -167,10 +245,37 @@ export const WEIGHT_BADGES: Badge[] = [
     requirement: 1, // Boolean check
     xpReward: 1000,
   },
+  {
+    id: 'first_kilo',
+    name: 'Premier kilo',
+    iconComponent: TrendingDown,
+    description: '1 kg perdu au total',
+    category: 'weight',
+    requirement: 1,
+    xpReward: 25,
+  },
+  {
+    id: 'halfway_goal',
+    name: 'Mi-chemin',
+    iconComponent: Target,
+    description: 'Atteindre 50% de son objectif de poids',
+    category: 'weight',
+    requirement: 1, // Boolean check
+    xpReward: 500,
+  },
 ];
 
 // BADGES ENTRAINEMENT
 export const TRAINING_BADGES: Badge[] = [
+  {
+    id: 'first_training',
+    name: 'Premier combat',
+    iconComponent: Dumbbell,
+    description: '5 entrainements completes',
+    category: 'training',
+    requirement: 5,
+    xpReward: 25,
+  },
   {
     id: 'beginner',
     name: 'Debutant',
@@ -179,6 +284,15 @@ export const TRAINING_BADGES: Badge[] = [
     category: 'training',
     requirement: 10,
     xpReward: 50,
+  },
+  {
+    id: 'committed',
+    name: 'Engage',
+    iconComponent: Award,
+    description: '25 entrainements completes',
+    category: 'training',
+    requirement: 25,
+    xpReward: 100,
   },
   {
     id: 'regular',
@@ -199,6 +313,24 @@ export const TRAINING_BADGES: Badge[] = [
     xpReward: 500,
   },
   {
+    id: 'veteran',
+    name: 'Veteran',
+    iconComponent: Swords,
+    description: '200 entrainements completes',
+    category: 'training',
+    requirement: 200,
+    xpReward: 800,
+  },
+  {
+    id: 'elite',
+    name: 'Elite',
+    iconComponent: Shield,
+    description: '300 entrainements completes',
+    category: 'training',
+    requirement: 300,
+    xpReward: 1200,
+  },
+  {
     id: 'master',
     name: 'Maitre',
     iconComponent: Shield,
@@ -206,6 +338,33 @@ export const TRAINING_BADGES: Badge[] = [
     category: 'training',
     requirement: 500,
     xpReward: 2000,
+  },
+  {
+    id: 'legend',
+    name: 'Legende',
+    iconComponent: Crown,
+    description: '1000 entrainements completes',
+    category: 'training',
+    requirement: 1000,
+    xpReward: 5000,
+  },
+  {
+    id: 'champion',
+    name: 'Champion',
+    iconComponent: Medal,
+    description: '400 entrainements completes',
+    category: 'training',
+    requirement: 400,
+    xpReward: 1500,
+  },
+  {
+    id: 'unstoppable',
+    name: 'Inarretable',
+    iconComponent: Mountain,
+    description: '750 entrainements completes',
+    category: 'training',
+    requirement: 750,
+    xpReward: 3000,
   },
 ];
 
@@ -248,6 +407,15 @@ export const SPECIAL_BADGES: Badge[] = [
     xpReward: 100,
   },
   {
+    id: 'photo_master',
+    name: 'Maitre photo',
+    iconComponent: Camera,
+    description: '25 photos de transformation',
+    category: 'special',
+    requirement: 25,
+    xpReward: 250,
+  },
+  {
     id: 'analyst',
     name: 'Analyste',
     iconComponent: BarChart,
@@ -261,6 +429,87 @@ export const SPECIAL_BADGES: Badge[] = [
     name: 'Complet',
     iconComponent: Award,
     description: 'Tous les champs remplis 30 fois',
+    category: 'special',
+    requirement: 30,
+    xpReward: 300,
+  },
+  {
+    id: 'double_session',
+    name: 'Double session',
+    iconComponent: Flame,
+    description: '2 entrainements en 1 jour',
+    category: 'special',
+    requirement: 1,
+    xpReward: 150,
+  },
+  {
+    id: 'weekend_warrior',
+    name: 'Guerrier weekend',
+    iconComponent: Calendar,
+    description: 'Entrainement samedi et dimanche',
+    category: 'special',
+    requirement: 1,
+    xpReward: 100,
+  },
+  {
+    id: 'seven_days_straight',
+    name: 'Semaine parfaite',
+    iconComponent: Trophy,
+    description: '7 jours entrainement consecutifs',
+    category: 'special',
+    requirement: 7,
+    xpReward: 200,
+  },
+  {
+    id: 'perfect_month',
+    name: 'Mois parfait',
+    iconComponent: Crown,
+    description: '30 jours entrainement consecutifs',
+    category: 'special',
+    requirement: 30,
+    xpReward: 500,
+  },
+  {
+    id: 'hydration_master',
+    name: 'Maitre hydratation',
+    iconComponent: Droplet,
+    description: 'Objectif hydratation 7 jours de suite',
+    category: 'special',
+    requirement: 7,
+    xpReward: 100,
+  },
+  {
+    id: 'super_photographer',
+    name: 'Super photographe',
+    iconComponent: Camera,
+    description: '50 photos de transformation',
+    category: 'special',
+    requirement: 50,
+    xpReward: 500,
+  },
+  {
+    id: 'triple_session',
+    name: 'Triple session',
+    iconComponent: Zap,
+    description: '3 entrainements en 1 jour',
+    category: 'special',
+    requirement: 1,
+    xpReward: 300,
+  },
+  {
+    id: 'sleep_master',
+    name: 'Maitre du sommeil',
+    iconComponent: Moon,
+    description: '10 nuits avec 8h+ de sommeil',
+    category: 'special',
+    requirement: 10,
+    xpReward: 150,
+  },
+  {
+    id: 'hydration_legend',
+    name: 'Legende hydratation',
+    iconComponent: Droplet,
+    description: 'Objectif hydratation 30 jours de suite',
     category: 'special',
     requirement: 30,
     xpReward: 300,
@@ -304,6 +553,15 @@ export const TIME_BADGES: Badge[] = [
     category: 'time',
     requirement: 365,
     xpReward: 500,
+  },
+  {
+    id: 'two_years',
+    name: '2 ans',
+    iconComponent: Gem,
+    description: 'Utiliser l\'app pendant 2 ans',
+    category: 'time',
+    requirement: 730,
+    xpReward: 2000,
   },
 ];
 
@@ -691,6 +949,92 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         shouldUnlock = stats.completeMeasurements >= 30;
         break;
 
+      // NOUVEAUX BADGES STREAK
+      case 'centurion':
+        shouldUnlock = stats.currentStreak >= 150 || stats.maxStreak >= 150;
+        break;
+      case 'fortnight_warrior':
+        shouldUnlock = stats.currentStreak >= 14 || stats.maxStreak >= 14;
+        break;
+      case 'fifty_days':
+        shouldUnlock = stats.currentStreak >= 50 || stats.maxStreak >= 50;
+        break;
+      case 'double_century':
+        shouldUnlock = stats.currentStreak >= 200 || stats.maxStreak >= 200;
+        break;
+
+      // NOUVEAUX BADGES POIDS
+      case 'first_kilo':
+        shouldUnlock = stats.weightLost >= 1;
+        break;
+      case 'first_three':
+        shouldUnlock = stats.weightLost >= 3;
+        break;
+      case 'halfway_hero':
+        shouldUnlock = stats.weightLost >= 15;
+        break;
+      case 'super_transformed':
+        shouldUnlock = stats.weightLost >= 25;
+        break;
+      case 'ultimate_warrior':
+        shouldUnlock = stats.weightLost >= 30;
+        break;
+      case 'halfway_goal':
+        shouldUnlock = stats.goalReached; // TODO: calculer 50% objectif
+        break;
+
+      // NOUVEAUX BADGES ENTRAINEMENT
+      case 'first_training':
+        shouldUnlock = stats.totalWorkouts >= 5;
+        break;
+      case 'committed':
+        shouldUnlock = stats.totalWorkouts >= 25;
+        break;
+      case 'veteran':
+        shouldUnlock = stats.totalWorkouts >= 200;
+        break;
+      case 'elite':
+        shouldUnlock = stats.totalWorkouts >= 300;
+        break;
+      case 'champion':
+        shouldUnlock = stats.totalWorkouts >= 400;
+        break;
+      case 'unstoppable':
+        shouldUnlock = stats.totalWorkouts >= 750;
+        break;
+
+      // NOUVEAUX BADGES SPECIAUX
+      case 'team_yoroi_member':
+        shouldUnlock = true; // Auto-débloqué
+        break;
+      case 'photo_master':
+        shouldUnlock = stats.totalPhotos >= 25;
+        break;
+      case 'super_photographer':
+        shouldUnlock = stats.totalPhotos >= 50;
+        break;
+      case 'double_session':
+        shouldUnlock = false; // TODO: implémenter détection 2 entraînements/jour
+        break;
+      case 'triple_session':
+        shouldUnlock = false; // TODO: implémenter détection 3 entraînements/jour
+        break;
+      case 'weekend_warrior':
+        shouldUnlock = false; // TODO: implémenter détection samedi+dimanche
+        break;
+      case 'seven_days_straight':
+        shouldUnlock = stats.currentStreak >= 7;
+        break;
+      case 'perfect_month':
+        shouldUnlock = stats.currentStreak >= 30;
+        break;
+      case 'hydration_legend':
+        shouldUnlock = false; // TODO: implémenter streak hydratation 30j
+        break;
+      case 'sleep_master':
+        shouldUnlock = false; // TODO: implémenter détection 10 nuits 8h+
+        break;
+
       // TEMPS
       case 'one_month':
         shouldUnlock = stats.daysUsingApp >= 30;
@@ -700,6 +1044,9 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         break;
       case 'one_year':
         shouldUnlock = stats.daysUsingApp >= 365;
+        break;
+      case 'two_years':
+        shouldUnlock = stats.daysUsingApp >= 730;
         break;
       case 'anniversary':
         shouldUnlock = stats.isAnniversary;
@@ -755,8 +1102,12 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
     switch (badge.id) {
       // STREAK
       case 'first_flame':
+      case 'fortnight_warrior':
       case 'on_fire':
+      case 'fifty_days':
       case 'inferno':
+      case 'centurion':
+      case 'double_century':
       case 'legendary_streak':
         currentProgress = Math.max(stats.currentStreak, stats.maxStreak);
         break;
@@ -765,24 +1116,40 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
       case 'first_step':
         currentProgress = stats.totalMeasurements;
         break;
+      case 'first_kilo':
+      case 'first_three':
       case 'launched':
       case 'determined':
+      case 'halfway_hero':
       case 'transformed':
+      case 'super_transformed':
+      case 'ultimate_warrior':
         currentProgress = stats.weightLost;
         break;
       case 'goal_reached':
+      case 'halfway_goal':
         currentProgress = stats.goalReached ? 1 : 0;
         break;
 
       // ENTRAINEMENT
+      case 'first_training':
       case 'beginner':
+      case 'committed':
       case 'regular':
       case 'warrior':
+      case 'veteran':
+      case 'elite':
+      case 'champion':
       case 'master':
+      case 'unstoppable':
+      case 'legend':
         currentProgress = stats.totalWorkouts;
         break;
 
       // SPECIAL
+      case 'team_yoroi_member':
+        currentProgress = 1;
+        break;
       case 'early_bird':
         currentProgress = stats.earlyMeasurements;
         break;
@@ -790,6 +1157,8 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         currentProgress = stats.lateWorkouts;
         break;
       case 'photographer':
+      case 'photo_master':
+      case 'super_photographer':
         currentProgress = stats.totalPhotos;
         break;
       case 'analyst':
@@ -798,11 +1167,26 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
       case 'complete':
         currentProgress = stats.completeMeasurements;
         break;
+      case 'double_session':
+      case 'triple_session':
+      case 'weekend_warrior':
+        currentProgress = 0; // TODO
+        break;
+      case 'seven_days_straight':
+      case 'perfect_month':
+        currentProgress = stats.currentStreak;
+        break;
+      case 'hydration_master':
+      case 'hydration_legend':
+      case 'sleep_master':
+        currentProgress = 0; // TODO
+        break;
 
       // TEMPS
       case 'one_month':
       case 'six_months':
       case 'one_year':
+      case 'two_years':
         currentProgress = stats.daysUsingApp;
         break;
       case 'anniversary':

@@ -253,12 +253,12 @@ export default function PhotosScreen() {
           </View>
         </View>
 
-        {/* Bouton Flouter / Actions */}
-        <View style={styles.actionsRow}>
-          {/* Bouton d'ajout */}
+        {/* Boutons d'ajout - Caméra et Galerie */}
+        <View style={styles.addButtonsContainer}>
+          {/* Bouton Caméra */}
           <TouchableOpacity
-            style={styles.addButton}
-            onPress={showPhotoOptions}
+            style={[styles.actionButton, styles.cameraButton]}
+            onPress={takePhoto}
             activeOpacity={0.8}
             disabled={uploading}
           >
@@ -266,33 +266,50 @@ export default function PhotosScreen() {
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <>
-                <Plus size={22} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.addButtonText}>Ajouter</Text>
+                <Camera size={28} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.actionButtonText}>Caméra</Text>
               </>
             )}
           </TouchableOpacity>
 
-          {/* Bouton Flouter */}
-          {photos.length > 0 && (
-            <TouchableOpacity
-              style={[styles.blurButton, isBlurred && styles.blurButtonActive]}
-              onPress={() => setIsBlurred(!isBlurred)}
-              activeOpacity={0.8}
-            >
-              {isBlurred ? (
-                <>
-                  <Eye size={20} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={styles.blurButtonText}>Afficher</Text>
-                </>
-              ) : (
-                <>
-                  <EyeOff size={20} color={themeColors.textSecondary} strokeWidth={2.5} />
-                  <Text style={[styles.blurButtonText, { color: themeColors.textSecondary }]}>Flouter</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
+          {/* Bouton Galerie */}
+          <TouchableOpacity
+            style={[styles.actionButton, styles.galleryButton]}
+            onPress={pickImage}
+            activeOpacity={0.8}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <ImageIcon size={28} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.actionButtonText}>Galerie</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
+
+        {/* Bouton Flouter */}
+        {photos.length > 0 && (
+          <TouchableOpacity
+            style={[styles.blurButton, isBlurred && styles.blurButtonActive]}
+            onPress={() => setIsBlurred(!isBlurred)}
+            activeOpacity={0.8}
+          >
+            {isBlurred ? (
+              <>
+                <Eye size={20} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.blurButtonText}>Afficher</Text>
+              </>
+            ) : (
+              <>
+                <EyeOff size={20} color={themeColors.textSecondary} strokeWidth={2.5} />
+                <Text style={[styles.blurButtonText, { color: themeColors.textSecondary }]}>Flouter</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         {/* Grille de photos */}
         {photos.length === 0 ? (
@@ -342,8 +359,15 @@ export default function PhotosScreen() {
                       year: 'numeric',
                     })}
                   </Text>
-                  {photo.weight && !isBlurred && (
-                    <Text style={styles.photoWeight}>{photo.weight.toFixed(1)} kg</Text>
+                  {!isBlurred && (
+                    <>
+                      {photo.weight && (
+                        <Text style={styles.photoWeight}>{photo.weight.toFixed(1)} kg</Text>
+                      )}
+                      {photo.notes && (
+                        <Text style={styles.photoNotes} numberOfLines={1}>{photo.notes}</Text>
+                      )}
+                    </>
                   )}
                 </View>
               </TouchableOpacity>
@@ -476,30 +500,38 @@ const styles = StyleSheet.create({
     color: '#1E8449',
     lineHeight: FONT_SIZE.sm * 1.4,
   },
-  actionsRow: {
+  // Nouveaux boutons Caméra et Galerie
+  addButtonsContainer: {
     flexDirection: 'row',
     gap: SPACING.md,
   },
-  addButton: {
+  actionButton: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.xl,
-    backgroundColor: '#D4AF37', // Gold/Primary color
+    paddingVertical: SPACING.xl,
+    borderRadius: RADIUS.xxl,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+    minHeight: 120,
   },
-  addButtonText: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '700',
+  cameraButton: {
+    backgroundColor: '#8B5CF6', // Violet/Purple
+  },
+  galleryButton: {
+    backgroundColor: '#10B981', // Vert/Green
+  },
+  actionButtonText: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   blurButton: {
     flexDirection: 'row',
@@ -639,5 +671,11 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.sm,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  photoNotes: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '500',
+    opacity: 0.7,
+    marginTop: 2,
   },
 });

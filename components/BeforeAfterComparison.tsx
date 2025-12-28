@@ -50,22 +50,44 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   // Slider state
   const sliderPosition = useRef(new Animated.Value(0.5)).current;
   const [currentPosition, setCurrentPosition] = useState(0.5);
+  const startPosition = useRef(0.5);
   const viewShotRef = useRef<ViewShot>(null);
 
   // PanResponder pour le slider
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
+      onPanResponderGrant: () => {
+        // Mémoriser la position de départ
+        startPosition.current = currentPosition;
+        sliderPosition.stopAnimation();
+        sliderPosition.setOffset(currentPosition);
+        sliderPosition.setValue(0);
+      },
       onPanResponderMove: (_, gestureState) => {
-        const newPosition = Math.max(0.05, Math.min(0.95,
-          currentPosition + (gestureState.dx / SLIDER_WIDTH)
-        ));
-        sliderPosition.setValue(newPosition);
+        // Calculer la nouvelle position avec interpolation fluide
+        const delta = gestureState.dx / SLIDER_WIDTH;
+        const newValue = Math.max(-currentPosition, Math.min(1 - currentPosition, delta));
+        sliderPosition.setValue(newValue);
       },
       onPanResponderRelease: (_, gestureState) => {
-        const newPosition = Math.max(0.05, Math.min(0.95,
-          currentPosition + (gestureState.dx / SLIDER_WIDTH)
+        sliderPosition.flattenOffset();
+        // Calculer la position finale
+        const newPosition = Math.max(0, Math.min(1,
+          startPosition.current + (gestureState.dx / SLIDER_WIDTH)
+        ));
+        setCurrentPosition(newPosition);
+        sliderPosition.setValue(newPosition);
+      },
+      onPanResponderTerminate: (_, gestureState) => {
+        sliderPosition.flattenOffset();
+        const newPosition = Math.max(0, Math.min(1,
+          startPosition.current + (gestureState.dx / SLIDER_WIDTH)
         ));
         setCurrentPosition(newPosition);
         sliderPosition.setValue(newPosition);
