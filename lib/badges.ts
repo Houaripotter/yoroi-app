@@ -565,6 +565,100 @@ export const TIME_BADGES: Badge[] = [
   },
 ];
 
+// BADGES CHEVALIER
+export const KNIGHT_BADGES: Badge[] = [
+  {
+    id: 'squire',
+    name: 'Ecuyer',
+    iconComponent: Shield,
+    description: 'Premiers pas sur le chemin de la chevalerie',
+    category: 'training',
+    requirement: 5,
+    xpReward: 50,
+  },
+  {
+    id: 'knight',
+    name: 'Chevalier',
+    iconComponent: Swords,
+    description: 'Adoube comme chevalier du royaume',
+    category: 'training',
+    requirement: 50,
+    xpReward: 250,
+  },
+  {
+    id: 'knight_gold',
+    name: 'Chevalier d\'Or',
+    iconComponent: Crown,
+    description: 'Elite des chevaliers, armure doree',
+    category: 'training',
+    requirement: 100,
+    xpReward: 500,
+  },
+  {
+    id: 'paladin',
+    name: 'Paladin',
+    iconComponent: Award,
+    description: 'Champion de la justice et de l\'honneur',
+    category: 'training',
+    requirement: 200,
+    xpReward: 1000,
+  },
+  {
+    id: 'crusader',
+    name: 'Croise',
+    iconComponent: Flame,
+    description: 'En croisade pour ta transformation',
+    category: 'streak',
+    requirement: 7,
+    xpReward: 150,
+  },
+  {
+    id: 'guardian',
+    name: 'Gardien',
+    iconComponent: Shield,
+    description: 'Gardien inebranlable de tes objectifs',
+    category: 'streak',
+    requirement: 30,
+    xpReward: 300,
+  },
+  {
+    id: 'templar',
+    name: 'Templier',
+    iconComponent: Star,
+    description: 'Discipline de fer, corps d\'acier',
+    category: 'special',
+    requirement: 1, // 50 workouts + 5kg lost (combo)
+    xpReward: 400,
+  },
+  {
+    id: 'conqueror',
+    name: 'Conquerant',
+    iconComponent: Trophy,
+    description: 'Tu as conquis ton objectif',
+    category: 'weight',
+    requirement: 1, // Boolean check
+    xpReward: 750,
+  },
+  {
+    id: 'lord',
+    name: 'Seigneur',
+    iconComponent: Crown,
+    description: 'Seigneur de ton domaine',
+    category: 'time',
+    requirement: 100,
+    xpReward: 500,
+  },
+  {
+    id: 'legendary_king',
+    name: 'Roi Legendaire',
+    iconComponent: Gem,
+    description: 'Regne absolu sur ta transformation',
+    category: 'special',
+    requirement: 1, // 365 days + goal reached
+    xpReward: 2000,
+  },
+];
+
 // TOUS LES BADGES
 export const ALL_BADGES: Badge[] = [
   ...STREAK_BADGES,
@@ -572,6 +666,7 @@ export const ALL_BADGES: Badge[] = [
   ...TRAINING_BADGES,
   ...SPECIAL_BADGES,
   ...TIME_BADGES,
+  ...KNIGHT_BADGES,
 ];
 
 // ============================================
@@ -1051,6 +1146,38 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
       case 'anniversary':
         shouldUnlock = stats.isAnniversary;
         break;
+
+      // BADGES CHEVALIER
+      case 'squire':
+        shouldUnlock = stats.totalWorkouts >= 5;
+        break;
+      case 'knight':
+        shouldUnlock = stats.totalWorkouts >= 50;
+        break;
+      case 'knight_gold':
+        shouldUnlock = stats.totalWorkouts >= 100;
+        break;
+      case 'paladin':
+        shouldUnlock = stats.totalWorkouts >= 200;
+        break;
+      case 'crusader':
+        shouldUnlock = stats.currentStreak >= 7 || stats.maxStreak >= 7;
+        break;
+      case 'guardian':
+        shouldUnlock = stats.currentStreak >= 30 || stats.maxStreak >= 30;
+        break;
+      case 'templar':
+        shouldUnlock = stats.totalWorkouts >= 50 && stats.weightLost >= 5;
+        break;
+      case 'conqueror':
+        shouldUnlock = stats.goalReached;
+        break;
+      case 'lord':
+        shouldUnlock = stats.daysUsingApp >= 100;
+        break;
+      case 'legendary_king':
+        shouldUnlock = stats.daysUsingApp >= 365 && stats.goalReached;
+        break;
     }
 
     if (shouldUnlock) {
@@ -1191,6 +1318,36 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         break;
       case 'anniversary':
         currentProgress = stats.isAnniversary ? 1 : 0;
+        break;
+
+      // BADGES CHEVALIER
+      case 'squire':
+      case 'knight':
+      case 'knight_gold':
+      case 'paladin':
+        currentProgress = stats.totalWorkouts;
+        break;
+      case 'crusader':
+      case 'guardian':
+        currentProgress = Math.max(stats.currentStreak, stats.maxStreak);
+        break;
+      case 'templar':
+        // Progression combinée (50 workouts + 5kg)
+        const workoutProgress = Math.min(stats.totalWorkouts / 50, 1);
+        const weightProgress = Math.min(stats.weightLost / 5, 1);
+        currentProgress = (workoutProgress + weightProgress) / 2;
+        break;
+      case 'conqueror':
+        currentProgress = stats.goalReached ? 1 : 0;
+        break;
+      case 'lord':
+        currentProgress = stats.daysUsingApp;
+        break;
+      case 'legendary_king':
+        // Progression combinée (365 jours + objectif)
+        const daysProgress = Math.min(stats.daysUsingApp / 365, 1);
+        const goalProgress = stats.goalReached ? 1 : 0;
+        currentProgress = (daysProgress + goalProgress) / 2;
         break;
     }
 
