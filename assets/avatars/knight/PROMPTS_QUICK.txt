@@ -1,0 +1,31 @@
+=== 🛡️ PROMPTS RAPIDES - COPIER-COLLER ===
+
+[1. ÉCUYER - squire.png]
+Young squire knight avatar, minimalist design, bronze/copper armor, simple round shield, beginner warrior, warm bronze colors #CD7F32, flat illustration, transparent background, mobile app icon, 512x512, centered
+
+[2. CHEVALIER - knight.png]
+Medieval knight avatar, minimalist armor, full helmet with visor, steel grey armor #808080, sword and shield, flat design, transparent background, mobile app icon, 512x512, centered
+
+[3. CHEVALIER ARGENT - knight_silver.png]
+Silver knight avatar, elegant shining armor, polished silver metal #C0C0C0, noble warrior, detailed helmet, minimalist flat design, transparent background, mobile game icon, 512x512, centered
+
+[4. CHEVALIER OR - knight_gold.png]
+Golden knight avatar, shining gold armor #FFD700, elite warrior, ornate helmet, prestigious, minimalist flat design, transparent background, luxury game icon, 512x512, centered
+
+[5. PALADIN - paladin.png]
+Holy paladin knight avatar, white and gold armor, sacred warrior with divine aura, golden accents #FFD700 on white, holy light glow, minimalist flat design, transparent background, 512x512, centered
+
+[6. CROISÉ - crusader.png]
+Crusader knight avatar, red cross on white shield, silver armor with red cape #DC143C, holy warrior, minimalist flat design, transparent background, heroic game icon, 512x512, centered
+
+[7. TEMPLIER - templar.png]
+Knight templar avatar, white armor with red cross #DC143C, sacred temple knight, iconic red cross symbol, white and red colors, minimalist flat design, transparent background, 512x512, centered
+
+[8. ROI - king.png]
+King knight avatar, royal crown, purple cape, golden armor #FFD700, majestic warrior king, gold and royal purple #800080, minimalist flat design, transparent background, 512x512, centered
+
+=== IMPORTANT ===
+- Toujours préciser : transparent background
+- Toujours préciser : 512x512, centered
+- Toujours préciser : flat design, minimalist
+- Format PNG obligatoire
