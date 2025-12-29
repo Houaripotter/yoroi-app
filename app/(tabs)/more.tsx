@@ -57,6 +57,12 @@ import {
   TrendingDown,
   Calendar,
   Award,
+  Bell,
+  Watch,
+  Globe,
+  RefreshCw,
+  Moon,
+  Trash2,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -67,6 +73,7 @@ import { generateProgressPDF } from '@/lib/pdfExport';
 import { getWeightCategoriesBySportAndGender, WeightCategory, sportHasWeightCategories } from '@/lib/weightCategories';
 import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
 import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeService';
+import { resetAllData } from '@/lib/storage';
 
 // ============================================
 // ECRAN PLUS - DESIGN MODERNE
@@ -98,6 +105,13 @@ interface MenuItem {
 // ACTIONS RAPIDES (Grille en haut)
 // ============================================
 const QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: 'health-metrics',
+    label: 'Métriques',
+    Icon: Heart,
+    route: '/health-metrics',
+    gradient: ['#EC4899', '#DB2777'],
+  },
   {
     id: 'infirmary',
     label: 'Infirmerie',
@@ -151,15 +165,6 @@ const PROFILE_ITEMS: MenuItem[] = [
     iconBg: '#F472B620',
   },
   {
-    id: 'appearance',
-    label: 'Apparence',
-    sublabel: 'Thèmes et personnalisation',
-    Icon: Palette,
-    route: '/appearance',
-    iconColor: '#A78BFA',
-    iconBg: '#A78BFA20',
-  },
-  {
     id: 'customize-home',
     label: 'Personnaliser l\'Accueil',
     sublabel: 'Ordre et visibilité des sections',
@@ -173,7 +178,7 @@ const PROFILE_ITEMS: MenuItem[] = [
     label: 'Avatars',
     sublabel: 'Débloque des guerriers',
     Icon: Sparkles,
-    route: '/avatar-gallery',
+    route: '/avatar-selection',
     iconColor: '#FBBF24',
     iconBg: '#FBBF2420',
   },
@@ -183,6 +188,15 @@ const PROFILE_ITEMS: MenuItem[] = [
 // SECTION OUTILS
 // ============================================
 const TOOLS_ITEMS: MenuItem[] = [
+  {
+    id: 'health-metrics',
+    label: 'Métriques Santé',
+    sublabel: 'Apple Health · HRV · Sommeil',
+    Icon: Heart,
+    route: '/health-metrics',
+    iconColor: '#EC4899',
+    iconBg: '#EC489920',
+  },
   {
     id: 'training-journal',
     label: 'Carnet d\'Entraînement',
@@ -211,13 +225,13 @@ const TOOLS_ITEMS: MenuItem[] = [
     iconBg: '#10B98120',
   },
   {
-    id: 'share',
-    label: 'Partager',
-    sublabel: 'Stories et réseaux sociaux',
+    id: 'share-hub',
+    label: 'Partager ma progression',
+    sublabel: '6 cartes pour réseaux sociaux',
     Icon: Share2,
-    route: '/social-card',
-    iconColor: '#38BDF8',
-    iconBg: '#38BDF820',
+    route: '/share-hub',
+    iconColor: '#EC4899',
+    iconBg: '#EC489920',
   },
 ];
 
@@ -246,35 +260,113 @@ const COMMUNITY_ITEMS: MenuItem[] = [
 ];
 
 // ============================================
-// SECTION PARAMÈTRES
+// SECTION AFFICHAGE
 // ============================================
-const SETTINGS_ITEMS: MenuItem[] = [
+const DISPLAY_ITEMS: MenuItem[] = [
   {
-    id: 'settings',
-    label: 'Réglages',
-    sublabel: 'Notifications, rappels, thème',
-    Icon: Settings,
+    id: 'language',
+    label: 'Langue',
+    sublabel: 'Français, English, العربية',
+    Icon: Globe,
     route: '/settings',
-    iconColor: '#94A3B8',
-    iconBg: '#94A3B820',
+    iconColor: '#3B82F6',
+    iconBg: '#3B82F620',
+  },
+  {
+    id: 'appearance',
+    label: 'Apparence',
+    sublabel: 'Thèmes et personnalisation',
+    Icon: Palette,
+    route: '/appearance',
+    iconColor: '#A78BFA',
+    iconBg: '#A78BFA20',
   },
   {
     id: 'preferences',
-    label: 'Préférences',
-    sublabel: 'Unités de poids et mesures',
+    label: 'Unités',
+    sublabel: 'Kg/Lbs, Cm/Inches',
     Icon: Sliders,
     route: '/preferences',
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
   },
+];
+
+// ============================================
+// SECTION RAPPELS & NOTIFICATIONS
+// ============================================
+const REMINDERS_ITEMS: MenuItem[] = [
   {
-    id: 'tutorial',
-    label: 'Revoir le Tutoriel',
-    sublabel: 'Découvre toutes les fonctionnalités',
-    Icon: Info,
-    onPress: () => {},
+    id: 'reminders',
+    label: 'Rappels',
+    sublabel: 'Entraînement, hydratation',
+    Icon: Bell,
+    route: '/settings',
+    iconColor: '#F59E0B',
+    iconBg: '#F59E0B20',
+  },
+  {
+    id: 'smart-reminders',
+    label: 'Rappels Intelligents',
+    sublabel: 'Adaptés à ton rythme',
+    Icon: Zap,
+    route: '/settings',
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
+  },
+  {
+    id: 'briefing',
+    label: 'Briefing du Matin',
+    sublabel: 'Résumé quotidien',
+    Icon: Settings,
+    route: '/settings',
+    iconColor: '#06B6D4',
+    iconBg: '#06B6D420',
+  },
+];
+
+// ============================================
+// SECTION APPLE HEALTH
+// ============================================
+const HEALTH_ITEMS: MenuItem[] = [
+  {
+    id: 'health-sync',
+    label: 'Apple Health',
+    sublabel: 'Synchronisation automatique',
+    Icon: Watch,
+    route: '/health-metrics',
+    iconColor: '#EC4899',
+    iconBg: '#EC489920',
+  },
+];
+
+// ============================================
+// SECTION RAMADAN
+// ============================================
+const RAMADAN_ITEMS: MenuItem[] = [
+  {
+    id: 'ramadan',
+    label: 'Mode Ramadan',
+    sublabel: 'Adapter l\'app au jeûne',
+    Icon: Moon,
+    route: '/settings',
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+  },
+];
+
+// ============================================
+// SECTION SAUVEGARDE & RESTAURATION
+// ============================================
+const BACKUP_ITEMS: MenuItem[] = [
+  {
+    id: 'icloud-sync',
+    label: 'Sync iCloud',
+    sublabel: 'Sauvegarde automatique',
+    Icon: RefreshCw,
+    route: '/settings',
+    iconColor: '#3B82F6',
+    iconBg: '#3B82F620',
   },
   {
     id: 'exportPdf',
@@ -302,6 +394,54 @@ const SETTINGS_ITEMS: MenuItem[] = [
     onPress: () => {},
     iconColor: '#6366F1',
     iconBg: '#6366F120',
+  },
+];
+
+// ============================================
+// SECTION MODE SCREENSHOT (Dev)
+// ============================================
+const DEV_ITEMS: MenuItem[] = [
+  {
+    id: 'screenshot-load',
+    label: 'Mode Screenshot',
+    sublabel: 'Charger données démo',
+    Icon: Camera,
+    onPress: () => {},
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+  },
+  {
+    id: 'screenshot-clear',
+    label: 'Effacer Démo',
+    sublabel: 'Retour app vierge',
+    Icon: Trash2,
+    onPress: () => {},
+    iconColor: '#EF4444',
+    iconBg: '#EF444420',
+  },
+];
+
+// ============================================
+// SECTION SÉCURITÉ
+// ============================================
+const SECURITY_ITEMS: MenuItem[] = [
+  {
+    id: 'tutorial',
+    label: 'Revoir le Tutoriel',
+    sublabel: 'Découvre toutes les fonctionnalités',
+    Icon: Info,
+    onPress: () => {},
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+  },
+  {
+    id: 'reset-all',
+    label: 'Réinitialiser Tout',
+    sublabel: 'Effacer toutes les données',
+    Icon: Trash2,
+    onPress: () => {},
+    iconColor: '#EF4444',
+    iconBg: '#EF444420',
   },
 ];
 
@@ -519,6 +659,72 @@ export default function MoreScreen() {
     );
   };
 
+  const handleScreenshotLoad = async () => {
+    Alert.alert(
+      '📸 Mode Screenshot',
+      'Charger des données de démonstration pour screenshots ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Charger',
+          onPress: async () => {
+            try {
+              // TODO: Importer generateScreenshotDemoData depuis lib/screenshotDemoData
+              Alert.alert('✅ Chargé', 'Données de démo chargées');
+            } catch (e) {
+              Alert.alert('Erreur', 'Impossible de charger les données');
+            }
+          }
+        },
+      ]
+    );
+  };
+
+  const handleScreenshotClear = async () => {
+    Alert.alert(
+      '🧹 Effacer Démo',
+      'Supprimer toutes les données de démonstration ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Effacer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // TODO: Importer clearScreenshotDemoData depuis lib/screenshotDemoData
+              Alert.alert('✅ Effacé', 'Données de démo supprimées');
+            } catch (e) {
+              Alert.alert('Erreur', 'Impossible d\'effacer');
+            }
+          }
+        },
+      ]
+    );
+  };
+
+  const handleResetAll = async () => {
+    Alert.alert(
+      '⚠️ Réinitialiser Tout',
+      'ATTENTION : Cette action est IRRÉVERSIBLE. Toutes tes données seront DÉFINITIVEMENT supprimées.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Réinitialiser',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await resetAllData();
+              Alert.alert('✅ Réinitialisé', 'Toutes les données ont été supprimées');
+              router.replace('/(tabs)');
+            } catch (e) {
+              Alert.alert('Erreur', 'Impossible de réinitialiser');
+            }
+          }
+        },
+      ]
+    );
+  };
+
   const handleQuickAction = (action: QuickAction) => {
     if (action.route) {
       router.push(action.route as any);
@@ -550,6 +756,18 @@ export default function MoreScreen() {
     }
     if (item.id === 'tutorial') {
       handleShowTutorial();
+      return;
+    }
+    if (item.id === 'screenshot-load') {
+      handleScreenshotLoad();
+      return;
+    }
+    if (item.id === 'screenshot-clear') {
+      handleScreenshotClear();
+      return;
+    }
+    if (item.id === 'reset-all') {
+      handleResetAll();
       return;
     }
 
@@ -637,27 +855,38 @@ export default function MoreScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Plus</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Menu</Text>
             <View style={[styles.versionBadge, { backgroundColor: colors.cardHover }]}>
               <Text style={[styles.versionText, { color: colors.textMuted }]}>v1.0.0</Text>
             </View>
           </View>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Outils et paramètres
+            Profil, outils et paramètres
           </Text>
         </View>
 
         {/* QUICK ACTIONS GRID */}
-        <View style={styles.quickActionsGrid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickActionsContainer}
+          style={styles.quickActionsScroll}
+        >
           {QUICK_ACTIONS.map(renderQuickAction)}
-        </View>
+        </ScrollView>
 
         {/* SECTIONS */}
-        {renderSection('PROFIL & APPARENCE', PROFILE_ITEMS)}
+        {renderSection('PROFIL', PROFILE_ITEMS)}
         {renderSection('OUTILS', TOOLS_ITEMS)}
         {renderSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
-        {renderSection('PARAMÈTRES', SETTINGS_ITEMS)}
+        {renderSection('AFFICHAGE', DISPLAY_ITEMS)}
+        {renderSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
+        {renderSection('APPLE HEALTH', HEALTH_ITEMS)}
+        {renderSection('RAMADAN', RAMADAN_ITEMS)}
+        {renderSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
+        {renderSection('MODE SCREENSHOT', DEV_ITEMS)}
         {renderSection('SUPPORT', SUPPORT_ITEMS)}
+        {renderSection('SÉCURITÉ', SECURITY_ITEMS)}
 
         {/* MODE UTILISATEUR */}
         <View style={styles.sectionContainer}>
@@ -1182,10 +1411,12 @@ const styles = StyleSheet.create({
   },
 
   // QUICK ACTIONS
-  quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  quickActionsScroll: {
     marginBottom: 28,
+  },
+  quickActionsContainer: {
+    gap: 12,
+    paddingRight: 20,
   },
   quickActionContainer: {
     width: QUICK_ACTION_SIZE,
