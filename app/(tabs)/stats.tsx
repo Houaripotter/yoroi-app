@@ -19,9 +19,11 @@ import {
   Dumbbell,
   Heart,
   Activity,
+  Share2,
 } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getTrainings, getWeights, getCompositionHistory, type Weight, type Training } from '@/lib/database';
+import { getTrainings, getWeights, getCompositionHistory, getMeasurements, type Weight, type Training, type Measurement } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/design';
 import { WeightStats } from '@/components/stats/WeightStats';
@@ -43,10 +45,12 @@ type TabType = 'poids' | 'compo' | 'mesures' | 'discipline' | 'vitalite' | 'perf
 export default function StatsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const params = useLocalSearchParams<{ tab?: string }>();
   const [activeTab, setActiveTab] = useState<TabType>('discipline');
   const [weights, setWeights] = useState<Weight[]>([]);
   const [compositionHistory, setCompositionHistory] = useState<Weight[]>([]);
   const [trainings, setTrainings] = useState<Training[]>([]);
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
 
   // Refs pour le scroll
   const horizontalScrollRef = useRef<ScrollView>(null);
@@ -57,25 +61,21 @@ export default function StatsScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [weightsData, compHistory, trainingsData] = await Promise.all([
+      const [weightsData, compHistory, trainingsData, measurementsData] = await Promise.all([
         getWeights ? getWeights() : Promise.resolve([]),
         getCompositionHistory ? getCompositionHistory(10) : Promise.resolve([]),
         getTrainings ? getTrainings() : Promise.resolve([]),
+        getMeasurements ? getMeasurements() : Promise.resolve([]),
       ]);
 
       setWeights(weightsData);
       setCompositionHistory(compHistory);
       setTrainings(trainingsData);
+      setMeasurements(measurementsData);
     } catch (error) {
       console.error('Error loading data:', error);
     }
   }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
 
   // ============================================
   // TABS - Design moderne avec icônes uniquement en haut
@@ -88,6 +88,23 @@ export default function StatsScreen() {
     { key: 'vitalite', label: 'Vitalité', icon: Heart, color: '#EF4444' },
     { key: 'performance', label: 'Perf', icon: Activity, color: '#EC4899' },
   ];
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  // Gérer le paramètre tab de l'URL
+  useEffect(() => {
+    if (params.tab && tabs.some(t => t.key === params.tab)) {
+      setActiveTab(params.tab as TabType);
+      const tabIndex = tabs.findIndex(t => t.key === params.tab);
+      if (tabIndex >= 0) {
+        horizontalScrollRef.current?.scrollTo({ x: SCREEN_WIDTH * tabIndex, animated: false });
+      }
+    }
+  }, [params.tab]);
 
   const activeIndex = tabs.findIndex(t => t.key === activeTab);
 
@@ -271,7 +288,7 @@ export default function StatsScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <MeasurementsStats data={[]} />
+            <MeasurementsStats data={measurements} />
             <View style={{ height: 120 }} />
           </ScrollView>
         </View>
@@ -300,6 +317,18 @@ export default function StatsScreen() {
           </ScrollView>
         </View>
       </ScrollView>
+
+      {/* Bouton flottant Partager */}
+      <TouchableOpacity
+        style={[styles.floatingButton, { backgroundColor: colors.accent }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push('/share-hub');
+        }}
+        activeOpacity={0.8}
+      >
+        <Share2 size={24} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -396,5 +425,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     // Pas de paddingHorizontal ici car les composants Stats gèrent leur propre padding
+  },
+
+  // Floating Button
+  floatingButton: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

@@ -1,276 +1,182 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Scale, TrendingDown, TrendingUp, Minus as TrendingStable, Target } from 'lucide-react-native';
-import Svg, { Circle, Path, G, Line, Rect } from 'react-native-svg';
+import { TrendingDown, TrendingUp, Target } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { scale, scaleModerate, getHistoryDays, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
-const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
+const columns = getGridColumns();
+const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface WeightLottieCardProps {
   weight?: number;
   target?: number;
   trend?: 'up' | 'down' | 'stable';
   history?: number[];
+  fatPercent?: number;
+  musclePercent?: number;
+  waterPercent?: number;
+  onPress?: () => void;
 }
 
 export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
   weight,
   target,
   trend = 'stable',
-  history = []
+  history = [],
+  fatPercent,
+  musclePercent,
+  waterPercent,
+  onPress
 }) => {
   const { colors, isDark } = useTheme();
 
-  // Nombre de jours à afficher selon l'appareil
-  const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+  // Animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
-  // Animations
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const numberAnim = useRef(new Animated.Value(0)).current;
-  const ledFlicker = useRef(new Animated.Value(1)).current;
-
-  // Animations barres en cascade - adapté au nombre de jours
-  const barAnims = useRef(
-    Array(historyDays).fill(0).map(() => new Animated.Value(0))
-  ).current;
-  
   useEffect(() => {
-    // Animation d'entrée
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      damping: 15,
-      useNativeDriver: true,
-    }).start();
-    
-    // Animation pulse subtil du poids
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.02,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulse.start();
-    
-    // LED flicker effect (écran digital)
-    const flicker = Animated.loop(
-      Animated.sequence([
-        Animated.timing(ledFlicker, {
-          toValue: 0.9,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(ledFlicker, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.delay(3000),
-      ])
-    );
-    flicker.start();
-    
-    // Animation barres en cascade
-    if (history.length > 0) {
-      history.slice(0, historyDays).forEach((_, i) => {
-        Animated.timing(barAnims[i], {
-          toValue: 1,
-          duration: 500,
-          delay: i * 80,
-          easing: Easing.out(Easing.back(1.2)),
-          useNativeDriver: true,
-        }).start();
-      });
-    }
-    
-    return () => {
-      pulse.stop();
-      flicker.stop();
-    };
-  }, [weight, history]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        damping: 15,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [weight]);
 
-  const diff = target && weight != null ? weight - target : 0;
-  const trendColor = trend === 'down' ? '#10B981' : trend === 'up' ? '#EF4444' : '#6B7280';
-  const TrendIcon = trend === 'down' ? TrendingDown : trend === 'up' ? TrendingUp : TrendingStable;
+  const trendColor = trend === 'down' ? '#10B981' : trend === 'up' ? '#EF4444' : '#94A3B8';
+  const accentColor = isDark ? '#818CF8' : '#6366F1';
 
-  // Calcul du pourcentage vers l'objectif
-  const progressToGoal = target && weight != null && weight > 0 ? Math.min(Math.abs(1 - (Math.abs(diff) / 10)) * 100, 100) : 0;
+  const currentWeight = weight || 0;
+  const hasComposition = fatPercent !== undefined || musclePercent !== undefined || waterPercent !== undefined;
 
-  // Couleur principale : Bleu Cyan adaptatif
-  const primaryColor = '#06B6D4';
-  // Fond écran digital adaptatif au thème - éclairci pour meilleure lisibilité
-  const screenBg = isDark ? '#1E293B' : '#F0F9FF'; // Gris bleuté en sombre, bleu très clair en clair
+  // Calcul des kg pour chaque composant
+  const fatKg = fatPercent && currentWeight > 0 ? (currentWeight * fatPercent) / 100 : undefined;
+  const muscleKg = musclePercent && currentWeight > 0 ? (currentWeight * musclePercent) / 100 : undefined;
+  const waterKg = waterPercent && currentWeight > 0 ? (currentWeight * waterPercent) / 100 : undefined;
 
   return (
-    <Animated.View style={[
-      styles.card, 
-      { 
-        backgroundColor: colors.backgroundCard,
-        transform: [{ scale: scaleAnim }],
-      }
-    ]}>
-      {/* Header - POIDS ACTUEL */}
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Scale size={12} color={primaryColor} />
-          <Text style={[styles.title, { color: primaryColor }]}>POIDS ACTUEL</Text>
-        </View>
-        <TrendIcon size={14} color={trendColor} />
-      </View>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress}
+    >
+      <Animated.View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.backgroundCard,
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          }
+        ]}
+      >
+        {/* Dégradé */}
+        <LinearGradient
+          colors={isDark
+            ? [`${accentColor}12`, 'transparent']
+            : [`${accentColor}10`, 'transparent']
+          }
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
 
-      {/* Zone animation - Balance digitale moderne */}
-      <View style={styles.animationContainer}>
-        {/* Écran digital LED */}
-        <View style={[styles.digitalScreen, { backgroundColor: screenBg }]}>
-          {/* Effet de bordure LED */}
-          <View style={[styles.ledBorder, { borderColor: primaryColor }]} />
-
-          {/* Grille de fond (effet écran) */}
-          <View style={styles.screenGrid}>
-            {Array(12).fill(0).map((_, i) => (
-              <View key={i} style={[styles.gridLine, { backgroundColor: `${primaryColor}10` }]} />
-            ))}
-          </View>
-          
-          {/* Affichage du poids avec animation */}
-          <Animated.View style={[
-            styles.weightDisplayContainer,
-            {
-              transform: [{ scale: pulseAnim }],
-              opacity: ledFlicker,
-            }
-          ]}>
-            <Text style={[
-              styles.weightValueLED,
-              {
-                color: primaryColor,
-                textShadowColor: primaryColor,
-              }
-            ]}>
-              {weight != null && weight > 0 ? weight.toFixed(1) : '--.-'}
-            </Text>
-            <Text style={[styles.weightUnitLED, { color: `${primaryColor}80` }]}>kg</Text>
-          </Animated.View>
-
-          {/* Indicateur de stabilité */}
-          <View style={styles.stabilityIndicator}>
-            <View style={[styles.stabilityDot, { backgroundColor: weight != null && weight > 0 ? primaryColor : '#6B7280' }]} />
-            <Text style={[styles.stabilityText, { color: weight != null && weight > 0 ? primaryColor : '#6B7280' }]}>
-              {weight != null && weight > 0 ? 'STABLE' : 'ATTENTE'}
-            </Text>
-          </View>
-        </View>
-        
-        {/* Plateforme de la balance */}
-        <Svg width={90} height={16} viewBox="0 0 90 16" style={styles.platform}>
-          <Path
-            d="M 5 0 L 85 0 L 90 8 L 85 12 L 5 12 L 0 8 Z"
-            fill={isDark ? '#1E293B' : '#BAE6FD'}
-            stroke={primaryColor}
-            strokeWidth="1"
-          />
-          {/* Lignes de texture */}
-          <Line x1="15" y1="4" x2="75" y2="4" stroke={`${primaryColor}30`} strokeWidth="1" />
-          <Line x1="10" y1="8" x2="80" y2="8" stroke={`${primaryColor}30`} strokeWidth="1" />
-        </Svg>
-      </View>
-
-      {/* Mini sparkline - Evolution */}
-      {history.length > 0 && (
-        <View style={styles.sparklineContainer}>
-          {/* Min/Max labels */}
-          <View style={styles.sparklineHeader}>
-            <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Min <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.min(...history.slice(0, historyDays)).toFixed(1)}</Text>
-            </Text>
-            <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Max <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.max(...history.slice(0, historyDays)).toFixed(1)}</Text>
-            </Text>
+        <View style={styles.content}>
+          {/* Header avec titre et tendance */}
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: colors.textMuted }]}>Poids actuel</Text>
+            {trend !== 'stable' && (
+              <View style={[styles.trendBadge, { backgroundColor: `${trendColor}20` }]}>
+                {trend === 'down' ? (
+                  <TrendingDown size={scale(11)} color={trendColor} strokeWidth={2.5} />
+                ) : (
+                  <TrendingUp size={scale(11)} color={trendColor} strokeWidth={2.5} />
+                )}
+              </View>
+            )}
           </View>
 
-          {/* Graphique avec jours */}
-          <View style={styles.sparklineChart}>
-            {history.slice(0, historyDays).reverse().map((w, i) => {
-              const maxW = Math.max(...history.slice(0, historyDays));
-              const minW = Math.min(...history.slice(0, historyDays));
-              const range = maxW - minW || 1;
-              const height = ((w - minW) / range) * 24 + 6;
-              const isLast = i === 0; // Premier élément après reverse = dernier jour
+          {/* Poids actuel */}
+          <View style={styles.weightSection}>
+            <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
+              {currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
+            </Text>
+            <Text style={[styles.weightUnit, { color: accentColor }]}>kg</Text>
+          </View>
 
-              // Jours de la semaine - Lundi = 0, Dimanche = 6
-              const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-              const today = new Date();
-              // getDay() : Dimanche=0, Lundi=1, etc. On convertit pour que Lundi=0
-              const todayIndex = (today.getDay() + 6) % 7; // Lundi=0, Mardi=1, ..., Dimanche=6
-              const dayIndex = (todayIndex - ((historyDays - 1) - i) + 7) % 7;
-
-              return (
-                <View key={i} style={styles.barColumn}>
-                  {/* Poids au-dessus de CHAQUE barre */}
-                  <Text style={[styles.barValue, { color: isLast ? primaryColor : colors.textMuted }]}>
-                    {w.toFixed(1)}
-                  </Text>
-
-                  {/* Barre */}
-                  <Animated.View
-                    style={[
-                      styles.sparkBar,
-                      {
-                        height,
-                        backgroundColor: isLast ? primaryColor : `${primaryColor}50`,
-                        opacity: barAnims[(historyDays - 1) - i],
-                        transform: [{
-                          scaleY: barAnims[(historyDays - 1) - i],
-                        }],
-                      }
-                    ]}
-                  />
-
-                  {/* Jour de la semaine */}
-                  <Text style={[
-                    styles.dayLabel,
-                    { color: isLast ? primaryColor : colors.textMuted }
-                  ]}>
-                    {days[dayIndex]}
+          {/* Composition corporelle */}
+          {hasComposition && (
+            <View style={styles.compositionSection}>
+              {fatPercent !== undefined && fatKg !== undefined && (
+                <View style={[styles.compositionBadge, { backgroundColor: '#EF444415' }]}>
+                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>GRAISSE</Text>
+                  <View style={styles.compositionRow}>
+                    <Text style={[styles.compositionValue, { color: '#EF4444' }]}>
+                      {fatKg.toFixed(1)}
+                    </Text>
+                    <Text style={[styles.compositionUnit, { color: '#EF4444' }]}>kg</Text>
+                  </View>
+                  <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>
+                    {fatPercent.toFixed(1)}%
                   </Text>
                 </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {/* Footer - Objectif */}
-      {target && (
-        <View style={styles.footer}>
-          <Target size={16} color="#EF4444" strokeWidth={2.5} />
-          <Text style={[styles.targetValue, { color: colors.textPrimary }]}>
-            Objectif : {target} kg
-          </Text>
-          {diff !== 0 && (
-            <View style={[styles.diffBadge, { backgroundColor: trendColor + '20' }]}>
-              <Text style={[styles.diff, { color: trendColor }]}>
-                {diff > 0 ? '+' : ''}{diff.toFixed(1)}
-              </Text>
+              )}
+              {musclePercent !== undefined && muscleKg !== undefined && (
+                <View style={[styles.compositionBadge, { backgroundColor: '#10B98115' }]}>
+                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>MUSCLE</Text>
+                  <View style={styles.compositionRow}>
+                    <Text style={[styles.compositionValue, { color: '#10B981' }]}>
+                      {muscleKg.toFixed(1)}
+                    </Text>
+                    <Text style={[styles.compositionUnit, { color: '#10B981' }]}>kg</Text>
+                  </View>
+                  <Text style={[styles.compositionPercent, { color: '#10B981' }]}>
+                    {musclePercent.toFixed(1)}%
+                  </Text>
+                </View>
+              )}
+              {waterPercent !== undefined && waterKg !== undefined && (
+                <View style={[styles.compositionBadge, { backgroundColor: '#3B82F615' }]}>
+                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>EAU</Text>
+                  <View style={styles.compositionRow}>
+                    <Text style={[styles.compositionValue, { color: '#3B82F6' }]}>
+                      {waterKg.toFixed(1)}
+                    </Text>
+                    <Text style={[styles.compositionUnit, { color: '#3B82F6' }]}>kg</Text>
+                  </View>
+                  <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>
+                    {waterPercent.toFixed(1)}%
+                  </Text>
+                </View>
+              )}
             </View>
           )}
+
+          {/* Footer avec objectif - toujours affiché */}
+          <View style={styles.footer}>
+            <View style={[styles.targetBadge, { backgroundColor: `${accentColor}15` }]}>
+              <Target size={scale(14)} color={accentColor} strokeWidth={2.5} />
+              <View style={styles.targetInfo}>
+                <Text style={[styles.targetLabel, { color: colors.textMuted }]}>
+                  Objectif
+                </Text>
+                <Text style={[styles.targetValue, { color: accentColor }]}>
+                  {target ? `${target} kg` : 'Non défini'}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
-      )}
-    </Animated.View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 };
 
@@ -278,174 +184,117 @@ const styles = StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,
-    borderRadius: scale(16),
-    padding: scale(10),
-    justifyContent: 'space-between',
+    borderRadius: scale(20),
+    padding: scale(14),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
     overflow: 'hidden',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(4),
-  },
   title: {
-    fontSize: scaleModerate(8, 0.3),
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: scaleModerate(9, 0.3),
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  animationContainer: {
-    flex: 1,
+  trendBadge: {
+    width: scale(22),
+    height: scale(22),
+    borderRadius: scale(11),
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 2,
   },
-  digitalScreen: {
-    width: '100%',
-    height: 48,
-    borderRadius: 8,
-    padding: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  ledBorder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  screenGrid: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-  },
-  gridLine: {
-    width: 1,
-    height: '100%',
-  },
-  weightDisplayContainer: {
+  weightSection: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 2,
-    paddingBottom: 2,
+    justifyContent: 'center',
+    gap: scale(4),
   },
-  weightValueLED: {
-    fontSize: scaleModerate(24, 0.4),
+  weightValue: {
+    fontSize: scaleModerate(40, 0.3),
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: scale(8),
-    letterSpacing: 1,
+    letterSpacing: -2,
   },
-  weightUnitLED: {
-    fontSize: scaleModerate(11, 0.3),
+  weightUnit: {
+    fontSize: scaleModerate(16, 0.3),
     fontWeight: '700',
   },
-  stabilityIndicator: {
-    position: 'absolute',
-    bottom: 4,
-    right: 6,
+  compositionSection: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    gap: scale(6),
+  },
+  compositionBadge: {
+    flex: 1,
+    paddingVertical: scale(6),
+    paddingHorizontal: scale(4),
+    borderRadius: scale(10),
     alignItems: 'center',
-    gap: 3,
+    justifyContent: 'center',
+    gap: scale(2),
   },
-  stabilityDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-  },
-  stabilityText: {
-    fontSize: 7,
+  compositionLabel: {
+    fontSize: scaleModerate(6, 0.3),
     fontWeight: '700',
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  platform: {
-    marginTop: 4,
-  },
-  sparklineContainer: {
-    marginTop: 4,
-    gap: 4,
-  },
-  sparklineHeader: {
+  compositionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 2,
-    marginBottom: 2,
+    alignItems: 'baseline',
+    gap: scale(2),
   },
-  sparkMinMax: {
-    fontSize: 8,
+  compositionValue: {
+    fontSize: scaleModerate(11, 0.3),
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+  },
+  compositionUnit: {
+    fontSize: scaleModerate(8, 0.3),
     fontWeight: '700',
   },
-  sparklineChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 50,
-  },
-  barColumn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  barValue: {
-    fontSize: 7,
+  compositionPercent: {
+    fontSize: scaleModerate(9, 0.3),
     fontWeight: '700',
-    marginBottom: 2,
-    minHeight: 11,
-  },
-  sparkBar: {
-    width: '100%',
-    maxWidth: 12,
-    borderRadius: 3,
-    minHeight: 6,
-  },
-  dayLabel: {
-    fontSize: 8,
-    fontWeight: '600',
-    marginTop: 3,
-  },
-  sparkline: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 4,
-    height: 20,
-  },
-  sparkLabel: {
-    fontSize: 8,
-    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   footer: {
+    alignItems: 'center',
+  },
+  targetBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    gap: scale(8),
+    paddingVertical: scale(8),
+    paddingHorizontal: scale(12),
+    borderRadius: scale(12),
+  },
+  targetInfo: {
+    gap: scale(1),
+  },
+  targetLabel: {
+    fontSize: scaleModerate(7, 0.3),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   targetValue: {
-    fontSize: scaleModerate(12, 0.3),
-    fontWeight: '700',
-  },
-  diffBadge: {
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  diff: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: scaleModerate(14, 0.3),
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.5,
   },
 });

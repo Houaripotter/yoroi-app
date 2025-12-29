@@ -56,7 +56,7 @@ import {
   Clock,
   BookOpen,
 } from 'lucide-react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -66,7 +66,7 @@ import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getDailyQuote, Citation } from '@/lib/citations';
 import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
-import { AvatarDisplay } from '@/components/AvatarDisplay';
+import AvatarDisplay from '@/components/AvatarDisplay';
 import { RanksModal } from '@/components/RanksModal';
 import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
@@ -77,7 +77,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
-import { HydrationLottieCard } from '@/components/cards/HydrationLottieCard';
+import { HydrationCard2 } from '@/components/cards/HydrationCard2';
 import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
 import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
@@ -90,7 +90,7 @@ import HealthConnect from '@/lib/healthConnect.ios';
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
-import ObjectiveSwitch from '@/components/home/ObjectiveSwitch';
+import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -124,7 +124,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
-  // Mode d'affichage (Guerrier / Essentiel)
+  // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
 
   // États de base
@@ -222,7 +222,7 @@ export default function HomeScreen() {
 
       // Charger l'objectif (ou utiliser la valeur par défaut)
       if (goalStored) {
-        const goal = parseFloat(goalStored) * 1000; // Convertir L en ml
+        const goal = parseFloat(goalStored); // goalStored est déjà en ml
         setHydrationGoal(goal);
       }
 
@@ -230,7 +230,7 @@ export default function HomeScreen() {
       if (stored) {
         const value = parseInt(stored, 10);
         setHydration(value);
-        animateWater(value, goalStored ? parseFloat(goalStored) * 1000 : DEFAULT_HYDRATION_GOAL);
+        animateWater(value, goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL);
       }
     } catch (error) {
       console.error('Erreur hydratation:', error);
@@ -360,7 +360,7 @@ export default function HomeScreen() {
     return 'Bonsoir';
   };
 
-  // Calcul Batterie du Guerrier
+  // Calcul Batterie Athlète
   const calculateBatteryPercent = () => {
     let score = 50;
     score += Math.min(streak * 2, 20);
@@ -548,8 +548,8 @@ export default function HomeScreen() {
       case 'header':
         return (
           <View style={styles.header} key={sectionId}>
-            <TouchableOpacity onPress={() => setLogoViewerVisible(true)}>
-              <Image source={require('@/assets/logo d\'app/logo1.png')} style={styles.logo} resizeMode="contain" />
+            <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
+              <AvatarDisplay size="small" />
             </TouchableOpacity>
             <View style={styles.headerText}>
               <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
@@ -557,13 +557,28 @@ export default function HomeScreen() {
                 <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
                 <ViewModeSwitch mode={mode} onToggle={toggleMode} />
               </View>
-              {dailyQuote && mode === 'guerrier' && (
+              {dailyQuote && mode === 'complet' && (
                 <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
                   <Sparkles size={12} color={colors.accent} />
                   <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
                 </View>
               )}
             </View>
+            <TouchableOpacity
+              style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
+              onPress={() => router.push('/profile')}
+              activeOpacity={0.8}
+            >
+              {profile?.profile_photo ? (
+                <Image
+                  source={{ uri: profile.profile_photo }}
+                  style={styles.profilePhotoImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Ionicons name="person" size={24} color={colors.textSecondary} />
+              )}
+            </TouchableOpacity>
           </View>
         );
 
@@ -607,15 +622,19 @@ export default function HomeScreen() {
         return (
           <View style={styles.gridLottieContainer} key={sectionId}>
             <View style={styles.gridLottieRow}>
-              <TouchableOpacity onPress={() => router.push('/stats?tab=poids')} activeOpacity={0.9}>
-                <WeightLottieCard
-                  weight={currentWeight || 0}
-                  target={targetWeight || undefined}
-                  trend={trend}
-                  history={last7Weights.map(w => w.weight)}
-                />
-              </TouchableOpacity>
-              <HydrationLottieCard
+              <WeightLottieCard
+                weight={currentWeight || 0}
+                target={targetWeight || undefined}
+                trend={trend}
+                history={last7Weights.map(w => w.weight)}
+                fatPercent={latestWeight?.fat_percent}
+                musclePercent={latestWeight?.muscle_percent}
+                waterPercent={latestWeight?.water_percent}
+                onPress={() => {
+                  router.push('/(tabs)/stats?tab=poids');
+                }}
+              />
+              <HydrationCard2
                 currentMl={hydration}
                 goalMl={hydrationGoal}
                 onAddMl={(amountMl) => addWater(amountMl)}
@@ -674,28 +693,48 @@ export default function HomeScreen() {
 
       case 'actions_row':
         return (
-          <View style={styles.actionsRow4} key={sectionId}>
-            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
-              <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
-              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
-              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
-              <Timer size={28} color={colors.accent} />
-              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
-              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/photos')} activeOpacity={0.85}>
-              <Camera size={28} color="#10B981" />
-              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
-              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
-              <FlaskConical size={28} color="#3B82F6" />
-              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Savoir</Text>
-              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Études & Conseils</Text>
-            </TouchableOpacity>
-          </View>
+          <React.Fragment key={sectionId}>
+            <View style={styles.actionsRow4}>
+              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
+                <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
+                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
+                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
+                <Timer size={28} color={colors.accent} />
+                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
+                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/photos')} activeOpacity={0.85}>
+                <Camera size={28} color="#10B981" />
+                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
+                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
+              </TouchableOpacity>
+              <View style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]}>
+                <CompactObjectiveSwitch onToggle={(isOn) => setIsCompetitorMode(isOn)} />
+              </View>
+            </View>
+            {/* 3 carrés qui apparaissent quand le toggle est ON */}
+            {isCompetitorMode && (
+              <View style={[styles.actionsRow3, { marginTop: 8 }]}>
+                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')} activeOpacity={0.85}>
+                  <Scale size={24} color="#EF4444" />
+                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Mode Cut</Text>
+                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Poids</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')} activeOpacity={0.85}>
+                  <Trophy size={24} color={colors.accent} />
+                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Compétitions</Text>
+                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>À venir</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')} activeOpacity={0.85}>
+                  <Medal size={24} color={colors.gold} />
+                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Palmarès</Text>
+                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Victoires</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </React.Fragment>
         );
 
       case 'sleep_charge':
@@ -863,7 +902,7 @@ export default function HomeScreen() {
             style={[styles.trainingJournalCard, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/training-journal');
+              router.push('/quick-log');
             }}
             activeOpacity={0.85}
           >
@@ -873,10 +912,10 @@ export default function HomeScreen() {
               </View>
               <View style={styles.trainingJournalTitleContainer}>
                 <Text style={[styles.trainingJournalTitle, { color: colors.textPrimary }]}>
-                  📖 Carnet d'Entraînement
+                  Carnet d'Entraînement
                 </Text>
                 <Text style={[styles.trainingJournalSubtitle, { color: colors.textMuted }]}>
-                  Ta progression personnelle
+                  Logger tes séances rapidement
                 </Text>
               </View>
               <ChevronRight size={20} color={colors.textMuted} />
@@ -946,8 +985,8 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* MODE GUERRIER - Contenu complet actuel */}
-        {mode === 'guerrier' && (
+        {/* MODE COMPLET - Contenu complet actuel */}
+        {mode === 'complet' && (
           <>
             {/* === RENDU DYNAMIQUE DES SECTIONS SELON L'ORDRE PERSONNALISÉ === */}
             {sortedSections.map(section => renderDynamicSection(section.id))}
@@ -976,6 +1015,10 @@ export default function HomeScreen() {
         {mode === 'essentiel' && (
           <>
             <HomeEssentielContent
+              userName={profile?.name}
+              viewMode={mode}
+              onToggleMode={toggleMode}
+              profile={profile}
               currentWeight={currentWeight ?? undefined}
               targetWeight={targetWeight ?? undefined}
               weightHistory={weightHistory.map(w => w.weight)}
@@ -1040,6 +1083,21 @@ const styles = StyleSheet.create({
   // Header
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   logo: { width: 70, height: 70, borderRadius: 14 },
+  profilePhotoContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginLeft: 12,
+  },
+  profilePhotoImage: {
+    width: 70,
+    height: 70,
+  },
   headerText: { flex: 1, marginLeft: 12 },
   greeting: { fontSize: 14, fontWeight: '600' },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
