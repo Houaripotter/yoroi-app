@@ -13,7 +13,7 @@ import {
   Share,
   Alert,
 } from 'react-native';
-import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2 } from 'lucide-react-native';
+import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2, TrendingDown, Calendar, Trophy, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
@@ -249,17 +249,26 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
               <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
             </TouchableOpacity>
           )}
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            {step === 'before' && 'Photo AVANT'}
-            {step === 'after' && 'Photo APRÈS'}
-            {step === 'compare' && 'Comparaison'}
-          </Text>
+          <View style={styles.titleContainer}>
+            <View style={styles.stepBadgeContainer}>
+              <View style={[styles.stepBadge, { backgroundColor: colors.gold + '20', borderColor: colors.gold }]}>
+                <Text style={[styles.stepBadgeText, { color: colors.gold }]}>
+                  {step === 'before' ? '1/3' : step === 'after' ? '2/3' : '3/3'}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {step === 'before' && 'Photo AVANT'}
+              {step === 'after' && 'Photo APRÈS'}
+              {step === 'compare' && 'Ta Transformation'}
+            </Text>
+          </View>
           {step === 'compare' ? (
-            <TouchableOpacity onPress={captureAndShare} style={[styles.closeButton, { backgroundColor: colors.gold }]}>
+            <TouchableOpacity onPress={captureAndShare} style={[styles.shareButton, { backgroundColor: colors.gold }]}>
               <Share2 size={20} color={colors.background} strokeWidth={2.5} />
             </TouchableOpacity>
           ) : step !== 'before' ? (
-            <TouchableOpacity onPress={reset} style={styles.resetButton}>
+            <TouchableOpacity onPress={reset} style={[styles.resetButton, { backgroundColor: colors.card }]}>
               <Text style={[styles.resetButtonText, { color: colors.gold }]}>Reset</Text>
             </TouchableOpacity>
           ) : (
@@ -491,15 +500,28 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
               {/* Stats Card */}
               <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
-                <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>📊 Progression</Text>
+                <View style={styles.statsHeader}>
+                  <View style={[styles.statsIconContainer, { backgroundColor: colors.gold + '15' }]}>
+                    <Trophy size={24} color={colors.gold} strokeWidth={2.5} />
+                  </View>
+                  <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>Progression</Text>
+                </View>
 
                 <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Différence</Text>
+                  <View style={styles.statItemEnhanced}>
+                    <View style={[styles.statIconSmall, { backgroundColor: weightDifference !== null && weightDifference <= 0 ? '#10B98115' : '#EF444415' }]}>
+                      <TrendingDown
+                        size={18}
+                        color={weightDifference !== null && weightDifference <= 0 ? '#10B981' : '#EF4444'}
+                        strokeWidth={2.5}
+                        style={weightDifference !== null && weightDifference > 0 ? { transform: [{ rotate: '180deg' }] } : {}}
+                      />
+                    </View>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Poids</Text>
                     {weightDifference !== null ? (
                       <Text style={[
                         styles.statValue,
-                        { color: weightDifference <= 0 ? colors.success : colors.danger }
+                        { color: weightDifference <= 0 ? '#10B981' : '#EF4444' }
                       ]}>
                         {weightDifference > 0 ? '+' : ''}{weightDifference.toFixed(1)} kg
                       </Text>
@@ -508,11 +530,14 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                     )}
                   </View>
 
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Période</Text>
+                  <View style={styles.statItemEnhanced}>
+                    <View style={[styles.statIconSmall, { backgroundColor: colors.accent + '15' }]}>
+                      <Calendar size={18} color={colors.accent} strokeWidth={2.5} />
+                    </View>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Durée</Text>
                     {daysDifference !== null ? (
                       <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-                        {daysDifference} jours
+                        {daysDifference === 0 ? 'Aujourd\'hui' : `${daysDifference} j`}
                       </Text>
                     ) : (
                       <Text style={[styles.statValue, { color: colors.textMuted }]}>—</Text>
@@ -521,9 +546,24 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                 </View>
 
                 {weightDifference !== null && weightDifference < 0 && (
-                  <View style={[styles.motivationCard, { backgroundColor: colors.successMuted }]}>
-                    <Text style={[styles.motivationText, { color: colors.success }]}>
-                      🎯 Excellent ! Tu as perdu {Math.abs(weightDifference).toFixed(1)} kg !
+                  <View style={[styles.motivationCard, { backgroundColor: '#10B98115' }]}>
+                    <Text style={[styles.motivationEmoji]}>🏆</Text>
+                    <Text style={[styles.motivationText, { color: '#10B981' }]}>
+                      Bravo Champion ! {Math.abs(weightDifference).toFixed(1)} kg en moins !
+                    </Text>
+                    {daysDifference && daysDifference > 0 && (
+                      <Text style={[styles.motivationSubtext, { color: '#059669' }]}>
+                        {(Math.abs(weightDifference) / daysDifference * 7).toFixed(2)} kg/semaine
+                      </Text>
+                    )}
+                  </View>
+                )}
+
+                {weightDifference !== null && weightDifference > 0 && (
+                  <View style={[styles.motivationCard, { backgroundColor: colors.accent + '15' }]}>
+                    <Text style={[styles.motivationEmoji]}>💪</Text>
+                    <Text style={[styles.motivationText, { color: colors.accent }]}>
+                      En prise de masse ! +{weightDifference.toFixed(1)} kg de muscle !
                     </Text>
                   </View>
                 )}
@@ -531,44 +571,66 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
             </View>
           ) : (
             /* Grille de sélection */
-            <View style={styles.selectionGrid}>
-              {photos
-                .filter((photo) => {
-                  if (step === 'after' && selectedBefore) {
-                    return photo.id !== selectedBefore.id;
-                  }
-                  return true;
-                })
-                .map((photo) => (
-                  <TouchableOpacity
-                    key={photo.id}
-                    style={[styles.selectionCard, { backgroundColor: colors.card }]}
-                    onPress={() => {
-                      if (step === 'before') {
-                        handleBeforeSelect(photo);
-                      } else {
-                        handleAfterSelect(photo);
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Image
-                      source={getImageSource(photo)}
-                      style={styles.selectionImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.selectionInfo}>
-                      <Text style={[styles.selectionDate, { color: colors.textSecondary }]}>
-                        {formatDate(photo.date)}
-                      </Text>
+            <View style={styles.selectionContainer}>
+              {/* Instruction Card */}
+              <View style={[styles.instructionCard, { backgroundColor: colors.card }]}>
+                <View style={[styles.instructionIconContainer, { backgroundColor: colors.accent + '15' }]}>
+                  <Zap size={24} color={colors.accent} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.instructionTitle, { color: colors.textPrimary }]}>
+                  {step === 'before' ? 'Choisis ta photo de départ' : 'Choisis ta photo actuelle'}
+                </Text>
+                <Text style={[styles.instructionText, { color: colors.textSecondary }]}>
+                  {step === 'before'
+                    ? 'Sélectionne la photo qui montre ton point de départ'
+                    : 'Sélectionne ta photo la plus récente pour voir ta progression'}
+                </Text>
+              </View>
+
+              <View style={styles.selectionGrid}>
+                {photos
+                  .filter((photo) => {
+                    if (step === 'after' && selectedBefore) {
+                      return photo.id !== selectedBefore.id;
+                    }
+                    return true;
+                  })
+                  .map((photo) => (
+                    <TouchableOpacity
+                      key={photo.id}
+                      style={[styles.selectionCard, { backgroundColor: colors.card }]}
+                      onPress={() => {
+                        if (step === 'before') {
+                          handleBeforeSelect(photo);
+                        } else {
+                          handleAfterSelect(photo);
+                        }
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Image
+                        source={getImageSource(photo)}
+                        style={styles.selectionImage}
+                        resizeMode="cover"
+                      />
                       {photo.weight && (
-                        <Text style={[styles.selectionWeight, { color: colors.gold }]}>
-                          {photo.weight.toFixed(1)} kg
-                        </Text>
+                        <View style={styles.selectionWeightBadge}>
+                          <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
+                        </View>
                       )}
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                      <View style={[styles.selectionInfo, { backgroundColor: colors.card }]}>
+                        <Text style={[styles.selectionDate, { color: colors.textSecondary }]}>
+                          {formatDate(photo.date)}
+                        </Text>
+                        {photo.weight && (
+                          <Text style={[styles.selectionWeight, { color: colors.gold }]}>
+                            {photo.weight.toFixed(1)} kg
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+              </View>
             </View>
           )}
         </ScrollView>
@@ -589,7 +651,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   closeButton: {
     width: 44,
@@ -597,23 +659,62 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   placeholderButton: {
     width: 44,
     height: 44,
   },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  stepBadgeContainer: {
+    marginBottom: 4,
+  },
+  stepBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  stepBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
   title: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  shareButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   resetButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   resetButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   scrollView: {
     flex: 1,
@@ -628,21 +729,28 @@ const styles = StyleSheet.create({
   // Mode Toggle
   modeToggle: {
     flexDirection: 'row',
-    borderRadius: 14,
-    padding: 4,
+    borderRadius: 16,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   modeButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   modeButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   // Slider Mode
   sliderCaptureZone: {
@@ -807,82 +915,173 @@ const styles = StyleSheet.create({
   sideBySideRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   sideBySideCard: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sideBySideLabelContainer: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   sideBySideLabelText: {
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   sideBySideImage: {
     width: '100%',
-    height: 200,
+    height: 220,
   },
   sideBySideInfo: {
-    padding: 12,
+    padding: 16,
     alignItems: 'center',
+    gap: 4,
   },
   sideBySideDate: {
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   sideBySideWeight: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   arrowContainer: {
     paddingHorizontal: 4,
   },
   // Stats
   statsCard: {
-    borderRadius: 16,
-    padding: 20,
-    gap: 16,
+    borderRadius: 20,
+    padding: 24,
+    gap: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  statsIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: 16,
   },
   statItem: {
     alignItems: 'center',
     gap: 4,
   },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  statItemEnhanced: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  motivationCard: {
-    padding: 12,
+  statIconSmall: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  statValue: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  motivationCard: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  motivationEmoji: {
+    fontSize: 32,
+    marginBottom: 4,
   },
   motivationText: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  motivationSubtext: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  // Selection Grid
+  selectionContainer: {
+    gap: 20,
+  },
+  instructionCard: {
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  instructionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  instructionTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
+  instructionText: {
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: 8,
   },
-  // Selection Grid
   selectionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -890,23 +1089,44 @@ const styles = StyleSheet.create({
   },
   selectionCard: {
     width: selectionPhotoSize,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   selectionImage: {
     width: '100%',
-    height: 150,
+    height: 180,
+  },
+  selectionWeightBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: '#10B981',
+    borderRadius: 10,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectionInfo: {
-    padding: 12,
-    gap: 4,
+    padding: 14,
+    gap: 6,
   },
   selectionDate: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   selectionWeight: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
 });

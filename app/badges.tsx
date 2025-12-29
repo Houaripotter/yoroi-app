@@ -110,8 +110,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 
   return (
     <View style={styles.categorySection}>
-      <View style={styles.categoryHeader}>
-        <View style={styles.categoryIconContainer}>
+      <View style={[styles.categoryHeader, { borderBottomColor: colors.border }]}>
+        <View style={[styles.categoryIconContainer, { backgroundColor: colors.goldMuted }]}>
           <IconComponent size={20} color={colors.gold} strokeWidth={2.5} />
         </View>
         <Text style={[styles.categoryTitle, { color: colors.textPrimary }]}>
@@ -243,18 +243,21 @@ export default function BadgesScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.statsGradient}
           >
-            <View style={styles.statsIconContainer}>
-              <Award size={48} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+            <View style={styles.statsMainContent}>
+              <View style={styles.statsIconContainer}>
+                <Award size={56} color="rgba(255,255,255,0.95)" strokeWidth={2.5} />
+              </View>
+              <View style={styles.statsTextContent}>
+                <Text style={[styles.statsCount, { color: colors.background }]}>
+                  {unlockedCount}/{totalBadges}
+                </Text>
+                <Text style={[styles.statsLabel, { color: colors.background }]}>
+                  BADGES DÉBLOQUÉS
+                </Text>
+              </View>
             </View>
-            <View style={styles.statsContent}>
-              <Text style={[styles.statsCount, { color: colors.background }]}>
-                {unlockedCount}/{totalBadges}
-              </Text>
-              <Text style={[styles.statsLabel, { color: colors.background }]}>
-                badges debloques
-              </Text>
-            </View>
-            <View style={styles.statsProgressContainer}>
+
+            <View style={styles.statsProgressSection}>
               <View style={[styles.statsProgressBg, { backgroundColor: 'rgba(0,0,0,0.2)' }]}>
                 <View
                   style={[
@@ -267,7 +270,7 @@ export default function BadgesScreen() {
                 />
               </View>
               <Text style={[styles.statsProgressText, { color: colors.background }]}>
-                {Math.round((unlockedCount / totalBadges) * 100)}%
+                {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
               </Text>
             </View>
           </LinearGradient>
@@ -437,174 +440,216 @@ const styles = StyleSheet.create({
 
   // STATS CARD
   statsCard: {
-    marginBottom: 24,
+    marginBottom: 28,
     padding: 0,
     overflow: 'hidden',
   },
   statsGradient: {
+    padding: 24,
+  },
+  statsMainContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    marginBottom: 20,
   },
   statsIconContainer: {
-    marginRight: 16,
+    marginRight: 20,
   },
-  statsContent: {
+  statsTextContent: {
     flex: 1,
   },
   statsCount: {
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: '900',
+    letterSpacing: -1,
+    marginBottom: 4,
   },
   statsLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.9,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    opacity: 0.95,
   },
-  statsProgressContainer: {
-    alignItems: 'flex-end',
+  statsProgressSection: {
+    gap: 10,
   },
   statsProgressBg: {
-    width: 60,
-    height: 6,
-    borderRadius: 3,
+    height: 10,
+    borderRadius: 5,
     overflow: 'hidden',
   },
   statsProgressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 5,
   },
   statsProgressText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    marginTop: 4,
-    opacity: 0.9,
+    opacity: 0.95,
+    textAlign: 'center',
   },
 
   // CATEGORY
   categorySection: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 2,
   },
   categoryIconContainer: {
-    marginRight: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   categoryTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 1.5,
     flex: 1,
   },
   categoryCount: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   categoryCountText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
 
   // BADGES GRID
   badgesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 14,
   },
   badgeItem: {
-    width: 72,
-    height: 72,
-    borderRadius: 16,
+    width: 84,
+    height: 84,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 2.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
   badgeIconContainer: {
     position: 'relative',
   },
   badgeIcon: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeIconLocked: {
-    opacity: 0.3,
+    opacity: 0.35,
   },
   checkBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    bottom: -6,
+    right: -10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   lockBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    bottom: -6,
+    right: -10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   progressBar: {
     position: 'absolute',
-    bottom: 6,
-    left: 8,
-    right: 8,
-    height: 3,
-    borderRadius: 1.5,
+    bottom: 8,
+    left: 10,
+    right: 10,
+    height: 4,
+    borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: 2,
   },
 
   // MODAL
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 320,
-    borderRadius: 24,
-    padding: 24,
+    maxWidth: 350,
+    borderRadius: 28,
+    padding: 28,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   modalClose: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   modalIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   modalIcon: {
-    width: 80,
-    height: 80,
+    width: 90,
+    height: 90,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -612,87 +657,104 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   modalDescription: {
-    fontSize: 15,
+    fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 22,
+    marginBottom: 24,
+    lineHeight: 24,
+    fontWeight: '500',
   },
   unlockedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 12,
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    marginBottom: 16,
   },
   unlockedText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   progressContainer: {
     width: '100%',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 16,
   },
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   progressLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   progressValue: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   modalProgressBar: {
-    height: 8,
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 5,
     overflow: 'hidden',
   },
   modalProgressFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   progressPercent: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '700',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 10,
   },
   unlockedDate: {
-    fontSize: 13,
-    marginBottom: 16,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 20,
   },
   xpReward: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    marginTop: 8,
+    paddingTop: 20,
+    borderTopWidth: 2,
+    marginTop: 12,
   },
   xpLabel: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   xpBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   xpValue: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
 });

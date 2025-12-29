@@ -159,15 +159,19 @@ export default function SleepScreen() {
         {/* Carte principale */}
         <View style={[styles.mainCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.mainHeader}>
-            <Battery size={20} color="#8B5CF6" />
+            <View style={[styles.mainIconContainer, { backgroundColor: '#8B5CF615' }]}>
+              <Battery size={24} color="#8B5CF6" strokeWidth={2.5} />
+            </View>
             <Text style={[styles.mainTitle, { color: colors.textMuted }]}>DETTE DE SOMMEIL</Text>
           </View>
           <Text style={[styles.debtValue, { color: advice?.severity === 'good' ? '#10B981' : advice?.severity === 'danger' ? '#EF4444' : '#F59E0B' }]}>
             {stats?.sleepDebtHours || 0}<Text style={styles.debtUnit}>h</Text>
           </Text>
-          <View style={[styles.adviceBox, { backgroundColor: advice?.severity === 'good' ? '#10B98115' : advice?.severity === 'danger' ? '#EF444415' : '#F59E0B15' }]}>
-            {advice?.severity !== 'good' && <AlertTriangle size={14} color={advice?.severity === 'danger' ? '#EF4444' : '#F59E0B'} />}
-            {advice?.severity === 'good' && <CheckCircle2 size={14} color="#10B981" />}
+          <View style={[styles.adviceBox, { backgroundColor: advice?.severity === 'good' ? '#10B98120' : advice?.severity === 'danger' ? '#EF444420' : '#F59E0B20' }]}>
+            <View style={[styles.adviceIconContainer, { backgroundColor: advice?.severity === 'good' ? '#10B98130' : advice?.severity === 'danger' ? '#EF444430' : '#F59E0B30' }]}>
+              {advice?.severity !== 'good' && <AlertTriangle size={16} color={advice?.severity === 'danger' ? '#EF4444' : '#F59E0B'} strokeWidth={2.5} />}
+              {advice?.severity === 'good' && <CheckCircle2 size={16} color="#10B981" strokeWidth={2.5} />}
+            </View>
             <Text style={[styles.adviceText, { color: advice?.severity === 'good' ? '#10B981' : advice?.severity === 'danger' ? '#EF4444' : '#F59E0B' }]}>
               {advice?.message}
             </Text>
@@ -177,23 +181,29 @@ export default function SleepScreen() {
         {/* Stats */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Clock size={16} color="#8B5CF6" />
+            <View style={[styles.statIconContainer, { backgroundColor: '#8B5CF615' }]}>
+              <Clock size={18} color="#8B5CF6" strokeWidth={2.5} />
+            </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {stats ? formatSleepDuration(stats.averageDuration) : '--'}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moyenne</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            <Star size={16} color="#F59E0B" />
+            <View style={[styles.statIconContainer, { backgroundColor: '#F59E0B15' }]}>
+              <Star size={18} color="#F59E0B" strokeWidth={2.5} />
+            </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {stats?.averageQuality.toFixed(1) || '--'}/5
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Qualité</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
-            {stats?.trend === 'improving' && <TrendingUp size={16} color="#10B981" />}
-            {stats?.trend === 'declining' && <TrendingDown size={16} color="#EF4444" />}
-            {stats?.trend === 'stable' && <Target size={16} color={colors.textMuted} />}
+            <View style={[styles.statIconContainer, { backgroundColor: stats?.trend === 'improving' ? '#10B98115' : stats?.trend === 'declining' ? '#EF444415' : colors.border }]}>
+              {stats?.trend === 'improving' && <TrendingUp size={18} color="#10B981" strokeWidth={2.5} />}
+              {stats?.trend === 'declining' && <TrendingDown size={18} color="#EF4444" strokeWidth={2.5} />}
+              {stats?.trend === 'stable' && <Target size={18} color={colors.textMuted} strokeWidth={2.5} />}
+            </View>
             <Text style={[styles.statValue, { color: stats?.trend === 'improving' ? '#10B981' : stats?.trend === 'declining' ? '#EF4444' : colors.textPrimary }]}>
               {stats?.trend === 'improving' ? '↗' : stats?.trend === 'declining' ? '↘' : '→'}
             </Text>
@@ -383,19 +393,69 @@ const styles = StyleSheet.create({
   content: { padding: 16 },
 
   // Main card
-  mainCard: { padding: 20, borderRadius: 16, marginBottom: 12, alignItems: 'center' },
-  mainHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-  mainTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
-  debtValue: { fontSize: 56, fontWeight: '900' },
-  debtUnit: { fontSize: 20, fontWeight: '600' },
-  adviceBox: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, marginTop: 10 },
-  adviceText: { fontSize: 11, fontWeight: '600', flex: 1 },
+  mainCard: {
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  mainHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  mainIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mainTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  debtValue: { fontSize: 64, fontWeight: '900', letterSpacing: -2 },
+  debtUnit: { fontSize: 24, fontWeight: '700', letterSpacing: -1 },
+  adviceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 16
+  },
+  adviceIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adviceText: { fontSize: 13, fontWeight: '700', flex: 1, letterSpacing: -0.2 },
 
   // Stats
-  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  statCard: { flex: 1, padding: 12, borderRadius: 12, alignItems: 'center' },
-  statValue: { fontSize: 18, fontWeight: '800', marginTop: 4 },
-  statLabel: { fontSize: 9, fontWeight: '600', marginTop: 2 },
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: { fontSize: 20, fontWeight: '900', marginTop: 6, letterSpacing: -0.5 },
+  statLabel: { fontSize: 10, fontWeight: '700', marginTop: 4, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   // Goal
   goalCard: { padding: 16, borderRadius: 14, marginBottom: 12 },

@@ -162,9 +162,12 @@ export default function BodyStatusScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.subtitle}>
-          Surveillez l'état de votre machine de combat
-        </Text>
+        <View style={styles.headerCard}>
+          <Activity size={22} color="#0EA5E9" strokeWidth={2.5} />
+          <Text style={styles.subtitle}>
+            Surveille l'état de ta machine de combat
+          </Text>
+        </View>
 
         <View style={styles.zonesGrid}>
           {BODY_ZONES.map((zone) => {
@@ -178,9 +181,9 @@ export default function BodyStatusScreen() {
                   styles.zoneCard,
                   {
                     borderColor: statusColor,
-                    borderWidth: zoneStatus ? 2 : 1,
-                    backgroundColor: zoneStatus?.status === 'injury' 
-                      ? '#FEF2F2' 
+                    borderWidth: zoneStatus ? 2.5 : 1.5,
+                    backgroundColor: zoneStatus?.status === 'injury'
+                      ? '#FEF2F2'
                       : zoneStatus?.status === 'warning'
                       ? '#FFFBEB'
                       : '#F0FDF4',
@@ -189,27 +192,29 @@ export default function BodyStatusScreen() {
                 onPress={() => handleZonePress(zone.key)}
                 activeOpacity={0.7}
               >
-                <View style={styles.zoneIconContainer}>
+                <View style={[styles.zoneIconContainer, { backgroundColor: statusColor + '20' }]}>
                   <Text style={styles.zoneIcon}>{zone.icon}</Text>
                 </View>
                 <Text style={styles.zoneLabel}>{zone.label}</Text>
                 {zoneStatus ? (
                   <View style={styles.zoneStatusContainer}>
-                    {getStatusIcon(zoneStatus.status)}
+                    <View style={[styles.statusIconWrapper, { backgroundColor: statusColor + '20' }]}>
+                      {getStatusIcon(zoneStatus.status)}
+                    </View>
                     <Text style={[styles.zoneStatusText, { color: statusColor }]}>
                       {getStatusLabel(zoneStatus.status)}
                     </Text>
                     {zoneStatus.pain && (
-                      <Text style={styles.zonePainText}>Douleur: {zoneStatus.pain}/10</Text>
+                      <Text style={styles.zonePainText}>💥 Douleur: {zoneStatus.pain}/10</Text>
                     )}
                     {zoneStatus.note && (
                       <Text style={styles.zoneNoteText} numberOfLines={1}>
-                        {zoneStatus.note}
+                        📝 {zoneStatus.note}
                       </Text>
                     )}
                   </View>
                 ) : (
-                  <Text style={styles.zoneEmptyText}>Non défini</Text>
+                  <Text style={styles.zoneEmptyText}>Appuie pour définir</Text>
                 )}
               </TouchableOpacity>
             );
@@ -391,68 +396,99 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
-  subtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
+  headerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 24,
-    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  subtitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: -0.2,
   },
   zonesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 14,
   },
   zoneCard: {
     width: '47%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   zoneIconContainer: {
-    marginBottom: 8,
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   zoneIcon: {
-    fontSize: 40,
+    fontSize: 44,
   },
   zoneLabel: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '900',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 12,
+    letterSpacing: -0.3,
   },
   zoneStatusContainer: {
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+    width: '100%',
+  },
+  statusIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   zoneStatusText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     textAlign: 'center',
+    letterSpacing: 0.2,
   },
   zonePainText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: '#F59E0B',
-    marginTop: 2,
+    marginTop: 4,
   },
   zoneNoteText: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: '#EF4444',
-    marginTop: 2,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 4,
     textAlign: 'center',
   },
   zoneEmptyText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     color: '#9CA3AF',
+    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,

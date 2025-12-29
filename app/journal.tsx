@@ -381,7 +381,9 @@ export default function JournalScreen() {
         >
           {/* Header Info */}
           <View style={[styles.infoCard, { backgroundColor: colors.goldMuted }]}>
-            <BookOpen size={24} color={colors.gold} />
+            <View style={[styles.infoIconContainer, { backgroundColor: colors.gold + '20' }]}>
+              <BookOpen size={26} color={colors.gold} strokeWidth={2.5} />
+            </View>
             <Text style={[styles.infoText, { color: colors.gold }]}>
               Note ton ressenti pour suivre ton mental de guerrier
             </Text>
@@ -390,7 +392,9 @@ export default function JournalScreen() {
           {/* Today's Entry */}
           <Card style={styles.todayCard}>
             <View style={styles.todayHeader}>
-              <Calendar size={20} color={colors.gold} />
+              <View style={[styles.todayIconContainer, { backgroundColor: colors.gold + '15' }]}>
+                <Calendar size={22} color={colors.gold} strokeWidth={2.5} />
+              </View>
               <Text style={[styles.todayTitle, { color: colors.textPrimary }]}>
                 {formatFullDate(getToday())}
               </Text>
@@ -722,71 +726,99 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: RADIUS.lg,
-    marginBottom: 20,
+    gap: 14,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  infoIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
 
   // Today Card
   todayCard: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   todayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 18,
+  },
+  todayIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   todayTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
     textTransform: 'capitalize',
+    letterSpacing: -0.5,
   },
   moodQuestion: {
-    fontSize: 15,
-    marginBottom: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 16,
   },
 
   // Mood Selector
   moodSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 20,
+    gap: 10,
+    marginBottom: 24,
   },
   moodButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: RADIUS.md,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   moodEmoji: {
-    fontSize: 28,
-    marginBottom: 4,
+    fontSize: 32,
+    marginBottom: 6,
   },
   moodLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 
   // Note Input
   noteLabel: {
-    fontSize: 14,
-    marginBottom: 8,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 10,
   },
   noteInput: {
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    padding: 14,
-    fontSize: 15,
-    minHeight: 100,
-    marginBottom: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 16,
+    fontSize: 16,
+    minHeight: 120,
+    marginBottom: 20,
+    fontWeight: '500',
   },
 
   // Save Button
@@ -794,13 +826,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    borderRadius: RADIUS.md,
+    gap: 12,
+    paddingVertical: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
 
   // Analysis Card

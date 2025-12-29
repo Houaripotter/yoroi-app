@@ -125,7 +125,7 @@ const StatBadge = ({
 }) => (
   <View style={styles.statBadge}>
     <View style={[styles.statBadgeIcon, { backgroundColor: bgColor }]}>
-      <Icon size={18} color={color} />
+      <Icon size={22} color={color} strokeWidth={2.5} />
     </View>
     <Text style={styles.statBadgeValue}>{value}</Text>
     <Text style={styles.statBadgeLabel}>{label}</Text>
@@ -199,7 +199,7 @@ const InfoRow = ({
 }) => (
   <View style={styles.infoRow}>
     <View style={[styles.infoIcon, { backgroundColor: bgColor }]}>
-      <Icon size={16} color={color} />
+      <Icon size={18} color={color} strokeWidth={2.5} />
     </View>
     <Text style={styles.infoLabel}>{label}</Text>
     <Text style={[styles.infoValue, value.includes('kg') && parseFloat(value) < 80 ? { color: COLORS.success } : {}]}>
@@ -803,29 +803,38 @@ const styles = StyleSheet.create({
   statBadge: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
+    borderRadius: RADIUS.xxl,
+    borderWidth: 1.5,
     borderColor: COLORS.surfaceBorder,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   statBadgeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   statBadgeValue: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontWeight: '900',
     color: COLORS.text,
-    marginBottom: 2,
+    marginBottom: SPACING.xs,
+    letterSpacing: -0.5,
   },
   statBadgeLabel: {
     fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '700',
     color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   // Progress Card
@@ -896,42 +905,51 @@ const styles = StyleSheet.create({
   // Info Card
   infoCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    borderWidth: 1,
+    borderRadius: RADIUS.xxl,
+    borderWidth: 1.5,
     borderColor: COLORS.surfaceBorder,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   sectionTitle: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.bold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: '900',
     color: COLORS.text,
     marginBottom: SPACING.lg,
+    letterSpacing: -0.3,
   },
   infoList: {
-    gap: SPACING.md,
+    gap: SPACING.lg,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+    paddingVertical: SPACING.xs,
   },
   infoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.md,
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   infoLabel: {
     flex: 1,
     fontSize: TYPOGRAPHY.size.md,
+    fontWeight: '600',
     color: COLORS.textSecondary,
   },
   infoValue: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: TYPOGRAPHY.weight.semibold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: '800',
     color: COLORS.text,
+    letterSpacing: -0.3,
   },
 
   // Edit Form

@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar } from 'lucide-react-native';
+import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar, Zap, Target, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
@@ -126,26 +126,58 @@ export default function TransformationScreen() {
     setStep('select_before');
   };
 
-  // Pas assez de photos
+  // Pas assez de photos - Empty State amélioré
   if (!isLoading && photos.length < 2) {
     return (
       <ScreenWrapper>
         <Header title="Ma Transformation" showBack />
         <View style={styles.emptyContainer}>
-          <Camera size={64} color={colors.textMuted} strokeWidth={1.5} />
+          <View style={[styles.emptyIconContainer, { backgroundColor: `${colors.accent}15` }]}>
+            <Camera size={48} color={colors.accent} strokeWidth={2} />
+          </View>
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Pas assez de photos
+            Commence ta transformation
           </Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Ajoute au moins 2 photos de progression pour utiliser la comparaison avant/apres
+            Ajoute au moins 2 photos pour visualiser ta progression et te motiver !
           </Text>
+
+          {/* Bénéfices */}
+          <View style={styles.benefitsContainer}>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: `${colors.gold}20` }]}>
+                <Zap size={20} color={colors.gold} />
+              </View>
+              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
+                Compare avant/après
+              </Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: `${colors.success}20` }]}>
+                <Target size={20} color={colors.success} />
+              </View>
+              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
+                Suis ta progression
+              </Text>
+            </View>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}20` }]}>
+                <Award size={20} color={colors.accent} />
+              </View>
+              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
+                Partage tes résultats
+              </Text>
+            </View>
+          </View>
+
           <TouchableOpacity
-            style={[styles.emptyButton, { backgroundColor: colors.gold }]}
+            style={[styles.emptyButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/photos')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.emptyButtonText, { color: colors.background }]}>
-              Ajouter des photos
+            <Camera size={20} color="#FFFFFF" />
+            <Text style={styles.emptyButtonText}>
+              Ajouter mes photos
             </Text>
           </TouchableOpacity>
         </View>
@@ -337,11 +369,16 @@ export default function TransformationScreen() {
         {/* MODE SELECTION AVANT */}
         {step === 'select_before' && (
           <View style={styles.selectionSection}>
+            <View style={styles.selectionHeader}>
+              <View style={[styles.selectionBadge, { backgroundColor: '#EF444420' }]}>
+                <Text style={[styles.selectionBadgeText, { color: '#EF4444' }]}>ÉTAPE 1/2</Text>
+              </View>
+            </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo AVANT
+              Choisis ta photo AVANT ⏪
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              Selectionne la photo de depart de ta transformation
+              Sélectionne la photo de départ de ta transformation
             </Text>
 
             <View style={styles.photoGrid}>
@@ -413,11 +450,16 @@ export default function TransformationScreen() {
               </TouchableOpacity>
             </View>
 
+            <View style={styles.selectionHeader}>
+              <View style={[styles.selectionBadge, { backgroundColor: '#10B98120' }]}>
+                <Text style={[styles.selectionBadgeText, { color: '#10B981' }]}>ÉTAPE 2/2</Text>
+              </View>
+            </View>
             <Text style={[styles.selectionTitle, { color: colors.textPrimary }]}>
-              Choisis ta photo APRES
+              Choisis ta photo APRÈS ⏩
             </Text>
             <Text style={[styles.selectionSubtitle, { color: colors.textSecondary }]}>
-              Selectionne ta photo la plus recente
+              Sélectionne ta photo la plus récente
             </Text>
 
             <View style={styles.photoGrid}>
@@ -480,33 +522,75 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
   },
-  // Empty
+  // Empty State - Amélioré
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    gap: 16,
+    paddingHorizontal: 30,
+    gap: 20,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 16,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    maxWidth: 320,
   },
-  emptyButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 14,
+  benefitsContainer: {
+    width: '100%',
+    gap: 12,
     marginTop: 8,
   },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  benefitIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benefitText: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   emptyButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   // Header
   resetButton: {
@@ -516,28 +600,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Stats Card
+  // Stats Card - Amélioré
   statsCard: {
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 24,
     marginTop: 20,
-    gap: 16,
+    gap: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   statsTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '900',
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
   },
   statBox: {
     flex: 1,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 18,
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   statIconRow: {
     flexDirection: 'row',
@@ -545,165 +635,203 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   statLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   statEmoji: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#10B981',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   statSub: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
   },
   motivationBanner: {
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 16,
+    padding: 18,
     alignItems: 'center',
   },
   motivationText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     textAlign: 'center',
+    lineHeight: 22,
   },
-  // Quick Select
+  // Quick Select - Amélioré
   quickSelectSection: {
-    marginTop: 24,
+    marginTop: 28,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 16,
   },
   quickSelectRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   quickSelectCard: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   quickSelectImage: {
     width: '100%',
-    height: 100,
+    height: 120,
   },
   quickSelectBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    top: 10,
+    left: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   quickSelectBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   quickSelectDate: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
     textAlign: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   quickSelectArrow: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   // Selection Section
   selectionSection: {
     gap: 12,
   },
-  selectionTitle: {
-    fontSize: 20,
+  selectionHeader: {
+    marginBottom: 4,
+  },
+  selectionBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  selectionBadgeText: {
+    fontSize: 11,
     fontWeight: '800',
+    letterSpacing: 1,
+  },
+  selectionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   selectionSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     marginBottom: 8,
+    lineHeight: 22,
   },
   photoGrid: {
-    gap: 12,
+    gap: 14,
   },
   photoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
-    padding: 8,
-    gap: 12,
+    padding: 10,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   photoImage: {
-    width: 80,
-    height: 100,
-    borderRadius: 12,
+    width: 90,
+    height: 110,
+    borderRadius: 14,
   },
   photoInfo: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
   photoDate: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   photoWeight: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
   },
   selectIndicator: {
     paddingRight: 8,
+    backgroundColor: 'transparent',
   },
-  // Selected Preview
+  // Selected Preview - Amélioré
   selectedPreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 20,
-    gap: 12,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 24,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   selectedPreviewImage: {
-    width: 60,
-    height: 80,
-    borderRadius: 10,
+    width: 70,
+    height: 90,
+    borderRadius: 12,
   },
   selectedPreviewInfo: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
   selectedBadge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   selectedBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   selectedDate: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 4,
+    fontWeight: '600',
   },
   selectedWeight: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
   },
   changeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
   },
   changeButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

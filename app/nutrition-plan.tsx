@@ -136,7 +136,9 @@ export default function NutritionPlanScreen() {
         {/* Formulaire Infos Personnelles */}
         <View style={[styles.personalInfoCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.personalInfoHeader}>
-            <User size={20} color={colors.accent} />
+            <View style={[styles.headerIconContainer, { backgroundColor: colors.accent + '15' }]}>
+              <User size={22} color={colors.accent} strokeWidth={2.5} />
+            </View>
             <Text style={[styles.personalInfoTitle, { color: colors.textPrimary }]}>
               Tes informations
             </Text>
@@ -667,61 +669,80 @@ const styles = StyleSheet.create({
 
   // Personal Info Card
   personalInfoCard: {
-    padding: 20,
-    borderRadius: 16,
+    padding: 24,
+    borderRadius: 20,
     marginBottom: SPACING.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
   },
   personalInfoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 20,
+  },
+  headerIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   personalInfoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   inputsGrid: {
-    gap: 12,
+    gap: 14,
   },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 12,
-    gap: 12,
+    padding: 16,
+    borderRadius: 14,
+    gap: 14,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   inputContent: {
     flex: 1,
   },
   inputLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   input: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
     padding: 0,
+    letterSpacing: -0.5,
   },
   inputUnit: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   genderButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   genderBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 2,
     alignItems: 'center',
   },
   genderText: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
 
   // Calories card

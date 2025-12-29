@@ -316,30 +316,42 @@ export default function HydrationScreen() {
 
         {/* Boutons d'ajout */}
         <View style={[styles.buttonsCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Ajouter de l'eau</Text>
-          
+          <View style={styles.cardHeader}>
+            <Droplets size={22} color="#0EA5E9" strokeWidth={2.5} />
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Ajouter de l'eau</Text>
+          </View>
+
           <View style={styles.buttonsRow}>
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: '#EF444420' }]}
+              style={[styles.addButton, { backgroundColor: '#EF444415' }]}
               onPress={() => addWater(-0.25)}
+              activeOpacity={0.7}
             >
-              <Minus size={20} color="#EF4444" />
+              <View style={[styles.addButtonIcon, { backgroundColor: '#EF444425' }]}>
+                <Minus size={18} color="#EF4444" strokeWidth={2.5} />
+              </View>
               <Text style={[styles.addButtonLabel, { color: '#EF4444' }]}>-250ml</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: '#0EA5E920' }]}
+              style={[styles.addButton, { backgroundColor: '#0EA5E915' }]}
               onPress={() => addWater(0.25)}
+              activeOpacity={0.7}
             >
-              <Plus size={20} color="#0EA5E9" />
+              <View style={[styles.addButtonIcon, { backgroundColor: '#0EA5E925' }]}>
+                <Plus size={18} color="#0EA5E9" strokeWidth={2.5} />
+              </View>
               <Text style={[styles.addButtonLabel, { color: '#0EA5E9' }]}>+250ml</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.addButton, { backgroundColor: '#0EA5E9' }]}
               onPress={() => addWater(0.5)}
+              activeOpacity={0.8}
             >
-              <Droplets size={20} color="#FFFFFF" />
+              <View style={[styles.addButtonIcon, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+                <Droplets size={18} color="#FFFFFF" strokeWidth={2.5} />
+              </View>
               <Text style={[styles.addButtonLabel, { color: '#FFFFFF' }]}>+500ml</Text>
             </TouchableOpacity>
           </View>
@@ -349,8 +361,9 @@ export default function HydrationScreen() {
             {[0.1, 0.33, 0.75, 1].map((amount) => (
               <TouchableOpacity
                 key={amount}
-                style={[styles.quickButton, { backgroundColor: colors.background }]}
+                style={[styles.quickButton, { backgroundColor: colors.background, borderColor: '#0EA5E930' }]}
                 onPress={() => addWater(amount)}
+                activeOpacity={0.7}
               >
                 <Text style={[styles.quickLabel, { color: '#0EA5E9' }]}>
                   +{(amount * 1000).toFixed(0)}ml
@@ -764,44 +777,71 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   buttonsCard: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 12,
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   buttonsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   addButton: {
     flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  addButtonIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addButtonLabel: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   quickRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
+    gap: 10,
+    marginTop: 16,
   },
   quickButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1.5,
   },
   quickLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   goalCard: {
     borderRadius: 16,

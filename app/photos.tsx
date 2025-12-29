@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useFocusEffect, router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
@@ -256,13 +256,18 @@ export default function PhotosScreen() {
         title="Photos de Progression"
         showBack
         rightElement={
-          <TouchableOpacity
-            style={styles.compareButton}
-            onPress={openComparison}
-            activeOpacity={0.7}
-          >
-            <GitCompare size={20} color={themeColors.gold} strokeWidth={2.5} />
-          </TouchableOpacity>
+          photos.length >= 2 ? (
+            <TouchableOpacity
+              style={[styles.compareButton, { backgroundColor: themeColors.gold }]}
+              onPress={openComparison}
+              activeOpacity={0.8}
+            >
+              <GitCompare size={18} color={themeColors.background} strokeWidth={2.5} />
+              <Text style={[styles.compareButtonText, { color: themeColors.background }]}>
+                Comparer
+              </Text>
+            </TouchableOpacity>
+          ) : null
         }
       />
 
@@ -280,17 +285,108 @@ export default function PhotosScreen() {
         }
       >
         {/* Message de sécurité */}
-        <View style={styles.securityCard}>
-          <View style={styles.securityIconContainer}>
-            <Shield size={24} color="#27AE60" strokeWidth={2.5} />
+        <View style={[styles.securityCard, { backgroundColor: isDark ? '#1A4D2E' : '#E8F8F5' }]}>
+          <View style={[styles.securityIconContainer, { backgroundColor: isDark ? '#27AE6030' : '#27AE6020' }]}>
+            <Shield size={28} color="#27AE60" strokeWidth={2.5} />
           </View>
           <View style={styles.securityTextContainer}>
-            <Text style={[styles.securityTitle, { color: themeColors.textPrimary }]}>Coffre-fort local</Text>
-            <Text style={[styles.securityText, { color: themeColors.textSecondary }]}>
-              Vos photos sont stockées uniquement sur cet appareil. Elles ne sont jamais envoyées sur un serveur.
+            <Text style={[styles.securityTitle, { color: isDark ? '#4ADE80' : '#27AE60' }]}>
+              Coffre-fort 100% Local
+            </Text>
+            <Text style={[styles.securityText, { color: isDark ? '#86EFAC' : '#1E8449' }]}>
+              Toutes tes photos restent sur ton appareil. Jamais dans le cloud. Jamais.
             </Text>
           </View>
         </View>
+
+        {/* Stats Summary Card - only show when photos exist */}
+        {photos.length > 0 && (
+          <View style={[styles.statsCard, { backgroundColor: themeColors.card }]}>
+            <View style={styles.statsHeader}>
+              <Text style={[styles.statsTitle, { color: themeColors.textPrimary }]}>Progression</Text>
+              <View style={[styles.photoCountBadge, { backgroundColor: themeColors.gold + '20' }]}>
+                <Text style={[styles.photoCountBadgeText, { color: themeColors.gold }]}>
+                  {photos.length} photo{photos.length > 1 ? 's' : ''}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.statsGrid}>
+              {/* Timeline */}
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: themeColors.accent + '20' }]}>
+                  <Calendar size={20} color={themeColors.accent} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
+                  {(() => {
+                    const firstDate = new Date(photos[photos.length - 1].date);
+                    const lastDate = new Date(photos[0].date);
+                    const diffTime = Math.abs(lastDate.getTime() - firstDate.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 0) return 'Aujourd\'hui';
+                    if (diffDays < 7) return `${diffDays} jours`;
+                    if (diffDays < 30) return `${Math.floor(diffDays / 7)} semaines`;
+                    return `${Math.floor(diffDays / 30)} mois`;
+                  })()}
+                </Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Suivi</Text>
+              </View>
+
+              {/* Weight Progress */}
+              {(() => {
+                const photosWithWeight = photos.filter(p => p.weight);
+                if (photosWithWeight.length >= 2) {
+                  const firstWeight = photosWithWeight[photosWithWeight.length - 1].weight!;
+                  const lastWeight = photosWithWeight[0].weight!;
+                  const weightDiff = lastWeight - firstWeight;
+                  return (
+                    <View style={styles.statItem}>
+                      <View style={[styles.statIconContainer, { backgroundColor: weightDiff <= 0 ? '#10B98120' : '#EF444420' }]}>
+                        <TrendingDown
+                          size={20}
+                          color={weightDiff <= 0 ? '#10B981' : '#EF4444'}
+                          strokeWidth={2.5}
+                          style={weightDiff > 0 ? { transform: [{ rotate: '180deg' }] } : {}}
+                        />
+                      </View>
+                      <Text style={[styles.statValue, { color: weightDiff <= 0 ? '#10B981' : '#EF4444' }]}>
+                        {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
+                      </Text>
+                      <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Évolution</Text>
+                    </View>
+                  );
+                }
+                return (
+                  <View style={styles.statItem}>
+                    <View style={[styles.statIconContainer, { backgroundColor: themeColors.primary + '20' }]}>
+                      <ImageIcon size={20} color={themeColors.primary} strokeWidth={2.5} />
+                    </View>
+                    <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
+                      {photosWithWeight.length}
+                    </Text>
+                    <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Avec poids</Text>
+                  </View>
+                );
+              })()}
+
+              {/* Achievement/Milestone */}
+              <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: themeColors.gold + '20' }]}>
+                  <Award size={20} color={themeColors.gold} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.statValue, { color: themeColors.textPrimary }]}>
+                  {(() => {
+                    if (photos.length >= 50) return 'Légende';
+                    if (photos.length >= 25) return 'Expert';
+                    if (photos.length >= 10) return 'Motivé';
+                    return 'Débutant';
+                  })()}
+                </Text>
+                <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Niveau</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Boutons d'ajout - Caméra et Galerie */}
         <View style={styles.addButtonsContainer}>
@@ -353,18 +449,82 @@ export default function PhotosScreen() {
         {/* Grille de photos */}
         {photos.length === 0 ? (
           <View style={styles.emptyState}>
-            <Camera size={48} color={themeColors.textMuted} strokeWidth={2} opacity={0.6} />
-            <Text style={[styles.emptyStateTitle, { color: themeColors.textPrimary }]}>Aucune photo</Text>
-            <Text style={[styles.emptyStateText, { color: themeColors.textSecondary }]}>
-              Commencez à capturer votre progression en ajoutant votre première photo
+            <View style={[styles.emptyIconContainer, { backgroundColor: themeColors.accent + '15' }]}>
+              <Camera size={56} color={themeColors.accent} strokeWidth={2.5} />
+            </View>
+            <Text style={[styles.emptyStateTitle, { color: themeColors.textPrimary }]}>
+              Commence Ton Voyage
             </Text>
+            <Text style={[styles.emptyStateSubtitle, { color: themeColors.textSecondary }]}>
+              Capture ta transformation physique et deviens une légende
+            </Text>
+
+            {/* Benefits Grid */}
+            <View style={styles.benefitsGrid}>
+              <View style={styles.benefitItem}>
+                <View style={[styles.benefitIconContainer, { backgroundColor: '#10B98115' }]}>
+                  <TrendingDown size={24} color="#10B981" strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
+                  Suivi Poids
+                </Text>
+                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
+                  Visualise ton évolution dans le temps
+                </Text>
+              </View>
+
+              <View style={styles.benefitItem}>
+                <View style={[styles.benefitIconContainer, { backgroundColor: themeColors.accent + '15' }]}>
+                  <Calendar size={24} color={themeColors.accent} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
+                  Timeline
+                </Text>
+                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
+                  Chronologie complète de ta progression
+                </Text>
+              </View>
+
+              <View style={styles.benefitItem}>
+                <View style={[styles.benefitIconContainer, { backgroundColor: themeColors.gold + '15' }]}>
+                  <Award size={24} color={themeColors.gold} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
+                  Achievements
+                </Text>
+                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
+                  Débloque des jalons de progression
+                </Text>
+              </View>
+
+              <View style={styles.benefitItem}>
+                <View style={[styles.benefitIconContainer, { backgroundColor: '#27AE6015' }]}>
+                  <Shield size={24} color="#27AE60" strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.benefitTitle, { color: themeColors.textPrimary }]}>
+                  100% Privé
+                </Text>
+                <Text style={[styles.benefitText, { color: themeColors.textSecondary }]}>
+                  Tes photos ne quittent jamais ton appareil
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.emptyStateCTA}>
+              <Text style={[styles.emptyStateCTAText, { color: themeColors.textMuted }]}>
+                Appuie sur les boutons ci-dessus pour commencer
+              </Text>
+            </View>
           </View>
         ) : (
           <View style={styles.photoGrid}>
             {photos.map((photo) => (
-              <TouchableOpacity 
-                key={photo.id} 
-                style={styles.photoCard}
+              <TouchableOpacity
+                key={photo.id}
+                style={[
+                  styles.photoCard,
+                  { backgroundColor: themeColors.card }
+                ]}
                 onPress={() => isBlurred && setIsBlurred(false)}
                 activeOpacity={isBlurred ? 0.9 : 1}
               >
@@ -380,6 +540,12 @@ export default function PhotosScreen() {
                       <EyeOff size={24} color="rgba(255,255,255,0.7)" />
                     </View>
                   )}
+                  {/* Weight indicator badge */}
+                  {!isBlurred && photo.weight && (
+                    <View style={styles.weightBadge}>
+                      <TrendingDown size={12} color="#FFFFFF" strokeWidth={3} />
+                    </View>
+                  )}
                 </View>
                 {!isBlurred && (
                   <TouchableOpacity
@@ -390,8 +556,8 @@ export default function PhotosScreen() {
                     <X size={18} color="#FFFFFF" strokeWidth={2.5} />
                   </TouchableOpacity>
                 )}
-                <View style={styles.photoInfo}>
-                  <Text style={styles.photoDate}>
+                <View style={[styles.photoInfo, { backgroundColor: themeColors.card }]}>
+                  <Text style={[styles.photoDate, { color: themeColors.textSecondary }]}>
                     {new Date(photo.date).toLocaleDateString('fr-FR', {
                       day: 'numeric',
                       month: 'short',
@@ -401,10 +567,14 @@ export default function PhotosScreen() {
                   {!isBlurred && (
                     <>
                       {photo.weight && (
-                        <Text style={styles.photoWeight}>{photo.weight.toFixed(1)} kg</Text>
+                        <Text style={[styles.photoWeight, { color: themeColors.textPrimary }]}>
+                          {photo.weight.toFixed(1)} kg
+                        </Text>
                       )}
                       {photo.notes && (
-                        <Text style={styles.photoNotes} numberOfLines={1}>{photo.notes}</Text>
+                        <Text style={[styles.photoNotes, { color: themeColors.textSecondary }]} numberOfLines={1}>
+                          {photo.notes}
+                        </Text>
                       )}
                     </>
                   )}
@@ -587,16 +757,23 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   compareButton: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.xl,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.xl,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  compareButtonText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   scrollView: {
     flex: 1,
@@ -609,18 +786,16 @@ const styles = StyleSheet.create({
   securityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F8F5',
-    borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.xxl,
     padding: SPACING.lg,
     gap: SPACING.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#27AE6030',
   },
   securityIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#27AE6020',
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -628,16 +803,74 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   securityTitle: {
-    fontSize: FONT_SIZE.md,
-    fontWeight: '700',
-    color: '#27AE60',
-    marginBottom: 4,
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '800',
+    marginBottom: SPACING.xs,
   },
   securityText: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+    lineHeight: FONT_SIZE.md * 1.5,
+  },
+  // Stats Summary Card
+  statsCard: {
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  statsTitle: {
+    fontSize: FONT_SIZE.xxl,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  photoCountBadge: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.md,
+  },
+  photoCountBadgeText: {
     fontSize: FONT_SIZE.sm,
-    fontWeight: '500',
-    color: '#1E8449',
-    lineHeight: FONT_SIZE.sm * 1.4,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xs,
+  },
+  statValue: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   // Nouveaux boutons Caméra et Galerie
   addButtonsContainer: {
@@ -646,18 +879,18 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    paddingVertical: SPACING.xl,
-    borderRadius: RADIUS.xxl,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.xl,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-    minHeight: 120,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   cameraButton: {
     backgroundColor: '#8B5CF6', // Violet/Purple
@@ -666,11 +899,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981', // Vert/Green
   },
   actionButtonText: {
-    fontSize: FONT_SIZE.lg,
+    fontSize: FONT_SIZE.md,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
   blurButton: {
     flexDirection: 'row',
@@ -695,8 +927,67 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.xxxl * 2,
-    gap: SPACING.md,
+    paddingVertical: SPACING.xxxl,
+    gap: SPACING.lg,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: RADIUS.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  emptyStateSubtitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: FONT_SIZE.md * 1.5,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.lg,
+  },
+  benefitsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.lg,
+  },
+  benefitItem: {
+    width: (screenWidth - 64 - SPACING.lg) / 2,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  benefitIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xs,
+  },
+  benefitTitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '800',
+    textAlign: 'center',
+    letterSpacing: 0.3,
+  },
+  benefitText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: FONT_SIZE.sm * 1.4,
+    paddingHorizontal: SPACING.xs,
+  },
+  emptyStateCTA: {
+    marginTop: SPACING.xxl,
+    paddingHorizontal: SPACING.xl,
+  },
+  emptyStateCTAText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
@@ -761,15 +1052,15 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xxl,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   photoImageContainer: {
     position: 'relative',
     width: '100%',
-    height: photoSize * 1.3,
+    height: photoSize * 1.35,
   },
   photoImage: {
     width: '100%',
@@ -788,34 +1079,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  weightBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.sm,
+    backgroundColor: '#10B981',
+    borderRadius: RADIUS.md,
+    padding: SPACING.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   deleteButton: {
     position: 'absolute',
     top: SPACING.sm,
     right: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     borderRadius: RADIUS.full,
     padding: SPACING.xs,
     zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   photoInfo: {
-    padding: SPACING.sm,
-    gap: 2,
+    padding: SPACING.md,
+    gap: SPACING.xs,
   },
   photoDate: {
     fontSize: FONT_SIZE.xs,
-    fontWeight: '600',
-    letterSpacing: 0.2,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   photoWeight: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   photoNotes: {
     fontSize: FONT_SIZE.xs,
     fontWeight: '500',
     opacity: 0.7,
-    marginTop: 2,
+    marginTop: SPACING.xs,
   },
   // Modal poids
   weightInfoContainer: {
