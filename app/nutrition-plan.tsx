@@ -10,10 +10,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  TextInput,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Info, ExternalLink } from 'lucide-react-native';
+import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { getLatestWeight, getProfile, Profile } from '@/lib/database';
 import {
@@ -62,11 +63,24 @@ export default function NutritionPlanScreen() {
       const profileData = await getProfile();
       if (profileData) {
         const latestWeight = await getLatestWeight();
+
+        // Calculer l'âge à partir de la date de naissance si disponible
+        let age = 30; // Valeur par défaut
+        if (profileData.birth_date) {
+          const birthDate = new Date(profileData.birth_date);
+          const today = new Date();
+          age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+        }
+
         setProfile(profileData);
         setUserProfile({
           weight: latestWeight?.weight ?? profileData.start_weight ?? 80,
           height: profileData.height_cm ?? 175,
-          age: 30,
+          age,
           gender: profileData.avatar_gender === 'femme' ? 'female' : 'male',
         });
       }
@@ -119,12 +133,126 @@ export default function NutritionPlanScreen() {
           </View>
         </View>
 
+        {/* Formulaire Infos Personnelles */}
+        <View style={[styles.personalInfoCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={styles.personalInfoHeader}>
+            <User size={20} color={colors.accent} />
+            <Text style={[styles.personalInfoTitle, { color: colors.textPrimary }]}>
+              Tes informations
+            </Text>
+          </View>
+
+          <View style={styles.inputsGrid}>
+            {/* Poids */}
+            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
+              <Weight size={18} color={colors.textMuted} />
+              <View style={styles.inputContent}>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Poids</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  value={userProfile.weight.toString()}
+                  onChangeText={(text) => {
+                    const num = parseInt(text) || 0;
+                    setUserProfile({ ...userProfile, weight: num });
+                  }}
+                  keyboardType="numeric"
+                  placeholder="80"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>kg</Text>
+            </View>
+
+            {/* Taille */}
+            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
+              <Ruler size={18} color={colors.textMuted} />
+              <View style={styles.inputContent}>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Taille</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  value={userProfile.height.toString()}
+                  onChangeText={(text) => {
+                    const num = parseInt(text) || 0;
+                    setUserProfile({ ...userProfile, height: num });
+                  }}
+                  keyboardType="numeric"
+                  placeholder="175"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>cm</Text>
+            </View>
+
+            {/* Âge */}
+            <View style={[styles.inputGroup, { backgroundColor: colors.background }]}>
+              <Calendar size={18} color={colors.textMuted} />
+              <View style={styles.inputContent}>
+                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Âge</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  value={userProfile.age.toString()}
+                  onChangeText={(text) => {
+                    const num = parseInt(text) || 0;
+                    setUserProfile({ ...userProfile, age: num });
+                  }}
+                  keyboardType="numeric"
+                  placeholder="30"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+              <Text style={[styles.inputUnit, { color: colors.textMuted }]}>ans</Text>
+            </View>
+
+            {/* Genre */}
+            <View style={styles.genderButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.genderBtn,
+                  {
+                    backgroundColor: userProfile.gender === 'male' ? colors.accent : colors.background,
+                    borderColor: userProfile.gender === 'male' ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => setUserProfile({ ...userProfile, gender: 'male' })}
+              >
+                <Text
+                  style={[
+                    styles.genderText,
+                    { color: userProfile.gender === 'male' ? colors.textOnAccent : colors.textPrimary },
+                  ]}
+                >
+                  Homme
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.genderBtn,
+                  {
+                    backgroundColor: userProfile.gender === 'female' ? colors.accent : colors.background,
+                    borderColor: userProfile.gender === 'female' ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => setUserProfile({ ...userProfile, gender: 'female' })}
+              >
+                <Text
+                  style={[
+                    styles.genderText,
+                    { color: userProfile.gender === 'female' ? colors.textOnAccent : colors.textPrimary },
+                  ]}
+                >
+                  Femme
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         {/* Carte Calories Principal */}
         {results && (
-          <View style={[styles.caloriesCard, { backgroundColor: colors.accent }]}>
-            <Text style={styles.caloriesLabel}>OBJECTIF CALORIQUE JOURNALIER</Text>
-            <Text style={styles.caloriesValue}>{results.goalCalories}</Text>
-            <Text style={styles.caloriesUnit}>kcal / jour</Text>
+          <View style={[styles.caloriesCard, { backgroundColor: colors.backgroundCard, borderColor: colors.accent, borderWidth: 2 }]}>
+            <Text style={[styles.caloriesLabel, { color: colors.accent }]}>OBJECTIF CALORIQUE JOURNALIER</Text>
+            <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
+            <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal / jour</Text>
 
             {results.deficit > 0 && (
               <View style={[styles.deficitBadge, { backgroundColor: colors.danger }]}>
@@ -537,6 +665,65 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  // Personal Info Card
+  personalInfoCard: {
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: SPACING.xl,
+  },
+  personalInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  personalInfoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  inputsGrid: {
+    gap: 12,
+  },
+  inputGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    gap: 12,
+  },
+  inputContent: {
+    flex: 1,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  input: {
+    fontSize: 18,
+    fontWeight: '700',
+    padding: 0,
+  },
+  inputUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  genderButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  genderBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  genderText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
   // Calories card
   caloriesCard: {
     padding: 24,
@@ -545,23 +732,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   },
   caloriesLabel: {
-    color: '#FFF',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2,
-    opacity: 0.8,
   },
   caloriesValue: {
-    color: '#FFF',
     fontSize: 64,
     fontWeight: '900',
     marginVertical: 8,
   },
   caloriesUnit: {
-    color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
-    opacity: 0.9,
   },
   deficitBadge: {
     paddingHorizontal: 16,

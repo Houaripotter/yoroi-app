@@ -5,8 +5,10 @@ import { getWeights } from '@/lib/database';
 import { Target } from 'lucide-react-native';
 import Svg, { Path, Line, Circle, G, Text as SvgText } from 'react-native-svg';
 import { format } from 'date-fns';
+import { scale, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16, iPad s'adapte
 
 export default function PoidsTab() {
   const { colors } = useTheme();
@@ -25,7 +27,7 @@ export default function PoidsTab() {
     setWeightData(last14);
   };
 
-  const chartWidth = SCREEN_WIDTH - 48;
+  const chartWidth = SCREEN_WIDTH - CONTAINER_PADDING * 2; // Utilise toute la largeur disponible
   const chartHeight = 140;
   const padding = { left: 35, right: 15, top: 15, bottom: 30 };
 

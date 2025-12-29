@@ -38,6 +38,18 @@ export default function TransformationScreen() {
     setIsLoading(true);
     try {
       const fetchedPhotos = await getPhotosFromStorage();
+
+      // DEBUG : Afficher les photos chargées
+      console.log('📸 Photos chargées:', fetchedPhotos.length);
+      fetchedPhotos.forEach((photo, index) => {
+        console.log(`  Photo ${index + 1}:`, {
+          id: photo.id,
+          date: photo.date,
+          weight: photo.weight,
+          hasWeight: !!photo.weight,
+        });
+      });
+
       setPhotos(fetchedPhotos);
 
       // Auto-selectionner si assez de photos

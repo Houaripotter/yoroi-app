@@ -110,10 +110,18 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   {
     id: 'fighter_mode',
     name: 'Mode Compétiteur',
-    description: 'Cut, Compétitions, Palmarès (visible uniquement pour les compétiteurs)',
+    description: 'Mode Cut, Compétitions, Palmarès (pour compétiteurs)',
     icon: 'award',
     visible: true,
     order: 11,
+  },
+  {
+    id: 'training_journal',
+    name: 'Carnet d\'Entraînement',
+    description: 'Tes objectifs et progression',
+    icon: 'book-open',
+    visible: true,
+    order: 12,
   },
 ];
 
@@ -122,13 +130,18 @@ export const getHomeCustomization = async (): Promise<HomeSection[]> => {
   try {
     const stored = await AsyncStorage.getItem(HOME_CUSTOMIZATION_KEY);
     if (stored) {
+      console.log('[HOME_SERVICE] Configuration trouvée dans AsyncStorage');
       const customization = JSON.parse(stored) as HomeSection[];
+      console.log('[HOME_SERVICE] Sections chargées:', customization.map(s => `${s.id}(${s.order})`).join(', '));
       // Fusionner avec les valeurs par défaut pour les nouvelles sections
-      return mergeWithDefaults(customization);
+      const merged = mergeWithDefaults(customization);
+      console.log('[HOME_SERVICE] Après fusion:', merged.map(s => `${s.id}(${s.order})`).join(', '));
+      return merged;
     }
+    console.log('[HOME_SERVICE] Aucune configuration trouvée, utilisation des valeurs par défaut');
     return DEFAULT_HOME_SECTIONS;
   } catch (error) {
-    console.error('Erreur chargement customization:', error);
+    console.error('[HOME_SERVICE] Erreur chargement customization:', error);
     return DEFAULT_HOME_SECTIONS;
   }
 };
@@ -150,9 +163,12 @@ const mergeWithDefaults = (saved: HomeSection[]): HomeSection[] => {
 // Sauvegarder la configuration
 export const saveHomeCustomization = async (sections: HomeSection[]): Promise<void> => {
   try {
+    console.log('[HOME_SERVICE] Sauvegarde de', sections.length, 'sections');
+    console.log('[HOME_SERVICE] Ordre:', sections.map(s => `${s.id}(${s.order})`).join(', '));
     await AsyncStorage.setItem(HOME_CUSTOMIZATION_KEY, JSON.stringify(sections));
+    console.log('[HOME_SERVICE] Sauvegarde AsyncStorage réussie');
   } catch (error) {
-    console.error('Erreur sauvegarde customization:', error);
+    console.error('[HOME_SERVICE] Erreur sauvegarde customization:', error);
     throw error;
   }
 };
@@ -170,7 +186,10 @@ export const resetHomeCustomization = async (): Promise<void> => {
 // Vérifier si une section est visible
 export const isSectionVisible = (sections: HomeSection[], sectionId: string): boolean => {
   const section = sections.find(s => s.id === sectionId);
-  return section ? section.visible : true;
+  if (!section) return true;
+  // Les sections mandatory sont toujours visibles
+  if (section.mandatory) return true;
+  return section.visible;
 };
 
 // Obtenir les sections triées

@@ -13,7 +13,7 @@ interface SleepCardProps {
 
 export const SleepCard: React.FC<SleepCardProps> = ({
   duration,
-  goal = 480,
+  goal,
   debtHours,
   onPress,
 }) => {

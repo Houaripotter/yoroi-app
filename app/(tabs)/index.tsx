@@ -564,36 +564,41 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
-            <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} activeOpacity={0.8}>
-              <AvatarDisplay size="medium" refreshTrigger={Date.now()} showBorder={false} />
-            </TouchableOpacity>
           </View>
         );
 
       case 'stats_compact':
         return (
           <View style={styles.statsRowCompact} key={sectionId}>
-            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/activity-detail')}>
-              <MaterialCommunityIcons name="walk" size={16} color="#3B82F6" />
-              <AnimatedCounter value={steps} style={[styles.statValueCompactVertical, { color: '#3B82F6' }]} duration={800} />
-              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/activity-detail')}>
+              <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
               <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
-                <Flame size={16} color="#F97316" />
+                <Flame size={14} color="#F97316" />
               </Animated.View>
-              <AnimatedCounter value={streak} style={[styles.statValueCompactVertical, { color: '#F97316' }]} duration={800} />
-              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={streak} style={[styles.statValueCompactHorizontal, { color: '#F97316' }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-              <Zap size={16} color={colors.accent} />
-              <AnimatedCounter value={level.level} style={[styles.statValueCompactVertical, { color: colors.accent }]} duration={800} />
-              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+              <Zap size={14} color={colors.accent} />
+              <View style={styles.statTextColumn}>
+                <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: colors.accent }]} duration={800} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-              <Trophy size={16} color={rank.color} />
-              <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompactVertical} delay={300} />
-              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+              <Trophy size={14} color={rank.color} />
+              <View style={styles.statTextColumn}>
+                <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompactHorizontal} delay={300} />
+                <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
+              </View>
             </TouchableOpacity>
           </View>
         );
@@ -1245,13 +1250,16 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, alignItems: 'center', padding: 6, borderRadius: 10 },
   statValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
   statLabel: { fontSize: 7, fontWeight: '600' },
-  statsRowCompact: { flexDirection: 'row', gap: 5, marginBottom: 8, marginTop: 4 },
+  statsRowCompact: { flexDirection: 'row', gap: 3, marginBottom: 6, marginTop: 2 },
   statCardCompact: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 3 },
   statCardCompactVertical: { flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 2, minHeight: 60 },
+  statCardCompactHorizontal: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 4, paddingHorizontal: 5, borderRadius: 6, gap: 4, minHeight: 38 },
+  statTextColumn: { flexDirection: 'column', alignItems: 'flex-start', gap: 0 },
   statTextContainer: { flexDirection: 'column', alignItems: 'flex-start' },
   statValueCompact: { fontSize: 18, fontWeight: '900', marginTop: 0 },
   statValueCompactVertical: { fontSize: 16, fontWeight: '800', marginTop: 0 },
-  statLabelCompact: { fontSize: 8, fontWeight: '600' },
+  statValueCompactHorizontal: { fontSize: 13, fontWeight: '800', lineHeight: 14 },
+  statLabelCompact: { fontSize: 7, fontWeight: '600', lineHeight: 8, marginTop: -1 },
 
   // Battery + Tools - UNE SEULE LIGNE DE 4 CARTES
   batteryToolsRowSingle: {

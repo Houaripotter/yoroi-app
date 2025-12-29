@@ -9,19 +9,26 @@ import {
   Modal,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame, Sun, Dumbbell, Target, Clock, Maximize2, X } from 'lucide-react-native';
+import { Activity, Zap, Moon, TrendingUp, TrendingDown, AlertTriangle, Lightbulb, Flame, Sun, Dumbbell, Target, Clock, Maximize2, X, CheckCircle, ThumbsUp, Circle as CircleIcon } from 'lucide-react-native';
 import { getTrainings, Training } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MODAL_CHART_HEIGHT = 300;
-const MODAL_PADDING_LEFT = 50;
-const MODAL_PADDING_RIGHT = 20;
-const MODAL_PADDING_TOP = 40;
-const MODAL_PADDING_BOTTOM = 50;
+const MODAL_CHART_HEIGHT = scale(300);
+const MODAL_PADDING_LEFT = scale(50);
+const MODAL_PADDING_RIGHT = scale(20);
+const MODAL_PADDING_TOP = scale(40);
+const MODAL_PADDING_BOTTOM = scale(50);
+
+// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
+const STATS_COLUMNS = isIPad() ? 4 : 2;
+const STATS_GAP = 12; // Gap fixe pour tous les appareils
+const CONTAINER_PADDING = isIPad() ? scale(10) : 20; // iPhone garde 20, iPad scale(10)
+const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
 
 interface PerformanceStatsProps {
   trainings?: Training[];
@@ -52,8 +59,73 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
   const maxSleep = Math.max(...sleepData);
   const minSleep = Math.min(...sleepData);
 
+  // Calculer le ratio et la qualité de l'équilibre
+  const workRestRatio = avgSleep > 0 ? (totalTraining / avgSleep).toFixed(1) : '0.0';
+
+  // Analyser l'équilibre (bon si sommeil stable et charge progressive)
+  const getBalanceQuality = () => {
+    // Vérifier si charge augmente pendant que sommeil baisse (mauvais)
+    const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+    const lastThreeTraining = trainingData.slice(-historyDays);
+    const lastThreeSleep = sleepData.slice(-historyDays);
+
+    const trainingIncreasing = lastThreeTraining[historyDays-1] > lastThreeTraining[0];
+    const sleepDecreasing = lastThreeSleep[historyDays-1] < lastThreeSleep[0];
+
+    if (trainingIncreasing && sleepDecreasing) {
+      return {
+        status: 'danger',
+        color: '#EF4444',
+        label: 'Déséquilibre Critique',
+        icon: <AlertTriangle size={16} color="#EF4444" />,
+        message: 'Tu t\'entraînes plus mais tu dors moins ! Risque de surmenage et blessures.',
+        advice: 'Réduis la charge d\'entraînement ou augmente ton temps de repos.',
+      };
+    }
+
+    // Vérifier si sommeil est bon (7-9h en moyenne)
+    if (avgSleep >= 7 && avgSleep <= 9) {
+      return {
+        status: 'excellent',
+        color: '#10B981',
+        label: 'Équilibre Optimal',
+        icon: <CheckCircle size={16} color="#10B981" />,
+        message: 'Excellent équilibre ! Tu récupères bien.',
+        advice: 'Continue comme ça, ton corps se régénère correctement.',
+      };
+    }
+
+    // Sommeil insuffisant
+    if (avgSleep < 6) {
+      return {
+        status: 'warning',
+        color: '#F59E0B',
+        label: 'Repos Insuffisant',
+        icon: <Zap size={16} color="#F59E0B" />,
+        message: 'Attention, tu manques de sommeil.',
+        advice: 'Essaie de dormir au moins 7h par nuit pour une récupération optimale.',
+      };
+    }
+
+    // Sommeil correct mais peut être amélioré
+    return {
+      status: 'good',
+      color: '#3B82F6',
+      label: 'Bon Équilibre',
+      icon: <ThumbsUp size={16} color="#3B82F6" />,
+      message: 'Tu es sur la bonne voie.',
+      advice: 'Vise 7-9h de sommeil pour une récupération optimale.',
+    };
+  };
+
+  const balance = getBalanceQuality();
+
+  // Compter les jours avec bon sommeil (7-9h)
+  const goodSleepDays = sleepData.filter(h => h >= 7 && h <= 9).length;
+  const goodSleepPercent = Math.round((goodSleepDays / sleepData.length) * 100);
+
   // Préparer les données pour le graphique
-  const chartWidth = SCREEN_WIDTH - 48;
+  const chartWidth = SCREEN_WIDTH - (isIPad() ? CONTAINER_PADDING * 2 : 48);
   const maxValue = Math.max(maxTraining, maxSleep);
 
   const chartData = trainingData.map((training, index) => {
@@ -125,6 +197,27 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Carte d'équilibre globale */}
+            <View style={[modalStyles.balanceCard, { backgroundColor: balance.color + '15', borderLeftColor: balance.color }]}>
+              <View style={modalStyles.balanceHeader}>
+                <View style={[modalStyles.balanceStatusBadge, { backgroundColor: balance.color }]}>
+                  <Text style={modalStyles.balanceStatusText}>{balance.label}</Text>
+                </View>
+              </View>
+              <View style={modalStyles.balanceMessageRow}>
+                {balance.icon}
+                <Text style={[modalStyles.balanceMessage, { color: colors.textPrimary }]}>
+                  {balance.message}
+                </Text>
+              </View>
+              <View style={modalStyles.balanceAdviceRow}>
+                <Lightbulb size={14} color={colors.textMuted} />
+                <Text style={[modalStyles.balanceAdvice, { color: colors.textMuted }]}>
+                  {balance.advice}
+                </Text>
+              </View>
+            </View>
+
             {/* Stats Cards */}
             <View style={modalStyles.statsGrid}>
               <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
@@ -132,12 +225,37 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
                 <Text style={[modalStyles.statValue, { color: '#8B5CF6' }]}>
                   {avgTraining.toFixed(1)}
                 </Text>
+                <Text style={[modalStyles.statHint, { color: colors.textMuted }]}>pts/sem</Text>
               </View>
               <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[modalStyles.statLabel, { color: colors.textMuted }]}>Sommeil Moy.</Text>
                 <Text style={[modalStyles.statValue, { color: '#10B981' }]}>
                   {avgSleep.toFixed(1)}h
                 </Text>
+                <View style={modalStyles.zoneIndicator}>
+                  <CircleIcon
+                    size={10}
+                    fill={avgSleep >= 7 && avgSleep <= 9 ? '#10B981' : '#F59E0B'}
+                    color={avgSleep >= 7 && avgSleep <= 9 ? '#10B981' : '#F59E0B'}
+                  />
+                  <Text style={[modalStyles.statHint, { color: colors.textMuted }]}>
+                    {avgSleep >= 7 && avgSleep <= 9 ? 'Optimale' : avgSleep < 7 ? 'Faible' : 'Élevée'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[modalStyles.statLabel, { color: colors.textMuted }]}>Ratio Effort/Repos</Text>
+                <Text style={[modalStyles.statValue, { color: '#8B5CF6' }]}>
+                  {workRestRatio}:1
+                </Text>
+                <Text style={[modalStyles.statHint, { color: colors.textMuted }]}>charge/sommeil</Text>
+              </View>
+              <View style={[modalStyles.statCard, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[modalStyles.statLabel, { color: colors.textMuted }]}>Bon Sommeil</Text>
+                <Text style={[modalStyles.statValue, { color: '#10B981' }]}>
+                  {goodSleepPercent}%
+                </Text>
+                <Text style={[modalStyles.statHint, { color: colors.textMuted }]}>7-9h ({goodSleepDays}/7j)</Text>
               </View>
             </View>
 
@@ -145,6 +263,9 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
             <View style={[modalStyles.chartCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[modalStyles.chartTitle, { color: colors.textPrimary }]}>
                 Évolution sur 7 jours
+              </Text>
+              <Text style={[modalStyles.chartSubtitle, { color: colors.textMuted }]}>
+                Les zones colorées indiquent la qualité du sommeil
               </Text>
 
               <View style={modalStyles.chart}>
@@ -159,6 +280,53 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
                       <Stop offset="1" stopColor="#10B981" stopOpacity="0.05" />
                     </LinearGradient>
                   </Defs>
+
+                  {/* Zones de sommeil colorées (en fond) */}
+                  {/* Zone Rouge (<6h) - Sommeil insuffisant */}
+                  <Rect
+                    x={MODAL_PADDING_LEFT}
+                    y={MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0)}
+                    width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                    height={(MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.4}
+                    fill="#EF4444"
+                    opacity={0.08}
+                  />
+                  {/* Zone Orange (6-7h) - Sommeil faible */}
+                  <Rect
+                    x={MODAL_PADDING_LEFT}
+                    y={MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.4)}
+                    width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                    height={(MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.1}
+                    fill="#F59E0B"
+                    opacity={0.08}
+                  />
+                  {/* Zone Verte (7-9h) - Sommeil optimal */}
+                  <Rect
+                    x={MODAL_PADDING_LEFT}
+                    y={MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.5)}
+                    width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                    height={(MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.2}
+                    fill="#10B981"
+                    opacity={0.12}
+                  />
+                  {/* Zone Orange (9-10h) - Sommeil élevé */}
+                  <Rect
+                    x={MODAL_PADDING_LEFT}
+                    y={MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.7)}
+                    width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                    height={(MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.1}
+                    fill="#F59E0B"
+                    opacity={0.08}
+                  />
+                  {/* Zone Rouge (>10h) - Sommeil excessif */}
+                  <Rect
+                    x={MODAL_PADDING_LEFT}
+                    y={MODAL_PADDING_TOP + ((MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.8)}
+                    width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT}
+                    height={(MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM) * 0.2}
+                    fill="#EF4444"
+                    opacity={0.08}
+                  />
 
                   {/* Lignes de grille */}
                   {[0, 1, 2, 3, 4].map((i) => {
@@ -320,6 +488,53 @@ const modalStyles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 40,
   },
+  balanceCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    padding: 16,
+    borderLeftWidth: 4,
+  },
+  balanceHeader: {
+    marginBottom: 12,
+  },
+  balanceStatusBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  balanceStatusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  balanceMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  balanceMessage: {
+    fontSize: 16,
+    fontWeight: '700',
+    flex: 1,
+  },
+  balanceAdviceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  balanceAdvice: {
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+  },
+  zoneIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -354,24 +569,32 @@ const modalStyles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: CONTAINER_PADDING,
     marginBottom: 20,
   },
   statCard: {
-    flex: 1,
+    width: STATS_CARD_WIDTH,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+    marginBottom: STATS_GAP,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     marginBottom: 6,
+    textAlign: 'center',
   },
   statValue: {
     fontSize: 24,
     fontWeight: '900',
+    marginBottom: 4,
+  },
+  statHint: {
+    fontSize: 10,
+    textAlign: 'center',
   },
   chartCard: {
     marginHorizontal: 20,
@@ -382,6 +605,10 @@ const modalStyles = StyleSheet.create({
   chartTitle: {
     fontSize: 18,
     fontWeight: '700',
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    fontSize: 12,
     marginBottom: 16,
   },
   chart: {
@@ -616,11 +843,12 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
   // Détecter les alertes Work/Rest
   const hasAlert = useMemo(() => {
     // Alert si charge monte et sommeil baisse
-    const lastThreeTraining = weeklyTrainingData.slice(-3);
-    const lastThreeSleep = sleepHours.slice(-3);
-    
-    const trainingTrend = lastThreeTraining[2] > lastThreeTraining[0];
-    const sleepTrend = lastThreeSleep[2] < lastThreeSleep[0];
+    const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+    const lastThreeTraining = weeklyTrainingData.slice(-historyDays);
+    const lastThreeSleep = sleepHours.slice(-historyDays);
+
+    const trainingTrend = lastThreeTraining[historyDays-1] > lastThreeTraining[0];
+    const sleepTrend = lastThreeSleep[historyDays-1] < lastThreeSleep[0];
     
     return trainingTrend && sleepTrend;
   }, [weeklyTrainingData, sleepHours]);
@@ -635,7 +863,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
       label: 'Charge Totale',
       icon: <Flame size={18} color="#F59E0B" />,
       color: '#F59E0B',
-      value: totalCharge,
+      value: totalCharge || 0,
       unit: 'pts',
     },
     {
@@ -643,7 +871,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
       label: 'Ratio Effort/Repos',
       icon: <Activity size={18} color="#8B5CF6" />,
       color: '#8B5CF6',
-      value: parseFloat(workRestRatio),
+      value: parseFloat(workRestRatio) || 0,
       unit: ':1',
     },
   ];
@@ -687,7 +915,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
               {/* Value */}
               <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-                {card.value > 0 ? card.value.toFixed(card.key === 'ratio' ? 1 : 0) : '--'}
+                {card.value && card.value > 0 ? card.value.toFixed(card.key === 'ratio' ? 1 : 0) : '--'}
                 <Text style={[styles.cardUnit, { color: colors.textMuted }]}>
                   {' '}{card.unit}
                 </Text>
@@ -709,19 +937,18 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
 
         <View style={styles.chargeMain}>
           <Text style={[styles.chargeValue, { color: colors.textPrimary }]}>
-            {totalCharge}
+            {totalCharge || 0}
             <Text style={[styles.chargeUnit, { color: colors.textMuted }]}> pts</Text>
           </Text>
           <View style={styles.chargeComparison}>
             <Text style={[styles.chargeAverage, { color: colors.textMuted }]}>
-              Moy. 4 sem : {averageCharge} pts
+              Moy. 4 sem : {averageCharge || 0} pts
             </Text>
             <Text style={[
               styles.chargeVariation,
               { color: Number(chargeVariation) > 20 ? '#EF4444' : Number(chargeVariation) > 0 ? '#F59E0B' : '#10B981' }
             ]}>
               {Number(chargeVariation) > 0 ? '+' : ''}{chargeVariation}%
-              {Number(chargeVariation) > 20 && ' ⚠️'}
             </Text>
           </View>
         </View>
@@ -877,7 +1104,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
           <View style={[styles.alertCard, { backgroundColor: '#EF444415' }]}>
             <AlertTriangle size={14} color="#EF4444" />
             <Text style={styles.alertText}>
-              ⚠️ Attention : Tu t'entraînes plus mais tu dors moins. Risque de surmenage !
+              Attention : Tu t'entraînes plus mais tu dors moins. Risque de surmenage !
             </Text>
           </View>
         )}

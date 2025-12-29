@@ -255,7 +255,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <CheckCircle size={32} color="#10B981" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>🟢 Opérationnel</Text>
+                <Text style={styles.statusOptionLabel}>Opérationnel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -268,7 +268,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <AlertTriangle size={32} color="#F59E0B" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>🟠 Gêne / Douleur</Text>
+                <Text style={styles.statusOptionLabel}>Gêne / Douleur</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -281,7 +281,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <Activity size={32} color="#EF4444" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>🔴 Blessure / Arrêt</Text>
+                <Text style={styles.statusOptionLabel}>Blessure / Arrêt</Text>
               </TouchableOpacity>
             </View>
 

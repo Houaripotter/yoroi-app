@@ -218,9 +218,8 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
 
           {/* Message d'aide */}
           <View style={[styles.helpBanner, { backgroundColor: '#F59E0B15' }]}>
-            <AlertCircle size={18} color="#F59E0B" />
             <Text style={[styles.helpText, { color: '#F59E0B' }]}>
-              Quelle zone exacte est concernée ?
+              Sélectionne la zone exacte concernée
             </Text>
           </View>
 

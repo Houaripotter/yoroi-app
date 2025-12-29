@@ -420,7 +420,7 @@ export default function ProfileScreen() {
                   />
                 ) : (
                   <AvatarSolid
-                    source={require('@/assets/avatars/samurai/samurai_neutral.png')}
+                    source={null}
                     size="xl"
                     backgroundColor={COLORS.avatarBg}
                   />

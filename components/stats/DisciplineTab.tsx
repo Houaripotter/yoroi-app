@@ -9,8 +9,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Rect, G, Text as SvgText } from 'react-native-svg';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { scale, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16, iPad s'adapte
 
 interface SportStat {
   sport: string;
@@ -45,7 +47,7 @@ export default function DisciplineTab() {
     setWeekCount(trainings.length);
   };
 
-  const chartWidth = SCREEN_WIDTH - 48;
+  const chartWidth = SCREEN_WIDTH - CONTAINER_PADDING * 2; // Utilise toute la largeur disponible
   const padding = { left: 35, right: 15, top: 15, bottom: 30 };
 
   return (

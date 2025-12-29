@@ -38,13 +38,14 @@ export interface UserActivityData {
 // ═══════════════════════════════════════════════
 // IMAGES MAPPING
 // ═══════════════════════════════════════════════
+// TEMPORAIREMENT VIDE - EN COURS DE CREATION DE NOUVEAUX AVATARS
 
 export const AVATAR_IMAGES: Record<AvatarState, any> = {
-  legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
-  strong: require('@/assets/avatars/samurai/samurai_strong.png'),
-  neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
-  tired: require('@/assets/avatars/samurai/samurai_tired.png'),
-  down: require('@/assets/avatars/samurai/samurai_down.png'),
+  legendary: null,
+  strong: null,
+  neutral: null,
+  tired: null,
+  down: null,
 };
 
 // ═══════════════════════════════════════════════

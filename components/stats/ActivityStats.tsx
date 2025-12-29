@@ -10,13 +10,17 @@ import { getClubLogoSource } from '@/lib/sports';
 import { Maximize2, Dumbbell as DumbbellIcon } from 'lucide-react-native';
 import { StatsDetailModal } from '../StatsDetailModal';
 
+import { scale, isIPad } from '@/constants/responsive';
+
 const { width } = Dimensions.get('window');
-const CHART_WIDTH = width - 64;
-const CHART_HEIGHT = 200;
-const PADDING_LEFT = 35;
-const PADDING_RIGHT = 20;
-const PADDING_TOP = 20;
-const PADDING_BOTTOM = 50;
+// iPhone garde 16, iPad utilise scale(8)
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
+const CHART_WIDTH = width - CONTAINER_PADDING * 2;
+const CHART_HEIGHT = scale(200);
+const PADDING_LEFT = scale(35);
+const PADDING_RIGHT = scale(20);
+const PADDING_TOP = scale(20);
+const PADDING_BOTTOM = scale(50);
 
 interface ActivityStatsProps {
   data: Training[];
@@ -347,6 +351,59 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                   <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
                 </LinearGradient>
               </Defs>
+
+              {/* Zones d'intensité d'entraînement (en fond) */}
+              {(() => {
+                // Définir les zones d'entraînement recommandées
+                const optimalMin = 3; // Minimum recommandé: 3 entraînements/semaine
+                const optimalMax = 5; // Maximum recommandé: 5 entraînements/semaine
+                const max = maxCount;
+
+                const getYPosition = (count: number) => {
+                  return PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * (1 - count / max));
+                };
+
+                const yOptimalMax = getYPosition(optimalMax);
+                const yOptimalMin = getYPosition(optimalMin);
+                const yTop = PADDING_TOP;
+                const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
+
+                return (
+                  <>
+                    {/* Zone excellente (>5 entraînements) */}
+                    {optimalMax < max && (
+                      <Rect
+                        x={PADDING_LEFT}
+                        y={yTop}
+                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                        height={Math.max(0, yOptimalMax - yTop)}
+                        fill="#3B82F6"
+                        opacity={0.08}
+                      />
+                    )}
+
+                    {/* Zone optimale (3-5 entraînements) */}
+                    <Rect
+                      x={PADDING_LEFT}
+                      y={Math.max(yTop, yOptimalMax)}
+                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                      height={Math.max(0, Math.min(yBottom, yOptimalMin) - Math.max(yTop, yOptimalMax))}
+                      fill="#10B981"
+                      opacity={0.12}
+                    />
+
+                    {/* Zone faible (<3 entraînements) */}
+                    <Rect
+                      x={PADDING_LEFT}
+                      y={Math.max(yTop, yOptimalMin)}
+                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                      height={Math.max(0, yBottom - Math.max(yTop, yOptimalMin))}
+                      fill="#F59E0B"
+                      opacity={0.08}
+                    />
+                  </>
+                );
+              })()}
 
               {/* Lignes de grille horizontales */}
               {[0, 1, 2, 3, 4].map((i) => {

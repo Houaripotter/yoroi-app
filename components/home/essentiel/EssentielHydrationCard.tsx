@@ -12,7 +12,7 @@ interface EssentielHydrationCardProps {
 
 export const EssentielHydrationCard: React.FC<EssentielHydrationCardProps> = ({
   current = 0,
-  goal = 2.5,
+  goal,
   onAdd250,
   onAdd500,
 }) => {

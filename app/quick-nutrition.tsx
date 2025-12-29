@@ -189,7 +189,8 @@ export default function QuickNutritionScreen() {
   const [bodyWeight, setBodyWeight] = useState('75');
 
   const currentPhase = useMemo(() => {
-    return NUTRITION_PHASES.find(p => p.id === selectedPhase) || NUTRITION_PHASES[0];
+    const phase = NUTRITION_PHASES.find(p => p.id === selectedPhase);
+    return phase ? phase : NUTRITION_PHASES[0];
   }, [selectedPhase]);
 
   // Calculer les besoins en proteines

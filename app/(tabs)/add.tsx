@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,16 +35,21 @@ import {
   Moon,
   Frown,
   Calendar,
+  Cloud,
+  CheckCircle2,
   type LucideIcon,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
-import { SPACING, RADIUS, FONT, SHADOWS } from '@/constants/appTheme';
+import { SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/design';
 import { addWeight } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
 import { WeightInput, WeightInputHandle } from '@/components/WeightInput';
+import { backupReminderService } from '@/lib/backupReminderService';
+import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
+import { draftService, WeightDraft } from '@/lib/draftService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -97,11 +102,167 @@ export default function AddScreen() {
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
 
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [savedWeight, setSavedWeight] = useState<number | null>(null);
+
+  // Auto-save timer
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showAutoSaveIndicator, setShowAutoSaveIndicator] = useState(false);
+
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
+
+  // Charger le brouillon au démarrage
+  useEffect(() => {
+    const loadDraft = async () => {
+      const draft = await draftService.getWeightDraft();
+      if (draft) {
+        const draftAge = await draftService.getWeightDraftAgeInDays();
+        const isExpiringSoon = await draftService.isWeightDraftExpiringSoon();
+
+        let message = 'Tu as des données non sauvegardées.';
+
+        if (draftAge !== null) {
+          if (draftAge === 0) {
+            message += ' Sauvegardées aujourd\'hui.';
+          } else if (draftAge === 1) {
+            message += ' Sauvegardées il y a 1 jour.';
+          } else {
+            message += ` Sauvegardées il y a ${draftAge} jours.`;
+          }
+
+          if (isExpiringSoon) {
+            const daysLeft = 7 - draftAge;
+            message += `\n\n⚠️ ATTENTION : Ce brouillon sera supprimé dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''} ! N'oublie pas de l'enregistrer.`;
+          }
+        }
+
+        message += '\n\nVeux-tu restaurer ces données ?';
+
+        Alert.alert(
+          '📝 Brouillon trouvé',
+          message,
+          [
+            {
+              text: 'Supprimer',
+              style: 'destructive',
+              onPress: async () => {
+                await draftService.clearWeightDraft();
+              },
+            },
+            {
+              text: 'Restaurer',
+              onPress: () => {
+                // Restaurer les valeurs
+                if (draft.weight && weightInputRef.current) {
+                  weightInputRef.current.setValue(parseFloat(draft.weight));
+                }
+                if (draft.date) setSelectedDate(draft.date);
+                if (draft.fatPercent) setFatPercent(draft.fatPercent);
+                if (draft.musclePercent) setMusclePercent(draft.musclePercent);
+                if (draft.waterPercent) setWaterPercent(draft.waterPercent);
+                if (draft.boneMass) setBoneMass(draft.boneMass);
+                if (draft.visceralFat) setVisceralFat(draft.visceralFat);
+                if (draft.metabolicAge) setMetabolicAge(draft.metabolicAge);
+                if (draft.bmr) setBmr(draft.bmr);
+                if (draft.waist) setWaist(draft.waist);
+                if (draft.chest) setChest(draft.chest);
+                if (draft.arm) setArm(draft.arm);
+                if (draft.thigh) setThigh(draft.thigh);
+                if (draft.hips) setHips(draft.hips);
+                if (draft.neck) setNeck(draft.neck);
+                if (draft.calf) setCalf(draft.calf);
+                if (draft.mood) setSelectedMood(draft.mood);
+              },
+            },
+          ]
+        );
+      }
+    };
+
+    loadDraft();
+  }, []);
+
+  // Auto-sauvegarder quand les valeurs changent
+  const autoSaveDraft = () => {
+    // Annuler le timer précédent
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Créer un nouveau timer (debounce de 2 secondes)
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const weight = weightInputRef.current?.getValue();
+
+      // Sauvegarder seulement si au moins le poids est renseigné
+      if (weight) {
+        const draft: WeightDraft = {
+          timestamp: new Date().toISOString(),
+          weight: weight.toString(),
+          date: selectedDate,
+          fatPercent,
+          musclePercent,
+          waterPercent,
+          boneMass,
+          visceralFat,
+          metabolicAge,
+          bmr,
+          waist,
+          chest,
+          arm,
+          thigh,
+          hips,
+          neck,
+          calf,
+          mood: selectedMood || undefined,
+        };
+
+        await draftService.saveWeightDraft(draft);
+        console.log('[Draft] Auto-sauvegarde effectuée');
+
+        // Afficher l'indicateur brièvement
+        setShowAutoSaveIndicator(true);
+        setTimeout(() => {
+          setShowAutoSaveIndicator(false);
+        }, 2000);
+      }
+    }, 2000); // 2 secondes après la dernière modification
+  };
+
+  // Cleanup du timer au démontage
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Déclencher l'auto-save quand les valeurs changent
+  useEffect(() => {
+    autoSaveDraft();
+  }, [
+    selectedDate,
+    fatPercent,
+    musclePercent,
+    waterPercent,
+    boneMass,
+    visceralFat,
+    metabolicAge,
+    bmr,
+    waist,
+    chest,
+    arm,
+    thigh,
+    hips,
+    neck,
+    calf,
+    selectedMood,
+  ]);
 
   const handleDateChange = (_event: any, date?: Date) => {
     if (Platform.OS === 'android') {
@@ -138,15 +299,68 @@ export default function AddScreen() {
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('✅ Enregistré !', `Poids: ${weight} kg`, [
-        { text: 'OK', onPress: () => router.back() }
-      ]);
+
+      // Effacer le brouillon car sauvegarde réussie
+      await draftService.clearWeightDraft();
+
+      // Afficher la belle modal de succès
+      setSavedWeight(weight);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Erreur:', error);
       Alert.alert('Erreur', "Impossible d'enregistrer");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Fonction pour sauvegarder sur iCloud
+  const handleBackupToCloud = async () => {
+    setShowSuccessModal(false);
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Proposer les deux formats
+    Alert.alert(
+      'Choisir le format',
+      'Quel format veux-tu utiliser pour sauvegarder tes données ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+          onPress: () => setShowSuccessModal(true),
+        },
+        {
+          text: 'CSV (Excel/Numbers)',
+          onPress: async () => {
+            const success = await exportDataToCSV();
+            if (success) {
+              await backupReminderService.reset();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setTimeout(() => router.back(), 500);
+            }
+          },
+        },
+        {
+          text: 'JSON (Réimport)',
+          onPress: async () => {
+            const success = await exportDataToJSON();
+            if (success) {
+              await backupReminderService.reset();
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setTimeout(() => router.back(), 500);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // Fonction pour fermer la modal
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    router.back();
   };
 
   // Card Component
@@ -230,6 +444,16 @@ export default function AddScreen() {
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Ajouter</Text>
         <View style={{ width: 40 }} />
       </View>
+
+      {/* Auto-save Indicator */}
+      {showAutoSaveIndicator && (
+        <View style={[styles.autoSaveIndicator, { backgroundColor: colors.success + '20', borderColor: colors.success }]}>
+          <Check size={16} color={colors.success} />
+          <Text style={[styles.autoSaveText, { color: colors.success }]}>
+            Brouillon sauvegardé
+          </Text>
+        </View>
+      )}
 
       <ScrollView
         style={styles.scrollView}
@@ -608,6 +832,76 @@ export default function AddScreen() {
           />
         )
       )}
+
+      {/* Success Modal - Belle popup de confirmation */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseSuccessModal}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={[styles.successModalContent, { backgroundColor: colors.backgroundCard }]}>
+            {/* Icône de succès */}
+            <View style={[styles.successIconContainer, { backgroundColor: colors.success + '20' }]}>
+              <CheckCircle2 size={64} color={colors.success} strokeWidth={2.5} />
+            </View>
+
+            {/* Titre */}
+            <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
+              Données enregistrées !
+            </Text>
+
+            {/* Détails */}
+            <View style={styles.successDetails}>
+              <View style={styles.successDetailRow}>
+                <Scale size={18} color={colors.accent} />
+                <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
+                  Poids : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
+                </Text>
+              </View>
+              <View style={styles.successDetailRow}>
+                <Calendar size={18} color={colors.accent} />
+                <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
+                  {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
+                </Text>
+              </View>
+            </View>
+
+            {/* Alerte importante */}
+            <View style={[styles.warningBox, { backgroundColor: colors.gold + '15', borderColor: colors.gold }]}>
+              <Cloud size={20} color={colors.gold} />
+              <Text style={[styles.warningText, { color: colors.textPrimary }]}>
+                <Text style={{ fontWeight: '700' }}>Important :</Text> Sauvegardez vos données sur iCloud pour ne jamais les perdre !
+              </Text>
+            </View>
+
+            {/* Boutons */}
+            <View style={styles.successButtons}>
+              {/* Bouton PRINCIPAL : Sauvegarder sur iCloud */}
+              <TouchableOpacity
+                style={[styles.cloudButton, { backgroundColor: colors.gold }]}
+                onPress={handleBackupToCloud}
+                activeOpacity={0.8}
+              >
+                <Cloud size={24} color="#FFF" strokeWidth={2.5} />
+                <Text style={styles.cloudButtonText}>Sauvegarder sur iCloud</Text>
+              </TouchableOpacity>
+
+              {/* Bouton secondaire : Plus tard */}
+              <TouchableOpacity
+                style={[styles.laterButton, { borderColor: colors.border }]}
+                onPress={handleCloseSuccessModal}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.laterButtonText, { color: colors.textMuted }]}>
+                  Plus tard
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -641,6 +935,24 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
+  },
+
+  // Auto-save Indicator
+  autoSaveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+  },
+  autoSaveText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   // Date
@@ -924,5 +1236,104 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 18,
     fontWeight: '700',
+  },
+
+  // Success Modal
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  successModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: RADIUS.xxl,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.3,
+    shadowRadius: 30,
+    elevation: 20,
+  },
+  successIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+  successDetails: {
+    width: '100%',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  successDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  successDetailText: {
+    fontSize: 15,
+    flex: 1,
+  },
+  warningBox: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    marginBottom: SPACING.lg,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  successButtons: {
+    width: '100%',
+    gap: SPACING.md,
+  },
+  cloudButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    borderRadius: RADIUS.xl,
+    gap: SPACING.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  cloudButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  laterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1.5,
+  },
+  laterButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

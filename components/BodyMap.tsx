@@ -46,6 +46,7 @@ export interface BodyZone {
 interface BodyMapProps {
   onZonePress: (zone: BodyZone, view: 'front' | 'back') => void;
   injuredZones?: Array<{ zone_id: string; zone_view: 'front' | 'back'; eva_score: number }>;
+  isCreatorMode?: boolean;
 }
 
 // ============================================
@@ -192,7 +193,7 @@ const FORCED_ASPECT_RATIO = 0.45;
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = [] }) => {
+export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = [], isCreatorMode = false }) => {
   const { colors } = useTheme();
   const [view, setView] = useState<'front' | 'back'>('front');
   const [zones, setZones] = useState(INITIAL_DATA);
@@ -276,19 +277,57 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
-      <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
-        <View>
-          <Text style={[styles.title, { color: colors.accent }]}>
-            {debug ? '🩺 Mode Chirurgien' : '🎯 Sélecteur'}
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {view === 'front' ? activeZones.length : activeZones.length} zones
-          </Text>
+      {/* HEADER - Seulement en mode créateur */}
+      {isCreatorMode && (
+        <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
+          <View>
+            <Text style={[styles.title, { color: colors.accent }]}>
+              {debug ? '🩺 Mode Chirurgien' : '🎯 Sélecteur'}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              {view === 'front' ? activeZones.length : activeZones.length} zones
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => setDebug(!debug)} style={styles.iconBtn}>
+            {debug ? <EyeOff size={20} color={colors.textPrimary} /> : <Eye size={20} color={colors.textPrimary} />}
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => setDebug(!debug)} style={styles.iconBtn}>
-          {debug ? <EyeOff size={20} color={colors.textPrimary} /> : <Eye size={20} color={colors.textPrimary} />}
+      )}
+
+      {/* FACE/DOS + Légende - Pour tous les utilisateurs */}
+      <View style={[styles.viewSwitcher, { backgroundColor: colors.backgroundCard, marginBottom: SPACING.md }]}>
+        <TouchableOpacity
+          onPress={() => toggleView('front')}
+          style={[styles.btn, view === 'front' ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundCard }]}
+        >
+          <Text style={[styles.btnText, { color: view === 'front' ? '#FFF' : colors.textPrimary }]}>
+            FACE{isCreatorMode ? ` (${INITIAL_DATA.front.length})` : ''}
+          </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => toggleView('back')}
+          style={[styles.btn, view === 'back' ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundCard }]}
+        >
+          <Text style={[styles.btnText, { color: view === 'back' ? '#FFF' : colors.textPrimary }]}>
+            DOS{isCreatorMode ? ` (${INITIAL_DATA.back.length})` : ''}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Légende des couleurs */}
+      <View style={[styles.legend, { backgroundColor: colors.backgroundCard, marginBottom: SPACING.md }]}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: 'rgba(139, 195, 74, 0.8)' }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Léger</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: 'rgba(255, 152, 0, 0.8)' }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Modéré</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: 'rgba(244, 67, 54, 0.8)' }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Sévère</Text>
+        </View>
       </View>
 
       {/* PANNEAU EN HAUT (zones du haut) */}
@@ -457,43 +496,6 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
         </View>
       )}
 
-      {/* Légende (mode normal) */}
-      {!debug && (
-        <View style={[styles.legend, { backgroundColor: colors.backgroundCard }]}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: 'rgba(244, 67, 54, 0.8)' }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Sévère</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: 'rgba(255, 152, 0, 0.8)' }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Modéré</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: 'rgba(139, 195, 74, 0.8)' }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Léger</Text>
-          </View>
-        </View>
-      )}
-
-      {/* FOOTER */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          onPress={() => toggleView('front')}
-          style={[styles.btn, view === 'front' ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundCard }]}
-        >
-          <Text style={[styles.btnText, { color: view === 'front' ? '#FFF' : colors.textPrimary }]}>
-            FACE ({INITIAL_DATA.front.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => toggleView('back')}
-          style={[styles.btn, view === 'back' ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundCard }]}
-        >
-          <Text style={[styles.btnText, { color: view === 'back' ? '#FFF' : colors.textPrimary }]}>
-            DOS ({INITIAL_DATA.back.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -592,14 +594,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     padding: SPACING.sm,
     borderRadius: RADIUS.md,
-    marginVertical: SPACING.xs,
   },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontSize: 9, fontWeight: '600' },
-  footer: { flexDirection: 'row', gap: SPACING.sm },
-  btn: { flex: 1, paddingVertical: 10, borderRadius: RADIUS.md, alignItems: 'center' },
-  btnText: { fontWeight: 'bold', fontSize: 12 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 11, fontWeight: '600' },
+  viewSwitcher: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+  },
+  btn: { flex: 1, paddingVertical: 12, borderRadius: RADIUS.md, alignItems: 'center' },
+  btnText: { fontWeight: 'bold', fontSize: 13 },
 });
 
 export default BodyMap;

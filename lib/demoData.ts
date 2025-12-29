@@ -239,54 +239,10 @@ export const generateWeeklyPlan = (clubIds: number[]) => {
 // FONCTION POUR INSERER LES DONNEES DEMO
 // ═══════════════════════════════════════
 export const insertDemoData = async (): Promise<void> => {
-  console.log('⚔️ Insertion des donnees de demo...');
-
-  try {
-    // 1. Inserer le profil
-    await saveProfile(DEMO_PROFILE);
-    console.log('✅ Profil insere');
-
-    // 2. Inserer les clubs
-    const clubIds: number[] = [];
-    for (const club of DEMO_CLUBS) {
-      const id = await addClub(club);
-      clubIds.push(id);
-    }
-    console.log(`✅ ${clubIds.length} clubs inseres`);
-
-    // 3. Inserer les poids
-    const weights = generateWeightHistory();
-    for (const weight of weights) {
-      await addWeight(weight);
-    }
-    console.log(`✅ ${weights.length} pesees inserees`);
-
-    // 4. Inserer les mensurations
-    const measurements = generateMeasurements();
-    for (const measurement of measurements) {
-      await addMeasurementRecord(measurement);
-    }
-    console.log(`✅ ${measurements.length} mensurations inserees`);
-
-    // 5. Inserer les entrainements
-    const trainings = generateTrainings(clubIds);
-    for (const training of trainings) {
-      await addTraining(training);
-    }
-    console.log(`✅ ${trainings.length} entrainements inseres`);
-
-    // 6. Inserer le planning hebdomadaire
-    const weeklyPlan = generateWeeklyPlan(clubIds);
-    for (const item of weeklyPlan) {
-      await addWeeklyPlanItem(item);
-    }
-    console.log(`✅ ${weeklyPlan.length} elements de planning inseres`);
-
-    console.log('🎉 Donnees de demo inserees avec succes !');
-  } catch (error) {
-    console.error('❌ Erreur insertion demo:', error);
-    throw error;
-  }
+  console.log('⚔️ Fonction insertDemoData désactivée - Aucune donnée de test insérée');
+  console.log('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
+  // FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
+  // Pour charger des données de démo, utilisez screenshotDemoData.ts
 };
 
 // ═══════════════════════════════════════

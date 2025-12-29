@@ -35,6 +35,10 @@ export interface HealthData {
     duration: number;
     quality?: 'poor' | 'fair' | 'good' | 'excellent';
   };
+  hydration?: {
+    amount: number; // en millilitres
+    date: string;
+  };
   heartRate?: {
     average: number;
     min: number;
@@ -56,6 +60,7 @@ export interface HealthPermissions {
   weight: boolean;
   steps: boolean;
   sleep: boolean;
+  hydration: boolean;
   heartRate: boolean;
   calories: boolean;
   distance: boolean;
@@ -77,6 +82,7 @@ const STORAGE_KEYS = {
   LAST_WEIGHT: '@yoroi_health_last_weight',
   LAST_STEPS: '@yoroi_health_last_steps',
   LAST_SLEEP: '@yoroi_health_last_sleep',
+  LAST_HYDRATION: '@yoroi_health_last_hydration',
 };
 
 // ============================================
@@ -93,6 +99,7 @@ class HealthConnectService {
       weight: false,
       steps: false,
       sleep: false,
+      hydration: false,
       heartRate: false,
       calories: false,
       distance: false,
@@ -139,12 +146,16 @@ class HealthConnectService {
         'HKQuantityTypeIdentifierBodyMass',
         'HKQuantityTypeIdentifierStepCount',
         'HKCategoryTypeIdentifierSleepAnalysis',
+        'HKQuantityTypeIdentifierDietaryWater',
         'HKQuantityTypeIdentifierHeartRate',
         'HKQuantityTypeIdentifierActiveEnergyBurned',
         'HKQuantityTypeIdentifierDistanceWalkingRunning',
       ];
 
-      const writeTypes = ['HKQuantityTypeIdentifierBodyMass'];
+      const writeTypes = [
+        'HKQuantityTypeIdentifierBodyMass',
+        'HKQuantityTypeIdentifierDietaryWater',
+      ];
 
       await Healthkit.requestAuthorization(readTypes, writeTypes);
 
@@ -152,6 +163,7 @@ class HealthConnectService {
         weight: true,
         steps: true,
         sleep: true,
+        hydration: true,
         heartRate: true,
         calories: true,
         distance: true,
@@ -189,6 +201,7 @@ class HealthConnectService {
       weight: false,
       steps: false,
       sleep: false,
+      hydration: false,
       heartRate: false,
       calories: false,
       distance: false,
@@ -295,17 +308,50 @@ class HealthConnectService {
     return this.getIOSSleep();
   }
 
+  private async getIOSHydration(): Promise<HealthData['hydration'] | null> {
+    if (!Healthkit) return null;
+
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const samples = await Healthkit.queryQuantitySamples('HKQuantityTypeIdentifierDietaryWater', {
+        from: today,
+        to: new Date(),
+      });
+
+      if (samples && samples.length > 0) {
+        // Apple Health retourne l'eau en litres, on convertit en millilitres
+        const totalLiters = samples.reduce((sum: number, s: any) => sum + s.quantity, 0);
+        return {
+          amount: Math.round(totalLiters * 1000),
+          date: today.toISOString(),
+        };
+      }
+    } catch (error) {
+      console.error('Erreur lecture hydratation iOS:', error);
+    }
+    return null;
+  }
+
+  async getTodayHydration(): Promise<HealthData['hydration'] | null> {
+    if (!this.syncStatus.permissions.hydration) return null;
+    return this.getIOSHydration();
+  }
+
   async getAllHealthData(): Promise<HealthData> {
-    const [weight, steps, sleep] = await Promise.all([
+    const [weight, steps, sleep, hydration] = await Promise.all([
       this.getLatestWeight(),
       this.getTodaySteps(),
       this.getLastSleep(),
+      this.getTodayHydration(),
     ]);
 
     return {
       weight: weight || undefined,
       steps: steps || undefined,
       sleep: sleep || undefined,
+      hydration: hydration || undefined,
     };
   }
 
@@ -322,6 +368,24 @@ class HealthConnectService {
       return true;
     } catch (error) {
       console.error('Erreur écriture poids:', error);
+      return false;
+    }
+  }
+
+  async writeHydration(amountMl: number): Promise<boolean> {
+    if (!this.syncStatus.permissions.hydration || !Healthkit) return false;
+
+    // Apple Health attend des litres, on convertit
+    const amountLiters = amountMl / 1000;
+
+    try {
+      await Healthkit.saveQuantitySample('HKQuantityTypeIdentifierDietaryWater', amountLiters, {
+        start: new Date(),
+        end: new Date(),
+      });
+      return true;
+    } catch (error) {
+      console.error('Erreur écriture hydratation:', error);
       return false;
     }
   }
@@ -343,6 +407,9 @@ class HealthConnectService {
       }
       if (data.sleep) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_SLEEP, JSON.stringify(data.sleep));
+      }
+      if (data.hydration) {
+        await AsyncStorage.setItem(STORAGE_KEYS.LAST_HYDRATION, JSON.stringify(data.hydration));
       }
 
       this.syncStatus.lastSync = new Date().toISOString();
@@ -388,7 +455,7 @@ export const getProviderIcon = (): string => '❤️';
 
 export const getConnectionInstructions = (): string[] => [
   "1. YOROI va demander l'accès à Apple Santé",
-  "2. Autorise l'accès au poids, aux pas et au sommeil",
+  "2. Autorise l'accès au poids, aux pas, au sommeil et à l'hydratation",
   "3. Tes données seront synchronisées automatiquement",
 ];
 

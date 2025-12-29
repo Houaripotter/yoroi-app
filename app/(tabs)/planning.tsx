@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Image,
   Alert,
   Linking,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,32 +30,40 @@ import {
   MapPin,
   Bell,
   ExternalLink,
+  BookOpen,
 } from 'lucide-react-native';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
-import { COLORS, SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { getTrainings, getClubs, addTraining, deleteTraining, Club, Training, getCompetitions, Competition } from '@/lib/database';
 import { getSportIcon } from '@/constants/sportIcons';
-import { DayDetailModal, AddSessionModal } from '@/components/calendar';
+import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
+import { TimetableView, EnhancedCalendarView, EnhancedAddSessionModal } from '@/components/planning';
 
 // ============================================
-// PLANNING SCREEN - CALENDRIER INTERACTIF
+// PLANNING SCREEN - SWIPEABLE VIEWS
 // ============================================
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DAYS_FR = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
+type ViewMode = 'calendar' | 'programme' | 'clubs' | 'competitions' | 'journal';
+
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const [viewMode, setViewMode] = useState<'calendar' | 'programme' | 'clubs' | 'competitions'>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Refs pour le scroll
+  const horizontalScrollRef = useRef<ScrollView>(null);
+  const isScrollingRef = useRef(false);
 
   // Modals state
   const [showDayModal, setShowDayModal] = useState(false);
@@ -62,8 +72,10 @@ export default function PlanningScreen() {
   const [showProgrammeEditModal, setShowProgrammeEditModal] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
-  const [selectedSport, setSelectedSport] = useState<string>('jjb');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedSportInCategory, setSelectedSportInCategory] = useState<string>('all');
   const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Fonction pour obtenir la prochaine date d'un jour de la semaine (0=Lundi, 6=Dimanche)
   const getNextDateForDayOfWeek = (dayIndex: number): Date => {
@@ -106,40 +118,115 @@ export default function PlanningScreen() {
     return program;
   }, [workouts]);
 
-  // Fonction pour extraire l'organisateur du nom de la compétition
-  const getOrganizer = (competitionName: string): string => {
-    if (competitionName.includes('IBJJF')) return 'IBJJF';
-    if (competitionName.includes('CFJJB')) return 'CFJJB';
-    return 'Autres';
+  // Catégories de sports
+  const sportCategories = {
+    all: { name: 'Tout', color: '#8B5CF6', sports: [] },
+    combat: {
+      name: 'Sports de Combat',
+      color: '#EF4444',
+      sports: [
+        { id: 'all', name: 'Tous' },
+        { id: 'jjb', name: 'JJB' },
+        { id: 'mma', name: 'MMA' },
+        { id: 'boxe', name: 'Boxe' },
+        { id: 'judo', name: 'Judo' },
+        { id: 'karate', name: 'Karaté' },
+        { id: 'lutte', name: 'Lutte' },
+        { id: 'sambo', name: 'Sambo' },
+        { id: 'kickboxing', name: 'Kickboxing' },
+        { id: 'muay-thai', name: 'Muay Thai' }
+      ]
+    },
+    endurance: {
+      name: 'Endurance',
+      color: '#10B981',
+      sports: [
+        { id: 'all', name: 'Tous' },
+        { id: 'running', name: 'Running' },
+        { id: 'marathon', name: 'Marathon' },
+        { id: 'trail', name: 'Trail' },
+        { id: 'triathlon', name: 'Triathlon' },
+        { id: 'cyclisme', name: 'Cyclisme' },
+        { id: 'natation', name: 'Natation' }
+      ]
+    },
+    force: {
+      name: 'Force & Fitness',
+      color: '#F59E0B',
+      sports: [
+        { id: 'all', name: 'Tous' },
+        { id: 'crossfit', name: 'CrossFit' },
+        { id: 'powerlifting', name: 'Powerlifting' },
+        { id: 'haltérophilie', name: 'Haltérophilie' },
+        { id: 'strongman', name: 'Strongman' }
+      ]
+    },
+    collectif: {
+      name: 'Sports Collectifs',
+      color: '#3B82F6',
+      sports: [
+        { id: 'all', name: 'Tous' },
+        { id: 'football', name: 'Football' },
+        { id: 'basket', name: 'Basketball' },
+        { id: 'rugby', name: 'Rugby' },
+        { id: 'handball', name: 'Handball' },
+        { id: 'volley', name: 'Volleyball' }
+      ]
+    },
   };
 
-  // Grouper les compétitions par organisateur
+  // Grouper les compétitions par catégorie
   const groupedCompetitions = useMemo(() => {
     const upcoming = competitions
       .filter(c => new Date(c.date) >= new Date())
-      .filter(c => c.sport === selectedSport)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const groups: { [key: string]: Competition[] } = {};
 
     upcoming.forEach(comp => {
-      const organizer = getOrganizer(comp.nom);
-      if (!groups[organizer]) {
-        groups[organizer] = [];
+      const sport = comp.sport?.toLowerCase() || '';
+
+      // Trouver la catégorie du sport
+      let category = 'autres';
+      for (const [key, cat] of Object.entries(sportCategories)) {
+        if (key === 'all') continue;
+        const sportIds = cat.sports.map((s: any) => s.id);
+        if (sportIds.includes(sport)) {
+          category = key;
+          break;
+        }
       }
-      groups[organizer].push(comp);
+
+      // Filtrer par catégorie sélectionnée
+      if (selectedCategory !== 'all' && category !== selectedCategory) {
+        return;
+      }
+
+      // Filtrer par sport spécifique dans la catégorie
+      if (selectedSportInCategory !== 'all' && sport !== selectedSportInCategory) {
+        return;
+      }
+
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(comp);
     });
 
     return groups;
-  }, [competitions, selectedSport]);
+  }, [competitions, selectedCategory, selectedSportInCategory]);
 
   const loadData = useCallback(async () => {
     try {
+      console.log('📥 Chargement des données...');
       const [trainingsData, clubsData, competitionsData] = await Promise.all([
         getTrainings(),
         getClubs(),
         getCompetitions ? getCompetitions() : Promise.resolve([]),
       ]);
+      console.log('📥 Trainings chargés:', trainingsData.length);
+      console.log('📥 Clubs chargés:', clubsData.length, '-', clubsData.map(c => c.name).join(', '));
+      console.log('📥 Compétitions chargées:', competitionsData.length);
       setWorkouts(trainingsData);
       setClubs(clubsData);
       setCompetitions(competitionsData);
@@ -209,10 +296,29 @@ export default function PlanningScreen() {
   // Handler: sauvegarder une nouvelle seance
   const handleSaveSession = async (session: Omit<Training, 'id' | 'created_at'>) => {
     try {
+      console.log('💾 Ajout de la séance...', session);
       await addTraining(session);
+      console.log('✅ Séance ajoutée en DB');
+
+      // Petit délai pour s'assurer que la DB est à jour
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await loadData();
+      console.log('✅ Données rechargées');
+      console.log('📊 Nombre de workouts après reload:', workouts.length);
+
+      // Incrémenter le trigger pour rafraîchir le TimetableView
+      setRefreshTrigger(prev => {
+        const newVal = prev + 1;
+        console.log('✅ Refresh trigger incrémenté:', newVal);
+        return newVal;
+      });
+
+      // Fermer le modal
+      setShowAddModal(false);
+      console.log('✅ Modal fermé');
     } catch (error) {
-      console.error('Erreur ajout seance:', error);
+      console.error('❌ Erreur ajout seance:', error);
       Alert.alert('Erreur', "Impossible d'ajouter la seance");
       throw error;
     }
@@ -241,154 +347,156 @@ export default function PlanningScreen() {
     return { type: 'color' as const, color: club.color || colors.accent };
   };
 
+  // Handler: Toggle repos (à implémenter avec une table dédiée)
+  const handleToggleRest = (dayId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // TODO: Implémenter la logique de repos avec une table dédiée
+    Alert.alert('Repos', `Fonction repos pour ${dayId} à implémenter`);
+  };
+
+  // Handler: Ouvrir une séance depuis la vue programme
+  const handleSessionPress = (dayId: string, sessionIndex: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // TODO: Ouvrir le modal de détail de la séance
+    Alert.alert('Séance', `Ouvrir la séance ${sessionIndex} du ${dayId}`);
+  };
+
+  // Handler: Ajouter une séance depuis la vue emploi du temps
+  const handleAddSessionFromProgramme = (dayId: string, timeSlot?: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    console.log('🔥 handleAddSessionFromProgramme appelé', { dayId, timeSlot });
+    console.log('🔥 Nombre de clubs:', clubs.length);
+    console.log('🔥 Liste clubs:', clubs.map(c => c.name).join(', '));
+    // Calculer la prochaine date pour ce jour de la semaine
+    const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
+    const nextDate = getNextDateForDayOfWeek(dayIndex);
+    setSelectedDate(nextDate);
+    console.log('🔥 Date sélectionnée:', nextDate);
+    // TODO: Pré-remplir l'heure selon le timeSlot (morning, afternoon, evening)
+    setShowAddModal(true);
+    console.log('🔥 Modal ouvert');
+  };
+
+  // Gérer le clic sur un onglet
+  const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string }[] = [
+    { key: 'calendar', label: 'Calendrier', icon: Calendar, color: colors.accent },
+    { key: 'programme', label: 'Emploi du Temps', sublabel: 'Sportif', icon: List, color: '#8B5CF6' },
+    { key: 'journal', label: 'Carnet', sublabel: 'Entraînement', icon: BookOpen, color: '#EF4444' },
+    { key: 'clubs', label: 'Clubs', icon: Dumbbell, color: '#10B981' },
+    { key: 'competitions', label: 'Événements', icon: Trophy, color: '#F59E0B' },
+  ];
+
+  const handleTabPress = (tab: ViewMode, index: number) => {
+    if (isScrollingRef.current) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setViewMode(tab);
+
+    // Scroller vers la page correspondante
+    horizontalScrollRef.current?.scrollTo({
+      x: index * SCREEN_WIDTH,
+      animated: true,
+    });
+  };
+
+  // Gérer le scroll horizontal des pages
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const currentIndex = Math.round(offsetX / SCREEN_WIDTH);
+
+    if (currentIndex >= 0 && currentIndex < tabs.length) {
+      const newTab = tabs[currentIndex].key;
+      if (newTab !== viewMode) {
+        isScrollingRef.current = true;
+        setViewMode(newTab);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Reset le flag après un délai
+        setTimeout(() => {
+          isScrollingRef.current = false;
+        }, 100);
+      }
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
+      {/* HEADER */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Planning</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Swipe pour naviguer</Text>
+      </View>
+
+      {/* VIEW MODE TOGGLE - Design moderne comme Stats */}
+      <View style={styles.toggleScroll}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.toggleScrollContent}
       >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Planning</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Clique sur un jour pour voir/ajouter</Text>
-        </View>
+        {tabs.map((tab, index) => {
+          const Icon = tab.icon;
+          const isActive = viewMode === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tabItemWrapper}
+              onPress={() => handleTabPress(tab.key, index)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.tabIconCircle,
+                {
+                  backgroundColor: isActive ? tab.color : colors.backgroundCard,
+                  borderColor: isActive ? tab.color : colors.border,
+                }
+              ]}>
+                <Icon size={20} color={isActive ? '#FFF' : colors.textMuted} />
+              </View>
+              <View style={styles.tabLabelContainer}>
+                <Text style={[
+                  styles.tabLabel,
+                  { color: isActive ? tab.color : colors.textMuted },
+                  isActive && styles.tabLabelActive
+                ]}>
+                  {tab.label}
+                </Text>
+                {tab.sublabel && (
+                  <Text style={[
+                    styles.tabLabelSub,
+                    { color: isActive ? tab.color : colors.textMuted }
+                  ]}>
+                    {tab.sublabel}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+      </View>
 
-        {/* VIEW MODE TOGGLE - Design moderne comme Stats */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.toggleScroll}
-          contentContainerStyle={styles.toggleScrollContent}
-        >
-          <TouchableOpacity
-            style={styles.tabItemWrapper}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setViewMode('calendar');
-            }}
-            activeOpacity={0.7}
+      {/* ScrollView horizontal avec pagination */}
+      <ScrollView
+        ref={horizontalScrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.horizontalScroll}
+        bounces={false}
+        decelerationRate="fast"
+      >
+        {/* Page Calendrier */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
           >
-            <View style={[
-              styles.tabIconCircle,
-              {
-                backgroundColor: viewMode === 'calendar' ? colors.accent : colors.backgroundCard,
-                borderColor: viewMode === 'calendar' ? colors.accent : colors.border,
-              }
-            ]}>
-              <Calendar size={20} color={viewMode === 'calendar' ? '#FFF' : colors.textMuted} />
-            </View>
-            <Text style={[
-              styles.tabLabel,
-              { color: viewMode === 'calendar' ? colors.accent : colors.textMuted },
-              viewMode === 'calendar' && styles.tabLabelActive
-            ]}>
-              Calendrier
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tabItemWrapper}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setViewMode('programme');
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={[
-              styles.tabIconCircle,
-              {
-                backgroundColor: viewMode === 'programme' ? '#8B5CF6' : colors.backgroundCard,
-                borderColor: viewMode === 'programme' ? '#8B5CF6' : colors.border,
-              }
-            ]}>
-              <List size={20} color={viewMode === 'programme' ? '#FFF' : colors.textMuted} />
-            </View>
-            <Text style={[
-              styles.tabLabel,
-              { color: viewMode === 'programme' ? '#8B5CF6' : colors.textMuted },
-              viewMode === 'programme' && styles.tabLabelActive
-            ]}>
-              Programme
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tabItemWrapper}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setViewMode('clubs');
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={[
-              styles.tabIconCircle,
-              {
-                backgroundColor: viewMode === 'clubs' ? '#10B981' : colors.backgroundCard,
-                borderColor: viewMode === 'clubs' ? '#10B981' : colors.border,
-              }
-            ]}>
-              <Dumbbell size={20} color={viewMode === 'clubs' ? '#FFF' : colors.textMuted} />
-            </View>
-            <Text style={[
-              styles.tabLabel,
-              { color: viewMode === 'clubs' ? '#10B981' : colors.textMuted },
-              viewMode === 'clubs' && styles.tabLabelActive
-            ]}>
-              Clubs
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.tabItemWrapper}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setViewMode('competitions');
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={[
-              styles.tabIconCircle,
-              {
-                backgroundColor: viewMode === 'competitions' ? '#F59E0B' : colors.backgroundCard,
-                borderColor: viewMode === 'competitions' ? '#F59E0B' : colors.border,
-              }
-            ]}>
-              <Trophy size={20} color={viewMode === 'competitions' ? '#FFF' : colors.textMuted} />
-            </View>
-            <Text style={[
-              styles.tabLabel,
-              { color: viewMode === 'competitions' ? '#F59E0B' : colors.textMuted },
-              viewMode === 'competitions' && styles.tabLabelActive
-            ]}>
-              Compétitions
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {viewMode === 'calendar' ? (
-          <>
-            {/* CALENDAR HEADER */}
-            <View style={styles.calendarHeader}>
-              <TouchableOpacity
-                onPress={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                style={[styles.calendarNavButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              >
-                <ChevronLeft size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
-              <Text style={[styles.calendarTitle, { color: colors.textPrimary }]}>
-                {format(currentMonth, 'MMMM yyyy', { locale: fr })}
-              </Text>
-              <TouchableOpacity
-                onPress={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                style={[styles.calendarNavButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              >
-                <ChevronRight size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
             {/* MONTHLY STATS BY CLUB - COMPACT */}
             {monthlyClubStats.length > 0 && (
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -417,188 +525,127 @@ export default function PlanningScreen() {
               </View>
             )}
 
-            {/* CALENDAR GRID */}
-            <View style={[styles.calendarCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              {/* Day names */}
-              <View style={styles.weekDaysRow}>
-                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
-                  <Text key={day} style={[styles.weekDayText, { color: colors.textMuted }]}>{day}</Text>
-                ))}
-              </View>
+            {/* NOUVEAU CALENDRIER AMÉLIORÉ */}
+            <EnhancedCalendarView
+              currentMonth={currentMonth}
+              workouts={workouts}
+              clubs={clubs}
+              onMonthChange={setCurrentMonth}
+              onDayPress={handleDayPress}
+              selectedDate={selectedDate}
+            />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-              {/* Calendar days */}
-              <View style={styles.calendarGrid}>
-                {calendarDays.map((day, index) => {
-                  const dayWorkouts = getWorkoutsForDate(day);
-                  const isCurrentMonth = isSameMonth(day, currentMonth);
-                  const isDayToday = isToday(day);
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  const hasWorkouts = dayWorkouts.length > 0;
+        {/* Page Programme */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <TimetableView
+              onAddSession={handleAddSessionFromProgramme}
+              onSessionPress={handleSessionPress}
+              refreshTrigger={refreshTrigger}
+            />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-                  // Get unique clubs for this day (max 3)
-                  const uniqueClubIds = [...new Set(dayWorkouts.filter(w => w.club_id).map(w => w.club_id))].slice(0, 3);
-                  const uniqueClubs = uniqueClubIds.map(id => clubs.find(c => c.id === id)).filter(Boolean) as Club[];
+        {/* Page Carnet d'Entraînement */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Carnet d'Entraînement</Text>
 
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.calendarDay,
-                        !isCurrentMonth && styles.calendarDayOther,
-                        isDayToday && { backgroundColor: `${colors.accent}20` },
-                        isSelected && { backgroundColor: colors.accent },
-                        hasWorkouts && !isSelected && !isDayToday && { backgroundColor: `${colors.backgroundElevated}` },
-                      ]}
-                      onPress={() => handleDayPress(day)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.calendarDayText,
-                          { color: colors.textPrimary },
-                          !isCurrentMonth && { color: colors.textMuted, opacity: 0.5 },
-                          isDayToday && { color: colors.accent, fontWeight: '700' as const },
-                          isSelected && styles.calendarDayTextSelected,
-                        ]}
-                      >
-                        {format(day, 'd')}
-                      </Text>
-
-                      {/* Club logos/colors instead of emojis */}
-                      {uniqueClubs.length > 0 && (
-                        <View style={styles.clubLogosRow}>
-                          {uniqueClubs.map((club) => {
-                            const display = getClubDisplay(club);
-                            return (
-                              <View key={club.id} style={styles.clubLogoMini}>
-                                {display.type === 'image' ? (
-                                  <Image source={display.source} style={styles.clubLogoMiniImage} />
-                                ) : (
-                                  <View style={[styles.clubColorMini, { backgroundColor: display.color }]} />
-                                )}
-                              </View>
-                            );
-                          })}
-                          {dayWorkouts.length > 3 && (
-                            <Text style={[styles.moreWorkouts, { color: colors.textMuted }]}>+{dayWorkouts.length - 3}</Text>
-                          )}
-                        </View>
-                      )}
-
-                      {/* Indicateur vide pour les jours sans seance */}
-                      {!hasWorkouts && isCurrentMonth && (
-                        <View style={styles.emptyIndicator}>
-                          <Plus size={10} color={colors.textMuted} strokeWidth={1.5} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          </>
-        ) : viewMode === 'programme' ? (
-          <>
-            {/* MON PROGRAMME - SEMAINE TYPE */}
-            <View style={styles.programmeHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Ma Semaine</Text>
+            <View style={[styles.journalIntroCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <BookOpen size={48} color="#EF4444" />
+              <Text style={[styles.journalIntroTitle, { color: colors.textPrimary }]}>
+                Suivi de Progression
+              </Text>
+              <Text style={[styles.journalIntroText, { color: colors.textMuted }]}>
+                Gère tes objectifs, suis ta progression et organise tes programmes d'entraînement
+              </Text>
               <TouchableOpacity
-                style={[styles.editProgrammeBtn, { backgroundColor: `${colors.accent}15` }]}
+                style={[styles.journalOpenButton, { backgroundColor: '#EF4444' }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  // Ouvrir le modal d'ajout avec la date d'aujourd'hui
-                  setSelectedDate(new Date());
-                  setShowAddModal(true);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push('/training-journal');
                 }}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.editProgrammeBtnText, { color: colors.accent }]}>+ Ajouter</Text>
+                <BookOpen size={20} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.journalOpenButtonText}>Ouvrir le carnet</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Weekly Schedule */}
-            {DAYS_FR.map((day, index) => {
-              // Récupérer les clubs pour ce jour depuis le programme réel
-              const dayProgramData = weeklyProgram[index] || [];
-              const daySchedule = dayProgramData
-                .map(({ clubId }) => clubs.find(c => c.id === clubId))
-                .filter((c): c is Club => c !== undefined);
-
-              const isRestDay = index === 6;
-
-              return (
-                <TouchableOpacity
-                  key={day}
-                  style={[styles.programmeDay, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    // Ouvrir le modal d'ajout avec la prochaine date de ce jour
-                    const nextDate = getNextDateForDayOfWeek(index);
-                    setSelectedDate(nextDate);
-                    setShowAddModal(true);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.programmeDayLeft}>
-                    <Text style={[styles.programmeDayName, { color: colors.textPrimary }, isRestDay && { color: colors.textMuted }]}>{day}</Text>
-                  </View>
-
-                  <View style={styles.programmeDayCenter}>
-                    {isRestDay ? (
-                      <View style={[styles.restBadge, { backgroundColor: colors.backgroundElevated }]}>
-                        <Moon size={14} color={colors.textMuted} />
-                        <Text style={[styles.restText, { color: colors.textMuted }]}>Repos</Text>
-                      </View>
-                    ) : daySchedule.length > 0 ? (
-                      <View style={styles.programmeClubs}>
-                        {daySchedule.map((club) => {
-                          const display = getClubDisplay(club);
-                          return (
-                            <View
-                              key={club.id}
-                              style={[styles.programmeClubBadge, { backgroundColor: `${club.color || colors.accent}15` }]}
-                            >
-                              {display.type === 'image' ? (
-                                <Image source={display.source} style={styles.programmeClubLogo} />
-                              ) : (
-                                <View style={[styles.programmeClubDot, { backgroundColor: display.color }]} />
-                              )}
-                              <Text style={[styles.programmeClubName, { color: club.color || colors.textPrimary }]} numberOfLines={1}>
-                                {club.name}
-                              </Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    ) : (
-                      <Text style={[styles.noSessionText, { color: colors.textMuted }]}>-</Text>
-                    )}
-                  </View>
-
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              );
-            })}
-
-            {/* Stats Semaine */}
-            <View style={[styles.weeklyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <View style={styles.weeklyStatItem}>
-                <Text style={[styles.weeklyStatValue, { color: colors.accent }]}>
-                  {clubs.length > 0 ? Math.min(6, clubs.length * 2) : 0}
+            {/* Features cards */}
+            <View style={styles.journalFeaturesGrid}>
+              <View style={[styles.journalFeatureCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={[styles.journalFeatureIcon, { backgroundColor: `${colors.accent}20` }]}>
+                  <TrendingUp size={24} color={colors.accent} />
+                </View>
+                <Text style={[styles.journalFeatureTitle, { color: colors.textPrimary }]}>
+                  Objectifs
                 </Text>
-                <Text style={[styles.weeklyStatLabel, { color: colors.textMuted }]}>seances/semaine</Text>
+                <Text style={[styles.journalFeatureText, { color: colors.textMuted }]}>
+                  Crée et organise tes objectifs par sport
+                </Text>
               </View>
-              <View style={[styles.weeklyStatDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.weeklyStatItem}>
-                <Text style={[styles.weeklyStatValue, { color: colors.accent }]}>
-                  {clubs.length > 0 ? `~${clubs.length * 3}h` : '0h'}
+
+              <View style={[styles.journalFeatureCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={[styles.journalFeatureIcon, { backgroundColor: '#8B5CF620' }]}>
+                  <Trophy size={24} color="#8B5CF6" />
+                </View>
+                <Text style={[styles.journalFeatureTitle, { color: colors.textPrimary }]}>
+                  Statistiques
                 </Text>
-                <Text style={[styles.weeklyStatLabel, { color: colors.textMuted }]}>prevues</Text>
+                <Text style={[styles.journalFeatureText, { color: colors.textMuted }]}>
+                  Suis ta progression avec des stats détaillées
+                </Text>
+              </View>
+
+              <View style={[styles.journalFeatureCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={[styles.journalFeatureIcon, { backgroundColor: '#10B98120' }]}>
+                  <Calendar size={24} color="#10B981" />
+                </View>
+                <Text style={[styles.journalFeatureTitle, { color: colors.textPrimary }]}>
+                  Calendrier
+                </Text>
+                <Text style={[styles.journalFeatureText, { color: colors.textMuted }]}>
+                  Visualise ton historique d'entraînement
+                </Text>
+              </View>
+
+              <View style={[styles.journalFeatureCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={[styles.journalFeatureIcon, { backgroundColor: '#F59E0B20' }]}>
+                  <List size={24} color="#F59E0B" />
+                </View>
+                <Text style={[styles.journalFeatureTitle, { color: colors.textPrimary }]}>
+                  Programmes
+                </Text>
+                <Text style={[styles.journalFeatureText, { color: colors.textMuted }]}>
+                  Structure tes objectifs en programmes
+                </Text>
               </View>
             </View>
-          </>
-        ) : viewMode === 'clubs' ? (
-          <>
-            {/* CLUBS VIEW */}
+
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
+
+        {/* Page Clubs */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mes Clubs</Text>
 
             {clubs.length === 0 ? (
@@ -691,96 +738,91 @@ export default function PlanningScreen() {
                 </TouchableOpacity>
               </>
             )}
-          </>
-        ) : (
-          <>
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
+
+        {/* Page Compétitions */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={{ height: 20 }} />
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              📅 MES COMPÉTITIONS
+              MES ÉVÉNEMENTS
             </Text>
 
-            {/* Sélecteur de sport */}
+            {/* Filtre par catégorie */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sportFilterContainer}
+              contentContainerStyle={styles.categoryFilterContainer}
             >
-              <TouchableOpacity
-                style={[
-                  styles.sportChip,
-                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                  selectedSport === 'jjb' && { backgroundColor: '#0ABAB5', borderColor: '#0ABAB5' }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedSport('jjb');
-                }}
-              >
-                <Text style={[
-                  styles.sportChipText,
-                  { color: colors.textPrimary },
-                  selectedSport === 'jjb' && { color: '#FFFFFF', fontWeight: '700' }
-                ]}>
-                  🥋 JJB
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sportChip,
-                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                  selectedSport === 'mma' && { backgroundColor: '#EF4444', borderColor: '#EF4444' }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedSport('mma');
-                }}
-              >
-                <Text style={[
-                  styles.sportChipText,
-                  { color: colors.textPrimary },
-                  selectedSport === 'mma' && { color: '#FFFFFF', fontWeight: '700' }
-                ]}>
-                  🥊 MMA
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sportChip,
-                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                  selectedSport === 'boxe' && { backgroundColor: '#F59E0B', borderColor: '#F59E0B' }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedSport('boxe');
-                }}
-              >
-                <Text style={[
-                  styles.sportChipText,
-                  { color: colors.textPrimary },
-                  selectedSport === 'boxe' && { color: '#FFFFFF', fontWeight: '700' }
-                ]}>
-                  🥊 Boxe
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.sportChip,
-                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                  selectedSport === 'running' && { backgroundColor: '#10B981', borderColor: '#10B981' }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setSelectedSport('running');
-                }}
-              >
-                <Text style={[
-                  styles.sportChipText,
-                  { color: colors.textPrimary },
-                  selectedSport === 'running' && { color: '#FFFFFF', fontWeight: '700' }
-                ]}>
-                  🏃 Running
-                </Text>
-              </TouchableOpacity>
+              {Object.entries(sportCategories).map(([key, category]) => {
+                const isActive = selectedCategory === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.categoryChip,
+                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                      isActive && { backgroundColor: category.color, borderColor: category.color }
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedCategory(key);
+                      setSelectedSportInCategory('all');
+                    }}
+                  >
+                    <Text style={[
+                      styles.categoryChipText,
+                      { color: colors.textPrimary },
+                      isActive && { color: '#FFFFFF', fontWeight: '700' }
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
+
+            {/* Sous-menu sports spécifiques */}
+            {selectedCategory !== 'all' && sportCategories[selectedCategory as keyof typeof sportCategories]?.sports?.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sportFilterContainer}
+              >
+                {sportCategories[selectedCategory as keyof typeof sportCategories].sports.map((sport: any) => {
+                  const isActive = selectedSportInCategory === sport.id;
+                  const categoryColor = sportCategories[selectedCategory as keyof typeof sportCategories].color;
+                  return (
+                    <TouchableOpacity
+                      key={sport.id}
+                      style={[
+                        styles.sportChip,
+                        { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                        isActive && { backgroundColor: categoryColor, borderColor: categoryColor }
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setSelectedSportInCategory(sport.id);
+                      }}
+                    >
+                      <Text style={[
+                        styles.sportChipText,
+                        { color: colors.textSecondary },
+                        isActive && { color: '#FFFFFF', fontWeight: '700' }
+                      ]}>
+                        {sport.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
 
             {Object.keys(groupedCompetitions).length === 0 ? (
               <View style={[styles.emptyClubsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -799,26 +841,32 @@ export default function PlanningScreen() {
               </View>
             ) : (
               <>
-                {/* Groupement par organisateur */}
-                {Object.entries(groupedCompetitions).map(([organizer, comps]) => {
-                  const isExpanded = expandedOrganizers[organizer];
-                  const displayedComps = isExpanded ? comps : comps.slice(0, 2);
-                  const hasMore = comps.length > 2;
+                {/* Groupement par catégorie */}
+                {Object.entries(groupedCompetitions).map(([categoryKey, comps]) => {
+                  // Trouver la catégorie
+                  const categoryData = categoryKey === 'autres'
+                    ? { name: 'Autres', color: '#6B7280' }
+                    : sportCategories[categoryKey as keyof typeof sportCategories];
 
-                  // Couleur de l'organisateur
-                  const organizerColor = organizer === 'IBJJF' ? '#E53935' : organizer === 'CFJJB' ? '#1E88E5' : '#6B7280';
+                  if (!categoryData) return null;
+
+                  const isExpanded = expandedOrganizers[categoryKey];
+                  const displayedComps = isExpanded ? comps : comps.slice(0, 3);
+                  const hasMore = comps.length > 3;
 
                   return (
-                    <View key={organizer} style={styles.organizerGroup}>
-                      {/* Header organisateur */}
-                      <View style={[styles.organizerHeader, { borderLeftColor: organizerColor }]}>
-                        <Text style={[styles.organizerName, { color: organizerColor }]}>
-                          {organizer}
-                        </Text>
-                        <View style={[styles.organizerBadge, { backgroundColor: organizerColor + '20' }]}>
-                          <Text style={[styles.organizerCount, { color: organizerColor }]}>
-                            {comps.length}
-                          </Text>
+                    <View key={categoryKey} style={styles.categoryGroup}>
+                      {/* Header catégorie */}
+                      <View style={[styles.categoryGroupHeader, { backgroundColor: categoryData.color + '15', borderColor: categoryData.color }]}>
+                        <View style={styles.categoryGroupHeaderLeft}>
+                          <View>
+                            <Text style={[styles.categoryGroupName, { color: categoryData.color }]}>
+                              {categoryData.name}
+                            </Text>
+                            <Text style={[styles.categoryGroupCount, { color: colors.textMuted }]}>
+                              {comps.length} événement{comps.length > 1 ? 's' : ''}
+                            </Text>
+                          </View>
                         </View>
                       </View>
 
@@ -836,67 +884,73 @@ export default function PlanningScreen() {
                         return (
                           <TouchableOpacity
                             key={competition.id}
-                            style={[styles.competitionCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                            style={[styles.eventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, borderLeftColor: categoryData.color }]}
                             onPress={() => router.push('/competitions')}
                             activeOpacity={0.8}
                           >
-                            <View style={styles.competitionHeader}>
-                              <View style={[styles.sportIconBg, { backgroundColor: sportInfo.color + '20' }]}>
-                                <Text style={styles.sportIconText}>{sportInfo.icon}</Text>
-                              </View>
-                              <View style={styles.competitionInfo}>
-                                <Text style={[styles.competitionName, { color: colors.textPrimary }]} numberOfLines={1}>
-                                  {competition.nom}
-                                </Text>
-                                <View style={styles.competitionMeta}>
-                                  <Calendar size={12} color={colors.textMuted} />
-                                  <Text style={[styles.competitionDate, { color: colors.textMuted }]}>
-                                    {format(eventDate, 'd MMMM yyyy', { locale: fr })}
-                                  </Text>
+                            <View style={styles.eventCardHeader}>
+                              <View style={styles.eventCardLeft}>
+                                <View style={[styles.eventIconBg, { backgroundColor: categoryData.color + '20' }]}>
+                                  <Text style={styles.eventIconText}>{sportInfo.icon}</Text>
                                 </View>
-                                {competition.lieu && (
-                                  <View style={styles.competitionMeta}>
-                                    <MapPin size={12} color={colors.textMuted} />
-                                    <Text style={[styles.competitionLocation, { color: colors.textMuted }]}>
-                                      {competition.lieu}
+                                <View style={styles.eventCardInfo}>
+                                  <Text style={[styles.eventCardName, { color: colors.textPrimary }]} numberOfLines={2}>
+                                    {competition.nom}
+                                  </Text>
+                                  <View style={styles.eventCardMeta}>
+                                    <Calendar size={12} color={categoryData.color} />
+                                    <Text style={[styles.eventCardDate, { color: colors.textSecondary }]}>
+                                      {format(eventDate, 'd MMMM yyyy', { locale: fr })}
                                     </Text>
                                   </View>
-                                )}
+                                  {competition.lieu && (
+                                    <View style={styles.eventCardMeta}>
+                                      <MapPin size={12} color={colors.textMuted} />
+                                      <Text style={[styles.eventCardLocation, { color: colors.textMuted }]} numberOfLines={1}>
+                                        {competition.lieu}
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
                               </View>
-                              <View style={[styles.countdownBadge, { backgroundColor: urgencyColor + '20' }]}>
-                                <Text style={[styles.countdownText, { color: urgencyColor }]}>
+                              <View style={[styles.eventCountdownBadge, { backgroundColor: urgencyColor + '20' }]}>
+                                <Text style={[styles.eventCountdownText, { color: urgencyColor }]}>
                                   J-{daysLeft}
                                 </Text>
                               </View>
                             </View>
 
                             {competition.categorie_poids && (
-                              <View style={[styles.weightCategory, { backgroundColor: colors.background }]}>
-                                <Text style={[styles.weightCategoryText, { color: colors.textPrimary }]}>
-                                  ⚖️ {competition.categorie_poids}
+                              <View style={[styles.eventWeightBadge, { backgroundColor: categoryData.color + '15' }]}>
+                                <Text style={[styles.eventWeightText, { color: categoryData.color }]}>
+                                  {competition.categorie_poids}
                                 </Text>
                               </View>
                             )}
 
-                            <View style={styles.competitionActions}>
+                            <View style={styles.eventCardActions}>
                               {competition.lien_inscription && (
                                 <TouchableOpacity
-                                  style={[styles.competitionAction, { backgroundColor: sportInfo.color + '20' }]}
-                                  onPress={() => Linking.openURL(competition.lien_inscription!)}
+                                  style={[styles.eventAction, { backgroundColor: categoryData.color + '15' }]}
+                                  onPress={(e) => {
+                                    e.stopPropagation();
+                                    Linking.openURL(competition.lien_inscription!);
+                                  }}
                                 >
-                                  <ExternalLink size={14} color={sportInfo.color} />
-                                  <Text style={[styles.competitionActionText, { color: sportInfo.color }]}>Inscription</Text>
+                                  <ExternalLink size={14} color={categoryData.color} />
+                                  <Text style={[styles.eventActionText, { color: categoryData.color }]}>Inscription</Text>
                                 </TouchableOpacity>
                               )}
                               <TouchableOpacity
-                                style={[styles.competitionAction, { backgroundColor: '#8B5CF620' }]}
-                                onPress={() => {
+                                style={[styles.eventAction, { backgroundColor: '#8B5CF615' }]}
+                                onPress={(e) => {
+                                  e.stopPropagation();
                                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                  Alert.alert('Rappels', 'Les rappels J-30, J-7, J-1 et H-2 sont activés !');
+                                  Alert.alert('Rappels', 'Rappels J-30, J-7, J-1 et H-2 activés !');
                                 }}
                               >
                                 <Bell size={14} color="#8B5CF6" />
-                                <Text style={[styles.competitionActionText, { color: '#8B5CF6' }]}>Rappels</Text>
+                                <Text style={[styles.eventActionText, { color: '#8B5CF6' }]}>Rappels</Text>
                               </TouchableOpacity>
                             </View>
                           </TouchableOpacity>
@@ -906,21 +960,21 @@ export default function PlanningScreen() {
                       {/* Bouton "Voir plus" */}
                       {hasMore && (
                         <TouchableOpacity
-                          style={[styles.seeMoreButton, { backgroundColor: `${organizerColor}15`, borderColor: organizerColor }]}
+                          style={[styles.seeMoreButton, { backgroundColor: categoryData.color + '15', borderColor: categoryData.color }]}
                           onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             setExpandedOrganizers(prev => ({
                               ...prev,
-                              [organizer]: !prev[organizer]
+                              [categoryKey]: !prev[categoryKey]
                             }));
                           }}
                         >
-                          <Text style={[styles.seeMoreText, { color: organizerColor }]}>
-                            {isExpanded ? `Voir moins` : `Voir plus (${comps.length - 2} autres)`}
+                          <Text style={[styles.seeMoreText, { color: categoryData.color }]}>
+                            {isExpanded ? `Voir moins` : `Voir ${comps.length - 3} de plus`}
                           </Text>
                           <ChevronRight
                             size={16}
-                            color={organizerColor}
+                            color={categoryData.color}
                             style={{ transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }}
                           />
                         </TouchableOpacity>
@@ -943,7 +997,7 @@ export default function PlanningScreen() {
 
             {/* CALENDRIERS OFFICIELS */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 24 }]}>
-              🌐 CALENDRIERS OFFICIELS
+              CALENDRIERS OFFICIELS
             </Text>
             <View style={styles.officialCalendars}>
               <TouchableOpacity
@@ -951,9 +1005,6 @@ export default function PlanningScreen() {
                 onPress={() => Linking.openURL('https://cfjjb.com/competitions/calendrier-competitions')}
                 activeOpacity={0.8}
               >
-                <View style={[styles.officialCalendarIcon, { backgroundColor: '#1E88E520' }]}>
-                  <Text style={styles.officialCalendarEmoji}>🥋</Text>
-                </View>
                 <View style={styles.officialCalendarInfo}>
                   <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>CFJJB</Text>
                   <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>Confédération Française JJB</Text>
@@ -966,9 +1017,6 @@ export default function PlanningScreen() {
                 onPress={() => Linking.openURL('https://ibjjf.com/events/calendar')}
                 activeOpacity={0.8}
               >
-                <View style={[styles.officialCalendarIcon, { backgroundColor: '#E5393520' }]}>
-                  <Text style={styles.officialCalendarEmoji}>🏆</Text>
-                </View>
                 <View style={styles.officialCalendarInfo}>
                   <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>IBJJF</Text>
                   <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>International Brazilian JJF</Text>
@@ -981,9 +1029,6 @@ export default function PlanningScreen() {
                 onPress={() => Linking.openURL('https://www.ufc.com/events')}
                 activeOpacity={0.8}
               >
-                <View style={[styles.officialCalendarIcon, { backgroundColor: '#FF6F0020' }]}>
-                  <Text style={styles.officialCalendarEmoji}>🥊</Text>
-                </View>
                 <View style={styles.officialCalendarInfo}>
                   <Text style={[styles.officialCalendarName, { color: colors.textPrimary }]}>UFC / MMA</Text>
                   <Text style={[styles.officialCalendarDesc, { color: colors.textMuted }]}>Événements MMA</Text>
@@ -991,10 +1036,9 @@ export default function PlanningScreen() {
                 <ExternalLink size={18} color="#FF6F00" />
               </TouchableOpacity>
             </View>
-          </>
-        )}
-
-        <View style={{ height: 120 }} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
       </ScrollView>
 
       {/* MODALS */}
@@ -1008,7 +1052,7 @@ export default function PlanningScreen() {
         onDeleteSession={handleDeleteSession}
       />
 
-      <AddSessionModal
+      <EnhancedAddSessionModal
         visible={showAddModal}
         date={selectedDate}
         clubs={clubs}
@@ -1037,23 +1081,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
   },
 
   // HEADER
   header: {
-    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.sm,
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   title: {
-    fontSize: FONT.size.xxxl,
-    fontWeight: FONT.weight.bold,
+    fontSize: 24,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: '#FFFFFF',
   },
   subtitle: {
-    fontSize: FONT.size.md,
+    fontSize: 12,
     color: '#888888',
-    marginTop: SPACING.xs,
+    marginTop: 0,
+    marginBottom: 0,
+  },
+
+  // Horizontal scroll
+  horizontalScroll: {
+    flex: 1,
+    marginTop: 0,
+    paddingTop: 0, // Pas de padding top
+  },
+  page: {
+    width: SCREEN_WIDTH,
+    paddingTop: 0,
   },
 
   // TOGGLE
@@ -1068,24 +1125,49 @@ const styles = StyleSheet.create({
   // Nouveaux styles pour les onglets (comme Stats)
   tabItemWrapper: {
     alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 4,
+    gap: 4,
+    marginHorizontal: 2,
+    minWidth: 68,
   },
   tabIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 13,
   },
   tabLabelActive: {
     fontWeight: '700',
+  },
+  tabLabelContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabelSub: {
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 0,
+    lineHeight: 12,
+  },
+
+  // Toggle scroll pour 4 onglets - Style moderne
+  toggleScroll: {
+    marginBottom: 8,
+    marginTop: 0,
+    height: 88, // Hauteur fixe pour les tabs (52px icône + 16px label + 20px padding)
+  },
+  toggleScrollContent: {
+    paddingHorizontal: SPACING.sm,
+    gap: 8,
+    alignItems: 'center',
   },
 
   // CALENDAR HEADER
@@ -1106,8 +1188,8 @@ const styles = StyleSheet.create({
     borderColor: '#1A1A1A',
   },
   calendarTitle: {
-    fontSize: FONT.size.xl,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: '#FFFFFF',
     textTransform: 'capitalize',
   },
@@ -1116,9 +1198,10 @@ const styles = StyleSheet.create({
   monthlyStatsCard: {
     backgroundColor: '#0A0A0A',
     borderRadius: RADIUS.xl,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.xs,
+    marginTop: 0,
     borderWidth: 1,
     borderColor: '#1A1A1A',
   },
@@ -1129,8 +1212,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   monthlyStatsTitle: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
     color: COLORS.text,
   },
   monthlyStatsScroll: {
@@ -1159,11 +1242,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   monthlyStatCount: {
-    fontSize: FONT.size.lg,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
   monthlyStatName: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textSecondary,
     marginTop: 2,
     maxWidth: 70,
@@ -1185,8 +1268,8 @@ const styles = StyleSheet.create({
   weekDayText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: FONT.size.xs,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.semibold,
     color: COLORS.textMuted,
     textTransform: 'uppercase',
   },
@@ -1208,12 +1291,12 @@ const styles = StyleSheet.create({
   },
   calendarDayText: {
     fontSize: 14,  // Réduit pour laisser encore plus de place aux logos
-    fontWeight: FONT.weight.bold,  // Plus bold
+    fontWeight: TYPOGRAPHY.weight.bold,  // Plus bold
     color: COLORS.text,
   },
   calendarDayTextSelected: {
     color: '#FFFFFF',
-    fontWeight: FONT.weight.bold,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
 
   // Club logos in calendar
@@ -1281,16 +1364,17 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    fontSize: FONT.size.xs,
-    fontWeight: FONT.weight.medium,
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.medium,
   },
 
   // SECTION TITLE
   sectionTitle: {
     fontSize: 11,
-    fontWeight: FONT.weight.bold,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: '#555555',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xs,
+    marginTop: 0,
     textTransform: 'uppercase',
     letterSpacing: 3,
   },
@@ -1299,14 +1383,14 @@ const styles = StyleSheet.create({
   clubsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   clubCard: {
-    width: (SCREEN_WIDTH - SPACING.xl * 2 - SPACING.md) / 2,
+    width: (SCREEN_WIDTH - SPACING.sm * 2 - SPACING.sm) / 2,
     backgroundColor: '#0A0A0A',
     borderRadius: RADIUS.xxl,
-    padding: SPACING.lg,
+    padding: SPACING.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#1A1A1A',
@@ -1330,14 +1414,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   clubName: {
-    fontSize: FONT.size.md,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.text,
     textAlign: 'center',
     marginBottom: 2,
   },
   clubSport: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textSecondary,
     marginBottom: SPACING.sm,
   },
@@ -1347,31 +1431,31 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   clubStatsValue: {
-    fontSize: FONT.size.xl,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
   clubStatsLabel: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textMuted,
   },
 
   // EMPTY CLUBS
   emptyClubsCard: {
     backgroundColor: '#0A0A0A',
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.xxl,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#1A1A1A',
   },
   emptyClubsTitle: {
-    fontSize: FONT.size.lg,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.text,
     marginTop: SPACING.md,
   },
   emptyClubsText: {
-    fontSize: FONT.size.sm,
+    fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textMuted,
     marginTop: SPACING.xs,
     marginBottom: SPACING.lg,
@@ -1385,8 +1469,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
   },
   addClubButtonText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
     color: '#FFFFFF',
   },
   addClubButtonFixed: {
@@ -1399,105 +1483,108 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
   },
   addClubButtonFixedText: {
-    fontSize: FONT.size.md,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: '#FFFFFF',
   },
-  
-  // Toggle scroll pour 4 onglets - Style moderne
-  toggleScroll: {
-    marginBottom: SPACING.lg,
-  },
-  toggleScrollContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: 12,
-  },
 
-  // COMPÉTITIONS
-  competitionCard: {
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.lg,
+  // ÉVÉNEMENTS / COMPÉTITIONS
+  eventCard: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.md,
     marginBottom: SPACING.md,
     borderWidth: 1,
+    borderLeftWidth: 4,
   },
-  competitionHeader: {
+  eventCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  eventCardLeft: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.md,
+    flex: 1,
   },
-  sportIconBg: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  eventIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sportIconText: {
-    fontSize: 24,
+  eventIconText: {
+    fontSize: 22,
   },
-  competitionInfo: {
+  eventCardInfo: {
     flex: 1,
   },
-  competitionName: {
-    fontSize: FONT.size.lg,
-    fontWeight: FONT.weight.bold,
-    marginBottom: 4,
+  eventCardName: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    marginBottom: 6,
+    lineHeight: 20,
   },
-  competitionMeta: {
+  eventCardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 6,
+    marginTop: 4,
   },
-  competitionDate: {
-    fontSize: FONT.size.sm,
+  eventCardDate: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.medium,
   },
-  competitionLocation: {
-    fontSize: FONT.size.sm,
+  eventCardLocation: {
+    fontSize: TYPOGRAPHY.size.xs,
+    flex: 1,
   },
-  countdownBadge: {
+  eventCountdownBadge: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.lg,
+    minWidth: 56,
+    alignItems: 'center',
   },
-  countdownText: {
-    fontSize: FONT.size.lg,
-    fontWeight: FONT.weight.bold,
+  eventCountdownText: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
-  weightCategory: {
-    marginTop: SPACING.md,
+  eventWeightBadge: {
+    marginTop: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 6,
     borderRadius: RADIUS.md,
     alignSelf: 'flex-start',
   },
-  weightCategoryText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+  eventWeightText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
-  competitionActions: {
+  eventCardActions: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: SPACING.sm,
     marginTop: SPACING.md,
   },
-  competitionAction: {
+  eventAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 6,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.lg,
   },
-  competitionActionText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+  eventActionText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
 
   // TOTAL STATS
   totalStatsCard: {
     backgroundColor: '#0A0A0A',
     borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
+    padding: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -1508,12 +1595,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalStatValue: {
-    fontSize: FONT.size.xxl,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.text,
   },
   totalStatLabel: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textMuted,
     marginTop: 2,
   },
@@ -1536,8 +1623,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
   },
   editProgrammeBtnText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
   },
   programmeDay: {
     flexDirection: 'row',
@@ -1554,8 +1641,8 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   programmeDayName: {
-    fontSize: FONT.size.md,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.text,
   },
   programmeDayCenter: {
@@ -1572,7 +1659,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   restText: {
-    fontSize: FONT.size.sm,
+    fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textMuted,
   },
   programmeClubs: {
@@ -1599,11 +1686,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   programmeClubName: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.medium,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.medium,
   },
   noSessionText: {
-    fontSize: FONT.size.sm,
+    fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textMuted,
   },
   weeklyStatsCard: {
@@ -1621,11 +1708,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weeklyStatValue: {
-    fontSize: FONT.size.xxl,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
   weeklyStatLabel: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textMuted,
     marginTop: 2,
   },
@@ -1634,7 +1721,7 @@ const styles = StyleSheet.create({
     height: 40,
     backgroundColor: COLORS.border,
   },
-  
+
   // Calendriers officiels
   officialCalendars: {
     gap: SPACING.md,
@@ -1642,77 +1729,88 @@ const styles = StyleSheet.create({
   officialCalendarCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: SPACING.md,
     borderRadius: RADIUS.xl,
     borderLeftWidth: 4,
     gap: SPACING.md,
   },
-  officialCalendarIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  officialCalendarEmoji: {
-    fontSize: 22,
-  },
   officialCalendarInfo: {
     flex: 1,
   },
   officialCalendarName: {
-    fontSize: FONT.size.md,
-    fontWeight: FONT.weight.bold,
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
   officialCalendarDesc: {
-    fontSize: FONT.size.xs,
+    fontSize: TYPOGRAPHY.size.xs,
     marginTop: 2,
   },
 
-  // Filtre sport
-  sportFilterContainer: {
+  // Filtre catégorie
+  categoryFilterContainer: {
     gap: SPACING.sm,
+    marginBottom: SPACING.md,
+    paddingRight: SPACING.lg,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    borderWidth: 2,
+  },
+  categoryChipText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+  },
+
+  // Filtre sports spécifiques
+  sportFilterContainer: {
+    gap: SPACING.xs,
     marginBottom: SPACING.lg,
     paddingRight: SPACING.lg,
   },
   sportChip: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
     borderRadius: RADIUS.full,
-    borderWidth: 2,
+    borderWidth: 1,
   },
   sportChipText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.medium,
   },
 
-  // Groupement par organisateur
-  organizerGroup: {
-    marginBottom: SPACING.xl,
+  // Groupement par catégorie
+  categoryGroup: {
+    marginBottom: SPACING.lg,
   },
-  organizerHeader: {
+  categoryGroupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: SPACING.md,
-    paddingRight: SPACING.sm,
-    paddingVertical: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
     marginBottom: SPACING.md,
     borderLeftWidth: 4,
   },
-  organizerName: {
-    fontSize: FONT.size.lg,
-    fontWeight: FONT.weight.bold,
-    letterSpacing: 0.5,
+  categoryGroupHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
   },
-  organizerBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 4,
-    borderRadius: RADIUS.full,
+  categoryGroupName: {
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    letterSpacing: 0.3,
   },
-  organizerCount: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.bold,
+  categoryGroupCount: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: TYPOGRAPHY.weight.medium,
+    marginTop: 2,
   },
   seeMoreButton: {
     flexDirection: 'row',
@@ -1726,7 +1824,73 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   seeMoreText: {
-    fontSize: FONT.size.sm,
-    fontWeight: FONT.weight.semibold,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+  },
+
+  // ============================================
+  // CARNET D'ENTRAÎNEMENT
+  // ============================================
+  journalIntroCard: {
+    alignItems: 'center',
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    marginBottom: SPACING.lg,
+    gap: SPACING.md,
+  },
+  journalIntroTitle: {
+    fontSize: TYPOGRAPHY.size.xl,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    marginTop: SPACING.sm,
+  },
+  journalIntroText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.sm,
+  },
+  journalOpenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.full,
+    marginTop: SPACING.sm,
+  },
+  journalOpenButtonText: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: '#FFFFFF',
+  },
+  journalFeaturesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+  },
+  journalFeatureCard: {
+    flex: 1,
+    minWidth: '47%',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    gap: SPACING.sm,
+  },
+  journalFeatureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xs,
+  },
+  journalFeatureTitle: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
+  },
+  journalFeatureText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    lineHeight: 16,
   },
 });

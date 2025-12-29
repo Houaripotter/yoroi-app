@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Lock, Check, X, ChevronRight } from 'lucide-react-native';
+import { Lock, Check, X, ChevronRight, Flame, Scale, Dumbbell, Star, Calendar, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
@@ -93,7 +93,7 @@ const BadgeItem: React.FC<BadgeItemProps> = ({ badgeProgress, onPress }) => {
 
 interface CategorySectionProps {
   title: string;
-  icon: string;
+  IconComponent: React.ComponentType<any>;
   badges: BadgeProgress[];
   unlockedCount: number;
   onBadgePress: (badge: BadgeProgress) => void;
@@ -101,7 +101,7 @@ interface CategorySectionProps {
 
 const CategorySection: React.FC<CategorySectionProps> = ({
   title,
-  icon,
+  IconComponent,
   badges,
   unlockedCount,
   onBadgePress,
@@ -111,7 +111,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   return (
     <View style={styles.categorySection}>
       <View style={styles.categoryHeader}>
-        <Text style={styles.categoryIcon}>{icon}</Text>
+        <View style={styles.categoryIconContainer}>
+          <IconComponent size={20} color={colors.gold} strokeWidth={2.5} />
+        </View>
         <Text style={[styles.categoryTitle, { color: colors.textPrimary }]}>
           {title}
         </Text>
@@ -136,12 +138,12 @@ const CategorySection: React.FC<CategorySectionProps> = ({
 };
 
 // Configuration des categories
-const CATEGORIES: { key: BadgeCategory; title: string; icon: string; badges: Badge[] }[] = [
-  { key: 'streak', title: 'STREAK', icon: '🔥', badges: STREAK_BADGES },
-  { key: 'weight', title: 'POIDS', icon: '⚖️', badges: WEIGHT_BADGES },
-  { key: 'training', title: 'ENTRAINEMENT', icon: '💪', badges: TRAINING_BADGES },
-  { key: 'special', title: 'SPECIAUX', icon: '⭐', badges: SPECIAL_BADGES },
-  { key: 'time', title: 'TEMPS', icon: '📅', badges: TIME_BADGES },
+const CATEGORIES: { key: BadgeCategory; title: string; IconComponent: React.ComponentType<any>; badges: Badge[] }[] = [
+  { key: 'streak', title: 'STREAK', IconComponent: Flame, badges: STREAK_BADGES },
+  { key: 'weight', title: 'POIDS', IconComponent: Scale, badges: WEIGHT_BADGES },
+  { key: 'training', title: 'ENTRAINEMENT', IconComponent: Dumbbell, badges: TRAINING_BADGES },
+  { key: 'special', title: 'SPECIAUX', IconComponent: Star, badges: SPECIAL_BADGES },
+  { key: 'time', title: 'TEMPS', IconComponent: Calendar, badges: TIME_BADGES },
 ];
 
 export default function BadgesScreen() {
@@ -241,7 +243,9 @@ export default function BadgesScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.statsGradient}
           >
-            <Text style={styles.statsIcon}>🏅</Text>
+            <View style={styles.statsIconContainer}>
+              <Award size={48} color="rgba(255,255,255,0.9)" strokeWidth={2.5} />
+            </View>
             <View style={styles.statsContent}>
               <Text style={[styles.statsCount, { color: colors.background }]}>
                 {unlockedCount}/{totalBadges}
@@ -278,7 +282,7 @@ export default function BadgesScreen() {
             <CategorySection
               key={cat.key}
               title={cat.title}
-              icon={cat.icon}
+              IconComponent={cat.IconComponent}
               badges={categoryBadges}
               unlockedCount={categoryUnlocked}
               onBadgePress={handleBadgePress}
@@ -442,8 +446,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  statsIcon: {
-    fontSize: 48,
+  statsIconContainer: {
     marginRight: 16,
   },
   statsContent: {
@@ -487,8 +490,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  categoryIcon: {
-    fontSize: 20,
+  categoryIconContainer: {
     marginRight: 8,
   },
   categoryTitle: {

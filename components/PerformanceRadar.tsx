@@ -1,50 +1,49 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Modal, ScrollView, Animated } from 'react-native';
-import Svg, { Polygon, Line, Circle, G } from 'react-native-svg';
-import { Info, TrendingUp, TrendingDown, Minus, X } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import Svg, { Polygon, Line, Circle, Defs, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { Info, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { router } from 'expo-router';
 import {
   calculateRadarScores,
   calculateRadarEvolution,
-  getRadarInsight,
-  RADAR_REFERENCES,
   RadarScores,
   RadarEvolution,
-  RadarInsight,
 } from '@/lib/radarService';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface PerformanceRadarProps {
   size?: number;
 }
 
 export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
-  size = 170,
+  size = 400,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [scores, setScores] = useState<RadarScores>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
   const [evolution, setEvolution] = useState<RadarEvolution | null>(null);
-  const [insight, setInsight] = useState<RadarInsight | null>(null);
-  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   // Animations
-  const forceAnim = useRef(new Animated.Value(0)).current;
-  const cardioAnim = useRef(new Animated.Value(0)).current;
-  const techniqueAnim = useRef(new Animated.Value(0)).current;
-  const souplesseAnim = useRef(new Animated.Value(0)).current;
-  const mentalAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const center = size / 2;
-  const radius = (size / 2) - 20;
+  const CENTER = size / 2;
+  const RADIUS = 70;
 
-  // 5 axes
+  // Couleurs par axe
+  const axisColors = {
+    force: '#EF4444',      // Rouge
+    cardio: '#3B82F6',     // Bleu
+    technique: '#F59E0B',  // Orange
+    souplesse: '#8B5CF6',  // Violet
+    mental: '#10B981',     // Vert
+  };
+
+  // 5 axes équidistants (72° entre chaque, commençant en haut à -90°)
   const axes = [
-    { key: 'force', label: 'Force', angle: -90, anim: forceAnim },
-    { key: 'cardio', label: 'Cardio', angle: -18, anim: cardioAnim },
-    { key: 'souplesse', label: 'Souplesse', angle: 54, anim: souplesseAnim },
-    { key: 'mental', label: 'Mental', angle: 126, anim: mentalAnim },
-    { key: 'technique', label: 'Technique', angle: 198, anim: techniqueAnim },
+    { key: 'force', label: 'Force', angle: -90, color: axisColors.force },
+    { key: 'cardio', label: 'Cardio', angle: -18, color: axisColors.cardio },
+    { key: 'souplesse', label: 'Souplesse', angle: 54, color: axisColors.souplesse },
+    { key: 'mental', label: 'Mental', angle: 126, color: axisColors.mental },
+    { key: 'technique', label: 'Technique', angle: 198, color: axisColors.technique },
   ];
 
   useEffect(() => {
@@ -54,69 +53,76 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
   const loadRadarData = async () => {
     const radarScores = await calculateRadarScores('week');
     const radarEvolution = await calculateRadarEvolution();
-    const radarInsight = getRadarInsight(radarScores);
 
     setScores(radarScores);
     setEvolution(radarEvolution);
-    setInsight(radarInsight);
 
-    // Animer le radar de 0 à la valeur réelle (800ms)
-    Animated.parallel([
-      Animated.timing(forceAnim, {
-        toValue: radarScores.force,
-        duration: 800,
-        useNativeDriver: false,
-      }),
-      Animated.timing(cardioAnim, {
-        toValue: radarScores.cardio,
-        duration: 800,
-        useNativeDriver: false,
-      }),
-      Animated.timing(techniqueAnim, {
-        toValue: radarScores.technique,
-        duration: 800,
-        useNativeDriver: false,
-      }),
-      Animated.timing(souplesseAnim, {
-        toValue: radarScores.souplesse,
-        duration: 800,
-        useNativeDriver: false,
-      }),
-      Animated.timing(mentalAnim, {
-        toValue: radarScores.mental,
-        duration: 800,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    // Animation fade in
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   };
 
   // Convertir angle en coordonnées
-  const angleToCoord = (angle: number, r: number) => {
+  const angleToCoord = (angle: number, distance: number) => {
     const rad = (angle * Math.PI) / 180;
     return {
-      x: center + r * Math.cos(rad),
-      y: center + r * Math.sin(rad),
+      x: CENTER + distance * Math.cos(rad),
+      y: CENTER + distance * Math.sin(rad),
     };
   };
 
-  // Points du polygone de données (version animée)
+  // Points du polygone de données
   const dataPoints = axes.map((axis) => {
-    const animatedValue = axis.anim;
-    // On utilise __getValue() pour obtenir la valeur courante
-    const value = (animatedValue as any).__getValue();
-    const r = (value / 100) * radius;
-    return angleToCoord(axis.angle, r);
+    const value = scores[axis.key as keyof RadarScores] || 0;
+    const r = (value / 100) * RADIUS;
+    return { ...angleToCoord(axis.angle, r), value, color: axis.color };
   });
 
   const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
-  // Grille (3 niveaux)
-  const gridLevels = [0.33, 0.66, 1];
+  // Positions des labels DANS le SVG
+  const getLabelTextPosition = (index: number) => {
+    const labelDist = RADIUS + 80;
+    const axis = axes[index];
+    const coord = angleToCoord(axis.angle, labelDist);
+
+    // Anchor text basé sur la position
+    let textAnchor: 'start' | 'middle' | 'end' = 'middle';
+    let dy = 0;
+
+    if (index === 0) { // Force (top)
+      textAnchor = 'middle';
+      dy = -22;
+    } else if (index === 1) { // Cardio (top-right)
+      textAnchor = 'start';
+      dy = -5;
+    } else if (index === 2) { // Souplesse (bottom-right)
+      textAnchor = 'start';
+      dy = 10;
+    } else if (index === 3) { // Mental (bottom-left)
+      textAnchor = 'end';
+      dy = 10;
+    } else if (index === 4) { // Technique (top-left)
+      textAnchor = 'end';
+      dy = -5;
+    }
+
+    return { x: coord.x, y: coord.y, textAnchor, dy };
+  };
 
   // Score moyen
-  const avgScore = Math.round((scores.force + scores.cardio + scores.technique + scores.souplesse + scores.mental) / 5);
+  const avgScore = Math.round((
+    (scores.force || 0) +
+    (scores.cardio || 0) +
+    (scores.technique || 0) +
+    (scores.souplesse || 0) +
+    (scores.mental || 0)
+  ) / 5) || 0;
 
-  // Tendance évolution moyenne
+  // Tendance
   const TrendIcon = evolution && evolution.average > 5
     ? TrendingUp
     : evolution && evolution.average < -5
@@ -129,455 +135,241 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
     : colors.textMuted;
 
   return (
-    <>
-      <View
-        style={[styles.container, { backgroundColor: colors.backgroundCard }]}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={[styles.title, { color: colors.textMuted }]}>RADAR PERFORMANCE</Text>
-          </View>
-          <View style={styles.headerRight}>
-            {/* Bouton Info */}
-            <TouchableOpacity
-              onPress={() => setInfoModalVisible(true)}
-              style={[styles.infoBtn, { backgroundColor: colors.accent + '20' }]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Info size={12} color={colors.accent} />
-            </TouchableOpacity>
-          </View>
+    <TouchableOpacity
+      style={[styles.container, { backgroundColor: colors.backgroundCard }]}
+      onPress={() => router.push('/radar-performance')}
+      activeOpacity={0.8}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.textMuted }]}>RADAR PERFORMANCE</Text>
+        <View style={[styles.infoBtn, { backgroundColor: colors.accent + '20' }]}>
+          <Info size={12} color={colors.accent} />
         </View>
+      </View>
 
-        <View style={styles.radarContainer}>
-          <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            {/* Grilles concentriques */}
-            {gridLevels.map((level, i) => {
-              const points = axes.map((axis) => {
-                const coord = angleToCoord(axis.angle, radius * level);
-                return `${coord.x},${coord.y}`;
-              }).join(' ');
-              return (
+      {/* Radar SVG */}
+      <Animated.View style={[styles.radarContainer, { opacity: fadeAnim }]}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <Defs>
+            <RadialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={colors.accent} stopOpacity="0.08" />
+              <Stop offset="70%" stopColor={colors.accent} stopOpacity="0.03" />
+              <Stop offset="100%" stopColor={colors.accent} stopOpacity="0" />
+            </RadialGradient>
+            <RadialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
+              <Stop offset="0%" stopColor={colors.accent} stopOpacity="0.3" />
+              <Stop offset="100%" stopColor={colors.accent} stopOpacity="0.05" />
+            </RadialGradient>
+          </Defs>
+
+          {/* Fond avec dégradé radial */}
+          <Circle
+            cx={CENTER}
+            cy={CENTER}
+            r={RADIUS + 85}
+            fill="url(#bgGradient)"
+          />
+
+          {/* Grilles concentriques (25%, 50%, 75%, 100%) */}
+          {[0.25, 0.5, 0.75, 1].map((level, i) => {
+            const points = axes.map((axis) => {
+              const coord = angleToCoord(axis.angle, RADIUS * level);
+              return `${coord.x},${coord.y}`;
+            }).join(' ');
+            return (
+              <React.Fragment key={i}>
                 <Polygon
-                  key={i}
                   points={points}
                   fill="none"
                   stroke={colors.border}
-                  strokeWidth={1}
-                  opacity={0.3}
+                  strokeWidth={i === 3 ? 2 : 1}
+                  opacity={i === 3 ? 0.4 : 0.2}
                 />
-              );
-            })}
+                {/* Labels de pourcentage sur les cercles */}
+                {i > 0 && (
+                  <SvgText
+                    x={CENTER}
+                    y={CENTER - RADIUS * level + 3}
+                    fill={colors.textMuted}
+                    fontSize="8"
+                    fontWeight="600"
+                    textAnchor="middle"
+                    opacity={0.5}
+                  >
+                    {level * 100}%
+                  </SvgText>
+                )}
+              </React.Fragment>
+            );
+          })}
 
-            {/* Lignes des axes */}
-            {axes.map((axis, i) => {
-              const end = angleToCoord(axis.angle, radius);
-              return (
-                <Line
-                  key={i}
-                  x1={center}
-                  y1={center}
-                  x2={end.x}
-                  y2={end.y}
-                  stroke={colors.border}
-                  strokeWidth={1}
-                  opacity={0.3}
-                />
-              );
-            })}
-
-            {/* Polygone de données avec remplissage semi-transparent */}
-            <Polygon
-              points={dataPolygon}
-              fill={colors.accent}
-              fillOpacity={0.25}
-              stroke={colors.accent}
-              strokeWidth={2}
-            />
-
-            {/* Points sur les axes */}
-            {dataPoints.map((point, i) => (
-              <Circle
+          {/* Lignes des axes avec couleurs */}
+          {axes.map((axis, i) => {
+            const end = angleToCoord(axis.angle, RADIUS);
+            return (
+              <Line
                 key={i}
+                x1={CENTER}
+                y1={CENTER}
+                x2={end.x}
+                y2={end.y}
+                stroke={axis.color}
+                strokeWidth={1}
+                opacity={0.3}
+              />
+            );
+          })}
+
+          {/* Polygone de données avec gradient */}
+          <Polygon
+            points={dataPolygon}
+            fill="url(#radarGradient)"
+            stroke={colors.accent}
+            strokeWidth={2}
+            strokeLinejoin="round"
+          />
+
+          {/* Points colorés par axe */}
+          {dataPoints.map((point, i) => (
+            <React.Fragment key={i}>
+              {/* Cercle extérieur blanc */}
+              <Circle
                 cx={point.x}
                 cy={point.y}
                 r={4}
-                fill={colors.accent}
+                fill="#FFFFFF"
+                opacity={0.95}
               />
-            ))}
-          </Svg>
-
-          {/* Labels */}
+              {/* Cercle intérieur avec couleur de l'axe */}
+              <Circle
+                cx={point.x}
+                cy={point.y}
+                r={3}
+                fill={point.color}
+              />
+            </React.Fragment>
+          ))}
+          {/* Labels DANS le SVG */}
           {axes.map((axis, i) => {
-            const labelDist = radius + 18;
-            const coord = angleToCoord(axis.angle, labelDist);
             const value = scores[axis.key as keyof RadarScores] || 0;
-
-            // Ajustement de position selon l'angle pour centrer les labels
-            let adjustLeft = -30; // Par défaut (centré)
-            let adjustTop = -18;
-
-            // Haut (Force)
-            if (axis.angle === -90) {
-              adjustLeft = -30;
-              adjustTop = -30;
-            }
-            // Haut droite (Cardio)
-            else if (axis.angle === -18) {
-              adjustLeft = -5;
-              adjustTop = -25;
-            }
-            // Bas droite (Souplesse)
-            else if (axis.angle === 54) {
-              adjustLeft = 0;
-              adjustTop = -5;
-            }
-            // Bas gauche (Mental)
-            else if (axis.angle === 126) {
-              adjustLeft = -60;
-              adjustTop = -5;
-            }
-            // Haut gauche (Technique)
-            else if (axis.angle === 198) {
-              adjustLeft = -60;
-              adjustTop = -25;
-            }
+            const pos = getLabelTextPosition(i);
 
             return (
-              <View
-                key={i}
-                style={[
-                  styles.label,
-                  {
-                    left: coord.x + adjustLeft,
-                    top: coord.y + adjustTop,
-                  },
-                ]}
-              >
-                <Text style={[styles.labelText, { color: colors.textMuted }]}>{axis.label}</Text>
-                <Text style={[styles.labelValue, { color: value >= 50 ? colors.accent : colors.textMuted }]}>
+              <React.Fragment key={`label-${i}`}>
+                {/* Nom de l'axe */}
+                <SvgText
+                  x={pos.x}
+                  y={pos.y + pos.dy}
+                  fill={axis.color}
+                  fontSize="10"
+                  fontWeight="700"
+                  textAnchor={pos.textAnchor}
+                >
+                  {axis.label}
+                </SvgText>
+                {/* Valeur */}
+                <SvgText
+                  x={pos.x}
+                  y={pos.y + pos.dy + 14}
+                  fill={axis.color}
+                  fontSize="13"
+                  fontWeight="900"
+                  textAnchor={pos.textAnchor}
+                >
                   {Math.round(value)}%
-                </Text>
-              </View>
+                </SvgText>
+              </React.Fragment>
             );
           })}
-        </View>
+        </Svg>
+      </Animated.View>
 
-        {/* Score moyen avec évolution */}
-        <View style={styles.footer}>
-          <View style={styles.scoreContainer}>
-            <Text style={[styles.avgValue, { color: colors.accent }]}>
-              {avgScore}%
+      {/* Score global */}
+      <View style={styles.footer}>
+        <View style={styles.scoreContainer}>
+          <Text style={[styles.avgValue, { color: colors.accent }]}>
+            {avgScore}%
+          </Text>
+          <Text style={[styles.avgLabel, { color: colors.textMuted }]}>Score Global</Text>
+        </View>
+        {evolution && evolution.average !== 0 && (
+          <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>
+            <TrendIcon size={12} color={trendColor} />
+            <Text style={[styles.evolutionText, { color: trendColor }]}>
+              {evolution.average > 0 ? '+' : ''}{evolution.average}%
             </Text>
-            <Text style={[styles.avgLabel, { color: colors.textMuted }]}>Score Global</Text>
-          </View>
-          {evolution && evolution.average !== 0 && (
-            <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>
-              <TrendIcon size={10} color={trendColor} />
-              <Text style={[styles.evolutionText, { color: trendColor }]}>
-                {evolution.average > 0 ? '+' : ''}{evolution.average}% vs sem.
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Insight personnalisé */}
-        {insight && (
-          <View style={[styles.insightCard, { backgroundColor: colors.accent + '10' }]}>
-            <Text style={styles.insightIcon}>{insight.icon}</Text>
-            <View style={styles.insightContent}>
-              <Text style={[styles.insightText, { color: colors.textPrimary }]}>{insight.text}</Text>
-              {insight.source && (
-                <Text style={[styles.insightSource, { color: colors.textMuted }]}>📚 {insight.source}</Text>
-              )}
-            </View>
           </View>
         )}
       </View>
-
-      {/* Modal Info - Références scientifiques */}
-      <Modal
-        visible={infoModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setInfoModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Header */}
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.intro.title}
-                </Text>
-                <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
-                  <X size={24} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={[styles.modalIntro, { color: colors.textSecondary }]}>
-                {RADAR_REFERENCES.intro.description}
-              </Text>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              {/* Force */}
-              <View style={styles.refSection}>
-                <Text style={[styles.refTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.force.title}
-                </Text>
-                <Text style={[styles.refDesc, { color: colors.textSecondary }]}>
-                  {RADAR_REFERENCES.force.description}
-                </Text>
-                <Text style={[styles.refSource, { color: colors.textMuted }]}>
-                  {RADAR_REFERENCES.force.reference}
-                </Text>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              {/* Cardio */}
-              <View style={styles.refSection}>
-                <Text style={[styles.refTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.cardio.title}
-                </Text>
-                <Text style={[styles.refDesc, { color: colors.textSecondary }]}>
-                  {RADAR_REFERENCES.cardio.description}
-                </Text>
-                <Text style={[styles.refSource, { color: colors.textMuted }]}>
-                  {RADAR_REFERENCES.cardio.reference}
-                </Text>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              {/* Mental */}
-              <View style={styles.refSection}>
-                <Text style={[styles.refTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.mental.title}
-                </Text>
-                <Text style={[styles.refDesc, { color: colors.textSecondary }]}>
-                  {RADAR_REFERENCES.mental.description}
-                </Text>
-                <Text style={[styles.refSource, { color: colors.textMuted }]}>
-                  {RADAR_REFERENCES.mental.reference}
-                </Text>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              {/* Technique */}
-              <View style={styles.refSection}>
-                <Text style={[styles.refTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.technique.title}
-                </Text>
-                <Text style={[styles.refDesc, { color: colors.textSecondary }]}>
-                  {RADAR_REFERENCES.technique.description}
-                </Text>
-                <Text style={[styles.refSource, { color: colors.textMuted }]}>
-                  {RADAR_REFERENCES.technique.reference}
-                </Text>
-              </View>
-
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-              {/* Souplesse */}
-              <View style={styles.refSection}>
-                <Text style={[styles.refTitle, { color: colors.textPrimary }]}>
-                  {RADAR_REFERENCES.souplesse.title}
-                </Text>
-                <Text style={[styles.refDesc, { color: colors.textSecondary }]}>
-                  {RADAR_REFERENCES.souplesse.description}
-                </Text>
-                <Text style={[styles.refSource, { color: colors.textMuted }]}>
-                  {RADAR_REFERENCES.souplesse.reference}
-                </Text>
-              </View>
-
-              {/* Bouton J'ai compris */}
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: colors.accent }]}
-                onPress={() => setInfoModalVisible(false)}
-              >
-                <Text style={styles.modalBtnText}>✓ J'ai compris</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-    </>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  infoBtn: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 12,
   },
   title: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  infoBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radarContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    height: 200,
     marginVertical: 8,
-  },
-  label: {
-    position: 'absolute',
-    width: 60,
-    alignItems: 'center',
-  },
-  labelText: {
-    fontSize: 9,
-    fontWeight: '600',
-  },
-  labelValue: {
-    fontSize: 10,
-    fontWeight: '800',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 12,
   },
   scoreContainer: {
     alignItems: 'center',
   },
   avgLabel: {
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
   },
   avgValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '900',
+    letterSpacing: -1,
   },
   evolutionBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   evolutionText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  insightCard: {
-    flexDirection: 'row',
-    padding: 10,
-    borderRadius: 10,
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  insightIcon: {
-    fontSize: 18,
-  },
-  insightContent: {
-    flex: 1,
-    gap: 4,
-  },
-  insightText: {
     fontSize: 11,
-    fontWeight: '600',
-    lineHeight: 16,
-  },
-  insightSource: {
-    fontSize: 9,
-    fontStyle: 'italic',
-    lineHeight: 13,
-  },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 500,
-    maxHeight: '90%',
-    borderRadius: 16,
-    padding: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  modalIntro: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 16,
-  },
-  refSection: {
-    gap: 8,
-  },
-  refTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  refDesc: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  refSource: {
-    fontSize: 11,
-    fontStyle: 'italic',
-    lineHeight: 16,
-  },
-  modalBtn: {
-    marginTop: 20,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  modalBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
     fontWeight: '700',
   },
 });

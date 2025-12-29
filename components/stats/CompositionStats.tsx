@@ -7,6 +7,15 @@ import { fr } from 'date-fns/locale';
 import { SparklineChart } from '../charts/SparklineChart';
 import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2 } from 'lucide-react-native';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { getHistoryDays, getChartDataPoints, scale, isIPad } from '@/constants/responsive';
+import { Dimensions } from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
+const STATS_COLUMNS = isIPad() ? 4 : 2;
+const STATS_GAP = 12; // Gap fixe pour tous les appareils
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16
+const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
 
 interface CompositionStatsProps {
   data: Weight[];
@@ -27,7 +36,8 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
 
   // Préparer les données pour les sparklines (SEULEMENT 3 dernières prises)
   const getSparklineData = (key: keyof Weight) => {
-    return data.slice(-3).map(entry => ({
+    const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+    return data.slice(-historyDays).map(entry => ({
       value: (entry[key] as number) || 0,
     }));
   };
@@ -212,7 +222,7 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
             Historique
           </Text>
 
-          {data.slice(-7).reverse().map((entry, index) => (
+          {data.slice(-getChartDataPoints('medium')).reverse().map((entry, index) => (
             <View
               key={index}
               style={[
@@ -266,7 +276,7 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: isIPad() ? 0 : 16, // Pas de padding sur iPad, déjà géré par le parent
     paddingBottom: 40,
   },
 
@@ -274,11 +284,11 @@ const styles = StyleSheet.create({
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   metricCard: {
-    width: '48%',
+    width: STATS_CARD_WIDTH,
     borderRadius: 16,
     padding: 14,
     minHeight: 140,
@@ -288,6 +298,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+    marginBottom: STATS_GAP,
   },
   expandIcon: {
     position: 'absolute',

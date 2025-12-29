@@ -11,14 +11,14 @@ interface EssentielActivityCardProps {
 }
 
 export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
-  steps = 0,
-  stepsGoal = 5000,
-  calories = 0,
-  caloriesGoal = 300,
+  steps,
+  stepsGoal,
+  calories,
+  caloriesGoal,
 }) => {
   const { colors } = useTheme();
-  const stepsPercentage = Math.min((steps / stepsGoal) * 100, 100);
-  const caloriesPercentage = Math.min((calories / caloriesGoal) * 100, 100);
+  const stepsPercentage = stepsGoal && steps != null ? Math.min((steps / stepsGoal) * 100, 100) : 0;
+  const caloriesPercentage = caloriesGoal && calories != null ? Math.min((calories / caloriesGoal) * 100, 100) : 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
@@ -37,7 +37,7 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
           </View>
           <View style={styles.statContent}>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
-              {steps.toLocaleString()}
+              {steps != null ? steps.toLocaleString() : '--'}
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>pas</Text>
           </View>
@@ -52,7 +52,7 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
             <Flame size={20} color="#F97316" />
           </View>
           <View style={styles.statContent}>
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{calories}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{calories != null ? calories : '--'}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>kcal actives</Text>
           </View>
         </View>

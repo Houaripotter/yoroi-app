@@ -236,139 +236,8 @@ export const PACKS: Record<string, PackData> = {
 // ============================================
 
 // Avatars avec etats (tous les dossiers et fichiers en minuscules)
-const AVATAR_STATE_IMAGES: Record<string, Record<AvatarState, any>> = {
-  samurai: {
-    legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
-    strong: require('@/assets/avatars/samurai/samurai_strong.png'),
-    neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
-    tired: require('@/assets/avatars/samurai/samurai_tired.png'),
-    down: require('@/assets/avatars/samurai/samurai_down.png'),
-  },
-  ninja: {
-    legendary: require('@/assets/avatars/ninja/ninja_legendary.png'),
-    strong: require('@/assets/avatars/ninja/ninja_strong.png'),
-    neutral: require('@/assets/avatars/ninja/ninja_neutral.png'),
-    tired: require('@/assets/avatars/ninja/ninja_tired.png'),
-    down: require('@/assets/avatars/ninja/ninja_down.png'),
-  },
-  ronin: {
-    legendary: require('@/assets/avatars/ronin/ronin_legendary.png'),
-    strong: require('@/assets/avatars/ronin/ronin_strong.png'),
-    neutral: require('@/assets/avatars/ronin/ronin_neutral.png'),
-    tired: require('@/assets/avatars/ronin/ronin_tired.png'),
-    down: require('@/assets/avatars/ronin/ronin_down.png'),
-  },
-  boxer: {
-    legendary: require('@/assets/avatars/boxer/boxer_legendary.png'),
-    strong: require('@/assets/avatars/boxer/boxer_strong.png'),
-    neutral: require('@/assets/avatars/boxer/boxer_neutral.png'),
-    tired: require('@/assets/avatars/boxer/boxer_tired.png'),
-    down: require('@/assets/avatars/boxer/boxer_down.png'),
-  },
-  judoka: {
-    legendary: require('@/assets/avatars/judoka/judoka_legendary.png'),
-    strong: require('@/assets/avatars/judoka/judoka_strong.png'),
-    neutral: require('@/assets/avatars/judoka/judoka_neutral.png'),
-    tired: require('@/assets/avatars/judoka/judoka_tired.png'),
-    down: require('@/assets/avatars/judoka/judoka_down.png'),
-  },
-  karateka: {
-    legendary: require('@/assets/avatars/karateka/karateka_legendary.png'),
-    strong: require('@/assets/avatars/karateka/karateka_strong.png'),
-    neutral: require('@/assets/avatars/karateka/karateka_neutral.png'),
-    tired: require('@/assets/avatars/karateka/karateka_tired.png'),
-    down: require('@/assets/avatars/karateka/karateka_down.png'),
-  },
-  wrestler: {
-    legendary: require('@/assets/avatars/wrestler/wrestler_legendary.png'),
-    strong: require('@/assets/avatars/wrestler/wrestler_strong.png'),
-    neutral: require('@/assets/avatars/wrestler/wrestler_neutral.png'),
-    tired: require('@/assets/avatars/wrestler/wrestler_tired.png'),
-    down: require('@/assets/avatars/wrestler/wrestler_down.png'),
-  },
-  mma: {
-    legendary: require('@/assets/avatars/mma/mma_legendary.png'),
-    strong: require('@/assets/avatars/mma/mma_strong.png'),
-    neutral: require('@/assets/avatars/mma/mma_neutral.png'),
-    tired: require('@/assets/avatars/mma/mma_tired.png'),
-    down: require('@/assets/avatars/mma/mma_down.png'),
-  },
-  shogun: {
-    legendary: require('@/assets/avatars/shogun/shogun_legendary.png'),
-    strong: require('@/assets/avatars/shogun/shogun_strong.png'),
-    neutral: require('@/assets/avatars/shogun/shogun_neutral.png'),
-    tired: require('@/assets/avatars/shogun/shogun_tired.png'),
-    down: require('@/assets/avatars/shogun/shogun_down.png'),
-  },
-  oni: {
-    legendary: require('@/assets/avatars/oni/oni_legendary.png'),
-    strong: require('@/assets/avatars/oni/oni_strong.png'),
-    neutral: require('@/assets/avatars/oni/oni_neutral.png'),
-    tired: require('@/assets/avatars/oni/oni_tired.png'),
-    down: require('@/assets/avatars/oni/oni_down.png'),
-  },
-  emperor: {
-    legendary: require('@/assets/avatars/emperor/emperor_legendary.png'),
-    strong: require('@/assets/avatars/emperor/emperor_strong.png'),
-    neutral: require('@/assets/avatars/emperor/emperor_neutral.png'),
-    tired: require('@/assets/avatars/emperor/emperor_tired.png'),
-    down: require('@/assets/avatars/emperor/emperor_down.png'),
-  },
-  ghost: {
-    legendary: require('@/assets/avatars/ghost/ghost_legendary.png'),
-    strong: require('@/assets/avatars/ghost/ghost_strong.png'),
-    neutral: require('@/assets/avatars/ghost/ghost_neutral.png'),
-    tired: require('@/assets/avatars/ghost/ghost_tired.png'),
-    down: require('@/assets/avatars/ghost/ghost_down.png'),
-  },
-  champion: {
-    legendary: require('@/assets/avatars/champion/champion_legendary.png'),
-    strong: require('@/assets/avatars/champion/champion_strong.png'),
-    neutral: require('@/assets/avatars/champion/champion_neutral.png'),
-    tired: require('@/assets/avatars/champion/champion_tired.png'),
-    down: require('@/assets/avatars/champion/champion_down.png'),
-  },
-  // PACK BJJ HOMMES
-  BJJ_Male: {
-    legendary: require('@/assets/avatars/BJJ_Male/char_bjj_m_victory_champion.png'),
-    strong: require('@/assets/avatars/BJJ_Male/char_bjj_m_powered_up.png'),
-    neutral: require('@/assets/avatars/BJJ_Male/char_bjj_m_idle_stand.png'),
-    tired: require('@/assets/avatars/BJJ_Male/char_bjj_m_tired_stool.png'),
-    down: require('@/assets/avatars/BJJ_Male/char_bjj_m_defeated_ground.png'),
-  },
-  // PACK BJJ FEMMES
-  BJJ_Female: {
-    legendary: require('@/assets/avatars/BJJ_Female/char_bjj_f_victory_champion.png'),
-    strong: require('@/assets/avatars/BJJ_Female/char_bjj_f_powered_up.png'),
-    neutral: require('@/assets/avatars/BJJ_Female/char_bjj_f_idle_stand.png'),
-    tired: require('@/assets/avatars/BJJ_Female/char_bjj_f_tired_stool.png'),
-    down: require('@/assets/avatars/BJJ_Female/char_bjj_f_defeated_ground.png'),
-  },
-  // PACK FEMMES
-  pack_femmes: {
-    legendary: require('@/assets/avatars/pack_femmes/amazon.png'),
-    strong: require('@/assets/avatars/pack_femmes/boxer_woman.png'),
-    neutral: require('@/assets/avatars/pack_femmes/kunoichi.png'),
-    tired: require('@/assets/avatars/pack_femmes/mma_woman.png'),
-    down: require('@/assets/avatars/pack_femmes/valkyrie.png'),
-  },
-  // PACK COMBAT
-  pack_combat: {
-    legendary: require('@/assets/avatars/pack_combat/capoeira.png'),
-    strong: require('@/assets/avatars/pack_combat/kravmaga.png'),
-    neutral: require('@/assets/avatars/pack_combat/muaythai.png'),
-    tired: require('@/assets/avatars/pack_combat/sumo.png'),
-    down: require('@/assets/avatars/pack_combat/taekwondo.png'),
-  },
-  // PACK MONSTRES
-  pack_monstres: {
-    legendary: require('@/assets/avatars/pack_monstres/dragon.png'),
-    strong: require('@/assets/avatars/pack_monstres/kappa.png'),
-    neutral: require('@/assets/avatars/pack_monstres/oni_blue.png'),
-    tired: require('@/assets/avatars/pack_monstres/tengu.png'),
-    down: require('@/assets/avatars/pack_monstres/yokai.png'),
-  },
-};
+// TEMPORAIREMENT VIDE - EN COURS DE CREATION DE NOUVEAUX AVATARS
+const AVATAR_STATE_IMAGES: Record<string, Record<AvatarState, any>> = {};
 
 // Avatars sans etats (packs) - image unique
 // Note: Les packs pack_combat, pack_femmes, pack_monstres ont été déplacés vers AVATAR_STATE_IMAGES
@@ -376,8 +245,8 @@ const AVATAR_SINGLE_IMAGES: Record<string, any> = {
   // Les anciens avatars individuels ne sont plus utilisés car ils font partie des packs avec états
 };
 
-// Image fallback
-const FALLBACK_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
+// Image fallback - TEMPORAIREMENT NULL (à remplacer quand les nouveaux avatars seront créés)
+const FALLBACK_IMAGE = null;
 
 // ============================================
 // FONCTIONS UTILITAIRES

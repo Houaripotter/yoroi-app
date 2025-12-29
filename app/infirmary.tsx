@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { ArrowLeft, Plus, Activity, TrendingDown } from 'lucide-react-native';
+import { ArrowLeft, Plus, Activity, TrendingDown, Shield } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { BodyMap, BodyZone as BodyMapZone, INITIAL_DATA } from '@/components/BodyMap';
@@ -44,13 +45,14 @@ export default function InfirmaryScreen() {
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [isCreatorMode, setIsCreatorMode] = useState(false);
 
   // Zone selection modal state
   const [showZoneModal, setShowZoneModal] = useState(false);
   const [overlappingZones, setOverlappingZones] = useState<Zone[]>([]);
   const [currentView, setCurrentView] = useState<'front' | 'back'>('front');
 
-  // Charger les données
+  // Charger les données et vérifier le mode créateur
   const loadData = async () => {
     try {
       const activeInjuries = await getActiveInjuries();
@@ -62,6 +64,10 @@ export default function InfirmaryScreen() {
 
       const injuryStats = await getInjuryStats();
       setStats(injuryStats);
+
+      // Vérifier le mode créateur (code 2412)
+      const creatorCode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      setIsCreatorMode(creatorCode === '2412');
     } catch (error) {
       console.error('[Infirmary] Erreur chargement:', error);
     }
@@ -111,21 +117,22 @@ export default function InfirmaryScreen() {
     console.log('🎯 Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
     console.log('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
 
-    if (overlapping.length > 1) {
-      // Plusieurs zones détectées, formater pour le modal
+    if (overlapping.length > 1 && isCreatorMode) {
+      // Mode créateur: afficher le sélecteur pour choisir la zone exacte
       const formattedZones = overlapping.map(z => ({
         id: z.id,
-        name: z.label, // Utiliser 'label' au lieu de 'name'
+        name: z.label,
       }));
 
-      console.log('✅ AFFICHAGE MODAL avec zones:', formattedZones);
+      console.log('✅ MODE CRÉATEUR - AFFICHAGE MODAL avec zones:', formattedZones);
       setOverlappingZones(formattedZones);
       setCurrentView(view);
       setShowZoneModal(true);
     } else {
-      // Une seule zone, aller directement à l'évaluation
-      console.log('⚠️ Une seule zone, pas de modal');
-      navigateToEvaluation(zone.id, view, zone.label);
+      // Mode normal ou une seule zone: prendre la première zone automatiquement
+      const targetZone = overlapping.length > 0 ? overlapping[0] : zone;
+      console.log('⚠️ Mode normal ou une seule zone, navigation directe vers:', targetZone.label);
+      navigateToEvaluation(targetZone.id, view, targetZone.label);
     }
   };
 
@@ -206,7 +213,6 @@ export default function InfirmaryScreen() {
               { backgroundColor: fitForDutyStatus.backgroundColor },
             ]}
           >
-            <Text style={styles.fitForDutyIcon}>{fitForDutyStatus.icon}</Text>
             <View style={styles.fitForDutyInfo}>
               <Text style={[styles.fitForDutyTitle, { color: fitForDutyStatus.color }]}>
                 {fitForDutyStatus.title}
@@ -252,7 +258,7 @@ export default function InfirmaryScreen() {
         )}
 
         {/* Body Map */}
-        <BodyMap onZonePress={handleZonePress} injuredZones={injuredZones} />
+        <BodyMap onZonePress={handleZonePress} injuredZones={injuredZones} isCreatorMode={isCreatorMode} />
 
         {/* Liste des blessures actives */}
         {injuries.length > 0 && (
@@ -282,7 +288,7 @@ export default function InfirmaryScreen() {
                     ]}
                   >
                     <Text style={styles.evaBadgeText}>
-                      {getEVAEmoji(injury.eva_score)} EVA {injury.eva_score}
+                      EVA {injury.eva_score}
                     </Text>
                   </View>
                 </View>
@@ -301,7 +307,9 @@ export default function InfirmaryScreen() {
         {/* Empty state */}
         {injuries.length === 0 && (
           <View style={[styles.emptyState, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={styles.emptyIcon}>🛡️</Text>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.success + '20' }]}>
+              <Shield size={32} color={colors.success} strokeWidth={2} />
+            </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
               Aucune blessure
             </Text>
@@ -312,13 +320,15 @@ export default function InfirmaryScreen() {
         )}
       </ScrollView>
 
-      {/* Modal de sélection de zone */}
-      <ZoneSelectionModal
-        visible={showZoneModal}
-        zones={overlappingZones}
-        onSelect={handleZoneSelected}
-        onClose={() => setShowZoneModal(false)}
-      />
+      {/* Modal de sélection de zone - Seulement en mode créateur */}
+      {isCreatorMode && (
+        <ZoneSelectionModal
+          visible={showZoneModal}
+          zones={overlappingZones}
+          onSelect={handleZoneSelected}
+          onClose={() => setShowZoneModal(false)}
+        />
+      )}
     </ScreenWrapper>
   );
 }
@@ -484,8 +494,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.xl,
   },
-  emptyIcon: {
-    fontSize: 64,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: SPACING.md,
   },
   emptyTitle: {

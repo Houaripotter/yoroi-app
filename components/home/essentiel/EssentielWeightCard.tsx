@@ -16,7 +16,7 @@ interface EssentielWeightCardProps {
 }
 
 export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
-  currentWeight = 0,
+  currentWeight,
   objective,
   weekData = [],
   weekLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
@@ -78,7 +78,7 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
       { days: 90, label: '90j' },
     ].map(({ days, label }) => {
       const prediction = dailyChange * days;
-      const predictedWeight = currentWeight + prediction;
+      const predictedWeight = (currentWeight ?? 0) + prediction;
       const sign = prediction > 0 ? '+' : '';
       const color = prediction > 0 ? '#F59E0B' : '#10B981';
 
@@ -111,7 +111,7 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
       {/* Poids principal - GRAND */}
       <View style={styles.weightContainer}>
         <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
-          {currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
+          {currentWeight != null && currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
         </Text>
         <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
       </View>

@@ -8,14 +8,24 @@ import { fr } from 'date-fns/locale';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { getHistoryDays, scale, scaleModerate, isIPad } from '@/constants/responsive';
 
 const { width } = Dimensions.get('window');
-const CHART_WIDTH = width - 64;
-const CHART_HEIGHT = 240;
-const PADDING_LEFT = 45;
-const PADDING_RIGHT = 20;
-const PADDING_TOP = 20;
-const PADDING_BOTTOM = 40;
+// iPhone garde le padding original de 16, iPad utilise scale(8)
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
+const CHART_WIDTH = width - CONTAINER_PADDING * 2;
+const CHART_HEIGHT = scale(240);
+const PADDING_LEFT = scale(45);
+const PADDING_RIGHT = scale(20);
+const PADDING_TOP = scale(20);
+const PADDING_BOTTOM = scale(40);
+
+// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
+const STATS_COLUMNS = isIPad() ? 4 : 2;
+const STATS_GAP = 12; // Gap fixe pour tous les appareils
+// Largeur carte = (largeur totale - padding container - gaps entre colonnes) / nombre colonnes
+// Pour 2 colonnes: 1 gap de 12px entre elles
+const STATS_CARD_WIDTH = (width - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
 
 interface WeightStatsProps {
   data: Weight[];
@@ -146,11 +156,12 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
   const yLabels = getYLabels();
 
-  // Préparer les données sparkline (SEULEMENT 3 dernières prises)
-  const sparklineData = data.slice(-3).map(entry => ({ value: entry.weight }));
+  // Préparer les données sparkline - Adapté à l'appareil
+  const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+  const sparklineData = data.slice(-historyDays).map(entry => ({ value: entry.weight }));
 
-  // Objectif de poids (simulé - devrait venir de la DB)
-  const goalWeight = stats.end > 0 ? stats.end - 2 : 75; // Exemple : objectif = -2kg du poids actuel
+  // Objectif de poids (null si pas de données)
+  const goalWeight = stats.end > 0 ? stats.end - 2 : null;
 
   // Calculer la position Y de la ligne d'objectif
   const getGoalLineY = () => {
@@ -333,6 +344,66 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                   <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
                 </LinearGradient>
               </Defs>
+
+              {/* Zones de poids colorées (en fond) */}
+              {(() => {
+                const range = stats.max - stats.min;
+                const paddedMin = stats.min - range * 0.05;
+                const paddedMax = stats.max + range * 0.05;
+                const paddedRange = paddedMax - paddedMin || 1;
+
+                // Calculer les positions Y des zones autour de l'objectif
+                const goal = goalWeight;
+                const zoneOptimalMin = goal - 2; // -2kg de l'objectif
+                const zoneOptimalMax = goal + 2; // +2kg de l'objectif
+
+                const getYPosition = (weight: number) => {
+                  return CHART_HEIGHT - PADDING_BOTTOM - ((weight - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
+                };
+
+                const yOptimalMin = getYPosition(zoneOptimalMax);
+                const yOptimalMax = getYPosition(zoneOptimalMin);
+                const yTop = PADDING_TOP;
+                const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
+
+                return (
+                  <>
+                    {/* Zone au-dessus de l'optimal (surpoids potentiel) */}
+                    {yOptimalMin > yTop && (
+                      <Rect
+                        x={PADDING_LEFT}
+                        y={yTop}
+                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                        height={Math.max(0, yOptimalMin - yTop)}
+                        fill="#F59E0B"
+                        opacity={0.08}
+                      />
+                    )}
+
+                    {/* Zone optimale (±2kg de l'objectif) */}
+                    <Rect
+                      x={PADDING_LEFT}
+                      y={Math.max(yTop, yOptimalMin)}
+                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                      height={Math.max(0, Math.min(yBottom, yOptimalMax) - Math.max(yTop, yOptimalMin))}
+                      fill="#10B981"
+                      opacity={0.12}
+                    />
+
+                    {/* Zone en-dessous de l'optimal */}
+                    {yOptimalMax < yBottom && (
+                      <Rect
+                        x={PADDING_LEFT}
+                        y={Math.max(yTop, yOptimalMax)}
+                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                        height={Math.max(0, yBottom - Math.max(yTop, yOptimalMax))}
+                        fill="#F59E0B"
+                        opacity={0.08}
+                      />
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Lignes de grille horizontales */}
               {[0, 1, 2, 3, 4].map((i) => {
@@ -557,7 +628,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: CONTAINER_PADDING,
     paddingBottom: 40,
   },
 
@@ -581,15 +652,16 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   statCard: {
-    width: '48%',
+    width: STATS_CARD_WIDTH,
     borderRadius: 16,
     padding: 14,
     minHeight: 140,
     position: 'relative',
+    marginBottom: STATS_GAP,
   },
   expandIcon: {
     position: 'absolute',

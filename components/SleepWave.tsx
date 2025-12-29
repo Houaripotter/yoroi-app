@@ -14,7 +14,7 @@ interface SleepWaveProps {
 
 export const SleepWave: React.FC<SleepWaveProps> = ({
   duration,
-  goal = 480,
+  goal,
   debtHours,
   width = Dimensions.get('window').width / 2 - 20,
   height = 120,

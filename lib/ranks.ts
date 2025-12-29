@@ -137,19 +137,9 @@ export const getDaysToNextRank = (streakDays: number): number => {
 };
 
 // Obtenir l'avatar correspondant au rang
+// TEMPORAIREMENT DESACTIVE - EN COURS DE CREATION DE NOUVEAUX AVATARS
 export const getAvatarForRank = (rankId: string) => {
-  const avatarMap: Record<string, any> = {
-    recrue: require('@/assets/avatars/samurai/samurai_neutral.png'),
-    ashigaru: require('@/assets/avatars/samurai/samurai_neutral.png'),
-    bushi: require('@/assets/avatars/samurai/samurai_neutral.png'),
-    knight: require('@/assets/avatars/knight/knight.png'),
-    samurai: require('@/assets/avatars/samurai/samurai_strong.png'),
-    ronin: require('@/assets/avatars/samurai/samurai_tired.png'),
-    sensei: require('@/assets/avatars/samurai/samurai_strong.png'),
-    shogun: require('@/assets/avatars/samurai/samurai_legendary.png'),
-    daimyo: require('@/assets/avatars/samurai/samurai_legendary.png'),
-  };
-  return avatarMap[rankId] || avatarMap.recrue;
+  return null;
 };
 
 // Progression vers le prochain rang (en %)

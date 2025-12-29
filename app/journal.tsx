@@ -26,6 +26,11 @@ import {
   Trash2,
   Info,
   Sparkles,
+  Frown,
+  Meh,
+  Smile,
+  Zap,
+  Flame,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -50,7 +55,7 @@ export interface JournalEntry {
 }
 
 interface MoodConfig {
-  emoji: string;
+  iconName: string;
   label: string;
   color: string;
   value: number; // Pour calculs
@@ -58,14 +63,27 @@ interface MoodConfig {
 
 // Configuration des humeurs
 const MOODS: Record<MoodType, MoodConfig> = {
-  very_bad: { emoji: '😔', label: 'Difficile', color: '#EF4444', value: 1 },
-  bad: { emoji: '😐', label: 'Bof', color: '#F97316', value: 2 },
-  neutral: { emoji: '😊', label: 'Bien', color: '#EAB308', value: 3 },
-  good: { emoji: '💪', label: 'Motivé', color: '#22C55E', value: 4 },
-  excellent: { emoji: '🔥', label: 'En feu !', color: '#D4AF37', value: 5 },
+  very_bad: { iconName: 'frown', label: 'Difficile', color: '#EF4444', value: 1 },
+  bad: { iconName: 'meh', label: 'Bof', color: '#F97316', value: 2 },
+  neutral: { iconName: 'smile', label: 'Bien', color: '#EAB308', value: 3 },
+  good: { iconName: 'zap', label: 'Motivé', color: '#22C55E', value: 4 },
+  excellent: { iconName: 'flame', label: 'En feu !', color: '#D4AF37', value: 5 },
 };
 
 const MOOD_ORDER: MoodType[] = ['very_bad', 'bad', 'neutral', 'good', 'excellent'];
+
+// Helper pour obtenir l'icône à partir du nom
+const getMoodIcon = (iconName: string, size: number, color: string) => {
+  const icons: Record<string, any> = {
+    frown: Frown,
+    meh: Meh,
+    smile: Smile,
+    zap: Zap,
+    flame: Flame,
+  };
+  const IconComponent = icons[iconName];
+  return IconComponent ? <IconComponent size={size} color={color} /> : null;
+};
 
 // Storage key
 const JOURNAL_STORAGE_KEY = '@yoroi_journal_entries';
@@ -399,7 +417,9 @@ export default function JournalScreen() {
                     onPress={() => setSelectedMood(mood)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.moodEmoji}>{config.emoji}</Text>
+                    <View style={styles.moodIconContainer}>
+                      {getMoodIcon(config.iconName, 24, config.color)}
+                    </View>
                     <Text style={[
                       styles.moodLabel,
                       { color: isSelected ? config.color : colors.textMuted }
@@ -481,7 +501,7 @@ export default function JournalScreen() {
                       <View style={[styles.analysisBadge, { backgroundColor: colors.successMuted }]}>
                         <TrendingDown size={18} color={colors.success} />
                         <Text style={[styles.analysisBadgeText, { color: colors.success }]}>
-                          Les jours ou tu te sens {MOODS.good.emoji} ou {MOODS.excellent.emoji}
+                          Les jours où tu te sens motivé ou en feu
                         </Text>
                       </View>
                       <Text style={[styles.analysisResult, { color: colors.gold }]}>
@@ -510,7 +530,9 @@ export default function JournalScreen() {
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>entrees</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={styles.statEmoji}>{MOODS[stats.mostFrequent].emoji}</Text>
+                <View style={styles.statIconContainer}>
+                  {getMoodIcon(MOODS[stats.mostFrequent].iconName, 32, MOODS[stats.mostFrequent].color)}
+                </View>
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>humeur freq.</Text>
               </View>
               <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -581,7 +603,9 @@ export default function JournalScreen() {
                     ]}
                     onPress={() => setFilterMood(filterMood === mood ? null : mood)}
                   >
-                    <Text style={styles.filterMoodEmoji}>{MOODS[mood].emoji}</Text>
+                    <View style={styles.filterMoodIconContainer}>
+                      {getMoodIcon(MOODS[mood].iconName, 20, selectedMoodFilter === mood ? '#FFFFFF' : colors.textMuted)}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -611,7 +635,9 @@ export default function JournalScreen() {
                   >
                     <View style={styles.entryHeader}>
                       <View style={[styles.entryMoodBadge, { backgroundColor: moodConfig.color + '20' }]}>
-                        <Text style={styles.entryMoodEmoji}>{moodConfig.emoji}</Text>
+                        <View style={styles.entryMoodIconContainer}>
+                          {getMoodIcon(moodConfig.iconName, 20, moodConfig.color)}
+                        </View>
                       </View>
                       <View style={styles.entryInfo}>
                         <Text style={[styles.entryDate, { color: colors.textPrimary }]}>
@@ -898,8 +924,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  filterMoodEmoji: {
-    fontSize: 20,
+  filterMoodIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Entries Section

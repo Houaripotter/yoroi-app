@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Ruler, TrendingDown, TrendingUp, Minus, Maximize2 } from 'lucide-react-native';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { scale, isIPad } from '@/constants/responsive';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
+const STATS_COLUMNS = isIPad() ? 4 : 2;
+const STATS_GAP = 12; // Gap fixe pour tous les appareils
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16
+const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
 
 interface MeasurementsStatsProps {
   data: any[];
@@ -141,7 +149,7 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
                       height={35}
                       color={measurement.color}
                       showGradient={true}
-                      thickness={1.5}
+                      thickness={2.5}
                     />
                   </View>
                 </>
@@ -183,7 +191,7 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: isIPad() ? 0 : 16, // Pas de padding sur iPad, déjà géré par le parent
     paddingBottom: 40,
   },
   sectionTitle: {
@@ -197,15 +205,21 @@ const styles = StyleSheet.create({
   measurementsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    justifyContent: 'space-between',
   },
   measurementCard: {
-    width: '48%',
+    width: STATS_CARD_WIDTH,
     borderRadius: 16,
     padding: 14,
     paddingLeft: 18,
     minHeight: 160,
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: STATS_GAP,
   },
   measurementCardEmpty: {
     opacity: 0.6,
@@ -234,13 +248,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   measurementCardValue: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '900',
     marginBottom: 6,
+    letterSpacing: -0.5,
   },
   measurementUnit: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   evolutionRow: {
     flexDirection: 'row',
@@ -250,7 +265,7 @@ const styles = StyleSheet.create({
   },
   evolutionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   sparklineContainer: {
     marginTop: 'auto',

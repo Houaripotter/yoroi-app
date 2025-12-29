@@ -2,10 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Activity, Zap } from 'lucide-react-native';
+import { scale, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gap 12 = total 28
-const CARD_SIZE = (screenWidth - 28) / 2;
+// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
+const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
 
 type RiskLevel = 'safe' | 'moderate' | 'high' | 'danger' | 'leger' | 'modere' | 'optimal' | 'eleve';
 

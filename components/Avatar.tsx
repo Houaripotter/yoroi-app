@@ -3,12 +3,14 @@ import { View, Image, StyleSheet, ImageSourcePropType } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { COLORS, GRADIENTS, RADIUS, SHADOWS } from '@/constants/design';
+import { scale } from '@/constants/responsive';
 
 // ============================================
-// AVATAR COMPONENT
+// AVATAR COMPONENT - RESPONSIVE
 // ============================================
 // Gère le fond coloré pour cacher le fond blanc des PNG
 // Avec options de ring progress et glow effects
+// ADAPTÉ IPHONE & IPAD
 
 interface AvatarProps {
   source?: ImageSourcePropType;
@@ -21,14 +23,14 @@ interface AvatarProps {
 }
 
 const SIZES = {
-  sm: { container: 48, image: 40, ring: 52, strokeWidth: 2 },
-  md: { container: 64, image: 54, ring: 72, strokeWidth: 3 },
-  lg: { container: 80, image: 68, ring: 90, strokeWidth: 4 },
-  xl: { container: 100, image: 85, ring: 116, strokeWidth: 5 },
+  sm: { container: scale(48), image: scale(40), ring: scale(52), strokeWidth: scale(2) },
+  md: { container: scale(64), image: scale(54), ring: scale(72), strokeWidth: scale(3) },
+  lg: { container: scale(80), image: scale(68), ring: scale(90), strokeWidth: scale(4) },
+  xl: { container: scale(100), image: scale(85), ring: scale(116), strokeWidth: scale(5) },
 };
 
-// Default avatar
-const DEFAULT_AVATAR = require('@/assets/avatars/samurai/samurai_neutral.png');
+// Default avatar - TEMPORAIREMENT NULL (en cours de création de nouveaux avatars)
+const DEFAULT_AVATAR = null;
 
 // Ring Progress Component
 const RingProgress = ({
@@ -99,7 +101,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       shadowColor: glowColor,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.4,
-      shadowRadius: 15,
+      shadowRadius: scale(15),
       elevation: 8,
     },
     style,
@@ -175,7 +177,7 @@ export const AvatarSolid: React.FC<AvatarProps & { backgroundColor?: string }> =
       shadowColor: glowColor,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.4,
-      shadowRadius: 15,
+      shadowRadius: scale(15),
       elevation: 8,
     },
     style,
@@ -229,7 +231,7 @@ export const AvatarCompact: React.FC<{
   style?: any;
 }> = ({
   source = DEFAULT_AVATAR,
-  size = 40,
+  size = scale(40),
   style,
 }) => {
   return (
@@ -275,28 +277,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   solidBg: {
-    borderWidth: 3,
+    borderWidth: scale(3),
     borderColor: 'rgba(0,0,0,0.08)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: scale(4) },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: scale(10),
     elevation: 8,
   },
   image: {
-    marginTop: 4, // Slight offset since avatar heads are at top
+    marginTop: scale(4), // Slight offset since avatar heads are at top
   },
   compactContainer: {
     backgroundColor: COLORS.avatarBg,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 2,
+    borderWidth: scale(2),
     borderColor: 'rgba(0,0,0,0.06)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: scale(2) },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowRadius: scale(6),
     elevation: 4,
   },
 });

@@ -9,21 +9,25 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Moon, Droplets, Heart, TrendingUp, TrendingDown, Clock, Lightbulb, Maximize2 } from 'lucide-react-native';
+import { Moon, Droplets, Heart, TrendingUp, TrendingDown, Clock, Lightbulb, Maximize2, AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react-native';
 import { getSleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Rect, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { router } from 'expo-router';
+import { scale, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CHART_WIDTH = SCREEN_WIDTH - 64;
-const CHART_HEIGHT = 180;
-const PADDING_LEFT = 40;
-const PADDING_RIGHT = 20;
-const PADDING_TOP = 20;
-const PADDING_BOTTOM = 30;
+// iPhone garde 16, iPad utilise scale(8)
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
+const CHART_WIDTH = SCREEN_WIDTH - CONTAINER_PADDING * 2;
+const CHART_HEIGHT = scale(180);
+const PADDING_LEFT = scale(40);
+const PADDING_RIGHT = scale(20);
+const PADDING_TOP = scale(20);
+const PADDING_BOTTOM = scale(30);
 
 interface VitalityStatsProps {
   trainings?: any[];
@@ -127,20 +131,30 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
   };
 
   const calculateVitalityScore = (sleep: any, hydration: number[]): number => {
-    let score = 50; // Base
+    // Si aucune donnée, retourner 0
+    const hasSleepData = sleep && sleep.averageDuration > 0;
+    const hasHydrationData = hydration.some(h => h > 0);
 
-    // Sommeil (40 pts max)
-    if (sleep) {
+    if (!hasSleepData && !hasHydrationData) {
+      return 0;
+    }
+
+    let score = 0;
+
+    // Sommeil (90 pts max)
+    if (hasSleepData) {
       const sleepAvg = sleep.averageDuration / 60;
-      if (sleepAvg >= 7) score += 40;
-      else if (sleepAvg >= 6) score += 30;
-      else if (sleepAvg >= 5) score += 20;
-      else score += 10;
+      if (sleepAvg >= 7) score += 90;
+      else if (sleepAvg >= 6) score += 70;
+      else if (sleepAvg >= 5) score += 50;
+      else score += 30;
     }
 
     // Hydratation (10 pts max)
-    const hydrationDays = hydration.filter(h => h >= 2).length;
-    score += (hydrationDays / 7) * 10;
+    if (hasHydrationData) {
+      const hydrationDays = hydration.filter(h => h >= 2).length;
+      score += (hydrationDays / 7) * 10;
+    }
 
     return Math.min(100, Math.round(score));
   };
@@ -247,21 +261,13 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
       {/* Section Sommeil */}
       <TouchableOpacity
         style={[styles.section, { backgroundColor: colors.backgroundCard }]}
-        activeOpacity={0.9}
-        onPress={() => sleepHistory.length > 0 && setSelectedStat({
-          key: 'sleep_detail',
-          label: 'Sommeil Détaillé',
-          color: '#8B5CF6',
-          unit: 'h',
-          icon: <Moon size={24} color="#8B5CF6" />,
-        })}
+        activeOpacity={0.7}
+        onPress={() => router.push('/sleep')}
       >
-        {/* Expand icon */}
-        {sleepHistory.length > 0 && (
-          <View style={styles.expandIconSection}>
-            <Maximize2 size={16} color="#1F2937" opacity={0.9} />
-          </View>
-        )}
+        {/* Navigation icon */}
+        <View style={styles.expandIconSection}>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </View>
 
         <View style={styles.sectionHeader}>
           <Moon size={18} color="#8B5CF6" />
@@ -485,31 +491,39 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
           ]}>
             {sleepStats?.sleepDebtHours ? `${sleepStats.sleepDebtHours.toFixed(1)}h` : '0h'}
           </Text>
-          <Text style={[styles.debtDescription, { color: colors.textMuted }]}>
-            {sleepStats?.sleepDebtHours > 5 
-              ? '⚠️ Fais une sieste ou couche-toi tôt' 
-              : sleepStats?.sleepDebtHours > 0 
-              ? 'Tu rembourses ta dette' 
-              : '✅ Aucune dette !'}
-          </Text>
+          <View style={styles.debtDescriptionRow}>
+            {sleepStats?.sleepDebtHours > 5 ? (
+              <>
+                <AlertTriangle size={12} color="#EF4444" />
+                <Text style={[styles.debtDescription, { color: colors.textMuted }]}>
+                  Fais une sieste ou couche-toi tôt
+                </Text>
+              </>
+            ) : sleepStats?.sleepDebtHours > 0 ? (
+              <Text style={[styles.debtDescription, { color: colors.textMuted }]}>
+                Tu rembourses ta dette
+              </Text>
+            ) : (
+              <>
+                <CheckCircle size={12} color="#10B981" />
+                <Text style={[styles.debtDescription, { color: colors.textMuted }]}>
+                  Aucune dette !
+                </Text>
+              </>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
 
       {/* Section Hydratation */}
       <TouchableOpacity
         style={[styles.section, { backgroundColor: colors.backgroundCard }]}
-        activeOpacity={0.9}
-        onPress={() => setSelectedStat({
-          key: 'hydration_detail',
-          label: 'Hydratation Détaillée',
-          color: '#0EA5E9',
-          unit: 'L',
-          icon: <Droplets size={24} color="#0EA5E9" />,
-        })}
+        activeOpacity={0.7}
+        onPress={() => router.push('/hydration')}
       >
-        {/* Expand icon */}
+        {/* Navigation icon */}
         <View style={styles.expandIconSection}>
-          <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+          <ChevronRight size={20} color={colors.textMuted} />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -886,9 +900,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
   },
+  debtDescriptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    justifyContent: 'center',
+  },
   debtDescription: {
     fontSize: 12,
-    marginTop: 4,
   },
   hydrationChart: {
     flexDirection: 'row',

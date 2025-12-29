@@ -12,6 +12,8 @@ import {
   RefreshControl,
   Dimensions,
   Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +21,8 @@ import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff } 
 import { useTheme } from '@/lib/ThemeContext';
 import { useFocusEffect, router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
-import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getLatestMeasurement, getUserSettings, saveUserSettings } from '@/lib/storage';
+import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getUserSettings, saveUserSettings } from '@/lib/storage';
+import { getLatestWeight, addWeight } from '@/lib/database';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +40,11 @@ export default function PhotosScreen() {
   const [comparisonVisible, setComparisonVisible] = useState(false);
   const [isBlurred, setIsBlurred] = useState(false); // Option flouter la galerie
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+
+  // Modal pour entrer le poids
+  const [weightModalVisible, setWeightModalVisible] = useState(false);
+  const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
+  const [weightInput, setWeightInput] = useState('');
 
   const fetchPhotos = useCallback(async () => {
     try {
@@ -120,6 +128,39 @@ export default function PhotosScreen() {
     return true;
   };
 
+  const savePhotoWithWeight = async () => {
+    if (!pendingPhotoUri) return;
+
+    const weight = weightInput ? parseFloat(weightInput) : undefined;
+    const today = new Date().toISOString().split('T')[0];
+
+    setWeightModalVisible(false);
+    setUploading(true);
+
+    // Sauvegarder la photo avec le poids
+    await savePhotoToStorage(pendingPhotoUri, today, weight);
+
+    // Si un poids a été entré, l'enregistrer aussi dans la base de données
+    // pour qu'il soit utilisé comme poids actuel pour les prochaines photos
+    if (weight) {
+      try {
+        await addWeight({
+          weight,
+          date: today,
+          source: 'manual',
+        });
+        console.log('✅ Poids enregistré dans la base:', weight, 'kg');
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'enregistrement du poids:', error);
+      }
+    }
+
+    setUploading(false);
+    setPendingPhotoUri(null);
+    setWeightInput('');
+    fetchPhotos();
+  };
+
   const takePhoto = async () => {
     const hasPermissions = await requestPermissions();
     if (!hasPermissions) return;
@@ -133,15 +174,14 @@ export default function PhotosScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setUploading(true);
-        const latestMeasurement = await getLatestMeasurement();
-        await savePhotoToStorage(
-          result.assets[0].uri,
-          new Date().toISOString().split('T')[0],
-          latestMeasurement?.weight
-        );
-        setUploading(false);
-        fetchPhotos();
+        // Ouvrir le modal pour entrer le poids
+        setPendingPhotoUri(result.assets[0].uri);
+        const latestWeight = await getLatestWeight();
+
+        console.log('📊 Dernier poids trouvé:', latestWeight?.weight);
+
+        setWeightInput(latestWeight?.weight?.toString() || '');
+        setWeightModalVisible(true);
       }
     } catch (error) {
       console.error('❌ Erreur caméra:', error);
@@ -166,15 +206,14 @@ export default function PhotosScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setUploading(true);
-        const latestMeasurement = await getLatestMeasurement();
-        await savePhotoToStorage(
-          result.assets[0].uri,
-          new Date().toISOString().split('T')[0],
-          latestMeasurement?.weight
-        );
-        setUploading(false);
-        fetchPhotos();
+        // Ouvrir le modal pour entrer le poids
+        setPendingPhotoUri(result.assets[0].uri);
+        const latestWeight = await getLatestWeight();
+
+        console.log('📊 Dernier poids trouvé:', latestWeight?.weight);
+
+        setWeightInput(latestWeight?.weight?.toString() || '');
+        setWeightModalVisible(true);
       }
     } catch (error) {
       console.error('❌ Erreur galerie:', error);
@@ -408,6 +447,106 @@ export default function PhotosScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      </Modal>
+
+      {/* Modal pour entrer le poids */}
+      <Modal
+        visible={weightModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setWeightModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={[styles.modalContent, { backgroundColor: themeColors.card }]}>
+            <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>
+              Poids de la photo
+            </Text>
+
+            {weightInput ? (
+              <View style={styles.weightInfoContainer}>
+                <Text style={[styles.modalText, { color: themeColors.success }]}>
+                  ✓ Ton poids actuel : {weightInput} kg
+                </Text>
+                <Text style={[styles.modalTextSmall, { color: themeColors.textMuted }]}>
+                  (Tu peux le modifier si nécessaire)
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.modalText, { color: themeColors.textSecondary }]}>
+                Entre ton poids actuel (optionnel)
+              </Text>
+            )}
+
+            <TextInput
+              style={[styles.weightInput, {
+                backgroundColor: themeColors.background,
+                color: themeColors.textPrimary,
+                borderColor: weightInput ? themeColors.gold : themeColors.border,
+              }]}
+              placeholder="Ex: 75.5"
+              placeholderTextColor={themeColors.textMuted}
+              value={weightInput}
+              onChangeText={setWeightInput}
+              keyboardType="decimal-pad"
+              autoFocus
+              selectTextOnFocus
+            />
+
+            {/* Bouton pour utiliser le poids actuel */}
+            <TouchableOpacity
+              style={[styles.useCurrentWeightButton, {
+                backgroundColor: themeColors.primary + '20',
+                borderColor: themeColors.primary,
+              }]}
+              onPress={async () => {
+                const latestWeight = await getLatestWeight();
+                if (latestWeight?.weight) {
+                  setWeightInput(latestWeight.weight.toString());
+                  console.log('📊 Poids actuel récupéré:', latestWeight.weight);
+                } else {
+                  Alert.alert(
+                    'Aucun poids trouvé',
+                    'Tu n\'as pas encore enregistré de poids. Entre ton poids actuel ci-dessus pour commencer.'
+                  );
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.useCurrentWeightButtonText, { color: themeColors.primary }]}>
+                Utiliser mon poids actuel
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary, { borderColor: themeColors.border }]}
+                onPress={() => {
+                  setWeightModalVisible(false);
+                  setPendingPhotoUri(null);
+                  setWeightInput('');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalButtonTextSecondary, { color: themeColors.textSecondary }]}>
+                  Annuler
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: themeColors.gold }]}
+                onPress={savePhotoWithWeight}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalButtonText, { color: themeColors.background }]}>
+                  Enregistrer
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenWrapper>
   );
@@ -677,5 +816,53 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     opacity: 0.7,
     marginTop: 2,
+  },
+  // Modal poids
+  weightInfoContainer: {
+    alignItems: 'center',
+    gap: 4,
+    marginVertical: 8,
+  },
+  modalTextSmall: {
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  weightInput: {
+    width: '100%',
+    padding: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    borderRadius: 12,
+    borderWidth: 2,
+    textAlign: 'center',
+    marginVertical: 16,
+  },
+  useCurrentWeightButton: {
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  useCurrentWeightButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButtonSecondary: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+  },
+  modalButtonTextSecondary: {
+    fontWeight: '700',
   },
 });

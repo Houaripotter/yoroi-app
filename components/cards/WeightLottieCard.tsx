@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-nati
 import { useTheme } from '@/lib/ThemeContext';
 import { Scale, TrendingDown, TrendingUp, Minus as TrendingStable, Target } from 'lucide-react-native';
 import Svg, { Circle, Path, G, Line, Rect } from 'react-native-svg';
+import { scale, scaleModerate, getHistoryDays, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gap 12 = total 28
-const CARD_SIZE = (screenWidth - 28) / 2;
+// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
+const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
 
 interface WeightLottieCardProps {
   weight?: number;
@@ -16,22 +18,25 @@ interface WeightLottieCardProps {
 }
 
 export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
-  weight = 0,
+  weight,
   target,
   trend = 'stable',
   history = []
 }) => {
   const { colors, isDark } = useTheme();
-  
+
+  // Nombre de jours à afficher selon l'appareil
+  const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
+
   // Animations
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const numberAnim = useRef(new Animated.Value(0)).current;
   const ledFlicker = useRef(new Animated.Value(1)).current;
-  
-  // Animations barres en cascade
+
+  // Animations barres en cascade - adapté au nombre de jours
   const barAnims = useRef(
-    Array(7).fill(0).map(() => new Animated.Value(0))
+    Array(historyDays).fill(0).map(() => new Animated.Value(0))
   ).current;
   
   useEffect(() => {
@@ -81,7 +86,7 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
     
     // Animation barres en cascade
     if (history.length > 0) {
-      history.slice(0, 7).forEach((_, i) => {
+      history.slice(0, historyDays).forEach((_, i) => {
         Animated.timing(barAnims[i], {
           toValue: 1,
           duration: 500,
@@ -98,12 +103,12 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
     };
   }, [weight, history]);
 
-  const diff = target ? weight - target : 0;
+  const diff = target && weight != null ? weight - target : 0;
   const trendColor = trend === 'down' ? '#10B981' : trend === 'up' ? '#EF4444' : '#6B7280';
   const TrendIcon = trend === 'down' ? TrendingDown : trend === 'up' ? TrendingUp : TrendingStable;
 
   // Calcul du pourcentage vers l'objectif
-  const progressToGoal = target && weight > 0 ? Math.min(Math.abs(1 - (Math.abs(diff) / 10)) * 100, 100) : 0;
+  const progressToGoal = target && weight != null && weight > 0 ? Math.min(Math.abs(1 - (Math.abs(diff) / 10)) * 100, 100) : 0;
 
   // Couleur principale : Bleu Cyan adaptatif
   const primaryColor = '#06B6D4';
@@ -156,16 +161,16 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
                 textShadowColor: primaryColor,
               }
             ]}>
-              {weight > 0 ? weight.toFixed(1) : '--.-'}
+              {weight != null && weight > 0 ? weight.toFixed(1) : '--.-'}
             </Text>
             <Text style={[styles.weightUnitLED, { color: `${primaryColor}80` }]}>kg</Text>
           </Animated.View>
 
           {/* Indicateur de stabilité */}
           <View style={styles.stabilityIndicator}>
-            <View style={[styles.stabilityDot, { backgroundColor: weight > 0 ? primaryColor : '#6B7280' }]} />
-            <Text style={[styles.stabilityText, { color: weight > 0 ? primaryColor : '#6B7280' }]}>
-              {weight > 0 ? 'STABLE' : 'ATTENTE'}
+            <View style={[styles.stabilityDot, { backgroundColor: weight != null && weight > 0 ? primaryColor : '#6B7280' }]} />
+            <Text style={[styles.stabilityText, { color: weight != null && weight > 0 ? primaryColor : '#6B7280' }]}>
+              {weight != null && weight > 0 ? 'STABLE' : 'ATTENTE'}
             </Text>
           </View>
         </View>
@@ -190,18 +195,18 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* Min/Max labels */}
           <View style={styles.sparklineHeader}>
             <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Min <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.min(...history.slice(0, 7)).toFixed(1)}</Text>
+              Min <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.min(...history.slice(0, historyDays)).toFixed(1)}</Text>
             </Text>
             <Text style={[styles.sparkMinMax, { color: colors.textMuted }]}>
-              Max <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.max(...history.slice(0, 7)).toFixed(1)}</Text>
+              Max <Text style={{ color: primaryColor, fontWeight: '800' }}>{Math.max(...history.slice(0, historyDays)).toFixed(1)}</Text>
             </Text>
           </View>
 
           {/* Graphique avec jours */}
           <View style={styles.sparklineChart}>
-            {history.slice(0, 7).reverse().map((w, i) => {
-              const maxW = Math.max(...history.slice(0, 7));
-              const minW = Math.min(...history.slice(0, 7));
+            {history.slice(0, historyDays).reverse().map((w, i) => {
+              const maxW = Math.max(...history.slice(0, historyDays));
+              const minW = Math.min(...history.slice(0, historyDays));
               const range = maxW - minW || 1;
               const height = ((w - minW) / range) * 24 + 6;
               const isLast = i === 0; // Premier élément après reverse = dernier jour
@@ -211,7 +216,7 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
               const today = new Date();
               // getDay() : Dimanche=0, Lundi=1, etc. On convertit pour que Lundi=0
               const todayIndex = (today.getDay() + 6) % 7; // Lundi=0, Mardi=1, ..., Dimanche=6
-              const dayIndex = (todayIndex - (6 - i) + 7) % 7;
+              const dayIndex = (todayIndex - ((historyDays - 1) - i) + 7) % 7;
 
               return (
                 <View key={i} style={styles.barColumn}>
@@ -227,9 +232,9 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
                       {
                         height,
                         backgroundColor: isLast ? primaryColor : `${primaryColor}50`,
-                        opacity: barAnims[6 - i],
+                        opacity: barAnims[(historyDays - 1) - i],
                         transform: [{
-                          scaleY: barAnims[6 - i],
+                          scaleY: barAnims[(historyDays - 1) - i],
                         }],
                       }
                     ]}
@@ -273,8 +278,8 @@ const styles = StyleSheet.create({
   card: {
     width: CARD_SIZE,
     height: CARD_SIZE,
-    borderRadius: 16,
-    padding: 10,
+    borderRadius: scale(16),
+    padding: scale(10),
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
@@ -286,10 +291,10 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: scale(4),
   },
   title: {
-    fontSize: 8,
+    fontSize: scaleModerate(8, 0.3),
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -338,15 +343,15 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   weightValueLED: {
-    fontSize: 24,
+    fontSize: scaleModerate(24, 0.4),
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowRadius: scale(8),
     letterSpacing: 1,
   },
   weightUnitLED: {
-    fontSize: 11,
+    fontSize: scaleModerate(11, 0.3),
     fontWeight: '700',
   },
   stabilityIndicator: {
@@ -389,7 +394,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 2,
     height: 50,
   },
   barColumn: {
@@ -432,7 +436,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   targetValue: {
-    fontSize: 12,
+    fontSize: scaleModerate(12, 0.3),
     fontWeight: '700',
   },
   diffBadge: {

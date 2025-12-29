@@ -42,6 +42,8 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (15.0.8):
     - ExpoModulesCore
+  - ExpoCalendar (15.0.8):
+    - ExpoModulesCore
   - ExpoCamera (17.0.10):
     - ExpoModulesCore
     - ZXingObjC/OneD
@@ -2180,7 +2182,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSVG (15.12.1):
+  - RNSVG (15.15.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2201,9 +2203,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNSVG/common (= 15.12.1)
+    - RNSVG/common (= 15.15.1)
     - Yoga
-  - RNSVG/common (15.12.1):
+  - RNSVG/common (15.15.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2317,6 +2319,7 @@ DEPENDENCIES:
   - Expo (from `../node_modules/expo`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
+  - ExpoCalendar (from `../node_modules/expo-calendar/ios`)
   - ExpoCamera (from `../node_modules/expo-camera/ios`)
   - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoDevice (from `../node_modules/expo-device/ios`)
@@ -2452,6 +2455,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-asset/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
+  ExpoCalendar:
+    :path: "../node_modules/expo-calendar/ios"
   ExpoCamera:
     :path: "../node_modules/expo-camera/ios"
   ExpoClipboard:
@@ -2676,6 +2681,7 @@ SPEC CHECKSUMS:
   Expo: 60c21ba34593688a2a6e8445c1f8b44abb0e3fae
   ExpoAsset: f867e55ceb428aab99e1e8c082b5aee7c159ea18
   ExpoBlur: b90747a3f22a8b6ceffd9cb0dc41a4184efdc656
+  ExpoCalendar: b35805a0a9e3f46a4cef0cbfdf36673b4c973c63
   ExpoCamera: 6a326deb45ba840749652e4c15198317aa78497e
   ExpoClipboard: b36b287d8356887844bb08ed5c84b5979bb4dd1e
   ExpoDevice: 6327c3c200816795708885adf540d26ecab83d1a
@@ -2781,7 +2787,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: 2914750df066d89bf9d8f48a10ad5f0051108ac3
   RNReanimated: e5c702a3e24cc1c68b2de67671713f35461678f4
   RNScreens: d8d6f1792f6e7ac12b0190d33d8d390efc0c1845
-  RNSVG: 31d6639663c249b7d5abc9728dde2041eb2a3c34
+  RNSVG: cf9ae78f2edf2988242c71a6392d15ff7dd62522
   RNWorklets: 9eb6d567fa43984e96b6924a6df504b8a15980cd
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   SDWebImageWebPCoder: 0e06e365080397465cc73a7a9b472d8a3bd0f377

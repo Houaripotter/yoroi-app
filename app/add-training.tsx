@@ -38,6 +38,7 @@ const RADIUS = { sm: 8, md: 12 };
 const SPACING = { sm: 8, md: 12, lg: 16, xl: 20 };
 const FONT_SIZE = { xs: 12, sm: 13, md: 14, lg: 16, xl: 18, xxl: 20, display: 28 };
 import { successHaptic, errorHaptic } from '@/lib/haptics';
+import { backupReminderService } from '@/lib/backupReminderService';
 import { playSuccessSound } from '@/lib/soundManager';
 import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { format } from 'date-fns';
@@ -144,11 +145,23 @@ export default function AddTrainingScreen() {
       // Verifier les badges debloques
       await checkBadges();
 
-      Alert.alert(
-        'Entrainement ajoute',
-        `${getSportName(selectedSport)} enregistre !`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      // Vérifier si on doit afficher le rappel de sauvegarde
+      const shouldShowBackupReminder = await backupReminderService.onDataAdded();
+
+      if (shouldShowBackupReminder) {
+        // Afficher le rappel de sauvegarde avec option de backup
+        await backupReminderService.showReminder(() => {
+          // Rediriger vers les paramètres/export
+          router.push('/settings');
+        });
+        router.back();
+      } else {
+        Alert.alert(
+          'Entrainement ajoute',
+          `${getSportName(selectedSport)} enregistre !`,
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      }
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
       errorHaptic();

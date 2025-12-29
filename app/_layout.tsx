@@ -11,6 +11,7 @@ import { DevModeProvider } from '@/lib/DevModeContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
+import { notificationService } from '@/lib/notificationService';
 
 // Couleurs pour le loading screen (avant que ThemeProvider soit monte)
 const LOADING_COLORS = {
@@ -39,6 +40,7 @@ function RootLayoutContent() {
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
         <Stack.Screen name="mode-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="sport-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
+        <Stack.Screen name="weight-category-selection" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="setup" options={{ gestureEnabled: false, animation: 'slide_from_right' }} />
         <Stack.Screen name="profile" options={{ presentation: 'card' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'card' }} />
@@ -49,6 +51,7 @@ function RootLayoutContent() {
         <Stack.Screen name="settings" options={{ presentation: 'card' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
         <Stack.Screen name="sport" options={{ presentation: 'card' }} />
+        <Stack.Screen name="history" options={{ presentation: 'card' }} />
         <Stack.Screen name="body-status" options={{ presentation: 'card' }} />
         <Stack.Screen name="chrono" options={{ presentation: 'card' }} />
         <Stack.Screen name="calculator" options={{ presentation: 'card' }} />
@@ -62,6 +65,13 @@ function RootLayoutContent() {
         <Stack.Screen name="add-combat" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="combat-detail" options={{ presentation: 'card' }} />
         <Stack.Screen name="palmares" options={{ presentation: 'card' }} />
+        <Stack.Screen name="radar-performance" options={{ presentation: 'card' }} />
+        <Stack.Screen name="customize-home" options={{ presentation: 'card' }} />
+        <Stack.Screen name="competition-sports-selection" options={{ presentation: 'card' }} />
+        <Stack.Screen name="competitor-profile" options={{ presentation: 'card' }} />
+        <Stack.Screen name="gamification" options={{ presentation: 'card' }} />
+        <Stack.Screen name="sleep" options={{ presentation: 'card' }} />
+        <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
@@ -85,6 +95,14 @@ export default function RootLayout() {
 
         // Auto-import des compétitions IBJJF et CFJJB au premier lancement
         await autoImportCompetitionsOnFirstLaunch();
+
+        // Initialiser le service de notifications
+        const notifInitialized = await notificationService.initialize();
+        if (notifInitialized) {
+          console.log('✅ Service de notifications initialisé');
+        } else {
+          console.log('⚠️ Service de notifications non disponible (simulateur ou permissions refusées)');
+        }
 
       } catch (error) {
         console.error('❌ Erreur initialisation:', error);

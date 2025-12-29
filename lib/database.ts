@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { initTrainingJournalDB } from './trainingJournalService';
 
 // ============================================
 // YOROI DATABASE - STOCKAGE LOCAL SQLite
@@ -121,6 +122,14 @@ export const initDatabase = async () => {
 
   try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN technique_rating INTEGER DEFAULT NULL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN session_types TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
   // Table Planning Semaine Type
@@ -294,6 +303,9 @@ export const initDatabase = async () => {
     );
   `);
 
+  // Initialiser le carnet d'entraînement
+  initTrainingJournalDB();
+
   console.log('Database initialized successfully');
 };
 
@@ -371,11 +383,13 @@ export interface Training {
   club_id?: number;
   sport: string;
   session_type?: string;
+  session_types?: string; // JSON array of session types (cours, sparring, drilling, etc.)
   date: string;
   start_time?: string;
   duration_minutes?: number;
   notes?: string;
-  muscles?: string;
+  muscles?: string; // JSON array of muscle groups
+  technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
   exercises?: Exercise[]; // For musculation workouts
   technique_rating?: number | null; // 1-5 stars rating
   created_at?: string;

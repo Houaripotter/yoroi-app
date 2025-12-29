@@ -1,8 +1,11 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
 import { getAllMeasurements, getUserSettings } from './storage';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining } from './database';
+import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 
 // ============================================
 // 📤 EXPORT & PARTAGE
@@ -13,15 +16,22 @@ import { getAllMeasurements, getUserSettings } from './storage';
  */
 export const exportDataToJSON = async (): Promise<boolean> => {
   try {
-    // Récupérer toutes les données
-    const measurements = await getAllMeasurements();
-    const userSettings = await getUserSettings();
+    // Récupérer toutes les données depuis la base SQLite
+    const [profile, weights, trainings, bodyCompositions] = await Promise.all([
+      getProfile(),
+      getWeights(1000), // Récupérer les 1000 dernières mesures
+      getTrainings(),
+      getAllBodyCompositions(),
+    ]);
 
     const exportData = {
-      version: '1.0',
+      version: '2.0',
       exportDate: new Date().toISOString(),
-      userSettings,
-      measurements,
+      appName: 'Yoroi',
+      profile,
+      weights,
+      trainings,
+      bodyCompositions,
     };
 
     // Créer le fichier JSON
@@ -34,12 +44,12 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       { encoding: FileSystem.EncodingType.UTF8 }
     );
 
-    // Partager le fichier
+    // Partager le fichier JSON
     const canShare = await Sharing.isAvailableAsync();
     if (canShare) {
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Exporter mes données Yoroi',
+        dialogTitle: 'Sauvegarder sur iCloud Drive',
         UTI: 'public.json',
       });
     } else {
@@ -50,6 +60,168 @@ export const exportDataToJSON = async (): Promise<boolean> => {
   } catch (error) {
     console.error('❌ Erreur export JSON:', error);
     Alert.alert('Erreur', 'Impossible d\'exporter les données');
+    return false;
+  }
+};
+
+/**
+ * Exporte les données en format CSV (Excel/Numbers)
+ */
+export const exportDataToCSV = async (): Promise<boolean> => {
+  try {
+    const weights = await getWeights(1000);
+
+    if (weights.length === 0) {
+      Alert.alert('Info', 'Aucune donnée à exporter');
+      return false;
+    }
+
+    // Créer le CSV avec toutes les colonnes
+    let csv = 'Date,Poids (kg),Graisse (%),Muscle (%),Eau (%),Masse osseuse (kg),Graisse viscérale,Âge métabolique,BMR\n';
+
+    weights.forEach(w => {
+      csv += `${w.date},${w.weight},`;
+      csv += `${w.fat_percent || ''},${w.muscle_percent || ''},${w.water_percent || ''},`;
+      csv += `${w.bone_mass || ''},${w.visceral_fat || ''},${w.metabolic_age || ''},${w.bmr || ''}\n`;
+    });
+
+    // Créer le fichier CSV
+    const fileName = `yoroi_export_${new Date().getTime()}.csv`;
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.writeAsStringAsync(fileUri, csv, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    // Partager le fichier CSV
+    const canShare = await Sharing.isAvailableAsync();
+    if (canShare) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Exporter vers Excel/Numbers',
+        UTI: 'public.comma-separated-values-text',
+      });
+    } else {
+      Alert.alert('Succès', `Données exportées vers ${fileUri}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur export CSV:', error);
+    Alert.alert('Erreur', 'Impossible d\'exporter les données');
+    return false;
+  }
+};
+
+/**
+ * Importe les données depuis un fichier JSON
+ */
+export const importDataFromJSON = async (): Promise<boolean> => {
+  try {
+    // Sélectionner un fichier
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) {
+      return false;
+    }
+
+    // Lire le fichier
+    const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    const importedData = JSON.parse(fileContent);
+
+    // Vérifier la version
+    if (!importedData.version || !importedData.appName || importedData.appName !== 'Yoroi') {
+      Alert.alert('Erreur', 'Ce fichier n\'est pas un export Yoroi valide');
+      return false;
+    }
+
+    // Demander confirmation
+    const confirmed = await new Promise<boolean>((resolve) => {
+      Alert.alert(
+        'Importer les données ?',
+        `Tu vas importer :\n• ${importedData.weights?.length || 0} mesures de poids\n• ${importedData.trainings?.length || 0} entraînements\n• ${importedData.bodyCompositions?.length || 0} compositions corporelles\n\n⚠️ Cela va AJOUTER ces données aux données existantes (pas de remplacement).`,
+        [
+          { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+          { text: 'Importer', onPress: () => resolve(true) },
+        ]
+      );
+    });
+
+    if (!confirmed) {
+      return false;
+    }
+
+    // Importer les données
+    let importedCount = 0;
+
+    // Importer les poids
+    if (importedData.weights && Array.isArray(importedData.weights)) {
+      for (const weight of importedData.weights) {
+        try {
+          await addWeight({
+            weight: weight.weight,
+            date: weight.date,
+            fat_percent: weight.fat_percent,
+            muscle_percent: weight.muscle_percent,
+            water_percent: weight.water_percent,
+            bone_mass: weight.bone_mass,
+            visceral_fat: weight.visceral_fat,
+            metabolic_age: weight.metabolic_age,
+            bmr: weight.bmr,
+          });
+          importedCount++;
+        } catch (error) {
+          console.error('Erreur import poids:', error);
+        }
+      }
+    }
+
+    // Importer les entraînements
+    if (importedData.trainings && Array.isArray(importedData.trainings)) {
+      for (const training of importedData.trainings) {
+        try {
+          await addTraining({
+            sport: training.sport || training.discipline || 'Sport',
+            date: training.date,
+            session_type: training.session_type || training.type,
+            notes: training.notes,
+            duration_minutes: training.duration_minutes,
+            start_time: training.start_time,
+          });
+          importedCount++;
+        } catch (error) {
+          console.error('Erreur import training:', error);
+        }
+      }
+    }
+
+    // Importer les compositions corporelles
+    if (importedData.bodyCompositions && Array.isArray(importedData.bodyCompositions)) {
+      for (const comp of importedData.bodyCompositions) {
+        try {
+          await addBodyComposition(comp);
+          importedCount++;
+        } catch (error) {
+          console.error('Erreur import composition:', error);
+        }
+      }
+    }
+
+    Alert.alert(
+      '✅ Import réussi !',
+      `${importedCount} éléments ont été importés avec succès.`
+    );
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur import JSON:', error);
+    Alert.alert('Erreur', 'Impossible d\'importer les données');
     return false;
   }
 };
@@ -215,51 +387,6 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
   }
 };
 
-/**
- * Exporte les données au format CSV
- */
-export const exportDataToCSV = async (): Promise<boolean> => {
-  try {
-    const measurements = await getAllMeasurements();
-
-    if (measurements.length === 0) {
-      Alert.alert('Aucune donnée', 'Vous n\'avez pas encore de mesures à exporter');
-      return false;
-    }
-
-    // Créer le CSV
-    let csv = 'Date,Poids (kg),Masse grasse (%),Muscle (kg),Eau (%),IMC\n';
-
-    measurements.reverse().forEach((m: { date: string; weight: number; body_fat?: number; muscle_mass?: number; water?: number; bmi?: number }) => {
-      csv += `${m.date},${m.weight},${m.body_fat || ''},${m.muscle_mass || ''},${m.water || ''},${m.bmi || ''}\n`;
-    });
-
-    // Créer le fichier CSV
-    const fileName = `yoroi_data_${new Date().getTime()}.csv`;
-    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
-
-    await FileSystem.writeAsStringAsync(fileUri, csv, {
-      encoding: FileSystem.EncodingType.UTF8,
-    });
-
-    // Partager le fichier
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(fileUri, {
-        mimeType: 'text/csv',
-        dialogTitle: 'Exporter mes données Yoroi (CSV)',
-      });
-    } else {
-      Alert.alert('Succès', `Données exportées vers ${fileUri}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('❌ Erreur export CSV:', error);
-    Alert.alert('Erreur', 'Impossible d\'exporter les données');
-    return false;
-  }
-};
 
 /**
  * Importe les données depuis un fichier JSON
@@ -293,6 +420,266 @@ export const importAllData = async (
   } catch (error) {
     console.error('❌ Erreur import:', error);
     Alert.alert('Erreur', "Impossible d'importer les données. Vérifie le format du fichier.");
+    return false;
+  }
+};
+
+/**
+ * Convertit une chaîne en format CSV-safe
+ * Échappe les guillemets et ajoute des guillemets si nécessaire
+ */
+function escapeCSV(value: string | null | undefined): string {
+  if (!value) return '';
+
+  // Remplacer les guillemets doubles par deux guillemets doubles
+  const escaped = value.replace(/"/g, '""');
+
+  // Ajouter des guillemets si la valeur contient une virgule, un guillemet ou un retour à la ligne
+  if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+    return `"${escaped}"`;
+  }
+
+  return escaped;
+}
+
+/**
+ * Exporte toutes les séances d'entraînement au format CSV
+ */
+export const exportTrainingsToCSV = async (): Promise<boolean> => {
+  try {
+    console.log('📊 Début export séances CSV...');
+
+    // Importer les fonctions de base de données
+    const { getAllTrainings, getAllClubs } = require('./database');
+
+    // Récupérer toutes les données
+    const trainings = await getAllTrainings();
+    const clubs = await getAllClubs();
+
+    if (trainings.length === 0) {
+      Alert.alert('Aucune donnée', 'Vous n\'avez pas encore de séances à exporter');
+      return false;
+    }
+
+    // Créer un map des clubs par ID
+    const clubsMap = new Map();
+    clubs.forEach((club: any) => {
+      clubsMap.set(club.id, club);
+    });
+
+    // Header CSV
+    const header = [
+      'Date',
+      'Club',
+      'Sport',
+      'Heure de début',
+      'Durée (min)',
+      'Types de séance',
+      'Muscles travaillés',
+      'Thème technique',
+      'Notes'
+    ].join(',');
+
+    // Convertir les trainings en lignes CSV
+    const rows = trainings.map((training: any) => {
+      const club = training.club_id ? clubsMap.get(training.club_id) : null;
+      const clubName = club?.name || 'Activité libre';
+
+      // Parser les JSON
+      let sessionTypes = '';
+      try {
+        if (training.session_types) {
+          const types = JSON.parse(training.session_types);
+          sessionTypes = Array.isArray(types) ? types.join('; ') : '';
+        }
+      } catch (e) {
+        console.error('Erreur parsing session_types:', e);
+      }
+
+      let muscles = '';
+      try {
+        if (training.muscles) {
+          const musclesList = JSON.parse(training.muscles);
+          muscles = Array.isArray(musclesList) ? musclesList.join('; ') : '';
+        }
+      } catch (e) {
+        console.error('Erreur parsing muscles:', e);
+      }
+
+      // Créer la ligne
+      return [
+        escapeCSV(training.date),
+        escapeCSV(clubName),
+        escapeCSV(training.sport),
+        escapeCSV(training.start_time),
+        training.duration_minutes.toString(),
+        escapeCSV(sessionTypes),
+        escapeCSV(muscles),
+        escapeCSV(training.technical_theme || ''),
+        escapeCSV(training.notes || '')
+      ].join(',');
+    });
+
+    // Combiner header et lignes
+    const csvContent = [header, ...rows].join('\n');
+
+    // Créer le nom du fichier avec la date
+    const date = new Date().toISOString().split('T')[0];
+    const fileName = `yoroi_seances_${date}.csv`;
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    // Écrire le fichier
+    await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    console.log('✅ Fichier CSV créé:', fileUri);
+
+    // Vérifier si le partage est disponible
+    const isSharingAvailable = await Sharing.isAvailableAsync();
+
+    if (isSharingAvailable) {
+      // Partager le fichier
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Exporter les séances Yoroi',
+        UTI: 'public.comma-separated-values-text',
+      });
+
+      console.log('✅ Export séances CSV terminé avec succès');
+      Alert.alert(
+        '✅ Export réussi',
+        `${trainings.length} séance(s) exportée(s) en CSV`
+      );
+    } else {
+      Alert.alert(
+        '✅ Export terminé',
+        `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
+      );
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur export séances CSV:', error);
+    Alert.alert(
+      'Erreur',
+      "Impossible d'exporter les séances en CSV. Veuillez réessayer."
+    );
+    return false;
+  }
+};
+
+/**
+ * Exporte toutes les séances au format Excel-compatible CSV
+ * (avec séparateur point-virgule pour Excel français)
+ */
+export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
+  try {
+    console.log('📊 Début export Excel CSV...');
+
+    // Importer les fonctions de base de données
+    const { getAllTrainings, getAllClubs } = require('./database');
+
+    // Récupérer toutes les données
+    const trainings = await getAllTrainings();
+    const clubs = await getAllClubs();
+
+    if (trainings.length === 0) {
+      Alert.alert('Aucune donnée', 'Vous n\'avez pas encore de séances à exporter');
+      return false;
+    }
+
+    const clubsMap = new Map();
+    clubs.forEach((club: any) => {
+      clubsMap.set(club.id, club);
+    });
+
+    // Header CSV avec point-virgule (format Excel français)
+    const header = [
+      'Date',
+      'Club',
+      'Sport',
+      'Heure de début',
+      'Durée (min)',
+      'Types de séance',
+      'Muscles travaillés',
+      'Thème technique',
+      'Notes'
+    ].join(';');
+
+    const rows = trainings.map((training: any) => {
+      const club = training.club_id ? clubsMap.get(training.club_id) : null;
+      const clubName = club?.name || 'Activité libre';
+
+      let sessionTypes = '';
+      try {
+        if (training.session_types) {
+          const types = JSON.parse(training.session_types);
+          sessionTypes = Array.isArray(types) ? types.join(', ') : '';
+        }
+      } catch (e) {}
+
+      let muscles = '';
+      try {
+        if (training.muscles) {
+          const musclesList = JSON.parse(training.muscles);
+          muscles = Array.isArray(musclesList) ? musclesList.join(', ') : '';
+        }
+      } catch (e) {}
+
+      return [
+        escapeCSV(training.date),
+        escapeCSV(clubName),
+        escapeCSV(training.sport),
+        escapeCSV(training.start_time),
+        training.duration_minutes.toString(),
+        escapeCSV(sessionTypes),
+        escapeCSV(muscles),
+        escapeCSV(training.technical_theme || ''),
+        escapeCSV(training.notes || '')
+      ].join(';');
+    });
+
+    const csvContent = [header, ...rows].join('\n');
+
+    const date = new Date().toISOString().split('T')[0];
+    const fileName = `yoroi_seances_excel_${date}.csv`;
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    console.log('✅ Fichier Excel CSV créé:', fileUri);
+
+    const isSharingAvailable = await Sharing.isAvailableAsync();
+
+    if (isSharingAvailable) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Exporter les séances Yoroi (Excel)',
+        UTI: 'public.comma-separated-values-text',
+      });
+
+      console.log('✅ Export Excel CSV terminé avec succès');
+      Alert.alert(
+        '✅ Export réussi',
+        `${trainings.length} séance(s) exportée(s) en format Excel`
+      );
+    } else {
+      Alert.alert(
+        '✅ Export terminé',
+        `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
+      );
+    }
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur export Excel CSV:', error);
+    Alert.alert(
+      'Erreur',
+      "Impossible d'exporter les séances en Excel CSV. Veuillez réessayer."
+    );
     return false;
   }
 };

@@ -50,7 +50,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   icon,
 }) => {
   const { colors } = useTheme();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
 
   if (data.length === 0) {
     return null;

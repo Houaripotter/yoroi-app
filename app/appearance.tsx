@@ -26,21 +26,32 @@ import {
   Check,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { ThemeMode } from '@/constants/themes';
+import { ThemeMode, themeColors } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
 import { LOGO_OPTIONS, getSelectedLogo, setSelectedLogo } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { getWeights, getTrainings, getPhotos } from '@/lib/database';
 import { POINTS_ACTIONS } from '@/lib/gamification';
+import { CITATION_STYLE_OPTIONS, getCitationStyle, setCitationStyle, CitationStyle } from '@/lib/citations';
+import { MessageSquareQuote, LayoutGrid, LayoutList } from 'lucide-react-native';
+import { useViewMode, ViewMode } from '@/hooks/useViewMode';
 
-type Tab = 'themes' | 'logos';
+type Tab = 'themes' | 'logos' | 'citations';
+
+// Helper pour obtenir la couleur d'un thème
+const getThemeColor = (themeColorId: string): string => {
+  const theme = themeColors.find(t => t.id === themeColorId);
+  return theme?.color || '#FFFFFF';
+};
 
 export default function AppearanceScreen() {
   const { colors, themeColor, themeMode, setThemeColor, setThemeMode } = useTheme();
+  const { mode: viewMode, toggleMode: toggleViewMode } = useViewMode();
   const [activeTab, setActiveTab] = useState<Tab>('themes');
   const [userXP, setUserXP] = useState(0);
   const [selectedLogoId, setSelectedLogoId] = useState<string>('default');
+  const [selectedCitationStyle, setSelectedCitationStyle] = useState<CitationStyle>('all');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +63,10 @@ export default function AppearanceScreen() {
       // Charger le logo sélectionné
       const logoId = await getSelectedLogo();
       setSelectedLogoId(logoId);
+
+      // Charger le style de citation sélectionné
+      const citationStyle = await getCitationStyle();
+      setSelectedCitationStyle(citationStyle);
 
       // Calculer l'XP basé sur l'activité de l'utilisateur
       const [weights, trainings, photos] = await Promise.all([
@@ -116,6 +131,18 @@ export default function AppearanceScreen() {
     } catch (error) {
       console.error('[Appearance] Erreur changement logo:', error);
       Alert.alert('Erreur', 'Impossible de changer le logo');
+    }
+  };
+
+  const handleCitationStyleChange = async (style: CitationStyle) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      await setCitationStyle(style);
+      setSelectedCitationStyle(style);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('[Appearance] Erreur changement style citation:', error);
+      Alert.alert('Erreur', 'Impossible de changer le style de citation');
     }
   };
 
@@ -215,7 +242,61 @@ export default function AppearanceScreen() {
           </View>
         </View>
 
-        {/* Onglets Thèmes / Logos */}
+        {/* Vue de l'accueil */}
+        <View style={[styles.modeSection, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.modeSectionTitle, { color: colors.textPrimary }]}>
+            Vue de l'accueil
+          </Text>
+          <Text style={[styles.modeSectionSubtitle, { color: colors.textMuted }]}>
+            Choisissez entre une vue complète ou condensée
+          </Text>
+          <View style={styles.modesContainer}>
+            {[
+              { mode: 'guerrier' as ViewMode, label: 'Guerrier', description: 'Complet', icon: LayoutGrid },
+              { mode: 'essentiel' as ViewMode, label: 'Essentiel', description: 'Condensé', icon: LayoutList },
+            ].map(({ mode, label, description, icon: Icon }) => {
+              const isActive = viewMode === mode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[
+                    styles.viewModeButton,
+                    { backgroundColor: colors.backgroundElevated },
+                    isActive && { backgroundColor: colors.accent },
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    toggleViewMode();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Icon
+                    size={24}
+                    color={isActive ? '#FFFFFF' : colors.textPrimary}
+                  />
+                  <Text
+                    style={[
+                      styles.viewModeLabel,
+                      { color: isActive ? '#FFFFFF' : colors.textPrimary },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.viewModeDescription,
+                      { color: isActive ? 'rgba(255, 255, 255, 0.8)' : colors.textMuted },
+                    ]}
+                  >
+                    {description}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Onglets Thèmes / Logos / Citations */}
         <View style={styles.tabsContainer}>
           <TouchableOpacity
             style={[
@@ -266,6 +347,31 @@ export default function AppearanceScreen() {
               Logos
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              { backgroundColor: colors.backgroundCard },
+              activeTab === 'citations' && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setActiveTab('citations');
+            }}
+            activeOpacity={0.7}
+          >
+            <MessageSquareQuote size={18} color={activeTab === 'citations' ? '#FFFFFF' : colors.textPrimary} />
+            <Text
+              style={[
+                styles.tabLabel,
+                { color: activeTab === 'citations' ? '#FFFFFF' : colors.textPrimary },
+              ]}
+            >
+              Citations
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Contenu selon l'onglet actif */}
@@ -284,6 +390,7 @@ export default function AppearanceScreen() {
                 {WARRIOR_THEMES.map((theme) => {
                   const isUnlocked = appearanceService.isWarriorThemeUnlocked(theme.id, userXP);
                   const isActive = currentWarriorTheme?.id === theme.id;
+                  const themeAccentColor = getThemeColor(theme.themeColor);
 
                   return (
                     <TouchableOpacity
@@ -302,10 +409,10 @@ export default function AppearanceScreen() {
                       activeOpacity={0.7}
                     >
                       <View style={styles.themeHeader}>
-                        <Text style={styles.themeIcon}>{theme.icon}</Text>
-                        {!isUnlocked && (
-                          <Lock size={14} color={colors.textMuted} style={styles.lockIcon} />
-                        )}
+                        <View style={styles.themeIconContainer}>
+                          <Palette size={24} color={themeAccentColor} />
+                        </View>
+                        <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
                       </View>
                       <Text style={[styles.themeName, { color: colors.textPrimary }]}>
                         {theme.name}
@@ -313,9 +420,14 @@ export default function AppearanceScreen() {
                       <Text style={[styles.themeDescription, { color: colors.textMuted }]}>
                         {isUnlocked ? theme.description : `${theme.unlockXP} XP`}
                       </Text>
+                      {!isUnlocked && (
+                        <View style={styles.lockBadge}>
+                          <Lock size={14} color={colors.textMuted} />
+                        </View>
+                      )}
                       {isActive && (
                         <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
-                          <Text style={styles.activeText}>✓</Text>
+                          <Check size={14} color="#FFFFFF" />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -328,14 +440,13 @@ export default function AppearanceScreen() {
                 <View style={[styles.nextUnlock, { backgroundColor: colors.backgroundElevated }]}>
                   <Crown size={16} color={colors.accent} />
                   <Text style={[styles.nextUnlockText, { color: colors.textSecondary }]}>
-                    Prochain: {nextTheme.name} {nextTheme.icon} dans{' '}
-                    {nextTheme.unlockXP - userXP} XP
+                    Prochain: {nextTheme.name} dans {nextTheme.unlockXP - userXP} XP
                   </Text>
                 </View>
               )}
             </View>
           </>
-        ) : (
+        ) : activeTab === 'logos' ? (
           <>
             {/* Section: Logos d'App */}
             <View style={styles.section}>
@@ -391,6 +502,61 @@ export default function AppearanceScreen() {
                           <Check size={16} color="#FFFFFF" />
                         </View>
                       )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Section: Citations */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Style de Citations
+              </Text>
+              <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
+                Choisissez le type de citations qui vous inspire
+              </Text>
+
+              <View style={styles.citationsGrid}>
+                {CITATION_STYLE_OPTIONS.map((option) => {
+                  const isSelected = selectedCitationStyle === option.id;
+                  const IconComponent = option.iconComponent;
+
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[
+                        styles.citationCard,
+                        { backgroundColor: colors.backgroundCard },
+                        isSelected && {
+                          borderColor: colors.accent,
+                          borderWidth: 2,
+                        },
+                      ]}
+                      onPress={() => handleCitationStyleChange(option.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.citationHeader}>
+                        <View style={[styles.citationIconContainer, { backgroundColor: `${colors.accent}15` }]}>
+                          <IconComponent size={24} color={colors.accent} />
+                        </View>
+                        {isSelected && (
+                          <View style={[styles.activeIndicator, { backgroundColor: colors.accent }]}>
+                            <Text style={styles.activeText}>✓</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.citationLabel, { color: colors.textPrimary }]}>
+                        {option.label}
+                      </Text>
+                      <Text style={[styles.citationLabelJp, { color: colors.textMuted }]}>
+                        {option.labelJp}
+                      </Text>
+                      <Text style={[styles.citationDescription, { color: colors.textSecondary }]}>
+                        {option.description}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -455,6 +621,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: SPACING.sm,
   },
+  modeSectionSubtitle: {
+    fontSize: 13,
+    marginBottom: SPACING.sm,
+  },
   modesContainer: {
     flexDirection: 'row',
     gap: SPACING.sm,
@@ -470,6 +640,23 @@ const styles = StyleSheet.create({
   modeLabel: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  viewModeButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.xs,
+  },
+  viewModeLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: SPACING.xs,
+  },
+  viewModeDescription: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   tabsContainer: {
     flexDirection: 'row',
@@ -517,16 +704,33 @@ const styles = StyleSheet.create({
   themeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.xs,
+    alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  themeIcon: {
-    fontSize: 28,
+  themeIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  lockIcon: {
+  colorCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  lockBadge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 8,
+    left: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   themeName: {
     fontSize: 15,
@@ -541,9 +745,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -627,5 +831,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 100,
+  },
+  citationsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  citationCard: {
+    width: '48%',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    position: 'relative',
+    minHeight: 140,
+  },
+  citationHeader: {
+    marginBottom: SPACING.sm,
+    alignItems: 'flex-start',
+  },
+  citationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xs,
+  },
+  citationLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  citationLabelJp: {
+    fontSize: 13,
+    marginBottom: SPACING.xs,
+  },
+  citationDescription: {
+    fontSize: 11,
+    lineHeight: 15,
   },
 });

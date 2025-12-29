@@ -24,6 +24,7 @@ import {
   HelpCircle,
   Mail,
   Check,
+  Instagram,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT, SHADOWS } from '@/constants/appTheme';
@@ -84,10 +85,25 @@ export default function IdeasScreen() {
     const categoryLabel = CATEGORIES.find(c => c.id === category)?.label || 'Autre';
     const subject = encodeURIComponent(`[Yoroi] ${categoryLabel}: Suggestion`);
     const body = encodeURIComponent(`Catégorie: ${categoryLabel}\n\n${ideaText}\n\n---\nEnvoyé depuis l'app Yoroi`);
-    const mailto = `mailto:contact@yoroi-app.com?subject=${subject}&body=${body}`;
+    const mailto = `mailto:yoroiapp@hotmail.com?subject=${subject}&body=${body}`;
 
     Linking.openURL(mailto).catch(() => {
       Alert.alert('Erreur', 'Impossible d\'ouvrir l\'app de mail');
+    });
+  };
+
+  const sendByInstagram = () => {
+    const instagramUrl = 'instagram://user?username=yoroiapp';
+    const webUrl = 'https://www.instagram.com/yoroiapp';
+
+    Linking.canOpenURL(instagramUrl).then(supported => {
+      if (supported) {
+        Linking.openURL(instagramUrl);
+      } else {
+        Linking.openURL(webUrl);
+      }
+    }).catch(() => {
+      Alert.alert('Erreur', 'Impossible d\'ouvrir Instagram');
     });
   };
 
@@ -99,10 +115,10 @@ export default function IdeasScreen() {
       <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ChevronLeft size={24} color={COLORS.text} />
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: colors.card }]}>
+            <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Boîte à Idées</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Boîte à Idées</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -112,18 +128,18 @@ export default function IdeasScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Hero */}
-          <View style={styles.heroCard}>
+          <View style={[styles.heroCard, { backgroundColor: colors.card }]}>
             <View style={[styles.heroIconBg, { backgroundColor: `${colors.accent}20` }]}>
               <Lightbulb size={32} color={colors.accent} />
             </View>
-            <Text style={styles.heroTitle}>Une idée pour améliorer Yoroi ?</Text>
-            <Text style={styles.heroText}>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>Une idée pour améliorer Yoroi ?</Text>
+            <Text style={[styles.heroText, { color: colors.textSecondary }]}>
               Dis-nous tout ! Chaque suggestion est lue et prise en compte pour les prochaines mises à jour.
             </Text>
           </View>
 
           {/* Category Selection */}
-          <Text style={styles.sectionTitle}>Catégorie</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Catégorie</Text>
           <View style={styles.categoriesRow}>
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
@@ -133,12 +149,12 @@ export default function IdeasScreen() {
                   key={cat.id}
                   style={[
                     styles.categoryBtn,
-                    isSelected && { backgroundColor: cat.color },
+                    { backgroundColor: isSelected ? cat.color : colors.card },
                   ]}
                   onPress={() => setCategory(cat.id)}
                 >
                   <Icon size={18} color={isSelected ? '#FFF' : cat.color} />
-                  <Text style={[styles.categoryText, isSelected && { color: '#FFF' }]}>
+                  <Text style={[styles.categoryText, { color: isSelected ? '#FFF' : colors.text }]}>
                     {cat.label}
                   </Text>
                 </TouchableOpacity>
@@ -147,12 +163,12 @@ export default function IdeasScreen() {
           </View>
 
           {/* Idea Input */}
-          <Text style={[styles.sectionTitle, { marginTop: SPACING.xl }]}>Ton idée</Text>
-          <View style={styles.inputCard}>
+          <Text style={[styles.sectionTitle, { marginTop: SPACING.xl, color: colors.textMuted }]}>Ton idée</Text>
+          <View style={[styles.inputCard, { backgroundColor: colors.card }]}>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { color: colors.text }]}
               placeholder="Écris ton idée ici..."
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={6}
               textAlignVertical="top"
@@ -160,7 +176,7 @@ export default function IdeasScreen() {
               onChangeText={setIdeaText}
               maxLength={1000}
             />
-            <Text style={styles.charCount}>{ideaText.length}/1000</Text>
+            <Text style={[styles.charCount, { color: colors.textMuted }]}>{ideaText.length}/1000</Text>
           </View>
 
           {/* Send Button */}
@@ -188,11 +204,18 @@ export default function IdeasScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Alternative: Email */}
-          <TouchableOpacity style={styles.emailBtn} onPress={sendByEmail}>
-            <Mail size={18} color={COLORS.textSecondary} />
-            <Text style={styles.emailBtnText}>Ou envoyer par email</Text>
-          </TouchableOpacity>
+          {/* Alternative: Email & Instagram */}
+          <View style={styles.alternativeButtons}>
+            <TouchableOpacity style={styles.emailBtn} onPress={sendByEmail}>
+              <Mail size={18} color={colors.textSecondary} />
+              <Text style={[styles.emailBtnText, { color: colors.textSecondary }]}>Ou envoyer par email</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.emailBtn} onPress={sendByInstagram}>
+              <Instagram size={18} color={colors.textSecondary} />
+              <Text style={[styles.emailBtnText, { color: colors.textSecondary }]}>Nous contacter sur Instagram</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -216,7 +239,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.card,
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.sm,
@@ -224,7 +246,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: FONT.size.xl,
     fontWeight: '700',
-    color: COLORS.text,
   },
   content: {
     flex: 1,
@@ -235,7 +256,6 @@ const styles = StyleSheet.create({
 
   // Hero
   heroCard: {
-    backgroundColor: COLORS.card,
     borderRadius: RADIUS.xxl,
     padding: SPACING.xl,
     alignItems: 'center',
@@ -253,12 +273,10 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: FONT.size.lg,
     fontWeight: '700',
-    color: COLORS.text,
     textAlign: 'center',
   },
   heroText: {
     fontSize: FONT.size.sm,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: SPACING.xs,
     lineHeight: 20,
@@ -268,7 +286,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONT.size.sm,
     fontWeight: '700',
-    color: COLORS.textMuted,
     letterSpacing: 1,
     marginBottom: SPACING.md,
   },
@@ -285,32 +302,27 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.card,
     borderRadius: RADIUS.lg,
     ...SHADOWS.sm,
   },
   categoryText: {
     fontSize: FONT.size.sm,
     fontWeight: '600',
-    color: COLORS.text,
   },
 
   // Input
   inputCard: {
-    backgroundColor: COLORS.card,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     ...SHADOWS.sm,
   },
   textInput: {
     fontSize: FONT.size.md,
-    color: COLORS.text,
     minHeight: 120,
     lineHeight: 22,
   },
   charCount: {
     fontSize: FONT.size.xs,
-    color: COLORS.textMuted,
     textAlign: 'right',
     marginTop: SPACING.sm,
   },
@@ -334,16 +346,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFF',
   },
+  alternativeButtons: {
+    marginTop: SPACING.md,
+    gap: SPACING.xs,
+  },
   emailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
-    marginTop: SPACING.md,
   },
   emailBtnText: {
     fontSize: FONT.size.sm,
-    color: COLORS.textSecondary,
   },
 });

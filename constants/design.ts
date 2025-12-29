@@ -3,9 +3,11 @@
 // ============================================
 // Couleurs CLAIRES et énergisantes
 // Objectif: Rendre les utilisateurs accros !
+// RESPONSIVE: Adapté iPhone & iPad
 // ============================================
 
 import { themes, defaultThemeColor, defaultThemeMode, Theme } from './themes';
+import { scale, scaleModerate } from './responsive';
 
 // Obtenir le thème par défaut
 const activeTheme: Theme = themes[`${defaultThemeColor}_${defaultThemeMode}`];
@@ -91,49 +93,49 @@ export const COLORS = {
 };
 
 // ============================================
-// SPACING - Généreux et aéré
+// SPACING - Généreux et aéré - RESPONSIVE
 // ============================================
 export const SPACING = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  huge: 48,
-  massive: 64,
+  xs: scale(4),
+  sm: scale(8),
+  md: scale(12),
+  lg: scale(16),
+  xl: scale(20),
+  xxl: scale(24),
+  xxxl: scale(32),
+  huge: scale(48),
+  massive: scale(64),
 };
 
 // ============================================
-// BORDER RADIUS - Moderne et arrondi
+// BORDER RADIUS - Moderne et arrondi - RESPONSIVE
 // ============================================
 export const RADIUS = {
-  xs: 6,
-  sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 24,
-  xxl: 32,
-  xxxl: 40,
+  xs: scale(6),
+  sm: scale(10),
+  md: scale(14),
+  lg: scale(18),
+  xl: scale(24),
+  xxl: scale(32),
+  xxxl: scale(40),
   full: 9999,
 };
 
 // ============================================
-// TYPOGRAPHY
+// TYPOGRAPHY - RESPONSIVE
 // ============================================
 export const TYPOGRAPHY = {
   size: {
-    xs: 11,
-    sm: 13,
-    md: 15,
-    lg: 17,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
-    display: 40,
-    hero: 56,
-    giant: 72,
+    xs: scaleModerate(11, 0.3),
+    sm: scaleModerate(13, 0.3),
+    md: scaleModerate(15, 0.3),
+    lg: scaleModerate(17, 0.3),
+    xl: scaleModerate(20, 0.3),
+    xxl: scaleModerate(24, 0.4),
+    xxxl: scaleModerate(32, 0.4),
+    display: scaleModerate(40, 0.5),
+    hero: scaleModerate(56, 0.5),
+    giant: scaleModerate(72, 0.5),
   },
   weight: {
     regular: '400' as const,
@@ -265,20 +267,20 @@ export const GRADIENTS = {
 };
 
 // ============================================
-// TAB BAR
+// TAB BAR - RESPONSIVE
 // ============================================
 export const TAB_BAR = {
-  height: 80,
+  height: scale(80),
   background: c.tabBar,
   backgroundBlur: `${c.tabBar}F5`,
   activeColor: c.tabBarActive,
   inactiveColor: c.tabBarInactive,
-  plusButtonSize: 60,
+  plusButtonSize: scale(60),
   plusButtonGradient: GRADIENTS.primary,
-  borderRadius: 30,
+  borderRadius: scale(30),
   margin: {
-    horizontal: 20,
-    bottom: 24,
+    horizontal: scale(20),
+    bottom: scale(24),
   },
 };
 

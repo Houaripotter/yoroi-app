@@ -53,6 +53,7 @@ import {
   CircleDot,
   Building2,
   Shirt,
+  Palette,
   type LucideIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -84,7 +85,7 @@ import {
 } from '@/lib/storage';
 import { CITATION_STYLE_OPTIONS, CitationStyle, setCitationStyle as saveCitationStyleToStorage } from '@/lib/citations';
 import type { UserClub, UserGear } from '@/lib/storage';
-import { exportDataToJSON, exportDataToCSV, shareProgress } from '@/lib/exportService';
+import { exportDataToJSON, exportDataToCSV, shareProgress, importDataFromJSON } from '@/lib/exportService';
 import { exportToPDF, previewPDFReport } from '@/lib/pdfExportService';
 import { isiCloudSyncFeatureEnabled, getiCloudUnavailableMessage, getSyncStatus, SyncStatus } from '@/lib/iCloudSyncService';
 import {
@@ -95,13 +96,13 @@ import {
   isRamadanPeriod,
   RamadanSettings,
 } from '@/lib/ramadanService';
-import { generateMockMeasurements } from '@/lib/generateMockData';
-import { insertDemoData, clearAllData } from '@/lib/demoData';
 import { getUserMode, setUserMode, getUserSport } from '@/lib/fighterModeService';
-import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
-import { resetAndGenerateDemoData, DemoDataResult } from '@/lib/generateDemoData';
+import { UserMode, Sport } from '@/lib/fighterMode';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import { loadScreenshotDemoData, clearScreenshotDemoData } from '@/lib/screenshotDemoData';
+import { Weight } from '@/lib/database';
+import { getWeightCategoriesForSport, WeightCategory } from '@/lib/weightCategories';
 
 // Constants for non-theme values
 const RADIUS = { sm: 8, md: 12, lg: 16, xl: 20 };
@@ -151,8 +152,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
   const [newGearBrand, setNewGearBrand] = useState('');
   const [newGearType, setNewGearType] = useState<'kimono' | 'chaussure' | 'gants' | 'protections' | 'autre'>('kimono');
   const [newGearPhoto, setNewGearPhoto] = useState<string | null>(null);
-  const [citationStyle, setCitationStyle] = useState<CitationStyle>('all');
-  const [citationModalVisible, setCitationModalVisible] = useState(false);
 
   // Ramadan Mode
   const [ramadanEnabled, setRamadanEnabled] = useState(false);
@@ -189,10 +188,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
       // Charger les clubs utilisateur
       const clubs = await getUserClubs();
       setUserClubs(clubs);
-      // Charger le style de citation
-      if (settings.citationStyle) {
-        setCitationStyle(settings.citationStyle as CitationStyle);
-      }
 
       // Charger les parametres Ramadan
       const ramSettings = await getRamadanSettings();
@@ -332,6 +327,14 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     await exportDataToCSV();
   };
 
+  const handleImportJSON = async () => {
+    const success = await importDataFromJSON();
+    if (success) {
+      // Recharger les paramètres après import
+      await fetchSettings();
+    }
+  };
+
   const handleShareProgress = async () => {
     await shareProgress();
   };
@@ -372,27 +375,57 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     );
   };
 
-  const handleGenerateMockData = async () => {
+  // Mode Screenshot pour captures d'écran App Store
+  const handleLoadScreenshotDemo = async () => {
     Alert.alert(
-      'Générer des données de démo',
-      'Cela va créer 6 mois de données fictives pour visualiser une transformation réaliste : 99.9kg → 86kg avec :\n\n• ~144 pesées\n• 26 mensurations\n• ~104 entraînements\n• 4 clubs de sport\n• Planning hebdomadaire\n\nLes données existantes seront EFFACÉES.',
+      '📸 Mode Screenshot',
+      'Charger des données de démonstration complètes pour faire des captures d\'écran professionnelles pour l\'App Store ?\n\n✨ Inclut :\n• 3 mois de transformation (82kg → 75.8kg)\n• Composition corporelle (22% → 16% gras, 38% → 42% muscle)\n• Tour de taille -9cm, biceps +3cm\n• 60+ entraînements (JJB + Musculation)\n• Sommeil & hydratation\n• 2 clubs : Gracie Barra + Basic Fit\n• Planning hebdomadaire équilibré\n• 12 badges débloqués\n\n⚠️ Toutes les données actuelles seront EFFACÉES !',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Générer',
+          text: 'Charger',
           style: 'destructive',
           onPress: async () => {
             try {
-              // Effacer les données existantes
-              await clearAllData();
-              // Inserer les nouvelles donnees demo
-              await insertDemoData();
-              Alert.alert('✅ Données de démo créées !', 'Profil Houari avec 6 mois de transformation : 99.9kg → 86kg');
+              const result = await loadScreenshotDemoData();
+              if (result.success) {
+                Alert.alert(
+                  '✅ Mode Screenshot activé !',
+                  'Données complètes chargées.\n\n📱 Profil : Alex Martin\n📊 Transformation : -13kg en 6 mois\n🥋 3 clubs + planning complet\n\nL\'app est prête pour les screenshots !'
+                );
+                fetchSettings();
+                router.replace('/(tabs)');
+              } else {
+                Alert.alert('Erreur', result.error || 'Échec du chargement');
+              }
+            } catch (error) {
+              console.error('Erreur mode screenshot:', error);
+              Alert.alert('Erreur', 'Impossible de charger les données de démonstration.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearScreenshotDemo = async () => {
+    Alert.alert(
+      '🧹 Effacer le Mode Screenshot',
+      'Supprimer toutes les données de démonstration et revenir à une app vierge ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Effacer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearScreenshotDemoData();
+              Alert.alert('✅ Effacé', 'L\'app est maintenant vierge.');
               fetchSettings();
               router.replace('/(tabs)');
             } catch (error) {
-              console.error('Erreur génération données:', error);
-              Alert.alert('Erreur', 'Impossible de générer les données.');
+              console.error('Erreur nettoyage:', error);
+              Alert.alert('Erreur', 'Impossible d\'effacer les données.');
             }
           },
         },
@@ -428,40 +461,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     );
   };
 
-  // Hidden realistic demo data generator
-  const handleGenerateRealisticDemoData = async () => {
-    Alert.alert(
-      '🎌 Données Démo Complètes',
-      'Génère 6 mois de transformation réaliste :\n\n📊 95 kg → 77 kg (-18 kg)\n\n• ~150 pesées avec composition corporelle\n• ~26 mensurations (tour de taille: 98→82cm)\n• ~150 entraînements\n• 3 clubs avec logos :\n  - Gracie Barra (JJB)\n  - Basic Fit (Musculation)\n  - Marseille Fight Club (MMA)\n• Planning hebdomadaire\n• 11 badges débloqués\n\n⚠️ Toutes les données actuelles seront EFFACÉES !',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Générer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result: DemoDataResult = await resetAndGenerateDemoData();
-
-              if (result.success) {
-                setShowHiddenDemo(false);
-                Alert.alert(
-                  '✅ Données générées !',
-                  `Transformation 95 kg → 77 kg créée :\n\n• ${result.weightsCount} pesées\n• ${result.measurementsCount} mensurations\n• ${result.trainingsCount} entraînements\n• ${result.achievementsCount} badges\n\n🥋 Gracie Barra + Basic Fit + MFC`
-                );
-                fetchSettings();
-                router.replace('/(tabs)');
-              } else {
-                Alert.alert('Erreur', result.error || 'Échec de la génération');
-              }
-            } catch (error) {
-              console.error('Erreur génération données réalistes:', error);
-              Alert.alert('Erreur', 'Impossible de générer les données.');
-            }
-          },
-        },
-      ]
-    );
-  };
 
   // Helper pour les lignes de menu
   const MenuRow = ({ icon: Icon, color, label, value, onPress, isDestructive = false }: any) => (
@@ -493,18 +492,11 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
         {/* Autres options d'affichage */}
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
             <MenuRow
-                icon={Sparkles}
-                color={colors.accent || '#FFD700'}
-                label="Personnaliser le logo"
-                value="Premium"
-                onPress={() => router.push('/logo-selection')}
-            />
-            <MenuRow
-                icon={BookOpen}
-                color="#9B59B6"
-                label="Style de citations"
-                value={CITATION_STYLE_OPTIONS.find(o => o.id === citationStyle)?.label || 'Samourai'}
-                onPress={() => setCitationModalVisible(true)}
+                icon={Palette}
+                color={colors.accent}
+                label="Apparence"
+                value="Thèmes et personnalisation"
+                onPress={() => router.push('/appearance')}
             />
             <MenuRow
                 icon={Scale}
@@ -520,63 +512,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
                 value={measurementUnit === 'cm' ? 'Centimètres' : 'Pouces'}
                 onPress={() => setMeasurementUnitModalVisible(true)}
             />
-        </View>
-
-        {/* MODE UTILISATEUR */}
-        <Text style={styles.sectionHeader}>MODE UTILISATEUR</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-          <TouchableOpacity
-            style={styles.modeRow}
-            onPress={() => handleChangeUserMode(userModeSetting === 'loisir' ? 'competiteur' : 'loisir')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.modeLeft}>
-              <View style={[styles.modeIconContainer, { backgroundColor: userModeSetting === 'competiteur' ? '#FF6B6B20' : '#4ECDC420' }]}>
-                {userModeSetting === 'competiteur' ? (
-                  <Trophy size={20} color="#FF6B6B" />
-                ) : (
-                  <Heart size={20} color="#4ECDC4" />
-                )}
-              </View>
-              <View style={styles.modeInfo}>
-                <Text style={[styles.modeLabel, { color: textColor }]}>
-                  {userModeSetting === 'competiteur' ? 'Mode Compétiteur' : 'Mode Loisir'}
-                </Text>
-                <Text style={[styles.modeDescription, { color: colors.textSecondary }]}>
-                  {userModeSetting === 'competiteur'
-                    ? 'Compétitions, palmarès, hydratation'
-                    : 'Bien-être et progression'}
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={userModeSetting === 'competiteur'}
-              onValueChange={(value) => handleChangeUserMode(value ? 'competiteur' : 'loisir')}
-              trackColor={{ false: '#3e3e3e', true: '#FF6B6B' }}
-              thumbColor={'#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-            />
-          </TouchableOpacity>
-
-          {/* Afficher le sport si mode compétiteur */}
-          {userModeSetting === 'competiteur' && (
-            <View style={styles.sportInfo}>
-              <View style={styles.sportInfoHeader}>
-                <Shield size={16} color={colors.gold} />
-                <Text style={[styles.sportInfoLabel, { color: colors.textSecondary }]}>
-                  Sport principal:
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => router.push('/sport-selection')}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.sportInfoValue, { color: colors.accent }]}>
-                  {userSport ? SPORT_LABELS[userSport] : 'Non défini - Appuyez pour choisir'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         {/* RAPPELS & NOTIFICATIONS */}
@@ -635,6 +570,79 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
           </View>
         </View>
 
+        {/* SAUVEGARDE & RESTAURATION */}
+        <Text style={styles.sectionHeader}>SAUVEGARDE & RESTAURATION</Text>
+        <View style={[styles.card, { backgroundColor: cardBackground }]}>
+            <TouchableOpacity
+              style={[styles.backupButton, { backgroundColor: colors.gold }]}
+              onPress={handleExportJSON}
+              activeOpacity={0.8}
+            >
+              <CloudUpload size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <View style={styles.backupButtonContent}>
+                <Text style={styles.backupButtonTitle}>Sauvegarder (JSON)</Text>
+                <Text style={styles.backupButtonSubtitle}>Pour réimporter dans l'app</Text>
+              </View>
+              <ChevronRight size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.backupButton, { backgroundColor: '#10B981', marginTop: 12 }]}
+              onPress={handleExportCSV}
+              activeOpacity={0.8}
+            >
+              <FileText size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <View style={styles.backupButtonContent}>
+                <Text style={styles.backupButtonTitle}>Exporter (CSV)</Text>
+                <Text style={styles.backupButtonSubtitle}>Pour Excel, Numbers, Google Sheets</Text>
+              </View>
+              <ChevronRight size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.backupButton, { backgroundColor: colors.accent, marginTop: 12 }]}
+              onPress={handleImportJSON}
+              activeOpacity={0.8}
+            >
+              <CloudDownload size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <View style={styles.backupButtonContent}>
+                <Text style={styles.backupButtonTitle}>Restaurer (JSON)</Text>
+                <Text style={styles.backupButtonSubtitle}>Importer une sauvegarde</Text>
+              </View>
+              <ChevronRight size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+        </View>
+
+        {/* MODE SCREENSHOT */}
+        <Text style={styles.sectionHeader}>MODE SCREENSHOT 📸</Text>
+        <View style={[styles.card, { backgroundColor: cardBackground }]}>
+            <TouchableOpacity
+              style={[styles.screenshotButton, { backgroundColor: '#8B5CF6' }]}
+              onPress={handleLoadScreenshotDemo}
+              activeOpacity={0.8}
+            >
+              <Sparkles size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <View style={styles.screenshotButtonContent}>
+                <Text style={styles.screenshotButtonTitle}>Charger données de démo</Text>
+                <Text style={styles.screenshotButtonSubtitle}>Pour captures d'écran App Store</Text>
+              </View>
+              <ChevronRight size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.screenshotButton, { backgroundColor: '#64748B', marginTop: 12 }]}
+              onPress={handleClearScreenshotDemo}
+              activeOpacity={0.8}
+            >
+              <Trash2 size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <View style={styles.screenshotButtonContent}>
+                <Text style={styles.screenshotButtonTitle}>Effacer les données démo</Text>
+                <Text style={styles.screenshotButtonSubtitle}>Revenir à une app vierge</Text>
+              </View>
+              <ChevronRight size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+        </View>
+
         {/* SÉCURITÉ DES DONNÉES */}
         <Text style={styles.sectionHeader}>SÉCURITÉ DES DONNÉES</Text>
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
@@ -655,20 +663,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
             />
         </View>
 
-        {/* BOUTON DONNÉES DÉMO - VISIBLE */}
-        <Text style={styles.sectionHeader}>MODE DÉMO</Text>
-        <TouchableOpacity
-          style={[styles.demoButton, { backgroundColor: colors.accent }]}
-          onPress={handleGenerateRealisticDemoData}
-          activeOpacity={0.8}
-        >
-          <Sparkles size={22} color={colors.background} strokeWidth={2.5} />
-          <View style={styles.demoButtonContent}>
-            <Text style={[styles.demoButtonTitle, { color: colors.background }]}>Charger données de démo</Text>
-            <Text style={[styles.demoButtonSubtitle, { color: colors.background }]}>95kg → 77kg • 6 mois • 3 clubs</Text>
-          </View>
-          <ChevronRight size={22} color={colors.background} />
-        </TouchableOpacity>
 
         <View style={styles.offlineNotice}>
             <Text style={styles.offlineTitle}><ShieldCheck size={18} color="#4CAF50" /> Mode Confidentialité Totale</Text>
@@ -796,32 +790,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
               <Text style={[styles.comingSoonBadgeText, { color: colors.gold }]}>Soon</Text>
             </View>
           </View>
-
-          {/* Feedback */}
-          <View style={styles.comingSoonFeedback}>
-            <View style={[styles.feedbackIconContainer, { backgroundColor: colors.warning + '20' }]}>
-              <Lightbulb size={20} color={colors.warning} strokeWidth={2} />
-            </View>
-            <Text style={[styles.comingSoonFeedbackText, { color: colors.textSecondary }]}>
-              Une idee ? Contacte-nous !
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.feedbackButton, { backgroundColor: colors.gold }]}
-            activeOpacity={0.8}
-            onPress={() => {
-              const email = 'feedback@yoroi-app.com';
-              const subject = encodeURIComponent('Feedback Yoroi');
-              const body = encodeURIComponent('Bonjour,\n\nVoici mon feedback/suggestion pour Yoroi :\n\n');
-              Linking.openURL(`mailto:${email}?subject=${subject}&body=${body}`);
-            }}
-          >
-            <Mail size={18} color={colors.background} strokeWidth={2.5} />
-            <Text style={[styles.feedbackButtonText, { color: colors.background }]}>
-              Envoyer un feedback
-            </Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
@@ -845,7 +813,7 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
           {showHiddenDemo && (
             <TouchableOpacity
               style={styles.hiddenDemoButton}
-              onPress={handleGenerateRealisticDemoData}
+              onPress={handleLoadScreenshotDemo}
               activeOpacity={0.8}
             >
               <Sparkles size={18} color="#F59E0B" strokeWidth={2.5} />
@@ -930,42 +898,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
           </Pressable>
         </Pressable>
       </Modal>
-
-      {/* Modal Style de Citations */}
-      <Modal visible={citationModalVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setCitationModalVisible(false)}>
-          <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Style de citations</Text>
-              <TouchableOpacity onPress={() => setCitationModalVisible(false)}>
-                <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
-              </TouchableOpacity>
-            </View>
-
-            {CITATION_STYLE_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[styles.optionButton, citationStyle === option.id && styles.optionButtonActive]}
-                onPress={async () => {
-                  setCitationStyle(option.id);
-                  await saveCitationStyleToStorage(option.id);
-                  await saveUserSettings({ citationStyle: option.id });
-                  setCitationModalVisible(false);
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.optionText, citationStyle === option.id && styles.optionTextActive]}>
-                    {option.icon} {option.label}
-                  </Text>
-                  <Text style={[styles.rowValue, { marginTop: 2 }]}>{option.description}</Text>
-                </View>
-                {citationStyle === option.id && <Check size={20} color={colors.gold} strokeWidth={2.5} />}
-              </TouchableOpacity>
-            ))}
-          </Pressable>
-        </Pressable>
-      </Modal>
-
 
       {/* Modal Réinitialisation */}
       <Modal visible={resetModalVisible} transparent animationType="fade">
@@ -2385,27 +2317,51 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  // Bouton démo visible
-  demoButton: {
+  // Screenshot Mode Buttons
+  screenshotButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
     padding: SPACING.lg,
     borderRadius: RADIUS.xl,
     gap: SPACING.md,
   },
-  demoButtonContent: {
+  screenshotButtonContent: {
     flex: 1,
   },
-  demoButtonTitle: {
+  screenshotButtonTitle: {
     fontSize: FONT_SIZE.lg,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  demoButtonSubtitle: {
+  screenshotButtonSubtitle: {
     fontSize: FONT_SIZE.sm,
     color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  // Backup/Restore Section
+  backupButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    gap: SPACING.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  backupButtonContent: {
+    flex: 1,
+  },
+  backupButtonTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  backupButtonSubtitle: {
+    fontSize: FONT_SIZE.sm,
+    color: 'rgba(255,255,255,0.85)',
     marginTop: 2,
   },
   // iCloud Sync Section
@@ -2867,37 +2823,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Mode Switcher Styles
-  modeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  modeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  modeIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeInfo: {
-    flex: 1,
-  },
-  modeLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  modeDescription: {
-    fontSize: 12,
-  },
+  // Sport Info
   sportInfo: {
     paddingHorizontal: 16,
     paddingBottom: 16,
@@ -2918,5 +2844,27 @@ const styles = StyleSheet.create({
   sportInfoValue: {
     fontSize: 15,
     fontWeight: '700',
+  },
+
+  // Confirm Button
+  confirmButton: {
+    paddingVertical: 14,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // Text Input
+  textInput: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

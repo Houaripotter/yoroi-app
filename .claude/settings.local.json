@@ -44,7 +44,22 @@
       "Bash(watchman watch-del-all:*)",
       "Bash(xargs:*)",
       "Bash(timeout 30 npx expo export:*)",
-      "Bash(npx expo:*)"
+      "Bash(npx expo:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(FAST_REFRESH=false npx expo start:*)",
+      "Bash(git branch:*)",
+      "Bash(ps:*)",
+      "Bash(rm:*)",
+      "Bash(node -c:*)",
+      "Bash(npm run check:*)",
+      "Bash(npx react-native-community/cli bundle:*)",
+      "Bash(npm ls:*)",
+      "Bash(pod update:*)",
+      "Bash(pod install:*)",
+      "Bash(killall:*)",
+      "Bash(npm start)",
+      "Bash(timeout 30 npx expo start:*)"
     ],
     "deny": [],
     "ask": []

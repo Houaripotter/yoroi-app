@@ -6,9 +6,12 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 
+import { scale, getGridColumns } from '@/constants/responsive';
+
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gap 12 = total 28
-const CARD_SIZE = (screenWidth - 28) / 2;
+// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
+const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
 
 interface HydrationLottieCardProps {
   currentMl?: number; // En millilitres maintenant
@@ -18,7 +21,7 @@ interface HydrationLottieCardProps {
 
 export const HydrationLottieCard: React.FC<HydrationLottieCardProps> = ({
   currentMl = 0,
-  goalMl = 2500,
+  goalMl,
   onAddMl
 }) => {
   const { colors } = useTheme();

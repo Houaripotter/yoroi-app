@@ -10,6 +10,7 @@ import {
   Easing,
   TextInput,
   Alert,
+  Switch,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,8 +27,14 @@ import {
   Plus,
   Minus,
   Settings,
+  Bell,
+  BellOff,
+  Sun,
+  CloudRain,
+  Moon as MoonIcon,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { notificationService } from '@/lib/notificationService';
 
 const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -49,6 +56,19 @@ export default function HydrationScreen() {
   const [editingGoal, setEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState('2.5');
   const [history, setHistory] = useState<DayData[]>([]);
+
+  // Notifications
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [morningTime, setMorningTime] = useState('09:00');
+  const [morningAmount, setMorningAmount] = useState('750');
+  const [morningEnabled, setMorningEnabled] = useState(true);
+  const [afternoonTime, setAfternoonTime] = useState('14:00');
+  const [afternoonAmount, setAfternoonAmount] = useState('750');
+  const [afternoonEnabled, setAfternoonEnabled] = useState(true);
+  const [eveningTime, setEveningTime] = useState('19:00');
+  const [eveningAmount, setEveningAmount] = useState('750');
+  const [eveningEnabled, setEveningEnabled] = useState(true);
 
   // Animations
   const waveAnim = useRef(new Animated.Value(0)).current;
@@ -109,6 +129,19 @@ export default function HydrationScreen() {
       if (historyStr) {
         setHistory(JSON.parse(historyStr));
       }
+
+      // Charger les paramètres de notifications
+      const notifSettings = notificationService.getSettings();
+      setNotificationsEnabled(notifSettings.hydration.enabled && notifSettings.hydration.useSlots);
+      setMorningTime(notifSettings.hydration.slots.morning.time);
+      setMorningAmount(notifSettings.hydration.slots.morning.amount.toString());
+      setMorningEnabled(notifSettings.hydration.slots.morning.enabled);
+      setAfternoonTime(notifSettings.hydration.slots.afternoon.time);
+      setAfternoonAmount(notifSettings.hydration.slots.afternoon.amount.toString());
+      setAfternoonEnabled(notifSettings.hydration.slots.afternoon.enabled);
+      setEveningTime(notifSettings.hydration.slots.evening.time);
+      setEveningAmount(notifSettings.hydration.slots.evening.amount.toString());
+      setEveningEnabled(notifSettings.hydration.slots.evening.enabled);
     } catch (error) {
       console.error('Erreur chargement hydratation:', error);
     }
@@ -146,6 +179,54 @@ export default function HydrationScreen() {
     const newAmount = Math.max(0, currentAmount + amountL);
     setCurrentAmount(newAmount);
     saveAmount(newAmount);
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const settings = notificationService.getSettings();
+    await notificationService.updateSettings({
+      hydration: {
+        ...settings.hydration,
+        enabled: value,
+        useSlots: true,
+      },
+    });
+
+    if (value) {
+      Alert.alert('✅ Activé', 'Tu recevras des rappels pour boire de l\'eau !');
+    }
+  };
+
+  const handleSaveNotificationSettings = async () => {
+    const settings = notificationService.getSettings();
+    await notificationService.updateSettings({
+      hydration: {
+        ...settings.hydration,
+        useSlots: true,
+        slots: {
+          morning: {
+            enabled: morningEnabled,
+            time: morningTime,
+            amount: parseInt(morningAmount, 10),
+          },
+          afternoon: {
+            enabled: afternoonEnabled,
+            time: afternoonTime,
+            amount: parseInt(afternoonAmount, 10),
+          },
+          evening: {
+            enabled: eveningEnabled,
+            time: eveningTime,
+            amount: parseInt(eveningAmount, 10),
+          },
+        },
+      },
+    });
+    setShowNotificationSettings(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('✅ Enregistré', 'Tes rappels ont été programmés !');
   };
 
   const percentage = Math.min((currentAmount / goal) * 100, 100);
@@ -286,7 +367,7 @@ export default function HydrationScreen() {
               <Target size={18} color="#F59E0B" />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Objectif quotidien</Text>
             </View>
-            
+
             <View style={styles.goalInputRow}>
               <TouchableOpacity
                 style={[styles.goalAdjust, { backgroundColor: colors.background }]}
@@ -329,6 +410,178 @@ export default function HydrationScreen() {
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Notifications personnalisées */}
+        <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={styles.notificationHeader}>
+            {notificationsEnabled ? <Bell size={18} color="#0EA5E9" /> : <BellOff size={18} color={colors.textMuted} />}
+            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>Rappels hydratation</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.border, true: '#0EA5E980' }}
+              thumbColor={notificationsEnabled ? '#0EA5E9' : colors.textMuted}
+            />
+          </View>
+
+          {notificationsEnabled && (
+            <>
+              <Text style={[styles.notificationSubtext, { color: colors.textMuted }]}>
+                Reçois des rappels pour boire de l'eau tout au long de la journée
+              </Text>
+
+              {!showNotificationSettings ? (
+                <TouchableOpacity
+                  style={[styles.notificationSettingsButton, { backgroundColor: colors.background }]}
+                  onPress={() => setShowNotificationSettings(true)}
+                >
+                  <Settings size={16} color="#0EA5E9" />
+                  <Text style={[styles.notificationSettingsText, { color: colors.textPrimary }]}>
+                    Configurer les rappels
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.notificationSlots}>
+                  {/* Matin */}
+                  <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
+                    <View style={styles.slotHeader}>
+                      <Sun size={16} color="#F59E0B" />
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Matin</Text>
+                      <Switch
+                        value={morningEnabled}
+                        onValueChange={setMorningEnabled}
+                        trackColor={{ false: colors.border, true: '#F59E0B80' }}
+                        thumbColor={morningEnabled ? '#F59E0B' : colors.textMuted}
+                      />
+                    </View>
+                    {morningEnabled && (
+                      <View style={styles.slotInputs}>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={morningTime}
+                            onChangeText={setMorningTime}
+                            placeholder="09:00"
+                            placeholderTextColor={colors.textMuted}
+                          />
+                        </View>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={morningAmount}
+                            onChangeText={setMorningAmount}
+                            placeholder="750"
+                            placeholderTextColor={colors.textMuted}
+                            keyboardType="number-pad"
+                          />
+                          <Text style={[styles.slotUnit, { color: colors.textMuted }]}>ml</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Après-midi */}
+                  <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
+                    <View style={styles.slotHeader}>
+                      <CloudRain size={16} color="#0EA5E9" />
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Après-midi</Text>
+                      <Switch
+                        value={afternoonEnabled}
+                        onValueChange={setAfternoonEnabled}
+                        trackColor={{ false: colors.border, true: '#0EA5E980' }}
+                        thumbColor={afternoonEnabled ? '#0EA5E9' : colors.textMuted}
+                      />
+                    </View>
+                    {afternoonEnabled && (
+                      <View style={styles.slotInputs}>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={afternoonTime}
+                            onChangeText={setAfternoonTime}
+                            placeholder="14:00"
+                            placeholderTextColor={colors.textMuted}
+                          />
+                        </View>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={afternoonAmount}
+                            onChangeText={setAfternoonAmount}
+                            placeholder="750"
+                            placeholderTextColor={colors.textMuted}
+                            keyboardType="number-pad"
+                          />
+                          <Text style={[styles.slotUnit, { color: colors.textMuted }]}>ml</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Soir */}
+                  <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
+                    <View style={styles.slotHeader}>
+                      <MoonIcon size={16} color="#8B5CF6" />
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Soir</Text>
+                      <Switch
+                        value={eveningEnabled}
+                        onValueChange={setEveningEnabled}
+                        trackColor={{ false: colors.border, true: '#8B5CF680' }}
+                        thumbColor={eveningEnabled ? '#8B5CF6' : colors.textMuted}
+                      />
+                    </View>
+                    {eveningEnabled && (
+                      <View style={styles.slotInputs}>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={eveningTime}
+                            onChangeText={setEveningTime}
+                            placeholder="19:00"
+                            placeholderTextColor={colors.textMuted}
+                          />
+                        </View>
+                        <View style={styles.slotInputGroup}>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <TextInput
+                            style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                            value={eveningAmount}
+                            onChangeText={setEveningAmount}
+                            placeholder="750"
+                            placeholderTextColor={colors.textMuted}
+                            keyboardType="number-pad"
+                          />
+                          <Text style={[styles.slotUnit, { color: colors.textMuted }]}>ml</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Boutons d'action */}
+                  <View style={styles.notificationActions}>
+                    <TouchableOpacity
+                      onPress={() => setShowNotificationSettings(false)}
+                      style={[styles.notificationCancelBtn, { borderColor: colors.border }]}
+                    >
+                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>Annuler</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleSaveNotificationSettings}
+                      style={[styles.notificationSaveBtn, { backgroundColor: '#0EA5E9' }]}
+                    >
+                      <Text style={styles.notificationSaveText}>Enregistrer</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+        </View>
 
         {/* Statistiques */}
         <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
@@ -650,5 +903,115 @@ const styles = StyleSheet.create({
   },
   dayLabelActive: {
     fontWeight: '900',
+  },
+
+  // Notifications
+  notificationCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  notificationTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  notificationSubtext: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 8,
+    lineHeight: 16,
+  },
+  notificationSettingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 12,
+  },
+  notificationSettingsText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  notificationSlots: {
+    marginTop: 16,
+    gap: 12,
+  },
+  slotCard: {
+    padding: 12,
+    borderRadius: 12,
+  },
+  slotHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  slotTitle: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  slotInputs: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  slotInputGroup: {
+    flex: 1,
+  },
+  slotLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  slotInput: {
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  slotUnit: {
+    position: 'absolute',
+    right: 10,
+    top: 22,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  notificationActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  notificationCancelBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  notificationCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  notificationSaveBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  notificationSaveText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

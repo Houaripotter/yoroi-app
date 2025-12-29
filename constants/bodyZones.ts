@@ -99,12 +99,12 @@ export const BODY_ZONES_BACK: BodyZone[] = [
 export type PainType = 'acute' | 'dull' | 'burning' | 'tingling' | 'stiffness' | 'cramping';
 
 export const PAIN_TYPES: { id: PainType; label: string; icon: string }[] = [
-  { id: 'acute', label: 'Aiguë', icon: '⚡' },
-  { id: 'dull', label: 'Sourde', icon: '〰️' },
-  { id: 'burning', label: 'Brûlure', icon: '🔥' },
-  { id: 'tingling', label: 'Picotement', icon: '✨' },
-  { id: 'stiffness', label: 'Raideur', icon: '🔒' },
-  { id: 'cramping', label: 'Crampe', icon: '💢' },
+  { id: 'acute', label: 'Aiguë', icon: 'Zap' },
+  { id: 'dull', label: 'Sourde', icon: 'Waves' },
+  { id: 'burning', label: 'Brûlure', icon: 'Flame' },
+  { id: 'tingling', label: 'Picotement', icon: 'Sparkles' },
+  { id: 'stiffness', label: 'Raideur', icon: 'Lock' },
+  { id: 'cramping', label: 'Crampe', icon: 'AlertCircle' },
 ];
 
 // ============================================
@@ -114,11 +114,11 @@ export const PAIN_TYPES: { id: PainType; label: string; icon: string }[] = [
 export type InjuryCause = 'training' | 'impact' | 'overuse' | 'bad_movement' | 'unknown';
 
 export const INJURY_CAUSES: { id: InjuryCause; label: string; icon: string }[] = [
-  { id: 'training', label: 'Entraînement', icon: '🥋' },
-  { id: 'impact', label: 'Choc/Impact', icon: '💥' },
-  { id: 'overuse', label: 'Surmenage', icon: '⚠️' },
-  { id: 'bad_movement', label: 'Faux mouvement', icon: '🔄' },
-  { id: 'unknown', label: 'Inconnue', icon: '❓' },
+  { id: 'training', label: 'Entraînement', icon: 'Dumbbell' },
+  { id: 'impact', label: 'Choc/Impact', icon: 'Swords' },
+  { id: 'overuse', label: 'Surmenage', icon: 'AlertTriangle' },
+  { id: 'bad_movement', label: 'Faux mouvement', icon: 'RotateCcw' },
+  { id: 'unknown', label: 'Inconnue', icon: 'HelpCircle' },
 ];
 
 // ============================================
@@ -138,16 +138,16 @@ export type TreatmentType =
   | 'custom';
 
 export const TREATMENT_TYPES: { id: TreatmentType; label: string; icon: string }[] = [
-  { id: 'rest', label: 'Repos', icon: '🛌' },
-  { id: 'ice', label: 'Glaçage', icon: '🧊' },
-  { id: 'heat', label: 'Chaleur', icon: '🔥' },
-  { id: 'compression', label: 'Compression', icon: '🩹' },
-  { id: 'elevation', label: 'Élévation', icon: '⬆️' },
-  { id: 'stretch', label: 'Étirements', icon: '🤸' },
-  { id: 'medication', label: 'Anti-inflammatoire', icon: '💊' },
-  { id: 'physio', label: 'Kiné', icon: '👨‍⚕️' },
-  { id: 'massage', label: 'Massage', icon: '💆' },
-  { id: 'custom', label: 'Personnalisé', icon: '✏️' },
+  { id: 'rest', label: 'Repos', icon: 'Bed' },
+  { id: 'ice', label: 'Glaçage', icon: 'Snowflake' },
+  { id: 'heat', label: 'Chaleur', icon: 'Flame' },
+  { id: 'compression', label: 'Compression', icon: 'CircleDot' },
+  { id: 'elevation', label: 'Élévation', icon: 'ArrowUp' },
+  { id: 'stretch', label: 'Étirements', icon: 'Move' },
+  { id: 'medication', label: 'Anti-inflammatoire', icon: 'Pill' },
+  { id: 'physio', label: 'Kiné', icon: 'Stethoscope' },
+  { id: 'massage', label: 'Massage', icon: 'Hand' },
+  { id: 'custom', label: 'Personnalisé', icon: 'Edit3' },
 ];
 
 // ============================================

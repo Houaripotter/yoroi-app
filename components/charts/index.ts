@@ -16,3 +16,8 @@ export { WeightEvolutionCard } from './WeightEvolutionCard';
 export { CompositionCard } from './CompositionCard';
 
 export { HydrationCard } from './HydrationCard';
+
+// Modern Charts
+export { SmoothLineChart } from './SmoothLineChart';
+export { SparklineChart } from './SparklineChart';
+export { BarChartPremium } from './BarChartPremium';

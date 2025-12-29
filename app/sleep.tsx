@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Dimensions,
+  Switch,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +24,8 @@ import {
   Battery,
   Target,
   CheckCircle2,
+  Bell,
+  BellOff,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
@@ -40,6 +43,7 @@ import {
   SleepEntry,
   SleepStats,
 } from '@/lib/sleepService';
+import { notificationService, NotificationSettings } from '@/lib/notificationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -58,6 +62,11 @@ export default function SleepScreen() {
   const [quality, setQuality] = useState(3);
   const [notes, setNotes] = useState('');
 
+  // Notifications
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [bedtimeReminder, setBedtimeReminder] = useState('22:30');
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       const [entriesData, statsData, goalData] = await Promise.all([
@@ -68,6 +77,11 @@ export default function SleepScreen() {
       setEntries(entriesData);
       setStats(statsData);
       setGoal(goalData);
+
+      // Charger les paramètres de notifications
+      const notifSettings = notificationService.getSettings();
+      setNotificationsEnabled(notifSettings.sleep.enabled);
+      setBedtimeReminder(notifSettings.sleep.bedtimeReminder);
     } catch (error) {
       console.error('Erreur:', error);
     }
@@ -96,6 +110,36 @@ export default function SleepScreen() {
     setGoal(newGoal);
     await setSleepGoal(newGoal);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const settings = notificationService.getSettings();
+    await notificationService.updateSettings({
+      sleep: {
+        ...settings.sleep,
+        enabled: value,
+      },
+    });
+
+    if (value) {
+      Alert.alert('✅ Activé', 'Tu recevras un rappel pour aller dormir !');
+    }
+  };
+
+  const handleSaveBedtimeReminder = async () => {
+    const settings = notificationService.getSettings();
+    await notificationService.updateSettings({
+      sleep: {
+        ...settings.sleep,
+        bedtimeReminder,
+      },
+    });
+    setShowNotificationSettings(false);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('✅ Enregistré', `Rappel programmé à ${bedtimeReminder}`);
   };
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
@@ -168,6 +212,82 @@ export default function SleepScreen() {
             <TouchableOpacity onPress={() => handleGoalChange(30)} style={[styles.goalBtn, { backgroundColor: colors.accent }]}>
               <Text style={styles.goalBtnTextLight}>+30min</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Notifications */}
+        <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={styles.notificationHeader}>
+            {notificationsEnabled ? <Bell size={18} color="#8B5CF6" /> : <BellOff size={18} color={colors.textMuted} />}
+            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>Rappel coucher</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.border, true: '#8B5CF680' }}
+              thumbColor={notificationsEnabled ? '#8B5CF6' : colors.textMuted}
+            />
+          </View>
+
+          {notificationsEnabled && (
+            <>
+              <Text style={[styles.notificationSubtext, { color: colors.textMuted }]}>
+                Reçois un rappel pour aller dormir et atteindre ton objectif
+              </Text>
+
+              {!showNotificationSettings ? (
+                <TouchableOpacity
+                  style={[styles.notificationTimeButton, { backgroundColor: colors.background }]}
+                  onPress={() => setShowNotificationSettings(true)}
+                >
+                  <Clock size={16} color="#8B5CF6" />
+                  <Text style={[styles.notificationTimeText, { color: colors.textPrimary }]}>
+                    Rappel à {bedtimeReminder}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.notificationTimeEditor}>
+                  <Text style={[styles.notificationLabel, { color: colors.textMuted }]}>Heure du rappel</Text>
+                  <TextInput
+                    style={[styles.notificationTimeInput, { color: colors.textPrimary, borderColor: colors.border }]}
+                    value={bedtimeReminder}
+                    onChangeText={setBedtimeReminder}
+                    placeholder="22:30"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="numbers-and-punctuation"
+                  />
+                  <View style={styles.notificationActions}>
+                    <TouchableOpacity
+                      onPress={() => setShowNotificationSettings(false)}
+                      style={[styles.notificationCancelBtn, { borderColor: colors.border }]}
+                    >
+                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>Annuler</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleSaveBedtimeReminder}
+                      style={[styles.notificationSaveBtn, { backgroundColor: '#8B5CF6' }]}
+                    >
+                      <Text style={styles.notificationSaveText}>Enregistrer</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Protocole Sommeil */}
+        <View style={[styles.protocolCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF620', borderWidth: 1 }]}>
+          <View style={styles.protocolHeader}>
+            <CheckCircle2 size={18} color="#8B5CF6" />
+            <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>Protocole Sommeil</Text>
+          </View>
+          <Text style={[styles.protocolText, { color: colors.textSecondary }]}>
+            💤 Avant de dormir, pense à faire ton check-up :
+          </Text>
+          <View style={styles.protocolList}>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Enregistrer ta nuit (heure coucher/réveil)</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Noter la qualité de ton sommeil</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Ajouter des notes si besoin</Text>
           </View>
         </View>
 
@@ -311,5 +431,29 @@ const styles = StyleSheet.create({
   entryDate: { fontSize: 11, fontWeight: '500', textTransform: 'capitalize' },
   entryDuration: { fontSize: 18, fontWeight: '800', marginTop: 2 },
   entryStars: { flexDirection: 'row', gap: 2 },
+
+  // Notifications
+  notificationCard: { padding: 16, borderRadius: 14, marginBottom: 12 },
+  notificationHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  notificationTitle: { flex: 1, fontSize: 14, fontWeight: '700' },
+  notificationSubtext: { fontSize: 11, fontWeight: '500', marginTop: 8, lineHeight: 16 },
+  notificationTimeButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 10, marginTop: 12 },
+  notificationTimeText: { fontSize: 14, fontWeight: '700' },
+  notificationTimeEditor: { marginTop: 16 },
+  notificationLabel: { fontSize: 10, fontWeight: '600', textAlign: 'center', marginBottom: 8 },
+  notificationTimeInput: { padding: 12, borderRadius: 10, borderWidth: 1, textAlign: 'center', fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  notificationActions: { flexDirection: 'row', gap: 10 },
+  notificationCancelBtn: { flex: 1, padding: 12, borderRadius: 10, borderWidth: 1, alignItems: 'center' },
+  notificationCancelText: { fontSize: 14, fontWeight: '600' },
+  notificationSaveBtn: { flex: 1, padding: 12, borderRadius: 10, alignItems: 'center' },
+  notificationSaveText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+
+  // Protocole
+  protocolCard: { padding: 16, borderRadius: 14, marginBottom: 12 },
+  protocolHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  protocolTitle: { fontSize: 14, fontWeight: '700' },
+  protocolText: { fontSize: 13, fontWeight: '600', marginBottom: 10 },
+  protocolList: { gap: 6 },
+  protocolItem: { fontSize: 12, lineHeight: 18 },
 });
 

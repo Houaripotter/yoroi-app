@@ -30,6 +30,10 @@ export interface SleepStats {
   lastNightQuality: number;
   trend: 'improving' | 'stable' | 'declining';
   weeklyData: { date: string; duration: number; quality: number }[];
+  currentStreak: number; // Jours consécutifs avec objectif atteint
+  longestStreak: number; // Plus longue série
+  goalReachedDays: number; // Nombre de jours où l'objectif a été atteint (derniers 30 jours)
+  totalDays: number; // Nombre total de jours avec données (derniers 30 jours)
 }
 
 // ============================================
@@ -39,9 +43,10 @@ export interface SleepStats {
 const STORAGE_KEYS = {
   SLEEP_ENTRIES: '@yoroi_sleep_entries',
   SLEEP_GOAL: '@yoroi_sleep_goal', // Objectif en minutes (défaut: 480 = 8h)
+  LONGEST_STREAK: '@yoroi_sleep_longest_streak',
 };
 
-const DEFAULT_SLEEP_GOAL = 480; // 8 heures en minutes
+const DEFAULT_SLEEP_GOAL = 0; // Pas d'objectif par défaut - l'utilisateur doit le définir
 
 // ============================================
 // FONCTIONS
@@ -147,13 +152,74 @@ export const getTodaySleep = async (): Promise<SleepEntry | null> => {
 };
 
 /**
+ * Calcule le streak actuel (jours consécutifs avec objectif atteint)
+ */
+const calculateCurrentStreak = (entries: SleepEntry[], goal: number): number => {
+  if (entries.length === 0 || goal === 0) return 0;
+
+  let streak = 0;
+  const today = new Date();
+
+  // Parcourir les jours depuis aujourd'hui vers le passé
+  for (let i = 0; i < 365; i++) {
+    const date = format(subDays(today, i), 'yyyy-MM-dd');
+    const entry = entries.find(e => e.date === date);
+
+    if (!entry) {
+      // Pas de données = casse le streak
+      break;
+    }
+
+    if (entry.duration >= goal) {
+      streak++;
+    } else {
+      // Objectif non atteint = casse le streak
+      break;
+    }
+  }
+
+  return streak;
+};
+
+/**
+ * Calcule le plus long streak de tous les temps
+ */
+const calculateLongestStreak = async (entries: SleepEntry[], goal: number): Promise<number> => {
+  if (entries.length === 0 || goal === 0) return 0;
+
+  // Récupérer le record sauvegardé
+  const savedRecord = await AsyncStorage.getItem(STORAGE_KEYS.LONGEST_STREAK);
+  let longestStreak = savedRecord ? parseInt(savedRecord, 10) : 0;
+
+  // Calculer les streaks à partir des données
+  let currentTestStreak = 0;
+  const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+
+  for (let i = 0; i < sortedEntries.length; i++) {
+    const entry = sortedEntries[i];
+
+    if (entry.duration >= goal) {
+      currentTestStreak++;
+      longestStreak = Math.max(longestStreak, currentTestStreak);
+    } else {
+      currentTestStreak = 0;
+    }
+  }
+
+  // Sauvegarder le nouveau record si nécessaire
+  await AsyncStorage.setItem(STORAGE_KEYS.LONGEST_STREAK, longestStreak.toString());
+
+  return longestStreak;
+};
+
+/**
  * Calcule les statistiques de sommeil
  */
 export const getSleepStats = async (): Promise<SleepStats> => {
   try {
     const entries = await getSleepEntries();
     const goal = await getSleepGoal();
-    
+
     // Derniers 7 jours
     const last7Days: SleepEntry[] = [];
     for (let i = 0; i < 7; i++) {
@@ -163,44 +229,63 @@ export const getSleepStats = async (): Promise<SleepStats> => {
         last7Days.push(entry);
       }
     }
-    
+
+    // Derniers 30 jours pour les statistiques de streak
+    const last30Days: SleepEntry[] = [];
+    let goalReachedDays = 0;
+    for (let i = 0; i < 30; i++) {
+      const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+      const entry = entries.find(e => e.date === date);
+      if (entry) {
+        last30Days.push(entry);
+        if (entry.duration >= goal && goal > 0) {
+          goalReachedDays++;
+        }
+      }
+    }
+
     // Moyennes
     const avgDuration = last7Days.length > 0
       ? last7Days.reduce((sum, e) => sum + e.duration, 0) / last7Days.length
       : 0;
-    
+
     const avgQuality = last7Days.length > 0
       ? last7Days.reduce((sum, e) => sum + e.quality, 0) / last7Days.length
       : 0;
-    
+
     // Dette de sommeil (7 derniers jours)
     let sleepDebt = 0;
     for (let i = 0; i < 7; i++) {
       const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
       const entry = entries.find(e => e.date === date);
-      const slept = entry?.duration || 0;
-      sleepDebt += Math.max(0, goal - slept);
+      if (entry && goal > 0) {
+        sleepDebt += Math.max(0, goal - entry.duration);
+      }
     }
-    
-    // Tendance (comparer 3 derniers jours vs 3 précédents)
+
+    // Tendance
     const recent3 = last7Days.slice(0, 3);
     const prev3 = last7Days.slice(3, 6);
     const recentAvg = recent3.length > 0 ? recent3.reduce((s, e) => s + e.duration, 0) / recent3.length : 0;
     const prevAvg = prev3.length > 0 ? prev3.reduce((s, e) => s + e.duration, 0) / prev3.length : 0;
-    
+
     let trend: 'improving' | 'stable' | 'declining' = 'stable';
     if (recentAvg > prevAvg + 15) trend = 'improving';
     else if (recentAvg < prevAvg - 15) trend = 'declining';
-    
-    // Données hebdomadaires pour graphique
+
+    // Données hebdomadaires
     const weeklyData = last7Days.map(e => ({
       date: e.date,
       duration: e.duration,
       quality: e.quality,
     })).reverse();
-    
+
     const lastNight = last7Days[0];
-    
+
+    // Calcul des streaks
+    const currentStreak = calculateCurrentStreak(entries, goal);
+    const longestStreak = await calculateLongestStreak(entries, goal);
+
     return {
       averageDuration: Math.round(avgDuration),
       averageQuality: Math.round(avgQuality * 10) / 10,
@@ -210,6 +295,10 @@ export const getSleepStats = async (): Promise<SleepStats> => {
       lastNightQuality: lastNight?.quality || 0,
       trend,
       weeklyData,
+      currentStreak,
+      longestStreak,
+      goalReachedDays,
+      totalDays: last30Days.length,
     };
   } catch (error) {
     console.error('Erreur stats sommeil:', error);
@@ -222,6 +311,10 @@ export const getSleepStats = async (): Promise<SleepStats> => {
       lastNightQuality: 0,
       trend: 'stable',
       weeklyData: [],
+      currentStreak: 0,
+      longestStreak: 0,
+      goalReachedDays: 0,
+      totalDays: 0,
     };
   }
 };
@@ -263,6 +356,72 @@ export const getSleepAdvice = (debtHours: number): { message: string; severity: 
   }
 };
 
+/**
+ * Exporte les données de sommeil en CSV
+ */
+export const exportSleepToCSV = async (): Promise<string> => {
+  try {
+    const entries = await getSleepEntries();
+
+    // En-tête CSV
+    let csv = 'Date,Heure Coucher,Heure Réveil,Durée (heures),Qualité (1-5),Notes\n';
+
+    // Ajouter chaque entrée (du plus récent au plus ancien)
+    const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+
+    for (const entry of sortedEntries) {
+      const durationHours = (entry.duration / 60).toFixed(1);
+      const notes = (entry.notes || '').replace(/,/g, ';').replace(/\n/g, ' '); // Échapper les virgules et retours à la ligne
+
+      csv += `${entry.date},${entry.bedTime},${entry.wakeTime},${durationHours},${entry.quality},"${notes}"\n`;
+    }
+
+    return csv;
+  } catch (error) {
+    console.error('Erreur export CSV sommeil:', error);
+    throw error;
+  }
+};
+
+/**
+ * Génère un texte de partage avec les statistiques de sommeil
+ */
+export const generateSleepShareText = async (): Promise<string> => {
+  try {
+    const stats = await getSleepStats();
+    const goal = await getSleepGoal();
+
+    let text = '📊 Mes Stats Sommeil - YOROI\n\n';
+
+    if (stats.currentStreak > 0) {
+      text += `🔥 Streak actuel : ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}\n`;
+    }
+    if (stats.longestStreak > 0) {
+      text += `🏆 Record : ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}\n`;
+    }
+
+    text += `\n⏱️ Moyenne : ${formatSleepDuration(stats.averageDuration)}\n`;
+    text += `⭐ Qualité : ${stats.averageQuality}/5\n`;
+
+    if (goal > 0) {
+      text += `🎯 Objectif : ${formatSleepDuration(goal)}\n`;
+      const successRate = stats.totalDays > 0 ? Math.round((stats.goalReachedDays / stats.totalDays) * 100) : 0;
+      text += `✅ Réussite : ${successRate}% (${stats.goalReachedDays}/${stats.totalDays} jours)\n`;
+    }
+
+    if (stats.sleepDebtHours > 0) {
+      text += `\n⚠️ Dette : ${stats.sleepDebtHours}h\n`;
+    }
+
+    text += '\n💪 Généré avec YOROI';
+
+    return text;
+  } catch (error) {
+    console.error('Erreur génération texte partage:', error);
+    throw error;
+  }
+};
+
 export default {
   getSleepGoal,
   setSleepGoal,
@@ -272,5 +431,7 @@ export default {
   getSleepStats,
   formatSleepDuration,
   getSleepAdvice,
+  exportSleepToCSV,
+  generateSleepShareText,
 };
 

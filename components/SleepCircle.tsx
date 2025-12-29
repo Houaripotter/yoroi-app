@@ -12,7 +12,7 @@ interface SleepCircleProps {
 
 export const SleepCircle: React.FC<SleepCircleProps> = ({
   duration,
-  goal = 480,
+  goal,
   debtHours,
   size = 80,
 }) => {

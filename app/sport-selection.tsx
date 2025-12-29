@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ChevronRight, ChevronLeft } from 'lucide-react-native';
+import { ChevronRight, ChevronLeft, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Sport, SPORT_LABELS, SPORT_ICONS } from '@/lib/fighterMode';
 import { setUserSport } from '@/lib/fighterModeService';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import { sportHasWeightCategories } from '@/lib/weightCategories';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SPORTS: { id: Sport; label: string; icon: string; description: string }[] = [
   {
@@ -82,8 +84,25 @@ export default function SportSelectionScreen() {
 
     try {
       await setUserSport(selectedSport);
-      // Continuer vers setup normal
-      router.replace('/setup');
+
+      // Si le sport a des catégories de poids officielles, demander la catégorie
+      if (sportHasWeightCategories(selectedSport)) {
+        // Charger le genre et poids actuel pour suggérer une catégorie
+        const gender = (await AsyncStorage.getItem('@yoroi_gender')) as 'male' | 'female' || 'male';
+        const currentWeight = await AsyncStorage.getItem('@yoroi_current_weight');
+
+        router.replace({
+          pathname: '/weight-category-selection',
+          params: {
+            sport: selectedSport,
+            gender,
+            currentWeight: currentWeight || '',
+          },
+        });
+      } else {
+        // Sports sans catégories → setup direct
+        router.replace('/setup');
+      }
     } catch (error) {
       console.error('Error saving sport:', error);
       setIsLoading(false);
@@ -178,10 +197,13 @@ export default function SportSelectionScreen() {
 
         {/* Info */}
         <View style={[styles.infoBox, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            💡 Cette information permet de configurer les catégories de poids et
-            les statistiques adaptées à ton sport
-          </Text>
+          <View style={styles.infoContent}>
+            <Lightbulb size={16} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.infoText, { color: colors.textMuted }]}>
+              Cette information permet de configurer les catégories de poids et
+              les statistiques adaptées à ton sport
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -299,10 +321,17 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginTop: SPACING.md,
   },
+  infoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    justifyContent: 'center',
+  },
   infoText: {
     fontSize: 13,
-    textAlign: 'center',
     lineHeight: 18,
+    flex: 1,
+    textAlign: 'center',
   },
   bottomContainer: {
     padding: SPACING.lg,

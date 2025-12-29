@@ -3,10 +3,17 @@ import { addMeasurement, deleteAllMeasurements } from './storage';
 
 /**
  * Génère des données fictives pour 6 mois (180 jours)
- * avec un scénario réaliste de transformation : 100kg → 86kg
- * 3 phases : Rapide baisse (mois 1-2), Plateau (mois 3-4), Baisse régulière (mois 5-6)
+ * FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
+ * Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots
  */
 export async function generateMockMeasurements(): Promise<void> {
+  console.log('⚔️ Fonction generateMockMeasurements désactivée - Aucune donnée fictive insérée');
+  console.log('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
+  // FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
+  return;
+
+  // Code désactivé ci-dessous
+  /*
   // Clear existing data first
   await deleteAllMeasurements();
 
@@ -144,6 +151,7 @@ export async function generateMockMeasurements(): Promise<void> {
       console.error(`❌ Erreur lors de l'ajout de la mesure ${measurement.date}:`, error);
     }
   }
-  
+
   console.log('✅ Toutes les mesures fictives (6 mois) ont été ajoutées !');
+  */
 }

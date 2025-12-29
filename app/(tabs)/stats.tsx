@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StatusBar,
   Animated,
   Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import {
@@ -17,13 +19,11 @@ import {
   Dumbbell,
   Heart,
   Activity,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTrainings, getWeights, getCompositionHistory, type Weight, type Training } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
-import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import { SPACING, RADIUS } from '@/constants/design';
 import { WeightStats } from '@/components/stats/WeightStats';
 import { CompositionStats } from '@/components/stats/CompositionStats';
 import { MeasurementsStats } from '@/components/stats/MeasurementsStats';
@@ -32,10 +32,10 @@ import { VitalityStats } from '@/components/stats/VitalityStats';
 import { PerformanceStats } from '@/components/stats/PerformanceStats';
 import * as Haptics from 'expo-haptics';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
-// STATS SCREEN - 6 ONGLETS (Design moderne)
+// STATS SCREEN - 6 ONGLETS SWIPEABLE
 // ============================================
 
 type TabType = 'poids' | 'compo' | 'mesures' | 'discipline' | 'vitalite' | 'performance';
@@ -47,8 +47,13 @@ export default function StatsScreen() {
   const [weights, setWeights] = useState<Weight[]>([]);
   const [compositionHistory, setCompositionHistory] = useState<Weight[]>([]);
   const [trainings, setTrainings] = useState<Training[]>([]);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const indicatorAnim = useRef(new Animated.Value(0)).current;
+
+  // Refs pour le scroll
+  const horizontalScrollRef = useRef<ScrollView>(null);
+  const tabScrollViewRef = useRef<ScrollView>(null);
+  const indicatorAnim = useRef(new Animated.Value(0)).current; // Start at index 0 (discipline)
+  const isScrollingRef = useRef(false);
+  const hasInitializedScroll = useRef(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -86,10 +91,19 @@ export default function StatsScreen() {
 
   const activeIndex = tabs.findIndex(t => t.key === activeTab);
 
+  // Gérer le clic sur un onglet
   const handleTabPress = (tab: TabType, index: number) => {
+    if (isScrollingRef.current) return;
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tab);
-    
+
+    // Scroller vers la page correspondante
+    horizontalScrollRef.current?.scrollTo({
+      x: index * SCREEN_WIDTH,
+      animated: true,
+    });
+
     // Animer l'indicateur
     Animated.spring(indicatorAnim, {
       toValue: index,
@@ -97,6 +111,34 @@ export default function StatsScreen() {
       damping: 15,
       stiffness: 200,
     }).start();
+  };
+
+  // Gérer le scroll horizontal des pages
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const currentIndex = Math.round(offsetX / SCREEN_WIDTH);
+
+    if (currentIndex >= 0 && currentIndex < tabs.length) {
+      const newTab = tabs[currentIndex].key;
+      if (newTab !== activeTab) {
+        isScrollingRef.current = true;
+        setActiveTab(newTab);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Animer l'indicateur
+        Animated.spring(indicatorAnim, {
+          toValue: currentIndex,
+          useNativeDriver: true,
+          damping: 15,
+          stiffness: 200,
+        }).start();
+
+        // Reset le flag après un délai
+        setTimeout(() => {
+          isScrollingRef.current = false;
+        }, 100);
+      }
+    }
   };
 
   const TAB_WIDTH = 56;
@@ -112,14 +154,14 @@ export default function StatsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Statistiques</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Ton évolution</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Swipe pour naviguer</Text>
       </View>
 
       {/* Modern Tab Bar - Icônes rondes */}
       <View style={styles.tabBarWrapper}>
-        <ScrollView 
-          ref={scrollViewRef}
-          horizontal 
+        <ScrollView
+          ref={tabScrollViewRef}
+          horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tabBarContent}
         >
@@ -135,7 +177,7 @@ export default function StatsScreen() {
               >
                 <View style={[
                   styles.tabIconCircle,
-                  { 
+                  {
                     backgroundColor: isActive ? tab.color : colors.backgroundCard,
                     borderColor: isActive ? tab.color : colors.border,
                   }
@@ -143,7 +185,7 @@ export default function StatsScreen() {
                   <Icon size={20} color={isActive ? '#FFF' : colors.textMuted} />
                 </View>
                 <Text style={[
-                  styles.tabLabel, 
+                  styles.tabLabel,
                   { color: isActive ? tab.color : colors.textMuted },
                   isActive && styles.tabLabelActive
                 ]}>
@@ -174,54 +216,89 @@ export default function StatsScreen() {
         </View>
       </View>
 
+      {/* ScrollView horizontal avec pagination */}
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        ref={horizontalScrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={styles.horizontalScroll}
+        bounces={false}
+        decelerationRate="fast"
       >
-        {/* ============================================ */}
-        {/* ONGLET POIDS */}
-        {/* ============================================ */}
-        {activeTab === 'poids' && (
-          <WeightStats data={weights} />
-        )}
+        {/* Page Discipline */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <ActivityStats data={trainings} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-        {/* ============================================ */}
-        {/* ONGLET COMPOSITION */}
-        {/* ============================================ */}
-        {activeTab === 'compo' && (
-          <CompositionStats data={compositionHistory} />
-        )}
+        {/* Page Poids */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <WeightStats data={weights} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-        {/* ============================================ */}
-        {/* ONGLET MESURES */}
-        {/* ============================================ */}
-        {activeTab === 'mesures' && (
-          <MeasurementsStats data={[]} />
-        )}
+        {/* Page Compo */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <CompositionStats data={compositionHistory} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-        {/* ============================================ */}
-        {/* ONGLET DISCIPLINE */}
-        {/* ============================================ */}
-        {activeTab === 'discipline' && (
-          <ActivityStats data={trainings} />
-        )}
+        {/* Page Mesures */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <MeasurementsStats data={[]} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-        {/* ============================================ */}
-        {/* ONGLET VITALITÉ */}
-        {/* ============================================ */}
-        {activeTab === 'vitalite' && (
-          <VitalityStats trainings={trainings} />
-        )}
+        {/* Page Vitalité */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <VitalityStats trainings={trainings} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
 
-        {/* ============================================ */}
-        {/* ONGLET PERFORMANCE */}
-        {/* ============================================ */}
-        {activeTab === 'performance' && (
-          <PerformanceStats trainings={trainings} />
-        )}
-
-        <View style={{ height: 120 }} />
+        {/* Page Performance */}
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <PerformanceStats trainings={trainings} />
+            <View style={{ height: 120 }} />
+          </ScrollView>
+        </View>
       </ScrollView>
     </View>
   );
@@ -232,35 +309,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: SPACING.xl,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 12,
+    marginTop: 2,
   },
 
   // Modern Tab Bar
   tabBarWrapper: {
-    paddingVertical: SPACING.md,
+    paddingVertical: 6,
     alignItems: 'center',
+    height: 80, // Hauteur fixe pour éviter l'espace géant
   },
   tabBarContent: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
     gap: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabItemWrapper: {
     alignItems: 'center',
-    width: 56,
+    width: 54,
   },
   tabIconCircle: {
     width: 48,
@@ -269,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    marginBottom: 6,
+    marginBottom: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -277,7 +355,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tabLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600',
     textAlign: 'center',
     width: '100%',
@@ -289,19 +367,27 @@ const styles = StyleSheet.create({
   // Indicateur dots
   activeIndicatorRow: {
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: 6,
   },
   activeIndicatorBg: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
     borderRadius: RADIUS.full,
-    gap: 8,
+    gap: 6,
   },
   indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  // Horizontal scroll
+  horizontalScroll: {
+    flex: 1,
+  },
+  page: {
+    width: SCREEN_WIDTH,
   },
 
   // Content
@@ -309,7 +395,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
+    // Pas de paddingHorizontal ici car les composants Stats gèrent leur propre padding
   },
 });

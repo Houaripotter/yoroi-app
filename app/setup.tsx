@@ -18,6 +18,8 @@ import {
   Minus,
   Check,
   ChevronRight,
+  UserCircle2,
+  Users,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { saveUserSettings } from '@/lib/storage';
@@ -28,15 +30,20 @@ type Goal = 'lose' | 'maintain' | 'gain';
 export default function SetupScreen() {
   const { colors } = useTheme();
 
-  const [step, setStep] = useState<'name' | 'gender' | 'goal'>('name');
+  const [step, setStep] = useState<'name' | 'gender' | 'gender_health' | 'goal'>('name');
   const [name, setName] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | null>(null);
+  const [selectedOther, setSelectedOther] = useState(false);
   const [goal, setGoal] = useState<Goal | null>(null);
 
   const handleNext = () => {
     if (step === 'name' && name.trim()) {
       setStep('gender');
+    } else if (step === 'gender' && selectedOther) {
+      setStep('gender_health');
     } else if (step === 'gender' && gender) {
+      setStep('goal');
+    } else if (step === 'gender_health' && gender) {
       setStep('goal');
     } else if (step === 'goal' && goal) {
       handleComplete();
@@ -65,7 +72,8 @@ export default function SetupScreen() {
 
   const canContinue = () => {
     if (step === 'name') return name.trim().length > 0;
-    if (step === 'gender') return gender !== null;
+    if (step === 'gender') return gender !== null || selectedOther;
+    if (step === 'gender_health') return gender !== null;
     if (step === 'goal') return goal !== null;
     return false;
   };
@@ -116,14 +124,135 @@ export default function SetupScreen() {
         {step === 'gender' && (
           <View style={styles.stepContainer}>
             <Text style={[styles.greeting, { color: colors.textMuted }]}>
-              Enchanté {name} ! 👋
+              Enchanté {name} !
             </Text>
 
             <Text style={[styles.question, { color: colors.textPrimary }]}>
               Tu es ?
             </Text>
 
-            <View style={styles.optionsRow}>
+            <View style={styles.optionsColumn}>
+              <TouchableOpacity
+                style={[
+                  styles.genderOption,
+                  { backgroundColor: colors.backgroundElevated },
+                  gender === 'male' && !selectedOther && {
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                  },
+                ]}
+                onPress={() => {
+                  setGender('male');
+                  setSelectedOther(false);
+                }}
+              >
+                <View style={styles.genderIconContainer}>
+                  <User
+                    size={32}
+                    color={gender === 'male' && !selectedOther ? '#FFF' : colors.accent}
+                    strokeWidth={2.5}
+                  />
+                </View>
+                <Text style={[
+                  styles.genderText,
+                  { color: gender === 'male' && !selectedOther ? '#FFF' : colors.textPrimary },
+                ]}>
+                  Homme
+                </Text>
+                {gender === 'male' && !selectedOther && (
+                  <View style={styles.checkIcon}>
+                    <Check size={16} color="#FFF" />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.genderOption,
+                  { backgroundColor: colors.backgroundElevated },
+                  gender === 'female' && !selectedOther && {
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                  },
+                ]}
+                onPress={() => {
+                  setGender('female');
+                  setSelectedOther(false);
+                }}
+              >
+                <View style={styles.genderIconContainer}>
+                  <UserCircle2
+                    size={32}
+                    color={gender === 'female' && !selectedOther ? '#FFF' : colors.accent}
+                    strokeWidth={2.5}
+                  />
+                </View>
+                <Text style={[
+                  styles.genderText,
+                  { color: gender === 'female' && !selectedOther ? '#FFF' : colors.textPrimary },
+                ]}>
+                  Femme
+                </Text>
+                {gender === 'female' && !selectedOther && (
+                  <View style={styles.checkIcon}>
+                    <Check size={16} color="#FFF" />
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.genderOption,
+                  { backgroundColor: colors.backgroundElevated },
+                  selectedOther && {
+                    backgroundColor: colors.accent,
+                    borderColor: colors.accent,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedOther(true);
+                  setGender(null);
+                }}
+              >
+                <View style={styles.genderIconContainer}>
+                  <Users
+                    size={32}
+                    color={selectedOther ? '#FFF' : colors.accent}
+                    strokeWidth={2.5}
+                  />
+                </View>
+                <Text style={[
+                  styles.genderText,
+                  { color: selectedOther ? '#FFF' : colors.textPrimary },
+                ]}>
+                  Autre
+                </Text>
+                {selectedOther && (
+                  <View style={styles.checkIcon}>
+                    <Check size={16} color="#FFF" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Étape 2.5 : Genre pour calculs de santé (si "Autre" sélectionné) */}
+        {step === 'gender_health' && (
+          <View style={styles.stepContainer}>
+            <Text style={[styles.greeting, { color: colors.textMuted }]}>
+              Merci {name} !
+            </Text>
+
+            <Text style={[styles.question, { color: colors.textPrimary }]}>
+              Pour les calculs de santé
+            </Text>
+
+            <Text style={[styles.hint, { color: colors.textMuted, textAlign: 'center', marginBottom: 20 }]}>
+              Choisis le profil physiologique le plus adapté pour le calcul de tes besoins caloriques et objectifs santé
+            </Text>
+
+            <View style={styles.optionsColumn}>
               <TouchableOpacity
                 style={[
                   styles.genderOption,
@@ -135,12 +264,18 @@ export default function SetupScreen() {
                 ]}
                 onPress={() => setGender('male')}
               >
-                <Text style={styles.genderEmoji}>👨</Text>
+                <View style={styles.genderIconContainer}>
+                  <User
+                    size={32}
+                    color={gender === 'male' ? '#FFF' : colors.accent}
+                    strokeWidth={2.5}
+                  />
+                </View>
                 <Text style={[
                   styles.genderText,
                   { color: gender === 'male' ? '#FFF' : colors.textPrimary },
                 ]}>
-                  Homme
+                  Profil Homme
                 </Text>
                 {gender === 'male' && (
                   <View style={styles.checkIcon}>
@@ -160,12 +295,18 @@ export default function SetupScreen() {
                 ]}
                 onPress={() => setGender('female')}
               >
-                <Text style={styles.genderEmoji}>👩</Text>
+                <View style={styles.genderIconContainer}>
+                  <UserCircle2
+                    size={32}
+                    color={gender === 'female' ? '#FFF' : colors.accent}
+                    strokeWidth={2.5}
+                  />
+                </View>
                 <Text style={[
                   styles.genderText,
                   { color: gender === 'female' ? '#FFF' : colors.textPrimary },
                 ]}>
-                  Femme
+                  Profil Femme
                 </Text>
                 {gender === 'female' && (
                   <View style={styles.checkIcon}>
@@ -379,6 +520,12 @@ const styles = StyleSheet.create({
     gap: 16,
     marginTop: 32,
   },
+  optionsColumn: {
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 32,
+    width: '100%',
+  },
   genderOption: {
     flex: 1,
     alignItems: 'center',
@@ -388,8 +535,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     position: 'relative',
   },
-  genderEmoji: {
-    fontSize: 48,
+  genderIconContainer: {
     marginBottom: 12,
   },
   genderText: {

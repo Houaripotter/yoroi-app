@@ -14,7 +14,22 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, AlertCircle, Save } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  AlertCircle,
+  Save,
+  Zap,
+  Waves,
+  Flame,
+  Sparkles,
+  Lock,
+  Dumbbell,
+  Swords,
+  AlertTriangle,
+  RotateCcw,
+  HelpCircle,
+  LucideIcon,
+} from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -33,6 +48,27 @@ import {
   getEVAEmoji,
 } from '@/lib/infirmaryService';
 import { updateInjury } from '@/lib/database';
+
+// Mapping des noms d'icônes vers les composants Lucide
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Zap,
+  Waves,
+  Flame,
+  Sparkles,
+  Lock,
+  AlertCircle,
+  Dumbbell,
+  Swords,
+  AlertTriangle,
+  RotateCcw,
+  HelpCircle,
+};
+
+const renderIcon = (iconName: string, color: string, size: number = 24) => {
+  const IconComponent = iconMap[iconName];
+  if (!IconComponent) return null;
+  return <IconComponent size={size} color={color} strokeWidth={2} />;
+};
 
 export default function InjuryEvaluationScreen() {
   const { colors } = useTheme();
@@ -253,7 +289,9 @@ export default function InjuryEvaluationScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.optionIcon}>{type.icon}</Text>
+                <View style={styles.optionIconContainer}>
+                  {renderIcon(type.icon, painType === type.id ? '#FFFFFF' : colors.textPrimary, 22)}
+                </View>
                 <Text
                   style={[
                     styles.optionLabel,
@@ -287,7 +325,9 @@ export default function InjuryEvaluationScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={styles.optionIcon}>{causeItem.icon}</Text>
+                <View style={styles.optionIconContainer}>
+                  {renderIcon(causeItem.icon, cause === causeItem.id ? '#FFFFFF' : colors.textPrimary, 22)}
+                </View>
                 <Text
                   style={[
                     styles.optionLabel,
@@ -531,8 +571,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     gap: SPACING.xs,
   },
-  optionIcon: {
-    fontSize: 18,
+  optionIconContainer: {
+    marginBottom: SPACING.xs,
   },
   optionLabel: {
     fontSize: 14,

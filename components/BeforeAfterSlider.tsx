@@ -51,37 +51,43 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
 }) => {
   const { colors } = useTheme();
   const viewShotRef = useRef<ViewShot>(null);
-  const sliderWidth = SCREEN_WIDTH - 40; // Padding de chaque côté
+  const sliderWidth = SCREEN_WIDTH - 40;
 
-  // Position du slider (0 = tout avant, 1 = tout après)
-  const sliderPosition = useRef(new Animated.Value(0.5)).current;
-  const [currentPosition, setCurrentPosition] = useState(0.5);
+  // STATE SIMPLE
+  const [sliderPosition, setSliderPosition] = useState(0.5);
+  const rafId = useRef<number | null>(null);
 
-  // PanResponder pour le glissement
+  // PanResponder avec requestAnimationFrame pour limiter les updates
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        // Petit feedback haptique au début du glissement
+
+      onPanResponderMove: (evt) => {
+        const touchX = evt.nativeEvent.locationX;
+        const position = Math.max(0, Math.min(1, touchX / sliderWidth));
+
+        // Annuler l'update précédent si pas encore exécuté
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
+        }
+
+        // Planifier l'update au prochain frame
+        rafId.current = requestAnimationFrame(() => {
+          setSliderPosition(position);
+        });
       },
-      onPanResponderMove: (_, gestureState) => {
-        // Calculer la nouvelle position basée sur le mouvement
-        const newPosition = Math.max(0.05, Math.min(0.95,
-          currentPosition + (gestureState.dx / sliderWidth)
-        ));
-        sliderPosition.setValue(newPosition);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        // Mettre à jour la position actuelle
-        const newPosition = Math.max(0.05, Math.min(0.95,
-          currentPosition + (gestureState.dx / sliderWidth)
-        ));
-        setCurrentPosition(newPosition);
-        sliderPosition.setValue(newPosition);
+
+      onPanResponderRelease: () => {
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
+        }
       },
     })
   ).current;
+
+  // Largeur directe - pas d'interpolation
+  const clipWidth = sliderPosition * sliderWidth;
 
   // Formater la date
   const formatDate = (dateString: string): string => {
@@ -95,6 +101,14 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       return dateString;
     }
   };
+
+  // Log pour déboguer TOUT
+  console.log('🔍 BeforeAfterSlider - DONNÉES COMPLÈTES:', {
+    before: before,
+    after: after,
+    beforeWeight: before.weight,
+    afterWeight: after.weight,
+  });
 
   // Calculer la différence de poids
   const weightDiff = before.weight && after.weight
@@ -151,18 +165,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     }
   };
 
-  // Interpolation pour la largeur de clip
-  const clipWidth = sliderPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, sliderWidth],
-  });
-
-  // Position du handle du slider
-  const handlePosition = sliderPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, sliderWidth],
-  });
-
   return (
     <View style={[styles.container, style]}>
       {/* Zone capturable pour partage */}
@@ -184,8 +186,11 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           </Text>
         </View>
 
-        {/* Slider container */}
-        <View style={[styles.sliderContainer, { height }]}>
+        {/* Slider container - PanResponder sur TOUTE la zone */}
+        <View
+          style={[styles.sliderContainer, { height }]}
+          {...panResponder.panHandlers}
+        >
           {/* Image AVANT (en dessous) */}
           <Image
             source={{ uri: before.uri }}
@@ -199,7 +204,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           </View>
 
           {/* Image APRÈS (par-dessus, clippée) */}
-          <Animated.View
+          <View
             style={[
               styles.afterContainer,
               {
@@ -207,6 +212,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
                 height,
               },
             ]}
+            pointerEvents="none"
           >
             <Image
               source={{ uri: after.uri }}
@@ -217,28 +223,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
             <View style={[styles.labelContainer, styles.labelRight]}>
               <Text style={styles.labelText}>APRÈS</Text>
             </View>
-          </Animated.View>
-
-          {/* Slider Handle */}
-          <Animated.View
-            style={[
-              styles.sliderHandle,
-              {
-                transform: [{ translateX: Animated.subtract(handlePosition, 2) }],
-                height,
-              },
-            ]}
-            {...panResponder.panHandlers}
-          >
-            {/* Ligne verticale */}
-            <View style={styles.sliderLine} />
-
-            {/* Handle central */}
-            <View style={styles.handleButton}>
-              <ChevronLeft size={16} color="#FFFFFF" style={{ marginRight: -4 }} />
-              <ChevronRight size={16} color="#FFFFFF" style={{ marginLeft: -4 }} />
-            </View>
-          </Animated.View>
+          </View>
 
           {/* Instructions */}
           <View style={styles.instructionsContainer}>
@@ -251,17 +236,21 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           </View>
         </View>
 
-        {/* Stats */}
-        {showStats && (before.weight || after.weight) && (
+        {/* Stats - Toujours affichées si showStats est true */}
+        {showStats && (
           <View style={[styles.statsContainer, { backgroundColor: colors.background }]}>
             {/* Date & Poids AVANT */}
             <View style={styles.statItem}>
               <Text style={[styles.statDate, { color: colors.textSecondary }]}>
                 {formatDate(before.date)}
               </Text>
-              {before.weight && (
+              {before.weight ? (
                 <Text style={[styles.statWeight, { color: colors.textPrimary }]}>
-                  {before.weight} kg
+                  {before.weight.toFixed(1)} kg
+                </Text>
+              ) : (
+                <Text style={[styles.statWeightMissing, { color: colors.textMuted }]}>
+                  Poids non renseigné
                 </Text>
               )}
             </View>
@@ -284,9 +273,13 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
               <Text style={[styles.statDate, { color: colors.textSecondary }]}>
                 {formatDate(after.date)}
               </Text>
-              {after.weight && (
+              {after.weight ? (
                 <Text style={[styles.statWeight, { color: colors.textPrimary }]}>
-                  {after.weight} kg
+                  {after.weight.toFixed(1)} kg
+                </Text>
+              ) : (
+                <Text style={[styles.statWeightMissing, { color: colors.textMuted }]}>
+                  Poids non renseigné
                 </Text>
               )}
             </View>
@@ -448,36 +441,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 1,
   },
-  sliderHandle: {
-    position: 'absolute',
-    top: 0,
-    width: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  sliderLine: {
-    position: 'absolute',
-    width: 4,
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  handleButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   instructionsContainer: {
     position: 'absolute',
     bottom: 0,
@@ -515,6 +478,11 @@ const styles = StyleSheet.create({
   statWeight: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  statWeightMissing: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
   statDiff: {
     flexDirection: 'row',

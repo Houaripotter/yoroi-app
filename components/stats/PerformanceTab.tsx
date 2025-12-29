@@ -8,8 +8,10 @@ import { getTrainingLoads, getWeeklyLoadStats } from '@/lib/trainingLoadService'
 import Svg, { Rect, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { scale, isIPad } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16, iPad s'adapte
 
 interface WeekData {
   week: string;
@@ -116,7 +118,7 @@ export default function PerformanceTab() {
     }
   };
 
-  const chartWidth = SCREEN_WIDTH - 48;
+  const chartWidth = SCREEN_WIDTH - CONTAINER_PADDING * 2; // Utilise toute la largeur disponible
   const chartHeight = 180;
   const padding = { left: 40, right: 15, top: 20, bottom: 35 };
 

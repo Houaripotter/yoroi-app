@@ -23,6 +23,12 @@ export interface ReminderSettings {
   type: ReminderType;
 }
 
+export interface HydrationSlot {
+  enabled: boolean;
+  time: string; // HH:mm
+  amount: number; // ml
+}
+
 export interface NotificationSettings {
   enabled: boolean;
   training: {
@@ -32,9 +38,15 @@ export interface NotificationSettings {
   };
   hydration: {
     enabled: boolean;
-    interval: number; // heures entre rappels
-    startTime: string; // HH:mm
-    endTime: string; // HH:mm
+    useSlots: boolean; // Utiliser les tranches personnalisées ou l'intervalle
+    interval: number; // heures entre rappels (mode ancien)
+    startTime: string; // HH:mm (mode ancien)
+    endTime: string; // HH:mm (mode ancien)
+    slots: {
+      morning: HydrationSlot;
+      afternoon: HydrationSlot;
+      evening: HydrationSlot;
+    };
   };
   weighing: {
     enabled: boolean;
@@ -44,6 +56,11 @@ export interface NotificationSettings {
   streak: {
     enabled: boolean;
     time: string; // HH:mm - rappel si pas entraîné
+  };
+  sleep: {
+    enabled: boolean;
+    bedtimeReminder: string; // HH:mm - rappel pour aller dormir
+    days: number[]; // jours de la semaine (0-6)
   };
 }
 
@@ -62,9 +79,27 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   },
   hydration: {
     enabled: true,
+    useSlots: true, // Par défaut, utiliser les tranches personnalisées
     interval: 2,
     startTime: '08:00',
     endTime: '22:00',
+    slots: {
+      morning: {
+        enabled: true,
+        time: '09:00',
+        amount: 750, // ml
+      },
+      afternoon: {
+        enabled: true,
+        time: '14:00',
+        amount: 750, // ml
+      },
+      evening: {
+        enabled: true,
+        time: '19:00',
+        amount: 750, // ml
+      },
+    },
   },
   weighing: {
     enabled: true,
@@ -74,6 +109,11 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   streak: {
     enabled: true,
     time: '20:00',
+  },
+  sleep: {
+    enabled: false, // Désactivé par défaut, l'utilisateur doit l'activer
+    bedtimeReminder: '22:30', // Rappel à 22h30 par défaut
+    days: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
   },
 };
 
@@ -101,6 +141,13 @@ const STREAK_MESSAGES = [
   { title: '🔥 Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
   { title: '⚠️ Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
   { title: '💔 Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
+];
+
+const SLEEP_MESSAGES = [
+  { title: '🌙 Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
+  { title: '😴 Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
+  { title: '💤 Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
+  { title: '🛌 Repos guerrier', body: 'La récupération est essentielle. Dors bien !' },
 ];
 
 // ============================================
@@ -221,6 +268,9 @@ class NotificationService {
     if (this.settings.streak.enabled) {
       await this.scheduleStreakNotification();
     }
+    if (this.settings.sleep.enabled) {
+      await this.scheduleSleepNotifications();
+    }
 
     console.log('Notifications programmées');
   }
@@ -250,26 +300,58 @@ class NotificationService {
   }
 
   private async scheduleHydrationNotifications(): Promise<void> {
-    const { interval, startTime, endTime } = this.settings.hydration;
-    const [startHour] = startTime.split(':').map(Number);
-    const [endHour] = endTime.split(':').map(Number);
+    const { useSlots, slots, interval, startTime, endTime } = this.settings.hydration;
 
-    for (let hour = startHour; hour <= endHour; hour += interval) {
-      const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
-      
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: message.title,
-          body: message.body,
-          data: { type: 'hydration' },
-          sound: true,
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: hour,
-          minute: 0,
-        },
-      });
+    if (useSlots) {
+      // Mode tranches personnalisées
+      const slotsList = [
+        { name: 'morning', slot: slots.morning },
+        { name: 'afternoon', slot: slots.afternoon },
+        { name: 'evening', slot: slots.evening },
+      ];
+
+      for (const { name, slot } of slotsList) {
+        if (!slot.enabled) continue;
+
+        const [hours, minutes] = slot.time.split(':').map(Number);
+        const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: message.title,
+            body: `${message.body} (${slot.amount}ml recommandés)`,
+            data: { type: 'hydration', slot: name, amount: slot.amount },
+            sound: true,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: hours,
+            minute: minutes,
+          },
+        });
+      }
+    } else {
+      // Mode intervalle (ancien mode)
+      const [startHour] = startTime.split(':').map(Number);
+      const [endHour] = endTime.split(':').map(Number);
+
+      for (let hour = startHour; hour <= endHour; hour += interval) {
+        const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: message.title,
+            body: message.body,
+            data: { type: 'hydration' },
+            sound: true,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: hour,
+            minute: 0,
+          },
+        });
+      }
     }
   }
 
@@ -302,7 +384,7 @@ class NotificationService {
     const [hours, minutes] = time.split(':').map(Number);
 
     const message = STREAK_MESSAGES[Math.floor(Math.random() * STREAK_MESSAGES.length)];
-    
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: message.title,
@@ -316,6 +398,30 @@ class NotificationService {
         minute: minutes,
       },
     });
+  }
+
+  private async scheduleSleepNotifications(): Promise<void> {
+    const { bedtimeReminder, days } = this.settings.sleep;
+    const [hours, minutes] = bedtimeReminder.split(':').map(Number);
+
+    for (const day of days) {
+      const message = SLEEP_MESSAGES[Math.floor(Math.random() * SLEEP_MESSAGES.length)];
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: message.title,
+          body: message.body,
+          data: { type: 'sleep' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday: day === 0 ? 1 : day + 1, // Expo utilise 1-7 (dimanche = 1)
+          hour: hours,
+          minute: minutes,
+        },
+      });
+    }
   }
 
   // ============================================

@@ -1,12 +1,15 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Moon, Clock, AlertTriangle, CheckCircle } from 'lucide-react-native';
 import Svg, { Path, Circle, Ellipse, G } from 'react-native-svg';
+import { router } from 'expo-router';
+import { scale, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gap 12 = total 28
-const CARD_SIZE = (screenWidth - 28) / 2;
+// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
+const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
 
 interface SleepLottieCardProps {
   hours?: number;
@@ -19,7 +22,7 @@ export const SleepLottieCard: React.FC<SleepLottieCardProps> = ({
   hours = 0,
   quality = 0,
   debt = 0,
-  goal = 8
+  goal
 }) => {
   const { colors, isDark } = useTheme();
   
@@ -172,7 +175,11 @@ export const SleepLottieCard: React.FC<SleepLottieCardProps> = ({
   const gradientBottom = isDark ? '#0F172A40' : '#C4B5FD15'; // Bleu-noir en sombre, violet très clair en clair
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: colors.backgroundCard }]}
+      onPress={() => router.push('/sleep')}
+      activeOpacity={0.7}
+    >
       {/* Background gradient effect - nuit étoilée */}
       <View style={styles.gradientBg}>
         <View style={[styles.gradientTop, { backgroundColor: gradientTop }]} />
@@ -339,7 +346,7 @@ export const SleepLottieCard: React.FC<SleepLottieCardProps> = ({
           </Text>
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -434,8 +441,8 @@ const styles = StyleSheet.create({
   },
   zzzContainer: {
     position: 'absolute',
-    top: 5,
-    right: 25,
+    top: 60,
+    left: 48,
   },
   zzz: {
     fontWeight: '900',
@@ -447,20 +454,20 @@ const styles = StyleSheet.create({
   zzz1: {
     fontSize: 11,
     position: 'absolute',
-    right: 0,
+    left: 0,
     top: 0,
   },
   zzz2: {
     fontSize: 15,
     position: 'absolute',
-    right: 10,
-    top: -6,
+    left: 8,
+    top: -8,
   },
   zzz3: {
     fontSize: 20,
     position: 'absolute',
-    right: 22,
-    top: -14,
+    left: 18,
+    top: -18,
   },
   valueContainer: {
     alignItems: 'center',

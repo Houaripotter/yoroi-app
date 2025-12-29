@@ -14,7 +14,7 @@ import {
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Trophy, Heart, ChevronRight } from 'lucide-react-native';
+import { Trophy, Heart, ChevronRight, Shield, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { setUserMode } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
@@ -62,7 +62,10 @@ export default function ModeSelectionScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.logo, { color: colors.accent }]}>🏯 YOROI</Text>
+          <View style={styles.logoContainer}>
+            <Shield size={40} color={colors.accent} strokeWidth={2.5} />
+            <Text style={[styles.logo, { color: colors.accent }]}>YOROI</Text>
+          </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Quel guerrier es-tu ?
           </Text>
@@ -107,7 +110,11 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                <Text style={styles.modeIcon}>🥊</Text>
+                <Swords
+                  size={36}
+                  color={selectedMode === 'competiteur' ? '#FFFFFF' : colors.textPrimary}
+                  strokeWidth={2.5}
+                />
               </View>
 
               {/* Title */}
@@ -220,7 +227,11 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                <Text style={styles.modeIcon}>💪</Text>
+                <Dumbbell
+                  size={36}
+                  color={selectedMode === 'loisir' ? '#FFFFFF' : colors.textPrimary}
+                  strokeWidth={2.5}
+                />
               </View>
 
               {/* Title */}
@@ -302,9 +313,12 @@ export default function ModeSelectionScreen() {
 
         {/* Info */}
         <View style={[styles.infoBox, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            💡 Tu pourras changer de mode à tout moment dans les réglages
-          </Text>
+          <View style={styles.infoContent}>
+            <Lightbulb size={16} color={colors.textMuted} strokeWidth={2} />
+            <Text style={[styles.infoText, { color: colors.textMuted }]}>
+              Tu pourras changer de mode à tout moment dans les réglages
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -351,10 +365,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl * 2,
   },
-  logo: {
-    fontSize: 48,
-    fontWeight: '800',
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     marginBottom: SPACING.md,
+  },
+  logo: {
+    fontSize: 40,
+    fontWeight: '800',
   },
   title: {
     fontSize: 28,
@@ -391,9 +410,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,
-  },
-  modeIcon: {
-    fontSize: 36,
   },
   modeTitle: {
     fontSize: 24,
@@ -446,10 +462,17 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginTop: SPACING.md,
   },
+  infoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    justifyContent: 'center',
+  },
   infoText: {
     fontSize: 13,
-    textAlign: 'center',
     lineHeight: 18,
+    flex: 1,
+    textAlign: 'center',
   },
   bottomContainer: {
     padding: SPACING.lg,
