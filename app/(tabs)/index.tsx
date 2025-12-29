@@ -53,6 +53,8 @@ import {
   FlaskConical,
   Calculator,
   Apple,
+  Clock,
+  BookOpen,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -70,6 +72,7 @@ import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
 import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
+import { getJournalStats } from '@/lib/trainingJournalService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
@@ -81,6 +84,7 @@ import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
 import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
+import HealthConnect from '@/lib/healthConnect.ios';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -203,6 +207,10 @@ export default function HomeScreen() {
   // Personnalisation de l'accueil
   const [homeSections, setHomeSections] = useState<HomeSection[]>([]);
 
+  // Activité (pas)
+  const [steps, setSteps] = useState(0);
+  const [stepsGoal, setStepsGoal] = useState(10000);
+
   // Hydratation functions
   const loadHydration = useCallback(async () => {
     try {
@@ -289,6 +297,16 @@ export default function HomeScreen() {
 
       const goal = await getSleepGoal();
       setSleepGoal(goal);
+
+      // Charger les pas depuis Apple Health
+      try {
+        const stepsData = await HealthConnect.getTodaySteps();
+        if (stepsData?.count) {
+          setSteps(stepsData.count);
+        }
+      } catch (error) {
+        console.log('Pas disponibles depuis Apple Health');
+      }
 
       setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
       loadHydration();
@@ -517,18 +535,19 @@ export default function HomeScreen() {
 
   const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
 
+  // === SYSTÈME DE PERSONNALISATION DE L'ORDRE - RENDU DYNAMIQUE ===
+  const sortedSections = useMemo(() => {
+    return [...homeSections].sort((a, b) => a.order - b.order);
+  }, [homeSections]);
+
+  // Fonction pour rendre chaque section dans l'ordre personnalisé
+  const renderDynamicSection = (sectionId: string) => {
+    if (!isSectionVisible(sectionId)) return null;
+
+    switch (sectionId) {
+      case 'header':
         return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <MotivationPopup />
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* HEADER */}
-        {isSectionVisible('header') && (
-          <View style={styles.header}>
+          <View style={styles.header} key={sectionId}>
             <TouchableOpacity onPress={() => setLogoViewerVisible(true)}>
               <Image source={require('@/assets/logo d\'app/logo1.png')} style={styles.logo} resizeMode="contain" />
             </TouchableOpacity>
@@ -538,616 +557,413 @@ export default function HomeScreen() {
                 <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
                 <ViewModeSwitch mode={mode} onToggle={toggleMode} />
               </View>
-              {/* Citation juste en dessous - SEULEMENT en Mode Guerrier */}
               {dailyQuote && mode === 'guerrier' && (
                 <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
                   <Sparkles size={12} color={colors.accent} />
                   <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
-                  </View>
-                    )}
-                  </View>
-            <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} style={styles.avatarBtn}>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity onPress={() => setAvatarViewerVisible(true)} activeOpacity={0.8}>
               <AvatarDisplay size="medium" refreshTrigger={Date.now()} showBorder={false} />
             </TouchableOpacity>
-                  </View>
-        )}
+          </View>
+        );
 
-        {/* MODE GUERRIER - Contenu complet actuel */}
-        {mode === 'guerrier' && (
-          <>
-        {/* Stats rapides (réduites) - Juste sous la citation */}
-        {isSectionVisible('stats_compact') && (
-        <View style={styles.statsRowCompact}>
-          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-            <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
-              <Flame size={18} color="#F97316" />
-            </Animated.View>
-            <AnimatedCounter value={streak} style={[styles.statValueCompact, { color: '#F97316' }]} duration={800} />
-            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-            <Zap size={18} color={colors.accent} />
-            <AnimatedCounter value={level.level} style={[styles.statValueCompact, { color: colors.accent }]} duration={800} />
-            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
-                </TouchableOpacity>
-          <TouchableOpacity style={[styles.statCardCompact, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-            <Trophy size={18} color={rank.color} />
-            <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompact} delay={300} />
-            <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
-              </TouchableOpacity>
-                </View>
-        )}
+      case 'stats_compact':
+        return (
+          <View style={styles.statsRowCompact} key={sectionId}>
+            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/activity-detail')}>
+              <MaterialCommunityIcons name="walk" size={16} color="#3B82F6" />
+              <AnimatedCounter value={steps} style={[styles.statValueCompactVertical, { color: '#3B82F6' }]} duration={800} />
+              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+              <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
+                <Flame size={16} color="#F97316" />
+              </Animated.View>
+              <AnimatedCounter value={streak} style={[styles.statValueCompactVertical, { color: '#F97316' }]} duration={800} />
+              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+              <Zap size={16} color={colors.accent} />
+              <AnimatedCounter value={level.level} style={[styles.statValueCompactVertical, { color: colors.accent }]} duration={800} />
+              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.statCardCompactVertical, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+              <Trophy size={16} color={rank.color} />
+              <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompactVertical} delay={300} />
+              <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
+            </TouchableOpacity>
+          </View>
+        );
 
-        {/* GRID 2x2 LOTTIE : Poids + Hydratation (haut), Sommeil + Charge (bas) - EN HAUT */}
-        {isSectionVisible('weight_hydration') && (
-        <View style={styles.gridLottieContainer}>
-          {/* Ligne 1 : Poids + Hydratation */}
-          <View style={styles.gridLottieRow}>
-            {/* Carte Poids - Vers les stats poids */}
-            <TouchableOpacity onPress={() => router.push('/stats?tab=poids')} activeOpacity={0.9}>
-              <WeightLottieCard
-                weight={currentWeight || 0}
-                target={targetWeight || undefined}
-                trend={trend}
-                history={last7Weights.map(w => w.weight)}
+      case 'weight_hydration':
+        return (
+          <View style={styles.gridLottieContainer} key={sectionId}>
+            <View style={styles.gridLottieRow}>
+              <TouchableOpacity onPress={() => router.push('/stats?tab=poids')} activeOpacity={0.9}>
+                <WeightLottieCard
+                  weight={currentWeight || 0}
+                  target={targetWeight || undefined}
+                  trend={trend}
+                  history={last7Weights.map(w => w.weight)}
+                />
+              </TouchableOpacity>
+              <HydrationLottieCard
+                currentMl={hydration}
+                goalMl={hydrationGoal}
+                onAddMl={(amountMl) => addWater(amountMl)}
               />
-            </TouchableOpacity>
-
-            {/* Carte Hydratation */}
-            <HydrationLottieCard
-              currentMl={hydration}
-              goalMl={hydrationGoal}
-              onAddMl={(amountMl) => addWater(amountMl)}
-            />
+            </View>
           </View>
+        );
 
-        </View>
-        )}
-
-        {/* BATTERIE + SAVOIR & OUTILS - Une seule ligne de 4 cartes */}
-        {isSectionVisible('battery_tools') && (
-        <AnimatedCard index={0}>
-          <View style={styles.batteryToolsRowSingle}>
-            {/* Batterie compacte avec animation horizontale */}
-            <TouchableOpacity
-              style={[styles.batteryCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => router.push('/energy')}
-              activeOpacity={0.8}
-            >
-              <Battery size={24} color={batteryStatus.color} />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
-
-              {/* Batterie horizontale animée */}
-              <View style={styles.batteryHorizontalSmall}>
-                <View style={[styles.batteryHBodySmall, { borderColor: batteryStatus.color, backgroundColor: `${batteryStatus.color}10` }]}>
-                  <Animated.View
-                    style={[
-                      styles.batteryHLevelSmall,
-                      {
-                        width: batteryAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                        backgroundColor: batteryStatus.color,
-                      }
-                    ]}
-                  >
-                    <View style={styles.batteryShineSmall} />
-                  </Animated.View>
-                </View>
-                <View style={[styles.batteryHHeadSmall, { backgroundColor: batteryStatus.color }]} />
-              </View>
-
-              <Text style={[styles.batteryPercentSmall, { color: batteryStatus.color }]}>{Math.round(batteryPercent)}%</Text>
-            </TouchableOpacity>
-
-            {/* Savoir */}
-            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
-              <FlaskConical size={28} color="#3B82F6" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Dormir moins bête</Text>
-            </TouchableOpacity>
-
-            {/* Outils */}
-            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/calculators')} activeOpacity={0.85}>
-              <Calculator size={28} color="#10B981" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Outils</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Calculatrice</Text>
-            </TouchableOpacity>
-
-            {/* Composition */}
-            <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/stats?tab=composition')} activeOpacity={0.85}>
-              <Apple size={28} color="#F59E0B" />
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Composition</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Corporelle</Text>
-            </TouchableOpacity>
-          </View>
-        </AnimatedCard>
-        )}
-
-        {/* LIGNE 2 : Infirmerie, Timer, Toggle Compétiteur, Photo - 4 CARTES */}
-        {isSectionVisible('actions_row') && (
-        <View style={styles.actionsRow4}>
-          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
-            <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
-            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
-            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
-            <Timer size={28} color={colors.accent} />
-            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
-            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <Camera size={28} color="#10B981" />
-            <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
-            <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
-          </TouchableOpacity>
-
-          {/* Toggle Mode Compétition avec compte à rebours */}
-          {userMode === 'competiteur' ? (
-            <TouchableOpacity
-              style={[styles.actionBtn4, {
-                backgroundColor: isCompetitorMode ? (nextEvent ? (nextEvent.daysLeft < 7 ? '#FEE2E2' : nextEvent.daysLeft < 30 ? '#FFF7ED' : colors.backgroundCard) : colors.backgroundCard) : colors.backgroundCard,
-                borderWidth: isCompetitorMode ? 2 : 0,
-                borderColor: isCompetitorMode ? (nextEvent ? (nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent) : colors.accent) : 'transparent',
-              }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setIsCompetitorMode(!isCompetitorMode);
-              }}
-              activeOpacity={0.85}
-            >
-              {isCompetitorMode && nextEvent ? (
-                <>
-                  {/* Icône avec cibles */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                    <Target size={10} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
-                    <Trophy size={24} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2} />
-                    <Target size={10} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
+      case 'battery_tools':
+        return (
+          <AnimatedCard index={0} key={sectionId}>
+            <View style={styles.batteryToolsRowSingle}>
+              <TouchableOpacity
+                style={[styles.batteryCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={() => router.push('/energy')}
+                activeOpacity={0.8}
+              >
+                <Battery size={24} color={batteryStatus.color} />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
+                <View style={styles.batteryHorizontalSmall}>
+                  <View style={[styles.batteryHBodySmall, { borderColor: batteryStatus.color, backgroundColor: `${batteryStatus.color}10` }]}>
+                    <Animated.View
+                      style={[
+                        styles.batteryHLevelSmall,
+                        {
+                          width: batteryAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                          backgroundColor: batteryStatus.color,
+                        }
+                      ]}
+                    >
+                      <View style={styles.batteryShineSmall} />
+                    </Animated.View>
                   </View>
-                  <Text style={[styles.actionLabel4, {
-                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
-                    fontWeight: '900',
-                    fontSize: 16,
-                  }]}>
-                    J-{nextEvent.daysLeft}
-                  </Text>
-                  <Text style={[styles.actionSubLabel4, { color: colors.textPrimary, fontWeight: '600' }]} numberOfLines={1}>
-                    {nextEvent.name}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Trophy size={28} color={isCompetitorMode ? colors.accent : colors.textMuted} strokeWidth={2} />
-                  <Text style={[styles.actionLabel4, { color: isCompetitorMode ? colors.accent : colors.textPrimary, fontWeight: isCompetitorMode ? '700' : '600' }]}>
-                    {isCompetitorMode ? 'Compétition' : 'Mode Compét'}
-                  </Text>
-                  <Text style={[styles.actionSubLabel4, { color: colors.textMuted, fontSize: 10 }]}>
-                    {isCompetitorMode ? 'Activé' : 'Désactivé'}
-                  </Text>
-                </>
-              )}
+                  <View style={[styles.batteryHHeadSmall, { backgroundColor: batteryStatus.color }]} />
+                </View>
+                <Text style={[styles.batteryPercentSmall, { color: batteryStatus.color }]}>{Math.round(batteryPercent)}%</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
+                <FlaskConical size={28} color="#3B82F6" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Dormir moins bête</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/calculators')} activeOpacity={0.85}>
+                <Calculator size={28} color="#10B981" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Outils</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Calculatrice</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/fasting')} activeOpacity={0.85}>
+                <Clock size={28} color="#F59E0B" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Jeûne</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Intermittent</Text>
+              </TouchableOpacity>
+            </View>
+          </AnimatedCard>
+        );
+
+      case 'actions_row':
+        return (
+          <View style={styles.actionsRow4} key={sectionId}>
+            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
+              <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
+              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
+              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
             </TouchableOpacity>
-          ) : (
+            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
+              <Timer size={28} color={colors.accent} />
+              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
+              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/photos')} activeOpacity={0.85}>
+              <Camera size={28} color="#10B981" />
+              <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
+              <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
               <FlaskConical size={28} color="#3B82F6" />
               <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Savoir</Text>
               <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Études & Conseils</Text>
             </TouchableOpacity>
-          )}
-        </View>
-        )}
+          </View>
+        );
 
+      case 'sleep_charge':
+        return (
+          <View style={styles.gridLottieRow} key={sectionId}>
+            <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
+              <SleepLottieCard
+                hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+                quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
+                debt={sleepStats?.sleepDebtHours || 0}
+                goal={sleepGoal / 60}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
+              <ChargeLottieCard
+                level={loadStats?.riskLevel || 'optimal'}
+                totalLoad={loadStats?.totalLoad || 0}
+                maxLoad={2000}
+                sessions={trainings.filter(t => {
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return new Date(t.date) >= weekAgo;
+                }).length}
+              />
+            </TouchableOpacity>
+          </View>
+        );
 
-        {/* LIGNE 3 : Sommeil + Charge */}
-        {isSectionVisible('sleep_charge') && (
-        <View style={styles.gridLottieRow}>
-          {/* Carte Sommeil */}
-          <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
-            <SleepLottieCard
-              hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
-              quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
-              debt={sleepStats?.sleepDebtHours || 0}
-              goal={sleepGoal / 60}
-            />
-          </TouchableOpacity>
+      case 'challenges':
+        return (
+          <AnimatedCard index={1} key={sectionId}>
+            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
+              <View style={styles.challengesHeader}>
+                <Target size={16} color={colors.accent} />
+                <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
+                <ChevronRight size={14} color={colors.textMuted} />
+              </View>
+              <View style={styles.challengesList}>
+                {dailyChallenges.slice(0, 3).map((challenge) => (
+                  <View key={challenge.id} style={styles.challengeItem}>
+                    <View style={styles.challengeIconWrap}>
+                      {renderChallengeIcon(challenge.icon)}
+                    </View>
+                    <View style={styles.challengeInfo}>
+                      <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
+                      <View style={[styles.challengeProgress, { backgroundColor: colors.border }]}>
+                        <View style={[styles.challengeFill, {
+                          width: `${Math.min(100, (challenge.progress.current / challenge.progress.target) * 100)}%`,
+                          backgroundColor: challenge.progress.completed ? colors.success : colors.accent
+                        }]} />
+                      </View>
+                    </View>
+                    <PulsingBadge
+                      color={challenge.progress.completed ? colors.success : colors.accent}
+                      enabled={challenge.progress.completed}
+                      style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
+                    >
+                      <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
+                      <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : colors.accent }]}>
+                        +{challenge.reward.xp}
+                      </Text>
+                    </PulsingBadge>
+                  </View>
+                ))}
+              </View>
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
 
-          {/* Carte Charge */}
-          <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
-            <ChargeLottieCard
-              level={loadStats?.riskLevel || 'optimal'}
-              totalLoad={loadStats?.totalLoad || 0}
-              maxLoad={2000}
-              sessions={trainings.filter(t => {
-                const weekAgo = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
-                return new Date(t.date) >= weekAgo;
-              }).length}
-            />
-          </TouchableOpacity>
-        </View>
-        )}
+      case 'performance_radar':
+        return (
+          <AnimatedCard index={2} key={sectionId}>
+            <TouchableOpacity onPress={() => router.push('/radar-performance')} activeOpacity={0.8}>
+              <PerformanceRadar />
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
 
-        {/* ANCIENNES ACTIONS RAPIDES - CACHÉES */}
-        <View style={{ display: 'none' }}>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
-            <Timer size={20} color={colors.accent} />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Timer</Text>
-            <View style={styles.timerFractionMini}>
-              <Text style={[styles.timerFractionTop, { color: colors.textSecondary }]}>Round</Text>
-              <View style={[styles.timerFractionLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.timerFractionBottom, { color: colors.textMuted }]}>Repos</Text>
+      case 'healthspan':
+        return (
+          <AnimatedCard index={3} key={sectionId}>
+            <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
+              <HealthspanChart />
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      case 'weekly_report':
+        if (!weeklyReport) return null;
+        return (
+          <AnimatedCard index={4} key={sectionId}>
+            <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
+              <View style={styles.reportHeader}>
+                <FileText size={16} color={colors.accent} />
+                <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
+              </View>
+              <View style={styles.reportContent}>
+                <View style={[styles.gradeBadge, {
+                  backgroundColor: colors.accent,
+                  shadowColor: colors.accent,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }]}>
+                  <Text style={styles.gradeText}>{weeklyReport.verdict.grade}</Text>
+                </View>
+                <View style={styles.reportInfo}>
+                  <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport.verdict.title}</Text>
+                  <View style={styles.scoreContainer}>
+                    <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
+                      Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
+                    </Text>
+                    <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          {
+                            width: `${weeklyReport.overallScore}%`,
+                            backgroundColor: weeklyReport.overallScore > 70 ? '#10B981' : weeklyReport.overallScore > 50 ? '#F59E0B' : '#EF4444'
+                          }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </View>
+                <ChevronRight size={16} color={colors.textMuted} />
+              </View>
+            </TouchableOpacity>
+          </AnimatedCard>
+        );
+
+      case 'streak_calendar':
+        return <StreakCalendar weeks={12} key={sectionId} />;
+
+      case 'fighter_mode':
+        if (userMode === 'competiteur') {
+          return (
+            <View style={[styles.actionsRow3, { marginTop: 12 }]} key={sectionId}>
+              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')} activeOpacity={0.85}>
+                <Scale size={24} color="#EF4444" />
+                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Mode Cut</Text>
+                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Poids</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')} activeOpacity={0.85}>
+                <Trophy size={24} color={colors.accent} />
+                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Compétitions</Text>
+                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>À venir</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')} activeOpacity={0.85}>
+                <Medal size={24} color={colors.gold} />
+                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Palmarès</Text>
+                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Victoires</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          );
+        }
+        return null;
+
+      case 'training_journal':
+        const journalStats = getJournalStats();
+        return (
           <TouchableOpacity
-            style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => router.push(nextEvent ? '/competitions' : '/add-competition')}
+            key={sectionId}
+            style={[styles.trainingJournalCard, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/training-journal');
+            }}
             activeOpacity={0.85}
           >
-            {nextEvent ? (
-              <>
-                {/* Icône selon le sport avec cibles */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <MaterialCommunityIcons
-                    name="target"
-                    size={12}
-                    color="#EF4444"
-                  />
-                  {nextEvent.sport === 'jjb' || nextEvent.sport === 'judo' || nextEvent.sport === 'karate' ? (
-                    <MaterialCommunityIcons
-                      name="karate"
-                      size={22}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  ) : nextEvent.sport === 'mma' || nextEvent.sport === 'boxe' || nextEvent.sport === 'muay_thai' ? (
-                    <MaterialCommunityIcons
-                      name="boxing-glove"
-                      size={22}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  ) : (
-                    <Trophy
-                      size={22}
-                      color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981'}
-                    />
-                  )}
-                  <MaterialCommunityIcons
-                    name="target"
-                    size={12}
-                    color="#EF4444"
-                  />
-                </View>
-                {/* J-XX avec couleur selon échéance */}
-                <Text style={[
-                  styles.actionLabelSquare,
-                  {
-                    color: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : '#10B981',
-                    fontSize: 11,
-                    fontWeight: '900'
-                  }
-                ]}>
-                  J-{nextEvent.daysLeft}
+            <View style={styles.trainingJournalHeader}>
+              <View style={[styles.trainingJournalIconContainer, { backgroundColor: '#F9731620' }]}>
+                <BookOpen size={24} color="#F97316" />
+              </View>
+              <View style={styles.trainingJournalTitleContainer}>
+                <Text style={[styles.trainingJournalTitle, { color: colors.textPrimary }]}>
+                  📖 Carnet d'Entraînement
                 </Text>
-                {/* Nom abrégé */}
-                <Text
-                  style={[
-                    styles.actionLabelSquare,
-                    {
-                      color: colors.textPrimary,
-                      fontSize: nextEvent.name.length > 12 ? 8 : 9,
-                      fontWeight: '600',
-                      marginTop: -2,
-                    }
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {nextEvent.name}
+                <Text style={[styles.trainingJournalSubtitle, { color: colors.textMuted }]}>
+                  Ta progression personnelle
                 </Text>
-              </>
-            ) : (
-              <>
-                <Trophy size={20} color={colors.accent} />
-                <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Compét</Text>
-                <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 8, marginTop: -2 }]}>Ajouter</Text>
-              </>
-            )}
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
-            <MaterialCommunityIcons name="hospital-box" size={22} color="#EF4444" />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Infirmerie</Text>
-              </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtnSquare, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/profile')} activeOpacity={0.85}>
-            <Camera size={20} color="#10B981" />
-            <Text style={[styles.actionLabelSquare, { color: colors.textPrimary, fontSize: 11, fontWeight: '700' }]}>Photo</Text>
-            <Text style={[styles.actionLabelSquare, { color: colors.textMuted, fontSize: 8, marginTop: -2 }]}>Avant/Après</Text>
-              </TouchableOpacity>
-                </View>
-
-        {/* DÉFIS DU JOUR */}
-        {isSectionVisible('challenges') && (
-        <AnimatedCard index={1}>
-        <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
-          <View style={styles.challengesHeader}>
-            <Target size={16} color={colors.accent} />
-            <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
-            <ChevronRight size={14} color={colors.textMuted} />
-            </View>
-          <View style={styles.challengesList}>
-            {dailyChallenges.slice(0, 3).map((challenge) => (
-              <View key={challenge.id} style={styles.challengeItem}>
-                <View style={styles.challengeIconWrap}>
-                  {renderChallengeIcon(challenge.icon)}
-            </View>
-                <View style={styles.challengeInfo}>
-                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
-                  <View style={[styles.challengeProgress, { backgroundColor: colors.border }]}>
-                    <View style={[styles.challengeFill, { 
-                      width: `${Math.min(100, (challenge.progress.current / challenge.progress.target) * 100)}%`,
-                      backgroundColor: challenge.progress.completed ? colors.success : colors.accent 
-                    }]} />
-        </View>
-          </View>
-                <PulsingBadge
-                  color={challenge.progress.completed ? colors.success : colors.accent}
-                  enabled={challenge.progress.completed}
-                  style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
-                >
-                  <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
-                  <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : colors.accent }]}>
-                    +{challenge.reward.xp}
-                  </Text>
-                </PulsingBadge>
-      </View>
-          ))}
-        </View>
-                </TouchableOpacity>
-        </AnimatedCard>
-        )}
-
-        {/* RADAR DE PERFORMANCE */}
-        {isSectionVisible('performance_radar') && (
-        <AnimatedCard index={2}>
-        <TouchableOpacity onPress={() => router.push('/radar-performance')} activeOpacity={0.8}>
-          <PerformanceRadar />
-        </TouchableOpacity>
-        </AnimatedCard>
-        )}
-
-        {/* COURBE HEALTHSPAN */}
-        {isSectionVisible('healthspan') && (
-        <AnimatedCard index={3}>
-        <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
-          <HealthspanChart />
-        </TouchableOpacity>
-        </AnimatedCard>
-        )}
-
-        {/* RAPPORT DE MISSION */}
-        {isSectionVisible('weekly_report') && weeklyReport && (
-          <AnimatedCard index={4}>
-          <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
-            <View style={styles.reportHeader}>
-              <FileText size={16} color={colors.accent} />
-              <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
               </View>
-            <View style={styles.reportContent}>
-              <View style={[styles.gradeBadge, {
-                backgroundColor: colors.accent,
-                shadowColor: colors.accent,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 6,
-              }]}>
-                <Text style={styles.gradeText}>{weeklyReport.verdict.grade}</Text>
+              <ChevronRight size={20} color={colors.textMuted} />
             </View>
-              <View style={styles.reportInfo}>
-                <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport.verdict.title}</Text>
-                <View style={styles.scoreContainer}>
-                  <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
-                    Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
+
+            <View style={styles.trainingJournalStats}>
+              <View style={styles.trainingJournalStat}>
+                <View style={[styles.trainingJournalStatIcon, { backgroundColor: '#F9731615' }]}>
+                  <Target size={18} color="#F97316" />
+                </View>
+                <View style={styles.trainingJournalStatInfo}>
+                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
+                    {journalStats.in_progress}
                   </Text>
-                  {/* Progress Bar */}
-                  <View style={[styles.progressBarBg, { backgroundColor: colors.border }]}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        {
-                          width: `${weeklyReport.overallScore}%`,
-                          backgroundColor: weeklyReport.overallScore > 70 ? '#10B981' : weeklyReport.overallScore > 50 ? '#F59E0B' : '#EF4444'
-                        }
-                      ]}
-                    />
-                  </View>
+                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
+                    En cours
+                  </Text>
                 </View>
               </View>
-              <ChevronRight size={16} color={colors.textMuted} />
-            </View>
-                    </TouchableOpacity>
-          </AnimatedCard>
-        )}
 
-        {/* CALENDRIER STREAK */}
-        {isSectionVisible('streak_calendar') && (
-        <StreakCalendar weeks={12} />
-        )}
+              <View style={[styles.trainingJournalDivider, { backgroundColor: colors.border }]} />
 
-        {/* MODE COMPÉTITEUR - Actions spécifiques */}
-        {isSectionVisible('fighter_mode') && userMode === 'competiteur' && (
-        <AnimatedCard>
-          <View style={[styles.modeCompetContainer, { backgroundColor: colors.backgroundCard }]}>
-            <View style={styles.modeCompetHeader}>
-              <View style={[styles.modeCompetIconContainer, { backgroundColor: colors.accent + '20' }]}>
-                <Trophy size={20} color={colors.accent} strokeWidth={2} />
+              <View style={styles.trainingJournalStat}>
+                <View style={[styles.trainingJournalStatIcon, { backgroundColor: `${colors.success}15` }]}>
+                  <Trophy size={18} color={colors.success} />
+                </View>
+                <View style={styles.trainingJournalStatInfo}>
+                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
+                    {journalStats.mastered}
+                  </Text>
+                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
+                    Maîtrisés
+                  </Text>
+                </View>
               </View>
-              <Text style={[styles.modeCompetTitle, { color: colors.textPrimary }]}>
-                Mode Compétition
+
+              <View style={[styles.trainingJournalDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.trainingJournalStat}>
+                <View style={[styles.trainingJournalStatIcon, { backgroundColor: `${colors.accent}15` }]}>
+                  <Flame size={18} color={colors.accent} />
+                </View>
+                <View style={styles.trainingJournalStatInfo}>
+                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
+                    {journalStats.mastered_this_week}
+                  </Text>
+                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
+                    Cette semaine
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <MotivationPopup />
+      
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* MODE GUERRIER - Contenu complet actuel */}
+        {mode === 'guerrier' && (
+          <>
+            {/* === RENDU DYNAMIQUE DES SECTIONS SELON L'ORDRE PERSONNALISÉ === */}
+            {sortedSections.map(section => renderDynamicSection(section.id))}
+
+            {/* Bouton personnaliser l'accueil */}
+            <TouchableOpacity
+              style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/customize-home');
+              }}
+              activeOpacity={0.7}
+            >
+              <Palette size={20} color={colors.accent} strokeWidth={2} />
+              <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
+                Personnaliser l'Accueil
               </Text>
+              <ChevronRight size={20} color={colors.textMuted} />
+            </TouchableOpacity>
 
-              {/* Toggle Activé/Désactivé */}
-              <View style={{ flex: 1 }} />
-              <TouchableOpacity
-                style={[styles.competToggleSwitch, {
-                  backgroundColor: isCompetitorMode ? colors.accent : colors.backgroundElevated,
-                  borderColor: isCompetitorMode ? colors.accent : colors.border,
-                }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setIsCompetitorMode(!isCompetitorMode);
-                }}
-                activeOpacity={0.8}
-              >
-                <Animated.View
-                  style={[styles.competToggleThumb, {
-                    backgroundColor: '#FFFFFF',
-                    transform: [{
-                      translateX: toggleAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [2, 26],
-                      }),
-                    }],
-                  }]}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Message mode désactivé */}
-            {!isCompetitorMode && (
-              <View style={[styles.competModeOffCard, { backgroundColor: colors.backgroundElevated }]}>
-                <Trophy size={20} color={colors.textMuted} strokeWidth={2} />
-                <Text style={[styles.competModeOffText, { color: colors.textMuted }]}>
-                  Active le mode compétition pour accéder aux fonctionnalités
-                </Text>
-              </View>
-            )}
-
-            {/* Compte à rebours prochaine compétition - Seulement si mode activé */}
-            {isCompetitorMode && nextEvent ? (
-              <TouchableOpacity
-                style={[styles.competCountdownCard, {
-                  backgroundColor: colors.backgroundElevated,
-                  borderColor: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
-                }]}
-                onPress={() => router.push('/competitions')}
-                activeOpacity={0.85}
-              >
-                <View style={styles.competCountdownLeft}>
-                  <View style={[styles.competCountdownIconWrapper, {
-                    backgroundColor: nextEvent.daysLeft < 7 ? '#EF444420' : nextEvent.daysLeft < 30 ? '#F9731620' : colors.accent + '20',
-                  }]}>
-                    <Target size={20} color={nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent} strokeWidth={2.5} />
-                  </View>
-                  <View style={styles.competCountdownInfo}>
-                    <Text style={[styles.competCountdownName, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {nextEvent.name}
-                    </Text>
-                    <Text style={[styles.competCountdownDate, { color: colors.textMuted }]}>
-                      {new Date(nextEvent.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </Text>
-                  </View>
-                </View>
-                <View style={[styles.competCountdownBadge, {
-                  backgroundColor: nextEvent.daysLeft < 7 ? '#EF4444' : nextEvent.daysLeft < 30 ? '#F97316' : colors.accent,
-                }]}>
-                  <Text style={[styles.competCountdownDays, { color: '#FFFFFF' }]}>
-                    J-{nextEvent.daysLeft}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ) : isCompetitorMode ? (
-              <TouchableOpacity
-                style={[styles.competNoEventCard, {
-                  backgroundColor: colors.backgroundElevated,
-                  borderColor: colors.border,
-                }]}
-                onPress={() => router.push('/add-competition')}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.competNoEventIcon, { backgroundColor: colors.textMuted + '20' }]}>
-                  <Trophy size={20} color={colors.textMuted} strokeWidth={2} />
-                </View>
-                <View style={styles.competNoEventContent}>
-                  <Text style={[styles.competNoEventTitle, { color: colors.textPrimary }]}>
-                    Aucune compétition prévue
-                  </Text>
-                  <Text style={[styles.competNoEventDesc, { color: colors.textMuted }]}>
-                    Ajoute un événement pour activer le compte à rebours
-                  </Text>
-                </View>
-                <ChevronRight size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            ) : null}
-
-            {isCompetitorMode && (
-            <View style={styles.modeCompetActions}>
-              <TouchableOpacity
-                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-                onPress={() => router.push('/cut-mode')}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.modeCompetBtnIcon, { backgroundColor: '#EF444420' }]}>
-                  <Scale size={24} color="#EF4444" strokeWidth={2} />
-                </View>
-                <View style={styles.modeCompetBtnContent}>
-                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Mode Cut</Text>
-                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Gestion du poids</Text>
-                </View>
-                <ChevronRight size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-                onPress={() => router.push('/competitions')}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.modeCompetBtnIcon, { backgroundColor: colors.accent + '20' }]}>
-                  <Trophy size={24} color={colors.accent} strokeWidth={2} />
-                </View>
-                <View style={styles.modeCompetBtnContent}>
-                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Compétitions</Text>
-                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Tes événements à venir</Text>
-                </View>
-                <ChevronRight size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modeCompetBtn, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-                onPress={() => router.push('/palmares')}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.modeCompetBtnIcon, { backgroundColor: colors.gold + '20' }]}>
-                  <Medal size={24} color={colors.gold} strokeWidth={2} />
-                </View>
-                <View style={styles.modeCompetBtnContent}>
-                  <Text style={[styles.modeCompetBtnLabel, { color: colors.textPrimary }]}>Palmarès</Text>
-                  <Text style={[styles.modeCompetBtnDesc, { color: colors.textMuted }]}>Tes victoires et médailles</Text>
-                </View>
-                <ChevronRight size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-            )}
-          </View>
-        </AnimatedCard>
-        )}
-
-        {/* Bouton personnaliser l'accueil */}
-        <TouchableOpacity
-          style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/customize-home');
-          }}
-          activeOpacity={0.7}
-        >
-          <Palette size={20} color={colors.accent} strokeWidth={2} />
-          <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
-            Personnaliser l'Accueil
-          </Text>
-          <ChevronRight size={20} color={colors.textMuted} />
-        </TouchableOpacity>
-
-        <View style={{ height: 120 }} />
+            <View style={{ height: 120 }} />
           </>
         )}
 
@@ -1165,17 +981,17 @@ export default function HomeScreen() {
               sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
               sleepDebt={sleepStats?.sleepDebtHours || 0}
               sleepGoal={sleepGoal / 60}
-              steps={2450}
-              stepsGoal={5000}
-              calories={180}
-              caloriesGoal={300}
+              steps={steps}
+              stepsGoal={stepsGoal}
+              calories={0}
+              caloriesGoal={0}
               weekWeightChange={
                 weightHistory.length >= 7
                   ? (weightHistory[0]?.weight || 0) - (weightHistory[6]?.weight || 0)
                   : 0
               }
-              weekHydrationRate={85}
-              weekAvgSleep={sleepStats?.avgSleepDuration ? sleepStats.avgSleepDuration / 60 : 0}
+              weekHydrationRate={0}
+              weekAvgSleep={sleepStats?.averageDuration ? sleepStats.averageDuration / 60 : 0}
             />
 
             {/* Bouton personnaliser l'accueil */}
@@ -1224,10 +1040,8 @@ const styles = StyleSheet.create({
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
   avatarBtn: {
-    overflow: 'visible',
+    width: 70,
     height: 70,
-    justifyContent: 'flex-start',
-    marginTop: -15,
   },
   avatarContainer: {
     height: 70,
@@ -1431,11 +1245,13 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, alignItems: 'center', padding: 6, borderRadius: 10 },
   statValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
   statLabel: { fontSize: 7, fontWeight: '600' },
-  statsRowCompact: { flexDirection: 'row', gap: 6, marginBottom: 8, marginTop: 4 },
-  statCardCompact: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 8, borderRadius: 8, gap: 4 },
+  statsRowCompact: { flexDirection: 'row', gap: 5, marginBottom: 8, marginTop: 4 },
+  statCardCompact: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 3 },
+  statCardCompactVertical: { flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 6, borderRadius: 8, gap: 2, minHeight: 60 },
   statTextContainer: { flexDirection: 'column', alignItems: 'flex-start' },
-  statValueCompact: { fontSize: 20, fontWeight: '900', marginTop: 0 },
-  statLabelCompact: { fontSize: 10, fontWeight: '600' },
+  statValueCompact: { fontSize: 18, fontWeight: '900', marginTop: 0 },
+  statValueCompactVertical: { fontSize: 16, fontWeight: '800', marginTop: 0 },
+  statLabelCompact: { fontSize: 8, fontWeight: '600' },
 
   // Battery + Tools - UNE SEULE LIGNE DE 4 CARTES
   batteryToolsRowSingle: {
@@ -1940,5 +1756,131 @@ const styles = StyleSheet.create({
   competAddText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+
+  // 3 petits carrés pour Mode Cut/Palmarès/Compétitions
+  actionsRow3: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+  actionBtn3: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 5,
+    minHeight: 105,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionLabel3: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+  },
+  actionSubLabel3: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -1,
+    width: '100%',
+  },
+
+  // Mini Switch pour le toggle Mode Compét
+  miniSwitch: {
+    width: 28,
+    height: 16,
+    borderRadius: 8,
+    padding: 2,
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  miniSwitchThumb: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+
+  // Carnet d'Entraînement
+  trainingJournalCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  trainingJournalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  trainingJournalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainingJournalTitleContainer: {
+    flex: 1,
+    gap: 2,
+  },
+  trainingJournalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  trainingJournalSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  trainingJournalStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trainingJournalStat: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trainingJournalStatIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainingJournalStatInfo: {
+    gap: 2,
+  },
+  trainingJournalStatValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  trainingJournalStatLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  trainingJournalDivider: {
+    width: 1,
+    height: 30,
+    marginHorizontal: 8,
   },
 });
