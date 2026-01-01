@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -87,9 +88,7 @@ export default function IdeasScreen() {
     const body = encodeURIComponent(`Catégorie: ${categoryLabel}\n\n${ideaText}\n\n---\nEnvoyé depuis l'app Yoroi`);
     const mailto = `mailto:yoroiapp@hotmail.com?subject=${subject}&body=${body}`;
 
-    Linking.openURL(mailto).catch(() => {
-      Alert.alert('Erreur', 'Impossible d\'ouvrir l\'app de mail');
-    });
+    safeOpenURL(mailto);
   };
 
   const sendByInstagram = () => {
@@ -98,9 +97,9 @@ export default function IdeasScreen() {
 
     Linking.canOpenURL(instagramUrl).then(supported => {
       if (supported) {
-        Linking.openURL(instagramUrl);
+        safeOpenURL(instagramUrl);
       } else {
-        Linking.openURL(webUrl);
+        safeOpenURL(webUrl);
       }
     }).catch(() => {
       Alert.alert('Erreur', 'Impossible d\'ouvrir Instagram');

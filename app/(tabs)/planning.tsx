@@ -288,7 +288,7 @@ export default function PlanningScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      console.log('[PLANNING] Chargement des donnees...');
+      if (__DEV__) console.log('[PLANNING] Chargement des donnees...');
 
       // Charger les donnees de base
       const [trainingsData, clubsData, competitionsData] = await Promise.all([
@@ -305,10 +305,10 @@ export default function PlanningScreen() {
         console.warn('[PLANNING] Erreur chargement objectifs (ignoree):', goalsError);
       }
 
-      console.log('[PLANNING] Trainings charges:', trainingsData.length);
-      console.log('[PLANNING] Clubs charges:', clubsData.length, '-', clubsData.map((c: Club) => c.name).join(', '));
-      console.log('[PLANNING] Competitions chargees:', competitionsData.length);
-      console.log('[PLANNING] Objectifs charges:', goalsData.length);
+      if (__DEV__) console.log('[PLANNING] Trainings charges:', trainingsData.length);
+      if (__DEV__) console.log('[PLANNING] Clubs charges:', clubsData.length, '-', clubsData.map((c: Club) => c.name).join(', '));
+      if (__DEV__) console.log('[PLANNING] Competitions chargees:', competitionsData.length);
+      if (__DEV__) console.log('[PLANNING] Objectifs charges:', goalsData.length);
       setWorkouts(trainingsData);
       setClubs(clubsData);
       setCompetitions(competitionsData);
@@ -504,27 +504,27 @@ export default function PlanningScreen() {
   // Handler: sauvegarder une nouvelle seance
   const handleSaveSession = async (session: Omit<Training, 'id' | 'created_at'>) => {
     try {
-      console.log('💾 Ajout de la séance...', session);
+      if (__DEV__) console.log('💾 Ajout de la séance...', session);
       await addTraining(session);
-      console.log('✅ Séance ajoutée en DB');
+      if (__DEV__) console.log('✅ Séance ajoutée en DB');
 
       // Petit délai pour s'assurer que la DB est à jour
       await new Promise(resolve => setTimeout(resolve, 300));
 
       await loadData();
-      console.log('✅ Données rechargées');
-      console.log('📊 Nombre de workouts après reload:', workouts.length);
+      if (__DEV__) console.log('✅ Données rechargées');
+      if (__DEV__) console.log('📊 Nombre de workouts après reload:', workouts.length);
 
       // Incrémenter le trigger pour rafraîchir le TimetableView
       setRefreshTrigger(prev => {
         const newVal = prev + 1;
-        console.log('✅ Refresh trigger incrémenté:', newVal);
+        if (__DEV__) console.log('✅ Refresh trigger incrémenté:', newVal);
         return newVal;
       });
 
       // Fermer le modal
       setShowAddModal(false);
-      console.log('✅ Modal fermé');
+      if (__DEV__) console.log('✅ Modal fermé');
 
       // TASK 4: Trigger Victory Modal after saving
       // Map sport to category type
@@ -608,17 +608,17 @@ export default function PlanningScreen() {
   // Handler: Ajouter une séance depuis la vue emploi du temps
   const handleAddSessionFromProgramme = (dayId: string, timeSlot?: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    console.log('🔥 handleAddSessionFromProgramme appelé', { dayId, timeSlot });
-    console.log('🔥 Nombre de clubs:', clubs.length);
-    console.log('🔥 Liste clubs:', clubs.map(c => c.name).join(', '));
+    if (__DEV__) console.log('🔥 handleAddSessionFromProgramme appelé', { dayId, timeSlot });
+    if (__DEV__) console.log('🔥 Nombre de clubs:', clubs.length);
+    if (__DEV__) console.log('🔥 Liste clubs:', clubs.map(c => c.name).join(', '));
     // Calculer la prochaine date pour ce jour de la semaine
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
     const nextDate = getNextDateForDayOfWeek(dayIndex);
     setSelectedDate(nextDate);
-    console.log('🔥 Date sélectionnée:', nextDate);
+    if (__DEV__) console.log('🔥 Date sélectionnée:', nextDate);
     // TODO: Pré-remplir l'heure selon le timeSlot (morning, afternoon, evening)
     setShowAddModal(true);
-    console.log('🔥 Modal ouvert');
+    if (__DEV__) console.log('🔥 Modal ouvert');
   };
 
   // Gérer le clic sur un onglet

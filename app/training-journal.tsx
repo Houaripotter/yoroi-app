@@ -18,9 +18,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  Linking,
   Animated,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -498,9 +498,7 @@ export default function TrainingJournalScreen() {
   const openVideoUrl = (url: string) => {
     if (!url) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Erreur', 'Impossible d\'ouvrir ce lien');
-    });
+    safeOpenURL(url);
   };
 
   const handleAddEntry = async () => {

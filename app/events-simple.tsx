@@ -13,10 +13,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Linking,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { MapPin, ExternalLink, Search, ArrowLeft, Plus, Check } from 'lucide-react-native';
@@ -178,7 +178,7 @@ export default function EventsSimpleScreen() {
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL(link);
+    safeOpenURL(link);
   }, []);
 
   // PERFORMANCE: getItemLayout for fixed height items

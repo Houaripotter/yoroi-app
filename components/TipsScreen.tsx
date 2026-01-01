@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { X, BookOpen, Heart, Moon, Footprints, ChevronRight, Sparkles, ExternalLink, Droplet } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Linking } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 
 interface TipsScreenProps {
   visible: boolean;
@@ -211,7 +211,7 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
                     style={styles.sourceContainer}
                     onPress={() => {
                       if (selectedTip.content.sourceUrl) {
-                        Linking.openURL(selectedTip.content.sourceUrl);
+                        safeOpenURL(selectedTip.content.sourceUrl);
                       }
                     }}
                     activeOpacity={0.7}

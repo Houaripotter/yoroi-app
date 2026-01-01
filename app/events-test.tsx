@@ -3,7 +3,8 @@
 // ============================================
 
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import eventsData from '@/src/data/events.json';
 
 export default function EventsTestScreen() {
@@ -18,7 +19,7 @@ export default function EventsTestScreen() {
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => Linking.openURL(item.registration_link)}
+            onPress={() => safeOpenURL(item.registration_link)}
             style={{
               padding: 16,
               marginBottom: 12,

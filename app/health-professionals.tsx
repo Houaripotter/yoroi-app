@@ -11,11 +11,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Linking,
   Alert,
   Modal,
   Platform,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -43,17 +43,17 @@ export default function HealthProfessionalsScreen() {
 
   const openInstagram = (handle: string) => {
     const cleanHandle = handle.replace('@', '');
-    Linking.openURL(`https://instagram.com/${cleanHandle}`);
+    safeOpenURL(`https://instagram.com/${cleanHandle}`);
   };
 
   const openEmail = () => {
-    const email = 'partenaires@yoroi-app.com';
+    const email = 'yoroiapp@hotmail.com';
     const subject = 'Partenariat Professionnel de Santé YOROI';
-    Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
+    safeOpenURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
   };
 
   const openWebsite = (url: string) => {
-    Linking.openURL(url);
+    safeOpenURL(url);
   };
 
   return (
@@ -313,7 +313,7 @@ export default function HealthProfessionalsScreen() {
                       ios: `maps://maps.apple.com/?q=${encodedAddress}`,
                       android: `geo:0,0?q=${encodedAddress}`,
                     });
-                    if (url) Linking.openURL(url);
+                    if (url) safeOpenURL(url);
                   }}
                   activeOpacity={0.7}
                 >

@@ -5,6 +5,7 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as Haptics from 'expo-haptics';
 import logger from '@/lib/security/logger';
+import { safeOpenURL } from '@/lib/security/validators';
 
 // ============================================
 // SOCIAL CARD HELPERS
@@ -95,7 +96,7 @@ export const captureAndSave = async (
             text: 'Ouvrir Réglages',
             onPress: () => {
               if (Platform.OS === 'ios') {
-                Linking.openURL('app-settings:');
+                safeOpenURL('app-settings:');
               } else {
                 Linking.openSettings();
               }

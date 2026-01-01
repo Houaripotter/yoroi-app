@@ -471,6 +471,93 @@ export function validateURL(url: any): ValidationResult {
 }
 
 /**
+ * ✅ Schémas d'URL autorisés pour Linking.openURL
+ */
+const ALLOWED_URL_SCHEMES = [
+  'http:',
+  'https:',
+  'mailto:',
+  'tel:',
+  'sms:',
+  'x-apple-health:',
+  'app-settings:',
+  'market:',
+  'itms-apps:',
+  'maps:',
+  'geo:',
+  'instagram:',
+  'twitter:',
+  'fb:',
+];
+
+/**
+ * ✅ Valide une URL pour Linking.openURL avec des schémas autorisés
+ */
+export function validateLinkingURL(url: any): ValidationResult {
+  if (typeof url !== 'string' || url.trim().length === 0) {
+    return { valid: false, error: 'L\'URL est invalide' };
+  }
+
+  const trimmedUrl = url.trim();
+
+  // Vérifier les patterns dangereux
+  if (/javascript:/i.test(trimmedUrl) || /data:/i.test(trimmedUrl)) {
+    logger.warn('🚨 URL potentiellement dangereuse bloquée:', trimmedUrl);
+    return { valid: false, error: 'URL dangereuse détectée' };
+  }
+
+  // Extraire le schéma
+  const schemeMatch = trimmedUrl.match(/^([a-zA-Z][a-zA-Z0-9+.-]*:)/);
+  if (!schemeMatch) {
+    return { valid: false, error: 'Schéma d\'URL manquant' };
+  }
+
+  const scheme = schemeMatch[1].toLowerCase();
+
+  // Vérifier si le schéma est autorisé
+  if (!ALLOWED_URL_SCHEMES.includes(scheme)) {
+    logger.warn('🚨 Schéma d\'URL non autorisé:', scheme);
+    return { valid: false, error: `Schéma d\'URL non autorisé: ${scheme}` };
+  }
+
+  return { valid: true, sanitized: trimmedUrl };
+}
+
+/**
+ * ✅ Ouvre une URL de manière sécurisée via Linking
+ */
+import { Linking, Alert } from 'react-native';
+
+export async function safeOpenURL(url: string): Promise<boolean> {
+  const validation = validateLinkingURL(url);
+
+  if (!validation.valid) {
+    if (__DEV__) {
+      console.warn('🚨 safeOpenURL - URL rejetée:', url, validation.error);
+    }
+    return false;
+  }
+
+  try {
+    const canOpen = await Linking.canOpenURL(validation.sanitized);
+    if (canOpen) {
+      await Linking.openURL(validation.sanitized);
+      return true;
+    } else {
+      if (__DEV__) {
+        console.warn('🚨 safeOpenURL - Impossible d\'ouvrir:', url);
+      }
+      return false;
+    }
+  } catch (error) {
+    if (__DEV__) {
+      console.error('🚨 safeOpenURL - Erreur:', error);
+    }
+    return false;
+  }
+}
+
+/**
  * ✅ Ensemble de validateurs
  */
 export const validators = {
@@ -490,6 +577,8 @@ export const validators = {
   measurement: validateMeasurement,
   username: validateUsername,
   url: validateURL,
+  linkingUrl: validateLinkingURL,
+  safeOpenURL,
 };
 
 export default validators;

@@ -631,10 +631,17 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
        ORDER BY t.date DESC, t.start_time ASC`;
 
   const results = await database.getAllAsync<Training & { exercises?: string }>(query);
-  return results.map(r => ({
-    ...r,
-    exercises: r.exercises ? JSON.parse(r.exercises as string) : undefined
-  }));
+  return results.map(r => {
+    let exercises;
+    if (r.exercises) {
+      try {
+        exercises = JSON.parse(r.exercises as string);
+      } catch {
+        exercises = undefined;
+      }
+    }
+    return { ...r, exercises };
+  });
 };
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
@@ -647,10 +654,17 @@ export const getTrainingsByMonth = async (year: number, month: number): Promise<
      ORDER BY t.date ASC`,
     [year.toString(), month.toString().padStart(2, '0')]
   );
-  return results.map(r => ({
-    ...r,
-    exercises: r.exercises ? JSON.parse(r.exercises as string) : undefined
-  }));
+  return results.map(r => {
+    let exercises;
+    if (r.exercises) {
+      try {
+        exercises = JSON.parse(r.exercises as string);
+      } catch {
+        exercises = undefined;
+      }
+    }
+    return { ...r, exercises };
+  });
 };
 
 export const getTrainingStats = async (): Promise<{ sport: string; count: number; club_name?: string; club_color?: string; club_logo?: string; club_id?: number }[]> => {
@@ -1202,7 +1216,12 @@ export const exportAllData = async () => {
 
 export const importData = async (jsonString: string): Promise<void> => {
   const database = await openDatabase();
-  const data = JSON.parse(jsonString);
+  let data;
+  try {
+    data = JSON.parse(jsonString);
+  } catch {
+    throw new Error('Format JSON invalide');
+  }
 
   if (!data.version || !data.data) {
     throw new Error('Format de fichier invalide');

@@ -9,11 +9,11 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Linking,
   Image,
   Modal,
   Platform,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, ExternalLink, Mail, MapPin, Star, X, Phone, Globe, Facebook as FacebookIcon, Swords, Trophy, Award, Zap, Dumbbell, User } from 'lucide-react-native';
@@ -52,31 +52,31 @@ export default function PartnersScreen() {
 
   const openInstagram = (handle: string) => {
     const cleanHandle = handle.replace('@', '');
-    Linking.openURL(`https://instagram.com/${cleanHandle}`);
+    safeOpenURL(`https://instagram.com/${cleanHandle}`);
   };
 
   const openYoutube = (channelName: string) => {
-    Linking.openURL(`https://youtube.com/@${channelName}`);
+    safeOpenURL(`https://youtube.com/@${channelName}`);
   };
 
   const openPhone = (phoneNumber: string) => {
     const cleanNumber = phoneNumber.replace(/\s/g, '').replace(/\./g, '');
-    Linking.openURL(`tel:${cleanNumber}`);
+    safeOpenURL(`tel:${cleanNumber}`);
   };
 
   const openEmail = (email?: string) => {
-    const emailAddress = email || 'partenaires@yoroi-app.com';
+    const emailAddress = email || 'yoroiapp@hotmail.com';
     const subject = email ? 'Contact via YOROI' : 'Partenariat YOROI';
-    Linking.openURL(`mailto:${emailAddress}?subject=${encodeURIComponent(subject)}`);
+    safeOpenURL(`mailto:${emailAddress}?subject=${encodeURIComponent(subject)}`);
   };
 
   const openWebsite = (url: string) => {
-    Linking.openURL(url);
+    safeOpenURL(url);
   };
 
   const openFacebook = (handle: string) => {
     const cleanHandle = handle.replace('@', '').replace('/', '');
-    Linking.openURL(`https://facebook.com/${cleanHandle}`);
+    safeOpenURL(`https://facebook.com/${cleanHandle}`);
   };
 
   return (
@@ -440,7 +440,7 @@ export default function PartnersScreen() {
                       ios: `maps://maps.apple.com/?q=${encodedAddress}`,
                       android: `geo:0,0?q=${encodedAddress}`,
                     });
-                    if (url) Linking.openURL(url);
+                    if (url) safeOpenURL(url);
                   }}
                   activeOpacity={0.7}
                 >

@@ -88,7 +88,7 @@ export const initProgramsTables = () => {
       ON program_items(item_id);
     `);
 
-    console.log('[PROGRAMS] Tables initialisées avec succès');
+    if (__DEV__) console.log('[PROGRAMS] Tables initialisées avec succès');
   } catch (error) {
     console.error('[PROGRAMS] Erreur initialisation tables:', error);
   }
@@ -111,7 +111,7 @@ export const createProgram = (
        VALUES (?, ?, ?, ?, ?, ?)`,
       [name, description || null, sport || null, targetDurationWeeks || null, now, now]
     );
-    console.log('[PROGRAMS] Programme créé:', result.lastInsertRowId);
+    if (__DEV__) console.log('[PROGRAMS] Programme créé:', result.lastInsertRowId);
     return result.lastInsertRowId;
   } catch (error) {
     console.error('[PROGRAMS] Erreur création programme:', error);
@@ -159,7 +159,7 @@ export const updateProgram = (
        WHERE id = ?`,
       [name, description || null, sport || null, targetDurationWeeks || null, now, id]
     );
-    console.log('[PROGRAMS] Programme mis à jour:', id);
+    if (__DEV__) console.log('[PROGRAMS] Programme mis à jour:', id);
   } catch (error) {
     console.error('[PROGRAMS] Erreur mise à jour programme:', error);
     throw error;
@@ -170,7 +170,7 @@ export const deleteProgram = (id: number): void => {
   try {
     // Les program_items seront supprimés automatiquement grâce à ON DELETE CASCADE
     db.runSync('DELETE FROM training_programs WHERE id = ?', [id]);
-    console.log('[PROGRAMS] Programme supprimé:', id);
+    if (__DEV__) console.log('[PROGRAMS] Programme supprimé:', id);
   } catch (error) {
     console.error('[PROGRAMS] Erreur suppression programme:', error);
     throw error;
@@ -197,7 +197,7 @@ export const addItemToProgram = (programId: number, itemId: number): void => {
       [programId, itemId, nextOrder, now]
     );
 
-    console.log('[PROGRAMS] Objectif ajouté au programme:', { programId, itemId, nextOrder });
+    if (__DEV__) console.log('[PROGRAMS] Objectif ajouté au programme:', { programId, itemId, nextOrder });
   } catch (error) {
     console.error('[PROGRAMS] Erreur ajout objectif au programme:', error);
     throw error;
@@ -210,7 +210,7 @@ export const removeItemFromProgram = (programId: number, itemId: number): void =
       'DELETE FROM program_items WHERE program_id = ? AND item_id = ?',
       [programId, itemId]
     );
-    console.log('[PROGRAMS] Objectif retiré du programme:', { programId, itemId });
+    if (__DEV__) console.log('[PROGRAMS] Objectif retiré du programme:', { programId, itemId });
   } catch (error) {
     console.error('[PROGRAMS] Erreur retrait objectif du programme:', error);
     throw error;
@@ -227,7 +227,7 @@ export const reorderProgramItems = (programId: number, itemOrders: { itemId: num
         );
       });
     });
-    console.log('[PROGRAMS] Ordre des objectifs mis à jour');
+    if (__DEV__) console.log('[PROGRAMS] Ordre des objectifs mis à jour');
   } catch (error) {
     console.error('[PROGRAMS] Erreur réorganisation objectifs:', error);
     throw error;

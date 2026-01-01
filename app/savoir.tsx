@@ -6,10 +6,10 @@ import {
   View,
   Platform,
   TouchableOpacity,
-  Linking,
   LayoutAnimation,
   UIManager,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -695,18 +695,9 @@ export default function SavoirScreen() {
   };
 
   const handleSourcePress = async (url: string) => {
-    try {
-      // Clean URL from markdown format if present
-      const cleanUrl = url.replace(/\[([^\]]+)\]\(([^)]+)\)/, '$2');
-      const canOpen = await Linking.canOpenURL(cleanUrl);
-      if (canOpen) {
-        await Linking.openURL(cleanUrl);
-      } else {
-        logger.error('Impossible d\'ouvrir l\'URL:', cleanUrl);
-      }
-    } catch (error) {
-      logger.error('Erreur lors de l\'ouverture de l\'URL:', error);
-    }
+    // Clean URL from markdown format if present
+    const cleanUrl = url.replace(/\[([^\]]+)\]\(([^)]+)\)/, '$2');
+    await safeOpenURL(cleanUrl);
   };
 
   return (

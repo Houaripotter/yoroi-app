@@ -10,8 +10,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, ExternalLink, BookOpen, GraduationCap } from 'lucide-react-native';
@@ -150,7 +150,7 @@ export default function ScientificSourcesScreen() {
               <TouchableOpacity
                 key={itemIndex}
                 style={[styles.sourceCard, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => Linking.openURL(item.url)}
+                onPress={() => safeOpenURL(item.url)}
                 activeOpacity={0.7}
               >
                 <View style={styles.sourceContent}>

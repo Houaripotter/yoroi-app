@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  Linking,
   Image,
   Platform,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { X, Phone, MapPin, Globe, Instagram, ExternalLink, Award, Users, Sword, Heart } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -108,7 +108,7 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
   const [selectedPartner, setSelectedPartner] = useState<PartnerData | null>(null);
 
   const handleCall = (phone: string) => {
-    Linking.openURL(`tel:${phone}`);
+    safeOpenURL(`tel:${phone}`);
   };
 
   const handleGPS = (address: string) => {
@@ -117,15 +117,15 @@ export function PartnersScreen({ visible, onClose }: PartnersScreenProps) {
       ios: `maps://maps.apple.com/?q=${encodedAddress}`,
       android: `geo:0,0?q=${encodedAddress}`,
     });
-    if (url) Linking.openURL(url);
+    if (url) safeOpenURL(url);
   };
 
   const handleWeb = (url: string) => {
-    Linking.openURL(`https://${url}`);
+    safeOpenURL(`https://${url}`);
   };
 
   const handleInstagram = (username: string) => {
-    Linking.openURL(`https://instagram.com/${username}`);
+    safeOpenURL(`https://instagram.com/${username}`);
   };
 
   const handlePartnerPress = (partner: PartnerData) => {

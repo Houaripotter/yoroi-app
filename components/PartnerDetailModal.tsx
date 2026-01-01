@@ -14,8 +14,8 @@ import {
   Easing,
   Dimensions,
   Image,
-  Linking,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { 
   X, 
   MapPin, 
@@ -205,11 +205,7 @@ export const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({
       url = `https://youtube.com/@${link.url.replace('@', '')}`;
     }
     
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      logger.error('Cannot open URL:', url);
-    }
+    await safeOpenURL(url);
   };
 
   if (!partner) return null;

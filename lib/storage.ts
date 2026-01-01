@@ -24,7 +24,7 @@ const isFileSystemAvailable = (): boolean => {
  */
 const getDocumentDirectory = (): string | null => {
   if (Platform.OS === 'web') {
-    console.log('ℹ️ FileSystem non disponible sur le web');
+    if (__DEV__) console.log('ℹ️ FileSystem non disponible sur le web');
     return null;
   }
   
@@ -330,7 +330,7 @@ const ensurePhotosDirectoryExists = async (): Promise<string | null> => {
   const docDir = getDocumentDirectory();
   
   if (!docDir) {
-    console.log('ℹ️ Mode web/simulateur : photos stockées en base64');
+    if (__DEV__) console.log('ℹ️ Mode web/simulateur : photos stockées en base64');
     return null; // On utilisera le stockage base64
   }
 
@@ -408,7 +408,7 @@ export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'crea
   measurements.push(newMeasurement);
   await saveData(STORAGE_KEYS.MEASUREMENTS, measurements);
 
-  console.log('✅ Mesure ajoutée localement:', newMeasurement.id);
+  if (__DEV__) console.log('✅ Mesure ajoutée localement:', newMeasurement.id);
   return newMeasurement;
 };
 
@@ -473,7 +473,7 @@ export const addWorkout = async (workout: Omit<Workout, 'id' | 'created_at'>): P
   workouts.push(newWorkout);
   await saveData(STORAGE_KEYS.WORKOUTS, workouts);
 
-  console.log('✅ Entraînement ajouté localement:', newWorkout.id);
+  if (__DEV__) console.log('✅ Entraînement ajouté localement:', newWorkout.id);
   return newWorkout;
 };
 
@@ -514,22 +514,22 @@ export const savePhotoToStorage = async (
         const destinationUri = `${photosDir}${filename}`;
         await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
         finalUri = destinationUri;
-        console.log('✅ Photo copiée vers:', destinationUri);
+        if (__DEV__) console.log('✅ Photo copiée vers:', destinationUri);
       } catch (copyError) {
         console.warn('⚠️ Impossible de copier, utilisation de l\'URI original:', copyError);
         // Fallback : utiliser l'URI d'origine
       }
     } else {
       // Mode web/simulateur : essayer de lire en base64
-      console.log('ℹ️ Mode sans FileSystem : stockage URI direct');
+      if (__DEV__) console.log('ℹ️ Mode sans FileSystem : stockage URI direct');
       if (Platform.OS !== 'web' && FileSystem.EncodingType) {
         try {
           base64Data = await FileSystem.readAsStringAsync(sourceUri, {
             encoding: FileSystem.EncodingType.Base64,
           });
-          console.log('✅ Photo convertie en base64');
+          if (__DEV__) console.log('✅ Photo convertie en base64');
         } catch (b64Error) {
-          console.log('ℹ️ Conversion base64 non disponible, utilisation URI direct');
+          if (__DEV__) console.log('ℹ️ Conversion base64 non disponible, utilisation URI direct');
         }
       }
     }
@@ -548,7 +548,7 @@ export const savePhotoToStorage = async (
     photos.push(newPhoto);
     await saveData(STORAGE_KEYS.PHOTOS, photos);
 
-    console.log('✅ Photo sauvegardée avec ID:', id);
+    if (__DEV__) console.log('✅ Photo sauvegardée avec ID:', id);
     return newPhoto;
   } catch (error: any) {
     console.error('❌ Erreur sauvegarde photo:', error?.message || error);
@@ -567,7 +567,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
   const photoToDelete = photos.find(p => p.id === id);
 
   if (!photoToDelete) {
-    console.log('ℹ️ Photo non trouvée pour suppression:', id);
+    if (__DEV__) console.log('ℹ️ Photo non trouvée pour suppression:', id);
     return false;
   }
 
@@ -577,7 +577,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
       const fileInfo = await FileSystem.getInfoAsync(photoToDelete.file_uri);
       if (fileInfo.exists) {
         await FileSystem.deleteAsync(photoToDelete.file_uri);
-        console.log('✅ Fichier photo supprimé:', photoToDelete.file_uri);
+        if (__DEV__) console.log('✅ Fichier photo supprimé:', photoToDelete.file_uri);
       }
     } catch (error) {
       console.warn('⚠️ Erreur suppression fichier photo:', error);
@@ -586,7 +586,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
 
   const filteredPhotos = photos.filter(p => p.id !== id);
   await saveData(STORAGE_KEYS.PHOTOS, filteredPhotos);
-  console.log('✅ Photo supprimée de AsyncStorage:', id);
+  if (__DEV__) console.log('✅ Photo supprimée de AsyncStorage:', id);
   return true;
 };
 
@@ -639,7 +639,7 @@ export const saveUserSettings = async (settings: Partial<UserSettings>): Promise
     const currentSettings = await getUserSettings();
     const newSettings = { ...currentSettings, ...settings };
     await AsyncStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(newSettings));
-    console.log('✅ Paramètres sauvegardés');
+    if (__DEV__) console.log('✅ Paramètres sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde paramètres:', error);
@@ -692,7 +692,7 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
 export const saveUserClubs = async (clubs: UserClub[]): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_CLUBS, JSON.stringify(clubs));
-    console.log('✅ Clubs sauvegardés');
+    if (__DEV__) console.log('✅ Clubs sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde clubs:', error);
@@ -776,7 +776,7 @@ export const getUserGear = async (): Promise<UserGear[]> => {
 export const saveUserGear = async (gear: UserGear[]): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_GEAR, JSON.stringify(gear));
-    console.log('✅ Équipements sauvegardés');
+    if (__DEV__) console.log('✅ Équipements sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde équipements:', error);
@@ -842,7 +842,7 @@ export const getUserBodyStatus = async (): Promise<BodyStatusData> => {
 export const saveUserBodyStatus = async (status: BodyStatusData): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, JSON.stringify(status));
-    console.log('✅ Statut corporel sauvegardé');
+    if (__DEV__) console.log('✅ Statut corporel sauvegardé');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde statut corporel:', error);
@@ -878,7 +878,7 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
   badges.push(newBadge);
   await saveData(STORAGE_KEYS.USER_BADGES, badges);
 
-  console.log('🏆 Badge débloqué:', badgeId);
+  if (__DEV__) console.log('🏆 Badge débloqué:', badgeId);
   return true;
 };
 
@@ -936,7 +936,6 @@ export const exportData = async (): Promise<boolean> => {
         `Données exportées :\n- ${stats.measurements} mesures\n- ${stats.workouts} entraînements\n- ${stats.photos} photos\n\nLe système de fichiers n'est pas disponible sur ce simulateur.`,
         [{ text: 'OK' }]
       );
-      console.log('📦 Données de backup:', jsonContent.substring(0, 500) + '...');
       return true;
     }
 
@@ -973,7 +972,7 @@ export const importData = async (): Promise<boolean> => {
     });
 
     if (result.canceled) {
-      console.log('Importation annulée par l\'utilisateur.');
+      if (__DEV__) console.log('Importation annulée par l\'utilisateur.');
       return false;
     }
 
@@ -1024,7 +1023,7 @@ export const importData = async (): Promise<boolean> => {
     await saveData(STORAGE_KEYS.USER_BADGES, backup.badges || []);
 
     Alert.alert('Succès', 'Données restaurées avec succès !');
-    console.log('📥 Données importées depuis le backup.');
+    if (__DEV__) console.log('📥 Données importées depuis le backup.');
     return true;
   } catch (error: any) {
     console.error('❌ Erreur importation:', error);
@@ -1042,7 +1041,7 @@ export const resetAllData = async (): Promise<boolean> => {
     try {
       const { resetDatabase } = await import('./database');
       await resetDatabase();
-      console.log('✅ Base SQLite réinitialisée');
+      if (__DEV__) console.log('✅ Base SQLite réinitialisée');
     } catch (dbError) {
       console.warn('⚠️ Erreur reset SQLite (peut être normal si non initialisé):', dbError);
     }
@@ -1086,8 +1085,8 @@ export const resetAllData = async (): Promise<boolean> => {
       await AsyncStorage.multiRemove(yoroiKeys);
     }
 
-    console.log('✅ Toutes les données supprimées:', yoroiKeys.length, 'clés');
-    console.log('🔑 Clés supprimées:', yoroiKeys);
+    if (__DEV__) console.log('✅ Toutes les données supprimées:', yoroiKeys.length, 'clés');
+    if (__DEV__) console.log('🔑 Clés supprimées:', yoroiKeys);
 
     return true;
   } catch (error) {
@@ -1098,13 +1097,16 @@ export const resetAllData = async (): Promise<boolean> => {
 
 // Fonction de debug pour voir toutes les données restantes
 export const debugShowAllData = async (): Promise<void> => {
+  // Fonction désactivée en production pour des raisons de sécurité
+  if (!__DEV__) return;
+
   try {
     const allKeys = await AsyncStorage.getAllKeys();
-    console.log('📦 Clés restantes:', allKeys.length);
+    if (__DEV__) console.log('📦 Clés restantes:', allKeys.length);
 
     for (const key of allKeys) {
       const value = await AsyncStorage.getItem(key);
-      console.log(`  ${key}:`, value?.substring(0, 100));
+      if (__DEV__) console.log(`  ${key}:`, value?.substring(0, 100));
     }
   } catch (error) {
     console.error('❌ Erreur debug:', error);
@@ -1183,7 +1185,7 @@ export const saveHydrationSettings = async (settings: Partial<HydrationSettings>
     const currentSettings = await getHydrationSettings();
     const newSettings = { ...currentSettings, ...settings };
     await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, JSON.stringify(newSettings));
-    console.log('✅ Paramètres hydratation sauvegardés');
+    if (__DEV__) console.log('✅ Paramètres hydratation sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde paramètres hydratation:', error);
@@ -1237,7 +1239,7 @@ export const addHydrationEntry = async (amount: number, date?: string): Promise<
 
   entries.push(newEntry);
   await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(entries));
-  console.log('💧 Hydratation ajoutée:', amount, 'ml');
+  if (__DEV__) console.log('💧 Hydratation ajoutée:', amount, 'ml');
   return newEntry;
 };
 

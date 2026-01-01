@@ -85,7 +85,12 @@
       "WebFetch(domain:smoothcomp.com)",
       "Bash(for file in app/settings.tsx \"app/settings 2.tsx\" app/competitor-profile.tsx app/sport-selection.tsx app/weight-category-selection.tsx)",
       "Bash(do echo \"=== $file ===\" grep -n \"backgroundColor: colors.gold\\\\|backgroundColor: colors.accent\" \"$file\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(git -C /Users/houari/Desktop/APP_Houari/yoroi_app log --all --full-history --source --remotes -- .env*)",
+      "Bash(git -C /Users/houari/Desktop/APP_Houari/yoroi_app log --oneline -10)",
+      "Bash(git -C /Users/houari/Desktop/APP_Houari/yoroi_app remote -v)",
+      "Bash(timeout 60 npx expo export:*)",
+      "Bash(node check-json-parse.js:*)"
     ],
     "deny": [],
     "ask": []

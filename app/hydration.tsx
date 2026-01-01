@@ -115,10 +115,14 @@ export default function HydrationScreen() {
       ]);
 
       if (amountStr) {
-        const data = JSON.parse(amountStr);
-        const today = new Date().toDateString();
-        if (data.date === today) {
-          setCurrentAmount(data.amount);
+        try {
+          const data = JSON.parse(amountStr);
+          const today = new Date().toDateString();
+          if (data.date === today) {
+            setCurrentAmount(data.amount);
+          }
+        } catch {
+          // Données corrompues, on ignore
         }
       }
 
@@ -128,7 +132,11 @@ export default function HydrationScreen() {
       }
 
       if (historyStr) {
-        setHistory(JSON.parse(historyStr));
+        try {
+          setHistory(JSON.parse(historyStr));
+        } catch {
+          // Données corrompues, on ignore
+        }
       }
 
       // Charger les paramètres de notifications

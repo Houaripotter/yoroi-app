@@ -111,7 +111,7 @@ export const initTrainingGoalsDB = async () => {
     );
   `);
 
-  console.log('[TrainingGoals] Table initialisee');
+  if (__DEV__) console.log('[TrainingGoals] Table initialisee');
 };
 
 // ============================================

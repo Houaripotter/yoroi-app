@@ -8,8 +8,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { ChevronLeft, Mail } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -21,9 +21,9 @@ export default function NutritionistsScreen() {
   const { colors } = useTheme();
 
   const openEmail = () => {
-    const email = 'partenaires@yoroi-app.com';
+    const email = 'yoroiapp@hotmail.com';
     const subject = 'Partenariat Nutritionniste - YOROI';
-    Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
+    safeOpenURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
   };
 
   return (

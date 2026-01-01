@@ -372,10 +372,10 @@ export default function HomeScreen() {
       // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
       try {
         const readiness = await calculateReadinessScore(streakDays);
-        console.log('🔋 Score Energie calculé:', readiness.score, '- Facteurs:', readiness.factors);
+        if (__DEV__) console.log('🔋 Score Energie calculé:', readiness.score, '- Facteurs:', readiness.factors);
         setReadinessScore(Math.round(readiness.score));
       } catch (error) {
-        console.log('🔋 Erreur calcul readiness, valeur par défaut 50%');
+        if (__DEV__) console.log('🔋 Erreur calcul readiness, valeur par défaut 50%');
         setReadinessScore(50);
       }
     } catch (error) {

@@ -178,7 +178,7 @@ export const getClubsByType = (type: string): Club[] => {
 // CONTACT
 // ============================================
 
-export const PARTNER_EMAIL = 'partenaires@yoroi-app.com';
+export const PARTNER_EMAIL = 'yoroiapp@hotmail.com';
 export const PARTNER_EMAIL_SUBJECT = 'Partenariat YOROI';
 
 export const getPartnerEmailUrl = (): string => {

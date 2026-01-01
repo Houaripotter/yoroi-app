@@ -113,16 +113,16 @@ export const initTrainingJournalDB = () => {
             column === 'competition_ready' ? 'INTEGER DEFAULT 0' :
             'INTEGER'
           }`);
-          console.log(`[TRAINING_JOURNAL] Colonne ${column} ajoutée`);
+          if (__DEV__) console.log(`[TRAINING_JOURNAL] Colonne ${column} ajoutée`);
         } catch (e: any) {
           // La colonne existe déjà, ignorer l'erreur
           if (!e.message?.includes('duplicate column')) {
-            console.log(`[TRAINING_JOURNAL] Colonne ${column} existe déjà`);
+            if (__DEV__) console.log(`[TRAINING_JOURNAL] Colonne ${column} existe déjà`);
           }
         }
       }
     } catch (migrationError) {
-      console.log('[TRAINING_JOURNAL] Migration des colonnes effectuée');
+      if (__DEV__) console.log('[TRAINING_JOURNAL] Migration des colonnes effectuée');
     }
 
     // Table practice_logs
@@ -143,7 +143,7 @@ export const initTrainingJournalDB = () => {
       );
     `);
 
-    console.log('[TRAINING_JOURNAL] Base de données initialisée');
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Base de données initialisée');
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur init DB:', error);
   }
@@ -191,7 +191,7 @@ export const createProgressionItem = (item: Omit<ProgressionItem, 'id' | 'create
         initialProgress,
       ]
     );
-    console.log('[TRAINING_JOURNAL] Item créé:', result.lastInsertRowId);
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Item créé:', result.lastInsertRowId);
     return result.lastInsertRowId;
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur création item:', error);
@@ -212,7 +212,7 @@ export const getProgressionItems = (status?: ProgressionStatus): ProgressionItem
     query += ' ORDER BY priority DESC, created_at DESC';
 
     const items = db.getAllSync(query, params) as ProgressionItem[];
-    console.log(`[TRAINING_JOURNAL] ${items.length} items récupérés (status: ${status || 'tous'})`);
+    if (__DEV__) console.log(`[TRAINING_JOURNAL] ${items.length} items récupérés (status: ${status || 'tous'})`);
     return items;
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur récupération items:', error);
@@ -248,7 +248,7 @@ export const updateProgressionItem = (id: number, updates: Partial<ProgressionIt
     const query = `UPDATE progression_items SET ${fields.join(', ')} WHERE id = ?`;
 
     db.runSync(query, values);
-    console.log('[TRAINING_JOURNAL] Item mis à jour:', id);
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Item mis à jour:', id);
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur mise à jour item:', error);
     throw error;
@@ -258,7 +258,7 @@ export const updateProgressionItem = (id: number, updates: Partial<ProgressionIt
 export const deleteProgressionItem = (id: number) => {
   try {
     db.runSync('DELETE FROM progression_items WHERE id = ?', [id]);
-    console.log('[TRAINING_JOURNAL] Item supprimé:', id);
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Item supprimé:', id);
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur suppression item:', error);
     throw error;
@@ -355,7 +355,7 @@ export const createPracticeLog = (log: Omit<PracticeLog, 'id' | 'created_at'>): 
       updateItemStatus(log.item_id, 'in_progress');
     }
 
-    console.log('[TRAINING_JOURNAL] Log créé:', result.lastInsertRowId);
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Log créé:', result.lastInsertRowId);
     return result.lastInsertRowId;
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur création log:', error);
@@ -404,7 +404,7 @@ export const deletePracticeLog = (id: number) => {
       );
     }
 
-    console.log('[TRAINING_JOURNAL] Log supprimé:', id);
+    if (__DEV__) console.log('[TRAINING_JOURNAL] Log supprimé:', id);
   } catch (error) {
     console.error('[TRAINING_JOURNAL] Erreur suppression log:', error);
     throw error;

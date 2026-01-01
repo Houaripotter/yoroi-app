@@ -643,7 +643,7 @@ export default function MoreScreen() {
   };
 
   const handleContact = () => {
-    Linking.openURL('mailto:contact@yoroi-app.com?subject=Contact%20Yoroi');
+    Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Contact%20Yoroi');
   };
 
   const handleExportPDF = async () => {
@@ -1398,7 +1398,7 @@ export default function MoreScreen() {
                   setUpcomingModalVisible(false);
                   router.push('./settings');
                   // On pourrait aussi ouvrir directement le lien de feedback
-                  // Linking.openURL('mailto:feedback@yoroi.app');
+                  // Linking.openURL('mailto:yoroiapp@hotmail.com');
                 }}
               >
                 <MessageCircle size={18} color="#FFF" />
