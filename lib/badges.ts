@@ -35,9 +35,12 @@ import {
   getAllWorkouts,
   getPhotosFromStorage,
   getUserSettings,
+  getAllHydrationEntries,
+  getHydrationSettings,
   Measurement,
   Workout,
 } from './storage';
+import { getSleepEntries } from './sleepService';
 
 // ============================================
 // TYPES
@@ -796,6 +799,17 @@ export interface BadgeStats {
   measurementsWithDetails: number; // Avec mensurations completes
   completeMeasurements: number; // Tous les champs remplis
 
+  // Sessions multiples
+  hasDoubleSession: boolean; // 2 entraînements en 1 jour
+  hasTripleSession: boolean; // 3 entraînements en 1 jour
+  hasWeekendWarrior: boolean; // Samedi + dimanche même weekend
+
+  // Hydratation
+  hydrationStreak: number; // Jours consécutifs objectif hydratation atteint
+
+  // Sommeil
+  goodSleepNights: number; // Nombre de nuits avec 8h+ de sommeil
+
   // Temps
   daysUsingApp: number;
   isAnniversary: boolean;
@@ -908,6 +922,121 @@ const countCompleteMeasurements = (measurements: Measurement[]): number => {
 };
 
 /**
+ * Vérifier si l'utilisateur a eu 2 ou 3 entraînements en 1 jour
+ */
+const checkMultipleSessions = (workouts: Workout[]): { hasDouble: boolean; hasTriple: boolean } => {
+  // Compter les entraînements par date
+  const workoutsByDate: Record<string, number> = {};
+
+  for (const workout of workouts) {
+    const dateKey = workout.date.split('T')[0];
+    workoutsByDate[dateKey] = (workoutsByDate[dateKey] || 0) + 1;
+  }
+
+  let hasDouble = false;
+  let hasTriple = false;
+
+  for (const count of Object.values(workoutsByDate)) {
+    if (count >= 2) hasDouble = true;
+    if (count >= 3) hasTriple = true;
+  }
+
+  return { hasDouble, hasTriple };
+};
+
+/**
+ * Vérifier si l'utilisateur s'est entraîné samedi ET dimanche du même weekend
+ */
+const checkWeekendWarrior = (workouts: Workout[]): boolean => {
+  // Grouper par semaine (du lundi au dimanche)
+  const weekends: Record<string, { saturday: boolean; sunday: boolean }> = {};
+
+  for (const workout of workouts) {
+    const date = new Date(workout.date);
+    const dayOfWeek = date.getDay(); // 0 = dimanche, 6 = samedi
+
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Trouver le début de la semaine (lundi)
+      const weekStart = new Date(date);
+      const diff = date.getDay() === 0 ? -6 : 1 - date.getDay();
+      weekStart.setDate(date.getDate() + diff);
+      const weekKey = weekStart.toISOString().split('T')[0];
+
+      if (!weekends[weekKey]) {
+        weekends[weekKey] = { saturday: false, sunday: false };
+      }
+
+      if (dayOfWeek === 6) weekends[weekKey].saturday = true;
+      if (dayOfWeek === 0) weekends[weekKey].sunday = true;
+    }
+  }
+
+  // Vérifier s'il existe un weekend avec samedi ET dimanche
+  return Object.values(weekends).some(w => w.saturday && w.sunday);
+};
+
+/**
+ * Calculer le streak d'hydratation (jours consécutifs objectif atteint)
+ */
+const calculateHydrationStreak = async (): Promise<number> => {
+  try {
+    const entries = await getAllHydrationEntries();
+    const settings = await getHydrationSettings();
+
+    if (entries.length === 0) return 0;
+
+    // Objectif en ml (customGoal ou dailyGoal * 1000)
+    const goalMl = settings.customGoal || (settings.dailyGoal * 1000);
+    if (!goalMl || goalMl <= 0) return 0;
+
+    // Grouper par date
+    const hydrationByDate: Record<string, number> = {};
+    for (const entry of entries) {
+      const dateKey = entry.date;
+      hydrationByDate[dateKey] = (hydrationByDate[dateKey] || 0) + entry.amount;
+    }
+
+    // Calculer le streak depuis aujourd'hui
+    let streak = 0;
+    const today = new Date();
+
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+
+      const totalForDay = hydrationByDate[dateKey] || 0;
+
+      if (totalForDay >= goalMl) {
+        streak++;
+      } else {
+        // Streak cassé
+        break;
+      }
+    }
+
+    return streak;
+  } catch (error) {
+    logger.error('Erreur calcul streak hydratation:', error);
+    return 0;
+  }
+};
+
+/**
+ * Compter le nombre de nuits avec 8h+ de sommeil
+ */
+const countGoodSleepNights = async (): Promise<number> => {
+  try {
+    const entries = await getSleepEntries();
+    // 8h = 480 minutes
+    return entries.filter(e => e.duration >= 480).length;
+  } catch (error) {
+    logger.error('Erreur comptage nuits sommeil:', error);
+    return 0;
+  }
+};
+
+/**
  * Calculer toutes les statistiques pour les badges
  */
 export const calculateBadgeStats = async (): Promise<BadgeStats> => {
@@ -929,6 +1058,18 @@ export const calculateBadgeStats = async (): Promise<BadgeStats> => {
     const latestWeight = measurements[0].weight;
     goalReached = latestWeight <= settings.weight_goal;
   }
+
+  // Sessions multiples (2 ou 3 entraînements/jour)
+  const { hasDouble, hasTriple } = checkMultipleSessions(workouts);
+
+  // Weekend warrior (samedi + dimanche)
+  const hasWeekendWarrior = checkWeekendWarrior(workouts);
+
+  // Hydratation streak
+  const hydrationStreak = await calculateHydrationStreak();
+
+  // Nuits avec 8h+ de sommeil
+  const goodSleepNights = await countGoodSleepNights();
 
   // Jours depuis premiere utilisation
   let daysUsingApp = 0;
@@ -957,6 +1098,11 @@ export const calculateBadgeStats = async (): Promise<BadgeStats> => {
     totalPhotos: photos.length,
     measurementsWithDetails: measurements.filter(m => m.measurements).length,
     completeMeasurements: countCompleteMeasurements(measurements),
+    hasDoubleSession: hasDouble,
+    hasTripleSession: hasTriple,
+    hasWeekendWarrior,
+    hydrationStreak,
+    goodSleepNights,
     daysUsingApp,
     isAnniversary,
   };
@@ -1110,13 +1256,13 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         shouldUnlock = stats.totalPhotos >= 50;
         break;
       case 'double_session':
-        shouldUnlock = false; // TODO: implémenter détection 2 entraînements/jour
+        shouldUnlock = stats.hasDoubleSession;
         break;
       case 'triple_session':
-        shouldUnlock = false; // TODO: implémenter détection 3 entraînements/jour
+        shouldUnlock = stats.hasTripleSession;
         break;
       case 'weekend_warrior':
-        shouldUnlock = false; // TODO: implémenter détection samedi+dimanche
+        shouldUnlock = stats.hasWeekendWarrior;
         break;
       case 'seven_days_straight':
         shouldUnlock = stats.currentStreak >= 7;
@@ -1124,11 +1270,14 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
       case 'perfect_month':
         shouldUnlock = stats.currentStreak >= 30;
         break;
+      case 'hydration_master':
+        shouldUnlock = stats.hydrationStreak >= 7;
+        break;
       case 'hydration_legend':
-        shouldUnlock = false; // TODO: implémenter streak hydratation 30j
+        shouldUnlock = stats.hydrationStreak >= 30;
         break;
       case 'sleep_master':
-        shouldUnlock = false; // TODO: implémenter détection 10 nuits 8h+
+        shouldUnlock = stats.goodSleepNights >= 10;
         break;
 
       // TEMPS
@@ -1296,9 +1445,13 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         currentProgress = stats.completeMeasurements;
         break;
       case 'double_session':
+        currentProgress = stats.hasDoubleSession ? 1 : 0;
+        break;
       case 'triple_session':
+        currentProgress = stats.hasTripleSession ? 1 : 0;
+        break;
       case 'weekend_warrior':
-        currentProgress = 0; // TODO
+        currentProgress = stats.hasWeekendWarrior ? 1 : 0;
         break;
       case 'seven_days_straight':
       case 'perfect_month':
@@ -1306,8 +1459,10 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         break;
       case 'hydration_master':
       case 'hydration_legend':
+        currentProgress = stats.hydrationStreak;
+        break;
       case 'sleep_master':
-        currentProgress = 0; // TODO
+        currentProgress = stats.goodSleepNights;
         break;
 
       // TEMPS
