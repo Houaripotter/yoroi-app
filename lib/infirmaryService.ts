@@ -459,7 +459,7 @@ export const getDaysSinceInjury = (injuryDate: string): number => {
 };
 
 /**
- * Retourne une recommandation basée sur l'EVA et la durée
+ * Retourne un statut basé sur l'EVA et la durée (sans conseils médicaux)
  */
 export const getInjuryRecommendation = (
   evaScore: number,
@@ -468,26 +468,26 @@ export const getInjuryRecommendation = (
   // Douleur sévère
   if (evaScore >= 7) {
     if (daysSinceInjury >= 2) {
-      return '⚠️ Consultation médicale fortement recommandée';
+      return `⚠️ Douleur intense (${daysSinceInjury} jours) - Consultez un professionnel de santé`;
     }
-    return '🧊 Appliquer le protocole RICE immédiatement';
+    return '⚠️ Douleur intense enregistrée';
   }
 
   // Douleur modérée
   if (evaScore >= 4) {
     if (daysSinceInjury >= 7) {
-      return '⚠️ Consulter si la douleur persiste au-delà de 7 jours';
+      return `⚠️ Douleur persistante (${daysSinceInjury} jours)`;
     }
-    return '🩹 Adapter vos entraînements, éviter la zone blessée';
+    return '⚠️ Douleur modérée en cours';
   }
 
   // Douleur légère
   if (evaScore > 0) {
-    return '✅ Reprise progressive avec prudence';
+    return '✅ Douleur légère en amélioration';
   }
 
   // Pas de douleur
-  return '🎉 Vous êtes guéri ! Reprise normale possible';
+  return '🎉 Aucune douleur - Blessure guérie';
 };
 
 export default {

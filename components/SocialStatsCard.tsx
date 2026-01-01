@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, TrendingDown, Flame, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 interface SocialStatsCardProps {
   userName: string;
@@ -55,7 +56,7 @@ export function SocialStatsCard({
         await Share.share({ url: uri });
       }
     } catch (error) {
-      console.error('[SocialStatsCard] Erreur partage:', error);
+      logger.error('[SocialStatsCard] Erreur partage:', error);
       Alert.alert('Erreur', 'Impossible de partager');
     }
   };

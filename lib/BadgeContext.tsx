@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
 import { Badge, checkAndUnlockBadges, setFirstUseDate } from './badges';
 import { Celebration } from '@/components/Celebration';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // BADGE CONTEXT - Gestion des badges et celebrations
@@ -55,7 +56,7 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
       const newBadges = await checkAndUnlockBadges();
 
       if (newBadges.length > 0) {
-        console.log(`${newBadges.length} nouveau(x) badge(s) debloque(s)!`);
+        logger.info(`${newBadges.length} nouveau(x) badge(s) debloque(s)!`);
 
         // Ajouter les nouveaux badges a la file
         if (celebratingBadge) {
@@ -69,7 +70,7 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
 
       return newBadges;
     } catch (error) {
-      console.error('Erreur verification badges:', error);
+      logger.error('Erreur verification badges:', error);
       return [];
     }
   }, [celebratingBadge, processQueue]);

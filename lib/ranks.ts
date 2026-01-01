@@ -12,6 +12,7 @@ export interface Rank {
   color: string;
   description: string;
   descriptionFemale: string;
+  reward?: string; // Récompense associée au rang
 }
 
 export const RANKS: Rank[] = [
@@ -25,6 +26,7 @@ export const RANKS: Rank[] = [
     color: '#6B7280',
     description: 'Le voyage commence. Tu fais tes premiers pas.',
     descriptionFemale: 'Le voyage commence. Tu fais tes premiers pas.',
+    reward: 'Démarrage du parcours',
   },
   {
     id: 'ashigaru',
@@ -36,6 +38,7 @@ export const RANKS: Rank[] = [
     color: '#60A5FA',
     description: "Fantassin loyal. Tu as prouvé ta détermination.",
     descriptionFemale: "Fantassine loyale. Tu as prouvé ta détermination.",
+    reward: 'Badge 7 jours',
   },
   {
     id: 'bushi',
@@ -45,8 +48,9 @@ export const RANKS: Rank[] = [
     icon: 'shield',
     minDays: 21,
     color: '#34D399',
-    description: "Guerrier discipliné. L'honneur guide tes pas.",
+    description: "Athlète discipliné. L'honneur guide tes pas.",
     descriptionFemale: "Guerrière disciplinée. L'honneur guide tes pas.",
+    reward: 'Avatar Bushi',
   },
   {
     id: 'knight',
@@ -56,8 +60,9 @@ export const RANKS: Rank[] = [
     icon: 'shield',
     minDays: 30,
     color: '#C0C0C0',
-    description: "Noble guerrier. L'honneur et le courage te guident.",
+    description: "Noble champion. L'honneur et le courage te guident.",
     descriptionFemale: "Noble guerrière. L'honneur et le courage te guident.",
+    reward: 'Thème Argent',
   },
   {
     id: 'samurai',
@@ -67,8 +72,9 @@ export const RANKS: Rank[] = [
     icon: 'sword',
     minDays: 45,
     color: '#D4AF37',
-    description: "Guerrier d'élite. La voie du bushido est la tienne.",
+    description: "Athlète d'élite. La voie du bushido est la tienne.",
     descriptionFemale: "Guerrière d'élite. La voie du bushido est la tienne.",
+    reward: 'Avatar Samouraï + Thème Or',
   },
   {
     id: 'ronin',
@@ -80,6 +86,7 @@ export const RANKS: Rank[] = [
     color: '#A855F7',
     description: 'Maître vagabond. Tu forges ta propre voie.',
     descriptionFemale: 'Maître vagabonde. Tu forges ta propre voie.',
+    reward: 'Mode Rōnin exclusif',
   },
   {
     id: 'sensei',
@@ -91,6 +98,7 @@ export const RANKS: Rank[] = [
     color: '#EC4899',
     description: 'Maître et guide. Tu inspires les autres.',
     descriptionFemale: 'Maître et guide. Tu inspires les autres.',
+    reward: 'Badge Mentor',
   },
   {
     id: 'shogun',
@@ -102,6 +110,7 @@ export const RANKS: Rank[] = [
     color: '#FFD700',
     description: 'Commandant suprême. Légende vivante.',
     descriptionFemale: 'Commandante suprême. Légende vivante.',
+    reward: 'Couronne dorée + Statistiques VIP',
   },
   {
     id: 'daimyo',
@@ -113,6 +122,7 @@ export const RANKS: Rank[] = [
     color: '#DC2626',
     description: 'Seigneur légendaire. Immortel.',
     descriptionFemale: 'Dame légendaire. Immortelle.',
+    reward: 'Château Daimyō + Accès Légende',
   },
 ];
 

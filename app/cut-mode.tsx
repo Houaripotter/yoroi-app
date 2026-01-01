@@ -33,6 +33,7 @@ import { format, differenceInDays, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getWeights } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -136,7 +137,7 @@ export default function CutModeScreen() {
         setCurrentWeight(weights[0].weight);
       }
     } catch (error) {
-      console.error('Erreur chargement cut mode:', error);
+      logger.error('Erreur chargement cut mode:', error);
     }
   };
 
@@ -488,13 +489,13 @@ export default function CutModeScreen() {
             </View>
 
             {/* Bouton démarrer */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.startBtn, { backgroundColor: colors.accent }]}
               onPress={startCut}
               disabled={currentWeight === 0}
             >
-              <Zap size={20} color="#FFFFFF" />
-              <Text style={styles.startBtnText}>Démarrer le Cut</Text>
+              <Zap size={20} color={colors.textOnGold} />
+              <Text style={[styles.startBtnText, { color: colors.textOnGold }]}>Démarrer le Cut</Text>
             </TouchableOpacity>
           </>
         )}

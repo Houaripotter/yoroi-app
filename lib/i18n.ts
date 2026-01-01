@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import fr from '@/i18n/fr.json';
 import en from '@/i18n/en.json';
+import logger from '@/lib/security/logger';
 
 // Clé de stockage pour la langue choisie
 const LANGUAGE_KEY = '@yoroi_language';
@@ -58,7 +59,7 @@ export const loadLanguage = async (): Promise<SupportedLanguage> => {
     i18n.locale = systemLanguage;
     return systemLanguage;
   } catch (error) {
-    console.error('[i18n] Erreur chargement langue:', error);
+    logger.error('[i18n] Erreur chargement langue:', error);
     i18n.locale = 'fr';
     return 'fr';
   }
@@ -72,7 +73,7 @@ export const changeLanguage = async (language: SupportedLanguage): Promise<void>
     i18n.locale = language;
     await AsyncStorage.setItem(LANGUAGE_KEY, language);
   } catch (error) {
-    console.error('[i18n] Erreur sauvegarde langue:', error);
+    logger.error('[i18n] Erreur sauvegarde langue:', error);
   }
 };
 

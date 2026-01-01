@@ -28,6 +28,7 @@ import { Header } from '@/components/ui/Header';
 import { getCombats } from '@/lib/fighterModeService';
 import { Combat, calculateRecord } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
 
@@ -50,7 +51,7 @@ export default function PalmaresScreen() {
       setCombats(allCombats);
       applyFilter(allCombats, filter);
     } catch (error) {
-      console.error('Error loading combats:', error);
+      logger.error('Error loading combats:', error);
     }
   };
 

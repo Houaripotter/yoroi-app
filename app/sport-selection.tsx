@@ -13,56 +13,126 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ChevronRight, ChevronLeft, Lightbulb } from 'lucide-react-native';
+import {
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
+  Lightbulb,
+  Swords,
+  Award,
+  Footprints,
+  Mountain,
+  Bike,
+  Waves,
+  Volleyball,
+  Trophy,
+  Dumbbell,
+  Zap,
+  Heart,
+  Flame,
+  Activity,
+  Wind,
+  Snowflake,
+  Music,
+  Flag,
+  Sparkles,
+} from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Sport, SPORT_LABELS, SPORT_ICONS } from '@/lib/fighterMode';
+import { Sport, SPORT_LABELS } from '@/lib/fighterMode';
 import { setUserSport } from '@/lib/fighterModeService';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { sportHasWeightCategories } from '@/lib/weightCategories';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
-const SPORTS: { id: Sport; label: string; icon: string; description: string }[] = [
+type IconType = 'swords' | 'trophy' | 'award' | 'mountain' | 'footprints' | 'bike' | 'waves' | 'volleyball' | 'dumbbell' | 'zap' | 'heart' | 'flame' | 'activity' | 'wind' | 'snowflake' | 'music' | 'flag' | 'sparkles';
+
+type SportCategory = {
+  title: string;
+  sports: { id: Sport; label: string; iconType: IconType; description: string }[];
+};
+
+const SPORT_CATEGORIES: SportCategory[] = [
   {
-    id: 'jjb',
-    label: SPORT_LABELS.jjb,
-    icon: SPORT_ICONS.jjb,
-    description: 'Grappling, soumissions',
+    title: 'Sports de Combat',
+    sports: [
+      { id: 'jjb', label: SPORT_LABELS.jjb, iconType: 'swords', description: 'Grappling, soumissions' },
+      { id: 'mma', label: SPORT_LABELS.mma, iconType: 'trophy', description: 'Arts martiaux mixtes' },
+      { id: 'boxe', label: SPORT_LABELS.boxe, iconType: 'award', description: 'Noble art' },
+      { id: 'muay_thai', label: SPORT_LABELS.muay_thai, iconType: 'swords', description: 'Boxe thaïlandaise' },
+      { id: 'judo', label: SPORT_LABELS.judo, iconType: 'swords', description: 'Projections, contrôles' },
+      { id: 'karate', label: SPORT_LABELS.karate, iconType: 'swords', description: 'Karaté traditionnel' },
+      { id: 'taekwondo', label: SPORT_LABELS.taekwondo, iconType: 'swords', description: 'Art martial coréen' },
+      { id: 'krav_maga', label: SPORT_LABELS.krav_maga, iconType: 'award', description: 'Self-défense' },
+    ],
   },
   {
-    id: 'mma',
-    label: SPORT_LABELS.mma,
-    icon: SPORT_ICONS.mma,
-    description: 'Arts martiaux mixtes',
+    title: 'Sports d\'Endurance',
+    sports: [
+      { id: 'trail', label: SPORT_LABELS.trail, iconType: 'mountain', description: 'Course nature' },
+      { id: 'running', label: SPORT_LABELS.running, iconType: 'footprints', description: 'Course à pied' },
+      { id: 'cyclisme', label: SPORT_LABELS.cyclisme, iconType: 'bike', description: 'Vélo route/VTT' },
+      { id: 'natation', label: SPORT_LABELS.natation, iconType: 'waves', description: 'Natation' },
+      { id: 'triathlon', label: SPORT_LABELS.triathlon, iconType: 'activity', description: 'Natation/Vélo/Course' },
+      { id: 'marche_nordique', label: SPORT_LABELS.marche_nordique, iconType: 'footprints', description: 'Marche avec bâtons' },
+      { id: 'randonnee', label: SPORT_LABELS.randonnee, iconType: 'mountain', description: 'Randonnée pédestre' },
+    ],
   },
   {
-    id: 'boxe',
-    label: SPORT_LABELS.boxe,
-    icon: SPORT_ICONS.boxe,
-    description: 'Noble art',
+    title: 'Sports Collectifs',
+    sports: [
+      { id: 'football', label: SPORT_LABELS.football, iconType: 'trophy', description: 'Football' },
+      { id: 'basket', label: SPORT_LABELS.basket, iconType: 'trophy', description: 'Basketball' },
+      { id: 'handball', label: SPORT_LABELS.handball, iconType: 'trophy', description: 'Handball' },
+      { id: 'rugby', label: SPORT_LABELS.rugby, iconType: 'trophy', description: 'Rugby' },
+      { id: 'volleyball', label: SPORT_LABELS.volleyball, iconType: 'volleyball', description: 'Volleyball' },
+    ],
   },
   {
-    id: 'muay_thai',
-    label: SPORT_LABELS.muay_thai,
-    icon: SPORT_ICONS.muay_thai,
-    description: 'Boxe thaïlandaise',
+    title: 'Fitness & Force',
+    sports: [
+      { id: 'musculation', label: SPORT_LABELS.musculation, iconType: 'dumbbell', description: 'Musculation' },
+      { id: 'crossfit', label: SPORT_LABELS.crossfit, iconType: 'zap', description: 'CrossFit' },
+      { id: 'hyrox', label: SPORT_LABELS.hyrox, iconType: 'flame', description: 'Fitness racing' },
+      { id: 'hiit', label: SPORT_LABELS.hiit, iconType: 'flame', description: 'Haute intensité' },
+      { id: 'calisthenics', label: SPORT_LABELS.calisthenics, iconType: 'activity', description: 'Poids du corps' },
+      { id: 'escalade', label: SPORT_LABELS.escalade, iconType: 'mountain', description: 'Escalade' },
+    ],
   },
   {
-    id: 'judo',
-    label: SPORT_LABELS.judo,
-    icon: SPORT_ICONS.judo,
-    description: 'Projections, contrôles',
+    title: 'Bien-être & Santé',
+    sports: [
+      { id: 'yoga', label: SPORT_LABELS.yoga, iconType: 'heart', description: 'Yoga' },
+      { id: 'pilates', label: SPORT_LABELS.pilates, iconType: 'heart', description: 'Pilates' },
+      { id: 'danse', label: SPORT_LABELS.danse, iconType: 'music', description: 'Danse' },
+    ],
   },
   {
-    id: 'karate',
-    label: SPORT_LABELS.karate,
-    icon: SPORT_ICONS.karate,
-    description: 'Karaté traditionnel',
+    title: 'Sports de Raquette',
+    sports: [
+      { id: 'tennis', label: SPORT_LABELS.tennis, iconType: 'trophy', description: 'Tennis' },
+      { id: 'padel', label: SPORT_LABELS.padel, iconType: 'trophy', description: 'Padel' },
+      { id: 'badminton', label: SPORT_LABELS.badminton, iconType: 'trophy', description: 'Badminton' },
+      { id: 'squash', label: SPORT_LABELS.squash, iconType: 'trophy', description: 'Squash' },
+      { id: 'ping_pong', label: SPORT_LABELS.ping_pong, iconType: 'trophy', description: 'Ping-Pong' },
+    ],
   },
   {
-    id: 'autre',
-    label: SPORT_LABELS.autre,
-    icon: SPORT_ICONS.autre,
-    description: 'Autre sport de combat',
+    title: 'Sports de Glisse',
+    sports: [
+      { id: 'surf', label: SPORT_LABELS.surf, iconType: 'wind', description: 'Surf' },
+      { id: 'ski', label: SPORT_LABELS.ski, iconType: 'snowflake', description: 'Ski' },
+      { id: 'snowboard', label: SPORT_LABELS.snowboard, iconType: 'snowflake', description: 'Snowboard' },
+      { id: 'skate', label: SPORT_LABELS.skate, iconType: 'sparkles', description: 'Skateboard' },
+    ],
+  },
+  {
+    title: 'Autres Sports',
+    sports: [
+      { id: 'golf', label: SPORT_LABELS.golf, iconType: 'flag', description: 'Golf' },
+      { id: 'equitation', label: SPORT_LABELS.equitation, iconType: 'trophy', description: 'Équitation' },
+      { id: 'autre', label: SPORT_LABELS.autre, iconType: 'swords', description: 'Autre sport' },
+    ],
   },
 ];
 
@@ -70,6 +140,62 @@ export default function SportSelectionScreen() {
   const { colors, isDark } = useTheme();
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<number[]>([0]); // Ouvre la première catégorie par défaut
+
+  // Helper function to render sport icon based on iconType
+  const renderSportIcon = (iconType: IconType, color: string, size: number = 32) => {
+    const iconProps = { size, color, strokeWidth: 2 };
+
+    switch (iconType) {
+      case 'swords':
+        return <Swords {...iconProps} />;
+      case 'trophy':
+        return <Trophy {...iconProps} />;
+      case 'award':
+        return <Award {...iconProps} />;
+      case 'mountain':
+        return <Mountain {...iconProps} />;
+      case 'footprints':
+        return <Footprints {...iconProps} />;
+      case 'bike':
+        return <Bike {...iconProps} />;
+      case 'waves':
+        return <Waves {...iconProps} />;
+      case 'volleyball':
+        return <Volleyball {...iconProps} />;
+      case 'dumbbell':
+        return <Dumbbell {...iconProps} />;
+      case 'zap':
+        return <Zap {...iconProps} />;
+      case 'heart':
+        return <Heart {...iconProps} />;
+      case 'flame':
+        return <Flame {...iconProps} />;
+      case 'activity':
+        return <Activity {...iconProps} />;
+      case 'wind':
+        return <Wind {...iconProps} />;
+      case 'snowflake':
+        return <Snowflake {...iconProps} />;
+      case 'music':
+        return <Music {...iconProps} />;
+      case 'flag':
+        return <Flag {...iconProps} />;
+      case 'sparkles':
+        return <Sparkles {...iconProps} />;
+      default:
+        return <Swords {...iconProps} />;
+    }
+  };
+
+  const toggleCategory = (categoryIndex: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setExpandedCategories((prev) =>
+      prev.includes(categoryIndex)
+        ? prev.filter((i) => i !== categoryIndex)
+        : [...prev, categoryIndex]
+    );
+  };
 
   const handleSelectSport = (sport: Sport) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -104,7 +230,7 @@ export default function SportSelectionScreen() {
         router.replace('/setup');
       }
     } catch (error) {
-      console.error('Error saving sport:', error);
+      logger.error('Error saving sport:', error);
       setIsLoading(false);
     }
   };
@@ -134,7 +260,6 @@ export default function SportSelectionScreen() {
       >
         {/* Title */}
         <View style={styles.header}>
-          <Text style={[styles.emoji]}>🥊</Text>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Quel est ton sport ?
           </Text>
@@ -143,57 +268,96 @@ export default function SportSelectionScreen() {
           </Text>
         </View>
 
-        {/* Sports Grid */}
-        <View style={styles.sportsGrid}>
-          {SPORTS.map((sport) => {
-            const isSelected = selectedSport === sport.id;
+        {/* Sports by Category - Accordéon */}
+        {SPORT_CATEGORIES.map((category, categoryIndex) => {
+          const isExpanded = expandedCategories.includes(categoryIndex);
 
-            return (
+          return (
+            <View key={categoryIndex} style={styles.categorySection}>
+              {/* Header cliquable */}
               <TouchableOpacity
-                key={sport.id}
                 style={[
-                  styles.sportCard,
-                  {
-                    backgroundColor: isSelected
-                      ? colors.accent
-                      : colors.backgroundCard,
-                    borderColor: isSelected ? colors.accent : colors.border,
-                  },
+                  styles.categoryHeader,
+                  { backgroundColor: colors.backgroundCard }
                 ]}
-                onPress={() => handleSelectSport(sport.id)}
+                onPress={() => toggleCategory(categoryIndex)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.sportIcon}>{sport.icon}</Text>
-                <Text
+                <Text style={[styles.categoryTitle, { color: colors.textPrimary }]}>
+                  {category.title}
+                </Text>
+                <View
                   style={[
-                    styles.sportLabel,
-                    { color: isSelected ? colors.background : colors.textPrimary },
+                    styles.chevronIcon,
+                    isExpanded && styles.chevronIconExpanded
                   ]}
                 >
-                  {sport.label}
-                </Text>
-                <Text
-                  style={[
-                    styles.sportDescription,
-                    {
-                      color: isSelected
-                        ? colors.background + '99'
-                        : colors.textMuted,
-                    },
-                  ]}
-                >
-                  {sport.description}
-                </Text>
-
-                {isSelected && (
-                  <View style={styles.checkBadge}>
-                    <Text style={styles.checkIcon}>✓</Text>
-                  </View>
-                )}
+                  <ChevronDown size={20} color={colors.textMuted} strokeWidth={2.5} />
+                </View>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+
+              {/* Contenu de la catégorie */}
+              {isExpanded && (
+                <View style={styles.sportsGrid}>
+                  {category.sports.map((sport) => {
+                    const isSelected = selectedSport === sport.id;
+
+                    return (
+                      <TouchableOpacity
+                        key={sport.id}
+                        style={[
+                          styles.sportCard,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.accent
+                              : colors.backgroundCard,
+                            borderColor: isSelected ? colors.accent : colors.border,
+                          },
+                        ]}
+                        onPress={() => handleSelectSport(sport.id)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.sportIconContainer}>
+                          {renderSportIcon(
+                            sport.iconType,
+                            isSelected ? colors.background : colors.textPrimary,
+                            28
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.sportLabel,
+                            { color: isSelected ? colors.background : colors.textPrimary },
+                          ]}
+                        >
+                          {sport.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.sportDescription,
+                            {
+                              color: isSelected
+                                ? colors.background + '99'
+                                : colors.textMuted,
+                            },
+                          ]}
+                        >
+                          {sport.description}
+                        </Text>
+
+                        {isSelected && (
+                          <View style={styles.checkBadge}>
+                            <Text style={styles.checkIcon}>✓</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          );
+        })}
 
         {/* Info */}
         <View style={[styles.infoBox, { backgroundColor: colors.backgroundCard }]}>
@@ -221,10 +385,10 @@ export default function SportSelectionScreen() {
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Text style={[styles.continueButtonText, { color: colors.background }]}>
+            <Text style={[styles.continueButtonText, { color: colors.textOnGold }]}>
               {isLoading ? 'Chargement...' : 'Continuer'}
             </Text>
-            <ChevronRight size={20} color={colors.background} />
+            <ChevronRight size={20} color={colors.textOnGold} />
           </TouchableOpacity>
         </View>
       )}
@@ -255,10 +419,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xl,
   },
-  emoji: {
-    fontSize: 64,
-    marginBottom: SPACING.md,
-  },
   title: {
     fontSize: 28,
     fontWeight: '800',
@@ -270,11 +430,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  categorySection: {
+    marginBottom: SPACING.md,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.sm,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  chevronIcon: {
+    transform: [{ rotate: '0deg' }],
+  },
+  chevronIconExpanded: {
+    transform: [{ rotate: '180deg' }],
+  },
   sportsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.md,
-    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   sportCard: {
     width: '47.5%',
@@ -285,8 +470,7 @@ const styles = StyleSheet.create({
     minHeight: 140,
     position: 'relative',
   },
-  sportIcon: {
-    fontSize: 40,
+  sportIconContainer: {
     marginBottom: SPACING.sm,
   },
   sportLabel: {

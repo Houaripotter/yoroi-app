@@ -7,6 +7,7 @@
 // ============================================
 
 import { getAllMeasurements, getUserSettings, Measurement } from './storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -387,7 +388,7 @@ export const calculatePrediction = async (): Promise<PredictionResult | null> =>
       dataPoints: dataForRegression.length,
     };
   } catch (error) {
-    console.error('Erreur calcul prediction:', error);
+    logger.error('Erreur calcul prediction:', error);
     return null;
   }
 };

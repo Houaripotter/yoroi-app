@@ -3,6 +3,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const HOME_CUSTOMIZATION_KEY = '@yoroi_home_customization';
 
@@ -20,7 +21,7 @@ export interface HomeSection {
 export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   {
     id: 'header',
-    name: 'En-tête',
+    name: 'En-tete',
     description: 'Logo, salutation et citation',
     icon: 'user',
     visible: true,
@@ -44,36 +45,52 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     order: 2,
   },
   {
-    id: 'actions_row',
-    name: 'Actions Rapides',
-    description: 'Infirmerie, Timer, Photo, Toggle Compétition (si compétiteur) ou Savoir',
-    icon: 'grid',
+    id: 'sleep_charge',
+    name: 'Sommeil & Charge',
+    description: 'Cartes sommeil et charge d\'entrainement',
+    icon: 'moon',
     visible: true,
     order: 3,
   },
   {
-    id: 'sleep_charge',
-    name: 'Sommeil & Charge',
-    description: 'Cartes sommeil et charge d\'entraînement',
-    icon: 'moon',
+    id: 'tools_row_1',
+    name: 'Carnet & Planning',
+    description: 'Carnet, Timer, Calendrier, Emploi du temps',
+    icon: 'book-open',
     visible: true,
     order: 4,
   },
   {
-    id: 'battery_tools',
-    name: 'Énergie & Outils',
-    description: 'Batterie, Savoir, Calculateurs, Nutrition',
-    icon: 'battery',
+    id: 'tools_row_2',
+    name: 'Sante & Outils',
+    description: 'Blessures, Energie, Savoir, Calculateurs',
+    icon: 'heart',
     visible: true,
     order: 5,
   },
   {
+    id: 'tools_row_3',
+    name: 'Objectifs & Partage',
+    description: 'Prochain objectif, Jeune, Photo, Partager',
+    icon: 'share-2',
+    visible: true,
+    order: 6,
+  },
+  {
+    id: 'healthspan',
+    name: 'Tendance Sante',
+    description: 'Ton esperance de vie en bonne sante',
+    icon: 'heart',
+    visible: true,
+    order: 7,
+  },
+  {
     id: 'challenges',
-    name: 'Défis du Jour',
+    name: 'Defis du Jour',
     description: 'Tes objectifs quotidiens',
     icon: 'target',
     visible: true,
-    order: 6,
+    order: 8,
   },
   {
     id: 'performance_radar',
@@ -81,15 +98,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Vue d\'ensemble de tes stats',
     icon: 'activity',
     visible: true,
-    order: 7,
-  },
-  {
-    id: 'healthspan',
-    name: 'Courbe Healthspan',
-    description: 'Ton espérance de vie en bonne santé',
-    icon: 'heart',
-    visible: true,
-    order: 8,
+    order: 9,
   },
   {
     id: 'weekly_report',
@@ -97,29 +106,21 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Bilan hebdomadaire',
     icon: 'file-text',
     visible: true,
-    order: 9,
-  },
-  {
-    id: 'streak_calendar',
-    name: 'Calendrier Streak',
-    description: 'Visualise ta régularité',
-    icon: 'calendar',
-    visible: true,
     order: 10,
   },
   {
-    id: 'fighter_mode',
-    name: 'Mode Compétiteur',
-    description: 'Mode Cut, Compétitions, Palmarès (pour compétiteurs)',
-    icon: 'award',
+    id: 'weight_graph_large',
+    name: 'Graphique Poids',
+    description: 'Grand graphique de suivi du poids',
+    icon: 'trending-down',
     visible: true,
     order: 11,
   },
   {
-    id: 'training_journal',
-    name: 'Carnet d\'Entraînement',
-    description: 'Tes objectifs et progression',
-    icon: 'book-open',
+    id: 'activity_summary',
+    name: 'Résumé Activité',
+    description: 'Pas et calories brûlées',
+    icon: 'activity',
     visible: true,
     order: 12,
   },
@@ -130,18 +131,18 @@ export const getHomeCustomization = async (): Promise<HomeSection[]> => {
   try {
     const stored = await AsyncStorage.getItem(HOME_CUSTOMIZATION_KEY);
     if (stored) {
-      console.log('[HOME_SERVICE] Configuration trouvée dans AsyncStorage');
+      logger.info('[HOME_SERVICE] Configuration trouvée dans AsyncStorage');
       const customization = JSON.parse(stored) as HomeSection[];
-      console.log('[HOME_SERVICE] Sections chargées:', customization.map(s => `${s.id}(${s.order})`).join(', '));
+      logger.info('[HOME_SERVICE] Sections chargées:', customization.map(s => `${s.id}(${s.order})`).join(', '));
       // Fusionner avec les valeurs par défaut pour les nouvelles sections
       const merged = mergeWithDefaults(customization);
-      console.log('[HOME_SERVICE] Après fusion:', merged.map(s => `${s.id}(${s.order})`).join(', '));
+      logger.info('[HOME_SERVICE] Après fusion:', merged.map(s => `${s.id}(${s.order})`).join(', '));
       return merged;
     }
-    console.log('[HOME_SERVICE] Aucune configuration trouvée, utilisation des valeurs par défaut');
+    logger.info('[HOME_SERVICE] Aucune configuration trouvée, utilisation des valeurs par défaut');
     return DEFAULT_HOME_SECTIONS;
   } catch (error) {
-    console.error('[HOME_SERVICE] Erreur chargement customization:', error);
+    logger.error('[HOME_SERVICE] Erreur chargement customization:', error);
     return DEFAULT_HOME_SECTIONS;
   }
 };
@@ -150,7 +151,14 @@ export const getHomeCustomization = async (): Promise<HomeSection[]> => {
 const mergeWithDefaults = (saved: HomeSection[]): HomeSection[] => {
   const merged = [...DEFAULT_HOME_SECTIONS];
 
+  // Sections obsolètes à ignorer
+  const obsoleteSections = ['tools_scroll']; // tools_scroll n'existe plus
+
   saved.forEach(savedSection => {
+    // Ignorer les sections obsolètes
+    if (obsoleteSections.includes(savedSection.id)) {
+      return;
+    }
     const index = merged.findIndex(s => s.id === savedSection.id);
     if (index !== -1) {
       merged[index] = { ...merged[index], ...savedSection };
@@ -163,12 +171,12 @@ const mergeWithDefaults = (saved: HomeSection[]): HomeSection[] => {
 // Sauvegarder la configuration
 export const saveHomeCustomization = async (sections: HomeSection[]): Promise<void> => {
   try {
-    console.log('[HOME_SERVICE] Sauvegarde de', sections.length, 'sections');
-    console.log('[HOME_SERVICE] Ordre:', sections.map(s => `${s.id}(${s.order})`).join(', '));
+    logger.info('[HOME_SERVICE] Sauvegarde de', sections.length, 'sections');
+    logger.info('[HOME_SERVICE] Ordre:', sections.map(s => `${s.id}(${s.order})`).join(', '));
     await AsyncStorage.setItem(HOME_CUSTOMIZATION_KEY, JSON.stringify(sections));
-    console.log('[HOME_SERVICE] Sauvegarde AsyncStorage réussie');
+    logger.info('[HOME_SERVICE] Sauvegarde AsyncStorage réussie');
   } catch (error) {
-    console.error('[HOME_SERVICE] Erreur sauvegarde customization:', error);
+    logger.error('[HOME_SERVICE] Erreur sauvegarde customization:', error);
     throw error;
   }
 };
@@ -178,7 +186,7 @@ export const resetHomeCustomization = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(HOME_CUSTOMIZATION_KEY);
   } catch (error) {
-    console.error('Erreur reset customization:', error);
+    logger.error('Erreur reset customization:', error);
     throw error;
   }
 };

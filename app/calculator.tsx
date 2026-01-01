@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import logger from '@/lib/security/logger';
 
 type Gender = 'male' | 'female';
 type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active';
@@ -68,7 +69,7 @@ export default function CalculatorScreen() {
         setHeight(settings.height.toString());
       }
     } catch (error) {
-      console.error('Erreur chargement données utilisateur:', error);
+      logger.error('Erreur chargement données utilisateur:', error);
     }
   };
 

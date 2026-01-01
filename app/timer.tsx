@@ -39,6 +39,7 @@ import { WorkoutSummaryModal } from '@/components/WorkoutSummaryModal';
 import { RPEModal } from '@/components/RPEModal';
 import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // MINUTEUR YOROI COMPLET
@@ -507,7 +508,7 @@ export default function TimerScreen() {
         mode,
       });
     } catch (error) {
-      console.error('Erreur sauvegarde charge:', error);
+      logger.error('Erreur sauvegarde charge:', error);
     }
     setShowRPEModal(false);
     resetTimer();
@@ -864,11 +865,11 @@ export default function TimerScreen() {
           onPress={() => changeMode(id)}
           disabled={timerState !== 'idle'}
         >
-          <Icon size={22} color={mode === id ? '#FFFFFF' : colors.textMuted} />
+          <Icon size={22} color={mode === id ? colors.textOnGold : colors.textMuted} />
           <Text style={[
             styles.modeTabLabel,
             { color: colors.textMuted },
-            mode === id && { color: '#FFFFFF' },
+            mode === id && { color: colors.textOnGold },
           ]}>
             {label}
           </Text>
@@ -906,14 +907,14 @@ export default function TimerScreen() {
                   <Text style={[
                     styles.presetLabel,
                     { color: colors.textPrimary },
-                    musculationRest === preset.seconds && { color: '#FFFFFF' },
+                    musculationRest === preset.seconds && { color: colors.textOnGold },
                   ]}>
                     {preset.label}
                   </Text>
                   <Text style={[
                     styles.presetDesc,
                     { color: colors.textMuted },
-                    musculationRest === preset.seconds && { color: 'rgba(255,255,255,0.8)' },
+                    musculationRest === preset.seconds && { color: colors.textOnGold },
                   ]}>
                     {preset.description}
                   </Text>
@@ -980,14 +981,14 @@ export default function TimerScreen() {
                     <Text style={[
                       styles.combatPresetName,
                       { color: colors.textPrimary },
-                      isSelected && { color: '#FFFFFF' },
+                      isSelected && { color: colors.textOnGold },
                     ]}>
                       {preset.name}
                     </Text>
                     <Text style={[
                       styles.combatPresetInfo,
                       { color: colors.textMuted },
-                      isSelected && { color: 'rgba(255,255,255,0.8)' },
+                      isSelected && { color: colors.textOnGold },
                     ]}>
                       {preset.rounds}x{preset.roundTime / 60}min
                     </Text>
@@ -1096,14 +1097,14 @@ export default function TimerScreen() {
                   <Text style={[
                     styles.tabataPresetLabel,
                     { color: colors.textPrimary },
-                    tabataRounds === preset.rounds && { color: '#FFFFFF' },
+                    tabataRounds === preset.rounds && { color: colors.textOnGold },
                   ]}>
                     {preset.label}
                   </Text>
                   <Text style={[
                     styles.tabataPresetRounds,
                     { color: colors.textMuted },
-                    tabataRounds === preset.rounds && { color: 'rgba(255,255,255,0.8)' },
+                    tabataRounds === preset.rounds && { color: colors.textOnGold },
                   ]}>
                     {preset.rounds} rounds
                   </Text>
@@ -1242,7 +1243,7 @@ export default function TimerScreen() {
                   <Text style={[
                     styles.emomPresetLabel,
                     { color: colors.textPrimary },
-                    emomDuration === minutes && { color: '#FFFFFF' },
+                    emomDuration === minutes && { color: colors.textOnGold },
                   ]}>
                     {minutes} min
                   </Text>
@@ -1495,7 +1496,7 @@ export default function TimerScreen() {
                   <Text style={[
                     styles.fractionBottom,
                     { color: colors.textMuted },
-                    isRoninMode && { color: RONIN_THEME.textSecondary }
+                    isRoninMode && { color: RONIN_THEME.text }
                   ]}>
                     {isInRest ? `Prochain round : ${currentRound + 1}/${totalRounds}` : `Temps de repos : ${formatTime(restDuration)}`}
                   </Text>
@@ -1536,7 +1537,7 @@ export default function TimerScreen() {
                 triggerHaptic('medium');
               }}
             >
-              <Text style={styles.amrapButtonText}>✓ Round Completé</Text>
+              <Text style={[styles.amrapButtonText, { color: colors.textOnGold }]}>✓ Round Completé</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1602,7 +1603,7 @@ export default function TimerScreen() {
                 triggerHaptic('light');
               }}
             >
-              <Text style={[styles.trackToggleText, { color: trackRepsWeight ? '#FFFFFF' : colors.textMuted }]}>
+              <Text style={[styles.trackToggleText, { color: trackRepsWeight ? colors.textOnGold : colors.textMuted }]}>
                 {trackRepsWeight ? '✓ Tracker reps/poids' : 'Tracker reps/poids'}
               </Text>
             </TouchableOpacity>
@@ -1876,7 +1877,7 @@ const styles = StyleSheet.create({
   amrapButtonText: {
     fontSize: FONT.size.md,
     fontWeight: '700',
-    color: '#FFFFFF',
+    // color dynamically set inline
   },
 
   // FOR TIME Finish

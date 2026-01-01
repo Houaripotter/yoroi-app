@@ -33,6 +33,10 @@ import {
 import { successHaptic } from '@/lib/haptics';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, MEASUREMENT_COLORS } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
+// 🔒 SÉCURITÉ: Protection contre les screenshots
+import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { BlurView } from 'expo-blur';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 80;
@@ -243,6 +247,9 @@ export default function MeasurementsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
+  // 🔒 SÉCURITÉ: Protection contre les screenshots
+  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
+
   // Form state
   const [chest, setChest] = useState('');
   const [waist, setWaist] = useState('');
@@ -266,7 +273,7 @@ export default function MeasurementsScreen() {
       const all = await getAllBodyMeasurements();
       setAllMeasurements(all);
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     }
   }, []);
 
@@ -317,7 +324,7 @@ export default function MeasurementsScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (error) {
-      console.error('Error saving:', error);
+      logger.error('Error saving:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder');
     } finally {
       setIsSubmitting(false);
@@ -342,6 +349,15 @@ export default function MeasurementsScreen() {
           <Text style={[styles.headerTitle, { color: colors.text }]}>Mensurations</Text>
           <View style={{ width: 44 }} />
         </View>
+
+        {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
+        {screenshotDetected && (
+          <View style={styles.screenshotWarning}>
+            <Text style={styles.screenshotWarningText}>
+              ⚠️ Screenshot détecté - Tes données sont sensibles
+            </Text>
+          </View>
+        )}
 
         {/* Body Illustration */}
         <BodyIllustration
@@ -470,6 +486,15 @@ export default function MeasurementsScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
+      {isBlurred && (
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          intensity={100}
+          tint={isDark ? 'dark' : 'light'}
+        />
+      )}
     </View>
   );
 }
@@ -684,5 +709,21 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.lg,
     fontWeight: TYPOGRAPHY.weight.bold,
     color: '#fff',
+  },
+
+  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
+  screenshotWarning: {
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  screenshotWarningText: {
+    color: '#FF9500',
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    textAlign: 'center',
   },
 });

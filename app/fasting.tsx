@@ -39,6 +39,7 @@ import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic, errorHaptic } from '@/lib/haptics';
 import { playSuccessSound } from '@/lib/soundManager';
+import logger from '@/lib/security/logger';
 import {
   FASTING_MODES,
   FastingMode,
@@ -144,7 +145,7 @@ export default function FastingScreen() {
         setRamadanMaghrib(ramadanSettings.maghribTime);
       }
     } catch (error) {
-      console.error('Erreur chargement fasting:', error);
+      logger.error('Erreur chargement fasting:', error);
     } finally {
       setIsLoading(false);
     }
@@ -195,35 +196,39 @@ export default function FastingScreen() {
 
     Alert.alert(
       '🎉 Bravo !',
-      'Tu as complete ton jeune avec succes !',
+      'Tu as complete ton jeûne avec succes !',
       [{ text: 'Super !' }]
     );
   };
 
   // Demarrer un jeune
   const handleStartFasting = async (mode: FastingMode) => {
-    // Avertissement pour les jeunes prolonges
-    if (mode.warning) {
-      Alert.alert(
-        '⚠️ Attention',
-        'Le jeune prolonge peut etre dangereux. Consulte un medecin avant de commencer et assure-toi de bien t\'hydrater.',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Je comprends',
-            onPress: () => proceedWithFasting(mode),
+    // Avertissement médical pour tous les jeûnes
+    const warningMessage = mode.warning
+      ? 'Le jeûne prolongé peut être dangereux. Consultez un médecin avant de commencer et assurez-vous de bien vous hydrater.\n\n⚠️ IMPORTANT : Ne mettez pas votre santé en danger. Si vous ne savez pas si le jeûne est adapté pour vous, consultez un professionnel de santé.'
+      : '⚠️ IMPORTANT : Consultez un médecin avant de commencer le jeûne si vous avez des problèmes de santé, prenez des médicaments, êtes enceinte ou allaitez.\n\nNe mettez pas votre santé en danger.';
+
+    Alert.alert(
+      '⚠️ Avertissement médical',
+      warningMessage,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Je comprends',
+          onPress: () => {
+            if (mode.id === 'ramadan') {
+              setShowRamadanModal(true);
+              setShowModeSelector(false);
+            } else if (mode.id === 'custom') {
+              setShowCustomModal(true);
+              setShowModeSelector(false);
+            } else {
+              proceedWithFasting(mode);
+            }
           },
-        ]
-      );
-    } else if (mode.id === 'ramadan') {
-      setShowRamadanModal(true);
-      setShowModeSelector(false);
-    } else if (mode.id === 'custom') {
-      setShowCustomModal(true);
-      setShowModeSelector(false);
-    } else {
-      proceedWithFasting(mode);
-    }
+        },
+      ]
+    );
   };
 
   const proceedWithFasting = async (mode: FastingMode) => {
@@ -234,15 +239,15 @@ export default function FastingScreen() {
       await loadData();
     } else {
       errorHaptic();
-      Alert.alert('Erreur', 'Impossible de demarrer le jeune.');
+      Alert.alert('Erreur', 'Impossible de demarrer le jeûne.');
     }
   };
 
-  // Arreter le jeune
+  // Arreter le jeûne
   const handleStopFasting = () => {
     Alert.alert(
-      'Arreter le jeune ?',
-      'Es-tu sur de vouloir arreter ton jeune maintenant ?',
+      'Arreter le jeûne ?',
+      'Es-tu sur de vouloir arreter ton jeûne maintenant ?',
       [
         { text: 'Continuer', style: 'cancel' },
         {
@@ -267,7 +272,7 @@ export default function FastingScreen() {
     await saveCustomFastingSettings(settings);
     setShowCustomModal(false);
 
-    // Demarrer le jeune
+    // Demarrer le jeûne
     const success = await startFasting('custom');
     if (success) {
       successHaptic();
@@ -287,7 +292,7 @@ export default function FastingScreen() {
     await saveRamadanSettings(settings);
     setShowRamadanModal(false);
 
-    // Demarrer le jeune
+    // Demarrer le jeûne
     const success = await startFasting('ramadan');
     if (success) {
       successHaptic();
@@ -308,7 +313,7 @@ export default function FastingScreen() {
   if (isLoading) {
     return (
       <ScreenWrapper noPadding>
-        <Header title="Mode Jeune" showBack />
+        <Header title="Mode Jeûne" showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.gold} />
         </View>
@@ -318,7 +323,7 @@ export default function FastingScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Mode Jeune" showBack />
+      <Header title="Mode Jeûne" showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -402,7 +407,7 @@ export default function FastingScreen() {
               <View style={[styles.streakBadge, { backgroundColor: colors.cardHover }]}>
                 <Flame size={16} color="#F59E0B" strokeWidth={2} />
                 <Text style={[styles.streakText, { color: colors.textPrimary }]}>
-                  Streak jeune : {stats.currentStreak} jours
+                  Streak jeûne : {stats.currentStreak} jours
                 </Text>
               </View>
             )}
@@ -414,7 +419,7 @@ export default function FastingScreen() {
             >
               <Square size={18} color={colors.danger} strokeWidth={2} />
               <Text style={[styles.stopButtonText, { color: colors.danger }]}>
-                Arreter le jeune
+                Arreter le jeûne
               </Text>
             </TouchableOpacity>
           </Card>
@@ -425,10 +430,10 @@ export default function FastingScreen() {
           <>
             <View style={styles.header}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                🍽️ Mode Jeune
+                🍽️ Mode Jeûne
               </Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Choisis ton type de jeune pour commencer
+                Choisis ton type de jeûne pour commencer
               </Text>
             </View>
 
@@ -541,7 +546,7 @@ export default function FastingScreen() {
               <Settings size={24} color={colors.gold} strokeWidth={2} />
               <View style={styles.customButtonText}>
                 <Text style={[styles.customButtonTitle, { color: colors.gold }]}>
-                  Jeune Personnalise
+                  Jeûne Personnalisé
                 </Text>
                 <Text style={[styles.customButtonDesc, { color: colors.textSecondary }]}>
                   Definis tes propres horaires
@@ -565,7 +570,7 @@ export default function FastingScreen() {
                   {stats.totalCompleted}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                  Jeunes completes
+                  Jeûnes complétés
                 </Text>
               </View>
               <View style={styles.statItem}>
@@ -619,7 +624,7 @@ export default function FastingScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                ⚙️ Jeune Personnalise
+                ⚙️ Jeûne Personnalisé
               </Text>
               <TouchableOpacity onPress={() => setShowCustomModal(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -628,7 +633,7 @@ export default function FastingScreen() {
 
             <View style={styles.modalBody}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Heure de debut du jeune
+                Heure de debut du jeûne
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
@@ -639,7 +644,7 @@ export default function FastingScreen() {
               />
 
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Duree du jeune (heures)
+                Duree du jeûne (heures)
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
@@ -668,7 +673,7 @@ export default function FastingScreen() {
                   >
                     <Text style={[
                       styles.dayButtonText,
-                      { color: customDays.includes(i) ? colors.background : colors.textSecondary }
+                      { color: customDays.includes(i) ? colors.textOnGold : colors.textSecondary }
                     ]}>
                       {day}
                     </Text>
@@ -680,8 +685,8 @@ export default function FastingScreen() {
                 style={[styles.saveButton, { backgroundColor: colors.gold }]}
                 onPress={handleSaveCustomSettings}
               >
-                <Text style={[styles.saveButtonText, { color: colors.background }]}>
-                  Commencer le jeune
+                <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
+                  Commencer le jeûne
                 </Text>
               </TouchableOpacity>
             </View>
@@ -722,7 +727,7 @@ export default function FastingScreen() {
               />
 
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                🌅 Fajr (debut du jeune)
+                🌅 Fajr (debut du jeûne)
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
@@ -733,7 +738,7 @@ export default function FastingScreen() {
               />
 
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                🌆 Maghrib (fin du jeune)
+                🌆 Maghrib (fin du jeûne)
               </Text>
               <TextInput
                 style={[styles.input, { backgroundColor: colors.cardHover, color: colors.textPrimary, borderColor: colors.border }]}
@@ -746,7 +751,7 @@ export default function FastingScreen() {
               <View style={[styles.ramadanDuration, { backgroundColor: colors.goldMuted }]}>
                 <Clock size={16} color={colors.gold} />
                 <Text style={[styles.ramadanDurationText, { color: colors.gold }]}>
-                  Duree du jeune : ~{calculateDuration(ramadanFajr, ramadanMaghrib)}
+                  Duree du jeûne : ~{calculateDuration(ramadanFajr, ramadanMaghrib)}
                 </Text>
               </View>
 
@@ -754,7 +759,7 @@ export default function FastingScreen() {
                 style={[styles.saveButton, { backgroundColor: colors.gold }]}
                 onPress={handleSaveRamadanSettings}
               >
-                <Text style={[styles.saveButtonText, { color: colors.background }]}>
+                <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
                   Commencer le Ramadan
                 </Text>
               </TouchableOpacity>

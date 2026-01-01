@@ -31,6 +31,7 @@ import {
 } from '@/lib/badges';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // ECRAN COLLECTION DE BADGES
@@ -165,7 +166,7 @@ export default function BadgesScreen() {
       const unlocked = await getUnlockedBadges();
       setUnlockedCount(unlocked.length);
     } catch (error) {
-      console.error('Erreur chargement badges:', error);
+      logger.error('Erreur chargement badges:', error);
     }
   }, []);
 

@@ -6,6 +6,7 @@ import { getHydrationHistory, getAverageHydration } from '@/lib/storage';
 import { calculateReadinessScore } from '@/lib/readinessService';
 import { generateInsights, type Insight } from '@/lib/correlationService';
 import { Heart, Moon, Droplet, TrendingUp, AlertCircle, Lightbulb } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 
 interface HydrationDayData {
   date: string;
@@ -48,7 +49,7 @@ export default function VitaliteTab() {
       const expertInsights = await generateInsights();
       setInsights(expertInsights);
     } catch (error) {
-      console.error('Erreur chargement Vitalité:', error);
+      logger.error('Erreur chargement Vitalité:', error);
     }
   };
 

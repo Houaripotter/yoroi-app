@@ -15,11 +15,9 @@ import {
   Easing,
   Dimensions,
 } from 'react-native';
-import { 
-  X, 
-  ChevronRight, 
-  MapPin, 
-  AlertCircle,
+import {
+  X,
+  ChevronRight,
   Hand,
   Footprints,
   Brain,
@@ -246,12 +244,6 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
                     <Text style={[styles.zoneName, { color: colors.textPrimary }]}>
                       {zone.name}
                     </Text>
-                    <View style={styles.zoneIdRow}>
-                      <MapPin size={12} color={colors.textMuted} />
-                      <Text style={[styles.zoneId, { color: colors.textMuted }]}>
-                        Zone {zone.id}
-                      </Text>
-                    </View>
                   </View>
                   <View style={[styles.selectButton, { backgroundColor: colors.accent + '20' }]}>
                     <ChevronRight size={18} color={colors.accent} />
@@ -388,15 +380,6 @@ const styles = StyleSheet.create({
   zoneName: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
-  },
-  zoneIdRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  zoneId: {
-    fontSize: 12,
   },
   selectButton: {
     width: 36,

@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts, Measurement, Workout } from './storage';
 import { getMeasurements } from './database';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -517,7 +518,7 @@ export const getPersonalRecords = async (): Promise<PersonalRecords> => {
     if (!data) return DEFAULT_RECORDS;
     return { ...DEFAULT_RECORDS, ...JSON.parse(data) };
   } catch (error) {
-    console.error('Erreur lecture records:', error);
+    logger.error('Erreur lecture records:', error);
     return DEFAULT_RECORDS;
   }
 };
@@ -529,7 +530,7 @@ export const savePersonalRecords = async (records: PersonalRecords): Promise<voi
   try {
     await AsyncStorage.setItem(STORAGE_KEY_RECORDS, JSON.stringify(records));
   } catch (error) {
-    console.error('Erreur sauvegarde records:', error);
+    logger.error('Erreur sauvegarde records:', error);
   }
 };
 
@@ -544,7 +545,7 @@ export const addRecordToHistory = async (event: NewRecordEvent): Promise<void> =
     const trimmed = history.slice(0, 50);
     await AsyncStorage.setItem(STORAGE_KEY_RECORDS_HISTORY, JSON.stringify(trimmed));
   } catch (error) {
-    console.error('Erreur ajout historique:', error);
+    logger.error('Erreur ajout historique:', error);
   }
 };
 
@@ -557,7 +558,7 @@ export const getRecordsHistory = async (): Promise<NewRecordEvent[]> => {
     if (!data) return [];
     return JSON.parse(data);
   } catch (error) {
-    console.error('Erreur lecture historique:', error);
+    logger.error('Erreur lecture historique:', error);
     return [];
   }
 };

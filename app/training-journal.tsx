@@ -1,8 +1,9 @@
 // ============================================
-// 📖 YOROI - CARNET D'ENTRAÎNEMENT V2
+// CARNET D'ENTRAINEMENT - HYBRID DASHBOARD
+// Mes Records (Benchmarks) + Mes Techniques (Skills)
 // ============================================
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,802 +13,2197 @@ import {
   TextInput,
   Modal,
   Alert,
+  Dimensions,
+  FlatList,
+  KeyboardAvoidingView,
   Platform,
-  Share,
+  SafeAreaView,
+  Linking,
   Animated,
-  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   ChevronLeft,
-  ChevronRight,
   Plus,
-  ChevronDown,
-  ChevronUp,
-  Play,
-  Check,
-  Trash2,
-  Star,
-  BookOpen,
-  Target,
-  Trophy,
-  Calendar,
   X,
-  BarChart3,
-  Share2,
-  Search,
+  Trash2,
   TrendingUp,
+  Target,
+  Check,
+  Clock,
+  Edit3,
+  BarChart2,
+  BookOpen,
+  Dumbbell,
+  Award,
+  Timer,
+  Mountain,
+  Flame,
+  Shield,
+  Move,
+  Lock,
+  Users,
   Zap,
+  Search,
+  Calendar,
+  ChevronDown,
+  FileText,
+  Scale,
+  Video,
+  ExternalLink,
+  Swords,
+  BarChart3,
+  Footprints,
+  Share2,
+  Gauge,
+  Play,
+  Camera,
+  Image as ImageIcon,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 import {
-  ProgressionItem,
-  ProgressionStatus,
-  Sport,
-  ProgressionItemType,
-  PracticeLog,
-  createProgressionItem,
-  getProgressionItems,
-  updateItemStatus,
-  deleteProgressionItem,
-  createPracticeLog,
-  getLastPracticeLog,
-  getPracticeLogsByItemId,
-  getJournalStats,
-  SPORT_LABELS,
-  TYPE_LABELS,
-  STATUS_LABELS,
-} from '@/lib/trainingJournalService';
-import {
-  getGlobalStats,
-  getStreakInfo,
-  getStatsBySport,
-  getPracticesLastDays,
-  getPracticeLogsForMonth,
-  PracticeLogWithItem,
-} from '@/lib/trainingStatsService';
-import {
-  createProgram,
-  getAllPrograms,
-  deleteProgram,
-  addItemToProgram,
-  removeItemFromProgram,
-  getProgramItems,
-  getProgramsWithProgress,
-  getProgramProgress,
-  TrainingProgram,
-  ProgramWithProgress,
-} from '@/lib/trainingProgramsService';
-import { ProgressChart } from '@/components/ProgressChart';
-import { ShareableProgressCard } from '@/components/ShareableProgressCard';
-import { captureRef } from 'react-native-view-shot';
+  Benchmark,
+  Skill,
+  BenchmarkCategory,
+  BenchmarkUnit,
+  BenchmarkEntry,
+  SkillCategory,
+  SkillStatus,
+  WeightUnit,
+  getBenchmarks,
+  createBenchmark,
+  addBenchmarkEntry,
+  deleteBenchmark,
+  getBenchmarkPR,
+  getBenchmarkLast,
+  formatValue,
+  formatForceEntry,
+  parseTimeToSeconds,
+  calculateCalories,
+  calculatePace,
+  METS_VALUES,
+  COMBAT_METS,
+  getSkills,
+  createSkill,
+  updateSkillStatus,
+  addSkillNote,
+  incrementDrillCount,
+  deleteSkill,
+  deleteSkillNote,
+  updateSkillVideoUrl,
+  BENCHMARK_CATEGORIES,
+  SKILL_CATEGORIES,
+  SKILL_STATUS_CONFIG,
+  getCarnetStats,
+  getRPELabel,
+  getRPEColor,
+} from '@/lib/carnetService';
+import VictoryShareModal, { VictorySessionData, createVictoryData, createVictoryFromEntry } from '@/components/VictoryShareModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getPendingVictory } from '@/lib/victoryTrigger';
 
-// Types pour les onglets
-type TabType = 'objectives' | 'stats' | 'calendar';
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Types pour la vue Objectifs
-type ObjectivesViewType = 'items' | 'programs';
+// ============================================
+// ICON HELPER - Map iconName to Lucide component
+// ============================================
+
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  dumbbell: Dumbbell,
+  timer: Timer,
+  mountain: Mountain,
+  flame: Flame,
+  target: Target,
+  shield: Shield,
+  move: Move,
+  lock: Lock,
+  users: Users,
+  zap: Zap,
+  scale: Scale,
+  swords: Swords,
+  'bar-chart': BarChart3,
+  footprints: Footprints,
+  'book-open': BookOpen,
+};
+
+const renderIcon = (iconName: string, size: number, color: string) => {
+  const IconComponent = ICON_MAP[iconName] || Target;
+  return <IconComponent size={size} color={color} />;
+};
+
+// Helper: Format relative date (Hier, Il y a 2j, 12 janv., etc.)
+const getRelativeDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return 'Hier';
+  if (diffDays < 7) return `Il y a ${diffDays}j`;
+  if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)}sem`;
+
+  // Format: "12 janv."
+  const months = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  return `${date.getDate()} ${months[date.getMonth()]}`;
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
-  // État de l'onglet actif
-  const [activeTab, setActiveTab] = useState<TabType>('objectives');
+  // Data state
+  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [stats, setStats] = useState({
+    totalBenchmarks: 0,
+    totalPRs: 0,
+    totalSkills: 0,
+    skillsMastered: 0,
+    skillsInProgress: 0,
+    totalDrills: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Animations
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const tabTransitionAnim = useRef(new Animated.Value(1)).current;
+  // Modal state
+  const [showFabMenu, setShowFabMenu] = useState(false);
+  const [showAddBenchmarkModal, setShowAddBenchmarkModal] = useState(false);
+  const [showAddSkillModal, setShowAddSkillModal] = useState(false);
+  const [showBenchmarkDetail, setShowBenchmarkDetail] = useState(false);
+  const [showSkillDetail, setShowSkillDetail] = useState(false);
+  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
 
-  // États pour l'onglet Objectifs
-  const [objectivesView, setObjectivesView] = useState<ObjectivesViewType>('items');
-  const [allItems, setAllItems] = useState<ProgressionItem[]>([]);
+  // Selected items
+  const [selectedBenchmark, setSelectedBenchmark] = useState<Benchmark | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+
+  // Form state
+  const [newBenchmarkName, setNewBenchmarkName] = useState('');
+  const [newBenchmarkCategory, setNewBenchmarkCategory] = useState<BenchmarkCategory>('force');
+  const [newBenchmarkUnit, setNewBenchmarkUnit] = useState<BenchmarkUnit>('kg');
+  const [newSkillName, setNewSkillName] = useState('');
+  const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>('jjb_garde');
+  const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('to_learn');
+  const [newSkillNotes, setNewSkillNotes] = useState('');
+  // TASK 3: Local video URI for techniques
+  const [newSkillVideoUri, setNewSkillVideoUri] = useState<string | null>(null);
+  const [newEntryValue, setNewEntryValue] = useState('');
+  const [newEntryReps, setNewEntryReps] = useState('');
+  const [newEntryUnit, setNewEntryUnit] = useState<WeightUnit>('kg');
+  const [newEntryRPE, setNewEntryRPE] = useState<number>(5);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [drillIncrement, setDrillIncrement] = useState('10');
+
+  // Filter state
+  const [selectedBenchmarkCategory, setSelectedBenchmarkCategory] = useState<BenchmarkCategory | 'all'>('all');
+  const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ProgressionStatus | 'all'>('all');
-  const [expandedSports, setExpandedSports] = useState<Set<Sport>>(new Set());
-  const [expandedCharts, setExpandedCharts] = useState<Set<number>>(new Set());
 
-  // États pour les Programmes
-  const [allPrograms, setAllPrograms] = useState<ProgramWithProgress[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<ProgramWithProgress | null>(null);
-  const [expandedPrograms, setExpandedPrograms] = useState<Set<number>>(new Set());
+  // Date picker state for new entry
+  const [entryDate, setEntryDate] = useState<'today' | 'yesterday' | 'custom'>('today');
+  const [customDate, setCustomDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // États pour l'onglet Calendrier
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  // TASK 2: Global "One Touch" Filter - Renamed Force -> Musculation
+  type GlobalFilter = 'all' | 'musculation' | 'running' | 'jjb' | 'boxe' | 'lutte' | 'grappling' | 'autre';
+  const [globalFilter, setGlobalFilter] = useState<GlobalFilter>('all');
 
-  // Modals
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [logModalVisible, setLogModalVisible] = useState(false);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ProgressionItem | null>(null);
-  const [shareItem, setShareItem] = useState<ProgressionItem | null>(null);
+  // TASK 2: Video URL for skills
+  const [editingVideoUrl, setEditingVideoUrl] = useState('');
 
-  // Modals Programmes
-  const [programModalVisible, setProgramModalVisible] = useState(false);
-  const [addItemsToProgramModalVisible, setAddItemsToProgramModalVisible] = useState(false);
-  const [editingProgram, setEditingProgram] = useState<ProgramWithProgress | null>(null);
+  // PILLAR 1: Enhanced data entry
+  const [newEntryDuration, setNewEntryDuration] = useState('');
+  const [newEntryCalories, setNewEntryCalories] = useState('');
+  const [userWeight, setUserWeight] = useState(75); // Default user weight in kg
+  const [clubName, setClubName] = useState('');
 
-  // Ref pour la capture de la carte partageable
-  const shareCardRef = useRef<View>(null);
+  // RUNNING Pro Entry: Distance + Time + Auto Pace
+  const [newEntryDistance, setNewEntryDistance] = useState('');
+  const [runningTimeHours, setRunningTimeHours] = useState('');
+  const [runningTimeMinutes, setRunningTimeMinutes] = useState('');
+  const [runningTimeSeconds, setRunningTimeSeconds] = useState('');
 
-  // Formulaire ajout
-  const [newItemType, setNewItemType] = useState<ProgressionItemType>('technique');
-  const [newItemSport, setNewItemSport] = useState<Sport>('jjb');
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemTarget, setNewItemTarget] = useState('');
-  const [newItemNotes, setNewItemNotes] = useState('');
-  const [newItemPriority, setNewItemPriority] = useState(3);
-  const [newItemCurrentWeight, setNewItemCurrentWeight] = useState('');
-  const [newItemTargetWeight, setNewItemTargetWeight] = useState('');
-  const [newItemDistanceKm, setNewItemDistanceKm] = useState('');
-  const [newItemCurrentTime, setNewItemCurrentTime] = useState('');
-  const [newItemTargetTime, setNewItemTargetTime] = useState('');
+  // HYROX Intelligence: Effort Type
+  type HyroxEffortType = 'course' | 'station_force' | 'repetitions';
+  const [hyroxEffortType, setHyroxEffortType] = useState<HyroxEffortType>('course');
+  const [hyroxDistanceMeters, setHyroxDistanceMeters] = useState('');
 
-  // Formulaire log
-  const [logQuality, setLogQuality] = useState(3);
-  const [logNotes, setLogNotes] = useState('');
-  const [logSets, setLogSets] = useState('');
-  const [logReps, setLogReps] = useState('');
-  const [logWeight, setLogWeight] = useState('');
-  const [logTime, setLogTime] = useState('');
+  // PILLAR 3: Victory Share Modal
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
 
-  // Formulaire programme
-  const [programName, setProgramName] = useState('');
-  const [programDescription, setProgramDescription] = useState('');
-  const [programSport, setProgramSport] = useState<Sport | ''>('');
-  const [programDuration, setProgramDuration] = useState('');
-
-  // Charger les données
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      // Petit délai pour permettre l'animation de s'afficher
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setAllItems(getProgressionItems());
-      setAllPrograms(getProgramsWithProgress());
-    } catch (error) {
-      console.error('[TRAINING_JOURNAL] Erreur chargement:', error);
-    } finally {
-      setIsLoading(false);
-      // Animation de fade in
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [fadeAnim]);
-
+  // Load user preferences
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    const loadUserPrefs = async () => {
+      try {
+        const savedWeight = await AsyncStorage.getItem('yoroi_user_weight');
+        const savedClub = await AsyncStorage.getItem('yoroi_club_name');
+        if (savedWeight) setUserWeight(parseFloat(savedWeight));
+        if (savedClub) setClubName(savedClub);
+      } catch (e) {
+        console.error('Error loading user prefs:', e);
+      }
+    };
+    loadUserPrefs();
+  }, []);
 
-  // Animation de transition entre tabs
-  const handleTabChange = (tab: TabType) => {
-    if (tab === activeTab) return;
+  // TASK 4: Check for pending victory from calendar
+  useEffect(() => {
+    const checkPendingVictory = async () => {
+      const pendingVictory = await getPendingVictory();
+      if (pendingVictory) {
+        setVictorySessionData(pendingVictory);
+        setShowVictoryModal(true);
+      }
+    };
+    checkPendingVictory();
+  }, []);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // TASK 3: Toast notification
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const toastOpacity = useState(new Animated.Value(0))[0];
 
-    // Fade out
-    Animated.timing(tabTransitionAnim, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
-      setActiveTab(tab);
-      // Fade in
-      Animated.timing(tabTransitionAnim, {
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
         toValue: 1,
         duration: 200,
         useNativeDriver: true,
-      }).start();
-    });
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setToastVisible(false));
   };
 
-  // Grouper les items par sport
-  const itemsBySport = useCallback(() => {
-    let filtered = allItems;
-
-    // Filtre par recherche
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filtre par statut
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(item => item.status === statusFilter);
-    }
-
-    // Grouper par sport
-    const grouped: Record<Sport, ProgressionItem[]> = {} as any;
-    filtered.forEach(item => {
-      if (!grouped[item.sport]) {
-        grouped[item.sport] = [];
-      }
-      grouped[item.sport].push(item);
-    });
-
-    return grouped;
-  }, [allItems, searchQuery, statusFilter]);
-
-  // Toggle section sport
-  const toggleSportSection = (sport: Sport) => {
-    setExpandedSports(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(sport)) {
-        newSet.delete(sport);
-      } else {
-        newSet.add(sport);
-      }
-      return newSet;
-    });
-  };
-
-  // Toggle graphique
-  const toggleChart = (itemId: number) => {
-    setExpandedCharts(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
-    });
-  };
-
-  // Partager le graphique
-  const handleShareProgress = async (item: ProgressionItem) => {
+  // Load data
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setShareItem(item);
-      setShareModalVisible(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      if (!shareCardRef.current) {
-        Alert.alert('Erreur', 'Impossible de générer l\'image');
-        setShareModalVisible(false);
-        return;
-      }
-
-      const uri = await captureRef(shareCardRef, {
-        format: 'png',
-        quality: 1,
-      });
-
-      setShareModalVisible(false);
-      setShareItem(null);
-
-      await Share.share({
-        url: uri,
-        message: `Ma progression : ${item.name} - ${SPORT_LABELS[item.sport]} 💪`,
-      });
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const [benchmarksData, skillsData, statsData] = await Promise.all([
+        getBenchmarks(),
+        getSkills(),
+        getCarnetStats(),
+      ]);
+      setBenchmarks(benchmarksData);
+      setSkills(skillsData);
+      setStats(statsData);
     } catch (error) {
-      console.error('[SHARE] Erreur:', error);
-      setShareModalVisible(false);
-      setShareItem(null);
-      Alert.alert('Erreur', 'Impossible de partager le graphique');
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  // TASK 2: Apply global filter to benchmarks and skills (Force -> Musculation)
+  const matchesGlobalFilter = (benchmarkCategory: BenchmarkCategory | null, skillCategory: SkillCategory | null): boolean => {
+    if (globalFilter === 'all') return true;
+    if (globalFilter === 'musculation') return benchmarkCategory === 'force' || benchmarkCategory === 'bodyweight';
+    if (globalFilter === 'running') return benchmarkCategory === 'running' || benchmarkCategory === 'trail' || benchmarkCategory === 'hyrox';
+    if (globalFilter === 'jjb') return skillCategory?.startsWith('jjb_') ?? false;
+    if (globalFilter === 'boxe') return skillCategory === 'striking';
+    if (globalFilter === 'lutte') return skillCategory === 'lutte';
+    if (globalFilter === 'grappling') return skillCategory === 'lutte' || (skillCategory?.startsWith('jjb_') ?? false);
+    if (globalFilter === 'autre') return benchmarkCategory === 'custom' || skillCategory === 'other';
+    return true;
   };
 
-  // Ajouter un objectif
-  const handleAddItem = () => {
-    if (!newItemName.trim()) {
-      Alert.alert('Erreur', 'Le nom est requis');
+  // Filter benchmarks: ONLY show ones WITH entries (filtered by global filter)
+  const filteredBenchmarks = benchmarks.filter(b => {
+    // MUST have at least one entry to be displayed
+    const hasEntries = b.entries && b.entries.length > 0;
+    if (!hasEntries) return false;
+
+    const matchesGlobal = matchesGlobalFilter(b.category, null);
+    const matchesSearch = searchQuery.trim() === '' ||
+      b.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesGlobal && matchesSearch;
+  });
+
+  // Filter skills (by global filter, status AND search query)
+  const filteredSkills = skills.filter(s => {
+    const matchesGlobal = matchesGlobalFilter(null, s.category);
+    const matchesStatus = selectedSkillFilter === 'all' || s.status === selectedSkillFilter;
+    const matchesSearch = searchQuery.trim() === '' ||
+      s.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesGlobal && matchesStatus && matchesSearch;
+  });
+
+  // Get the actual date for entry
+  const getEntryDate = (): Date => {
+    if (entryDate === 'today') return new Date();
+    if (entryDate === 'yesterday') {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d;
+    }
+    return customDate;
+  };
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+
+  const handleAddBenchmark = async () => {
+    if (!newBenchmarkName.trim()) {
+      Alert.alert('Erreur', 'Entre un nom pour le suivi');
       return;
     }
 
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      createProgressionItem({
-        type: newItemType,
-        sport: newItemSport,
-        name: newItemName,
-        status: 'todo',
-        target: newItemTarget || undefined,
-        priority: newItemPriority,
-        notes: newItemNotes || undefined,
-        current_weight: newItemCurrentWeight ? parseFloat(newItemCurrentWeight) : undefined,
-        target_weight: newItemTargetWeight ? parseFloat(newItemTargetWeight) : undefined,
-        distance_km: newItemDistanceKm ? parseFloat(newItemDistanceKm) : undefined,
-        current_time: newItemCurrentTime ? parseInt(newItemCurrentTime) : undefined,
-        target_time: newItemTargetTime ? parseInt(newItemTargetTime) : undefined,
-      });
-
-      setNewItemName('');
-      setNewItemTarget('');
-      setNewItemNotes('');
-      setNewItemPriority(3);
-      setNewItemCurrentWeight('');
-      setNewItemTargetWeight('');
-      setNewItemDistanceKm('');
-      setNewItemCurrentTime('');
-      setNewItemTargetTime('');
-      setAddModalVisible(false);
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const result = await createBenchmark(newBenchmarkName, newBenchmarkCategory, newBenchmarkUnit);
+    if (result) {
+      setShowAddBenchmarkModal(false);
+      setNewBenchmarkName('');
+      showToast('Enregistrement sauvegardé');
       loadData();
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'objectif');
     }
   };
 
-  // Logger une pratique
-  const handleLogPractice = () => {
-    if (!selectedItem) return;
-
+  // TASK 3: Video picker for techniques
+  // Helper: Copy video from temp cache to permanent storage
+  const saveVideoToPermanentStorage = async (tempUri: string): Promise<string | null> => {
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      createPracticeLog({
-        item_id: selectedItem.id,
-        date: new Date().toISOString(),
-        quality_rating: logQuality,
-        notes: logNotes || undefined,
-        sets: logSets ? parseInt(logSets) : undefined,
-        reps: logReps ? parseInt(logReps) : undefined,
-        weight: logWeight ? parseFloat(logWeight) : undefined,
-        time: logTime ? parseInt(logTime) : undefined,
+      const videoDir = `${FileSystem.documentDirectory}skill_videos/`;
+      const dirInfo = await FileSystem.getInfoAsync(videoDir);
+      if (!dirInfo.exists) {
+        await FileSystem.makeDirectoryAsync(videoDir, { intermediates: true });
+      }
+
+      const fileName = `skill_${Date.now()}.mp4`;
+      const permanentUri = `${videoDir}${fileName}`;
+
+      await FileSystem.copyAsync({
+        from: tempUri,
+        to: permanentUri,
       });
 
-      setLogQuality(3);
-      setLogNotes('');
-      setLogSets('');
-      setLogReps('');
-      setLogWeight('');
-      setLogTime('');
-      setLogModalVisible(false);
-      setSelectedItem(null);
-
-      loadData();
+      return permanentUri;
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'enregistrer la pratique');
+      console.error('Error saving video to permanent storage:', error);
+      return null;
     }
   };
 
-  // Changer le statut
-  const handleStatusChange = (item: ProgressionItem, newStatus: ProgressionStatus) => {
-    Alert.alert(
-      'Changer le statut ?',
-      `Passer "${item.name}" en "${STATUS_LABELS[newStatus]}" ?`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: () => {
-            try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              updateItemStatus(item.id, newStatus);
-              loadData();
-            } catch (error) {
-              Alert.alert('Erreur', 'Impossible de changer le statut');
-            }
-          },
-        },
-      ]
+  const pickSkillVideo = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie pour ajouter une vidéo.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Copy to permanent storage
+      const permanentUri = await saveVideoToPermanentStorage(result.assets[0].uri);
+      if (permanentUri) {
+        setNewSkillVideoUri(permanentUri);
+      } else {
+        Alert.alert('Erreur', 'Impossible de sauvegarder la vidéo');
+      }
+    }
+  };
+
+  const recordSkillVideo = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Autorise l\'accès à la caméra pour filmer.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: true,
+      quality: 0.8,
+      videoMaxDuration: 60, // Max 60 seconds
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Copy to permanent storage
+      const permanentUri = await saveVideoToPermanentStorage(result.assets[0].uri);
+      if (permanentUri) {
+        setNewSkillVideoUri(permanentUri);
+      } else {
+        Alert.alert('Erreur', 'Impossible de sauvegarder la vidéo');
+      }
+    }
+  };
+
+  const handleAddSkill = async () => {
+    if (!newSkillName.trim()) {
+      Alert.alert('Erreur', 'Entre un nom pour la technique');
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Create skill with video URI if available
+    const result = await createSkill(newSkillName, newSkillCategory, newSkillStatus, newSkillNotes);
+    if (result && newSkillVideoUri) {
+      // Save video URI to skill (using videoUrl field for local URI)
+      await updateSkillVideoUrl(result.id, newSkillVideoUri);
+    }
+    if (result) {
+      setShowAddSkillModal(false);
+      setNewSkillName('');
+      setNewSkillStatus('to_learn');
+      setNewSkillNotes('');
+      setNewSkillVideoUri(null);
+      showToast('Technique sauvegardée');
+      loadData();
+    }
+  };
+
+  // TASK 2: Handle video URL update
+  const handleUpdateVideoUrl = async () => {
+    if (!selectedSkill) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await updateSkillVideoUrl(selectedSkill.id, editingVideoUrl);
+    showToast('Lien vidéo sauvegardé');
+    // Refresh
+    const updated = await getSkills();
+    const refreshed = updated.find(s => s.id === selectedSkill.id);
+    if (refreshed) setSelectedSkill(refreshed);
+    loadData();
+  };
+
+  const openVideoUrl = (url: string) => {
+    if (!url) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Erreur', 'Impossible d\'ouvrir ce lien');
+    });
+  };
+
+  const handleAddEntry = async () => {
+    if (!selectedBenchmark || !newEntryValue.trim()) return;
+
+    // For Force exercises (kg/lbs), reps is mandatory
+    const isForceExercise = selectedBenchmark.category === 'force' &&
+      (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
+
+    if (isForceExercise && !newEntryReps.trim()) {
+      Alert.alert('Erreur', 'Le nombre de répétitions est obligatoire');
+      return;
+    }
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    let value: number;
+
+    if (selectedBenchmark.unit === 'time') {
+      value = parseTimeToSeconds(newEntryValue);
+    } else {
+      value = parseFloat(newEntryValue);
+    }
+
+    if (isNaN(value)) {
+      Alert.alert('Erreur', 'Valeur invalide');
+      return;
+    }
+
+    const reps = newEntryReps.trim() ? parseInt(newEntryReps) : undefined;
+    const duration = newEntryDuration.trim() ? parseInt(newEntryDuration) : undefined;
+
+    // Auto-calculate calories if duration is provided
+    let calories = newEntryCalories.trim() ? parseInt(newEntryCalories) : undefined;
+    if (!calories && duration && duration > 0) {
+      calories = calculateCalories(duration, userWeight, selectedBenchmark.category);
+    }
+
+    const selectedDate = getEntryDate();
+
+    // Get current PR before adding new entry
+    const currentPR = getBenchmarkPR(selectedBenchmark);
+
+    const newEntry = await addBenchmarkEntry(
+      selectedBenchmark.id,
+      value,
+      newEntryRPE,
+      undefined,
+      selectedDate,
+      reps,
+      duration,
+      calories
     );
+
+    if (newEntry) {
+      // Check if this is a new PR
+      let isPR = false;
+      if (currentPR) {
+        if (selectedBenchmark.unit === 'time') {
+          isPR = value < currentPR.value;
+        } else {
+          isPR = value > currentPR.value;
+        }
+      } else {
+        isPR = true; // First entry is always a PR
+      }
+
+      // Format performance string
+      const performanceStr = isForceExercise
+        ? formatForceEntry(value, selectedBenchmark.unit, reps)
+        : formatValue(value, selectedBenchmark.unit);
+
+      setShowAddEntryModal(false);
+      setNewEntryValue('');
+      setNewEntryReps('');
+      setNewEntryDuration('');
+      setNewEntryCalories('');
+      setNewEntryRPE(5);
+      setEntryDate('today');
+
+      // Prepare victory data
+      const isRunning = ['running', 'trail', 'hyrox'].includes(selectedBenchmark.category);
+      setVictorySessionData({
+        exerciseName: selectedBenchmark.name,
+        category: selectedBenchmark.category,
+        performance: performanceStr,
+        duration,
+        calories,
+        rpe: newEntryRPE,
+        date: selectedDate.toISOString(),
+        isPR,
+        // Running-specific: for pace calculation
+        distanceKm: isRunning && selectedBenchmark.unit === 'km' ? value : undefined,
+        timeSeconds: isRunning && duration ? duration * 60 : undefined,
+      });
+
+      // Show victory modal (Strava-style)
+      setShowVictoryModal(true);
+
+      showToast(isPR ? 'Nouveau Record !' : 'Enregistrement sauvegardé');
+      loadData();
+
+      // Refresh selected benchmark
+      const updated = await getBenchmarks();
+      const refreshed = updated.find(b => b.id === selectedBenchmark.id);
+      if (refreshed) setSelectedBenchmark(refreshed);
+    }
   };
 
-  // Supprimer un item
-  const handleDeleteItem = (item: ProgressionItem) => {
+  const handleDeleteBenchmark = async (id: string) => {
     Alert.alert(
-      'Supprimer ?',
-      `Supprimer "${item.name}" définitivement ?`,
+      'Supprimer',
+      'Supprimer ce suivi et tout son historique ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
           style: 'destructive',
-          onPress: () => {
-            try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-              deleteProgressionItem(item.id);
-              loadData();
-            } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer');
-            }
+          onPress: async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            await deleteBenchmark(id);
+            setShowBenchmarkDetail(false);
+            setSelectedBenchmark(null);
+            loadData();
           },
         },
       ]
     );
   };
 
-  // Ouvrir le logger pour un item
-  const handleOpenLogger = (item: ProgressionItem) => {
-    setSelectedItem(item);
-    setLogModalVisible(true);
+  const handleUpdateSkillStatus = async (skillId: string, status: SkillStatus) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await updateSkillStatus(skillId, status);
+    loadData();
+    // Refresh selected skill
+    const updated = await getSkills();
+    const refreshed = updated.find(s => s.id === skillId);
+    if (refreshed) setSelectedSkill(refreshed);
   };
 
-  // Render Tab Bar
-  const renderTabBar = () => {
-    const tabs: { id: TabType; label: string; Icon: any }[] = [
-      { id: 'objectives', label: 'Objectifs', Icon: Target },
-      { id: 'stats', label: 'Stats', Icon: BarChart3 },
-      { id: 'calendar', label: 'Calendrier', Icon: Calendar },
-    ];
+  const handleAddNote = async () => {
+    if (!selectedSkill || !newNoteText.trim()) return;
 
-    return (
-      <View style={[styles.tabBar, { backgroundColor: colors.background }]}>
-        {tabs.map(tab => {
-          const isActive = activeTab === tab.id;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={styles.tab}
-              onPress={() => handleTabChange(tab.id)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.tabIconContainer,
-                  {
-                    backgroundColor: isActive ? colors.accent : colors.backgroundCard,
-                    borderColor: isActive ? colors.accent : colors.border,
-                  },
-                ]}
-              >
-                <tab.Icon size={22} color={isActive ? '#FFF' : colors.textMuted} />
-              </View>
-              <Text
-                style={[
-                  styles.tabLabel,
-                  { color: isActive ? colors.textPrimary : colors.textMuted },
-                ]}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await addSkillNote(selectedSkill.id, newNoteText);
+    setNewNoteText('');
+    // Refresh
+    const updated = await getSkills();
+    const refreshed = updated.find(s => s.id === selectedSkill.id);
+    if (refreshed) setSelectedSkill(refreshed);
+    loadData();
+  };
+
+  const handleIncrementDrill = async () => {
+    if (!selectedSkill) return;
+
+    const amount = parseInt(drillIncrement) || 10;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await incrementDrillCount(selectedSkill.id, amount);
+    // Refresh
+    const updated = await getSkills();
+    const refreshed = updated.find(s => s.id === selectedSkill.id);
+    if (refreshed) setSelectedSkill(refreshed);
+    loadData();
+  };
+
+  const handleDeleteSkill = async (id: string) => {
+    Alert.alert(
+      'Supprimer',
+      'Supprimer cette technique et toutes ses notes ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            await deleteSkill(id);
+            setShowSkillDetail(false);
+            setSelectedSkill(null);
+            loadData();
+          },
+        },
+      ]
     );
   };
 
-  // Icônes par sport
-  const SPORT_ICONS: Record<Sport, any> = {
-    jjb: '🥋',
-    mma: '🥊',
-    boxe: '🥊',
-    muay_thai: '🥊',
-    judo: '🥋',
-    karate: '🥋',
-    musculation: '💪',
-    crossfit: '🔥',
-    running: '🏃',
-    trail: '⛰️',
-    autre: '🎯',
-  };
+  // ============================================
+  // RENDER COMPONENTS
+  // ============================================
 
-  // Couleurs par sport
-  const SPORT_COLORS: Record<Sport, string> = {
-    jjb: '#8B5CF6',
-    mma: '#6366F1',
-    boxe: '#F59E0B',
-    muay_thai: '#F97316',
-    judo: '#8B5CF6',
-    karate: '#A855F7',
-    musculation: '#EF4444',
-    crossfit: '#DC2626',
-    running: '#3B82F6',
-    trail: '#10B981',
-    autre: '#6B7280',
-  };
+  // ============================================
+  // COMPACT LOG CARD - High density design
+  // ============================================
+  const renderCompactBenchmarkCard = (benchmark: Benchmark) => {
+    const pr = getBenchmarkPR(benchmark);
+    const last = getBenchmarkLast(benchmark);
+    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category];
+    const isPR = pr && last && last.value === pr.value;
 
-  // Render une carte d'objectif
-  const renderObjectiveCard = (item: ProgressionItem) => {
-    const lastLog = getLastPracticeLog(item.id);
-    const daysSince = lastLog
-      ? Math.floor((Date.now() - new Date(lastLog.date).getTime()) / (1000 * 60 * 60 * 24))
-      : null;
-
-    const allLogs = getPracticeLogsByItemId(item.id);
-    const hasData = allLogs.length > 0;
-    const isChartExpanded = expandedCharts.has(item.id);
-
-    // Préparer les données pour le graphique
-    let chartData: { date: string; value: number }[] = [];
-    let chartType: 'weight' | 'time' | 'quality' = 'quality';
-    let chartUnit = '';
-    let chartTarget: number | undefined;
-
-    if (item.current_weight && item.target_weight) {
-      chartType = 'weight';
-      chartUnit = 'kg';
-      chartTarget = item.target_weight;
-      chartData = allLogs
-        .filter(log => log.weight)
-        .map(log => ({ date: log.date, value: log.weight! }));
-    } else if (item.current_time && item.target_time) {
-      chartType = 'time';
-      chartUnit = 'min';
-      chartTarget = item.target_time;
-      chartData = allLogs
-        .filter(log => log.time)
-        .map(log => ({ date: log.date, value: log.time! }));
-    } else {
-      chartType = 'quality';
-      chartUnit = '/5';
-      chartData = allLogs
-        .filter(log => log.quality_rating)
-        .map(log => ({ date: log.date, value: log.quality_rating! }));
-    }
-
-    // Couleur de la bordure selon le statut
-    const borderColor = item.status === 'todo' ? colors.accent :
-      item.status === 'in_progress' ? '#F97316' : '#10B981';
+    // Format performance string: "100 kg × 5" for Force, "10km • 5:30 /km" for Running, etc.
+    const getPerformanceString = () => {
+      if (!last) return '--';
+      // Force: show weight × reps
+      if (benchmark.category === 'force' && (benchmark.unit === 'kg' || benchmark.unit === 'lbs')) {
+        return formatForceEntry(last.value, benchmark.unit, last.reps);
+      }
+      // Running/Trail/Hyrox: show distance + pace if duration available
+      if (['running', 'trail', 'hyrox'].includes(benchmark.category) && benchmark.unit === 'km' && last.duration) {
+        const timeSeconds = last.duration * 60; // duration is in minutes
+        const pace = calculatePace(timeSeconds, last.value);
+        return `${last.value}km • ${pace} /km`;
+      }
+      return formatValue(last.value, benchmark.unit);
+    };
 
     return (
-      <View
-        key={item.id}
-        style={[
-          styles.objectiveCard,
-          { backgroundColor: colors.backgroundCard, borderLeftColor: borderColor }
-        ]}
+      <TouchableOpacity
+        key={benchmark.id}
+        style={[styles.compactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: benchmark.color }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setSelectedBenchmark(benchmark);
+          setShowBenchmarkDetail(true);
+        }}
+        activeOpacity={0.7}
       >
-        {/* Header */}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-              {item.name}
+        {/* Left: Icon */}
+        <View style={[styles.compactCardIcon, { backgroundColor: benchmark.color + '15' }]}>
+          {renderIcon(benchmark.iconName || categoryConfig.iconName, 18, benchmark.color)}
+        </View>
+
+        {/* Center: Name + Performance */}
+        <View style={styles.compactCardContent}>
+          <Text style={[styles.compactCardName, { color: colors.textPrimary }]} numberOfLines={1}>
+            {benchmark.name}
+          </Text>
+          <View style={styles.compactCardRow}>
+            <Text style={[styles.compactCardValue, { color: benchmark.color }]}>
+              {getPerformanceString()}
             </Text>
-            {item.status === 'mastered' && (
-              <View style={[styles.masterBadge, { backgroundColor: '#10B98120' }]}>
-                <Check size={12} color="#10B981" />
+            {isPR && (
+              <View style={[styles.compactPRBadge, { backgroundColor: benchmark.color }]}>
+                <Text style={styles.compactPRText}>PR</Text>
               </View>
             )}
           </View>
         </View>
 
-        {/* Type et Priorité */}
-        <View style={styles.cardMeta}>
-          <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
-            {TYPE_LABELS[item.type]}
+        {/* Right: Date + Actions (Share + Add) */}
+        <View style={styles.compactCardRight}>
+          <Text style={[styles.compactCardDate, { color: colors.textMuted }]}>
+            {last ? getRelativeDate(last.date) : ''}
           </Text>
-          <Text style={[styles.cardMetaDot, { color: colors.textMuted }]}>•</Text>
-          <View style={styles.priority}>
-            {[1, 2, 3, 4, 5].map(star => (
-              <Star
-                key={star}
-                size={12}
-                color={star <= item.priority ? '#F59E0B' : colors.textMuted}
-                fill={star <= item.priority ? '#F59E0B' : 'transparent'}
-              />
-            ))}
+          <View style={styles.compactCardActions}>
+            {/* TASK 2: Share button for re-sharing past sessions */}
+            {last && (
+              <TouchableOpacity
+                style={[styles.compactShareBtn, { backgroundColor: colors.backgroundCard, borderColor: benchmark.color }]}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  // Create victory data from the last entry
+                  const victoryData = createVictoryFromEntry(
+                    benchmark.name,
+                    benchmark.category,
+                    last,
+                    benchmark.unit,
+                    isPR ?? false
+                  );
+                  setVictorySessionData(victoryData);
+                  setShowVictoryModal(true);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Share2 size={12} color={benchmark.color} strokeWidth={2.5} />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.compactAddBtn, { backgroundColor: benchmark.color }]}
+              onPress={(e) => {
+                e.stopPropagation();
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setSelectedBenchmark(benchmark);
+                setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
+                setShowAddEntryModal(true);
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Plus size={14} color="#FFFFFF" strokeWidth={3} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Keep old card for horizontal scroll (less used now)
+  const renderBenchmarkCard = (benchmark: Benchmark) => {
+    const pr = getBenchmarkPR(benchmark);
+    const last = getBenchmarkLast(benchmark);
+    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category];
+
+    const getPerformanceString = () => {
+      if (!last) return '--';
+      // Force: show weight × reps
+      if (benchmark.category === 'force' && (benchmark.unit === 'kg' || benchmark.unit === 'lbs')) {
+        return formatForceEntry(last.value, benchmark.unit, last.reps);
+      }
+      // Running/Trail/Hyrox: show distance + pace if duration available
+      if (['running', 'trail', 'hyrox'].includes(benchmark.category) && benchmark.unit === 'km' && last.duration) {
+        const timeSeconds = last.duration * 60;
+        const pace = calculatePace(timeSeconds, last.value);
+        return `${last.value}km • ${pace} /km`;
+      }
+      return formatValue(last.value, benchmark.unit);
+    };
+
+    return (
+      <TouchableOpacity
+        key={benchmark.id}
+        style={[styles.benchmarkCard, { backgroundColor: colors.backgroundCard, borderColor: benchmark.color + '40' }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setSelectedBenchmark(benchmark);
+          setShowBenchmarkDetail(true);
+        }}
+        activeOpacity={0.8}
+      >
+        {/* Icon */}
+        <View style={[styles.benchmarkIconBg, { backgroundColor: benchmark.color + '20' }]}>
+          {renderIcon(benchmark.iconName || categoryConfig.iconName, 24, benchmark.color)}
+        </View>
+
+        {/* Title - Allow 2 lines */}
+        <Text style={[styles.benchmarkName, { color: colors.textPrimary }]} numberOfLines={2}>
+          {benchmark.name}
+        </Text>
+
+        {/* DATA RICH: Last Entry Value + Relative Date */}
+        {last ? (
+          <View style={styles.benchmarkDataRich}>
+            <Text style={[styles.benchmarkValue, { color: benchmark.color }]}>
+              {getPerformanceString()}
+            </Text>
+            <View style={styles.benchmarkDateRow}>
+              <Text style={[styles.benchmarkDate, { color: colors.textMuted }]}>
+                {getRelativeDate(last.date)}
+              </Text>
+              {pr && last.value === pr.value && (
+                <View style={[styles.prBadge, { backgroundColor: benchmark.color + '20' }]}>
+                  <Award size={10} color={benchmark.color} />
+                  <Text style={[styles.prBadgeText, { color: benchmark.color }]}>PR</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.benchmarkDataRich}>
+            <Text style={[styles.benchmarkValue, { color: colors.textMuted }]}>--</Text>
+            <Text style={[styles.benchmarkDate, { color: colors.textMuted }]}>Aucune donnée</Text>
+          </View>
+        )}
+
+        {/* Quick Add Button */}
+        <TouchableOpacity
+          style={[styles.quickAddBtn, { backgroundColor: benchmark.color }]}
+          onPress={(e) => {
+            e.stopPropagation();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setSelectedBenchmark(benchmark);
+            setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
+            setShowAddEntryModal(true);
+          }}
+        >
+          <Plus size={16} color="#FFFFFF" strokeWidth={3} />
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSkillCard = (skill: Skill) => {
+    const statusConfig = SKILL_STATUS_CONFIG[skill.status];
+    const categoryConfig = SKILL_CATEGORIES[skill.category];
+    const hasNotes = skill.notes && skill.notes.length > 0;
+    const hasVideo = !!skill.videoUrl;
+
+    return (
+      <TouchableOpacity
+        key={skill.id}
+        style={[styles.skillCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          setSelectedSkill(skill);
+          setEditingVideoUrl(skill.videoUrl || ''); // Pre-fill video URL
+          setShowSkillDetail(true);
+        }}
+        activeOpacity={0.8}
+      >
+        {/* Left: Icon */}
+        <View style={styles.skillLeft}>
+          <View style={[styles.skillIconBg, { backgroundColor: categoryConfig.color + '20' }]}>
+            {renderIcon(categoryConfig.iconName, 22, categoryConfig.color)}
           </View>
         </View>
 
-        {/* Progress bar (si applicable) */}
-        {(item.current_weight && item.target_weight) && (
-          <View style={styles.progressBar}>
-            <View style={styles.progressBarHeader}>
-              <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
-                {item.current_weight}kg → {item.target_weight}kg
-              </Text>
-              <Text style={[styles.progressPercent, { color: borderColor }]}>
-                {item.progress_percent}%
-              </Text>
-            </View>
-            <View style={[styles.progressBarTrack, { backgroundColor: `${borderColor}20` }]}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { backgroundColor: borderColor, width: `${Math.min(100, item.progress_percent)}%` }
-                ]}
-              />
-            </View>
-          </View>
-        )}
-
-        {(item.current_time && item.target_time) && (
-          <View style={styles.progressBar}>
-            <View style={styles.progressBarHeader}>
-              <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
-                {item.current_time}min → {item.target_time}min
-              </Text>
-              <Text style={[styles.progressPercent, { color: borderColor }]}>
-                {item.progress_percent}%
-              </Text>
-            </View>
-            <View style={[styles.progressBarTrack, { backgroundColor: `${borderColor}20` }]}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { backgroundColor: borderColor, width: `${Math.min(100, item.progress_percent)}%` }
-                ]}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Infos pratique */}
-        {item.status === 'in_progress' && (
-          <View style={styles.practiceInfo}>
-            <Text style={[styles.practiceText, { color: colors.textSecondary }]}>
-              Pratiqué {item.practice_count}x
-              {daysSince !== null && ` • Il y a ${daysSince}j`}
-            </Text>
-            {lastLog?.notes && (
-              <Text style={[styles.lastNotes, { color: colors.textMuted }]} numberOfLines={1}>
-                "{lastLog.notes}"
-              </Text>
-            )}
-          </View>
-        )}
-
-        {item.status === 'mastered' && item.mastered_date && (
-          <Text style={[styles.masteredDate, { color: '#10B981' }]}>
-            ✓ Maîtrisé le {new Date(item.mastered_date).toLocaleDateString('fr-FR')}
+        {/* Center: Name + Meta */}
+        <View style={styles.skillCenter}>
+          <Text style={[styles.skillName, { color: colors.textPrimary }]} numberOfLines={2}>
+            {skill.name}
           </Text>
-        )}
-
-        {/* Boutons graphique */}
-        {item.status === 'in_progress' && hasData && (
-          <View style={styles.chartButtons}>
-            <TouchableOpacity
-              style={[styles.chartToggleBtn, { backgroundColor: `${borderColor}15`, flex: 1 }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                toggleChart(item.id);
-              }}
-              activeOpacity={0.7}
-            >
-              <BarChart3 size={14} color={borderColor} />
-              <Text style={[styles.chartToggleText, { color: borderColor }]}>
-                {isChartExpanded ? 'Masquer' : 'Voir'} le graphique
+          <View style={styles.skillMeta}>
+            <Text style={[styles.skillCategorySmall, { color: categoryConfig.color }]}>
+              {categoryConfig.label}
+            </Text>
+            {skill.drillCount > 0 && (
+              <Text style={[styles.skillDrillCount, { color: colors.textMuted }]}>
+                {skill.drillCount} répétitions
               </Text>
-              {isChartExpanded ? (
-                <ChevronUp size={14} color={borderColor} />
-              ) : (
-                <ChevronDown size={14} color={borderColor} />
-              )}
-            </TouchableOpacity>
-
-            {isChartExpanded && (
-              <TouchableOpacity
-                style={[styles.shareBtn, { backgroundColor: `${borderColor}15` }]}
-                onPress={() => handleShareProgress(item)}
-                activeOpacity={0.7}
-              >
-                <Share2 size={16} color={borderColor} />
-              </TouchableOpacity>
+            )}
+            {hasNotes && (
+              <View style={styles.skillNotesIndicator}>
+                <FileText size={12} color={colors.textMuted} />
+              </View>
+            )}
+            {hasVideo && (
+              <View style={[styles.skillVideoIndicator, { backgroundColor: categoryConfig.color + '20' }]}>
+                <Play size={12} color={categoryConfig.color} />
+              </View>
             )}
           </View>
-        )}
+        </View>
 
-        {/* Graphique */}
-        {item.status === 'in_progress' && isChartExpanded && hasData && (
-          <ProgressChart
-            data={chartData}
-            targetValue={chartTarget}
-            unit={chartUnit}
-            type={chartType}
-          />
-        )}
+        {/* Right: Status Pill (PROMINENT) */}
+        <View style={[styles.skillStatusPill, { backgroundColor: statusConfig.bgColor, borderColor: statusConfig.color + '40' }]}>
+          <View style={[styles.skillStatusDot, { backgroundColor: statusConfig.color }]} />
+          <Text style={[styles.skillStatusPillText, { color: statusConfig.color }]}>
+            {statusConfig.label}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
-        {/* Actions */}
-        <View style={styles.cardActions}>
-          {item.status === 'todo' && (
-            <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: `${colors.accent}20`, flex: 1 }]}
-              onPress={() => handleStatusChange(item, 'in_progress')}
-            >
-              <Play size={16} color={colors.accent} />
-              <Text style={[styles.actionBtnText, { color: colors.accent }]}>
-                Commencer
-              </Text>
+  // ============================================
+  // MODALS
+  // ============================================
+
+  const renderAddBenchmarkModal = () => (
+    <Modal visible={showAddBenchmarkModal} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouveau Suivi</Text>
+            <TouchableOpacity onPress={() => setShowAddBenchmarkModal(false)}>
+              <X size={24} color={colors.textMuted} />
             </TouchableOpacity>
-          )}
+          </View>
 
-          {item.status === 'in_progress' && (
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Catégorie</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            {(Object.keys(BENCHMARK_CATEGORIES) as BenchmarkCategory[]).map(cat => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryOption,
+                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                  newBenchmarkCategory === cat && { backgroundColor: BENCHMARK_CATEGORIES[cat].color, borderColor: BENCHMARK_CATEGORIES[cat].color }
+                ]}
+                onPress={() => {
+                  setNewBenchmarkCategory(cat);
+                  // Auto-set unit based on category
+                  if (cat === 'running' || cat === 'trail') {
+                    setNewBenchmarkUnit('time');
+                  } else if (cat === 'force') {
+                    setNewBenchmarkUnit('kg');
+                  }
+                }}
+              >
+                {renderIcon(
+                  BENCHMARK_CATEGORIES[cat].iconName,
+                  18,
+                  newBenchmarkCategory === cat ? '#FFFFFF' : BENCHMARK_CATEGORIES[cat].color
+                )}
+                <Text style={[
+                  styles.categoryOptionText,
+                  { color: newBenchmarkCategory === cat ? '#FFFFFF' : colors.textPrimary }
+                ]}>
+                  {BENCHMARK_CATEGORIES[cat].label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* TASK 2: Quick Presets for Running */}
+          {(newBenchmarkCategory === 'running' || newBenchmarkCategory === 'trail') && (
             <>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: `${borderColor}20`, flex: 1 }]}
-                onPress={() => handleOpenLogger(item)}
-              >
-                <Plus size={16} color={borderColor} />
-                <Text style={[styles.actionBtnText, { color: borderColor }]}>
-                  Logger
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: '#10B98120', flex: 1 }]}
-                onPress={() => handleStatusChange(item, 'mastered')}
-              >
-                <Check size={16} color="#10B981" />
-                <Text style={[styles.actionBtnText, { color: '#10B981' }]}>
-                  Maîtrisé
-                </Text>
-              </TouchableOpacity>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Distances populaires</Text>
+              <View style={styles.presetChipsRow}>
+                {[
+                  { label: '5km', name: '5km' },
+                  { label: '10km', name: '10km' },
+                  { label: 'Semi-Marathon', name: 'Semi-Marathon' },
+                  { label: 'Marathon', name: 'Marathon' },
+                ].map(preset => (
+                  <TouchableOpacity
+                    key={preset.name}
+                    style={[
+                      styles.presetChip,
+                      {
+                        backgroundColor: newBenchmarkName === preset.name ? '#3B82F6' : colors.backgroundCard,
+                        borderColor: '#3B82F6',
+                      }
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setNewBenchmarkName(preset.name);
+                      setNewBenchmarkUnit('time');
+                    }}
+                  >
+                    <Text style={[
+                      styles.presetChipText,
+                      { color: newBenchmarkName === preset.name ? '#FFFFFF' : '#3B82F6' }
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </>
           )}
 
+          {/* TASK 2: Quick Presets for Force */}
+          {newBenchmarkCategory === 'force' && (
+            <>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Exercices populaires</Text>
+              <View style={styles.presetChipsRow}>
+                {[
+                  { label: 'Squat', name: 'Squat' },
+                  { label: 'Développé Couché', name: 'Développé Couché' },
+                  { label: 'Soulevé de Terre', name: 'Soulevé de Terre' },
+                ].map(preset => (
+                  <TouchableOpacity
+                    key={preset.name}
+                    style={[
+                      styles.presetChip,
+                      {
+                        backgroundColor: newBenchmarkName === preset.name ? '#EF4444' : colors.backgroundCard,
+                        borderColor: '#EF4444',
+                      }
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setNewBenchmarkName(preset.name);
+                      setNewBenchmarkUnit('kg');
+                    }}
+                  >
+                    <Text style={[
+                      styles.presetChipText,
+                      { color: newBenchmarkName === preset.name ? '#FFFFFF' : '#EF4444' }
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom du suivi</Text>
+          <TextInput
+            style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+            placeholder="Ex: Squat, 10km..."
+            placeholderTextColor={colors.textMuted}
+            value={newBenchmarkName}
+            onChangeText={setNewBenchmarkName}
+          />
+
+          {/* Only show Unit selector if NOT using a preset (Running/Force) */}
+          {newBenchmarkCategory !== 'running' && newBenchmarkCategory !== 'trail' && newBenchmarkCategory !== 'force' && (
+            <>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Unité</Text>
+              <View style={styles.unitRow}>
+                {(['kg', 'lbs', 'time', 'reps', 'km'] as BenchmarkUnit[]).map(unit => (
+                  <TouchableOpacity
+                    key={unit}
+                    style={[
+                      styles.unitOption,
+                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                      newBenchmarkUnit === unit && { backgroundColor: colors.accent, borderColor: colors.accent }
+                    ]}
+                    onPress={() => setNewBenchmarkUnit(unit)}
+                  >
+                    <Text style={[
+                      styles.unitOptionText,
+                      { color: newBenchmarkUnit === unit ? colors.textOnGold : colors.textPrimary }
+                    ]}>
+                      {unit === 'time' ? 'Temps' : unit.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Show selected unit info for Running/Force */}
+          {(newBenchmarkCategory === 'running' || newBenchmarkCategory === 'trail') && (
+            <View style={[styles.unitInfoBanner, { backgroundColor: '#3B82F620', borderColor: '#3B82F6' }]}>
+              <Clock size={16} color="#3B82F6" />
+              <Text style={[styles.unitInfoText, { color: '#3B82F6' }]}>
+                Unité: Temps (mm:ss ou hh:mm:ss)
+              </Text>
+            </View>
+          )}
+          {newBenchmarkCategory === 'force' && (
+            <View style={[styles.unitInfoBanner, { backgroundColor: '#EF444420', borderColor: '#EF4444' }]}>
+              <Scale size={16} color="#EF4444" />
+              <Text style={[styles.unitInfoText, { color: '#EF4444' }]}>
+                Unité: Poids (kg) × Répétitions
+              </Text>
+            </View>
+          )}
+
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: `${colors.error}15` }]}
-            onPress={() => handleDeleteItem(item)}
+            style={[styles.modalButton, { backgroundColor: colors.accent }]}
+            onPress={handleAddBenchmark}
           >
-            <Trash2 size={16} color={colors.error} />
+            <Text style={[styles.modalButtonText, { color: colors.textOnGold }]}>Créer le Suivi</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  const renderAddSkillModal = () => (
+    <Modal visible={showAddSkillModal} animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <ScrollView style={{ maxHeight: '90%' }} showsVerticalScrollIndicator={false}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouvelle Technique</Text>
+              <TouchableOpacity onPress={() => {
+                setShowAddSkillModal(false);
+                setNewSkillStatus('to_learn');
+                setNewSkillNotes('');
+              }}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom de la technique</Text>
+            <TextInput
+              style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+              placeholder="Ex: Berimbolo, Leg Lock Defense..."
+              placeholderTextColor={colors.textMuted}
+              value={newSkillName}
+              onChangeText={setNewSkillName}
+            />
+
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Discipline</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+              {(Object.keys(SKILL_CATEGORIES) as SkillCategory[]).map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[
+                    styles.categoryOption,
+                    { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                    newSkillCategory === cat && { backgroundColor: SKILL_CATEGORIES[cat].color, borderColor: SKILL_CATEGORIES[cat].color }
+                  ]}
+                  onPress={() => setNewSkillCategory(cat)}
+                >
+                  {renderIcon(
+                    SKILL_CATEGORIES[cat].iconName,
+                    18,
+                    newSkillCategory === cat ? '#FFFFFF' : SKILL_CATEGORIES[cat].color
+                  )}
+                  <Text style={[
+                    styles.categoryOptionText,
+                    { color: newSkillCategory === cat ? '#FFFFFF' : colors.textPrimary }
+                  ]}>
+                    {SKILL_CATEGORIES[cat].label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Status Selector - NEW */}
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Statut initial</Text>
+            <View style={styles.statusSelectorRow}>
+              {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
+                const config = SKILL_STATUS_CONFIG[status];
+                const isSelected = newSkillStatus === status;
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.statusPill,
+                      {
+                        backgroundColor: isSelected ? config.color : colors.backgroundCard,
+                        borderColor: config.color,
+                      }
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setNewSkillStatus(status);
+                    }}
+                  >
+                    {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                    <Text style={[
+                      styles.statusPillText,
+                      { color: isSelected ? '#FFFFFF' : config.color }
+                    ]}>
+                      {config.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Notes Field */}
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Notes techniques (optionnel)</Text>
+            <TextInput
+              style={[styles.textAreaInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+              placeholder="Grip pants first, then enter legs..."
+              placeholderTextColor={colors.textMuted}
+              value={newSkillNotes}
+              onChangeText={setNewSkillNotes}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+
+            {/* TASK 3: Video Picker Section */}
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vidéo de la technique (optionnel)</Text>
+            {newSkillVideoUri ? (
+              <View style={[styles.videoPreviewContainer, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}>
+                <View style={styles.videoPreviewIcon}>
+                  <Play size={24} color="#8B5CF6" />
+                </View>
+                <Text style={[styles.videoPreviewText, { color: colors.textPrimary }]} numberOfLines={1}>
+                  Vidéo sélectionnée
+                </Text>
+                <TouchableOpacity
+                  style={styles.videoRemoveBtn}
+                  onPress={() => setNewSkillVideoUri(null)}
+                >
+                  <X size={18} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.videoPickerRow}>
+                <TouchableOpacity
+                  style={[styles.videoPickerBtn, { backgroundColor: '#8B5CF6' }]}
+                  onPress={recordSkillVideo}
+                >
+                  <Camera size={20} color="#FFFFFF" />
+                  <Text style={styles.videoPickerBtnText}>Filmer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.videoPickerBtn, styles.videoPickerBtnSecondary, { borderColor: '#8B5CF6' }]}
+                  onPress={pickSkillVideo}
+                >
+                  <ImageIcon size={20} color="#8B5CF6" />
+                  <Text style={[styles.videoPickerBtnText, { color: '#8B5CF6' }]}>Galerie</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: '#8B5CF6' }]}
+              onPress={handleAddSkill}
+            >
+              <Text style={styles.modalButtonText}>Ajouter la Technique</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  const renderAddEntryModal = () => {
+    // Detect exercise type
+    const isForceExercise = selectedBenchmark?.category === 'force' &&
+      (selectedBenchmark?.unit === 'kg' || selectedBenchmark?.unit === 'lbs');
+    const isRunningExercise = ['running', 'trail'].includes(selectedBenchmark?.category || '');
+    const isHyroxExercise = selectedBenchmark?.category === 'hyrox';
+
+    // Calculate total time in seconds from H/M/S fields
+    const getTotalTimeSeconds = () => {
+      const h = parseInt(runningTimeHours) || 0;
+      const m = parseInt(runningTimeMinutes) || 0;
+      const s = parseInt(runningTimeSeconds) || 0;
+      return h * 3600 + m * 60 + s;
+    };
+
+    // Auto-calculate pace for Running
+    const getEstimatedPace = () => {
+      const distanceKm = parseFloat(newEntryDistance);
+      const totalSeconds = getTotalTimeSeconds();
+      if (distanceKm > 0 && totalSeconds > 0) {
+        const paceSecondsPerKm = totalSeconds / distanceKm;
+        const paceMin = Math.floor(paceSecondsPerKm / 60);
+        const paceSec = Math.floor(paceSecondsPerKm % 60);
+        return `${paceMin}:${paceSec.toString().padStart(2, '0')} /km`;
+      }
+      return null;
+    };
+
+    // Auto-calculate calories when time changes
+    const updateCaloriesFromTime = () => {
+      const totalSeconds = getTotalTimeSeconds();
+      if (totalSeconds > 0 && selectedBenchmark) {
+        const durationMin = Math.round(totalSeconds / 60);
+        setNewEntryDuration(durationMin.toString());
+        const estimatedCal = calculateCalories(durationMin, userWeight, selectedBenchmark.category);
+        setNewEntryCalories(estimatedCal.toString());
+      }
+    };
+
+    // Reset modal state
+    const resetModalState = () => {
+      setShowAddEntryModal(false);
+      setNewEntryValue('');
+      setNewEntryReps('');
+      setNewEntryDuration('');
+      setNewEntryCalories('');
+      setNewEntryRPE(5);
+      setEntryDate('today');
+      setNewEntryDistance('');
+      setRunningTimeHours('');
+      setRunningTimeMinutes('');
+      setRunningTimeSeconds('');
+      setHyroxEffortType('course');
+      setHyroxDistanceMeters('');
+    };
+
+    return (
+      <Modal visible={showAddEntryModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <ScrollView style={{ maxHeight: '90%' }} showsVerticalScrollIndicator={false}>
+            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                  {selectedBenchmark?.name}
+                </Text>
+                <TouchableOpacity onPress={resetModalState} style={styles.modalCloseBtn}>
+                  <X size={24} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Date Picker */}
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Date de la séance</Text>
+              <View style={styles.datePickerRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.dateOption,
+                    { backgroundColor: entryDate === 'today' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                  ]}
+                  onPress={() => setEntryDate('today')}
+                >
+                  <Calendar size={16} color={entryDate === 'today' ? '#FFFFFF' : colors.textMuted} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'today' ? '#FFFFFF' : colors.textPrimary }]}>
+                    Aujourd'hui
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.dateOption,
+                    { backgroundColor: entryDate === 'yesterday' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                  ]}
+                  onPress={() => setEntryDate('yesterday')}
+                >
+                  <Clock size={16} color={entryDate === 'yesterday' ? '#FFFFFF' : colors.textMuted} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'yesterday' ? '#FFFFFF' : colors.textPrimary }]}>
+                    Hier
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.dateOption,
+                    { backgroundColor: entryDate === 'custom' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                  ]}
+                  onPress={() => {
+                    setEntryDate('custom');
+                    setShowDatePicker(true);
+                  }}
+                >
+                  <Edit3 size={16} color={entryDate === 'custom' ? '#FFFFFF' : colors.textMuted} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'custom' ? '#FFFFFF' : colors.textPrimary }]}>
+                    {entryDate === 'custom'
+                      ? customDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                      : 'Autre'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Native Date Picker (iOS inline) */}
+              {showDatePicker && (
+                <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <DateTimePicker
+                    value={customDate}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    maximumDate={new Date()}
+                    locale="fr-FR"
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowDatePicker(false);
+                      }
+                      if (selectedDate) {
+                        setCustomDate(selectedDate);
+                        setEntryDate('custom');
+                      }
+                    }}
+                    style={{ height: 150 }}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      style={[styles.datePickerDoneBtn, { backgroundColor: colors.accent }]}
+                      onPress={() => setShowDatePicker(false)}
+                    >
+                      <Text style={styles.datePickerDoneText}>Valider</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* ============================================ */}
+              {/* TASK 2: HYROX Effort Type Toggle */}
+              {/* ============================================ */}
+              {isHyroxExercise && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Type d'effort</Text>
+                  <View style={styles.hyroxTypeRow}>
+                    {([
+                      { key: 'course' as const, label: 'Course/Total', icon: Footprints },
+                      { key: 'station_force' as const, label: 'Station Force', icon: Dumbbell },
+                      { key: 'repetitions' as const, label: 'Répétitions', icon: Target },
+                    ]).map(({ key, label, icon: Icon }) => (
+                      <TouchableOpacity
+                        key={key}
+                        style={[
+                          styles.hyroxTypeBtn,
+                          {
+                            backgroundColor: hyroxEffortType === key ? '#F59E0B' : colors.backgroundCard,
+                            borderColor: hyroxEffortType === key ? '#F59E0B' : colors.border,
+                          }
+                        ]}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setHyroxEffortType(key);
+                        }}
+                      >
+                        <Icon size={16} color={hyroxEffortType === key ? '#FFFFFF' : colors.textMuted} />
+                        <Text style={[
+                          styles.hyroxTypeText,
+                          { color: hyroxEffortType === key ? '#FFFFFF' : colors.textPrimary }
+                        ]}>
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {/* ============================================ */}
+              {/* TASK 1: RUNNING PRO ENTRY */}
+              {/* Distance + Time (H:M:S) + Auto Pace */}
+              {/* ============================================ */}
+              {(isRunningExercise || (isHyroxExercise && hyroxEffortType === 'course')) && (
+                <>
+                  {/* Distance Input */}
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Distance (km) <Text style={{ color: '#3B82F6' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#3B82F6' }]}
+                    placeholder="10.5"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryDistance}
+                    onChangeText={(text) => {
+                      setNewEntryDistance(text);
+                      // Store distance as the main value for running
+                      setNewEntryValue(text);
+                    }}
+                    keyboardType="decimal-pad"
+                    autoFocus
+                  />
+
+                  {/* Time Input - Clean H:M:S */}
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Temps <Text style={{ color: '#3B82F6' }}>*</Text>
+                  </Text>
+                  <View style={styles.timeInputRow}>
+                    <View style={styles.timeInputGroup}>
+                      <TextInput
+                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0"
+                        placeholderTextColor={colors.textMuted}
+                        value={runningTimeHours}
+                        onChangeText={(text) => {
+                          setRunningTimeHours(text.replace(/[^0-9]/g, ''));
+                          setTimeout(updateCaloriesFromTime, 100);
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>h</Text>
+                    </View>
+                    <Text style={[styles.timeSeparator, { color: colors.textMuted }]}>:</Text>
+                    <View style={styles.timeInputGroup}>
+                      <TextInput
+                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="00"
+                        placeholderTextColor={colors.textMuted}
+                        value={runningTimeMinutes}
+                        onChangeText={(text) => {
+                          const val = text.replace(/[^0-9]/g, '');
+                          if (parseInt(val) <= 59 || val === '') {
+                            setRunningTimeMinutes(val);
+                            setTimeout(updateCaloriesFromTime, 100);
+                          }
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>min</Text>
+                    </View>
+                    <Text style={[styles.timeSeparator, { color: colors.textMuted }]}>:</Text>
+                    <View style={styles.timeInputGroup}>
+                      <TextInput
+                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="00"
+                        placeholderTextColor={colors.textMuted}
+                        value={runningTimeSeconds}
+                        onChangeText={(text) => {
+                          const val = text.replace(/[^0-9]/g, '');
+                          if (parseInt(val) <= 59 || val === '') {
+                            setRunningTimeSeconds(val);
+                            setTimeout(updateCaloriesFromTime, 100);
+                          }
+                        }}
+                        keyboardType="number-pad"
+                        maxLength={2}
+                      />
+                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>sec</Text>
+                    </View>
+                  </View>
+
+                  {/* Auto-Calculated Pace Display */}
+                  {getEstimatedPace() && (
+                    <View style={[styles.paceDisplay, { backgroundColor: '#3B82F620', borderColor: '#3B82F6' }]}>
+                      <Gauge size={18} color="#3B82F6" />
+                      <Text style={[styles.paceDisplayLabel, { color: colors.textSecondary }]}>
+                        Allure estimée:
+                      </Text>
+                      <Text style={[styles.paceDisplayValue, { color: '#3B82F6' }]}>
+                        {getEstimatedPace()}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}
+
+              {/* ============================================ */}
+              {/* HYROX: Station Force (Sleds, Lunges) */}
+              {/* ============================================ */}
+              {isHyroxExercise && hyroxEffortType === 'station_force' && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Poids (kg) <Text style={{ color: '#F59E0B' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#F59E0B' }]}
+                    placeholder="50"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryValue}
+                    onChangeText={setNewEntryValue}
+                    keyboardType="numeric"
+                    autoFocus
+                  />
+
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Distance (m) <Text style={{ color: '#F59E0B' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder="25"
+                    placeholderTextColor={colors.textMuted}
+                    value={hyroxDistanceMeters}
+                    onChangeText={setHyroxDistanceMeters}
+                    keyboardType="numeric"
+                  />
+                </>
+              )}
+
+              {/* ============================================ */}
+              {/* HYROX: Répétitions (Wall Balls, Burpees) */}
+              {/* ============================================ */}
+              {isHyroxExercise && hyroxEffortType === 'repetitions' && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Poids (kg)
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder="9"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryValue}
+                    onChangeText={setNewEntryValue}
+                    keyboardType="numeric"
+                    autoFocus
+                  />
+
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Répétitions <Text style={{ color: '#F59E0B' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#F59E0B' }]}
+                    placeholder="100"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryReps}
+                    onChangeText={setNewEntryReps}
+                    keyboardType="numeric"
+                  />
+                </>
+              )}
+
+              {/* ============================================ */}
+              {/* FORCE: Weight + Reps (existing) */}
+              {/* ============================================ */}
+              {isForceExercise && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Unité</Text>
+                  <View style={styles.unitToggleRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.unitToggleBtn,
+                        {
+                          backgroundColor: newEntryUnit === 'kg' ? selectedBenchmark?.color : colors.backgroundCard,
+                          borderColor: selectedBenchmark?.color,
+                        }
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setNewEntryUnit('kg');
+                      }}
+                    >
+                      <Text style={[styles.unitToggleText, { color: newEntryUnit === 'kg' ? '#FFFFFF' : colors.textPrimary }]}>
+                        KG
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.unitToggleBtn,
+                        {
+                          backgroundColor: newEntryUnit === 'lbs' ? selectedBenchmark?.color : colors.backgroundCard,
+                          borderColor: selectedBenchmark?.color,
+                        }
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setNewEntryUnit('lbs');
+                      }}
+                    >
+                      <Text style={[styles.unitToggleText, { color: newEntryUnit === 'lbs' ? '#FFFFFF' : colors.textPrimary }]}>
+                        LBS
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Poids ({newEntryUnit}) <Text style={{ color: '#EF4444' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#EF4444' }]}
+                    placeholder="100"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryValue}
+                    onChangeText={setNewEntryValue}
+                    keyboardType="numeric"
+                    autoFocus
+                  />
+
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Répétitions <Text style={{ color: '#EF4444' }}>*</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.repsInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder="5"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryReps}
+                    onChangeText={setNewEntryReps}
+                    keyboardType="numeric"
+                  />
+                </>
+              )}
+
+              {/* ============================================ */}
+              {/* OTHER Categories - Generic Input */}
+              {/* ============================================ */}
+              {!isRunningExercise && !isForceExercise && !isHyroxExercise && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    {selectedBenchmark?.unit === 'time' ? 'Temps' : `Valeur (${selectedBenchmark?.unit})`}
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder={selectedBenchmark?.unit === 'time' ? '25:30' : '100'}
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryValue}
+                    onChangeText={setNewEntryValue}
+                    keyboardType={selectedBenchmark?.unit === 'time' ? 'default' : 'numeric'}
+                    autoFocus
+                  />
+                </>
+              )}
+
+              {/* Duration Input - Show for non-Running exercises */}
+              {!isRunningExercise && !(isHyroxExercise && hyroxEffortType === 'course') && (
+                <>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Durée (minutes)
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder="45"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryDuration}
+                    onChangeText={(text) => {
+                      setNewEntryDuration(text);
+                      if (text.trim() && selectedBenchmark) {
+                        const duration = parseInt(text);
+                        if (!isNaN(duration) && duration > 0) {
+                          const estimatedCal = calculateCalories(duration, userWeight, selectedBenchmark.category);
+                          setNewEntryCalories(estimatedCal.toString());
+                        }
+                      }
+                    }}
+                    keyboardType="numeric"
+                  />
+                </>
+              )}
+
+              {/* Calories Display */}
+              <View style={styles.caloriesRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Calories estimées
+                  </Text>
+                  <TextInput
+                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                    placeholder="350"
+                    placeholderTextColor={colors.textMuted}
+                    value={newEntryCalories}
+                    onChangeText={setNewEntryCalories}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.metsInfo}>
+                  <Text style={[styles.metsLabel, { color: colors.textMuted }]}>
+                    MET: {selectedBenchmark ? METS_VALUES[selectedBenchmark.category] || 5 : 5}
+                  </Text>
+                </View>
+              </View>
+
+              {/* RPE Slider */}
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                Difficulté (RPE)
+              </Text>
+              <View style={[styles.rpeContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <View style={styles.rpeHeader}>
+                  <Text style={[styles.rpeValue, { color: getRPEColor(newEntryRPE) }]}>{newEntryRPE}</Text>
+                  <Text style={[styles.rpeLabel, { color: getRPEColor(newEntryRPE) }]}>{getRPELabel(newEntryRPE)}</Text>
+                </View>
+                <View style={styles.rpeSlider}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => (
+                    <TouchableOpacity
+                      key={val}
+                      style={[
+                        styles.rpeButton,
+                        {
+                          backgroundColor: val <= newEntryRPE ? getRPEColor(val) : colors.background,
+                          borderColor: getRPEColor(val),
+                        }
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setNewEntryRPE(val);
+                      }}
+                    >
+                      <Text style={[
+                        styles.rpeButtonText,
+                        { color: val <= newEntryRPE ? '#FFFFFF' : colors.textMuted }
+                      ]}>
+                        {val}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: selectedBenchmark?.color || colors.accent }]}
+                onPress={handleAddEntry}
+              >
+                <Text style={styles.modalButtonText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
     );
   };
 
-  // Render Onglet Objectifs
-  const renderObjectivesTab = () => {
-    return (
-      <View style={{ flex: 1 }}>
-        {/* Switch View (Objectifs / Programmes) */}
-        <View style={[styles.viewSwitch, { backgroundColor: colors.backgroundCard }]}>
-          <TouchableOpacity
-            style={[
-              styles.viewSwitchBtn,
-              objectivesView === 'items' && {
-                backgroundColor: colors.accent,
-              },
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setObjectivesView('items');
-            }}
-          >
-            <Target size={18} color={objectivesView === 'items' ? '#FFF' : colors.textMuted} />
-            <Text
-              style={[
-                styles.viewSwitchText,
-                { color: objectivesView === 'items' ? '#FFF' : colors.textSecondary },
-              ]}
-            >
-              Objectifs
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.viewSwitchBtn,
-              objectivesView === 'programs' && {
-                backgroundColor: colors.accent,
-              },
-            ]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setObjectivesView('programs');
-            }}
-          >
-            <BookOpen size={18} color={objectivesView === 'programs' ? '#FFF' : colors.textMuted} />
-            <Text
-              style={[
-                styles.viewSwitchText,
-                { color: objectivesView === 'programs' ? '#FFF' : colors.textSecondary },
-              ]}
-            >
-              Programmes
-            </Text>
-          </TouchableOpacity>
-        </View>
+  const renderBenchmarkDetailModal = () => {
+    if (!selectedBenchmark) return null;
 
-        {/* Contenu selon la vue */}
-        {objectivesView === 'items' ? renderItemsView() : renderProgramsView()}
-      </View>
+    const pr = getBenchmarkPR(selectedBenchmark);
+    const entries = [...selectedBenchmark.entries].sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    return (
+      <Modal visible={showBenchmarkDetail} animationType="slide" presentationStyle="fullScreen">
+        <SafeAreaView style={[styles.detailModalOverlay, { backgroundColor: colors.background }]}>
+          <View style={[styles.detailHeader, { borderBottomColor: colors.border }]}>
+            <TouchableOpacity
+              onPress={() => setShowBenchmarkDetail(false)}
+              style={styles.detailHeaderBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <ChevronLeft size={28} color={colors.textPrimary} />
+            </TouchableOpacity>
+            <Text style={[styles.detailTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              {selectedBenchmark.name}
+            </Text>
+            <View style={styles.detailHeaderRight}>
+              <TouchableOpacity
+                onPress={() => handleDeleteBenchmark(selectedBenchmark.id)}
+                style={styles.detailHeaderBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Trash2 size={22} color="#EF4444" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowBenchmarkDetail(false)}
+                style={styles.detailCloseBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
+            {/* PR Card */}
+            <View style={[styles.prCard, { backgroundColor: selectedBenchmark.color + '20', borderColor: selectedBenchmark.color }]}>
+              <View style={styles.prCardIconContainer}>
+                {renderIcon(selectedBenchmark.iconName || BENCHMARK_CATEGORIES[selectedBenchmark.category].iconName, 40, selectedBenchmark.color)}
+              </View>
+              <View style={styles.prCardInfo}>
+                <Text style={[styles.prCardLabel, { color: colors.textMuted }]}>Record Personnel</Text>
+                <Text style={[styles.prCardValue, { color: selectedBenchmark.color }]}>
+                  {pr ? formatValue(pr.value, selectedBenchmark.unit) : '--'}
+                </Text>
+                {pr && (
+                  <Text style={[styles.prCardDate, { color: colors.textMuted }]}>
+                    {new Date(pr.date).toLocaleDateString('fr-FR')}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={[styles.prAddBtn, { backgroundColor: selectedBenchmark.color }]}
+                onPress={() => setShowAddEntryModal(true)}
+              >
+                <Plus size={20} color="#FFFFFF" strokeWidth={3} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Mini Chart Placeholder */}
+            {entries.length > 1 && (
+              <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Progression</Text>
+                <View style={styles.chartPlaceholder}>
+                  {entries.slice(0, 10).reverse().map((entry, index) => {
+                    const maxVal = Math.max(...entries.map(e => e.value));
+                    const minVal = Math.min(...entries.map(e => e.value));
+                    const range = maxVal - minVal || 1;
+                    const heightPercent = ((entry.value - minVal) / range) * 100;
+
+                    return (
+                      <View key={entry.id} style={styles.chartBarContainer}>
+                        <View
+                          style={[
+                            styles.chartBar,
+                            {
+                              backgroundColor: selectedBenchmark.color,
+                              height: `${Math.max(20, heightPercent)}%`
+                            }
+                          ]}
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* History */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>HISTORIQUE</Text>
+            {entries.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: colors.backgroundCard }]}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  Aucune donnée. Ajoute ta première performance !
+                </Text>
+              </View>
+            ) : (
+              entries.map((entry, index) => {
+                const isPR = pr && entry.id === pr.id;
+                const isForce = selectedBenchmark.category === 'force' &&
+                  (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
+
+                return (
+                  <View
+                    key={entry.id}
+                    style={[
+                      styles.historyItem,
+                      { backgroundColor: colors.backgroundCard, borderColor: isPR ? selectedBenchmark.color : colors.border }
+                    ]}
+                  >
+                    <View style={styles.historyLeft}>
+                      <Text style={[styles.historyValue, { color: colors.textPrimary }]}>
+                        {isForce
+                          ? formatForceEntry(entry.value, selectedBenchmark.unit, entry.reps)
+                          : formatValue(entry.value, selectedBenchmark.unit)}
+                      </Text>
+                      <Text style={[styles.historyDate, { color: colors.textMuted }]}>
+                        {new Date(entry.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </Text>
+                    </View>
+                    {isPR && (
+                      <View style={[styles.prBadge, { backgroundColor: selectedBenchmark.color }]}>
+                        <Award size={12} color="#FFFFFF" />
+                        <Text style={styles.prBadgeText}>PR</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+
+            <View style={{ height: 100 }} />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     );
   };
 
-  const renderItemsView = () => {
-    const grouped = itemsBySport();
-    const sports = Object.keys(grouped) as Sport[];
+  const renderSkillDetailModal = () => {
+    if (!selectedSkill) return null;
+
+    const statusConfig = SKILL_STATUS_CONFIG[selectedSkill.status];
+    const categoryConfig = SKILL_CATEGORIES[selectedSkill.category];
 
     return (
-      <View style={{ flex: 1 }}>
-        {/* Barre de recherche */}
-        <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard }]}>
-          <Search size={18} color={colors.textMuted} />
+      <Modal visible={showSkillDetail} animationType="slide" presentationStyle="fullScreen">
+        <SafeAreaView style={[styles.detailModalOverlay, { backgroundColor: colors.background }]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            <View style={[styles.detailHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity
+                onPress={() => setShowSkillDetail(false)}
+                style={styles.detailHeaderBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <ChevronLeft size={28} color={colors.textPrimary} />
+              </TouchableOpacity>
+              <Text style={[styles.detailTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {selectedSkill.name}
+              </Text>
+              <View style={styles.detailHeaderRight}>
+                <TouchableOpacity
+                  onPress={() => handleDeleteSkill(selectedSkill.id)}
+                  style={styles.detailHeaderBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Trash2 size={22} color="#EF4444" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setShowSkillDetail(false)}
+                  style={styles.detailCloseBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <X size={24} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
+            {/* Status Selector */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STATUT</Text>
+            <View style={styles.statusRow}>
+              {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
+                const config = SKILL_STATUS_CONFIG[status];
+                const isSelected = selectedSkill.status === status;
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.statusOption,
+                      { backgroundColor: isSelected ? config.color : colors.backgroundCard, borderColor: config.color }
+                    ]}
+                    onPress={() => handleUpdateSkillStatus(selectedSkill.id, status)}
+                  >
+                    {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                    <Text style={[styles.statusOptionText, { color: isSelected ? '#FFFFFF' : config.color }]}>
+                      {config.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Drill Counter */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMPTEUR DE REPS</Text>
+            <View style={[styles.drillCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <View style={styles.drillInfo}>
+                <Text style={[styles.drillCount, { color: colors.textPrimary }]}>
+                  {selectedSkill.drillCount}
+                </Text>
+                <Text style={[styles.drillLabel, { color: colors.textMuted }]}>répétitions</Text>
+              </View>
+              <View style={styles.drillActions}>
+                <TextInput
+                  style={[styles.drillInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
+                  value={drillIncrement}
+                  onChangeText={setDrillIncrement}
+                  keyboardType="numeric"
+                  placeholder="10"
+                  placeholderTextColor={colors.textMuted}
+                />
+                <TouchableOpacity
+                  style={[styles.drillAddBtn, { backgroundColor: categoryConfig.color }]}
+                  onPress={handleIncrementDrill}
+                >
+                  <Plus size={18} color="#FFFFFF" strokeWidth={3} />
+                  <Text style={styles.drillAddText}>Ajouter</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Notes */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>NOTES</Text>
+            <View style={[styles.noteInputContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.noteInput, { color: colors.textPrimary }]}
+                placeholder="Grip pants first, then..."
+                placeholderTextColor={colors.textMuted}
+                value={newNoteText}
+                onChangeText={setNewNoteText}
+                multiline
+              />
+              <TouchableOpacity
+                style={[styles.noteAddBtn, { backgroundColor: categoryConfig.color }]}
+                onPress={handleAddNote}
+                disabled={!newNoteText.trim()}
+              >
+                <Plus size={18} color="#FFFFFF" strokeWidth={3} />
+              </TouchableOpacity>
+            </View>
+
+            {selectedSkill.notes.length > 0 && (
+              <View style={styles.notesList}>
+                {[...selectedSkill.notes].reverse().map(note => (
+                  <View
+                    key={note.id}
+                    style={[styles.noteItem, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                  >
+                    <Text style={[styles.noteText, { color: colors.textPrimary }]}>{note.text}</Text>
+                    <View style={styles.noteFooter}>
+                      <Text style={[styles.noteDate, { color: colors.textMuted }]}>
+                        {new Date(note.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          deleteSkillNote(selectedSkill.id, note.id).then(() => {
+                            getSkills().then(updated => {
+                              const refreshed = updated.find(s => s.id === selectedSkill.id);
+                              if (refreshed) setSelectedSkill(refreshed);
+                            });
+                          });
+                        }}
+                      >
+                        <Trash2 size={14} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* TASK 2: Video Link Section */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LIEN VIDÉO</Text>
+            <View style={[styles.videoLinkContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Video size={20} color={colors.textMuted} />
+              <TextInput
+                style={[styles.videoLinkInput, { color: colors.textPrimary }]}
+                placeholder="YouTube, Instagram..."
+                placeholderTextColor={colors.textMuted}
+                value={editingVideoUrl || selectedSkill.videoUrl || ''}
+                onChangeText={setEditingVideoUrl}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+              {(editingVideoUrl || selectedSkill.videoUrl) && (
+                <TouchableOpacity
+                  style={[styles.videoSaveBtn, { backgroundColor: categoryConfig.color }]}
+                  onPress={handleUpdateVideoUrl}
+                >
+                  <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                </TouchableOpacity>
+              )}
+            </View>
+            {selectedSkill.videoUrl && (
+              <TouchableOpacity
+                style={[styles.watchVideoBtn, { backgroundColor: categoryConfig.color + '20', borderColor: categoryConfig.color }]}
+                onPress={() => openVideoUrl(selectedSkill.videoUrl!)}
+              >
+                <ExternalLink size={16} color={categoryConfig.color} />
+                <Text style={[styles.watchVideoText, { color: categoryConfig.color }]}>
+                  Voir la vidéo
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={{ height: 100 }} />
+          </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+    );
+  };
+
+  const renderFabMenu = () => (
+    <Modal visible={showFabMenu} animationType="fade" transparent>
+      <TouchableOpacity
+        style={styles.fabMenuOverlay}
+        activeOpacity={1}
+        onPress={() => setShowFabMenu(false)}
+      >
+        <View style={styles.fabMenuContainer}>
+          <TouchableOpacity
+            style={[styles.fabMenuItem, { backgroundColor: '#EF4444' }]}
+            onPress={() => {
+              setShowFabMenu(false);
+              setShowAddBenchmarkModal(true);
+            }}
+          >
+            <Dumbbell size={22} color="#FFFFFF" />
+            <Text style={styles.fabMenuText}>Performance (Chiffre)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.fabMenuItem, { backgroundColor: '#8B5CF6' }]}
+            onPress={() => {
+              setShowFabMenu(false);
+              setShowAddSkillModal(true);
+            }}
+          >
+            <BookOpen size={22} color="#FFFFFF" />
+            <Text style={styles.fabMenuText}>Technique (Savoir)</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
+  // ============================================
+  // MAIN RENDER
+  // ============================================
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <ChevronLeft size={28} color={colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Carnet d'Entrainement</Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+          <Search size={20} color={colors.textMuted} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Rechercher un objectif..."
+            placeholder="Rechercher un exercice..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -818,1479 +2214,271 @@ export default function TrainingJournalScreen() {
             </TouchableOpacity>
           )}
         </View>
+      </View>
 
-        {/* Filtres par statut */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {(['all', 'todo', 'in_progress', 'mastered'] as const).map(status => {
-            const isActive = statusFilter === status;
-            const label = status === 'all' ? 'Tous' : STATUS_LABELS[status as ProgressionStatus];
+      {/* TASK 2: Global Filters - Force renamed to Musculation */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.globalFilterScroll}
+        contentContainerStyle={styles.globalFilterContent}
+      >
+        {[
+          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent },
+          { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444' },
+          { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6' },
+          { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4' },
+          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B' },
+          { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6' },
+          { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981' },
+          { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280' },
+        ].map(filter => {
+          const isSelected = globalFilter === filter.key;
+          return (
+            <TouchableOpacity
+              key={filter.key}
+              style={[
+                styles.globalFilterChip,
+                {
+                  backgroundColor: isSelected ? filter.color : colors.backgroundCard,
+                  borderColor: isSelected ? filter.color : colors.border,
+                }
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setGlobalFilter(filter.key);
+              }}
+            >
+              {renderIcon(filter.iconName, 16, isSelected ? '#FFFFFF' : filter.color)}
+              <Text style={[
+                styles.globalFilterText,
+                { color: isSelected ? '#FFFFFF' : colors.textPrimary }
+              ]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Stats Summary */}
+        <View style={[styles.statsRow, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalPRs}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Records</Text>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.skillsMastered}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Maîtrisées</Text>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.totalDrills}</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Reps</Text>
+          </View>
+        </View>
+
+        {/* SECTION: MES RECORDS */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Dumbbell size={20} color="#EF4444" />
+            <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
+            onPress={() => setShowAddBenchmarkModal(true)}
+          >
+            <Plus size={16} color="#EF4444" strokeWidth={3} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Benchmarks - COMPACT VERTICAL LIST (filtered by global filter) */}
+        <View style={styles.compactCardsList}>
+          {filteredBenchmarks.map(renderCompactBenchmarkCard)}
+          {filteredBenchmarks.length === 0 && searchQuery.trim() === '' && (
+            <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <TrendingUp size={24} color={colors.textMuted} />
+              <Text style={[styles.emptyCompactText, { color: colors.textMuted }]}>
+                Ajoute ton premier suivi
+              </Text>
+            </View>
+          )}
+          {/* Create custom item when search has no results */}
+          {filteredBenchmarks.length === 0 && searchQuery.trim() !== '' && (
+            <TouchableOpacity
+              style={[styles.createCompactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: '#EF4444' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setNewBenchmarkName(searchQuery.trim());
+                setSearchQuery('');
+                setShowAddBenchmarkModal(true);
+              }}
+            >
+              <View style={[styles.compactCardIcon, { backgroundColor: '#EF444415' }]}>
+                <Plus size={18} color="#EF4444" strokeWidth={2.5} />
+              </View>
+              <View style={styles.compactCardContent}>
+                <Text style={[styles.compactCardName, { color: colors.textPrimary }]}>
+                  Créer "{searchQuery.trim()}"
+                </Text>
+                <Text style={[styles.compactCardValue, { color: colors.textMuted }]}>
+                  Nouveau suivi
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* SECTION: MES TECHNIQUES */}
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <View style={styles.sectionTitleRow}>
+            <BookOpen size={20} color="#8B5CF6" />
+            <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
+            onPress={() => setShowAddSkillModal(true)}
+          >
+            <Plus size={16} color="#8B5CF6" strokeWidth={3} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Skills Filter */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              { backgroundColor: selectedSkillFilter === 'all' ? '#8B5CF6' : colors.backgroundCard, borderColor: colors.border }
+            ]}
+            onPress={() => setSelectedSkillFilter('all')}
+          >
+            <Text style={[styles.filterChipText, { color: selectedSkillFilter === 'all' ? '#FFFFFF' : colors.textPrimary }]}>
+              Toutes ({skills.length})
+            </Text>
+          </TouchableOpacity>
+          {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
+            const config = SKILL_STATUS_CONFIG[status];
+            const count = skills.filter(s => s.status === status).length;
             return (
               <TouchableOpacity
                 key={status}
                 style={[
                   styles.filterChip,
-                  {
-                    backgroundColor: isActive ? colors.accent : colors.backgroundCard,
-                    borderColor: isActive ? colors.accent : colors.border,
-                  },
+                  { backgroundColor: selectedSkillFilter === status ? config.color : colors.backgroundCard, borderColor: colors.border }
                 ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setStatusFilter(status);
-                }}
-                activeOpacity={0.7}
+                onPress={() => setSelectedSkillFilter(status)}
               >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    { color: isActive ? '#FFF' : colors.textSecondary },
-                  ]}
-                >
-                  {label}
+                <Text style={[styles.filterChipText, { color: selectedSkillFilter === status ? '#FFFFFF' : colors.textPrimary }]}>
+                  {config.label} ({count})
                 </Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
-        {/* Liste par sport */}
-        <ScrollView style={styles.sportsContainer} contentContainerStyle={styles.sportsContent}>
-          {sports.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={{ fontSize: 48, marginBottom: 8 }}>🎯</Text>
-              <Text style={[styles.emptyText, { color: colors.textPrimary }]}>
-                Aucun objectif trouvé
-              </Text>
-              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                Commence ton parcours en créant ton premier objectif !
+        {/* Skills List */}
+        <View style={styles.skillsList}>
+          {filteredSkills.map(renderSkillCard)}
+          {filteredSkills.length === 0 && searchQuery.trim() === '' && (
+            <View style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Target size={40} color={colors.textMuted} />
+              <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary }]}>Aucune technique</Text>
+              <Text style={[styles.emptySkillsText, { color: colors.textMuted }]}>
+                Ajoute les techniques que tu veux maîtriser
               </Text>
             </View>
-          ) : (
-            sports.map(sport => {
-              const items = grouped[sport];
-              const isExpanded = expandedSports.has(sport);
-              const sportColor = SPORT_COLORS[sport];
-
-              return (
-                <View key={sport} style={styles.sportSection}>
-                  {/* Header */}
-                  <TouchableOpacity
-                    style={[
-                      styles.sportHeader,
-                      {
-                        backgroundColor: `${sportColor}15`,
-                        borderColor: sportColor,
-                      },
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      toggleSportSection(sport);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.sportHeaderLeft}>
-                      <Text style={styles.sportIcon}>{SPORT_ICONS[sport]}</Text>
-                      <View style={styles.sportHeaderInfo}>
-                        <Text style={[styles.sportName, { color: sportColor }]}>
-                          {SPORT_LABELS[sport].toUpperCase()}
-                        </Text>
-                        <Text style={[styles.sportCount, { color: colors.textMuted }]}>
-                          {items.length} objectif{items.length > 1 ? 's' : ''}
-                        </Text>
-                      </View>
-                    </View>
-                    {isExpanded ? (
-                      <ChevronUp size={20} color={colors.textMuted} />
-                    ) : (
-                      <ChevronDown size={20} color={colors.textMuted} />
-                    )}
-                  </TouchableOpacity>
-
-                  {/* Items */}
-                  {isExpanded && (
-                    <View style={styles.sportItems}>
-                      {items.map(item => renderObjectiveCard(item))}
-                    </View>
-                  )}
-                </View>
-              );
-            })
           )}
-
-          <View style={{ height: 60 }} />
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const renderProgramsView = () => {
-    return (
-      <View style={{ flex: 1 }}>
-        {/* Liste des programmes */}
-        <ScrollView style={styles.programsContainer} contentContainerStyle={styles.programsContent}>
-          {allPrograms.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={{ fontSize: 48, marginBottom: 8 }}>📚</Text>
-              <Text style={[styles.emptyText, { color: colors.textPrimary }]}>
-                Aucun programme créé
-              </Text>
-              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                Crée un programme pour structurer ton entraînement et atteindre tes objectifs plus facilement
-              </Text>
-              <TouchableOpacity
-                style={[styles.createProgramBtn, { backgroundColor: colors.accent }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setEditingProgram(null);
-                  setProgramName('');
-                  setProgramDescription('');
-                  setProgramSport('');
-                  setProgramDuration('');
-                  setProgramModalVisible(true);
-                }}
-              >
-                <Plus size={20} color="#FFF" strokeWidth={2.5} />
-                <Text style={styles.createProgramBtnText}>Créer un programme</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              {allPrograms.map(program => {
-                const isExpanded = expandedPrograms.has(program.id);
-                const programItems = isExpanded ? getProgramItems(program.id) : [];
-
-                return (
-                  <View key={program.id} style={[styles.programCard, { backgroundColor: colors.backgroundCard }]}>
-                    {/* Header du programme */}
-                    <TouchableOpacity
-                      style={styles.programHeader}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        const newExpanded = new Set(expandedPrograms);
-                        if (isExpanded) {
-                          newExpanded.delete(program.id);
-                        } else {
-                          newExpanded.add(program.id);
-                        }
-                        setExpandedPrograms(newExpanded);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.programHeaderLeft}>
-                        <Text style={[styles.programName, { color: colors.textPrimary }]}>
-                          🔥 {program.name}
-                        </Text>
-                        <Text style={[styles.programStats, { color: colors.textMuted }]}>
-                          {program.total_items} objectif{program.total_items > 1 ? 's' : ''} • {program.mastered_items} maîtrisé{program.mastered_items > 1 ? 's' : ''}
-                        </Text>
-                      </View>
-                      <View style={styles.programHeaderRight}>
-                        <View style={[styles.programBadge, { backgroundColor: `${colors.accent}20` }]}>
-                          <Text style={[styles.programBadgeText, { color: colors.accent }]}>
-                            {program.completion_rate}%
-                          </Text>
-                        </View>
-                        {isExpanded ? (
-                          <ChevronUp size={20} color={colors.textMuted} />
-                        ) : (
-                          <ChevronDown size={20} color={colors.textMuted} />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Barre de progression */}
-                    <View style={[styles.programProgressBar, { backgroundColor: `${colors.accent}20` }]}>
-                      <View
-                        style={[
-                          styles.programProgressFill,
-                          { backgroundColor: colors.accent, width: `${program.completion_rate}%` },
-                        ]}
-                      />
-                    </View>
-
-                    {/* Description */}
-                    {program.description && (
-                      <Text style={[styles.programDescription, { color: colors.textSecondary }]}>
-                        {program.description}
-                      </Text>
-                    )}
-
-                    {/* Liste des objectifs (si expanded) */}
-                    {isExpanded && (
-                      <View style={styles.programItemsList}>
-                        {programItems.length === 0 ? (
-                          <View style={{ alignItems: 'center', paddingVertical: 12 }}>
-                            <Text style={{ fontSize: 32, marginBottom: 4 }}>📋</Text>
-                            <Text style={[styles.emptyText, { color: colors.textMuted, fontSize: 14 }]}>
-                              Aucun objectif dans ce programme
-                            </Text>
-                          </View>
-                        ) : (
-                          programItems.map((item: any, index: number) => {
-                            const statusIcon = item.status === 'mastered' ? '✓' : item.status === 'in_progress' ? '⚡' : '○';
-                            const statusColor = item.status === 'mastered' ? '#10B981' : item.status === 'in_progress' ? '#F97316' : colors.textMuted;
-
-                            return (
-                              <View key={item.id} style={styles.programItem}>
-                                <Text style={[styles.programItemIcon, { color: statusColor }]}>
-                                  {statusIcon}
-                                </Text>
-                                <Text style={[styles.programItemName, { color: colors.textPrimary }]}>
-                                  {item.name}
-                                </Text>
-                                <TouchableOpacity
-                                  onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    Alert.alert(
-                                      'Retirer du programme',
-                                      `Retirer "${item.name}" de ce programme ?`,
-                                      [
-                                        { text: 'Annuler', style: 'cancel' },
-                                        {
-                                          text: 'Retirer',
-                                          style: 'destructive',
-                                          onPress: () => {
-                                            removeItemFromProgram(program.id, item.item_id);
-                                            loadData();
-                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                          },
-                                        },
-                                      ]
-                                    );
-                                  }}
-                                  style={styles.programItemRemoveBtn}
-                                >
-                                  <X size={16} color={colors.textMuted} />
-                                </TouchableOpacity>
-                              </View>
-                            );
-                          })
-                        )}
-
-                        {/* Bouton ajouter des objectifs */}
-                        <TouchableOpacity
-                          style={[styles.addItemsToProgramBtn, { borderColor: colors.accent }]}
-                          onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setSelectedProgram(program);
-                            setAddItemsToProgramModalVisible(true);
-                          }}
-                        >
-                          <Plus size={16} color={colors.accent} />
-                          <Text style={[styles.addItemsToProgramBtnText, { color: colors.accent }]}>
-                            Ajouter des objectifs
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                    {/* Actions */}
-                    <View style={styles.programActions}>
-                      <TouchableOpacity
-                        style={[styles.programActionBtn, { borderColor: colors.border }]}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setEditingProgram(program);
-                          setProgramName(program.name);
-                          setProgramDescription(program.description || '');
-                          setProgramSport(program.sport || '');
-                          setProgramDuration(program.target_duration_weeks?.toString() || '');
-                          setProgramModalVisible(true);
-                        }}
-                      >
-                        <Text style={[styles.programActionBtnText, { color: colors.textSecondary }]}>
-                          Éditer
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.programActionBtn, { borderColor: colors.border }]}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          Alert.alert(
-                            'Supprimer le programme',
-                            `Supprimer "${program.name}" ?\nLes objectifs ne seront pas supprimés.`,
-                            [
-                              { text: 'Annuler', style: 'cancel' },
-                              {
-                                text: 'Supprimer',
-                                style: 'destructive',
-                                onPress: () => {
-                                  deleteProgram(program.id);
-                                  loadData();
-                                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                                },
-                              },
-                            ]
-                          );
-                        }}
-                      >
-                        <Text style={[styles.programActionBtnText, { color: '#EF4444' }]}>
-                          Supprimer
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
-
-              {/* Bouton créer un nouveau programme */}
-              <TouchableOpacity
-                style={[styles.createProgramBtnBottom, { backgroundColor: colors.accent }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setEditingProgram(null);
-                  setProgramName('');
-                  setProgramDescription('');
-                  setProgramSport('');
-                  setProgramDuration('');
-                  setProgramModalVisible(true);
-                }}
-              >
-                <Plus size={20} color="#FFF" strokeWidth={2.5} />
-                <Text style={styles.createProgramBtnText}>Créer un programme</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  // Render Onglet Stats
-  const renderStatsTab = () => {
-    const globalStats = getGlobalStats();
-    const streakInfo = getStreakInfo();
-    const sportStats = getStatsBySport();
-    const dailyPractices = getPracticesLastDays(7);
-
-    return (
-      <ScrollView style={styles.statsContainer} contentContainerStyle={styles.statsContent}>
-        {/* Vue d'ensemble */}
-        <View style={[styles.statsSection, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.statsSectionTitle, { color: colors.textPrimary }]}>
-            📈 Vue d'Ensemble
-          </Text>
-          <View style={styles.statsGrid}>
-            <View style={[styles.statCard, { backgroundColor: `${colors.accent}10` }]}>
-              <Text style={[styles.statNumber, { color: colors.accent }]}>
-                {globalStats.total}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Total
-              </Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#F9731610' }]}>
-              <Text style={[styles.statNumber, { color: '#F97316' }]}>
-                {globalStats.in_progress}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                En Cours
-              </Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#10B98110' }]}>
-              <Text style={[styles.statNumber, { color: '#10B981' }]}>
-                {globalStats.mastered}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                Maîtrisés
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Streak */}
-        <View style={[styles.statsSection, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.statsSectionTitle, { color: colors.textPrimary }]}>
-            🔥 Série & Régularité
-          </Text>
-          <View style={styles.streakInfo}>
-            <View style={styles.streakRow}>
-              <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>
-                • Série actuelle:
-              </Text>
-              <Text style={[styles.streakValue, { color: colors.accent }]}>
-                {streakInfo.currentStreak} jours
-              </Text>
-            </View>
-            <View style={styles.streakRow}>
-              <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>
-                • Record:
-              </Text>
-              <Text style={[styles.streakValue, { color: colors.accent }]}>
-                {streakInfo.longestStreak} jours
-              </Text>
-            </View>
-            <View style={styles.streakRow}>
-              <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>
-                • Pratiques cette semaine:
-              </Text>
-              <Text style={[styles.streakValue, { color: colors.accent }]}>
-                {globalStats.practices_this_week}
-              </Text>
-            </View>
-          </View>
-
-          {/* Mini calendrier 7 jours */}
-          <View style={styles.miniCalendar}>
-            {streakInfo.practicesLast7Days.map((day, index) => {
-              const date = new Date(day.date);
-              const dayLetter = ['D', 'L', 'M', 'M', 'J', 'V', 'S'][date.getDay()];
-              const hasPractice = day.count > 0;
-
-              return (
-                <View key={day.date} style={styles.miniCalendarDay}>
-                  <Text style={[styles.miniCalendarDayLabel, { color: colors.textMuted }]}>
-                    {dayLetter}
-                  </Text>
-                  <View
-                    style={[
-                      styles.miniCalendarDot,
-                      {
-                        backgroundColor: hasPractice ? colors.accent : colors.border,
-                      },
-                    ]}
-                  />
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Par Sport */}
-        <View style={[styles.statsSection, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.statsSectionTitle, { color: colors.textPrimary }]}>
-            🏆 Par Sport
-          </Text>
-          <View style={styles.sportStatsList}>
-            {sportStats.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Pas encore d'objectifs
-              </Text>
-            ) : (
-              sportStats.map(sport => {
-                const sportColor = SPORT_COLORS[sport.sport];
-                return (
-                  <View key={sport.sport} style={styles.sportStatItem}>
-                    <View style={styles.sportStatHeader}>
-                      <Text style={styles.sportStatIcon}>{SPORT_ICONS[sport.sport]}</Text>
-                      <View style={styles.sportStatInfo}>
-                        <Text style={[styles.sportStatName, { color: colors.textPrimary }]}>
-                          {SPORT_LABELS[sport.sport]}
-                        </Text>
-                        <Text style={[styles.sportStatMeta, { color: colors.textMuted }]}>
-                          {sport.total} objectifs • {sport.totalPractices} pratiques
-                        </Text>
-                      </View>
-                      <Text style={[styles.sportStatPercent, { color: sportColor }]}>
-                        {sport.completionRate}%
-                      </Text>
-                    </View>
-                    <View style={[styles.sportStatBar, { backgroundColor: `${sportColor}20` }]}>
-                      <View
-                        style={[
-                          styles.sportStatBarFill,
-                          {
-                            backgroundColor: sportColor,
-                            width: `${sport.completionRate}%`,
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </View>
-        </View>
-
-        {/* Progression récente */}
-        <View style={[styles.statsSection, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.statsSectionTitle, { color: colors.textPrimary }]}>
-            📊 Progression Récente (7j)
-          </Text>
-          <View style={styles.dailyChart}>
-            {dailyPractices.map((day, index) => {
-              const maxCount = Math.max(...dailyPractices.map(d => d.count), 1);
-              const heightPercent = (day.count / maxCount) * 100;
-              const date = new Date(day.date);
-              const dayLabel = date.getDate().toString();
-
-              return (
-                <View key={day.date} style={styles.dailyChartBar}>
-                  <View style={styles.dailyChartBarContainer}>
-                    <View
-                      style={[
-                        styles.dailyChartBarFill,
-                        {
-                          height: `${heightPercent}%`,
-                          backgroundColor: day.count > 0 ? colors.accent : colors.border,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.dailyChartLabel, { color: colors.textMuted }]}>
-                    {dayLabel}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={{ height: 60 }} />
-      </ScrollView>
-    );
-  };
-
-  // Render Onglet Calendrier
-  const renderCalendarTab = () => {
-    // Obtenir toutes les pratiques du mois sélectionné
-    const monthLogs = getPracticeLogsForMonth(selectedMonth.getFullYear(), selectedMonth.getMonth());
-
-    // Grouper par jour
-    const logsByDay: Record<string, PracticeLogWithItem[]> = {};
-    monthLogs.forEach(log => {
-      const dayKey = log.date.split('T')[0];
-      if (!logsByDay[dayKey]) logsByDay[dayKey] = [];
-      logsByDay[dayKey].push(log);
-    });
-
-    // Helpers pour le calendrier
-    const getDaysInMonth = (date: Date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      const startDayOfWeek = firstDay.getDay(); // 0 = dimanche
-
-      return { daysInMonth, startDayOfWeek };
-    };
-
-    const { daysInMonth, startDayOfWeek } = getDaysInMonth(selectedMonth);
-    const monthName = selectedMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-    // Naviguer entre les mois
-    const previousMonth = () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
-      setSelectedDay(null);
-    };
-
-    const nextMonth = () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
-      setSelectedDay(null);
-    };
-
-    // Créer les lignes du calendrier
-    const calendarRows: (number | null)[][] = [];
-    let currentRow: (number | null)[] = [];
-
-    // Ajouter les jours vides au début
-    for (let i = 0; i < startDayOfWeek; i++) {
-      currentRow.push(null);
-    }
-
-    // Ajouter les jours du mois
-    for (let day = 1; day <= daysInMonth; day++) {
-      currentRow.push(day);
-      if (currentRow.length === 7) {
-        calendarRows.push(currentRow);
-        currentRow = [];
-      }
-    }
-
-    // Compléter la dernière ligne
-    if (currentRow.length > 0) {
-      while (currentRow.length < 7) {
-        currentRow.push(null);
-      }
-      calendarRows.push(currentRow);
-    }
-
-    // Obtenir les logs du jour sélectionné
-    const selectedDayLogs = selectedDay ? (logsByDay[selectedDay] || []) : [];
-
-    return (
-      <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
-        {/* Header Calendrier */}
-        <View style={[styles.calendarHeader, { backgroundColor: colors.backgroundCard }]}>
-          <TouchableOpacity onPress={previousMonth} style={styles.monthNavBtn}>
-            <ChevronLeft size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.monthTitle, { color: colors.textPrimary }]}>
-            {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-          </Text>
-          <TouchableOpacity onPress={nextMonth} style={styles.monthNavBtn}>
-            <ChevronRight size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Jours de la semaine */}
-        <View style={[styles.weekDaysRow, { backgroundColor: colors.backgroundCard }]}>
-          {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, index) => (
-            <Text key={index} style={[styles.weekDayLabel, { color: colors.textMuted }]}>
-              {day}
-            </Text>
-          ))}
-        </View>
-
-        {/* Grille Calendrier */}
-        <View style={[styles.calendarGrid, { backgroundColor: colors.backgroundCard }]}>
-          {calendarRows.map((row, rowIndex) => (
-            <View key={rowIndex} style={styles.calendarRow}>
-              {row.map((day, dayIndex) => {
-                if (day === null) {
-                  return <View key={dayIndex} style={styles.calendarDayCell} />;
-                }
-
-                const dayKey = `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayLogs = logsByDay[dayKey] || [];
-                const isSelected = selectedDay === dayKey;
-                const isToday = dayKey === new Date().toISOString().split('T')[0];
-
-                return (
-                  <TouchableOpacity
-                    key={dayIndex}
-                    style={[
-                      styles.calendarDayCell,
-                      isSelected && { backgroundColor: `${colors.accent}20` },
-                      isToday && { borderWidth: 1, borderColor: colors.accent },
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedDay(isSelected ? null : dayKey);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.calendarDayNumber,
-                        { color: isSelected ? colors.accent : colors.textPrimary },
-                        isToday && { fontWeight: '800' },
-                      ]}
-                    >
-                      {day}
-                    </Text>
-                    {dayLogs.length > 0 && (
-                      <View style={styles.calendarDayDotsContainer}>
-                        {dayLogs.slice(0, 3).map((_, dotIndex) => (
-                          <View
-                            key={dotIndex}
-                            style={[styles.calendarDayDot, { backgroundColor: colors.accent }]}
-                          />
-                        ))}
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ))}
-        </View>
-
-        {/* Détails du jour sélectionné */}
-        {selectedDay && (
-          <View style={[styles.selectedDayDetails, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.selectedDayTitle, { color: colors.textPrimary }]}>
-              📅 {new Date(selectedDay).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-              })}
-            </Text>
-            {selectedDayLogs.length === 0 ? (
-              <View style={{ alignItems: 'center', paddingVertical: 20 }}>
-                <Text style={{ fontSize: 36, marginBottom: 8 }}>🗓️</Text>
-                <Text style={[styles.emptyText, { color: colors.textPrimary, fontSize: 15 }]}>
-                  Aucune pratique ce jour-là
+          {/* TASK 2: Create custom skill when search has no results */}
+          {filteredSkills.length === 0 && searchQuery.trim() !== '' && (
+            <TouchableOpacity
+              style={[styles.createCustomSkillCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setNewSkillName(searchQuery.trim());
+                setSearchQuery('');
+                setShowAddSkillModal(true);
+              }}
+            >
+              <View style={[styles.createCustomIcon, { backgroundColor: '#8B5CF620' }]}>
+                <Plus size={28} color="#8B5CF6" strokeWidth={2} />
+              </View>
+              <View style={styles.createCustomSkillInfo}>
+                <Text style={[styles.createCustomText, { color: colors.textPrimary }]}>
+                  Créer "{searchQuery.trim()}"
                 </Text>
-                <Text style={[styles.emptySubtext, { color: colors.textMuted, fontSize: 13, marginTop: 4 }]}>
-                  Sélectionne un autre jour pour voir ton historique
+                <Text style={[styles.createCustomSubtext, { color: colors.textMuted }]}>
+                  Nouvelle technique
                 </Text>
               </View>
-            ) : (
-              <>
-                <Text style={[styles.selectedDayCount, { color: colors.textSecondary }]}>
-                  {selectedDayLogs.length} pratique{selectedDayLogs.length > 1 ? 's' : ''} ce jour-là
-                </Text>
-                {selectedDayLogs.map(log => {
-                  const sportColor = SPORT_COLORS[log.sport];
-                  const sportLabel = SPORT_LABELS[log.sport];
-                  const logTime = new Date(log.date).toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
+            </TouchableOpacity>
+          )}
+        </View>
 
-                  return (
-                    <View
-                      key={log.id}
-                      style={[
-                        styles.dayLogCard,
-                        { backgroundColor: colors.background, borderLeftColor: sportColor },
-                      ]}
-                    >
-                      <View style={styles.dayLogHeader}>
-                        <View style={styles.dayLogHeaderLeft}>
-                          <Text style={[styles.dayLogIcon, { color: sportColor }]}>
-                            {SPORT_ICONS[log.sport]}
-                          </Text>
-                          <View>
-                            <Text style={[styles.dayLogName, { color: colors.textPrimary }]}>
-                              {log.item_name}
-                            </Text>
-                            <Text style={[styles.dayLogSport, { color: colors.textMuted }]}>
-                              {sportLabel}
-                            </Text>
-                          </View>
-                        </View>
-                        <Text style={[styles.dayLogTime, { color: colors.textMuted }]}>
-                          {logTime}
-                        </Text>
-                      </View>
-
-                      {/* Qualité */}
-                      {log.quality_rating && (
-                        <View style={styles.dayLogQuality}>
-                          <Text style={[styles.dayLogQualityLabel, { color: colors.textMuted }]}>
-                            Qualité:
-                          </Text>
-                          <View style={styles.dayLogStars}>
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <Star
-                                key={star}
-                                size={14}
-                                color="#FBBF24"
-                                fill={star <= (log.quality_rating || 0) ? '#FBBF24' : 'transparent'}
-                              />
-                            ))}
-                          </View>
-                        </View>
-                      )}
-
-                      {/* Détails spécifiques */}
-                      {(log.sets || log.reps || log.weight || log.time || log.distance) && (
-                        <View style={styles.dayLogDetails}>
-                          {log.sets && log.reps && (
-                            <Text style={[styles.dayLogDetailText, { color: colors.textSecondary }]}>
-                              {log.sets} séries × {log.reps} reps
-                            </Text>
-                          )}
-                          {log.weight && (
-                            <Text style={[styles.dayLogDetailText, { color: colors.textSecondary }]}>
-                              @ {log.weight}kg
-                            </Text>
-                          )}
-                          {log.time && (
-                            <Text style={[styles.dayLogDetailText, { color: colors.textSecondary }]}>
-                              {log.time} min
-                            </Text>
-                          )}
-                          {log.distance && (
-                            <Text style={[styles.dayLogDetailText, { color: colors.textSecondary }]}>
-                              {log.distance} km
-                            </Text>
-                          )}
-                        </View>
-                      )}
-
-                      {/* Notes */}
-                      {log.notes && (
-                        <Text style={[styles.dayLogNotes, { color: colors.textSecondary }]}>
-                          "{log.notes}"
-                        </Text>
-                      )}
-                    </View>
-                  );
-                })}
-              </>
-            )}
-          </View>
-        )}
+        <View style={{ height: 120 }} />
       </ScrollView>
-    );
-  };
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            📖 Carnet d'Entraînement
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setAddModalVisible(true)}
-          style={[styles.addBtn, { backgroundColor: colors.accent }]}
-        >
-          <Plus size={24} color="#FFF" strokeWidth={2.5} />
-        </TouchableOpacity>
-      </View>
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: colors.accent }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowFabMenu(true);
+        }}
+        activeOpacity={0.8}
+      >
+        <Plus size={28} color={colors.textOnGold} strokeWidth={2.5} />
+      </TouchableOpacity>
 
-      {/* Tab Bar */}
-      {renderTabBar()}
+      {/* Modals */}
+      {renderFabMenu()}
+      {renderAddBenchmarkModal()}
+      {renderAddSkillModal()}
+      {renderAddEntryModal()}
+      {renderBenchmarkDetailModal()}
+      {renderSkillDetailModal()}
 
-      {/* Tab Content */}
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            Chargement...
-          </Text>
-        </View>
-      ) : (
-        <Animated.View style={{ flex: 1, opacity: tabTransitionAnim }}>
-          {activeTab === 'objectives' && renderObjectivesTab()}
-          {activeTab === 'stats' && renderStatsTab()}
-          {activeTab === 'calendar' && renderCalendarTab()}
-        </Animated.View>
+      {/* PILLAR 3: Victory Share Modal (Strava-Style) */}
+      {victorySessionData && (
+        <VictoryShareModal
+          visible={showVictoryModal}
+          onClose={() => {
+            setShowVictoryModal(false);
+            setVictorySessionData(null);
+          }}
+          sessionData={victorySessionData}
+          clubName={clubName}
+        />
       )}
 
-      {/* MODAL AJOUT */}
-      <Modal
-        visible={addModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setAddModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Nouvel Objectif
-              </Text>
-              <TouchableOpacity onPress={() => setAddModalVisible(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScroll}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Type</Text>
-              <View style={styles.typeButtons}>
-                {(['technique', 'exercise', 'performance'] as ProgressionItemType[]).map(type => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeBtn,
-                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                      newItemType === type && { backgroundColor: `${colors.accent}20`, borderColor: colors.accent },
-                    ]}
-                    onPress={() => setNewItemType(type)}
-                  >
-                    <Text
-                      style={[
-                        styles.typeBtnText,
-                        { color: colors.textSecondary },
-                        newItemType === type && { color: colors.accent, fontWeight: '700' },
-                      ]}
-                    >
-                      {TYPE_LABELS[type]}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Sport</Text>
-              <View style={styles.sportButtons}>
-                {(['jjb', 'musculation', 'crossfit', 'running', 'mma', 'boxe'] as Sport[]).map(sport => (
-                  <TouchableOpacity
-                    key={sport}
-                    style={[
-                      styles.sportBtn,
-                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                      newItemSport === sport && { backgroundColor: `${colors.accent}20`, borderColor: colors.accent },
-                    ]}
-                    onPress={() => setNewItemSport(sport)}
-                  >
-                    <Text
-                      style={[
-                        styles.sportBtnText,
-                        { color: colors.textSecondary },
-                        newItemSport === sport && { color: colors.accent, fontWeight: '600' },
-                      ]}
-                    >
-                      {SPORT_LABELS[sport]}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Nom *</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Ex: Triangle Choke, Squat, 10km..."
-                placeholderTextColor={colors.textMuted}
-                value={newItemName}
-                onChangeText={setNewItemName}
-              />
-
-              {/* Champs Musculation/CrossFit */}
-              {(newItemSport === 'musculation' || newItemSport === 'crossfit') && (
-                <>
-                  <View style={styles.row}>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Poids actuel (kg)</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="80"
-                        placeholderTextColor={colors.textMuted}
-                        value={newItemCurrentWeight}
-                        onChangeText={setNewItemCurrentWeight}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Objectif (kg)</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="100"
-                        placeholderTextColor={colors.textMuted}
-                        value={newItemTargetWeight}
-                        onChangeText={setNewItemTargetWeight}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-
-              {/* Champs Running/Trail */}
-              {(newItemSport === 'running' || newItemSport === 'trail') && (
-                <>
-                  <Text style={[styles.label, { color: colors.textSecondary }]}>Distance (km)</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="10"
-                    placeholderTextColor={colors.textMuted}
-                    value={newItemDistanceKm}
-                    onChangeText={setNewItemDistanceKm}
-                    keyboardType="decimal-pad"
-                  />
-
-                  <View style={styles.row}>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Temps actuel (min)</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="52"
-                        placeholderTextColor={colors.textMuted}
-                        value={newItemCurrentTime}
-                        onChangeText={setNewItemCurrentTime}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Objectif (min)</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="50"
-                        placeholderTextColor={colors.textMuted}
-                        value={newItemTargetTime}
-                        onChangeText={setNewItemTargetTime}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
-              <TextInput
-                style={[styles.textArea, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Notes..."
-                placeholderTextColor={colors.textMuted}
-                value={newItemNotes}
-                onChangeText={setNewItemNotes}
-                multiline
-                numberOfLines={3}
-              />
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                Priorité: {newItemPriority}/5
-              </Text>
-              <View style={styles.priorityStars}>
-                {[1, 2, 3, 4, 5].map(star => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setNewItemPriority(star)}
-                  >
-                    <Star
-                      size={32}
-                      color={star <= newItemPriority ? '#F59E0B' : colors.textMuted}
-                      fill={star <= newItemPriority ? '#F59E0B' : 'transparent'}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => setAddModalVisible(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.confirmBtn, { backgroundColor: colors.accent }]}
-                onPress={handleAddItem}
-              >
-                <Text style={styles.confirmBtnText}>Ajouter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL LOGGER */}
-      <Modal
-        visible={logModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setLogModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Logger une Pratique
-              </Text>
-              <TouchableOpacity onPress={() => setLogModalVisible(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedItem && (
-              <View style={styles.selectedItemInfo}>
-                <Text style={[styles.selectedItemName, { color: colors.accent }]}>
-                  {selectedItem.name}
-                </Text>
-                <Text style={[styles.selectedItemSport, { color: colors.textMuted }]}>
-                  {SPORT_LABELS[selectedItem.sport]}
-                </Text>
-              </View>
-            )}
-
-            <ScrollView style={styles.modalScroll}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>
-                Qualité: {logQuality}/5
-              </Text>
-              <View style={styles.priorityStars}>
-                {[1, 2, 3, 4, 5].map(star => (
-                  <TouchableOpacity
-                    key={star}
-                    onPress={() => setLogQuality(star)}
-                  >
-                    <Star
-                      size={36}
-                      color={star <= logQuality ? '#F59E0B' : colors.textMuted}
-                      fill={star <= logQuality ? '#F59E0B' : 'transparent'}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {selectedItem?.type === 'exercise' && (
-                <>
-                  <View style={styles.row}>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Séries</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="3"
-                        placeholderTextColor={colors.textMuted}
-                        value={logSets}
-                        onChangeText={setLogSets}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Reps</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="12"
-                        placeholderTextColor={colors.textMuted}
-                        value={logReps}
-                        onChangeText={setLogReps}
-                        keyboardType="numeric"
-                      />
-                    </View>
-                    <View style={styles.rowItem}>
-                      <Text style={[styles.label, { color: colors.textSecondary }]}>Poids (kg)</Text>
-                      <TextInput
-                        style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="80"
-                        placeholderTextColor={colors.textMuted}
-                        value={logWeight}
-                        onChangeText={setLogWeight}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-
-              {/* Champs Running/Trail */}
-              {(selectedItem?.sport === 'running' || selectedItem?.sport === 'trail') && (
-                <>
-                  <Text style={[styles.label, { color: colors.textSecondary }]}>Temps (minutes)</Text>
-                  <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder={selectedItem?.target_time ? `Objectif: ${selectedItem.target_time}min` : "52"}
-                    placeholderTextColor={colors.textMuted}
-                    value={logTime}
-                    onChangeText={setLogTime}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
-              <TextInput
-                style={[styles.textArea, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Comment ça s'est passé?"
-                placeholderTextColor={colors.textMuted}
-                value={logNotes}
-                onChangeText={setLogNotes}
-                multiline
-                numberOfLines={4}
-              />
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => setLogModalVisible(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.confirmBtn, { backgroundColor: colors.accent }]}
-                onPress={handleLogPractice}
-              >
-                <Text style={styles.confirmBtnText}>Enregistrer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL PARTAGE */}
-      <Modal
-        visible={shareModalVisible}
-        animationType="fade"
-        transparent={true}
-      >
-        <View style={styles.shareModalOverlay}>
-          {shareItem && (() => {
-            const allLogs = getPracticeLogsByItemId(shareItem.id);
-
-            let chartData: { date: string; value: number }[] = [];
-            let chartType: 'weight' | 'time' | 'quality' = 'quality';
-            let chartUnit = '';
-            let chartTarget: number | undefined;
-
-            if (shareItem.current_weight && shareItem.target_weight) {
-              chartType = 'weight';
-              chartUnit = 'kg';
-              chartTarget = shareItem.target_weight;
-              chartData = allLogs
-                .filter(log => log.weight)
-                .map(log => ({ date: log.date, value: log.weight! }));
-            } else if (shareItem.current_time && shareItem.target_time) {
-              chartType = 'time';
-              chartUnit = 'min';
-              chartTarget = shareItem.target_time;
-              chartData = allLogs
-                .filter(log => log.time)
-                .map(log => ({ date: log.date, value: log.time! }));
-            } else {
-              chartType = 'quality';
-              chartUnit = '/5';
-              chartData = allLogs
-                .filter(log => log.quality_rating)
-                .map(log => ({ date: log.date, value: log.quality_rating! }));
+      {/* Toast Notification - NO EMOJI, use Lucide Check icon */}
+      {toastVisible && (
+        <Animated.View
+          style={[
+            styles.toast,
+            {
+              backgroundColor: '#10B981',
+              opacity: toastOpacity,
+              bottom: insets.bottom + 100,
             }
-
-            const currentValue = chartData.length > 0 ? chartData[chartData.length - 1].value : 0;
-
-            return (
-              <ShareableProgressCard
-                ref={shareCardRef}
-                itemName={shareItem.name}
-                sport={SPORT_LABELS[shareItem.sport]}
-                chartData={chartData}
-                targetValue={chartTarget}
-                unit={chartUnit}
-                type={chartType}
-                practiceCount={shareItem.practice_count}
-                currentValue={currentValue}
-                progressPercent={shareItem.progress_percent}
-              />
-            );
-          })()}
-        </View>
-      </Modal>
-
-      {/* MODAL PROGRAMME */}
-      <Modal
-        visible={programModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setProgramModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                {editingProgram ? 'Éditer Programme' : 'Nouveau Programme'}
-              </Text>
-              <TouchableOpacity onPress={() => setProgramModalVisible(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScroll}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Nom du programme *</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Ex: Débutant JJB, Programme Force 12 semaines..."
-                placeholderTextColor={colors.textMuted}
-                value={programName}
-                onChangeText={setProgramName}
-              />
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Description</Text>
-              <TextInput
-                style={[styles.textArea, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Décris ton programme..."
-                placeholderTextColor={colors.textMuted}
-                value={programDescription}
-                onChangeText={setProgramDescription}
-                multiline
-                numberOfLines={4}
-              />
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Sport (optionnel)</Text>
-              <View style={styles.sportButtons}>
-                <TouchableOpacity
-                  style={[
-                    styles.sportBtn,
-                    { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                    programSport === '' && { backgroundColor: `${colors.accent}20`, borderColor: colors.accent },
-                  ]}
-                  onPress={() => setProgramSport('')}
-                >
-                  <Text
-                    style={[
-                      styles.sportBtnText,
-                      { color: colors.textSecondary },
-                      programSport === '' && { color: colors.accent, fontWeight: '600' },
-                    ]}
-                  >
-                    Tous
-                  </Text>
-                </TouchableOpacity>
-                {(['jjb', 'musculation', 'crossfit', 'running', 'mma', 'boxe'] as Sport[]).map(sport => (
-                  <TouchableOpacity
-                    key={sport}
-                    style={[
-                      styles.sportBtn,
-                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                      programSport === sport && { backgroundColor: `${colors.accent}20`, borderColor: colors.accent },
-                    ]}
-                    onPress={() => setProgramSport(sport)}
-                  >
-                    <Text
-                      style={[
-                        styles.sportBtnText,
-                        { color: colors.textSecondary },
-                        programSport === sport && { color: colors.accent, fontWeight: '600' },
-                      ]}
-                    >
-                      {SPORT_LABELS[sport]}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Durée cible (semaines)</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                placeholder="Ex: 12"
-                placeholderTextColor={colors.textMuted}
-                value={programDuration}
-                onChangeText={setProgramDuration}
-                keyboardType="number-pad"
-              />
-            </ScrollView>
-
-            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
-              <TouchableOpacity
-                style={[styles.modalBtnSecondary, { borderColor: colors.border }]}
-                onPress={() => setProgramModalVisible(false)}
-              >
-                <Text style={[styles.modalBtnSecondaryText, { color: colors.textSecondary }]}>
-                  Annuler
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtnPrimary, { backgroundColor: colors.accent }]}
-                onPress={() => {
-                  if (!programName.trim()) {
-                    Alert.alert('Erreur', 'Le nom du programme est requis.');
-                    return;
-                  }
-
-                  try {
-                    const durationWeeks = programDuration ? parseInt(programDuration) : undefined;
-                    const sportValue = programSport === '' ? undefined : programSport;
-
-                    if (editingProgram) {
-                      // Mise à jour
-                      const { updateProgram } = require('@/lib/trainingProgramsService');
-                      updateProgram(editingProgram.id, programName, programDescription, sportValue, durationWeeks);
-                    } else {
-                      // Création
-                      createProgram(programName, programDescription, sportValue, durationWeeks);
-                    }
-
-                    loadData();
-                    setProgramModalVisible(false);
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  } catch (error) {
-                    console.error('Erreur programme:', error);
-                    Alert.alert('Erreur', 'Impossible de sauvegarder le programme.');
-                  }
-                }}
-              >
-                <Text style={styles.modalBtnPrimaryText}>
-                  {editingProgram ? 'Mettre à jour' : 'Créer'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL AJOUT OBJECTIFS AU PROGRAMME */}
-      <Modal
-        visible={addItemsToProgramModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setAddItemsToProgramModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Ajouter des objectifs
-              </Text>
-              <TouchableOpacity onPress={() => setAddItemsToProgramModalVisible(false)}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalScroll}>
-              {selectedProgram && (
-                <>
-                  <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-                    Programme: {selectedProgram.name}
-                  </Text>
-
-                  {allItems.length === 0 ? (
-                    <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                      Aucun objectif disponible
-                    </Text>
-                  ) : (
-                    <>
-                      {allItems.map(item => {
-                        const programItems = getProgramItems(selectedProgram.id);
-                        const isInProgram = programItems.some((pi: any) => pi.item_id === item.id);
-
-                        if (isInProgram) return null;
-
-                        return (
-                          <TouchableOpacity
-                            key={item.id}
-                            style={[styles.selectableItem, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                            onPress={() => {
-                              try {
-                                addItemToProgram(selectedProgram.id, item.id);
-                                loadData();
-                                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                              } catch (error) {
-                                console.error('Erreur ajout:', error);
-                                Alert.alert('Erreur', 'Impossible d\'ajouter cet objectif.');
-                              }
-                            }}
-                          >
-                            <View style={styles.selectableItemLeft}>
-                              <Text style={[styles.selectableItemIcon, { color: SPORT_COLORS[item.sport] }]}>
-                                {SPORT_ICONS[item.sport]}
-                              </Text>
-                              <View>
-                                <Text style={[styles.selectableItemName, { color: colors.textPrimary }]}>
-                                  {item.name}
-                                </Text>
-                                <Text style={[styles.selectableItemSport, { color: colors.textMuted }]}>
-                                  {SPORT_LABELS[item.sport]} • {STATUS_LABELS[item.status]}
-                                </Text>
-                              </View>
-                            </View>
-                            <Plus size={20} color={colors.accent} />
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </>
-                  )}
-                </>
-              )}
-            </ScrollView>
-
-            <View style={[styles.modalFooter, { borderTopColor: colors.border }]}>
-              <TouchableOpacity
-                style={[styles.modalBtnPrimary, { backgroundColor: colors.accent }]}
-                onPress={() => setAddItemsToProgramModalVisible(false)}
-              >
-                <Text style={styles.modalBtnPrimaryText}>
-                  Terminé
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+          ]}
+        >
+          <Check size={18} color="#FFFFFF" strokeWidth={3} />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 }
 
+// ============================================
+// STYLES
+// ============================================
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -2300,927 +2488,1272 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  backBtn: {
-    padding: 8,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
+  backButton: {
+    padding: 4,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
   },
-  addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-    justifyContent: 'space-around',
-  },
-  tab: {
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-  },
-  tabIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  tabContent: {
-    flex: 1,
-  },
-  tabPlaceholder: {
-    fontSize: 16,
-    fontStyle: 'italic',
-  },
-
-  // Recherche
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
+    padding: 0,
   },
 
-  // Filtres
-  filtersContainer: {
-    marginTop: 12,
+  // TASK 1: Global Filter Styles
+  globalFilterScroll: {
+    maxHeight: 50,
+    marginBottom: 4,
   },
-  filtersContent: {
+  globalFilterContent: {
     paddingHorizontal: 16,
     gap: 8,
   },
-  filterChip: {
+  globalFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  globalFilterText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Toast Styles (NO EMOJI - uses Lucide Check icon)
+  toast: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  content: {
+    flex: 1,
     paddingHorizontal: 16,
+  },
+
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+  },
+
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  addSectionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Filters
+  filterScroll: {
+    marginBottom: 12,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 2,
+    marginRight: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  filterChipIcon: {
+    fontSize: 14,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '600',
   },
 
-  // Sports
-  sportsContainer: {
-    flex: 1,
-    marginTop: 16,
+  // Benchmarks
+  benchmarksScroll: {
+    marginBottom: 8,
   },
-  sportsContent: {
-    padding: 16,
-    gap: 16,
-  },
-  sportSection: {
-    marginBottom: 16,
-  },
-  sportHeader: {
-    flexDirection: 'row',
+  benchmarkCard: {
+    width: 140,
+    padding: 14,
+    borderRadius: 16,
+    marginRight: 12,
+    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    marginBottom: 12,
   },
-  sportHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  sportIcon: {
-    fontSize: 28,
-  },
-  sportHeaderInfo: {
-    gap: 2,
-  },
-  sportName: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  sportCount: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  sportBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  sportBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  sportItems: {
-    gap: 12,
-  },
-
-  // Empty state
-  emptyState: {
+  benchmarkIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 32,
+    marginBottom: 8,
+  },
+  benchmarkIcon: {
+    fontSize: 24,
+  },
+  benchmarkName: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  benchmarkPR: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  benchmarkLabel: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  // DATA RICH styles
+  benchmarkDataRich: {
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  benchmarkValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  benchmarkDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  benchmarkDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  prBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 2,
+  },
+  prBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  quickAddBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyBenchmark: {
+    width: 200,
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  emptyBenchmarkText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  // TASK 2: Create custom item cards
+  createCustomCard: {
+    width: 160,
+    padding: 16,
+    borderRadius: 16,
+    marginRight: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  createCustomSkillCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderStyle: 'dashed',
     gap: 12,
   },
-  emptyText: {
-    fontSize: 17,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-
-  // Carte objectif
-  objectiveCard: {
-    padding: 14,
-    borderRadius: 12,
-    gap: 10,
-    borderLeftWidth: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
+  createCustomIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  createCustomSkillInfo: {
     flex: 1,
   },
-  cardTitle: {
+  createCustomText: {
     fontSize: 15,
     fontWeight: '700',
   },
-  masterBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  createCustomSubtext: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // Skills
+  skillsList: {
+    gap: 10,
+  },
+  skillCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  skillLeft: {
+    marginRight: 12,
+  },
+  skillIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardMeta: {
+  skillIcon: {
+    fontSize: 22,
+  },
+  skillCenter: {
+    flex: 1,
+  },
+  skillName: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  skillMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
   },
-  cardMetaText: {
-    fontSize: 12,
-    fontWeight: '600',
+  skillStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  cardMetaDot: {
-    fontSize: 12,
-  },
-  priority: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-
-  // Progress
-  progressBar: {
-    gap: 6,
-    marginTop: 4,
-  },
-  progressBarHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  progressLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  progressPercent: {
-    fontSize: 13,
+  skillStatusText: {
+    fontSize: 11,
     fontWeight: '700',
   },
-  progressBarTrack: {
+  skillDrillCount: {
+    fontSize: 12,
+  },
+  skillCategoryTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  skillCategoryText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  // NEW: Status Pill styles
+  skillCategorySmall: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  skillNotesIndicator: {
+    marginLeft: 4,
+  },
+  skillVideoIndicator: {
+    marginLeft: 4,
+    padding: 4,
+    borderRadius: 6,
+  },
+
+  // TASK 3: Video Picker Styles
+  videoPickerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
+  },
+  videoPickerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  videoPickerBtnSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+  },
+  videoPickerBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  videoPreviewContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    gap: 12,
+    marginBottom: 8,
+  },
+  videoPreviewIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  videoPreviewText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  videoRemoveBtn: {
+    padding: 8,
+  },
+
+  skillStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 5,
+  },
+  skillStatusDot: {
+    width: 8,
     height: 8,
     borderRadius: 4,
-    overflow: 'hidden',
   },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-
-  // Practice info
-  practiceInfo: {
-    gap: 4,
-  },
-  practiceText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  lastNotes: {
+  skillStatusPillText: {
     fontSize: 11,
-    fontStyle: 'italic',
+    fontWeight: '700',
   },
-  masteredDate: {
-    fontSize: 12,
+  emptySkills: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  emptySkillsTitle: {
+    fontSize: 16,
     fontWeight: '600',
   },
-
-  // Chart
-  chartButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  chartToggleBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  chartToggleText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  shareBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Actions
-  cardActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  actionBtnText: {
+  emptySkillsText: {
     fontSize: 13,
+    textAlign: 'center',
+  },
+
+  // FAB
+  fab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabMenuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    paddingRight: 20,
+    paddingBottom: 180,
+  },
+  fabMenuContainer: {
+    gap: 12,
+  },
+  fabMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 30,
+    gap: 10,
+  },
+  fabMenuText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '600',
   },
 
   // Modals
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '90%',
+    padding: 24,
+    paddingBottom: 40,
   },
   modalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
+    alignItems: 'center',
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
   },
-  modalScroll: {
-    padding: 20,
-  },
-  label: {
+  inputLabel: {
     fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 16,
   },
-  typeButtons: {
+  textInput: {
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    borderWidth: 1,
+  },
+  valueInput: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  categoryScroll: {
+    marginBottom: 8,
+  },
+  categoryOption: {
     flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginRight: 10,
+    borderWidth: 1,
+    gap: 6,
+  },
+  categoryOptionIcon: {
+    fontSize: 18,
+  },
+  categoryOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  unitRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  unitOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  unitOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // TASK 2: Preset Chips for Running/Force
+  presetChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 8,
+  },
+  presetChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  presetChipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // TASK 2: Unit Info Banner
+  unitInfoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
     gap: 8,
   },
-  typeBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    alignItems: 'center',
-  },
-  typeBtnText: {
+  unitInfoText: {
     fontSize: 13,
     fontWeight: '600',
   },
-  sportButtons: {
+
+  // TASK 3: Chrono Input for Running
+  chronoInputContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  sportBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 1.5,
-  },
-  sportBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  input: {
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    fontSize: 15,
-    borderWidth: 1,
-  },
-  textArea: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    fontSize: 15,
-    borderWidth: 1,
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  priorityStars: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  row: {
-    flexDirection: 'row',
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 2,
     gap: 12,
   },
-  rowItem: {
+  chronoInput: {
     flex: 1,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 20,
-    borderTopWidth: 1,
-  },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  modalBtnPrimary: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  modalBtnSecondary: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  modalBtnPrimaryText: {
-    fontSize: 15,
+    fontSize: 28,
     fontWeight: '700',
-    color: '#FFF',
-  },
-  modalBtnSecondaryText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  cancelBtn: {},
-  confirmBtn: {},
-  cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  confirmBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  selectedItemInfo: {
-    alignItems: 'center',
+    textAlign: 'center',
     paddingVertical: 12,
-    gap: 4,
-  },
-  selectedItemName: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  selectedItemSport: {
-    fontSize: 12,
-  },
-  shareModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
   },
 
-  // Stats Tab
-  statsContainer: {
-    flex: 1,
-  },
-  statsContent: {
-    padding: 16,
-    gap: 16,
-  },
-  statsSection: {
-    padding: 16,
-    borderRadius: 16,
-    gap: 16,
-  },
-  statsSectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  statsGrid: {
+  // TASK 1: Running Time Input Styles (H:M:S)
+  timeInputRow: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 12,
   },
-  statNumber: {
-    fontSize: 28,
+  timeInputGroup: {
+    alignItems: 'center',
+  },
+  timeInput: {
+    width: 56,
+    height: 56,
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  timeLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  timeSeparator: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginHorizontal: 2,
+    marginBottom: 20,
+  },
+  paceDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    marginBottom: 16,
+  },
+  paceDisplayLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  paceDisplayValue: {
+    fontSize: 18,
     fontWeight: '800',
   },
-  statLabel: {
-    fontSize: 12,
+
+  // TASK 2: Hyrox Effort Type Styles
+  hyroxTypeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  hyroxTypeBtn: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+  },
+  hyroxTypeText: {
+    fontSize: 11,
     fontWeight: '600',
+    textAlign: 'center',
   },
-  streakInfo: {
-    gap: 10,
+
+  modalButton: {
+    marginTop: 24,
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: 'center',
   },
-  streakRow: {
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // Detail Modal
+  detailModalOverlay: {
+    flex: 1,
+  },
+  detailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    minHeight: 56,
   },
-  streakLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+  detailHeaderBtn: {
+    padding: 4,
+    minWidth: 36,
+    alignItems: 'center',
   },
-  streakValue: {
-    fontSize: 15,
+  detailHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailCloseBtn: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  detailTitle: {
+    fontSize: 18,
     fontWeight: '700',
-  },
-  miniCalendar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 12,
-    paddingVertical: 12,
-    gap: 4,
-  },
-  miniCalendarDay: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  miniCalendarDayLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  miniCalendarDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  sportStatsList: {
-    gap: 14,
-  },
-  sportStatItem: {
-    gap: 8,
-  },
-  sportStatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  sportStatIcon: {
-    fontSize: 24,
-  },
-  sportStatInfo: {
     flex: 1,
-    gap: 2,
+    textAlign: 'center',
+    marginHorizontal: 8,
   },
-  sportStatName: {
-    fontSize: 14,
+  detailContent: {
+    flex: 1,
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 12,
     fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 12,
+    marginTop: 8,
   },
-  sportStatMeta: {
-    fontSize: 11,
-    fontWeight: '500',
+
+  // PR Card
+  prCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginBottom: 16,
   },
-  sportStatPercent: {
-    fontSize: 16,
+  prCardIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  prCardInfo: {
+    flex: 1,
+  },
+  prCardLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  prCardValue: {
+    fontSize: 32,
     fontWeight: '800',
   },
-  sportStatBar: {
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
+  prCardDate: {
+    fontSize: 12,
+    marginTop: 4,
   },
-  sportStatBarFill: {
-    height: '100%',
-    borderRadius: 3,
+  prAddBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  dailyChart: {
+
+  // Chart
+  chartCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  chartTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  chartPlaceholder: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'space-around',
-    height: 120,
-    gap: 4,
-  },
-  dailyChartBar: {
-    flex: 1,
-    alignItems: 'center',
+    height: 80,
     gap: 8,
   },
-  dailyChartBarContainer: {
+  chartBarContainer: {
     flex: 1,
-    width: '100%',
+    height: '100%',
     justifyContent: 'flex-end',
   },
-  dailyChartBarFill: {
+  chartBar: {
     width: '100%',
     borderRadius: 4,
     minHeight: 4,
   },
-  dailyChartLabel: {
+
+  // History
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  historyLeft: {
+    flex: 1,
+  },
+  historyValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  historyDate: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  emptyCard: {
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // Status Row
+  statusRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  statusOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    gap: 6,
+  },
+  statusOptionText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Drill Card
+  drillCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  drillInfo: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  drillCount: {
+    fontSize: 48,
+    fontWeight: '800',
+  },
+  drillLabel: {
+    fontSize: 14,
+  },
+  drillActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  drillInput: {
+    width: 80,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  drillAddBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 8,
+  },
+  drillAddText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Notes
+  noteInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  noteInput: {
+    flex: 1,
+    fontSize: 15,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  noteAddBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  notesList: {
+    gap: 10,
+  },
+  noteItem: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  noteText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  noteFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  noteDate: {
     fontSize: 11,
+  },
+
+  // TASK 2: Video Link Styles
+  videoLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 10,
+    marginBottom: 8,
+  },
+  videoLinkInput: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
+  },
+  videoSaveBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  watchVideoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 8,
+    marginBottom: 16,
+  },
+  watchVideoText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Modal Close Button
+  modalCloseBtn: {
+    padding: 4,
+  },
+
+  // RPE Slider
+  rpeContainer: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  rpeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  rpeValue: {
+    fontSize: 32,
+    fontWeight: '800',
+  },
+  rpeLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rpeSlider: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  rpeButton: {
+    flex: 1,
+    aspectRatio: 1,
+    maxWidth: 32,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rpeButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Date Picker
+  datePickerRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  dateOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+  },
+  dateOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  datePickerContainer: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  datePickerDoneBtn: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  datePickerDoneText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+
+  // ============================================
+  // COMPACT CARD STYLES - High density design
+  // ============================================
+  compactCardsList: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  compactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    gap: 10,
+  },
+  compactCardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactCardContent: {
+    flex: 1,
+    gap: 2,
+  },
+  compactCardName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  compactCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  compactCardValue: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  compactCardRight: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  compactCardDate: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  compactCardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  compactShareBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactAddBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactPRBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  compactPRText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  emptyCompactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 10,
+  },
+  emptyCompactText: {
+    fontSize: 13,
+  },
+  createCompactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderStyle: 'dashed',
+    gap: 10,
+  },
+
+  // ============================================
+  // STATUS SELECTOR STYLES (Add Skill Modal)
+  // ============================================
+  statusSelectorRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  statusPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  statusPillText: {
+    fontSize: 12,
     fontWeight: '600',
   },
 
   // ============================================
-  // CALENDRIER
+  // TEXT AREA INPUT (Notes field)
   // ============================================
-  calendarHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    marginTop: 8,
-    borderRadius: 16,
-    marginHorizontal: 16,
-  },
-  monthNavBtn: {
-    padding: 8,
-  },
-  monthTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  weekDaysRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginTop: 8,
-    marginHorizontal: 16,
+  textAreaInput: {
     borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    borderWidth: 1,
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
-  weekDayLabel: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  calendarGrid: {
-    padding: 16,
-    marginTop: 8,
-    marginHorizontal: 16,
-    borderRadius: 16,
-  },
-  calendarRow: {
+
+  // ============================================
+  // UNIT TOGGLE STYLES (KG/LBS)
+  // ============================================
+  unitToggleRow: {
     flexDirection: 'row',
+    gap: 12,
     marginBottom: 8,
   },
-  calendarDayCell: {
+  unitToggleBtn: {
     flex: 1,
-    aspectRatio: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
-    marginHorizontal: 2,
   },
-  calendarDayNumber: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  calendarDayDotsContainer: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 2,
-  },
-  calendarDayDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-  },
-  selectedDayDetails: {
-    padding: 16,
-    marginTop: 8,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  selectedDayTitle: {
+  unitToggleText: {
     fontSize: 16,
     fontWeight: '700',
   },
-  selectedDayCount: {
-    fontSize: 13,
+
+  // ============================================
+  // REPS INPUT
+  // ============================================
+  repsInput: {
+    fontSize: 20,
     fontWeight: '600',
-    marginBottom: 4,
+    textAlign: 'center',
   },
-  dayLogCard: {
-    padding: 12,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    gap: 8,
-  },
-  dayLogHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  dayLogHeaderLeft: {
-    flexDirection: 'row',
-    gap: 10,
-    flex: 1,
-  },
-  dayLogIcon: {
-    fontSize: 24,
-  },
-  dayLogName: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  dayLogSport: {
+  helperText: {
     fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  dayLogTime: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  dayLogQuality: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dayLogQualityLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  dayLogStars: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  dayLogDetails: {
-    flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  dayLogDetailText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  dayLogNotes: {
-    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 8,
+    textAlign: 'center',
     fontStyle: 'italic',
   },
 
   // ============================================
-  // VIEW SWITCH
+  // PILLAR 1: CALORIES & METs STYLES
   // ============================================
-  viewSwitch: {
+  caloriesRow: {
     flexDirection: 'row',
-    marginHorizontal: 16,
-    marginTop: 12,
-    padding: 4,
-    borderRadius: 12,
-    gap: 8,
-  },
-  viewSwitchBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  viewSwitchText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-
-  // ============================================
-  // PROGRAMMES
-  // ============================================
-  programsContainer: {
-    flex: 1,
-  },
-  programsContent: {
-    padding: 16,
+    alignItems: 'flex-end',
     gap: 12,
   },
-  programCard: {
-    padding: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  programHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  programHeaderLeft: {
-    flex: 1,
-    gap: 6,
-  },
-  programHeaderRight: {
-    flexDirection: 'row',
+  metsInfo: {
+    paddingBottom: 12,
+    paddingHorizontal: 12,
     alignItems: 'center',
-    gap: 12,
   },
-  programName: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  programStats: {
-    fontSize: 13,
+  metsLabel: {
+    fontSize: 11,
     fontWeight: '600',
-  },
-  programBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  programBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  programProgressBar: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  programProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  programDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  programItemsList: {
-    gap: 8,
-    paddingTop: 8,
-  },
-  programItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 8,
-  },
-  programItemIcon: {
-    fontSize: 16,
-  },
-  programItemName: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  programItemRemoveBtn: {
-    padding: 4,
-  },
-  addItemsToProgramBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    marginTop: 4,
-  },
-  addItemsToProgramBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  programActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
-  },
-  programActionBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  programActionBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  createProgramBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginTop: 16,
-  },
-  createProgramBtnBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginTop: 8,
-  },
-  createProgramBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFF',
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  selectableItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 8,
-  },
-  selectableItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  selectableItemIcon: {
-    fontSize: 24,
-  },
-  selectableItemName: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  selectableItemSport: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
   },
 });

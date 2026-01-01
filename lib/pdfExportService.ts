@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { Platform, Alert } from 'react-native';
 import { getAllMeasurements, getUserSettings } from './storage';
 import { getMeasurements, getTrainings } from './database';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -678,7 +679,7 @@ export const exportToPDF = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Erreur export PDF:', error);
+    logger.error('Erreur export PDF:', error);
     Alert.alert('Erreur', "Impossible de générer le rapport PDF.");
     return false;
   }
@@ -705,7 +706,7 @@ export const previewPDFReport = async (): Promise<void> => {
       html,
     });
   } catch (error) {
-    console.error('Erreur prévisualisation PDF:', error);
+    logger.error('Erreur prévisualisation PDF:', error);
     Alert.alert('Erreur', "Impossible de prévisualiser le rapport.");
   }
 };

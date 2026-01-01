@@ -20,6 +20,7 @@ import {
   Award,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import logger from '@/lib/security/logger';
 import {
   detectPlateau,
   dismissPlateau,
@@ -87,7 +88,7 @@ export const PlateauAlert: React.FC<PlateauAlertProps> = ({
         setCurrentSuggestion(result.suggestion);
       }
     } catch (error) {
-      console.error('Erreur detection plateau:', error);
+      logger.error('Erreur detection plateau:', error);
     }
     setLoading(false);
   };
@@ -376,7 +377,7 @@ export const PlateauResolvedAlert: React.FC<PlateauResolvedProps> = ({
         </TouchableOpacity>
       </View>
       <Text style={[styles.resolvedMessage, { color: colors.success }]}>
-        Bravo guerrier ! Tu as prouve que tu peux surmonter les obstacles.
+        Bravo champion ! Tu as prouve que tu peux surmonter les obstacles.
       </Text>
     </View>
   );

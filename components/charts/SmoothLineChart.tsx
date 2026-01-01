@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, G } from 'react-native-svg';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, G, Text as SvgText } from 'react-native-svg';
 // import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface DataPoint {
@@ -10,10 +10,14 @@ interface DataPoint {
 
 interface SmoothLineChartProps {
   data: DataPoint[];
+  width?: number; // Optional - uses screen width if not provided
   height?: number;
   showGradient?: boolean;
   showDots?: boolean;
+  showGrid?: boolean; // Alias for visual grid
+  animated?: boolean; // Animation enabled
   goalValue?: number;
+  maxValue?: number; // Optional max Y axis value
   goodZone?: { min: number; max: number };
   warningZone?: { min: number; max: number };
   color?: string;
@@ -27,10 +31,14 @@ interface SmoothLineChartProps {
 
 export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
   data,
+  width: propWidth,
   height = 220,
   showGradient = true,
   showDots = true,
+  showGrid: _showGrid,
+  animated: _animated,
   goalValue,
+  maxValue: propMaxValue,
   color = '#6366f1',
   curved = true,
   thickness = 3,
@@ -38,14 +46,15 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
   rulesColor = 'rgba(100,100,100,0.15)',
 }) => {
   const screenWidth = Dimensions.get('window').width;
-  const chartWidth = screenWidth - 60;
+  const chartWidth = propWidth ?? (screenWidth - 60);
   const padding = { top: 20, right: 10, bottom: 30, left: 40 };
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = height - padding.top - padding.bottom;
 
   if (data.length === 0) return null;
 
-  const maxValue = Math.max(...data.map(d => d.value));
+  const dataMaxValue = Math.max(...data.map(d => d.value));
+  const maxValue = propMaxValue ?? dataMaxValue;
   const minValue = Math.min(...data.map(d => d.value));
   const range = maxValue - minValue || 1;
 
@@ -107,7 +116,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
           {[0, 1, 2, 3, 4].map(i => {
             const value = maxValue - (range * i) / 4;
             return (
-              <Text
+              <SvgText
                 key={i}
                 x={-10}
                 y={(innerHeight / 4) * i + 5}
@@ -116,7 +125,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
                 textAnchor="end"
               >
                 {value.toFixed(0)}
-              </Text>
+              </SvgText>
             );
           })}
 
@@ -168,7 +177,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
           {/* X-axis labels */}
           {data.length > 1 && (
             <>
-              <Text
+              <SvgText
                 x={0}
                 y={innerHeight + 20}
                 fontSize={10}
@@ -176,8 +185,8 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
                 textAnchor="start"
               >
                 {data[0].label || ''}
-              </Text>
-              <Text
+              </SvgText>
+              <SvgText
                 x={innerWidth}
                 y={innerHeight + 20}
                 fontSize={10}
@@ -185,7 +194,7 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
                 textAnchor="end"
               >
                 {data[data.length - 1].label || ''}
-              </Text>
+              </SvgText>
             </>
           )}
         </G>

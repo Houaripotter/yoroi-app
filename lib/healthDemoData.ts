@@ -67,8 +67,7 @@ export function getDemoHealthData(): HealthData {
         awake: randomBetween(10, 40),
         inBed: randomBetween(400, 510),
       },
-      startDate: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-      endDate: new Date().toISOString(),
+      // Note: startDate/endDate removed - use startTime/endTime instead
       startTime: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
       endTime: new Date().toISOString(),
     },

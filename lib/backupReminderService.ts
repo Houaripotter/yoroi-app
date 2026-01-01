@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import logger from '@/lib/security/logger';
 
 const STORAGE_KEY = '@yoroi_backup_reminder';
 
@@ -33,7 +34,7 @@ class BackupReminderService {
         this.state = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('[BackupReminder] Erreur initialisation:', error);
+      logger.error('[BackupReminder] Erreur initialisation:', error);
     }
   }
 
@@ -41,7 +42,7 @@ class BackupReminderService {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     } catch (error) {
-      console.error('[BackupReminder] Erreur sauvegarde état:', error);
+      logger.error('[BackupReminder] Erreur sauvegarde état:', error);
     }
   }
 

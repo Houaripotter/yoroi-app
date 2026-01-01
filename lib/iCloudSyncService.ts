@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, NativeModules } from 'react-native';
 import { getAllMeasurements, getUserSettings, saveUserSettings } from './storage';
 import { getMeasurements, getTrainings, addMeasurementRecord, addTraining } from './database';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -128,7 +129,7 @@ export const checkiCloudAvailability = async (): Promise<boolean> => {
     const ubiquityUrl = await getUbiquityContainerURL();
     return ubiquityUrl !== null;
   } catch (error) {
-    console.log('iCloud non disponible:', error);
+    logger.info('iCloud non disponible:', error);
     return false;
   }
 };
@@ -156,7 +157,7 @@ const getUbiquityContainerURL = async (): Promise<string | null> => {
 
     return iCloudPath;
   } catch (error) {
-    console.error('Erreur acces iCloud:', error);
+    logger.error('Erreur acces iCloud:', error);
     return null;
   }
 };
@@ -175,7 +176,7 @@ export const getSyncSettings = async (): Promise<SyncSettings> => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erreur lecture settings sync:', error);
+    logger.error('Erreur lecture settings sync:', error);
   }
 
   // Parametres par defaut
@@ -198,7 +199,7 @@ export const saveSyncSettings = async (settings: Partial<SyncSettings>): Promise
     const updated = { ...current, ...settings };
     await AsyncStorage.setItem(SYNC_SETTINGS_KEY, JSON.stringify(updated));
   } catch (error) {
-    console.error('Erreur sauvegarde settings sync:', error);
+    logger.error('Erreur sauvegarde settings sync:', error);
   }
 };
 
@@ -207,13 +208,13 @@ export const saveSyncSettings = async (settings: Partial<SyncSettings>): Promise
  */
 export const toggleiCloudSync = async (enabled: boolean): Promise<boolean> => {
   if (!ICLOUD_SYNC_ENABLED) {
-    console.log('iCloud sync est desactive (feature flag)');
+    logger.info('iCloud sync est desactive (feature flag)');
     return false;
   }
 
   const available = await checkiCloudAvailability();
   if (!available && enabled) {
-    console.log('iCloud non disponible sur cet appareil');
+    logger.info('iCloud non disponible sur cet appareil');
     return false;
   }
 
@@ -249,7 +250,7 @@ const readiCloudSyncFile = async (): Promise<SyncData | null> => {
     const content = await FileSystem.readAsStringAsync(filePath);
     return JSON.parse(content);
   } catch (error) {
-    console.error('Erreur lecture fichier iCloud:', error);
+    logger.error('Erreur lecture fichier iCloud:', error);
     return null;
   }
 };
@@ -266,7 +267,7 @@ const writeiCloudSyncFile = async (data: SyncData): Promise<boolean> => {
     await FileSystem.writeAsStringAsync(filePath, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
-    console.error('Erreur ecriture fichier iCloud:', error);
+    logger.error('Erreur ecriture fichier iCloud:', error);
     return false;
   }
 };
@@ -292,7 +293,7 @@ const collectLocalData = async (): Promise<SyncData['data']> => {
  * Importe les donnees depuis iCloud vers le stockage local
  */
 const importFromiCloud = async (cloudData: SyncData): Promise<void> => {
-  console.log('Import des donnees depuis iCloud...');
+  logger.info('Import des donnees depuis iCloud...');
 
   // Importer les mensurations
   if (cloudData.data.measurements) {
@@ -323,7 +324,7 @@ const importFromiCloud = async (cloudData: SyncData): Promise<void> => {
     await saveUserSettings(mergedProfile);
   }
 
-  console.log('Import termine');
+  logger.info('Import termine');
 };
 
 /**
@@ -345,7 +346,7 @@ export const syncWithiCloud = async (): Promise<{ success: boolean; message: str
   }
 
   try {
-    console.log('Debut synchronisation iCloud...');
+    logger.info('Debut synchronisation iCloud...');
 
     // 1. Lire le fichier iCloud existant
     const cloudData = await readiCloudSyncFile();
@@ -361,7 +362,7 @@ export const syncWithiCloud = async (): Promise<{ success: boolean; message: str
 
       if (cloudDate > localDate) {
         // Donnees iCloud plus recentes -> importer
-        console.log('Donnees iCloud plus recentes, import...');
+        logger.info('Donnees iCloud plus recentes, import...');
         await importFromiCloud(cloudData);
       }
     }
@@ -380,13 +381,13 @@ export const syncWithiCloud = async (): Promise<{ success: boolean; message: str
     if (writeSuccess) {
       // 5. Mettre a jour la date de derniere sync
       await saveSyncSettings({ lastSyncDate: now });
-      console.log('Synchronisation reussie');
+      logger.info('Synchronisation reussie');
       return { success: true, message: 'Synchronisation reussie' };
     } else {
       return { success: false, message: 'Erreur ecriture iCloud' };
     }
   } catch (error) {
-    console.error('Erreur synchronisation:', error);
+    logger.error('Erreur synchronisation:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Erreur inconnue',

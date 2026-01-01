@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
@@ -53,7 +54,7 @@ export const loadCompetitorProfile = async (): Promise<CompetitorProfile> => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erreur chargement profil compétiteur:', error);
+    logger.error('Erreur chargement profil compétiteur:', error);
   }
 
   return {
@@ -71,7 +72,7 @@ export const saveCompetitorProfile = async (profile: CompetitorProfile): Promise
   try {
     await AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(profile));
   } catch (error) {
-    console.error('Erreur sauvegarde profil compétiteur:', error);
+    logger.error('Erreur sauvegarde profil compétiteur:', error);
     throw error;
   }
 };

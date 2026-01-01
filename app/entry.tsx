@@ -41,6 +41,7 @@ import { playSuccessSound } from '@/lib/soundManager';
 import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { useBadges } from '@/lib/BadgeContext';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -134,7 +135,7 @@ export default function EntryScreen() {
         setGoalWeight(settings.targetWeight);
       }
     } catch (error) {
-      console.log('Error loading data:', error);
+      logger.info('Error loading data:', error);
     }
   };
 
@@ -208,7 +209,7 @@ export default function EntryScreen() {
           : undefined;
         await updateWidget(weightData.weight, previousWeight, date);
       } catch (widgetError) {
-        console.log('Widget update error:', widgetError);
+        logger.info('Widget update error:', widgetError);
       }
 
       successHaptic();
@@ -247,7 +248,7 @@ export default function EntryScreen() {
       setWeight('');
       setDate(new Date());
     } catch (error) {
-      console.error('Save error:', error);
+      logger.error('Save error:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder');
       errorHaptic();
     } finally {

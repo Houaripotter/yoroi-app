@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getHydrationSettings, getTodayHydration, saveHydrationSettings } from './storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // SERVICE NOTIFICATIONS HYDRATATION
@@ -33,7 +34,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     }
 
     if (finalStatus !== 'granted') {
-      console.log('Permission de notification refusee');
+      logger.info('Permission de notification refusee');
       return false;
     }
 
@@ -50,7 +51,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('Erreur demande permissions notification:', error);
+    logger.error('Erreur demande permissions notification:', error);
     return false;
   }
 };
@@ -63,7 +64,7 @@ export const scheduleHydrationReminders = async (): Promise<void> => {
     const settings = await getHydrationSettings();
 
     if (!settings.reminderEnabled) {
-      console.log('Rappels hydratation desactives');
+      logger.info('Rappels hydratation desactives');
       return;
     }
 
@@ -73,7 +74,7 @@ export const scheduleHydrationReminders = async (): Promise<void> => {
     // Permissions
     const hasPermission = await requestNotificationPermissions();
     if (!hasPermission) {
-      console.log('Pas de permission pour les notifications');
+      logger.info('Pas de permission pour les notifications');
       return;
     }
 
@@ -90,7 +91,7 @@ export const scheduleHydrationReminders = async (): Promise<void> => {
       "Pense a boire !",
       "Un verre d'eau pour la victoire !",
       "L'hydratation, c'est la cle !",
-      "Bois un coup, guerrier !",
+      "Bois un coup, champion !",
       "Reste hydrate pour performer !",
     ];
 
@@ -134,9 +135,9 @@ export const scheduleHydrationReminders = async (): Promise<void> => {
       }
     }
 
-    console.log(`${notificationCount} rappels hydratation programmes`);
+    logger.info(`${notificationCount} rappels hydratation programmes`);
   } catch (error) {
-    console.error('Erreur programmation rappels hydratation:', error);
+    logger.error('Erreur programmation rappels hydratation:', error);
   }
 };
 
@@ -146,9 +147,9 @@ export const scheduleHydrationReminders = async (): Promise<void> => {
 export const cancelHydrationReminders = async (): Promise<void> => {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-    console.log('Rappels hydratation annules');
+    logger.info('Rappels hydratation annules');
   } catch (error) {
-    console.error('Erreur annulation rappels:', error);
+    logger.error('Erreur annulation rappels:', error);
   }
 };
 
@@ -172,7 +173,7 @@ export const toggleHydrationReminders = async (enabled: boolean): Promise<boolea
 
     return true;
   } catch (error) {
-    console.error('Erreur toggle rappels:', error);
+    logger.error('Erreur toggle rappels:', error);
     return false;
   }
 };
@@ -199,7 +200,7 @@ export const sendInstantHydrationReminder = async (): Promise<void> => {
       });
     }
   } catch (error) {
-    console.error('Erreur notification instantanee:', error);
+    logger.error('Erreur notification instantanee:', error);
   }
 };
 
@@ -211,7 +212,7 @@ export const areHydrationRemindersActive = async (): Promise<boolean> => {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
     return scheduled.some(n => n.content.data?.type === 'hydration');
   } catch (error) {
-    console.error('Erreur verification rappels:', error);
+    logger.error('Erreur verification rappels:', error);
     return false;
   }
 };

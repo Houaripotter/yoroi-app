@@ -19,6 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { setUserMode } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 export default function ModeSelectionScreen() {
   const { colors, isDark } = useTheme();
@@ -47,7 +48,7 @@ export default function ModeSelectionScreen() {
         router.replace('/setup');
       }
     } catch (error) {
-      console.error('Error saving mode:', error);
+      logger.error('Error saving mode:', error);
       setIsLoading(false);
     }
   };
@@ -67,7 +68,7 @@ export default function ModeSelectionScreen() {
             <Text style={[styles.logo, { color: colors.accent }]}>YOROI</Text>
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Quel guerrier es-tu ?
+            Quel champion es-tu ?
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Choisis ton mode d'entraînement

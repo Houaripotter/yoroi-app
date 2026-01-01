@@ -46,7 +46,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'five_kg',
-    name: 'Guerrier',
+    name: 'Athlète',
     iconComponent: Swords,
     description: '5 kg perdus',
     category: 'weight',

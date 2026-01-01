@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -205,7 +206,7 @@ export const getChallengeProgress = async (): Promise<Record<string, ChallengePr
     const data = await AsyncStorage.getItem(STORAGE_KEYS.CHALLENGE_PROGRESS);
     return data ? JSON.parse(data) : {};
   } catch (error) {
-    console.error('Erreur lecture progression défis:', error);
+    logger.error('Erreur lecture progression défis:', error);
     return {};
   }
 };
@@ -235,7 +236,7 @@ export const updateChallengeProgress = async (
     
     await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
   } catch (error) {
-    console.error('Erreur mise à jour progression:', error);
+    logger.error('Erreur mise à jour progression:', error);
   }
 };
 
@@ -261,7 +262,7 @@ export const claimChallengeReward = async (challengeId: string): Promise<number>
     
     return challenge.reward.xp;
   } catch (error) {
-    console.error('Erreur réclamation récompense:', error);
+    logger.error('Erreur réclamation récompense:', error);
     return 0;
   }
 };
@@ -284,7 +285,7 @@ export const getActiveChallenges = async (): Promise<ActiveChallenge[]> => {
       },
     }));
   } catch (error) {
-    console.error('Erreur récupération défis actifs:', error);
+    logger.error('Erreur récupération défis actifs:', error);
     return [];
   }
 };
@@ -338,7 +339,7 @@ export const resetDailyChallenges = async (): Promise<void> => {
     
     await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
   } catch (error) {
-    console.error('Erreur reset défis quotidiens:', error);
+    logger.error('Erreur reset défis quotidiens:', error);
   }
 };
 

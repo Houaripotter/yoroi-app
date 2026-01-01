@@ -16,6 +16,7 @@ import {
   Challenge,
 } from '@/lib/challenges';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // WEEKLY CHALLENGE - COMPOSANT DEFI HEBDOMADAIRE
@@ -61,7 +62,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
         useNativeDriver: false,
       }).start();
     } catch (error) {
-      console.error('Erreur chargement défi:', error);
+      logger.error('Erreur chargement défi:', error);
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +137,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erreur réclamation XP:', error);
+      logger.error('Erreur réclamation XP:', error);
     } finally {
       setIsClaiming(false);
     }

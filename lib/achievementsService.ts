@@ -3,6 +3,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const ACHIEVEMENTS_HISTORY_KEY = '@yoroi_achievements_history';
 
@@ -30,7 +31,7 @@ export const saveAchievementUnlock = async (achievement: AchievementUnlock): Pro
       await AsyncStorage.setItem(ACHIEVEMENTS_HISTORY_KEY, JSON.stringify(history));
     }
   } catch (error) {
-    console.error('Erreur sauvegarde achievement:', error);
+    logger.error('Erreur sauvegarde achievement:', error);
   }
 };
 
@@ -40,7 +41,7 @@ export const getAchievementsHistory = async (): Promise<AchievementUnlock[]> => 
     const historyJson = await AsyncStorage.getItem(ACHIEVEMENTS_HISTORY_KEY);
     return historyJson ? JSON.parse(historyJson) : [];
   } catch (error) {
-    console.error('Erreur chargement historique:', error);
+    logger.error('Erreur chargement historique:', error);
     return [];
   }
 };
@@ -52,7 +53,7 @@ export const getTodayAchievements = async (): Promise<AchievementUnlock[]> => {
     const today = new Date().toISOString().split('T')[0];
     return history.filter(a => a.unlockedAt.startsWith(today));
   } catch (error) {
-    console.error('Erreur achievements aujourd\'hui:', error);
+    logger.error('Erreur achievements aujourd\'hui:', error);
     return [];
   }
 };
@@ -65,7 +66,7 @@ export const getWeekAchievements = async (): Promise<AchievementUnlock[]> => {
     weekAgo.setDate(weekAgo.getDate() - 7);
     return history.filter(a => new Date(a.unlockedAt) >= weekAgo);
   } catch (error) {
-    console.error('Erreur achievements semaine:', error);
+    logger.error('Erreur achievements semaine:', error);
     return [];
   }
 };
@@ -76,7 +77,7 @@ export const isAchievementUnlocked = async (achievementId: string): Promise<bool
     const history = await getAchievementsHistory();
     return history.some(a => a.id === achievementId);
   } catch (error) {
-    console.error('Erreur vérification achievement:', error);
+    logger.error('Erreur vérification achievement:', error);
     return false;
   }
 };
@@ -97,7 +98,7 @@ export const getAchievementStats = async () => {
       levels: history.filter(a => a.type === 'level').length,
     };
   } catch (error) {
-    console.error('Erreur stats achievements:', error);
+    logger.error('Erreur stats achievements:', error);
     return { total: 0, today: 0, week: 0, badges: 0, ranks: 0, levels: 0 };
   }
 };

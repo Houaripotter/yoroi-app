@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Header } from '@/components/ui/Header';
 import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic } from '@/lib/haptics';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -182,7 +183,7 @@ export default function ChronoScreen() {
       );
       whistleSoundRef.current = whistleSound;
     } catch (error) {
-      console.log('Sons non disponibles:', error);
+      logger.info('Sons non disponibles:', error);
     }
   };
 
@@ -193,7 +194,7 @@ export default function ChronoScreen() {
         setCustomPresets(JSON.parse(data));
       }
     } catch (error) {
-      console.log('Erreur chargement presets:', error);
+      logger.info('Erreur chargement presets:', error);
     }
   };
 
@@ -233,7 +234,7 @@ export default function ChronoScreen() {
       }
       Vibration.vibrate([0, 500, 100, 500]);
     } catch (error) {
-      console.log('Erreur gong:', error);
+      logger.info('Erreur gong:', error);
     }
   };
 
@@ -245,7 +246,7 @@ export default function ChronoScreen() {
       }
       Vibration.vibrate(200);
     } catch (error) {
-      console.log('Erreur beep:', error);
+      logger.info('Erreur beep:', error);
     }
   };
 
@@ -257,7 +258,7 @@ export default function ChronoScreen() {
       }
       Vibration.vibrate([0, 300, 100, 300, 100, 300]);
     } catch (error) {
-      console.log('Erreur whistle:', error);
+      logger.info('Erreur whistle:', error);
     }
   };
 

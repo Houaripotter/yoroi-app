@@ -19,6 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getSleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -72,7 +73,7 @@ export default function VitalityDetailScreen() {
       setSleepQuality(avgSleepValue >= 7 ? 85 : avgSleepValue >= 6 ? 70 : avgSleepValue >= 5 ? 55 : 40);
 
     } catch (error) {
-      console.error('Erreur chargement vitalité:', error);
+      logger.error('Erreur chargement vitalité:', error);
     } finally {
       setLoading(false);
     }

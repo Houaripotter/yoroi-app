@@ -17,6 +17,7 @@ import { ChevronRight, Check, Swords, Users, Zap, Trophy } from 'lucide-react-na
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 // Types de sports disponibles
 const SPORTS_LIST = [
@@ -80,7 +81,7 @@ export default function CompetitionSportsSelectionScreen() {
       // Rediriger vers l'app
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Error saving sports:', error);
+      logger.error('Error saving sports:', error);
       setIsLoading(false);
     }
   };

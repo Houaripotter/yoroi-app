@@ -20,6 +20,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT, SHADOWS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // MODES DE JEÛNE
@@ -108,7 +109,7 @@ export default function FastingModesScreen() {
         setSettings(JSON.parse(saved));
       }
     } catch (error) {
-      console.error('Error loading fasting settings:', error);
+      logger.error('Error loading fasting settings:', error);
     }
   };
 
@@ -117,7 +118,7 @@ export default function FastingModesScreen() {
       await AsyncStorage.setItem('@yoroi_fasting_settings', JSON.stringify(newSettings));
       setSettings(newSettings);
     } catch (error) {
-      console.error('Error saving fasting settings:', error);
+      logger.error('Error saving fasting settings:', error);
     }
   };
 

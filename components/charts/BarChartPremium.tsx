@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Svg, { Rect, Line, G } from 'react-native-svg';
+import Svg, { Rect, Line, G, Text as SvgText } from 'react-native-svg';
 // import Animated, { FadeInUp } from 'react-native-reanimated';
 
 interface BarDataPoint {
@@ -85,7 +85,7 @@ export const BarChartPremium: React.FC<BarChartPremiumProps> = ({
           {[0, 1, 2, 3, 4].map(i => {
             const value = max - (max * i) / 4;
             return (
-              <Text
+              <SvgText
                 key={i}
                 x={-10}
                 y={(innerHeight / 4) * i + 5}
@@ -94,7 +94,7 @@ export const BarChartPremium: React.FC<BarChartPremiumProps> = ({
                 textAnchor="end"
               >
                 {value.toFixed(0)}
-              </Text>
+              </SvgText>
             );
           })}
 
@@ -117,7 +117,7 @@ export const BarChartPremium: React.FC<BarChartPremiumProps> = ({
                   ry={roundedTop ? 6 : 0}
                 />
                 {d.label && (
-                  <Text
+                  <SvgText
                     x={x + barWidth / 2}
                     y={innerHeight + 20}
                     fontSize={10}
@@ -125,7 +125,7 @@ export const BarChartPremium: React.FC<BarChartPremiumProps> = ({
                     textAnchor="middle"
                   >
                     {d.label}
-                  </Text>
+                  </SvgText>
                 )}
               </G>
             );

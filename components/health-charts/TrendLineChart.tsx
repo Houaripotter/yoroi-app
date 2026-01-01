@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { SPACING, RADIUS } from '@/constants/design';
 import { TrendingUp, TrendingDown, Maximize2 } from 'lucide-react-native';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface TrendLineChartProps {
   title: string;
@@ -26,7 +28,7 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
         <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
         <View style={styles.emptyState}>
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Aucune donnée disponible
+            Aucune donnee disponible
           </Text>
         </View>
       </View>
@@ -43,11 +45,18 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
   const change = current - first;
   const changePercent = ((change / first) * 100);
 
-  // Formater les données pour SmoothLineChart
-  const chartData = data.map(item => ({
-    value: item.value,
-    label: new Date(item.date).getDate().toString(),
-  }));
+  // Formater les données pour SmoothLineChart avec dates lisibles
+  const chartData = data.map(item => {
+    const date = new Date(item.date);
+    // Afficher jour/mois pour meilleure lisibilite
+    const label = data.length <= 7
+      ? format(date, 'd MMM', { locale: fr })
+      : date.getDate().toString();
+    return {
+      value: item.value,
+      label,
+    };
+  });
 
   const Wrapper = onPress ? TouchableOpacity : View;
 
@@ -103,12 +112,12 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
       <View style={styles.chartContainer}>
         <SmoothLineChart
           data={chartData}
-          height={200}
+          height={data.length <= 7 ? 180 : 160}
           color={color}
           showGradient={true}
-          showDots={data.length <= 30}
+          showDots={data.length <= 14}
           curved={true}
-          thickness={3}
+          thickness={data.length <= 7 ? 3 : 2}
           goalValue={goal}
         />
       </View>

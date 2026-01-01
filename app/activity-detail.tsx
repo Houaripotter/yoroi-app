@@ -18,6 +18,7 @@ import { ArrowLeft, Activity, Calendar, Clock, Dumbbell, TrendingUp } from 'luci
 import { useTheme } from '@/lib/ThemeContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -39,7 +40,7 @@ export default function ActivityDetailScreen() {
       const data = await getTrainings();
       setTrainings(data);
     } catch (error) {
-      console.error('Erreur chargement trainings:', error);
+      logger.error('Erreur chargement trainings:', error);
     } finally {
       setLoading(false);
     }

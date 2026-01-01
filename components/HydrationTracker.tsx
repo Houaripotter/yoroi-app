@@ -13,6 +13,7 @@ import { Droplet, Plus, ChevronRight, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
+import logger from '@/lib/security/logger';
 import {
   getTodayHydration,
   addHydrationEntry,
@@ -68,7 +69,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
       }
       setDailyGoal(goal);
     } catch (error) {
-      console.error('Erreur chargement hydratation:', error);
+      logger.error('Erreur chargement hydratation:', error);
     }
   }, []);
 
@@ -100,7 +101,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
       setTodayAmount(prev => prev + amount);
       onUpdate?.();
     } catch (error) {
-      console.error('Erreur ajout hydratation:', error);
+      logger.error('Erreur ajout hydratation:', error);
     }
   };
 

@@ -19,6 +19,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic } from '@/lib/haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // BEFORE/AFTER SLIDER - COMPARAISON PHOTOS
@@ -103,7 +104,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   };
 
   // Log pour déboguer TOUT
-  console.log('🔍 BeforeAfterSlider - DONNÉES COMPLÈTES:', {
+  logger.info('🔍 BeforeAfterSlider - DONNÉES COMPLÈTES:', {
     before: before,
     after: after,
     beforeWeight: before.weight,
@@ -160,7 +161,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
         ]
       );
     } catch (error) {
-      console.error('Erreur capture:', error);
+      logger.error('Erreur capture:', error);
       Alert.alert('Erreur', 'Impossible de créer l\'image');
     }
   };

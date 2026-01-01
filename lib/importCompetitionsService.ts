@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addCompetition, getCompetitions } from './fighterModeService';
 import { ALL_IBJJF_COMPETITIONS } from './competitions-ibjjf-2025';
 import { ALL_CFJJB_COMPETITIONS } from './competitions-cfjjb-2026';
+import logger from '@/lib/security/logger';
 
 const COMPETITIONS_IMPORTED_KEY = '@yoroi_competitions_auto_imported';
 
@@ -40,7 +41,7 @@ export const importIBJJFCompetitions = async (): Promise<{
         await addCompetition(competition);
         imported++;
       } catch (error) {
-        console.error(`Erreur import ${competition.nom}:`, error);
+        logger.error(`Erreur import ${competition.nom}:`, error);
         errors++;
       }
     }
@@ -52,7 +53,7 @@ export const importIBJJFCompetitions = async (): Promise<{
       errors,
     };
   } catch (error) {
-    console.error('Erreur import IBJJF:', error);
+    logger.error('Erreur import IBJJF:', error);
     return {
       success: false,
       imported,
@@ -92,7 +93,7 @@ export const importCFJJBCompetitions = async (): Promise<{
         await addCompetition(competition);
         imported++;
       } catch (error) {
-        console.error(`Erreur import ${competition.nom}:`, error);
+        logger.error(`Erreur import ${competition.nom}:`, error);
         errors++;
       }
     }
@@ -104,7 +105,7 @@ export const importCFJJBCompetitions = async (): Promise<{
       errors,
     };
   } catch (error) {
-    console.error('Erreur import CFJJB:', error);
+    logger.error('Erreur import CFJJB:', error);
     return {
       success: false,
       imported,
@@ -146,7 +147,7 @@ export const importAllCompetitions = async (): Promise<{
       },
     };
   } catch (error) {
-    console.error('Erreur import global:', error);
+    logger.error('Erreur import global:', error);
     throw error;
   }
 };
@@ -177,11 +178,11 @@ export const autoImportCompetitionsOnFirstLaunch = async (): Promise<boolean> =>
     const alreadyImported = await AsyncStorage.getItem(COMPETITIONS_IMPORTED_KEY);
 
     if (alreadyImported === 'true') {
-      console.log('Compétitions déjà importées, skip auto-import');
+      logger.info('Compétitions déjà importées, skip auto-import');
       return false;
     }
 
-    console.log('Premier lancement - Import automatique des compétitions...');
+    logger.info('Premier lancement - Import automatique des compétitions...');
 
     // Importer toutes les compétitions
     const result = await importAllCompetitions();
@@ -189,13 +190,13 @@ export const autoImportCompetitionsOnFirstLaunch = async (): Promise<boolean> =>
     // Marquer comme importé
     await AsyncStorage.setItem(COMPETITIONS_IMPORTED_KEY, 'true');
 
-    console.log(`✅ Auto-import terminé: ${result.total} compétitions importées`);
-    console.log(`   IBJJF: ${result.ibjjf.imported} importées, ${result.ibjjf.skipped} déjà présentes`);
-    console.log(`   CFJJB: ${result.cfjjb.imported} importées, ${result.cfjjb.skipped} déjà présentes`);
+    logger.info(`✅ Auto-import terminé: ${result.total} compétitions importées`);
+    logger.info(`   IBJJF: ${result.ibjjf.imported} importées, ${result.ibjjf.skipped} déjà présentes`);
+    logger.info(`   CFJJB: ${result.cfjjb.imported} importées, ${result.cfjjb.skipped} déjà présentes`);
 
     return true;
   } catch (error) {
-    console.error('Erreur auto-import compétitions:', error);
+    logger.error('Erreur auto-import compétitions:', error);
     return false;
   }
 };
@@ -205,5 +206,5 @@ export const autoImportCompetitionsOnFirstLaunch = async (): Promise<boolean> =>
  */
 export const resetAutoImportFlag = async (): Promise<void> => {
   await AsyncStorage.removeItem(COMPETITIONS_IMPORTED_KEY);
-  console.log('Flag auto-import réinitialisé');
+  logger.info('Flag auto-import réinitialisé');
 };

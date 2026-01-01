@@ -17,6 +17,7 @@ import { Header } from '@/components/ui/Header';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
 import { useTheme } from '@/lib/ThemeContext';
 import { Photo, getPhotosFromStorage } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // MA TRANSFORMATION - COMPARAISON AVANT/APRES
@@ -40,9 +41,9 @@ export default function TransformationScreen() {
       const fetchedPhotos = await getPhotosFromStorage();
 
       // DEBUG : Afficher les photos chargées
-      console.log('📸 Photos chargées:', fetchedPhotos.length);
+      logger.info('📸 Photos chargées:', fetchedPhotos.length);
       fetchedPhotos.forEach((photo, index) => {
-        console.log(`  Photo ${index + 1}:`, {
+        logger.info(`  Photo ${index + 1}:`, {
           id: photo.id,
           date: photo.date,
           weight: photo.weight,
@@ -63,7 +64,7 @@ export default function TransformationScreen() {
         setStep('compare');
       }
     } catch (error) {
-      console.error('Erreur chargement photos:', error);
+      logger.error('Erreur chargement photos:', error);
     } finally {
       setIsLoading(false);
     }
@@ -175,8 +176,8 @@ export default function TransformationScreen() {
             onPress={() => router.push('/photos')}
             activeOpacity={0.8}
           >
-            <Camera size={20} color="#FFFFFF" />
-            <Text style={styles.emptyButtonText}>
+            <Camera size={20} color={colors.textOnGold} />
+            <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>
               Ajouter mes photos
             </Text>
           </TouchableOpacity>

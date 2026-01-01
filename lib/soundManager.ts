@@ -1,5 +1,6 @@
 import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // 🔊 SOUND DESIGN - SoundManager
@@ -26,9 +27,9 @@ export const initSoundManager = async () => {
       staysActiveInBackground: false,
       shouldDuckAndroid: true,
     });
-    console.log('✅ SoundManager initialisé');
+    logger.info('✅ SoundManager initialisé');
   } catch (error) {
-    console.error('❌ Erreur initialisation SoundManager:', error);
+    logger.error('❌ Erreur initialisation SoundManager:', error);
   }
 };
 
@@ -45,7 +46,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
     // Vérifier si le fichier son existe dans le mapping
     const soundModule = SOUND_FILES[soundName];
     if (!soundModule) {
-      console.log(`ℹ️ Fichier son ${soundName}.mp3 non trouvé (sera ajouté plus tard)`);
+      logger.info(`ℹ️ Fichier son ${soundName}.mp3 non trouvé (sera ajouté plus tard)`);
       return null;
     }
 
@@ -57,7 +58,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
     soundCache[soundName] = sound;
     return sound;
   } catch (error) {
-    console.error(`❌ Erreur chargement son ${soundName}:`, error);
+    logger.error(`❌ Erreur chargement son ${soundName}:`, error);
     return null;
   }
 };
@@ -69,7 +70,7 @@ export const playSound = async (soundName: 'taiko_drum' | 'gong' | 'success' | '
   try {
     const sound = await loadSound(soundName);
     if (!sound) {
-      console.warn(`⚠️ Son ${soundName} non disponible`);
+      logger.warn(`⚠️ Son ${soundName} non disponible`);
       return;
     }
 
@@ -78,9 +79,9 @@ export const playSound = async (soundName: 'taiko_drum' | 'gong' | 'success' | '
     await sound.setVolumeAsync(volume);
     await sound.playAsync();
 
-    console.log(`🔊 Son ${soundName} joué`);
+    logger.info(`🔊 Son ${soundName} joué`);
   } catch (error) {
-    console.error(`❌ Erreur lecture son ${soundName}:`, error);
+    logger.error(`❌ Erreur lecture son ${soundName}:`, error);
   }
 };
 
@@ -121,9 +122,9 @@ export const cleanupSounds = async () => {
       await sound.unloadAsync();
       delete soundCache[name];
     }
-    console.log('✅ Sons libérés');
+    logger.info('✅ Sons libérés');
   } catch (error) {
-    console.error('❌ Erreur libération sons:', error);
+    logger.error('❌ Erreur libération sons:', error);
   }
 };
 
@@ -139,6 +140,6 @@ export const prepareSounds = async () => {
     loadSound('success').catch(() => {});
     loadSound('click').catch(() => {});
   } catch (error) {
-    console.error('❌ Erreur préparation sons:', error);
+    logger.error('❌ Erreur préparation sons:', error);
   }
 };

@@ -22,6 +22,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { getAllMeasurements, getAllWorkouts, getUserSettings } from '@/lib/storage';
 import { getMeasurements } from '@/lib/database';
 import { successHaptic } from '@/lib/haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // WEEKLY SHARE - PARTAGE INSTAGRAM
@@ -166,7 +167,7 @@ export default function WeeklyShareScreen() {
         bodyFatChange,
       });
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      logger.error('Erreur chargement stats:', error);
       Alert.alert('Erreur', 'Impossible de charger les statistiques');
     } finally {
       setIsLoading(false);
@@ -195,7 +196,7 @@ export default function WeeklyShareScreen() {
         Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
       }
     } catch (error) {
-      console.error('Erreur partage:', error);
+      logger.error('Erreur partage:', error);
       Alert.alert('Erreur', 'Impossible de partager l\'image');
     }
   };
@@ -221,7 +222,7 @@ export default function WeeklyShareScreen() {
       successHaptic();
       Alert.alert('Sauvegardé !', 'L\'image a été ajoutée à ta galerie');
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder l\'image');
     }
   };

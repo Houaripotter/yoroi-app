@@ -9,7 +9,7 @@ export interface Quote {
 
 export const QUOTES: Quote[] = [
   {
-    text: "Le guerrier victorieux gagne d'abord, puis va à la guerre.",
+    text: "Le champion victorieux gagne d'abord, puis va à la guerre.",
     author: "Sun Tzu",
   },
   {

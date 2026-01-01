@@ -47,6 +47,7 @@ import {
   getInjuryCauseLabel,
 } from '@/lib/infirmaryService';
 import { TREATMENT_TYPES } from '@/constants/bodyZones';
+import logger from '@/lib/security/logger';
 
 export default function InjuryDetailScreen() {
   const { colors } = useTheme();
@@ -73,7 +74,7 @@ export default function InjuryDetailScreen() {
         setTreatments(treatmentsData);
       }
     } catch (error) {
-      console.error('[InjuryDetail] Erreur:', error);
+      logger.error('[InjuryDetail] Erreur:', error);
     }
   };
 
@@ -322,8 +323,8 @@ export default function InjuryDetailScreen() {
               onPress={handleUpdateEva}
               activeOpacity={0.7}
             >
-              <Check size={20} color="#FFFFFF" />
-              <Text style={styles.updateButtonText}>Mettre à jour</Text>
+              <Check size={20} color={colors.textOnGold} />
+              <Text style={[styles.updateButtonText, { color: colors.textOnGold }]}>Mettre à jour</Text>
             </TouchableOpacity>
           )}
         </View>

@@ -35,6 +35,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { notificationService } from '@/lib/notificationService';
+import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -143,7 +144,7 @@ export default function HydrationScreen() {
       setEveningAmount(notifSettings.hydration.slots.evening.amount.toString());
       setEveningEnabled(notifSettings.hydration.slots.evening.enabled);
     } catch (error) {
-      console.error('Erreur chargement hydratation:', error);
+      logger.error('Erreur chargement hydratation:', error);
     }
   };
 
@@ -159,7 +160,7 @@ export default function HydrationScreen() {
       setHistory(newHistory.slice(0, 30)); // Garder 30 jours
       await AsyncStorage.setItem(HYDRATION_HISTORY_KEY, JSON.stringify(newHistory.slice(0, 30)));
     } catch (error) {
-      console.error('Erreur sauvegarde hydratation:', error);
+      logger.error('Erreur sauvegarde hydratation:', error);
     }
   };
 
@@ -170,7 +171,7 @@ export default function HydrationScreen() {
       setEditingGoal(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('Erreur sauvegarde objectif:', error);
+      logger.error('Erreur sauvegarde objectif:', error);
     }
   };
 
@@ -285,11 +286,11 @@ export default function HydrationScreen() {
               
               {/* Graduations */}
               <View style={styles.graduations}>
-                {[0.25, 0.5, 0.75].map((ratio) => (
+                {[0.75, 0.5, 0.25].map((ratio) => (
                   <View key={ratio} style={styles.graduation}>
                     <View style={[styles.gradLine, { backgroundColor: '#0EA5E930' }]} />
-                    <Text style={[styles.gradLabel, { color: '#0EA5E950' }]}>
-                      {(goal * ratio).toFixed(2)}L
+                    <Text style={[styles.gradLabel, { color: '#0EA5E9' }]}>
+                      {(goal * ratio).toFixed(1)}L
                     </Text>
                   </View>
                 ))}

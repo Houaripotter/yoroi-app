@@ -18,6 +18,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { router } from 'expo-router';
 import { scale, isIPad } from '@/constants/responsive';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // iPhone garde 16, iPad utilise scale(8)
@@ -81,7 +82,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
       const score = calculateVitalityScore(stats, hydration);
       setVitalityScore(score);
     } catch (error) {
-      console.error('Error loading vitality data:', error);
+      logger.error('Error loading vitality data:', error);
     }
   };
 

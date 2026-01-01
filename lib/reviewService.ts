@@ -1,6 +1,7 @@
 import * as StoreReview from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // SYSTÈME DE NOTATION APP STORE
@@ -18,7 +19,7 @@ export const incrementReviewTrigger = async (): Promise<void> => {
     const newCount = parseInt(count || '0', 10) + 1;
     await AsyncStorage.setItem(REVIEW_COUNT_KEY, newCount.toString());
   } catch (error) {
-    console.log('Review trigger error:', error);
+    logger.info('Review trigger error:', error);
   }
 };
 
@@ -43,7 +44,7 @@ export const askForReview = async (): Promise<void> => {
     if (!isAvailable) return;
 
     Alert.alert(
-      "🏆 Tu progresses bien Guerrier !",
+      "🏆 Tu progresses bien Champion !",
       "Si Yoroi t'aide dans ta conquête, donne-nous de la force avec une note ⭐⭐⭐⭐⭐\n\nÇa nous aide énormément à grandir !",
       [
         { text: "Plus tard", style: "cancel" },
@@ -54,14 +55,14 @@ export const askForReview = async (): Promise<void> => {
               await StoreReview.requestReview();
               await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
             } catch (e) {
-              console.log('Store review error:', e);
+              logger.info('Store review error:', e);
             }
           }
         },
       ]
     );
   } catch (error) {
-    console.log('Review error:', error);
+    logger.info('Review error:', error);
   }
 };
 
@@ -73,7 +74,7 @@ export const resetReviewTrigger = async (): Promise<void> => {
     await AsyncStorage.removeItem(REVIEW_COUNT_KEY);
     await AsyncStorage.removeItem(REVIEW_ASKED_KEY);
   } catch (error) {
-    console.log('Reset review error:', error);
+    logger.info('Reset review error:', error);
   }
 };
 

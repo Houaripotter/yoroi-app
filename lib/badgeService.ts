@@ -1,6 +1,7 @@
 import { BadgeId } from '@/types/badges';
 import { Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 import {
   unlockBadge as unlockBadgeLocal,
   isBadgeUnlocked,
@@ -100,13 +101,13 @@ export const unlockBadge = async (badgeId: BadgeId): Promise<boolean> => {
     const success = await unlockBadgeLocal(badgeId);
 
     if (success) {
-      console.log('✅ Badge débloqué:', badgeId);
+      logger.info('✅ Badge débloqué:', badgeId);
       return true;
     }
 
     return false;
   } catch (error) {
-    console.error('❌ Exception:', error);
+    logger.error('❌ Exception:', error);
     return false;
   }
 };
@@ -174,7 +175,7 @@ export const checkWeightBadges = async () => {
       showBadgeNotification(unlockedBadges);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification des badges de poids:', error);
+    logger.error('❌ Erreur lors de la vérification des badges de poids:', error);
   }
 };
 
@@ -211,7 +212,7 @@ export const checkWorkoutBadges = async () => {
       showBadgeNotification(unlockedBadges);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de la vérification des badges d\'entraînement:', error);
+    logger.error('❌ Erreur lors de la vérification des badges d\'entraînement:', error);
   }
 };
 

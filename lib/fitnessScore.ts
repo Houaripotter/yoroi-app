@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts } from './storage';
 import { getDailyHydration, getDailyQuestsProgress } from './quests';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -63,7 +64,7 @@ const ADVICE_BY_LEVEL: Record<ScoreLevel, string[]> = {
   poor: [
     'Petit coup de mou ? Un entrainement et c\'est reparti !',
     'Commence par te peser et boire de l\'eau. Tu peux le faire !',
-    'Chaque jour est une nouvelle chance. Releve-toi, guerrier !',
+    'Chaque jour est une nouvelle chance. Relève-toi, champion !',
     'Un pas apres l\'autre. Commence par ouvrir l\'app !',
   ],
   average: [
@@ -74,18 +75,18 @@ const ADVICE_BY_LEVEL: Record<ScoreLevel, string[]> = {
   ],
   good: [
     'Belle regularite ! Continue sur cette lancee.',
-    'Tu es dans le bon rythme, guerrier !',
+    'Tu es dans le bon rythme, champion !',
     'Tes efforts paient, continue !',
     'Tu fais du bon travail, persevere !',
   ],
   great: [
     'Impressionnant ! Tu es vraiment motive.',
     'Tu es en feu ! Continue comme ca.',
-    'Excellent travail, tu es un vrai guerrier !',
+    'Excellent travail, tu es un vrai champion !',
     'Ta discipline est admirable !',
   ],
   excellent: [
-    'Tu es une machine ! Le guerrier en toi est fier.',
+    'Tu es une machine ! Le champion en toi est fier.',
     'Legende ! Tu domines tous les domaines.',
     'Perfection atteinte ! Tu es au sommet.',
     'Maitre absolu ! Tu es un exemple a suivre.',
@@ -230,7 +231,7 @@ export const calculateFitnessScore = async (): Promise<FitnessScoreData> => {
     score = Math.min(100, Math.max(0, Math.round(score)));
 
   } catch (error) {
-    console.error('Erreur calcul score forme:', error);
+    logger.error('Erreur calcul score forme:', error);
   }
 
   // Determiner le niveau
@@ -275,7 +276,7 @@ export const getScoreHistory = async (): Promise<ScoreHistoryEntry[]> => {
     }
     return [];
   } catch (error) {
-    console.error('Erreur lecture historique score:', error);
+    logger.error('Erreur lecture historique score:', error);
     return [];
   }
 };
@@ -306,7 +307,7 @@ const saveScoreToHistory = async (score: number, level: ScoreLevel): Promise<voi
 
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   } catch (error) {
-    console.error('Erreur sauvegarde historique score:', error);
+    logger.error('Erreur sauvegarde historique score:', error);
   }
 };
 

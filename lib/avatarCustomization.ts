@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - PERSONNALISATION AVATAR GUERRIER
+// YOROI - PERSONNALISATION AVATAR
 // ============================================
 // Elements deblocables pour l'avatar
 // 100% Offline - AsyncStorage
@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts, getUserSettings, Measurement } from './storage';
 import { getCurrentRank, RANKS } from './ranks';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -303,7 +304,7 @@ export const getAvatarCustomization = async (): Promise<AvatarCustomization> => 
     }
     return JSON.parse(data);
   } catch (error) {
-    console.error('Erreur lecture avatar customization:', error);
+    logger.error('Erreur lecture avatar customization:', error);
     return {
       frame: 'none',
       background: 'black',
@@ -319,7 +320,7 @@ export const saveAvatarCustomization = async (customization: AvatarCustomization
   try {
     await AsyncStorage.setItem(STORAGE_KEY_AVATAR, JSON.stringify(customization));
   } catch (error) {
-    console.error('Erreur sauvegarde avatar customization:', error);
+    logger.error('Erreur sauvegarde avatar customization:', error);
   }
 };
 
@@ -617,7 +618,7 @@ export const checkAllUnlocks = async (isPro: boolean = false): Promise<{
 
     return { unlocked, statuses };
   } catch (error) {
-    console.error('Erreur verification deblocages avatar:', error);
+    logger.error('Erreur verification deblocages avatar:', error);
     return {
       unlocked: {
         frames: ['none'],

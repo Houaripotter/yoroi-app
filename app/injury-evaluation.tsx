@@ -41,13 +41,12 @@ import {
 } from '@/constants/bodyZones';
 import {
   createInjury,
-  shouldRecommendRICE,
-  getRICEProtocol,
   checkZoneRecurrence,
   getEVAColor,
   getEVAEmoji,
 } from '@/lib/infirmaryService';
 import { updateInjury } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 // Mapping des noms d'icônes vers les composants Lucide
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -133,36 +132,15 @@ export default function InjuryEvaluationScreen() {
         if (recurrence.isRecurring) {
           Alert.alert(
             '⚠️ Récurrence détectée',
-            `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours. Consultez un médecin si la douleur persiste.`,
+            `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours.`,
             [{ text: 'OK' }]
           );
         }
 
-        // Vérifier protocole RICE
-        if (shouldRecommendRICE(evaScore)) {
-          const protocol = getRICEProtocol();
-          const protocolText = protocol
-            .map(step => `${step.letter} - ${step.title}: ${step.description}`)
-            .join('\n\n');
-
-          Alert.alert(
-            '🧊 Protocole RICE Recommandé',
-            `Douleur sévère détectée (EVA ${evaScore}/10).\n\nAppliquez immédiatement :\n\n${protocolText}`,
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  router.back();
-                },
-              },
-            ]
-          );
-        } else {
-          router.back();
-        }
+        router.back();
       }
     } catch (error) {
-      console.error('[InjuryEvaluation] Erreur:', error);
+      logger.error('[InjuryEvaluation] Erreur:', error);
       Alert.alert('Erreur', `Impossible d'${isEditMode ? 'mettre à jour' : 'enregistrer'} la blessure`);
     } finally {
       setIsSubmitting(false);

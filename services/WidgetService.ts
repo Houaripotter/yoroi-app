@@ -7,6 +7,7 @@
 
 import { Platform } from 'react-native';
 import { getAllMeasurements, getUserSettings, getAllWorkouts } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 // Note: Pour que le widget fonctionne, il faut:
 // 1. Configurer l'App Group dans Xcode (group.com.yoroi.app)
@@ -102,14 +103,14 @@ export const updateWidget = async (): Promise<void> => {
         JSON.stringify(widgetData),
         'group.com.yoroi.app'
       );
-      console.log('Widget data updated successfully');
+      logger.info('Widget data updated successfully');
     } catch (moduleError) {
       // Module non installe ou erreur
-      console.log('SharedGroupPreferences not available, widget update skipped');
+      logger.info('SharedGroupPreferences not available, widget update skipped');
     }
 
   } catch (error) {
-    console.error('Error updating widget:', error);
+    logger.error('Error updating widget:', error);
   }
 };
 
@@ -124,10 +125,10 @@ export const reloadWidget = async (): Promise<void> => {
     const { NativeModules } = require('react-native');
     if (NativeModules.WidgetModule && NativeModules.WidgetModule.reloadAllTimelines) {
       NativeModules.WidgetModule.reloadAllTimelines();
-      console.log('Widget timelines reloaded');
+      logger.info('Widget timelines reloaded');
     }
   } catch (error) {
-    console.log('Widget reload not available');
+    logger.info('Widget reload not available');
   }
 };
 

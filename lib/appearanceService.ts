@@ -5,6 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeColor } from '@/constants/themes';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -153,7 +154,7 @@ class AppearanceService {
         selectedIcon: selectedIcon || DEFAULT_SETTINGS.selectedIcon,
       };
     } catch (error) {
-      console.error('[AppearanceService] Erreur chargement paramètres:', error);
+      logger.error('[AppearanceService] Erreur chargement paramètres:', error);
       return DEFAULT_SETTINGS;
     }
   }
@@ -163,7 +164,7 @@ class AppearanceService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.AVATAR_FORMAT, format);
     } catch (error) {
-      console.error('[AppearanceService] Erreur sauvegarde format avatar:', error);
+      logger.error('[AppearanceService] Erreur sauvegarde format avatar:', error);
       throw error;
     }
   }
@@ -173,7 +174,7 @@ class AppearanceService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.SELECTED_ICON, iconName || '');
     } catch (error) {
-      console.error('[AppearanceService] Erreur sauvegarde icône:', error);
+      logger.error('[AppearanceService] Erreur sauvegarde icône:', error);
       throw error;
     }
   }
@@ -211,7 +212,7 @@ class AppearanceService {
         AsyncStorage.removeItem(STORAGE_KEYS.SELECTED_ICON),
       ]);
     } catch (error) {
-      console.error('[AppearanceService] Erreur réinitialisation:', error);
+      logger.error('[AppearanceService] Erreur réinitialisation:', error);
       throw error;
     }
   }

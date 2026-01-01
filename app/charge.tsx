@@ -24,6 +24,7 @@ import {
   Target,
 } from 'lucide-react-native';
 import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
+import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -47,7 +48,7 @@ export default function ChargeScreen() {
       // TODO: Calculer les sessions depuis la DB
       setSessions(3);
     } catch (error) {
-      console.error('Erreur chargement charge:', error);
+      logger.error('Erreur chargement charge:', error);
     }
   };
 

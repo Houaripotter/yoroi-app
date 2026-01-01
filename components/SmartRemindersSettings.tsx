@@ -19,6 +19,7 @@ import {
   Brain,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import logger from '@/lib/security/logger';
 import {
   SmartReminderSettings,
   DetectedHabits,
@@ -55,7 +56,7 @@ export const SmartRemindersSettings: React.FC = () => {
       setSettings(savedSettings);
       setHabits(detectedHabits);
     } catch (error) {
-      console.error('Erreur chargement smart reminders:', error);
+      logger.error('Erreur chargement smart reminders:', error);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +75,7 @@ export const SmartRemindersSettings: React.FC = () => {
       const newHabits = await analyzeHabits();
       setHabits(newHabits);
     } catch (error) {
-      console.error('Erreur refresh habitudes:', error);
+      logger.error('Erreur refresh habitudes:', error);
     } finally {
       setIsRefreshing(false);
     }

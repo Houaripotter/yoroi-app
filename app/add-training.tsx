@@ -44,6 +44,7 @@ import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // NOUVEL ENTRAINEMENT
@@ -100,7 +101,7 @@ export default function AddTrainingScreen() {
       const data = await getClubs();
       setClubs(data);
     } catch (error) {
-      console.error('Erreur chargement clubs:', error);
+      logger.error('Erreur chargement clubs:', error);
     }
   };
 
@@ -163,7 +164,7 @@ export default function AddTrainingScreen() {
         );
       }
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       errorHaptic();
       Alert.alert('Erreur', "Impossible d'enregistrer l'entrainement");
     } finally {

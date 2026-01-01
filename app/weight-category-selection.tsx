@@ -17,6 +17,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 import {
   getWeightCategoriesBySportAndGender,
   findWeightCategoryByWeight,
@@ -86,7 +87,7 @@ export default function WeightCategorySelectionScreen() {
       // Continuer vers le setup
       router.replace('/setup');
     } catch (error) {
-      console.error('Erreur sauvegarde catégorie:', error);
+      logger.error('Erreur sauvegarde catégorie:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder la catégorie.');
     }
   };

@@ -7,6 +7,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -59,7 +60,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
       
       setData(generatedData);
     } catch (error) {
-      console.error('Erreur chargement données santé:', error);
+      logger.error('Erreur chargement données santé:', error);
     }
   };
 

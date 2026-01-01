@@ -35,6 +35,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
 import { formatSleepDuration } from '@/lib/sleepService';
 import { getRiskColor, formatLoad } from '@/lib/trainingLoadService';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,7 +51,7 @@ export default function WeeklyReportScreen() {
       const data = await generateWeeklyReport();
       setReport(data);
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
     } finally {
       setLoading(false);
     }
@@ -65,7 +66,7 @@ export default function WeeklyReportScreen() {
       const text = formatReportForSharing(report);
       await Share.share({ message: text });
     } catch (error) {
-      console.error('Erreur partage:', error);
+      logger.error('Erreur partage:', error);
     }
   };
 
@@ -98,7 +99,7 @@ export default function WeeklyReportScreen() {
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Rapport de Mission</Text>
         <TouchableOpacity onPress={handleShare} style={[styles.shareBtn, { backgroundColor: colors.accent }]}>
-          <Share2 size={18} color="#FFFFFF" />
+          <Share2 size={18} color={colors.textOnGold} />
         </TouchableOpacity>
       </View>
 

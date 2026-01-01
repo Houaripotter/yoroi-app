@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 import {
   themes,
   themeColors,
@@ -33,6 +34,8 @@ interface ThemeContextType {
   themeMode: ThemeMode;
   // Mode réel appliqué (dark ou light, après résolution de auto)
   actualMode: 'dark' | 'light';
+  // Alias pour actualMode (compatibilité)
+  mode: 'dark' | 'light';
   // Si le mode sombre est actif
   isDark: boolean;
   // Changer la couleur du thème
@@ -69,6 +72,7 @@ const ThemeContext = createContext<ThemeContextType>({
   themeColor: defaultThemeColor,
   themeMode: defaultThemeMode,
   actualMode: 'dark',
+  mode: 'dark',
   isDark: true,
   setThemeColor: async () => {},
   setThemeMode: async () => {},
@@ -88,6 +92,9 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const useTheme = () => useContext(ThemeContext);
+
+// Re-export types for convenience
+export type { ThemeColors, Theme, ThemeColor, ThemeMode } from '@/constants/themes';
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -125,7 +132,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           setThemeModeState(savedMode as ThemeMode);
         }
       } catch (error) {
-        console.error('Erreur chargement thème:', error);
+        logger.error('Erreur chargement thème:', error);
       }
       setIsLoaded(true);
     };
@@ -139,7 +146,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       setThemeColorState(color);
       await AsyncStorage.setItem(STORAGE_KEY_COLOR, color);
     } catch (error) {
-      console.error('Erreur sauvegarde couleur:', error);
+      logger.error('Erreur sauvegarde couleur:', error);
     }
   }, []);
 
@@ -149,7 +156,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       setThemeModeState(mode);
       await AsyncStorage.setItem(STORAGE_KEY_MODE, mode);
     } catch (error) {
-      console.error('Erreur sauvegarde mode:', error);
+      logger.error('Erreur sauvegarde mode:', error);
     }
   }, []);
 
@@ -170,6 +177,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     themeColor,
     themeMode,
     actualMode,
+    mode: actualMode,
     isDark: actualMode === 'dark',
     setThemeColor,
     setThemeMode,

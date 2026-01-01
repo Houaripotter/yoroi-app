@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getUserBodyStatus, saveUserBodyStatus } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import logger from '@/lib/security/logger';
 
 type BodyZoneStatus = 'ok' | 'warning' | 'injury';
 type BodyZone = 'neck' | 'shoulders' | 'back' | 'elbows' | 'wrists' | 'hips' | 'knees' | 'ankles';
@@ -61,7 +62,7 @@ export default function BodyStatusScreen() {
       const status = await getUserBodyStatus();
       setBodyStatus(status);
     } catch (error) {
-      console.error('Erreur chargement statut corporel:', error);
+      logger.error('Erreur chargement statut corporel:', error);
     }
   }, []);
 
@@ -109,7 +110,7 @@ export default function BodyStatusScreen() {
       setSelectedZone(null);
       setMedicalNote('');
     } catch (error) {
-      console.error('Erreur sauvegarde statut:', error);
+      logger.error('Erreur sauvegarde statut:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le statut.');
     }
   };
@@ -126,7 +127,7 @@ export default function BodyStatusScreen() {
       setModalVisible(false);
       setSelectedZone(null);
     } catch (error) {
-      console.error('Erreur suppression statut:', error);
+      logger.error('Erreur suppression statut:', error);
       Alert.alert('Erreur', 'Impossible de supprimer le statut.');
     }
   };

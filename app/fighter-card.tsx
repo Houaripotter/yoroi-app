@@ -41,6 +41,8 @@ import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import { getCurrentRank, RANKS } from '@/lib/ranks';
 import { getTrainingStats, calculateStreak, getProfile } from '@/lib/database';
 import { getGreeting, YOROI_VOCAB } from '@/lib/teamYoroi';
+import { getAllGoalsProgress, getGlobalGoalStats, GoalProgress, GlobalGoalStats } from '@/lib/trainingGoalsService';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -79,6 +81,8 @@ export default function FighterCardScreen() {
   const [stats, setStats] = useState<FighterStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [goalsProgress, setGoalsProgress] = useState<GoalProgress[]>([]);
+  const [globalGoalStats, setGlobalGoalStats] = useState<GlobalGoalStats | null>(null);
 
   // Charger les stats du combattant
   useEffect(() => {
@@ -95,6 +99,14 @@ export default function FighterCardScreen() {
       const trainingStats = await getTrainingStats();
       const streakData = await calculateStreak();
       const rank = getCurrentRank(streakData || 0);
+
+      // Charger les objectifs
+      const [goalsData, globalStats] = await Promise.all([
+        getAllGoalsProgress(),
+        getGlobalGoalStats(),
+      ]);
+      setGoalsProgress(goalsData);
+      setGlobalGoalStats(globalStats);
 
       // Calculer stats
       const totalTrainings = trainingStats?.reduce((acc: number, s: any) => acc + (s.count || 0), 0) || 0;
@@ -130,7 +142,7 @@ export default function FighterCardScreen() {
         badges: 0, // À récupérer depuis la base de données
       });
     } catch (error) {
-      console.error('Erreur chargement stats:', error);
+      logger.error('Erreur chargement stats:', error);
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +184,7 @@ export default function FighterCardScreen() {
 
       Alert.alert('Sauvegarde!', 'Fiche Combattant enregistree dans ta galerie!');
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
     } finally {
       setIsSaving(false);
@@ -212,7 +224,7 @@ export default function FighterCardScreen() {
         });
       }
     } catch (error) {
-      console.error('Erreur partage:', error);
+      logger.error('Erreur partage:', error);
     }
   };
 
@@ -369,6 +381,43 @@ export default function FighterCardScreen() {
               </View>
             )}
 
+            {/* Objectifs Section */}
+            {globalGoalStats && globalGoalStats.activeGoals > 0 && (
+              <View style={styles.goalsContainer}>
+                <Text style={styles.goalsTitle}>OBJECTIFS HEBDO</Text>
+                <View style={styles.goalsRow}>
+                  <View style={styles.goalsStat}>
+                    <Text style={styles.goalsValue}>
+                      {globalGoalStats.totalWeeklyCompleted}/{globalGoalStats.totalWeeklyTarget}
+                    </Text>
+                    <Text style={styles.goalsLabel}>sessions</Text>
+                  </View>
+                  <View style={styles.goalsDivider} />
+                  <View style={styles.goalsStat}>
+                    <Text style={[styles.goalsValue, { color: '#22C55E' }]}>
+                      {globalGoalStats.goalsOnTrack}
+                    </Text>
+                    <Text style={styles.goalsLabel}>on track</Text>
+                  </View>
+                  <View style={styles.goalsDivider} />
+                  <View style={styles.goalsStat}>
+                    <Text style={styles.goalsValue}>
+                      {Math.round(globalGoalStats.overallWeekPercent)}%
+                    </Text>
+                    <Text style={styles.goalsLabel}>objectif</Text>
+                  </View>
+                </View>
+                <View style={styles.goalsProgressBar}>
+                  <View
+                    style={[
+                      styles.goalsProgressFill,
+                      { width: `${Math.min(100, globalGoalStats.overallWeekPercent)}%` },
+                    ]}
+                  />
+                </View>
+              </View>
+            )}
+
             {/* Footer */}
             <View style={styles.cardFooter}>
               <View style={styles.footerItem}>
@@ -411,7 +460,7 @@ export default function FighterCardScreen() {
             Partage ta progression!
           </Text>
           <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Publie ta Fiche Combattant sur Instagram et inspire la communaute avec ton parcours de guerrier.
+            Publie ta Fiche Combattant sur Instagram et inspire la communaute avec ton parcours de champion.
           </Text>
         </View>
 
@@ -694,5 +743,58 @@ const styles = StyleSheet.create({
   tipText: {
     fontSize: 13,
     lineHeight: 18,
+  },
+
+  // Goals
+  goalsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  goalsTitle: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#D4AF37',
+    letterSpacing: 2,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  goalsRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  goalsStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  goalsValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  goalsLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#6B7280',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  goalsDivider: {
+    width: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 4,
+  },
+  goalsProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  goalsProgressFill: {
+    height: '100%',
+    backgroundColor: '#D4AF37',
+    borderRadius: 3,
   },
 });

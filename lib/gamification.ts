@@ -35,7 +35,7 @@ export const LEVELS: Level[] = [
   },
   {
     level: 3,
-    name: 'Guerrier',
+    name: 'Athlète',
     nameJp: '戦士',
     pointsRequired: 300,
     icon: 'Swords',

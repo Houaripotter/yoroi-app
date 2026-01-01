@@ -33,6 +33,7 @@ import {
   getEVAColor,
   getEVAEmoji,
 } from '@/lib/infirmaryService';
+import logger from '@/lib/security/logger';
 import {
   BodyZone,
   FIT_FOR_DUTY_STATUS,
@@ -69,7 +70,7 @@ export default function InfirmaryScreen() {
       const creatorCode = await AsyncStorage.getItem('@yoroi_creator_mode');
       setIsCreatorMode(creatorCode === '2412');
     } catch (error) {
-      console.error('[Infirmary] Erreur chargement:', error);
+      logger.error('[Infirmary] Erreur chargement:', error);
     }
   };
 
@@ -79,7 +80,7 @@ export default function InfirmaryScreen() {
     }, [])
   );
 
-  // Détecter les zones rectangulaires qui se chevauchent
+  // Détecter les zones rectangulaires qui se chevauchent ET sont proches
   const getOverlappingZones = (zone: BodyMapZone, view: 'front' | 'back'): BodyMapZone[] => {
     const allZones = view === 'front' ? INITIAL_DATA.front : INITIAL_DATA.back;
 
@@ -103,7 +104,16 @@ export default function InfirmaryScreen() {
         zone1Top < zone2Bottom &&
         zone1Bottom > zone2Top;
 
-      return overlaps;
+      if (!overlaps) return false;
+
+      // Calculer la distance entre les centres des deux zones
+      const dx = zone.x - z.x;
+      const dy = zone.y - z.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Ne garder que les zones très proches (distance < 50 pixels)
+      // Cela élimine les zones qui se chevauchent mais sont éloignées
+      return distance < 50;
     });
   };
 
@@ -114,24 +124,24 @@ export default function InfirmaryScreen() {
     // Détecter toutes les zones qui se chevauchent avec la zone cliquée
     const overlapping = getOverlappingZones(zone, view);
 
-    console.log('🎯 Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
-    console.log('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
+    logger.info('🎯 Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
+    logger.info('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
 
-    if (overlapping.length > 1 && isCreatorMode) {
-      // Mode créateur: afficher le sélecteur pour choisir la zone exacte
+    if (overlapping.length > 1) {
+      // Plusieurs zones se chevauchent: afficher le sélecteur pour choisir la zone exacte
       const formattedZones = overlapping.map(z => ({
         id: z.id,
         name: z.label,
       }));
 
-      console.log('✅ MODE CRÉATEUR - AFFICHAGE MODAL avec zones:', formattedZones);
+      logger.info('✅ AFFICHAGE MODAL avec zones:', formattedZones);
       setOverlappingZones(formattedZones);
       setCurrentView(view);
       setShowZoneModal(true);
     } else {
-      // Mode normal ou une seule zone: prendre la première zone automatiquement
+      // Une seule zone: navigation directe
       const targetZone = overlapping.length > 0 ? overlapping[0] : zone;
-      console.log('⚠️ Mode normal ou une seule zone, navigation directe vers:', targetZone.label);
+      logger.info('⚠️ Une seule zone, navigation directe vers:', targetZone.label);
       navigateToEvaluation(targetZone.id, view, targetZone.label);
     }
   };
@@ -196,10 +206,10 @@ export default function InfirmaryScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Infirmerie
+                Journal des Blessures
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Suivi des blessures
+                Carnet de suivi personnel
               </Text>
             </View>
           </View>
@@ -258,7 +268,7 @@ export default function InfirmaryScreen() {
         )}
 
         {/* Body Map */}
-        <BodyMap onZonePress={handleZonePress} injuredZones={injuredZones} isCreatorMode={isCreatorMode} />
+        <BodyMap onZonePress={handleZonePress} injuredZones={injuredZones} />
 
         {/* Liste des blessures actives */}
         {injuries.length > 0 && (
@@ -318,17 +328,22 @@ export default function InfirmaryScreen() {
             </Text>
           </View>
         )}
+
+        {/* Disclaimer médical */}
+        <View style={[styles.disclaimerContainer, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
+            Ce journal est un outil de suivi personnel et ne remplace pas un avis médical.
+          </Text>
+        </View>
       </ScrollView>
 
-      {/* Modal de sélection de zone - Seulement en mode créateur */}
-      {isCreatorMode && (
-        <ZoneSelectionModal
-          visible={showZoneModal}
-          zones={overlappingZones}
-          onSelect={handleZoneSelected}
-          onClose={() => setShowZoneModal(false)}
-        />
-      )}
+      {/* Modal de sélection de zone */}
+      <ZoneSelectionModal
+        visible={showZoneModal}
+        zones={overlappingZones}
+        onSelect={handleZoneSelected}
+        onClose={() => setShowZoneModal(false)}
+      />
     </ScreenWrapper>
   );
 }
@@ -511,5 +526,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  // Disclaimer
+  disclaimerContainer: {
+    marginTop: SPACING.xl,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+  },
+  disclaimerText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    fontStyle: 'italic',
   },
 });

@@ -23,6 +23,7 @@ import { checkWorkoutBadges } from '@/lib/badgeService';
 import { UserClub } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -234,7 +235,7 @@ export default function HistoryScreen() {
         setUseMockData(false);
       }
     } catch (error) {
-      console.error('❌ Erreur chargement historique:', error);
+      logger.error('❌ Erreur chargement historique:', error);
       setRecords([]);
     }
     setLoading(false);
@@ -293,7 +294,7 @@ export default function HistoryScreen() {
 
   const handleActivitySelect = async (types: WorkoutType[]): Promise<void> => {
     if (!selectedDate) {
-      console.error('❌ Pas de date sélectionnée');
+      logger.error('❌ Pas de date sélectionnée');
       return;
     }
 
@@ -322,7 +323,7 @@ export default function HistoryScreen() {
       // Vérifier et débloquer les badges
       checkWorkoutBadges();
     } catch (error) {
-      console.error('❌ [ERREUR GLOBALE]:', error);
+      logger.error('❌ [ERREUR GLOBALE]:', error);
     }
   };
 

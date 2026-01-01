@@ -250,14 +250,7 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
           })}
         </View>
 
-        {/* Label de l'objectif */}
-        {goal && goalLineY && (
-          <View style={[styles.goalLabelContainer, { left: CHART_WIDTH - PADDING_RIGHT - 80, top: goalLineY - 12 }]}>
-            <Text style={[styles.goalLabel, { color: colors.gold || '#F59E0B' }]}>
-              Objectif: {goal}kg
-            </Text>
-          </View>
-        )}
+        {/* Note: L'objectif est deja affiche dans l'entete, pas besoin de label sur le graphique */}
       </View>
 
       {/* Stats Footer */}
@@ -360,17 +353,22 @@ const styles = StyleSheet.create({
   },
   goalLabelContainer: {
     position: 'absolute',
+    alignItems: 'flex-end',
+  },
+  goalLabelBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
   },
   goalLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#F59E0B',
   },
   footer: {
     flexDirection: 'row',

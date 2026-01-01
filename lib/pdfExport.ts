@@ -4,6 +4,7 @@ import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getAllMeasurements } from './storage';
 import { getMeasurements, getProfile, Measurement } from './database';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // EXPORT PDF - YOROI
@@ -216,7 +217,7 @@ const generatePDFHTML = async (period: ExportPeriod): Promise<string> => {
   <!-- HEADER -->
   <div class="header">
     <div class="logo">YOROI</div>
-    <div class="subtitle">Rapport de suivi - ${profile?.name || 'Guerrier'}</div>
+    <div class="subtitle">Rapport de suivi - ${profile?.name || 'Athlète'}</div>
     <div class="meta">
       <span>Genere le ${dateStr}</span>
       <span>${periodLabel}</span>
@@ -357,7 +358,7 @@ export const generateProgressPDF = async (period: ExportPeriod = '30j'): Promise
       throw new Error('Le partage n\'est pas disponible sur cet appareil');
     }
   } catch (error) {
-    console.error('Erreur export PDF:', error);
+    logger.error('Erreur export PDF:', error);
     throw error;
   }
 };
@@ -368,7 +369,7 @@ export const previewPDF = async (period: ExportPeriod = '30j'): Promise<void> =>
     const html = await generatePDFHTML(period);
     await Print.printAsync({ html });
   } catch (error) {
-    console.error('Erreur preview PDF:', error);
+    logger.error('Erreur preview PDF:', error);
     throw error;
   }
 };

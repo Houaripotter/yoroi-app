@@ -282,8 +282,8 @@ export default function ClubsScreen() {
                 colors={gradients.gold}
                 style={styles.emptyButtonGradient}
               >
-                <Plus size={20} color={colors.background} />
-                <Text style={[styles.emptyButtonText, { color: colors.background }]}>Ajouter un club</Text>
+                <Plus size={20} color={colors.textOnGold} />
+                <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>Ajouter un club</Text>
               </LinearGradient>
             </TouchableOpacity>
           </Card>
@@ -510,7 +510,7 @@ export default function ClubsScreen() {
                 colors={gradients.gold}
                 style={styles.saveButtonGradient}
               >
-                <Text style={[styles.saveButtonText, { color: colors.background }]}>
+                <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
                   {editingClub ? 'Mettre a jour' : 'Ajouter le club'}
                 </Text>
               </LinearGradient>

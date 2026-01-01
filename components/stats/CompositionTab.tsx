@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { getCompositionHistory } from '@/lib/database';
 import { Activity } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 
 export default function CompositionTab() {
   const { colors } = useTheme();
@@ -21,7 +22,7 @@ export default function CompositionTab() {
         setLatestData(data[0]);
       }
     } catch (error) {
-      console.error('Erreur chargement composition:', error);
+      logger.error('Erreur chargement composition:', error);
     }
   };
 

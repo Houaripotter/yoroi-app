@@ -20,6 +20,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic } from '@/lib/haptics';
+import logger from '@/lib/security/logger';
 
 interface ProgressPhoto {
   id: string;
@@ -47,53 +48,44 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   const [step, setStep] = useState<'before' | 'after' | 'compare'>('before');
   const [viewMode, setViewMode] = useState<'sideBySide' | 'slider'>('slider');
 
-  // Slider state
-  const sliderPosition = useRef(new Animated.Value(0.5)).current;
-  const [currentPosition, setCurrentPosition] = useState(0.5);
-  const startPosition = useRef(0.5);
+  // Slider avec Animated et PanResponder
+  const sliderAnim = useRef(new Animated.Value(0.5)).current;
+  const startPos = useRef(0.5);
   const viewShotRef = useRef<ViewShot>(null);
 
-  // PanResponder pour le slider
+  // PanResponder pour glisser le slider
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
-      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: () => {
-        // Mémoriser la position de départ
-        startPosition.current = currentPosition;
-        sliderPosition.stopAnimation();
-        sliderPosition.setOffset(currentPosition);
-        sliderPosition.setValue(0);
+        sliderAnim.stopAnimation((value) => {
+          startPos.current = value;
+        });
       },
-      onPanResponderMove: (_, gestureState) => {
-        // Calculer la nouvelle position avec interpolation fluide
-        const delta = gestureState.dx / SLIDER_WIDTH;
-        const newValue = Math.max(-currentPosition, Math.min(1 - currentPosition, delta));
-        sliderPosition.setValue(newValue);
+      onPanResponderMove: (_, gesture) => {
+        const delta = gesture.dx / SLIDER_WIDTH;
+        const newVal = Math.max(0, Math.min(1, startPos.current + delta));
+        sliderAnim.setValue(newVal);
       },
-      onPanResponderRelease: (_, gestureState) => {
-        sliderPosition.flattenOffset();
-        // Calculer la position finale
-        const newPosition = Math.max(0, Math.min(1,
-          startPosition.current + (gestureState.dx / SLIDER_WIDTH)
-        ));
-        setCurrentPosition(newPosition);
-        sliderPosition.setValue(newPosition);
-      },
-      onPanResponderTerminate: (_, gestureState) => {
-        sliderPosition.flattenOffset();
-        const newPosition = Math.max(0, Math.min(1,
-          startPosition.current + (gestureState.dx / SLIDER_WIDTH)
-        ));
-        setCurrentPosition(newPosition);
-        sliderPosition.setValue(newPosition);
+      onPanResponderRelease: () => {
+        sliderAnim.stopAnimation((value) => {
+          startPos.current = value;
+        });
       },
     })
   ).current;
+
+  // Interpolations pour le slider
+  const clipWidth = sliderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, SLIDER_WIDTH],
+  });
+
+  const handleTranslateX = sliderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-30, SLIDER_WIDTH - 30],
+  });
 
   const handleBeforeSelect = (photo: ProgressPhoto) => {
     setSelectedBefore(photo);
@@ -104,16 +96,16 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
     setSelectedAfter(photo);
     setStep('compare');
     // Reset slider position
-    sliderPosition.setValue(0.5);
-    setCurrentPosition(0.5);
+    sliderAnim.setValue(0.5);
+    startPos.current = 0.5;
   };
 
   const reset = () => {
     setSelectedBefore(null);
     setSelectedAfter(null);
     setStep('before');
-    sliderPosition.setValue(0.5);
-    setCurrentPosition(0.5);
+    sliderAnim.setValue(0.5);
+    startPos.current = 0.5;
   };
 
   const handleClose = () => {
@@ -203,21 +195,10 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
         ]
       );
     } catch (error) {
-      console.error('Erreur capture:', error);
+      logger.error('Erreur capture:', error);
       Alert.alert('Erreur', 'Impossible de créer l\'image');
     }
   };
-
-  // Interpolations pour le slider
-  const clipWidth = sliderPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, SLIDER_WIDTH],
-  });
-
-  const handlePosition = sliderPosition.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, SLIDER_WIDTH],
-  });
 
   return (
     <Modal
@@ -340,8 +321,8 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                     </Text>
                   </View>
 
-                  {/* Slider Container */}
-                  <View style={styles.sliderContainer}>
+                  {/* Slider Container - Toute la zone est glissable */}
+                  <View style={styles.sliderContainer} {...panResponder.panHandlers}>
                     {/* Image AVANT (en dessous) */}
                     <Image
                       source={getImageSource(selectedBefore)}
@@ -350,16 +331,14 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                     />
 
                     {/* Label AVANT */}
-                    <View style={[styles.sliderLabel, styles.sliderLabelLeft]}>
+                    <View style={[styles.sliderLabel, styles.sliderLabelLeft]} pointerEvents="none">
                       <Text style={[styles.sliderLabelText, { color: colors.textPrimary }]}>AVANT</Text>
                     </View>
 
                     {/* Image APRÈS (clippée) */}
                     <Animated.View
-                      style={[
-                        styles.afterContainer,
-                        { width: clipWidth },
-                      ]}
+                      style={[styles.afterContainer, { width: clipWidth }]}
+                      pointerEvents="none"
                     >
                       <Image
                         source={getImageSource(selectedAfter)}
@@ -373,11 +352,8 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
                     {/* Slider Handle */}
                     <Animated.View
-                      style={[
-                        styles.sliderHandle,
-                        { transform: [{ translateX: Animated.subtract(handlePosition, 2) }] },
-                      ]}
-                      {...panResponder.panHandlers}
+                      style={[styles.sliderHandle, { transform: [{ translateX: handleTranslateX }] }]}
+                      pointerEvents="none"
                     >
                       <View style={[styles.sliderLine, { backgroundColor: colors.textPrimary }]} />
                       <View style={[styles.handleButton, { backgroundColor: colors.accent }]}>
@@ -387,7 +363,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                     </Animated.View>
 
                     {/* Instructions */}
-                    <View style={styles.instructionsContainer}>
+                    <View style={styles.instructionsContainer} pointerEvents="none">
                       <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.6)']}
                         style={styles.instructionsGradient}
@@ -817,7 +793,7 @@ const styles = StyleSheet.create({
   sliderHandle: {
     position: 'absolute',
     top: 0,
-    width: 44,
+    width: 60,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',

@@ -8,6 +8,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -120,7 +121,7 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 // Messages motivants
 const TRAINING_MESSAGES = [
   { title: '🥋 C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
-  { title: '⚔️ Guerrier !', body: 'Le tatami t\'appelle. Es-tu prêt ?' },
+  { title: '⚔️ Champion !', body: 'Le tatami t\'appelle. Es-tu prêt ?' },
   { title: '💪 Go training !', body: 'Chaque séance compte. Fais-la maintenant !' },
   { title: '🔥 On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
   { title: '🎯 Objectif du jour', body: 'Une séance de plus vers ton but !' },
@@ -147,7 +148,7 @@ const SLEEP_MESSAGES = [
   { title: '🌙 Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
   { title: '😴 Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
   { title: '💤 Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
-  { title: '🛌 Repos guerrier', body: 'La récupération est essentielle. Dors bien !' },
+  { title: '🛌 Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
 ];
 
 // ============================================
@@ -187,7 +188,7 @@ class NotificationService {
       // Demander les permissions
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
-        console.log('Permissions notifications refusées');
+        logger.info('Permissions notifications refusées');
         return false;
       }
 
@@ -197,10 +198,10 @@ class NotificationService {
       }
 
       this.isInitialized = true;
-      console.log('NotificationService initialisé');
+      logger.info('NotificationService initialisé');
       return true;
     } catch (error) {
-      console.error('Erreur init notifications:', error);
+      logger.error('Erreur init notifications:', error);
       return false;
     }
   }
@@ -211,7 +212,7 @@ class NotificationService {
 
   async requestPermissions(): Promise<boolean> {
     if (!Device.isDevice) {
-      console.log('Notifications non supportées sur simulateur');
+      logger.info('Notifications non supportées sur simulateur');
       return false;
     }
 
@@ -240,7 +241,7 @@ class NotificationService {
 
       return true;
     } catch (error) {
-      console.error('Erreur permissions:', error);
+      logger.error('Erreur permissions:', error);
       return false;
     }
   }
@@ -272,7 +273,7 @@ class NotificationService {
       await this.scheduleSleepNotifications();
     }
 
-    console.log('Notifications programmées');
+    logger.info('Notifications programmées');
   }
 
   private async scheduleTrainingNotifications(): Promise<void> {

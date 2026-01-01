@@ -36,6 +36,7 @@ import { POINTS_ACTIONS } from '@/lib/gamification';
 import { CITATION_STYLE_OPTIONS, getCitationStyle, setCitationStyle, CitationStyle } from '@/lib/citations';
 import { MessageSquareQuote, LayoutGrid, LayoutList } from 'lucide-react-native';
 import { useViewMode, ViewMode } from '@/hooks/useViewMode';
+import logger from '@/lib/security/logger';
 
 type Tab = 'themes' | 'logos' | 'citations';
 
@@ -83,7 +84,7 @@ export default function AppearanceScreen() {
 
       setUserXP(calculatedXP);
     } catch (error) {
-      console.error('[Appearance] Erreur chargement:', error);
+      logger.error('[Appearance] Erreur chargement:', error);
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,7 @@ export default function AppearanceScreen() {
       await setThemeColor(warriorTheme.themeColor);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[Appearance] Erreur changement thème:', error);
+      logger.error('[Appearance] Erreur changement thème:', error);
       Alert.alert('Erreur', 'Impossible de changer le thème');
     }
   };
@@ -118,7 +119,7 @@ export default function AppearanceScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await setThemeMode(mode);
     } catch (error) {
-      console.error('[Appearance] Erreur changement mode:', error);
+      logger.error('[Appearance] Erreur changement mode:', error);
     }
   };
 
@@ -129,7 +130,7 @@ export default function AppearanceScreen() {
       setSelectedLogoId(logoId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[Appearance] Erreur changement logo:', error);
+      logger.error('[Appearance] Erreur changement logo:', error);
       Alert.alert('Erreur', 'Impossible de changer le logo');
     }
   };
@@ -141,7 +142,7 @@ export default function AppearanceScreen() {
       setSelectedCitationStyle(style);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[Appearance] Erreur changement style citation:', error);
+      logger.error('[Appearance] Erreur changement style citation:', error);
       Alert.alert('Erreur', 'Impossible de changer le style de citation');
     }
   };
@@ -252,7 +253,7 @@ export default function AppearanceScreen() {
           </Text>
           <View style={styles.modesContainer}>
             {[
-              { mode: 'guerrier' as ViewMode, label: 'Guerrier', description: 'Complet', icon: LayoutGrid },
+              { mode: 'complet' as ViewMode, label: 'Complet', description: 'Complet', icon: LayoutGrid },
               { mode: 'essentiel' as ViewMode, label: 'Essentiel', description: 'Condensé', icon: LayoutList },
             ].map(({ mode, label, description, icon: Icon }) => {
               const isActive = viewMode === mode;

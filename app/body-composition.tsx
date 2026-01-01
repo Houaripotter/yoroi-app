@@ -39,6 +39,7 @@ import { getProfile } from '@/lib/database';
 import { successHaptic, lightHaptic } from '@/lib/haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS, GRADIENTS, BODY_COMP_COLORS } from '@/constants/design';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -253,7 +254,7 @@ export default function BodyCompositionScreen() {
         setBmr(calculatedBmr.toString());
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     }
   }, []);
 
@@ -293,7 +294,7 @@ export default function BodyCompositionScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (error) {
-      console.error('Error saving:', error);
+      logger.error('Error saving:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder');
     } finally {
       setIsSubmitting(false);

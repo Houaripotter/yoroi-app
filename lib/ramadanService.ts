@@ -8,6 +8,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements } from './storage';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -191,7 +192,7 @@ export const getRamadanSettings = async (): Promise<RamadanSettings> => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erreur lecture settings Ramadan:', error);
+    logger.error('Erreur lecture settings Ramadan:', error);
   }
 
   const { start, end } = getRamadanDates();
@@ -217,7 +218,7 @@ export const saveRamadanSettings = async (settings: Partial<RamadanSettings>): P
     const updated = { ...current, ...settings };
     await AsyncStorage.setItem(RAMADAN_SETTINGS_KEY, JSON.stringify(updated));
   } catch (error) {
-    console.error('Erreur sauvegarde settings Ramadan:', error);
+    logger.error('Erreur sauvegarde settings Ramadan:', error);
   }
 };
 
@@ -255,7 +256,7 @@ export const getRamadanWeights = async (): Promise<RamadanWeight[]> => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erreur lecture pesees Ramadan:', error);
+    logger.error('Erreur lecture pesees Ramadan:', error);
   }
   return [];
 };
@@ -299,7 +300,7 @@ export const addRamadanWeight = async (
 
     await AsyncStorage.setItem(RAMADAN_WEIGHTS_KEY, JSON.stringify(weights));
   } catch (error) {
-    console.error('Erreur ajout pesee Ramadan:', error);
+    logger.error('Erreur ajout pesee Ramadan:', error);
   }
 };
 
@@ -323,7 +324,7 @@ export const getTonightHydration = async (): Promise<number> => {
       }
     }
   } catch (error) {
-    console.error('Erreur lecture hydratation:', error);
+    logger.error('Erreur lecture hydratation:', error);
   }
   return 0;
 };
@@ -344,7 +345,7 @@ export const addRamadanHydration = async (liters: number): Promise<number> => {
 
     return newAmount;
   } catch (error) {
-    console.error('Erreur ajout hydratation:', error);
+    logger.error('Erreur ajout hydratation:', error);
     return 0;
   }
 };
@@ -360,7 +361,7 @@ export const getRamadanHydrationHistory = async (): Promise<{ date: string; amou
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Erreur lecture historique hydratation:', error);
+    logger.error('Erreur lecture historique hydratation:', error);
   }
   return [];
 };

@@ -19,6 +19,7 @@ import { SocialStatsCard } from '@/components/SocialStatsCard';
 import { getUserSettings } from '@/lib/storage';
 import { getProfile, getTrainings, getLatestWeight, getWeights, calculateStreak } from '@/lib/database';
 import { getCurrentRank } from '@/lib/ranks';
+import logger from '@/lib/security/logger';
 
 export default function SocialCardScreen() {
   const { colors } = useTheme();
@@ -75,7 +76,7 @@ export default function SocialCardScreen() {
         clubs: clubs.slice(0, 3), // Max 3 clubs
       });
     } catch (error) {
-      console.error('[SocialCard] Error loading data:', error);
+      logger.error('[SocialCard] Error loading data:', error);
     }
   };
 

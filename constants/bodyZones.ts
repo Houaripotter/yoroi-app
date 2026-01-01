@@ -173,8 +173,8 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     backgroundColor: '#E8F5E9',
     icon: '🛡️',
     title: 'OPÉRATIONNEL',
-    subtitle: 'Aucune restriction',
-    advice: 'Vous êtes apte à tous les entraînements',
+    subtitle: 'Aucune douleur significative',
+    advice: 'Aucune douleur active enregistrée',
   },
   restricted: {
     status: 'restricted',
@@ -182,17 +182,17 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     backgroundColor: '#FFF3E0',
     icon: '⚠️',
     title: 'RESTREINT',
-    subtitle: 'Adaptation nécessaire',
-    advice: 'Éviter les mouvements impliquant la zone blessée',
+    subtitle: 'Douleur modérée présente',
+    advice: 'Une ou plusieurs zones douloureuses enregistrées',
   },
   unfit: {
     status: 'unfit',
     color: '#F44336',
     backgroundColor: '#FFEBEE',
     icon: '🚫',
-    title: 'INAPTE',
-    subtitle: 'Repos forcé recommandé',
-    advice: 'Consultation médicale conseillée si douleur > 48h',
+    title: 'ATTENTION',
+    subtitle: 'Douleur importante',
+    advice: 'Douleur intense enregistrée - consulter un professionnel de santé',
   },
 };
 

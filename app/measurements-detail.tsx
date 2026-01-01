@@ -18,6 +18,10 @@ import { ArrowLeft, Ruler, TrendingDown, TrendingUp, Minus } from 'lucide-react-
 import { useTheme } from '@/lib/ThemeContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getMeasurements, Measurement } from '@/lib/database';
+// 🔒 SÉCURITÉ: Protection contre les screenshots
+import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { BlurView } from 'expo-blur';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,7 +46,11 @@ const MEASUREMENT_COLORS: Record<MeasurementType, string> = {
 
 export default function MeasurementsDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+
+  // 🔒 SÉCURITÉ: Protection contre les screenshots
+  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
+
   const [period, setPeriod] = useState<Period>('90d');
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +64,7 @@ export default function MeasurementsDetailScreen() {
       const data = await getMeasurements();
       setMeasurements(data);
     } catch (error) {
-      console.error('Erreur chargement mesures:', error);
+      logger.error('Erreur chargement mesures:', error);
     } finally {
       setLoading(false);
     }
@@ -117,6 +125,15 @@ export default function MeasurementsDetailScreen() {
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Mensurations</Text>
         <View style={{ width: 24 }} />
       </View>
+
+      {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
+      {screenshotDetected && (
+        <View style={styles.screenshotWarning}>
+          <Text style={styles.screenshotWarningText}>
+            ⚠️ Screenshot détecté - Tes données sont sensibles
+          </Text>
+        </View>
+      )}
 
       {/* Filtres de période */}
       <View style={styles.periodFilters}>
@@ -312,6 +329,15 @@ export default function MeasurementsDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
+      {isBlurred && (
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          intensity={100}
+          tint={isDark ? 'dark' : 'light'}
+        />
+      )}
     </View>
   );
 }
@@ -419,6 +445,23 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
+    textAlign: 'center',
+  },
+
+  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
+  screenshotWarning: {
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  screenshotWarningText: {
+    color: '#FF9500',
+    fontSize: 12,
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

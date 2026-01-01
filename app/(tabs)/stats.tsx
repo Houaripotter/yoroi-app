@@ -20,6 +20,7 @@ import {
   Heart,
   Activity,
   Share2,
+  Watch,
 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,7 +33,9 @@ import { MeasurementsStats } from '@/components/stats/MeasurementsStats';
 import { ActivityStats } from '@/components/stats/ActivityStats';
 import { VitalityStats } from '@/components/stats/VitalityStats';
 import { PerformanceStats } from '@/components/stats/PerformanceStats';
+import { HealthTab } from '@/components/stats/HealthTab';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,7 +43,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // STATS SCREEN - 6 ONGLETS SWIPEABLE
 // ============================================
 
-type TabType = 'poids' | 'compo' | 'mesures' | 'discipline' | 'vitalite' | 'performance';
+type TabType = 'poids' | 'compo' | 'mesures' | 'discipline' | 'vitalite' | 'performance' | 'sante';
 
 export default function StatsScreen() {
   const insets = useSafeAreaInsets();
@@ -73,7 +76,7 @@ export default function StatsScreen() {
       setTrainings(trainingsData);
       setMeasurements(measurementsData);
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     }
   }, []);
 
@@ -85,8 +88,9 @@ export default function StatsScreen() {
     { key: 'poids', label: 'Poids', icon: Scale, color: '#10B981' },
     { key: 'compo', label: 'Compo', icon: PieChart, color: '#8B5CF6' },
     { key: 'mesures', label: 'Mesures', icon: Ruler, color: '#0EA5E9' },
-    { key: 'vitalite', label: 'Vitalité', icon: Heart, color: '#EF4444' },
+    { key: 'vitalite', label: 'Vitalite', icon: Heart, color: '#EF4444' },
     { key: 'performance', label: 'Perf', icon: Activity, color: '#EC4899' },
+    { key: 'sante', label: 'Sante', icon: Watch, color: '#EC4899' },
   ];
 
   useFocusEffect(
@@ -316,6 +320,12 @@ export default function StatsScreen() {
             <View style={{ height: 120 }} />
           </ScrollView>
         </View>
+
+        {/* Page Sante - Apple Health / Health Connect */}
+        <View style={styles.page}>
+          <HealthTab />
+          <View style={{ height: 120 }} />
+        </View>
       </ScrollView>
 
       {/* Bouton flottant Partager */}
@@ -327,7 +337,7 @@ export default function StatsScreen() {
         }}
         activeOpacity={0.8}
       >
-        <Share2 size={24} color="#FFFFFF" />
+        <Share2 size={24} color={colors.textOnGold} />
       </TouchableOpacity>
     </View>
   );

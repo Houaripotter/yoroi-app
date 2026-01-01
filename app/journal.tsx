@@ -37,6 +37,7 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getAllMeasurements, Measurement } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // JOURNAL - NOTES ET RESSENTI
@@ -167,7 +168,7 @@ export default function JournalScreen() {
         }
       }
     } catch (error) {
-      console.error('Erreur chargement journal:', error);
+      logger.error('Erreur chargement journal:', error);
     }
   };
 
@@ -176,7 +177,7 @@ export default function JournalScreen() {
       const data = await getAllMeasurements();
       setMeasurements(data);
     } catch (error) {
-      console.error('Erreur chargement mesures:', error);
+      logger.error('Erreur chargement mesures:', error);
     }
   };
 
@@ -221,7 +222,7 @@ export default function JournalScreen() {
 
       Alert.alert('Enregistre !', 'Ton ressenti du jour est sauvegarde.');
     } catch (error) {
-      console.error('Erreur sauvegarde journal:', error);
+      logger.error('Erreur sauvegarde journal:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder');
     }
   };
@@ -247,7 +248,7 @@ export default function JournalScreen() {
                 setNote('');
               }
             } catch (error) {
-              console.error('Erreur suppression:', error);
+              logger.error('Erreur suppression:', error);
             }
           },
         },
@@ -385,7 +386,7 @@ export default function JournalScreen() {
               <BookOpen size={26} color={colors.gold} strokeWidth={2.5} />
             </View>
             <Text style={[styles.infoText, { color: colors.gold }]}>
-              Note ton ressenti pour suivre ton mental de guerrier
+              Note ton ressenti pour suivre ton mental de champion
             </Text>
           </View>
 
@@ -608,7 +609,7 @@ export default function JournalScreen() {
                     onPress={() => setFilterMood(filterMood === mood ? null : mood)}
                   >
                     <View style={styles.filterMoodIconContainer}>
-                      {getMoodIcon(MOODS[mood].iconName, 20, selectedMoodFilter === mood ? '#FFFFFF' : colors.textMuted)}
+                      {getMoodIcon(MOODS[mood].iconName, 20, filterMood === mood ? '#FFFFFF' : colors.textMuted)}
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -804,6 +805,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
+  moodIconContainer: {
+    marginBottom: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // Note Input
   noteLabel: {
@@ -910,6 +916,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 4,
   },
+  statIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // Filter Section
   filterSection: {
@@ -1000,6 +1010,10 @@ const styles = StyleSheet.create({
   },
   entryMoodEmoji: {
     fontSize: 22,
+  },
+  entryMoodIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   entryInfo: {
     flex: 1,

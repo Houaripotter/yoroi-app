@@ -169,6 +169,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
     const paddedMin = stats.min - range * 0.05;
     const paddedMax = stats.max + range * 0.05;
     const paddedRange = paddedMax - paddedMin || 1;
+    if (!goalWeight) return 0;
     return CHART_HEIGHT - PADDING_BOTTOM - ((goalWeight - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
   };
 
@@ -269,7 +270,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
               {/* Value */}
               <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>
-                {card.value > 0 ? card.value.toFixed(1) : '--'}
+                {card.value && card.value > 0 ? card.value.toFixed(1) : '--'}
                 <Text style={[styles.statCardUnit, { color: colors.textMuted }]}>
                   {' '}{card.unit}
                 </Text>
@@ -316,13 +317,13 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Objectif</Text>
               <Text style={[styles.summaryValue, { color: '#3B82F6' }]}>
-                {goalWeight.toFixed(1)} kg
+                {goalWeight ? goalWeight.toFixed(1) : '--'} kg
               </Text>
             </View>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Reste</Text>
               <Text style={[styles.summaryValue, { color: '#F59E0B' }]}>
-                {(stats.end - goalWeight).toFixed(1)} kg
+                {goalWeight ? (stats.end - goalWeight).toFixed(1) : '--'} kg
               </Text>
             </View>
           </View>
@@ -353,7 +354,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                 const paddedRange = paddedMax - paddedMin || 1;
 
                 // Calculer les positions Y des zones autour de l'objectif
-                const goal = goalWeight;
+                const goal = goalWeight ?? stats.end;
                 const zoneOptimalMin = goal - 2; // -2kg de l'objectif
                 const zoneOptimalMax = goal + 2; // +2kg de l'objectif
 
@@ -527,7 +528,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
             ))}
 
             {/* Label de l'objectif */}
-            {stats.end > 0 && (
+            {stats.end > 0 && goalWeight && (
               <View style={[styles.goalLabel, { left: CHART_WIDTH - PADDING_RIGHT - 50, top: goalLineY - 12 }]}>
                 <Text style={[styles.goalLabelText, { color: '#3B82F6' }]}>
                   Obj: {goalWeight.toFixed(1)}

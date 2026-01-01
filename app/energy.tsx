@@ -32,6 +32,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { calculateStreak, getTrainings, Training } from '@/lib/database';
 import { getSleepStats, formatSleepDuration, SleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -129,7 +130,7 @@ export default function EnergyScreen() {
         useNativeDriver: false,
       }).start();
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
     }
   }, []);
 

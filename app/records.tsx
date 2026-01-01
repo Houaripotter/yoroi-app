@@ -39,6 +39,7 @@ import {
 } from '@/lib/records';
 import { successHaptic } from '@/lib/haptics';
 import { playSuccessSound } from '@/lib/soundManager';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // PAGE MES RECORDS PERSONNELS
@@ -65,7 +66,7 @@ export default function RecordsScreen() {
         playSuccessSound();
       }
     } catch (error) {
-      console.error('Erreur chargement records:', error);
+      logger.error('Erreur chargement records:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -92,7 +93,7 @@ export default function RecordsScreen() {
         message: text,
       });
     } catch (error) {
-      console.error('Erreur partage:', error);
+      logger.error('Erreur partage:', error);
     }
   };
 

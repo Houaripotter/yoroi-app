@@ -15,9 +15,10 @@ import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar } from 'lucide-
 import { useWeekSchedule } from '@/hooks/useWeekSchedule';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { getClubLogoSource } from '@/lib/sports';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, getWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { exportMultipleTrainingsToCalendar } from '@/lib/calendarService';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -45,7 +46,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   // Recharger les données quand refreshTrigger change
   React.useEffect(() => {
     if (refreshTrigger && refreshTrigger > 0) {
-      console.log('🔄 TimetableView: Refresh déclenché par trigger', refreshTrigger);
+      logger.info('🔄 TimetableView: Refresh déclenché par trigger', refreshTrigger);
       // Petit délai pour s'assurer que la DB est à jour
       setTimeout(() => {
         refresh();
@@ -57,7 +58,44 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   const [showSessionDetail, setShowSessionDetail] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState<{ dayId: string; dayLabel: string; slotId: string } | null>(null);
   const [showAllSessions, setShowAllSessions] = useState<{ day: string; dayLabel: string; slotLabel: string; sessions: any[] } | null>(null);
-  const [restDays, setRestDays] = useState<string[]>([]); // Liste des jours en repos
+  const [manualRestDays, setManualRestDays] = useState<string[]>([]); // Jours marqués manuellement en repos
+
+  // Détecter automatiquement les jours sans aucune séance comme jours de repos
+  const getRestDays = () => {
+    const autoRestDays: string[] = [];
+    weekSchedule.forEach(day => {
+      if (day.sessions.length === 0) {
+        autoRestDays.push(day.id);
+      }
+    });
+    // Combiner les jours auto-détectés et manuels
+    return [...new Set([...autoRestDays, ...manualRestDays])];
+  };
+
+  const restDays = getRestDays();
+
+  // Calculer les dates de la semaine avec le numéro
+  const getWeekDates = () => {
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Lundi
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 }); // Dimanche
+    const weekNumber = getWeek(today, { weekStartsOn: 1, firstWeekContainsDate: 4 });
+
+    const startDay = format(weekStart, 'd', { locale: fr });
+    const endDay = format(weekEnd, 'd', { locale: fr });
+    const startMonth = format(weekStart, 'MMMM', { locale: fr }); // Mois complet
+    const endMonth = format(weekEnd, 'MMMM', { locale: fr });
+
+    // Si même mois : "7 au 14 janvier (S2)"
+    if (startMonth === endMonth) {
+      return `${startDay} au ${endDay} ${startMonth} (S${weekNumber})`;
+    } else {
+      // Mois différents : "30 déc. au 5 janv. (S1)"
+      const startMonthShort = format(weekStart, 'MMM', { locale: fr });
+      const endMonthShort = format(weekEnd, 'MMM', { locale: fr });
+      return `${startDay} ${startMonthShort}. au ${endDay} ${endMonthShort}. (S${weekNumber})`;
+    }
+  };
 
   if (loading) {
     return (
@@ -97,6 +135,14 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* INDICATEUR DE SEMAINE */}
+      <View style={[styles.weekIndicator, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+        <Calendar size={16} color={colors.accent} />
+        <Text style={[styles.weekIndicatorText, { color: colors.textPrimary }]}>
+          {getWeekDates()}
+        </Text>
+      </View>
+
       {/* GRILLE EMPLOI DU TEMPS - GRANDE VERSION */}
       <View style={styles.mainTimetableContainer}>
         <View style={[styles.mainTimetableCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -130,14 +176,14 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     <TouchableOpacity
                       style={styles.restDayButton}
                       onPress={() => {
-                        if (isRest) {
-                          // Retirer du repos
-                          setRestDays(prev => prev.filter(d => d !== day.id));
-                          console.log('🔆 Retirer repos pour', day.label);
-                        } else {
-                          // Marquer en repos
-                          setRestDays(prev => [...prev, day.id]);
-                          console.log('🌙 Marquer TOUTE LA JOURNÉE en repos pour', day.label);
+                        if (manualRestDays.includes(day.id)) {
+                          // Retirer du repos manuel
+                          setManualRestDays(prev => prev.filter(d => d !== day.id));
+                          logger.info('🔆 Retirer repos manuel pour', day.label);
+                        } else if (!isRest) {
+                          // Marquer manuellement en repos (seulement si pas déjà en repos auto)
+                          setManualRestDays(prev => [...prev, day.id]);
+                          logger.info('🌙 Marquer TOUTE LA JOURNÉE en repos pour', day.label);
                           Alert.alert(
                             '🌙 Jour de repos',
                             `Toute la journée ${day.label} marquée en repos`,
@@ -198,9 +244,9 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                             );
                             return;
                           }
-                          console.log('🖱️ Clic sur', day.label, slot.label, '- Séances:', sessions.length);
+                          logger.info('🖱️ Clic sur', day.label, slot.label, '- Séances:', sessions.length);
                           if (sessions.length > 0) {
-                            console.log('✅ Ouverture liste de', sessions.length, 'séances');
+                            logger.info('✅ Ouverture liste de', sessions.length, 'séances');
                             setShowAllSessions({
                               day: day.id,
                               dayLabel: day.label,
@@ -208,7 +254,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                               sessions: sessions
                             });
                           } else {
-                            console.log('➕ Ouverture menu ajout');
+                            logger.info('➕ Ouverture menu ajout');
                             setShowAddMenu({ dayId: day.id, dayLabel: day.label, slotId: slot.id });
                           }
                         }}
@@ -280,9 +326,14 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           {/* Header du modal */}
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              EMPLOI DU TEMPS
-            </Text>
+            <View style={styles.modalTitleContainer}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                EMPLOI DU TEMPS
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+                {getWeekDates()}
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={() => setIsExpanded(false)}
               style={[styles.closeButton, { backgroundColor: colors.backgroundCard }]}
@@ -468,33 +519,34 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
           <View style={[styles.detailModalContent, { backgroundColor: colors.backgroundCard }]}>
             {selectedSession && (
               <>
-                {/* Header */}
-                <View style={styles.detailHeader}>
-                  <View>
-                    <Text style={[styles.detailDay, { color: colors.textMuted }]}>
-                      {selectedSession.day}
-                    </Text>
-                    <Text style={[styles.detailClub, { color: colors.textPrimary }]}>
-                      {selectedSession.session.clubName}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => setShowSessionDetail(false)}
-                    style={[styles.detailCloseButton, { backgroundColor: colors.background }]}
-                  >
-                    <X size={20} color={colors.textPrimary} />
-                  </TouchableOpacity>
-                </View>
+                {/* Close Button - Top Right */}
+                <TouchableOpacity
+                  onPress={() => setShowSessionDetail(false)}
+                  style={[styles.detailCloseButtonTop, { backgroundColor: colors.background }]}
+                >
+                  <X size={24} color={colors.textPrimary} />
+                </TouchableOpacity>
 
-                {/* Logo du club */}
+                {/* Logo du club - Centered and Big */}
                 {selectedSession.session.clubLogo && getClubLogoSource(selectedSession.session.clubLogo) && (
-                  <View style={styles.detailLogoContainer}>
+                  <View style={styles.detailLogoContainerBig}>
                     <Image
                       source={getClubLogoSource(selectedSession.session.clubLogo)!}
-                      style={styles.detailClubLogo}
+                      style={styles.detailClubLogoBig}
+                      resizeMode="contain"
                     />
                   </View>
                 )}
+
+                {/* Header */}
+                <View style={styles.detailHeaderCentered}>
+                  <Text style={[styles.detailClubBig, { color: colors.textPrimary }]}>
+                    {selectedSession.session.clubName}
+                  </Text>
+                  <Text style={[styles.detailDay, { color: colors.textMuted }]}>
+                    {selectedSession.day}
+                  </Text>
+                </View>
 
                 {/* Infos */}
                 <View style={styles.detailInfoSection}>
@@ -534,20 +586,37 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   {selectedSession.session.details && (
                     <View style={[styles.detailCard, { backgroundColor: colors.background }]}>
                       <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                        Détails
+                        💪 Muscles travaillés
                       </Text>
-                      <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
-                        {selectedSession.session.details}
-                      </Text>
+                      <View style={styles.musclesContainer}>
+                        {selectedSession.session.details.split(' • ').map((muscle: string, idx: number) => (
+                          <View
+                            key={idx}
+                            style={[
+                              styles.muscleChip,
+                              { backgroundColor: selectedSession.session.clubColor + '20', borderColor: selectedSession.session.clubColor },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.muscleChipText,
+                                { color: selectedSession.session.clubColor },
+                              ]}
+                            >
+                              {muscle.charAt(0).toUpperCase() + muscle.slice(1)}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
                   )}
 
                   {selectedSession.session.note && (
                     <View style={[styles.detailCard, { backgroundColor: colors.background }]}>
                       <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                        Notes
+                        🏋️ Programme
                       </Text>
-                      <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
+                      <Text style={[styles.detailProgramText, { color: colors.textPrimary }]}>
                         {selectedSession.session.note}
                       </Text>
                     </View>
@@ -600,7 +669,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
               <TouchableOpacity
                 style={[styles.addMenuButton, { backgroundColor: '#FFD700' }]}
                 onPress={() => {
-                  console.log('🌙 Marquer repos pour', showAddMenu?.dayLabel, showAddMenu?.slotId);
+                  logger.info('🌙 Marquer repos pour', showAddMenu?.dayLabel, showAddMenu?.slotId);
                   // TODO: Implémenter la fonctionnalité repos dans la base de données
                   Alert.alert(
                     '🌙 Repos',
@@ -700,24 +769,6 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   })}
                 </ScrollView>
 
-                {/* GROS BOUTON EXPORT ICLOUD - STYLE BUZZER */}
-                <TouchableOpacity
-                  style={styles.exportBuzzerButton}
-                  onPress={async () => {
-                    console.log('📅 Export vers iCloud Calendar...');
-                    await exportMultipleTrainingsToCalendar(showAllSessions.sessions);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.exportBuzzerInner}>
-                    <Calendar size={32} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text style={styles.exportBuzzerTitle}>EXPORTER VERS ICLOUD</Text>
-                    <Text style={styles.exportBuzzerSubtitle}>
-                      {showAllSessions.sessions.length} séance{showAllSessions.sessions.length > 1 ? 's' : ''}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-
                 <TouchableOpacity
                   style={[styles.addSessionButton, { backgroundColor: colors.accent }]}
                   onPress={() => {
@@ -729,7 +780,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     }, 300);
                   }}
                 >
-                  <Plus size={20} color="#FFFFFF" />
+                  <Plus size={20} color="#000000" />
                   <Text style={styles.addSessionButtonText}>Ajouter une séance</Text>
                 </TouchableOpacity>
               </>
@@ -752,6 +803,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     fontSize: FONT.size.md,
+  },
+  // Indicateur de semaine
+  weekIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+  },
+  weekIndicatorText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Header
@@ -1136,10 +1203,21 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     borderBottomWidth: 1,
   },
+  modalTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 4,
   },
   closeButton: {
     width: 44,
@@ -1312,6 +1390,38 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+  },
+  // Nouveaux styles pour le modal amélioré
+  detailCloseButtonTop: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  detailLogoContainerBig: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  detailClubLogoBig: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  detailHeaderCentered: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  detailClubBig: {
+    fontSize: 24,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 6,
   },
   detailInfoSection: {
     gap: SPACING.md,
@@ -1563,6 +1673,29 @@ const styles = StyleSheet.create({
   addSessionButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#000000',
+  },
+  // Styles pour les muscles
+  musclesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  muscleChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  muscleChipText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  detailProgramText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+    lineHeight: 22,
   },
 });

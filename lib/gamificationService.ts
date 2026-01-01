@@ -1,4 +1,5 @@
 import { getAllMeasurements, getAllWorkouts, getUserSettings } from './storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // 🎖️ SYSTÈME DE GRADES YOROI
@@ -26,7 +27,7 @@ export const GRADES: Grade[] = [
   },
   {
     id: 'bushi',
-    name: 'Guerrier',
+    name: 'Athlète',
     japaneseName: 'Bushi',
     icon: '', // Utiliser badge coloré à la place
     color: '#3498DB',
@@ -39,7 +40,7 @@ export const GRADES: Grade[] = [
     japaneseName: 'Samouraï',
     icon: '', // Utiliser badge coloré à la place
     color: '#9B59B6',
-    description: 'Tu fais partie des guerriers d\'élite.',
+    description: 'Tu fais partie de l\'élite.',
     requirement: '30 séances OU 5 kg perdus',
   },
   {
@@ -187,7 +188,7 @@ export const calculateUserProgress = async (): Promise<UserProgress> => {
       goalReached,
     };
   } catch (error) {
-    console.error('Erreur calcul progression:', error);
+    logger.error('Erreur calcul progression:', error);
     return {
       totalWorkouts: 0,
       weightLost: 0,

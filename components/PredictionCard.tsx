@@ -25,6 +25,7 @@ import Svg, { Path, Circle, Line, Defs, LinearGradient, Stop, Text as SvgText } 
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import { calculatePrediction, PredictionResult, PredictionPoint } from '@/lib/prediction';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // COMPOSANT PREDICTION DE POIDS
@@ -59,7 +60,7 @@ export const PredictionCard: React.FC<PredictionCardProps> = ({
       const result = await calculatePrediction();
       setPrediction(result);
     } catch (error) {
-      console.error('Erreur chargement prediction:', error);
+      logger.error('Erreur chargement prediction:', error);
     }
     setLoading(false);
   };

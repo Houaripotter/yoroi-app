@@ -35,6 +35,7 @@ import {
 import Slider from '@react-native-community/slider';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CONSTANTS
@@ -86,7 +87,7 @@ export default function GhostCameraScreen() {
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error('Erreur chargement video:', error);
+      logger.error('Erreur chargement video:', error);
       Alert.alert('Erreur', 'Impossible de charger la video');
     }
   };
@@ -111,7 +112,7 @@ export default function GhostCameraScreen() {
         setShowComparison(true);
       }
     } catch (error) {
-      console.error('Erreur enregistrement:', error);
+      logger.error('Erreur enregistrement:', error);
     } finally {
       setIsRecording(false);
     }

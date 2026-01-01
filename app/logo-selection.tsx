@@ -27,6 +27,7 @@ import {
   LogoVariant 
 } from '@/lib/storage';
 import { YoroiLogo } from '@/components/YoroiLogo';
+import logger from '@/lib/security/logger';
 
 export default function LogoSelectionScreen() {
   const insets = useSafeAreaInsets();
@@ -83,7 +84,7 @@ export default function LogoSelectionScreen() {
         [{ text: 'Super !', onPress: () => router.back() }]
       );
     } catch (error) {
-      console.error('Erreur sauvegarde logo:', error);
+      logger.error('Erreur sauvegarde logo:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le logo');
     } finally {
       setIsSaving(false);

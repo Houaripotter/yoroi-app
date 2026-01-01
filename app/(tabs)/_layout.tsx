@@ -25,6 +25,11 @@ const triggerHaptic = () => {
 export default function TabLayout() {
   const { colors, isDark } = useTheme();
 
+  // Couleurs inversées pour la tab bar (contraste avec l'interface)
+  const tabBarBg = isDark ? '#FFFFFF' : '#0a0a0a';
+  const tabBarInactiveColor = isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
+  const tabBarBorderColor = isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+
   // Bouton FAB Central avec glow accent
   const FABButton = () => (
     <View style={styles.fabContainer}>
@@ -35,7 +40,7 @@ export default function TabLayout() {
           shadowColor: colors.accent,
         }
       ]}>
-        <Plus size={24} color={colors.background} strokeWidth={2.5} />
+        <Plus size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
       </View>
     </View>
   );
@@ -45,12 +50,17 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textMuted,
+        tabBarInactiveTintColor: tabBarInactiveColor,
         tabBarStyle: [
           styles.tabBar,
           {
-            backgroundColor: colors.backgroundCard,
-            borderTopColor: colors.border,
+            backgroundColor: tabBarBg,
+            borderTopColor: tabBarBorderColor,
+            // Glow effect en bas avec couleur accent en mode sombre
+            shadowColor: isDark ? colors.accent : 'transparent',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: isDark ? 0.3 : 0,
+            shadowRadius: 12,
           }
         ],
         tabBarLabelStyle: styles.tabBarLabel,
@@ -71,7 +81,7 @@ export default function TabLayout() {
             <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
               <Home
                 size={22}
-                color={focused ? colors.accent : colors.textMuted}
+                color={focused ? colors.accent : tabBarInactiveColor}
                 strokeWidth={focused ? 2.5 : 2}
               />
             </View>
@@ -88,7 +98,7 @@ export default function TabLayout() {
             <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
               <BarChart2
                 size={22}
-                color={focused ? colors.accent : colors.textMuted}
+                color={focused ? colors.accent : tabBarInactiveColor}
                 strokeWidth={focused ? 2.5 : 2}
               />
             </View>
@@ -114,7 +124,7 @@ export default function TabLayout() {
             <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
               <Calendar
                 size={22}
-                color={focused ? colors.accent : colors.textMuted}
+                color={focused ? colors.accent : tabBarInactiveColor}
                 strokeWidth={focused ? 2.5 : 2}
               />
             </View>
@@ -122,16 +132,16 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 5. PLUS */}
+      {/* 5. MENU */}
       <Tabs.Screen
         name="more"
         options={{
-          title: 'PLUS',
+          title: 'MENU',
           tabBarIcon: ({ focused }) => (
             <View style={focused ? [styles.iconActiveContainer, { shadowColor: colors.accent }] : undefined}>
               <Menu
                 size={22}
-                color={focused ? colors.accent : colors.textMuted}
+                color={focused ? colors.accent : tabBarInactiveColor}
                 strokeWidth={focused ? 2.5 : 2}
               />
             </View>

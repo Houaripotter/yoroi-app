@@ -1,4 +1,4 @@
-export const CITATIONS_GUERRIERES = [
+export const CITATIONS_MOTIVANTES = [
   "Cherchez secours dans la patience et la prière. La victoire vient avec l'endurance.",
   "Aucune âme n'est chargée au-delà de sa capacité. Tu es capable.",
   "Même si je marche dans la vallée de l'ombre, je ne crains aucun mal.",
@@ -10,7 +10,7 @@ export const CITATIONS_GUERRIERES = [
   "Celui qui a conquis sur lui-même est plus grand que celui qui a conquis mille hommes au combat.",
   "N'attends pas que ce soit facile. Fais en sorte d'être capable.",
   "La discipline, c'est choisir entre ce que tu veux maintenant et ce que tu veux le plus.",
-  "Un guerrier ne renonce jamais à ce qu'il aime. Il trouve l'amour dans ce qu'il fait.",
+  "Un champion ne renonce jamais à ce qu'il aime. Il trouve l'amour dans ce qu'il fait.",
   "La seule journée facile, c'était hier.",
   "Sois fort pour être utile.",
   "Le confort est l'ennemi du progrès.",
@@ -31,7 +31,7 @@ export const CITATIONS_GUERRIERES = [
   "L'or est testé par le feu, l'homme brave par l'adversité.",
   "Il y a une facilité après chaque difficulté.",
   "Sois comme l'eau : insaisissable mais capable de briser la roche.",
-  "Le guerrier sage évite le combat. Mais s'il doit combattre, il gagne.",
+  "Le champion sage évite le combat. Mais s'il doit combattre, il gagne.",
   "Rien de grand ne s'est accompli sans passion.",
   "Ton seul adversaire, c'est toi-même hier.",
   "La fatigue est une émotion. Contrôle-la.",

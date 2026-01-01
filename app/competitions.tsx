@@ -22,6 +22,7 @@ import { Competition, calculateDaysUntil, SPORT_ICONS } from '@/lib/fighterMode'
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { importAllCompetitions, getAvailableCompetitionsCount } from '@/lib/importCompetitionsService';
 import { Alert } from 'react-native';
+import logger from '@/lib/security/logger';
 
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
@@ -45,7 +46,7 @@ export default function CompetitionsScreen() {
       const past = all.filter(c => c.date < today && c.statut === 'terminee');
       setPastCompetitions(past);
     } catch (error) {
-      console.error('Error loading competitions:', error);
+      logger.error('Error loading competitions:', error);
     }
   };
 
@@ -163,8 +164,8 @@ export default function CompetitionsScreen() {
 
           {isUpcoming && daysUntil <= 30 && (
             <View style={[styles.urgentBadge, { backgroundColor: colors.accent }]}>
-              <Clock size={12} color="#FFFFFF" />
-              <Text style={styles.urgentText}>J-{daysUntil}</Text>
+              <Clock size={12} color={colors.textOnGold} />
+              <Text style={[styles.urgentText, { color: colors.textOnGold }]}>J-{daysUntil}</Text>
             </View>
           )}
         </View>
@@ -342,7 +343,7 @@ export default function CompetitionsScreen() {
         onPress={handleAddCompetition}
         activeOpacity={0.8}
       >
-        <Plus size={24} color="#FFFFFF" />
+        <Plus size={24} color={colors.textOnGold} />
       </TouchableOpacity>
     </ScreenWrapper>
   );

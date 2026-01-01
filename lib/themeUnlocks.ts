@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FullThemeKey, FULL_THEMES, UnlockCondition } from './theme';
 import { getAllMeasurements, getAllWorkouts, Measurement } from './storage';
 import { getCurrentRank, RANKS } from './ranks';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CLÉS DE STOCKAGE
@@ -127,7 +128,7 @@ const saveUnlockedThemes = async (themes: FullThemeKey[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_UNLOCKED_THEMES, JSON.stringify(themes));
   } catch (error) {
-    console.error('Erreur sauvegarde thèmes débloqués:', error);
+    logger.error('Erreur sauvegarde thèmes débloqués:', error);
   }
 };
 
@@ -150,7 +151,7 @@ export const clearNewlyUnlockedTheme = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(STORAGE_KEY_NEWLY_UNLOCKED);
   } catch (error) {
-    console.error('Erreur clear newly unlocked:', error);
+    logger.error('Erreur clear newly unlocked:', error);
   }
 };
 
@@ -161,7 +162,7 @@ const setNewlyUnlockedTheme = async (themeId: FullThemeKey): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_NEWLY_UNLOCKED, themeId);
   } catch (error) {
-    console.error('Erreur set newly unlocked:', error);
+    logger.error('Erreur set newly unlocked:', error);
   }
 };
 
@@ -323,7 +324,7 @@ export const checkAllThemeUnlocks = async (): Promise<ThemeUnlockResult> => {
       statuses,
     };
   } catch (error) {
-    console.error('Erreur vérification déblocages thèmes:', error);
+    logger.error('Erreur vérification déblocages thèmes:', error);
     return {
       unlockedThemes: ['default'],
       newlyUnlocked: null,

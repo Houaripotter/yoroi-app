@@ -47,6 +47,7 @@ import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank 
 import { LEVELS, getLevel, getNextLevel, getLevelProgress } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
 import { AnimatedCard } from '@/components/AnimatedCard';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -241,7 +242,7 @@ export default function GamificationScreen() {
       const points = weights.length * 5 + trainings.length * 20 + (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
       setTotalPoints(points);
     } catch (error) {
-      console.error('Erreur chargement gamification:', error);
+      logger.error('Erreur chargement gamification:', error);
     }
   }, []);
 

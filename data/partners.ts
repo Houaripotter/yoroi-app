@@ -16,6 +16,9 @@ export interface Coach {
   instagram?: string;
   youtube?: string;
   website?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
   imageUrl?: any; // Peut être require() ou URI
   featured: boolean;
 }
@@ -29,7 +32,11 @@ export interface Club {
   bio?: string; // Description du club
   instagram?: string | string[]; // Peut être un seul ou plusieurs comptes
   website?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
   imageUrl?: any;
+  photos?: any[]; // Plusieurs photos du club
   featured: boolean;
 }
 
@@ -39,8 +46,12 @@ export interface Nutritionist {
   title: string;
   specialties: string[];
   location: string;
+  bio?: string;
   instagram?: string;
   website?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
   imageUrl?: any;
   featured: boolean;
 }
@@ -51,8 +62,12 @@ export interface Osteopath {
   title: string;
   specialties: string[];
   location: string;
+  bio?: string;
   instagram?: string;
   website?: string;
+  phone?: string;
+  email?: string;
+  facebook?: string;
   imageUrl?: any;
   featured: boolean;
 }
@@ -99,6 +114,19 @@ export const COACHES: Coach[] = [
     imageUrl: require('@/assets/partenaires/kines/younes.jpg'),
     featured: true,
   },
+  {
+    id: 'ludovic-fontaine',
+    name: 'Ludovic Fontaine',
+    title: 'Head Trainer',
+    type: 'coach',
+    specialties: ['Remise en forme', 'Perte de poids', 'Renforcement musculaire'],
+    location: 'Marseille',
+    bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !\n\nDiplômes et certifications :\n- BPJEPS AF\n- Assurance RC Pro: 2872626904\n- Carte Pro: 09209ED0095',
+    instagram: '@ludocoach_marseille',
+    phone: '06.42.19.74.80',
+    imageUrl: require('@/assets/partenaires/coachs/ludovicfontaine.png'),
+    featured: true,
+  },
 ];
 
 // ═══════════════════════════════════════════════
@@ -117,7 +145,11 @@ export const CLUBS: Club[] = [
     ],
     bio: 'Une académie, une famille. Créée par Venino Jr (Black Belt, multiple champion) et Mélissa (multiple championne). Le club dispose d\'une section féminine dynamique. La porte est grande ouverte à tout le monde : n\'hésitez pas à venir faire un cours d\'essai !',
     instagram: ['@veninjr', '@melissa_lcomb'],
-    imageUrl: require('@/assets/partenaires/clubs/gracie-barra-olives.jpg'),
+    imageUrl: require('@/assets/partenaires/clubs/graciebarra.png'),
+    photos: [
+      require('@/assets/partenaires/clubs/graciebarra.png'),
+      require('@/assets/partenaires/clubs/gracie-barra-olives.jpg'),
+    ],
     featured: true,
   },
   {

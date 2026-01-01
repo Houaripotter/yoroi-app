@@ -6,6 +6,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -58,10 +59,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved === 'true') {
         setIsDevMode(true);
-        console.log('🔓 Mode Créateur activé');
+        logger.info('🔓 Mode Créateur activé');
       }
     } catch (e) {
-      console.log('Error loading dev mode:', e);
+      logger.info('Error loading dev mode:', e);
     }
   };
 
@@ -96,10 +97,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
       setIsDevMode(true);
       setShowCodeInput(false);
       await AsyncStorage.setItem(STORAGE_KEY, 'true');
-      console.log('🎉 Mode Créateur activé avec succès !');
+      logger.info('🎉 Mode Créateur activé avec succès !');
       return true;
     }
-    console.log('❌ Code incorrect');
+    logger.info('❌ Code incorrect');
     return false;
   }, []);
 
@@ -107,7 +108,7 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
   const disableDevMode = useCallback(async () => {
     setIsDevMode(false);
     await AsyncStorage.removeItem(STORAGE_KEY);
-    console.log('🔒 Mode Créateur désactivé');
+    logger.info('🔒 Mode Créateur désactivé');
   }, []);
 
   // Mémoïser la value pour éviter les re-renders en cascade

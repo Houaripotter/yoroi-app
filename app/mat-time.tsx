@@ -28,6 +28,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, getTrainingStats } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -143,7 +144,7 @@ export default function MatTimeScreen() {
         weeklyData,
       });
     } catch (error) {
-      console.error('Erreur chargement mat time:', error);
+      logger.error('Erreur chargement mat time:', error);
     } finally {
       setIsLoading(false);
     }

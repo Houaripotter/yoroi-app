@@ -9,6 +9,7 @@ import Svg, { Rect, Line, G, Text as SvgText, Path } from 'react-native-svg';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { scale, isIPad } from '@/constants/responsive';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16, iPad s'adapte
@@ -114,7 +115,7 @@ export default function PerformanceTab() {
         intense: Math.round((intense / total) * 100),
       });
     } catch (error) {
-      console.error('Erreur chargement performance:', error);
+      logger.error('Erreur chargement performance:', error);
     }
   };
 

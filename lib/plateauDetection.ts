@@ -8,6 +8,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, Measurement } from './storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -134,7 +135,7 @@ export const PLATEAU_SUGGESTIONS: PlateauSuggestion[] = [
 const ENCOURAGEMENTS: string[] = [
   'C\'est ton premier plateau. Pas de panique, c\'est normal !',
   'Tu as deja traverse 1 plateau et tu l\'as depasse. Tu peux le refaire !',
-  'Tu as deja traverse {count} plateaux et tu les as TOUS depasses ! Continue, guerrier !',
+  'Tu as deja traverse {count} plateaux et tu les as TOUS depasses ! Continue, champion !',
   'Veteran des plateaux ! Tu sais que ca passe. Reste focus.',
 ];
 
@@ -174,7 +175,7 @@ export const getPlateauHistory = async (): Promise<PlateauHistory[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEY_HISTORY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur lecture historique plateaux:', error);
+    logger.error('Erreur lecture historique plateaux:', error);
     return [];
   }
 };
@@ -183,7 +184,7 @@ const savePlateauHistory = async (history: PlateauHistory[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
   } catch (error) {
-    console.error('Erreur sauvegarde historique plateaux:', error);
+    logger.error('Erreur sauvegarde historique plateaux:', error);
   }
 };
 
@@ -251,7 +252,7 @@ export const dismissPlateau = async (averageWeight: number): Promise<void> => {
     };
     await AsyncStorage.setItem(STORAGE_KEY_DISMISSED, JSON.stringify(dismissed));
   } catch (error) {
-    console.error('Erreur dismiss plateau:', error);
+    logger.error('Erreur dismiss plateau:', error);
   }
 };
 
@@ -348,7 +349,7 @@ export const detectPlateau = async (): Promise<PlateauResult | null> => {
       encouragement,
     };
   } catch (error) {
-    console.error('Erreur detection plateau:', error);
+    logger.error('Erreur detection plateau:', error);
     return null;
   }
 };
@@ -391,7 +392,7 @@ export const checkPlateauResolved = async (): Promise<{
 
     return { resolved: false };
   } catch (error) {
-    console.error('Erreur verification resolution plateau:', error);
+    logger.error('Erreur verification resolution plateau:', error);
     return null;
   }
 };
@@ -431,7 +432,7 @@ export const getPlateauStats = async (): Promise<{
       totalDaysInPlateau: durations.reduce((a, b) => a + b, 0),
     };
   } catch (error) {
-    console.error('Erreur stats plateaux:', error);
+    logger.error('Erreur stats plateaux:', error);
     return null;
   }
 };

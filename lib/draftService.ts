@@ -5,6 +5,7 @@
 // pour éviter toute perte en cas de crash
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const DRAFT_KEYS = {
   WEIGHT_ENTRY: '@yoroi_draft_weight_entry',
@@ -65,7 +66,7 @@ class DraftService {
         JSON.stringify(draftWithTimestamp)
       );
     } catch (error) {
-      console.error('[Draft] Erreur sauvegarde brouillon poids:', error);
+      logger.error('[Draft] Erreur sauvegarde brouillon poids:', error);
     }
   }
 
@@ -95,7 +96,7 @@ class DraftService {
 
       return draft;
     } catch (error) {
-      console.error('[Draft] Erreur récupération brouillon poids:', error);
+      logger.error('[Draft] Erreur récupération brouillon poids:', error);
       return null;
     }
   }
@@ -107,7 +108,7 @@ class DraftService {
     try {
       await AsyncStorage.removeItem(DRAFT_KEYS.WEIGHT_ENTRY);
     } catch (error) {
-      console.error('[Draft] Erreur suppression brouillon poids:', error);
+      logger.error('[Draft] Erreur suppression brouillon poids:', error);
     }
   }
 
@@ -126,7 +127,7 @@ class DraftService {
         JSON.stringify(draftWithTimestamp)
       );
     } catch (error) {
-      console.error('[Draft] Erreur sauvegarde brouillon entraînement:', error);
+      logger.error('[Draft] Erreur sauvegarde brouillon entraînement:', error);
     }
   }
 
@@ -154,7 +155,7 @@ class DraftService {
 
       return draft;
     } catch (error) {
-      console.error('[Draft] Erreur récupération brouillon entraînement:', error);
+      logger.error('[Draft] Erreur récupération brouillon entraînement:', error);
       return null;
     }
   }
@@ -166,7 +167,7 @@ class DraftService {
     try {
       await AsyncStorage.removeItem(DRAFT_KEYS.TRAINING_ENTRY);
     } catch (error) {
-      console.error('[Draft] Erreur suppression brouillon entraînement:', error);
+      logger.error('[Draft] Erreur suppression brouillon entraînement:', error);
     }
   }
 

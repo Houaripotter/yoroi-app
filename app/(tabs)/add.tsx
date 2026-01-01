@@ -50,6 +50,7 @@ import { WeightInput, WeightInputHandle } from '@/components/WeightInput';
 import { backupReminderService } from '@/lib/backupReminderService';
 import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -222,7 +223,7 @@ export default function AddScreen() {
         };
 
         await draftService.saveWeightDraft(draft);
-        console.log('[Draft] Auto-sauvegarde effectuée');
+        logger.info('[Draft] Auto-sauvegarde effectuée');
 
         // Afficher l'indicateur brièvement
         setShowAutoSaveIndicator(true);
@@ -277,8 +278,15 @@ export default function AddScreen() {
   const handleSave = async () => {
     const weight = weightInputRef.current?.getValue();
 
-    if (!weight) {
-      Alert.alert('Erreur', 'Veuillez entrer votre poids');
+    // Vérifier si au moins une donnée est remplie (poids OU mensurations OU composition)
+    const hasMeasurements = waist || chest || arm || thigh || hips || neck || calf;
+    const hasComposition = fatPercent || musclePercent || waterPercent || boneMass || visceralFat || metabolicAge || bmr;
+
+    if (!weight && !hasMeasurements && !hasComposition) {
+      Alert.alert(
+        'Aucune donnée',
+        'Veuillez entrer au moins :\n• Votre poids\n• Des mensurations (tour de taille, etc.)\n• Votre composition corporelle (% de graisse, etc.)'
+      );
       return;
     }
 
@@ -287,7 +295,7 @@ export default function AddScreen() {
 
     try {
       await addWeight({
-        weight,
+        weight: weight ?? 0,
         date: format(selectedDate, 'yyyy-MM-dd'),
         fat_percent: fatPercent ? parseFloat(fatPercent) : undefined,
         muscle_percent: musclePercent ? parseFloat(musclePercent) : undefined,
@@ -296,6 +304,13 @@ export default function AddScreen() {
         visceral_fat: visceralFat ? parseInt(visceralFat) : undefined,
         metabolic_age: metabolicAge ? parseInt(metabolicAge) : undefined,
         bmr: bmr ? parseInt(bmr) : undefined,
+        waist: waist ? parseFloat(waist) : undefined,
+        chest: chest ? parseFloat(chest) : undefined,
+        arm: arm ? parseFloat(arm) : undefined,
+        thigh: thigh ? parseFloat(thigh) : undefined,
+        hips: hips ? parseFloat(hips) : undefined,
+        neck: neck ? parseFloat(neck) : undefined,
+        calf: calf ? parseFloat(calf) : undefined,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -304,10 +319,10 @@ export default function AddScreen() {
       await draftService.clearWeightDraft();
 
       // Afficher la belle modal de succès
-      setSavedWeight(weight);
+      setSavedWeight(weight ?? null);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
       Alert.alert('Erreur', "Impossible d'enregistrer");
     } finally {
       setIsSaving(false);
@@ -462,6 +477,29 @@ export default function AddScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="none"
       >
+        {/* QUICK ACTION - Ajouter une séance d'entraînement */}
+        <TouchableOpacity
+          style={[styles.trainingQuickAction, { backgroundColor: '#8B5CF620', borderColor: '#8B5CF6' }]}
+          onPress={() => {
+            triggerHaptic();
+            router.push('/add-training');
+          }}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.trainingQuickIcon, { backgroundColor: '#8B5CF6' }]}>
+            <Dumbbell size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.trainingQuickContent}>
+            <Text style={[styles.trainingQuickTitle, { color: colors.textPrimary }]}>
+              Ajouter une séance
+            </Text>
+            <Text style={[styles.trainingQuickSubtitle, { color: colors.textMuted }]}>
+              Entraînement, sparring, cours...
+            </Text>
+          </View>
+          <ChevronRight size={24} color="#8B5CF6" />
+        </TouchableOpacity>
+
         {/* Date Selector */}
         <TouchableOpacity
           style={[styles.dateSelector, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
@@ -507,7 +545,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
                 <Flame size={18} color="#EF4444" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Graisse</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Graisse</Text>
               <NumericInput
                 value={fatPercent}
                 onValueChange={setFatPercent}
@@ -527,7 +565,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(34,197,94,0.15)' }]}>
                 <Dumbbell size={18} color="#22C55E" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Muscle</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Muscle</Text>
               <NumericInput
                 value={musclePercent}
                 onValueChange={setMusclePercent}
@@ -547,7 +585,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(6,182,212,0.15)' }]}>
                 <Droplets size={18} color="#06B6D4" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Eau</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Eau</Text>
               <NumericInput
                 value={waterPercent}
                 onValueChange={setWaterPercent}
@@ -570,7 +608,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(168,162,158,0.15)' }]}>
                 <Bone size={18} color="#A8A29E" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Os</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Os</Text>
               <NumericInput
                 value={boneMass}
                 onValueChange={setBoneMass}
@@ -590,7 +628,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(249,115,22,0.15)' }]}>
                 <CircleDot size={18} color="#F97316" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Viscérale</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Viscérale</Text>
               <NumericInput
                 value={visceralFat}
                 onValueChange={setVisceralFat}
@@ -608,7 +646,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(168,85,247,0.15)' }]}>
                 <Activity size={18} color="#A855F7" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textMuted }]}>Âge Méta.</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Âge Méta.</Text>
               <NumericInput
                 value={metabolicAge}
                 onValueChange={setMetabolicAge}
@@ -629,7 +667,7 @@ export default function AddScreen() {
             <View style={[styles.compIcon, { backgroundColor: 'rgba(234,179,8,0.15)' }]}>
               <Zap size={18} color="#EAB308" />
             </View>
-            <Text style={[styles.bmrLabel, { color: colors.textMuted }]}>Métabolisme de base (BMR)</Text>
+            <Text style={[styles.bmrLabel, { color: colors.textPrimary }]}>Métabolisme de base (BMR)</Text>
             <NumericInput
               value={bmr}
               onValueChange={setBmr}
@@ -752,23 +790,59 @@ export default function AddScreen() {
         </Card>
 
         {/* ═══════════════════════════════════════════ */}
-        {/* PHOTO */}
+        {/* PHOTO TRANSFORMATION - Design amélioré */}
         {/* ═══════════════════════════════════════════ */}
         <TouchableOpacity
-          style={[styles.photoCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+          style={[styles.photoTransformationCard, { backgroundColor: colors.backgroundCard }]}
           onPress={() => {
             triggerHaptic();
             router.push('/transformation');
           }}
+          activeOpacity={0.7}
         >
-          <View style={[styles.photoIcon, { backgroundColor: 'rgba(249,115,22,0.15)' }]}>
-            <Camera size={28} color="#F97316" />
+          {/* Content */}
+          <View style={styles.photoTransformationContent}>
+            <View style={styles.photoHeader}>
+              <View style={[styles.photoIconLarge, { backgroundColor: `${colors.accent}20` }]}>
+                <Camera size={32} color={colors.accent} />
+              </View>
+              <View style={styles.photoTextContainer}>
+                <Text style={[styles.photoTitleLarge, { color: colors.textPrimary }]}>
+                  Ma Transformation
+                </Text>
+                <Text style={[styles.photoSubtitleLarge, { color: colors.textMuted }]}>
+                  Ajoute & Compare tes photos
+                </Text>
+              </View>
+            </View>
+
+            {/* Visual Indicator - Avant/Après */}
+            <View style={styles.photoBeforeAfterIndicator}>
+              <View style={styles.photoBeforeBox}>
+                <View style={[styles.photoMiniIcon, { backgroundColor: '#EF444420' }]}>
+                  <Camera size={16} color="#EF4444" />
+                </View>
+                <Text style={[styles.photoBeforeText, { color: colors.textSecondary }]}>Avant</Text>
+              </View>
+
+              <View style={styles.photoArrowContainer}>
+                <ChevronRight size={20} color={colors.accent} strokeWidth={3} />
+              </View>
+
+              <View style={styles.photoAfterBox}>
+                <View style={[styles.photoMiniIcon, { backgroundColor: '#10B98120' }]}>
+                  <Camera size={16} color="#10B981" />
+                </View>
+                <Text style={[styles.photoAfterText, { color: colors.textSecondary }]}>Après</Text>
+              </View>
+            </View>
+
+            {/* CTA */}
+            <View style={[styles.photoCTA, { backgroundColor: colors.accent }]}>
+              <Text style={[styles.photoCTAText, { color: colors.textOnGold }]}>Comparer mes photos</Text>
+              <ChevronRight size={18} color={colors.textOnGold} strokeWidth={3} />
+            </View>
           </View>
-          <View style={styles.photoContent}>
-            <Text style={[styles.photoTitle, { color: colors.textPrimary }]}>Ajouter une Photo</Text>
-            <Text style={[styles.photoSubtitle, { color: colors.textMuted }]}>Suivre ma transformation</Text>
-          </View>
-          <ChevronRight size={24} color={colors.textMuted} />
         </TouchableOpacity>
 
         {/* ═══════════════════════════════════════════ */}
@@ -782,10 +856,10 @@ export default function AddScreen() {
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Check size={24} color="#FFF" />
+          <Check size={24} color={colors.textOnGold} />
           <Text style={[
             styles.saveButtonText,
-            { color: '#FFF' }
+            { color: colors.textOnGold }
           ]}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Text>
@@ -884,8 +958,8 @@ export default function AddScreen() {
                 onPress={handleBackupToCloud}
                 activeOpacity={0.8}
               >
-                <Cloud size={24} color="#FFF" strokeWidth={2.5} />
-                <Text style={styles.cloudButtonText}>Sauvegarder sur iCloud</Text>
+                <Cloud size={24} color={colors.textOnGold} strokeWidth={2.5} />
+                <Text style={[styles.cloudButtonText, { color: colors.textOnGold }]}>Sauvegarder sur iCloud</Text>
               </TouchableOpacity>
 
               {/* Bouton secondaire : Plus tard */}
@@ -953,6 +1027,37 @@ const styles = StyleSheet.create({
   autoSaveText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  // Training Quick Action
+  trainingQuickAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    borderRadius: RADIUS.xl,
+    marginBottom: SPACING.lg,
+    borderWidth: 2,
+    gap: SPACING.md,
+  },
+  trainingQuickIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trainingQuickContent: {
+    flex: 1,
+  },
+  trainingQuickTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  trainingQuickSubtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 2,
   },
 
   // Date
@@ -1194,33 +1299,94 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Photo Card
-  photoCard: {
+  // Photo Transformation Card - Design amélioré
+  photoTransformationCard: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    marginBottom: SPACING.lg,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  photoTransformationContent: {
+    gap: SPACING.lg,
+  },
+  photoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: RADIUS.xxl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
+    gap: SPACING.md,
   },
-  photoIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    justifyContent: 'center',
+  photoIconLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     alignItems: 'center',
-    marginRight: SPACING.md,
+    justifyContent: 'center',
   },
-  photoContent: {
+  photoTextContainer: {
     flex: 1,
   },
-  photoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
+  photoTitleLarge: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 4,
   },
-  photoSubtitle: {
+  photoSubtitleLarge: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  photoBeforeAfterIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.md,
+  },
+  photoBeforeBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  photoAfterBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: SPACING.sm,
+  },
+  photoMiniIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoBeforeText: {
     fontSize: 13,
+    fontWeight: '600',
+  },
+  photoAfterText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  photoArrowContainer: {
+    paddingHorizontal: SPACING.sm,
+  },
+  photoCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.sm,
+  },
+  photoCTAText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 
   // Save Button

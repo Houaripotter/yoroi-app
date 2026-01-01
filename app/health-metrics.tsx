@@ -41,6 +41,7 @@ import {
 import { StatsDetailModal } from '@/components/StatsDetailModal';
 import { HealthInsightsGenerator } from '@/lib/healthInsights';
 import { getProfile } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,13 +51,47 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type Period = 7 | 30 | 90;
 
+// ============================================
+// DEFINITIONS DES TERMES MEDICAUX
+// ============================================
+const TERM_DEFINITIONS: Record<string, { short: string; full: string }> = {
+  HRV: {
+    short: 'Variabilite Cardiaque',
+    full: 'Variabilite de la frequence cardiaque - Mesure l\'intervalle entre les battements. Plus elle est elevee, meilleure est ta recuperation.',
+  },
+  SDNN: {
+    short: 'Ecart-type intervalle NN',
+    full: 'Mesure standard de la variabilite cardiaque en millisecondes.',
+  },
+  REM: {
+    short: 'Sommeil Paradoxal',
+    full: 'Phase de sommeil avec mouvements oculaires rapides. Essentielle pour la memoire et l\'apprentissage. Ideal: 20-25% du sommeil.',
+  },
+  SpO2: {
+    short: 'Saturation Oxygene',
+    full: 'Pourcentage d\'oxygene dans le sang. Normal: 95-100%. En dessous de 90%, consulte un medecin.',
+  },
+  VO2Max: {
+    short: 'Capacite Aerobie Max',
+    full: 'Volume maximal d\'oxygene que ton corps peut utiliser. Plus il est eleve, meilleure est ton endurance.',
+  },
+  BPM: {
+    short: 'Battements/min',
+    full: 'Battements par minute - Mesure de la frequence cardiaque.',
+  },
+  FC: {
+    short: 'Frequence Cardiaque',
+    full: 'Nombre de battements du coeur par minute.',
+  },
+};
+
 export default function HealthMetricsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [period, setPeriod] = useState<Period>(90);
+  const [period, setPeriod] = useState<Period>(7); // 7 jours par defaut pour meilleure lisibilite
   const [weightGoal, setWeightGoal] = useState<number | undefined>();
 
   // Historical data states
@@ -161,7 +196,7 @@ export default function HealthMetricsScreen() {
         setInsights(generatedInsights);
       }
     } catch (error) {
-      console.error('Erreur chargement métriques santé:', error);
+      logger.error('Erreur chargement métriques santé:', error);
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +217,7 @@ export default function HealthMetricsScreen() {
         await loadHealthData();
       }
     } catch (error) {
-      console.error('Erreur connexion Apple Health:', error);
+      logger.error('Erreur connexion Apple Health:', error);
     }
   };
 
@@ -403,40 +438,50 @@ export default function HealthMetricsScreen() {
 
             {/* VO2 Max History Chart */}
             {vo2MaxHistory.length > 0 && (
-              <TrendLineChart
-                title={`VO₂ Max - ${period} jours`}
-                data={vo2MaxHistory}
-                color={colors.warning}
-                unit="ml/kg/min"
-                colors={colors}
-                onPress={() => setSelectedModal({
-                  type: 'vo2max',
-                  title: 'VO₂ Max',
-                  data: vo2MaxHistory,
-                  color: colors.warning,
-                  unit: 'ml/kg/min',
-                  icon: <Wind size={20} color={colors.warning} />,
-                })}
-              />
+              <View>
+                <TrendLineChart
+                  title={`VO₂ Max (Capacite Aerobie) - ${period} jours`}
+                  data={vo2MaxHistory}
+                  color={colors.warning}
+                  unit="ml/kg/min"
+                  colors={colors}
+                  onPress={() => setSelectedModal({
+                    type: 'vo2max',
+                    title: 'VO₂ Max (Capacite Aerobie Maximale)',
+                    data: vo2MaxHistory,
+                    color: colors.warning,
+                    unit: 'ml/kg/min',
+                    icon: <Wind size={20} color={colors.warning} />,
+                  })}
+                />
+                <Text style={[styles.definitionText, { color: colors.textMuted }]}>
+                  {TERM_DEFINITIONS.VO2Max.full}
+                </Text>
+              </View>
             )}
 
             {/* HRV History Chart */}
             {hrvHistory.length > 0 && (
-              <TrendLineChart
-                title={`HRV - ${period} jours`}
-                data={hrvHistory}
-                color={colors.purple}
-                unit="ms"
-                colors={colors}
-                onPress={() => setSelectedModal({
-                  type: 'hrv',
-                  title: 'HRV (Heart Rate Variability)',
-                  data: hrvHistory,
-                  color: colors.purple,
-                  unit: 'ms',
-                  icon: <Heart size={20} color={colors.purple} />,
-                })}
-              />
+              <View>
+                <TrendLineChart
+                  title={`HRV (Variabilite Cardiaque) - ${period} jours`}
+                  data={hrvHistory}
+                  color={colors.purple}
+                  unit="ms"
+                  colors={colors}
+                  onPress={() => setSelectedModal({
+                    type: 'hrv',
+                    title: 'HRV (Variabilite de la Frequence Cardiaque)',
+                    data: hrvHistory,
+                    color: colors.purple,
+                    unit: 'ms',
+                    icon: <Heart size={20} color={colors.purple} />,
+                  })}
+                />
+                <Text style={[styles.definitionText, { color: colors.textMuted }]}>
+                  {TERM_DEFINITIONS.HRV.full}
+                </Text>
+              </View>
             )}
 
             {/* Resting HR History Chart */}
@@ -496,12 +541,13 @@ export default function HealthMetricsScreen() {
               {/* HRV */}
               {healthData?.heartRateVariability && (
                 <MetricCard
-                  title="HRV (SDNN)"
+                  title="HRV"
                   icon={Activity}
                   iconColor={colors.purple}
                   value={`${healthData.heartRateVariability.value}`}
                   unit="ms"
-                  subtitle="Variabilité FC"
+                  subtitle="Variabilite Cardiaque"
+                  details="Plus eleve = meilleure recuperation"
                   badge={getHRVBadge(healthData.heartRateVariability.value)}
                   colors={colors}
                   size="large"
@@ -511,21 +557,26 @@ export default function HealthMetricsScreen() {
 
             {/* SpO2 History Chart */}
             {oxygenSaturationHistory.length > 0 && (
-              <TrendLineChart
-                title={`Saturation O₂ (SpO2) - ${period} jours`}
-                data={oxygenSaturationHistory}
-                color={colors.info}
-                unit="%"
-                colors={colors}
-                onPress={() => setSelectedModal({
-                  type: 'spo2',
-                  title: 'Saturation en Oxygène (SpO2)',
-                  data: oxygenSaturationHistory,
-                  color: colors.info,
-                  unit: '%',
-                  icon: <Droplet size={20} color={colors.info} />,
-                })}
-              />
+              <View>
+                <TrendLineChart
+                  title={`Saturation O₂ (SpO2) - ${period} jours`}
+                  data={oxygenSaturationHistory}
+                  color={colors.info}
+                  unit="%"
+                  colors={colors}
+                  onPress={() => setSelectedModal({
+                    type: 'spo2',
+                    title: 'Saturation en Oxygene (SpO2)',
+                    data: oxygenSaturationHistory,
+                    color: colors.info,
+                    unit: '%',
+                    icon: <Droplet size={20} color={colors.info} />,
+                  })}
+                />
+                <Text style={[styles.definitionText, { color: colors.textMuted }]}>
+                  {TERM_DEFINITIONS.SpO2.full}
+                </Text>
+              </View>
             )}
 
             <View style={styles.row}>
@@ -942,24 +993,28 @@ function SleepCard({ sleep, colors }: { sleep: HealthData['sleep']; colors: any 
               minutes={sleep.phases.deep}
               color="#8B5CF6"
               colors={colors}
+              definition="Recuperation physique et musculaire"
             />
             <SleepPhaseLegendItem
-              label="REM"
+              label="REM (Sommeil Paradoxal)"
               minutes={sleep.phases.rem}
               color="#EC4899"
               colors={colors}
+              definition="Memoire et apprentissage - Ideal: 20-25%"
             />
             <SleepPhaseLegendItem
-              label="Léger"
+              label="Leger"
               minutes={sleep.phases.core}
               color="#06B6D4"
               colors={colors}
+              definition="Transition entre les phases"
             />
             <SleepPhaseLegendItem
-              label="Éveil"
+              label="Eveil"
               minutes={sleep.phases.awake}
               color="#EF4444"
               colors={colors}
+              definition="Reveils pendant la nuit"
             />
           </View>
         </View>
@@ -998,11 +1053,13 @@ function SleepPhaseLegendItem({
   minutes,
   color,
   colors,
+  definition,
 }: {
   label: string;
   minutes: number;
   color: string;
   colors: any;
+  definition?: string;
 }) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -1010,11 +1067,18 @@ function SleepPhaseLegendItem({
   return (
     <View style={styles.sleepPhaseLegendItem}>
       <View style={[styles.sleepPhaseDot, { backgroundColor: color }]} />
-      <Text style={[styles.sleepPhaseLegendLabel, { color: colors.textSecondary }]}>
-        {label}
-      </Text>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.sleepPhaseLegendLabel, { color: colors.textSecondary }]}>
+          {label}
+        </Text>
+        {definition && (
+          <Text style={[styles.sleepPhaseDefinition, { color: colors.textMuted }]}>
+            {definition}
+          </Text>
+        )}
+      </View>
       <Text style={[styles.sleepPhaseLegendValue, { color: colors.textPrimary }]}>
-        {hours > 0 ? `${hours}h` : ''} {mins}m
+        {hours > 0 ? `${hours}h` : ''}{mins > 0 ? ` ${mins}m` : ''}
       </Text>
     </View>
   );
@@ -1324,12 +1388,19 @@ const styles = StyleSheet.create({
   },
   sleepPhaseLegendLabel: {
     fontSize: 13,
-    fontWeight: '500',
-    flex: 1,
+    fontWeight: '600',
+  },
+  sleepPhaseDefinition: {
+    fontSize: 10,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   sleepPhaseLegendValue: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+    minWidth: 60,
+    textAlign: 'right',
   },
   workoutCard: {
     padding: SPACING.md,
@@ -1366,5 +1437,14 @@ const styles = StyleSheet.create({
   workoutStatValue: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  definitionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 18,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+    marginTop: -SPACING.sm,
   },
 });

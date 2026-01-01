@@ -40,6 +40,7 @@ import {
   SPORT_LABELS,
 } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 export default function CompetitionDetailScreen() {
   const { colors } = useTheme();
@@ -64,7 +65,7 @@ export default function CompetitionDetailScreen() {
       setCompetition(comp);
       setCombats(fights);
     } catch (error) {
-      console.error('Error loading competition:', error);
+      logger.error('Error loading competition:', error);
       Alert.alert('Erreur', 'Impossible de charger la compétition');
       router.back();
     } finally {
@@ -87,7 +88,7 @@ export default function CompetitionDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
-              console.error('Error deleting competition:', error);
+              logger.error('Error deleting competition:', error);
               Alert.alert('Erreur', 'Impossible de supprimer la compétition');
             }
           },
@@ -99,6 +100,11 @@ export default function CompetitionDetailScreen() {
   const handleAddFight = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push(`/add-combat?competitionId=${competitionId}`);
+  };
+
+  const handleEdit = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push(`/edit-competition?id=${competitionId}`);
   };
 
   if (loading || !competition) {
@@ -119,12 +125,20 @@ export default function CompetitionDetailScreen() {
         title="Détail Compétition"
         showBack
         rightElement={
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={styles.headerButton}
-          >
-            <Trash2 size={20} color={colors.textMuted} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={handleEdit}
+              style={styles.headerButton}
+            >
+              <Edit size={20} color={colors.accent} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.headerButton}
+            >
+              <Trash2 size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -360,6 +374,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.lg,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
   },
   headerButton: {
     padding: SPACING.xs,

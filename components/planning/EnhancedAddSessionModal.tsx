@@ -21,6 +21,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Club, Training } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 interface EnhancedAddSessionModalProps {
   visible: boolean;
@@ -111,8 +112,8 @@ export function EnhancedAddSessionModal({
   // Debug: afficher le nombre de clubs
   useEffect(() => {
     if (visible) {
-      console.log('📋 Clubs disponibles:', clubs.length);
-      console.log('📋 Liste des clubs:', clubs.map(c => c.name).join(', '));
+      logger.info('📋 Clubs disponibles:', clubs.length);
+      logger.info('📋 Liste des clubs:', clubs.map(c => c.name).join(', '));
     }
   }, [visible, clubs]);
 
@@ -281,7 +282,7 @@ export function EnhancedAddSessionModal({
       // Ne pas appeler handleClose() ici - le parent gère la fermeture
       reset(); // Juste reset les champs pour la prochaine fois
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsSaving(false);

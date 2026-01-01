@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Animated } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Text as SvgText, G } from 'react-native-svg';
 
-const AnimatedG = Animated.createAnimatedComponent(G);
+// Note: Removed AnimatedG as SVG G elements don't support style animations directly
 
 interface SleepWaveProps {
   duration: number;
@@ -126,26 +126,26 @@ export const SleepWave: React.FC<SleepWaveProps> = ({
         <Path d={wavePath} fill="url(#sleepGradient)" />
 
         {/* Particules ZzZ BLANCHES */}
-        <AnimatedG style={{ opacity: zzz1Opacity, transform: [{ translateY: zzz1Y }] }}>
-          <SvgText x="25" y={height - 15} fontSize="16" fontWeight="900" fill="#FFFFFF" opacity="0.8">
+        <G opacity={0.8}>
+          <SvgText x="25" y={height - 15} fontSize="16" fontWeight="900" fill="#FFFFFF">
             Z
           </SvgText>
-        </AnimatedG>
-        <AnimatedG style={{ opacity: zzz2Opacity, transform: [{ translateY: zzz2Y }] }}>
-          <SvgText x="55" y={height - 20} fontSize="12" fontWeight="900" fill="#FFFFFF" opacity="0.7">
+        </G>
+        <G opacity={0.7}>
+          <SvgText x="55" y={height - 20} fontSize="12" fontWeight="900" fill="#FFFFFF">
             Z
           </SvgText>
-        </AnimatedG>
-        <AnimatedG style={{ opacity: zzz3Opacity, transform: [{ translateY: zzz3Y }] }}>
-          <SvgText x="80" y={height - 10} fontSize="18" fontWeight="900" fill="#FFFFFF" opacity="0.9">
+        </G>
+        <G opacity={0.9}>
+          <SvgText x="80" y={height - 10} fontSize="18" fontWeight="900" fill="#FFFFFF">
             Z
           </SvgText>
-        </AnimatedG>
-        <AnimatedG style={{ opacity: zzz4Opacity, transform: [{ translateY: zzz4Y }] }}>
-          <SvgText x="110" y={height - 18} fontSize="14" fontWeight="900" fill="#FFFFFF" opacity="0.6">
+        </G>
+        <G opacity={0.6}>
+          <SvgText x="110" y={height - 18} fontSize="14" fontWeight="900" fill="#FFFFFF">
             Z
           </SvgText>
-        </AnimatedG>
+        </G>
       </Svg>
     </View>
   );

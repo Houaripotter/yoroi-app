@@ -20,6 +20,7 @@ import {
 } from '@/lib/ramadanService';
 import { TrendingDown, TrendingUp, Droplet, Moon, Sun } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // RAMADAN STATS - STATISTIQUES DU MOIS SACRE
@@ -72,7 +73,7 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
         }
       }
     } catch (error) {
-      console.error('Erreur chargement stats Ramadan:', error);
+      logger.error('Erreur chargement stats Ramadan:', error);
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +119,7 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
       setHydration(newAmount);
       if (onRefresh) onRefresh();
     } catch (error) {
-      console.error('Erreur ajout hydratation:', error);
+      logger.error('Erreur ajout hydratation:', error);
     }
   };
 

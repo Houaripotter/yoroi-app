@@ -11,6 +11,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SupportedLanguage } from '@/lib/i18n';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 const LANGUAGES: { code: SupportedLanguage; label: string; flag: string }[] = [
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
@@ -29,7 +30,7 @@ export function LanguageSelector() {
       await setLanguage(newLanguage);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[LanguageSelector] Erreur changement langue:', error);
+      logger.error('[LanguageSelector] Erreur changement langue:', error);
     }
   };
 

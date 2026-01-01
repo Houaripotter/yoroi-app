@@ -7,11 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 
 import { scale, getGridColumns } from '@/constants/responsive';
+import logger from '@/lib/security/logger';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
 const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
+const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface HydrationLottieCardProps {
   currentMl?: number; // En millilitres maintenant
@@ -21,12 +22,13 @@ interface HydrationLottieCardProps {
 
 export const HydrationLottieCard: React.FC<HydrationLottieCardProps> = ({
   currentMl = 0,
-  goalMl,
+  goalMl = 2500,
   onAddMl
 }) => {
   const { colors } = useTheme();
-  const percentage = Math.min((currentMl / goalMl) * 100, 100);
-  const goalReached = currentMl >= goalMl;
+  logger.info('HYDRATION DEBUG:', { currentMl, goalMl, goalInLiters: goalMl / 1000 });
+  const percentage = goalMl > 0 ? Math.min((currentMl / goalMl) * 100, 100) : 0;
+  const goalReached = goalMl > 0 && currentMl >= goalMl;
 
   // Animation vague douce - effet liquide subtil
   const waveAnim = useRef(new Animated.Value(0)).current;
@@ -49,7 +51,7 @@ export const HydrationLottieCard: React.FC<HydrationLottieCardProps> = ({
           setGender(parsed.gender || null);
         }
       } catch (error) {
-        console.error('Erreur chargement genre:', error);
+        logger.error('Erreur chargement genre:', error);
       }
     };
     loadGender();
@@ -158,7 +160,7 @@ export const HydrationLottieCard: React.FC<HydrationLottieCardProps> = ({
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Droplets size={12} color="#0EA5E9" />
-          <Text style={styles.title}>HYDRATATION</Text>
+          <Text style={styles.title}>HYDRATATION V2</Text>
         </View>
         <TouchableOpacity 
           onPress={() => router.push('/hydration')}
@@ -168,154 +170,122 @@ export const HydrationLottieCard: React.FC<HydrationLottieCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Bouteille simple sans animation qui bouge - CLIQUABLE */}
+      {/* Belle bouteille d'eau avec graduations - CLIQUABLE */}
       <TouchableOpacity
         style={styles.animationContainer}
         onPress={() => router.push('/hydration')}
         activeOpacity={0.7}
       >
-        <View style={styles.bottle}>
-          {/* Bouchon animé - se lève complètement */}
+        <View style={styles.bottleWrapper}>
+          {/* Bouchon */}
           <Animated.View style={[
-            styles.cap,
-            { backgroundColor: '#0EA5E9' },
+            styles.bottleCap,
             {
               transform: [
                 {
                   translateY: capRotateAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, -20]
-                  })
-                },
-                {
-                  translateX: capRotateAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 5]
+                    outputRange: [0, -15]
                   })
                 }
               ]
             }
           ]} />
 
+          {/* Goulot */}
+          <View style={styles.bottleNeck} />
+
           {/* Corps de la bouteille */}
-          <View style={[styles.bottleBody, { borderColor: '#0EA5E9' }]}>
-            {/* Eau avec vagues */}
-            <View style={styles.waterFill}>
-              <View
-                style={[
-                  styles.water,
+          <View style={styles.bottleBody}>
+            {/* Eau qui monte */}
+            <Animated.View
+              style={[
+                styles.waterLevel,
+                {
+                  height: `${percentage}%`,
+                }
+              ]}
+            >
+              {/* Vague au sommet */}
+              {percentage > 0 && (
+                <Animated.View style={[
+                  styles.waterWave,
                   {
-                    height: percentage >= 100 ? '110%' : `${percentage}%`,
-                    backgroundColor: '#0EA5E9',
+                    transform: [{
+                      translateX: waveAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-8, 8]
+                      })
+                    }],
                   }
-                ]}
-              >
-                {/* Vague qui ondule de gauche à droite - BIEN VISIBLE */}
-                {percentage > 0 && (
-                  <>
-                    <Animated.View style={[
-                      styles.waveLayer,
-                      {
-                        transform: [{
-                          translateX: waveAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [-12, 12]
-                          })
-                        }],
-                      }
-                    ]}>
-                      <View style={styles.waveShape1} />
-                    </Animated.View>
-                    <Animated.View style={[
-                      styles.waveLayer,
-                      styles.waveLayer2,
-                      {
-                        transform: [{
-                          translateX: waveAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [12, -12]
-                          })
-                        }],
-                      }
-                    ]}>
-                      <View style={styles.waveShape2} />
-                    </Animated.View>
-                  </>
-                )}
+                ]} />
+              )}
 
-                {/* Bulles qui montent quand on ajoute de l'eau */}
-                {isPouringWater && (
-                  <>
-                    <Animated.View style={[
-                      styles.bubble,
-                      { left: '20%' },
-                      {
-                        transform: [{
-                          translateY: pourAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0, -70]
-                          })
-                        }],
-                        opacity: pourAnim.interpolate({
-                          inputRange: [0, 0.2, 0.8, 1],
-                          outputRange: [0, 1, 1, 0]
+              {/* Bulles montantes */}
+              {isPouringWater && (
+                <>
+                  <Animated.View style={[
+                    styles.bubble,
+                    { left: '25%', bottom: '20%' },
+                    {
+                      transform: [{
+                        translateY: pourAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -50]
                         })
-                      }
-                    ]}>
-                      <View style={styles.bubbleShape} />
-                    </Animated.View>
-                    <Animated.View style={[
-                      styles.bubble,
-                      { left: '50%' },
-                      {
-                        transform: [{
-                          translateY: pourAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [10, -80]
-                          })
-                        }],
-                        opacity: pourAnim.interpolate({
-                          inputRange: [0, 0.3, 0.9, 1],
-                          outputRange: [0, 1, 1, 0]
+                      }],
+                      opacity: pourAnim.interpolate({
+                        inputRange: [0, 0.3, 0.8, 1],
+                        outputRange: [0, 1, 0.5, 0]
+                      })
+                    }
+                  ]}>
+                    <View style={styles.bubbleCircle} />
+                  </Animated.View>
+                  <Animated.View style={[
+                    styles.bubble,
+                    { left: '60%', bottom: '30%' },
+                    {
+                      transform: [{
+                        translateY: pourAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [5, -55]
                         })
-                      }
-                    ]}>
-                      <View style={[styles.bubbleShape, { width: 10, height: 10, borderRadius: 5 }]} />
-                    </Animated.View>
-                    <Animated.View style={[
-                      styles.bubble,
-                      { left: '75%' },
-                      {
-                        transform: [{
-                          translateY: pourAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [5, -65]
-                          })
-                        }],
-                        opacity: pourAnim.interpolate({
-                          inputRange: [0, 0.25, 0.85, 1],
-                          outputRange: [0, 1, 1, 0]
-                        })
-                      }
-                    ]}>
-                      <View style={[styles.bubbleShape, { width: 7, height: 7, borderRadius: 3.5 }]} />
-                    </Animated.View>
-                  </>
-                )}
-              </View>
+                      }],
+                      opacity: pourAnim.interpolate({
+                        inputRange: [0, 0.2, 0.7, 1],
+                        outputRange: [0, 1, 0.5, 0]
+                      })
+                    }
+                  ]}>
+                    <View style={[styles.bubbleCircle, { width: 8, height: 8 }]} />
+                  </Animated.View>
+                </>
+              )}
+            </Animated.View>
+          </View>
+
+          {/* Graduations à droite de la bouteille */}
+          <View style={styles.graduations}>
+            <View style={styles.graduation}>
+              <View style={styles.graduationLine} />
+              <Text style={styles.graduationLabel}>{(goalMl * 0.001).toFixed(1)}L</Text>
             </View>
-
-            {/* Graduations avec chiffres */}
-            <View style={styles.graduations}>
-              {[100, 75, 50, 25, 0].map((val, index) => {
-                const liters = ((goalMl / 1000) * (val / 100)).toFixed(1);
-                return (
-                  <View key={val} style={styles.gradRow}>
-                    <View style={styles.grad} />
-                    <Text style={styles.gradLabel}>{liters}</Text>
-                  </View>
-                );
-              })}
+            <View style={styles.graduation}>
+              <View style={styles.graduationLine} />
+              <Text style={styles.graduationLabel}>{(goalMl * 0.00075).toFixed(1)}L</Text>
+            </View>
+            <View style={styles.graduation}>
+              <View style={styles.graduationLine} />
+              <Text style={styles.graduationLabel}>{(goalMl * 0.0005).toFixed(1)}L</Text>
+            </View>
+            <View style={styles.graduation}>
+              <View style={styles.graduationLine} />
+              <Text style={styles.graduationLabel}>{(goalMl * 0.00025).toFixed(1)}L</Text>
+            </View>
+            <View style={styles.graduation}>
+              <View style={styles.graduationLine} />
+              <Text style={styles.graduationLabel}>0.0L</Text>
             </View>
           </View>
         </View>
@@ -416,114 +386,90 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'visible',
   },
-  bottle: {
+  bottleWrapper: {
     alignItems: 'center',
-    overflow: 'visible',
+    position: 'relative',
   },
-  cap: {
-    width: 28,
-    height: 10,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    zIndex: 15,
-    elevation: 15,
+  bottleCap: {
+    width: 20,
+    height: 8,
+    backgroundColor: '#0EA5E9',
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
+    zIndex: 10,
+  },
+  bottleNeck: {
+    width: 16,
+    height: 6,
+    backgroundColor: 'rgba(14, 165, 233, 0.1)',
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: '#0EA5E9',
   },
   bottleBody: {
-    width: 60,
-    height: 85,
-    borderWidth: 3,
-    borderRadius: 12,
+    width: 45,
+    height: 75,
+    borderWidth: 2.5,
+    borderColor: '#0EA5E9',
+    borderRadius: 8,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
-    overflow: 'visible',
+    backgroundColor: 'rgba(14, 165, 233, 0.03)',
+    overflow: 'hidden',
     position: 'relative',
-    backgroundColor: 'rgba(14, 165, 233, 0.05)',
-    zIndex: 5,
-    elevation: 5,
   },
-  waterFill: {
+  waterLevel: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    top: -2,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-    borderRadius: 9,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-  },
-  water: {
-    width: '100%',
     backgroundColor: '#0EA5E9',
-    opacity: 0.8,
-    position: 'relative',
-  },
-  waveLayer: {
-    position: 'absolute',
-    top: -6,
-    left: 0,
-    right: 0,
-    height: 12,
+    opacity: 0.9,
     overflow: 'visible',
   },
-  waveLayer2: {
-    top: -3,
-  },
-  waveShape1: {
-    width: '120%',
+  waterWave: {
+    position: 'absolute',
+    top: -5,
+    left: -8,
+    right: -8,
     height: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderTopLeftRadius: 60,
-    borderTopRightRadius: 60,
-    marginLeft: '-10%',
-  },
-  waveShape2: {
-    width: '120%',
-    height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderTopLeftRadius: 55,
-    borderTopRightRadius: 55,
-    marginLeft: '-10%',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    borderRadius: 50,
   },
   bubble: {
     position: 'absolute',
-    bottom: 10,
   },
-  bubbleShape: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  bubbleCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.9)',
-    shadowColor: '#FFF',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
   },
   graduations: {
     position: 'absolute',
-    right: -22,
-    top: 3,
-    bottom: 3,
+    right: -32,
+    top: 14,
+    height: 75,
     justifyContent: 'space-between',
+    paddingVertical: 3,
   },
-  gradRow: {
+  graduation: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
-  grad: {
-    width: 8,
-    height: 1.5,
-    backgroundColor: 'rgba(14, 165, 233, 0.5)',
+  graduationLine: {
+    width: 12,
+    height: 2,
+    backgroundColor: '#0EA5E9',
+    borderRadius: 1,
   },
-  gradLabel: {
-    fontSize: 8,
-    fontWeight: '700',
+  graduationLabel: {
+    fontSize: 9,
+    fontWeight: '800',
     color: '#0EA5E9',
   },
   value: {

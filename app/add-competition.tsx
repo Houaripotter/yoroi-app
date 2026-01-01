@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - AJOUTER UNE COMPÉTITION
+// YOROI - AJOUTER UNE COMPÉTITION
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -28,6 +28,7 @@ import {
 } from '@/lib/fighterMode';
 import { addCompetition, getUserSport } from '@/lib/fighterModeService';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 export default function AddCompetitionScreen() {
   const { colors } = useTheme();
@@ -36,9 +37,13 @@ export default function AddCompetitionScreen() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [sport, setSport] = useState<Sport>('jjb');
+  const [typeEvenement, setTypeEvenement] = useState('');
   const [categoriePoidsId, setCategoriePoidsId] = useState('');
   const [weightCategories, setWeightCategories] = useState<WeightCategory[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Suggestions pour le type d'événement
+  const typeSuggestions = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
 
   useEffect(() => {
     loadUserSport();
@@ -86,6 +91,7 @@ export default function AddCompetitionScreen() {
         lieu: lieu.trim() || undefined,
         date: date.toISOString().split('T')[0],
         sport,
+        type_evenement: typeEvenement.trim() || undefined,
         categorie_poids: selectedCategory?.name,
         poids_max: selectedCategory?.maxWeight,
         statut: 'a_venir',
@@ -93,7 +99,7 @@ export default function AddCompetitionScreen() {
 
       router.back();
     } catch (error) {
-      console.error('Error saving competition:', error);
+      logger.error('Error saving competition:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder la compétition');
       setIsSaving(false);
     }
@@ -142,6 +148,58 @@ export default function AddCompetitionScreen() {
               onChangeText={setLieu}
             />
           </View>
+        </View>
+
+        {/* Type d'événement */}
+        <View style={styles.field}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
+            Type d'événement
+          </Text>
+          <View style={[styles.inputContainer, { backgroundColor: colors.backgroundCard }]}>
+            <Trophy size={20} color={colors.textMuted} />
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary }]}
+              placeholder="Ex: Combat, Match, Course..."
+              placeholderTextColor={colors.textMuted}
+              value={typeEvenement}
+              onChangeText={setTypeEvenement}
+            />
+          </View>
+          {/* Suggestions */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.suggestionsRow}
+          >
+            {typeSuggestions.map((suggestion) => (
+              <TouchableOpacity
+                key={suggestion}
+                style={[
+                  styles.suggestionChip,
+                  {
+                    backgroundColor: typeEvenement === suggestion
+                      ? `${colors.accent}20`
+                      : colors.backgroundCard,
+                    borderColor: typeEvenement === suggestion ? colors.accent : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  setTypeEvenement(suggestion);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.suggestionText,
+                    { color: typeEvenement === suggestion ? colors.accent : colors.textMuted },
+                  ]}
+                >
+                  {suggestion}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Date */}
@@ -260,7 +318,7 @@ export default function AddCompetitionScreen() {
                     <Text
                       style={[
                         styles.categoryName,
-                        { color: isSelected ? '#FFFFFF' : colors.textPrimary },
+                        { color: isSelected ? colors.textOnGold : colors.textPrimary },
                       ]}
                     >
                       {category.name}
@@ -270,7 +328,7 @@ export default function AddCompetitionScreen() {
                         styles.categoryWeight,
                         {
                           color: isSelected
-                            ? 'rgba(255, 255, 255, 0.8)'
+                            ? colors.textOnGold
                             : colors.textMuted,
                         },
                       ]}
@@ -298,8 +356,8 @@ export default function AddCompetitionScreen() {
           disabled={isSaving}
           activeOpacity={0.8}
         >
-          <Save size={20} color="#FFFFFF" />
-          <Text style={styles.saveButtonText}>
+          <Save size={20} color={colors.textOnGold} />
+          <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Text>
         </TouchableOpacity>
@@ -355,6 +413,20 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: 12,
     marginTop: SPACING.xs,
+  },
+  suggestionsRow: {
+    gap: SPACING.sm,
+    paddingTop: SPACING.sm,
+  },
+  suggestionChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+  },
+  suggestionText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   categoriesRow: {
     gap: SPACING.sm,

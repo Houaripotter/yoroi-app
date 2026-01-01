@@ -38,6 +38,7 @@ import {
 } from '@/lib/fighterModeService';
 import { Combat, Competition } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 export default function CombatDetailScreen() {
   const { colors } = useTheme();
@@ -62,7 +63,7 @@ export default function CombatDetailScreen() {
         setCompetition(compData);
       }
     } catch (error) {
-      console.error('Error loading combat:', error);
+      logger.error('Error loading combat:', error);
       Alert.alert('Erreur', 'Impossible de charger le combat');
       router.back();
     } finally {
@@ -85,7 +86,7 @@ export default function CombatDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
-              console.error('Error deleting combat:', error);
+              logger.error('Error deleting combat:', error);
               Alert.alert('Erreur', 'Impossible de supprimer le combat');
             }
           },

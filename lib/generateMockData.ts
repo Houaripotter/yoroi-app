@@ -1,5 +1,6 @@
 import { Measurement } from './storage';
 import { addMeasurement, deleteAllMeasurements } from './storage';
+import logger from '@/lib/security/logger';
 
 /**
  * Génère des données fictives pour 6 mois (180 jours)
@@ -7,8 +8,8 @@ import { addMeasurement, deleteAllMeasurements } from './storage';
  * Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots
  */
 export async function generateMockMeasurements(): Promise<void> {
-  console.log('⚔️ Fonction generateMockMeasurements désactivée - Aucune donnée fictive insérée');
-  console.log('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
+  logger.info('⚔️ Fonction generateMockMeasurements désactivée - Aucune donnée fictive insérée');
+  logger.info('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
   // FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
   return;
 
@@ -143,15 +144,15 @@ export async function generateMockMeasurements(): Promise<void> {
   }
 
   // Ajouter toutes les mesures au stockage
-  console.log(`📊 Génération de ${measurements.length} mesures fictives (6 mois / 180 jours)...`);
+  logger.info(`📊 Génération de ${measurements.length} mesures fictives (6 mois / 180 jours)...`);
   for (const measurement of measurements) {
     try {
       await addMeasurement(measurement);
     } catch (error) {
-      console.error(`❌ Erreur lors de l'ajout de la mesure ${measurement.date}:`, error);
+      logger.error(`❌ Erreur lors de l'ajout de la mesure ${measurement.date}:`, error);
     }
   }
 
-  console.log('✅ Toutes les mesures fictives (6 mois) ont été ajoutées !');
+  logger.info('✅ Toutes les mesures fictives (6 mois) ont été ajoutées !');
   */
 }

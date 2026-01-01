@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight, ExternalLink, Mail, MapPin, Star, X } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, ExternalLink, Mail, MapPin, Star, X, Phone, Globe, Facebook as FacebookIcon, Swords, Trophy, Award, Zap, Dumbbell, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import {
@@ -27,19 +27,19 @@ import {
 } from '@/data/partners';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 
-const getClubIcon = (type: string): string => {
+const getClubIcon = (type: string, color: string = '#999') => {
   if (type.toLowerCase().includes('jiu-jitsu') || type.toLowerCase().includes('jjb')) {
-    return '🥋';
+    return <Swords size={32} color={color} strokeWidth={2} />;
   } else if (type.toLowerCase().includes('mma') || type.toLowerCase().includes('combat')) {
-    return '🥊';
+    return <Trophy size={32} color={color} strokeWidth={2} />;
   } else if (type.toLowerCase().includes('boxe')) {
-    return '🥊';
+    return <Award size={32} color={color} strokeWidth={2} />;
   } else if (type.toLowerCase().includes('crossfit')) {
-    return '💪';
+    return <Zap size={32} color={color} strokeWidth={2} />;
   } else if (type.toLowerCase().includes('musculation')) {
-    return '🏋️';
+    return <Dumbbell size={32} color={color} strokeWidth={2} />;
   } else {
-    return '🏆';
+    return <Trophy size={32} color={color} strokeWidth={2} />;
   }
 };
 
@@ -48,6 +48,7 @@ export default function PartnersScreen() {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<'coaches' | 'clubs'>('coaches');
   const [selectedPartner, setSelectedPartner] = useState<Coach | Club | null>(null);
+  const [imageZoomed, setImageZoomed] = useState(false);
 
   const openInstagram = (handle: string) => {
     const cleanHandle = handle.replace('@', '');
@@ -58,14 +59,24 @@ export default function PartnersScreen() {
     Linking.openURL(`https://youtube.com/@${channelName}`);
   };
 
-  const openEmail = () => {
-    const email = 'partenaires@yoroi-app.com';
-    const subject = 'Partenariat YOROI';
-    Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}`);
+  const openPhone = (phoneNumber: string) => {
+    const cleanNumber = phoneNumber.replace(/\s/g, '').replace(/\./g, '');
+    Linking.openURL(`tel:${cleanNumber}`);
+  };
+
+  const openEmail = (email?: string) => {
+    const emailAddress = email || 'partenaires@yoroi-app.com';
+    const subject = email ? 'Contact via YOROI' : 'Partenariat YOROI';
+    Linking.openURL(`mailto:${emailAddress}?subject=${encodeURIComponent(subject)}`);
   };
 
   const openWebsite = (url: string) => {
     Linking.openURL(url);
+  };
+
+  const openFacebook = (handle: string) => {
+    const cleanHandle = handle.replace('@', '').replace('/', '');
+    Linking.openURL(`https://facebook.com/${cleanHandle}`);
   };
 
   return (
@@ -159,7 +170,6 @@ export default function PartnersScreen() {
 
         {/* Devenir Partenaire */}
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={styles.becomePartnerIcon}>🤝</Text>
           <Text style={[styles.becomePartnerTitle, { color: colors.textPrimary }]}>
             Tu es coach ou tu gères un club ?
           </Text>
@@ -168,7 +178,7 @@ export default function PartnersScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.becomePartnerButton, { backgroundColor: colors.accent }]}
-            onPress={openEmail}
+            onPress={() => openEmail()}
             activeOpacity={0.8}
           >
             <Mail size={18} color={colors.textOnAccent} />
@@ -187,15 +197,50 @@ export default function PartnersScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Modal Image Agrandie */}
+      {selectedPartner && imageZoomed && (
+        <Modal
+          visible={imageZoomed}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setImageZoomed(false)}
+        >
+          <View style={styles.imageZoomContainer}>
+            <TouchableOpacity
+              style={styles.imageZoomOverlay}
+              activeOpacity={1}
+              onPress={() => setImageZoomed(false)}
+            >
+              <TouchableOpacity
+                style={styles.imageZoomCloseButton}
+                onPress={() => setImageZoomed(false)}
+              >
+                <X size={32} color="#FFFFFF" strokeWidth={3} />
+              </TouchableOpacity>
+              {selectedPartner.imageUrl && (
+                <Image
+                  source={selectedPartner.imageUrl}
+                  style={styles.imageZoomImage}
+                  resizeMode="contain"
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      )}
+
       {/* Modal Détail Partenaire */}
       {selectedPartner && (
         <Modal
           visible={!!selectedPartner}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={() => setSelectedPartner(null)}
+          onRequestClose={() => {
+            setSelectedPartner(null);
+            setImageZoomed(false);
+          }}
         >
-          <View style={styles.detailContainer}>
+          <View style={[styles.detailContainer, { backgroundColor: colors.background }]}>
             {/* Header avec photo en grand */}
             <View style={styles.detailHeader}>
               <TouchableOpacity
@@ -205,13 +250,19 @@ export default function PartnersScreen() {
                 <X size={28} color="#FFFFFF" strokeWidth={2.5} />
               </TouchableOpacity>
 
-              {/* Grande photo */}
+              {/* Grande photo - Cliquable pour agrandir */}
               {selectedPartner.imageUrl && (
-                <Image
-                  source={selectedPartner.imageUrl}
-                  style={styles.detailHeaderImage}
-                  resizeMode="cover"
-                />
+                <TouchableOpacity
+                  onPress={() => setImageZoomed(true)}
+                  activeOpacity={0.9}
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  <Image
+                    source={selectedPartner.imageUrl}
+                    style={styles.detailHeaderImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
               )}
 
               {/* Gradient overlay */}
@@ -242,6 +293,106 @@ export default function PartnersScreen() {
                   </Text>
                 </View>
               )}
+
+              {/* Contact - Boutons cliquables */}
+              <View style={styles.detailSection}>
+                <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
+                  Contact
+                </Text>
+                <View style={styles.contactButtonsGrid}>
+                  {/* Téléphone */}
+                  {'phone' in selectedPartner && selectedPartner.phone && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#10B981' }]}
+                      onPress={() => openPhone(selectedPartner.phone!)}
+                      activeOpacity={0.8}
+                    >
+                      <Phone size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>Appeler</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Instagram */}
+                  {selectedPartner.instagram && !Array.isArray(selectedPartner.instagram) && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#E1306C' }]}
+                      onPress={() => openInstagram(selectedPartner.instagram as string)}
+                      activeOpacity={0.8}
+                    >
+                      <ExternalLink size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>Instagram</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Site Web */}
+                  {selectedPartner.website && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#3B82F6' }]}
+                      onPress={() => openWebsite(selectedPartner.website!)}
+                      activeOpacity={0.8}
+                    >
+                      <Globe size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>Site Web</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Email */}
+                  {'email' in selectedPartner && selectedPartner.email && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#F59E0B' }]}
+                      onPress={() => openEmail(selectedPartner.email)}
+                      activeOpacity={0.8}
+                    >
+                      <Mail size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>Email</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Facebook */}
+                  {'facebook' in selectedPartner && selectedPartner.facebook && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#1877F2' }]}
+                      onPress={() => openFacebook(selectedPartner.facebook!)}
+                      activeOpacity={0.8}
+                    >
+                      <FacebookIcon size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>Facebook</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* YouTube */}
+                  {'youtube' in selectedPartner && selectedPartner.youtube && (
+                    <TouchableOpacity
+                      style={[styles.contactButton, { backgroundColor: '#FF0000' }]}
+                      onPress={() => openYoutube(selectedPartner.youtube!)}
+                      activeOpacity={0.8}
+                    >
+                      <ExternalLink size={20} color="#FFFFFF" strokeWidth={2.5} />
+                      <Text style={styles.contactButtonText}>YouTube</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Si Instagram multiple (pour les clubs) */}
+                {Array.isArray(selectedPartner.instagram) && (
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.detailSectionTitle, { color: colors.textMuted, fontSize: 12, marginBottom: 8 }]}>
+                      Comptes Instagram
+                    </Text>
+                    {selectedPartner.instagram.map((handle, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[styles.contactButton, { backgroundColor: '#E1306C', marginBottom: 8 }]}
+                        onPress={() => openInstagram(handle)}
+                        activeOpacity={0.8}
+                      >
+                        <ExternalLink size={20} color="#FFFFFF" strokeWidth={2.5} />
+                        <Text style={styles.contactButtonText}>{handle}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
 
               {/* Spécialités (pour les coachs) */}
               {'specialties' in selectedPartner && selectedPartner.specialties && (
@@ -301,51 +452,6 @@ export default function PartnersScreen() {
                 </TouchableOpacity>
               )}
 
-              {/* Instagram */}
-              {selectedPartner.instagram && (
-                <View style={styles.detailSection}>
-                  <Text style={[styles.detailSectionTitle, { color: colors.textMuted }]}>
-                    Réseaux sociaux
-                  </Text>
-                  {Array.isArray(selectedPartner.instagram) ? (
-                    selectedPartner.instagram.map((handle, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        style={styles.detailInstagramButton}
-                        onPress={() => openInstagram(handle)}
-                        activeOpacity={0.7}
-                      >
-                        <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
-                        <Text style={styles.detailInstagramText}>{handle}</Text>
-                        <ExternalLink size={18} color="#FFFFFF" />
-                      </TouchableOpacity>
-                    ))
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.detailInstagramButton}
-                      onPress={() => openInstagram(selectedPartner.instagram as string)}
-                      activeOpacity={0.7}
-                    >
-                      <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
-                      <Text style={styles.detailInstagramText}>{selectedPartner.instagram}</Text>
-                      <ExternalLink size={18} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-
-              {/* YouTube (pour les coachs) */}
-              {'youtube' in selectedPartner && selectedPartner.youtube && (
-                <TouchableOpacity
-                  style={[styles.detailYoutubeButton, { backgroundColor: '#FF0000' }]}
-                  onPress={() => openYoutube(selectedPartner.youtube!)}
-                  activeOpacity={0.7}
-                >
-                  <ExternalLink size={22} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={styles.detailYoutubeText}>YouTube</Text>
-                  <ExternalLink size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
 
               <View style={{ height: 60 }} />
             </ScrollView>
@@ -377,7 +483,9 @@ const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, onPress }) => (
       {coach.imageUrl ? (
         <Image source={coach.imageUrl} style={styles.coachImage} />
       ) : (
-        <Text style={styles.coachPhotoPlaceholder}>👨‍🏫</Text>
+        <View style={styles.coachPhotoPlaceholder}>
+          <User size={32} color={colors.textMuted} strokeWidth={2} />
+        </View>
       )}
     </View>
 
@@ -451,7 +559,9 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
       {club.imageUrl ? (
         <Image source={club.imageUrl} style={styles.clubImage} />
       ) : (
-        <Text style={styles.clubPhotoPlaceholder}>{getClubIcon(club.type)}</Text>
+        <View style={styles.clubPhotoPlaceholder}>
+          {getClubIcon(club.type, colors.textMuted)}
+        </View>
       )}
     </View>
 
@@ -589,7 +699,10 @@ const styles = StyleSheet.create({
     borderRadius: 35,
   },
   coachPhotoPlaceholder: {
-    fontSize: 32,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   coachInfo: {
     flex: 1,
@@ -679,7 +792,10 @@ const styles = StyleSheet.create({
     borderRadius: 35,
   },
   clubPhotoPlaceholder: {
-    fontSize: 32,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   clubInfo: {
     flex: 1,
@@ -719,10 +835,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.lg,
   },
-  becomePartnerIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
   becomePartnerTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -759,7 +871,7 @@ const styles = StyleSheet.create({
   // Detail Modal
   detailContainer: {
     flex: 1,
-    backgroundColor: '#E8EDF2',
+    // backgroundColor dynamique via style inline
   },
   detailHeader: {
     height: 400,
@@ -910,5 +1022,59 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
     textAlign: 'center',
+  },
+
+  // Contact buttons
+  contactButtonsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    minWidth: '48%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  contactButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Image zoom modal
+  imageZoomContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+  },
+  imageZoomOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageZoomCloseButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  imageZoomImage: {
+    width: '100%',
+    height: '80%',
   },
 });

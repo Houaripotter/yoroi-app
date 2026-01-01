@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // SAMURAI SLASH - ANIMATION DE TRANSITION
@@ -86,7 +87,7 @@ export const SamuraiSlash: React.FC<SamuraiSlashProps> = ({
       );
       soundRef.current = sound;
     } catch (error) {
-      console.log('Son non disponible:', error);
+      logger.info('Son non disponible:', error);
     }
   };
 
@@ -97,7 +98,7 @@ export const SamuraiSlash: React.FC<SamuraiSlashProps> = ({
         await soundRef.current.playAsync();
       }
     } catch (error) {
-      console.log('Erreur son:', error);
+      logger.info('Erreur son:', error);
     }
   };
 

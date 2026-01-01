@@ -4,6 +4,7 @@
 // Interface TypeScript pour contrôler les Live Activities iOS
 
 import { NativeModules, Platform } from 'react-native';
+import logger from '@/lib/security/logger';
 
 const { TimerActivityModule } = NativeModules;
 
@@ -34,7 +35,7 @@ export const isLiveActivitySupported = async (): Promise<boolean> => {
     if (!TimerActivityModule) return false;
     return await TimerActivityModule.isSupported();
   } catch (error) {
-    console.log('Live Activities non supportées:', error);
+    logger.info('Live Activities non supportées:', error);
     return false;
   }
 };
@@ -59,10 +60,10 @@ export const startTimerLiveActivity = async (
       state.totalRounds,
       state.isRest
     );
-    console.log('Live Activity démarrée:', activityId);
+    logger.info('Live Activity démarrée:', activityId);
     return activityId;
   } catch (error) {
-    console.error('Erreur démarrage Live Activity:', error);
+    logger.error('Erreur démarrage Live Activity:', error);
     return null;
   }
 };
@@ -103,10 +104,10 @@ export const stopTimerLiveActivity = async (): Promise<boolean> => {
 
   try {
     await TimerActivityModule.stopActivity();
-    console.log('Live Activity arrêtée');
+    logger.info('Live Activity arrêtée');
     return true;
   } catch (error) {
-    console.error('Erreur arrêt Live Activity:', error);
+    logger.error('Erreur arrêt Live Activity:', error);
     return false;
   }
 };

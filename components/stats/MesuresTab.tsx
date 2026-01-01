@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { getMeasurements, getLatestMeasurement } from '@/lib/database';
 import { Ruler } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 
 export default function MesuresTab() {
   const { colors } = useTheme();
@@ -17,7 +18,7 @@ export default function MesuresTab() {
       const latest = await getLatestMeasurement();
       setLatestMeasurement(latest);
     } catch (error) {
-      console.error('Erreur chargement mesures:', error);
+      logger.error('Erreur chargement mesures:', error);
     }
   };
 

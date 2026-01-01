@@ -56,6 +56,7 @@ import {
 import { ProgressChart } from '@/components/ProgressChart';
 import { ShareableProgressCard } from '@/components/ShareableProgressCard';
 import { captureRef } from 'react-native-view-shot';
+import logger from '@/lib/security/logger';
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
@@ -115,7 +116,7 @@ export default function TrainingJournalScreen() {
       setMasteredItems(getProgressionItems('mastered'));
       setStats(getJournalStats());
     } catch (error) {
-      console.error('[TRAINING_JOURNAL] Erreur chargement:', error);
+      logger.error('[TRAINING_JOURNAL] Erreur chargement:', error);
     }
   }, []);
 
@@ -300,7 +301,7 @@ export default function TrainingJournalScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.error('[SHARE] Erreur:', error);
+      logger.error('[SHARE] Erreur:', error);
       setShareModalVisible(false);
       setShareItem(null);
       Alert.alert('Erreur', 'Impossible de partager le graphique');

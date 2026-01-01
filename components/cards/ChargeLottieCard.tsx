@@ -5,9 +5,9 @@ import { Activity, Zap } from 'lucide-react-native';
 import { scale, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
 const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
+const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 type RiskLevel = 'safe' | 'moderate' | 'high' | 'danger' | 'leger' | 'modere' | 'optimal' | 'eleve';
 
@@ -337,11 +337,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   level: {
-    fontSize: 14,
+    fontSize: 24,
     fontWeight: '900',
   },
   description: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
   },
   footer: {

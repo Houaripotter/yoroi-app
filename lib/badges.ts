@@ -29,6 +29,7 @@ import {
   Medal,
   Mountain,
 } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 import {
   getAllMeasurements,
   getAllWorkouts,
@@ -99,7 +100,7 @@ export const STREAK_BADGES: Badge[] = [
   },
   {
     id: 'fortnight_warrior',
-    name: 'Guerrier quinzaine',
+    name: 'Athlète quinzaine',
     iconComponent: Flame,
     description: '14 jours de streak consecutifs',
     category: 'streak',
@@ -229,7 +230,7 @@ export const WEIGHT_BADGES: Badge[] = [
   },
   {
     id: 'ultimate_warrior',
-    name: 'Guerrier ultime',
+    name: 'Athlète ultime',
     iconComponent: Crown,
     description: '30 kg perdus au total',
     category: 'weight',
@@ -240,7 +241,7 @@ export const WEIGHT_BADGES: Badge[] = [
     id: 'goal_reached',
     name: 'Objectif atteint',
     iconComponent: Crown,
-    description: 'Atteindre son objectif de poids',
+    description: 'Atteindre ton objectif de poids',
     category: 'weight',
     requirement: 1, // Boolean check
     xpReward: 1000,
@@ -258,7 +259,7 @@ export const WEIGHT_BADGES: Badge[] = [
     id: 'halfway_goal',
     name: 'Mi-chemin',
     iconComponent: Target,
-    description: 'Atteindre 50% de son objectif de poids',
+    description: 'Atteindre 50% de ton objectif de poids',
     category: 'weight',
     requirement: 1, // Boolean check
     xpReward: 500,
@@ -305,7 +306,7 @@ export const TRAINING_BADGES: Badge[] = [
   },
   {
     id: 'warrior',
-    name: 'Guerrier',
+    name: 'Athlète',
     iconComponent: Swords,
     description: '100 entrainements completes',
     category: 'training',
@@ -374,7 +375,7 @@ export const SPECIAL_BADGES: Badge[] = [
     id: 'team_yoroi_member',
     name: 'Membre Team Yoroi',
     iconComponent: Swords,
-    description: 'Tu fais partie de la famille. Bienvenue, guerrier.',
+    description: 'Tu fais partie de la famille. Bienvenue, champion.',
     category: 'special',
     requirement: 0, // Donné automatiquement à l'inscription
     xpReward: 100,
@@ -444,7 +445,7 @@ export const SPECIAL_BADGES: Badge[] = [
   },
   {
     id: 'weekend_warrior',
-    name: 'Guerrier weekend',
+    name: 'Athlète weekend',
     iconComponent: Calendar,
     description: 'Entrainement samedi et dimanche',
     category: 'special',
@@ -681,7 +682,7 @@ export const getUnlockedBadges = async (): Promise<string[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.UNLOCKED_BADGES);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur lecture badges:', error);
+    logger.error('Erreur lecture badges:', error);
     return [];
   }
 };
@@ -694,7 +695,7 @@ export const getBadgeUnlockDates = async (): Promise<Record<string, string>> => 
     const data = await AsyncStorage.getItem(STORAGE_KEYS.BADGE_UNLOCK_DATES);
     return data ? JSON.parse(data) : {};
   } catch (error) {
-    console.error('Erreur lecture dates badges:', error);
+    logger.error('Erreur lecture dates badges:', error);
     return {};
   }
 };
@@ -726,10 +727,10 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
       JSON.stringify(dates)
     );
 
-    console.log('Badge debloque:', badgeId);
+    logger.info('Badge debloque:', badgeId);
     return true;
   } catch (error) {
-    console.error('Erreur deblocage badge:', error);
+    logger.error('Erreur deblocage badge:', error);
     return false;
   }
 };
@@ -767,7 +768,7 @@ export const setFirstUseDate = async (): Promise<void> => {
       );
     }
   } catch (error) {
-    console.error('Erreur enregistrement date:', error);
+    logger.error('Erreur enregistrement date:', error);
   }
 };
 

@@ -26,6 +26,8 @@ import {
   Calendar,
   Edit3,
   TrendingDown,
+  TrendingUp,
+  Minus,
   Award,
   X,
   Check,
@@ -34,6 +36,10 @@ import {
   Heart,
   Activity,
   Camera,
+  ChevronRight,
+  Droplet,
+  Swords,
+  User,
 } from 'lucide-react-native';
 import { AvatarSolid } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -49,6 +55,10 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
+// 🔒 SÉCURITÉ: Protection contre les screenshots
+import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
+import { BlurView } from 'expo-blur';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -212,7 +222,11 @@ const InfoRow = ({
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+
+  // 🔒 SÉCURITÉ: Protection contre les screenshots
+  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
+
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [streak, setStreak] = useState(0);
@@ -224,6 +238,9 @@ export default function ProfileScreen() {
   const [targetWeight, setTargetWeight] = useState('');
   const [startWeight, setStartWeight] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState('');
+  const [weightGoal, setWeightGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
+  const [userAge, setUserAge] = useState('');
 
   const loadData = useCallback(async () => {
     try {
@@ -236,6 +253,9 @@ export default function ProfileScreen() {
         setTargetWeight(profileData.target_weight?.toString() || '');
         setStartWeight(profileData.start_weight?.toString() || '');
         setProfilePhoto(profileData.profile_photo || null);
+        setBirthDate(profileData.birth_date || '');
+        setWeightGoal(profileData.weight_goal || 'lose');
+        setUserAge(profileData.age?.toString() || '');
       }
 
       const streakDays = await calculateStreak();
@@ -244,7 +264,7 @@ export default function ProfileScreen() {
       const progress = await getWeightProgress();
       setWeightProgress(progress);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      logger.error('Error loading profile:', error);
     }
   }, []);
 
@@ -274,13 +294,16 @@ export default function ProfileScreen() {
         start_date: profile?.start_date || format(new Date(), 'yyyy-MM-dd'),
         avatar_gender: profile?.avatar_gender || 'homme',
         profile_photo: profilePhoto,
+        birth_date: birthDate || undefined,
+        weight_goal: weightGoal,
+        age: userAge ? parseInt(userAge) : undefined,
       });
 
       await loadData();
       setIsEditing(false);
-      Alert.alert('Succès', 'Profil mis à jour');
+      Alert.alert('Profil mis à jour');
     } catch (error) {
-      console.error('Save error:', error);
+      logger.error('Save error:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder');
     }
   };
@@ -305,10 +328,20 @@ export default function ProfileScreen() {
               quality: 0.7,
             });
             if (!result.canceled && result.assets[0]) {
-              setProfilePhoto(result.assets[0].uri);
+              const photoUri = result.assets[0].uri;
+              setProfilePhoto(photoUri);
+
+              // S'assurer que le nom n'est jamais null ou vide
+              const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+
               await saveProfile({
-                ...profile!,
-                profile_photo: result.assets[0].uri,
+                name: safeName,
+                height_cm: profile?.height_cm,
+                target_weight: profile?.target_weight,
+                start_weight: profile?.start_weight,
+                start_date: profile?.start_date,
+                avatar_gender: profile?.avatar_gender || 'homme',
+                profile_photo: photoUri,
               });
               await loadData();
             }
@@ -329,10 +362,20 @@ export default function ProfileScreen() {
               quality: 0.7,
             });
             if (!result.canceled && result.assets[0]) {
-              setProfilePhoto(result.assets[0].uri);
+              const photoUri = result.assets[0].uri;
+              setProfilePhoto(photoUri);
+
+              // S'assurer que le nom n'est jamais null ou vide
+              const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+
               await saveProfile({
-                ...profile!,
-                profile_photo: result.assets[0].uri,
+                name: safeName,
+                height_cm: profile?.height_cm,
+                target_weight: profile?.target_weight,
+                start_weight: profile?.start_weight,
+                start_date: profile?.start_date,
+                avatar_gender: profile?.avatar_gender || 'homme',
+                profile_photo: photoUri,
               });
               await loadData();
             }
@@ -342,8 +385,17 @@ export default function ProfileScreen() {
           text: 'Utiliser avatar du rang',
           onPress: async () => {
             setProfilePhoto(null);
+
+            // S'assurer que le nom n'est jamais null
+            const safeName = (profile?.name || name || 'Champion').trim() || 'Champion';
+
             await saveProfile({
-              ...profile!,
+              name: safeName,
+              height_cm: profile?.height_cm,
+              target_weight: profile?.target_weight,
+              start_weight: profile?.start_weight,
+              start_date: profile?.start_date,
+              avatar_gender: profile?.avatar_gender || 'homme',
               profile_photo: null,
             });
             await loadData();
@@ -403,53 +455,74 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Hero Card */}
+        {/* 🔒 SÉCURITÉ: Avertissement screenshot détecté */}
+        {screenshotDetected && (
+          <View style={styles.screenshotWarning}>
+            <Text style={styles.screenshotWarningText}>
+              ⚠️ Screenshot détecté - Tes données sont sensibles
+            </Text>
+          </View>
+        )}
+
+        {/* Profile Hero Card - Avatar Left, Photo Right */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={[COLORS.surface, COLORS.background]}
             style={styles.heroGradient}
           >
-            {/* Avatar with Ring */}
-            <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.8}>
-              <LargeRingProgress progress={rankProgress} size={140} strokeWidth={6} accentColor={colors.accent}>
-                {profilePhoto ? (
-                  <Image
-                    source={{ uri: profilePhoto }}
-                    style={{ width: 120, height: 120, borderRadius: 60 }}
-                    resizeMode="cover"
+            {/* Top Row: Avatar + Name + Photo */}
+            <View style={styles.heroTopRow}>
+              {/* Left: Avatar du rang */}
+              <View style={styles.heroAvatarContainer}>
+                <AvatarSolid
+                  source={null}
+                  size="lg"
+                  backgroundColor={COLORS.avatarBg}
+                />
+                <View style={[styles.rankMini, { backgroundColor: colors.accent }]}>
+                  <Icon name={rank.icon as any} size={12} color="#FFF" />
+                </View>
+              </View>
+
+              {/* Center: Name + Rank */}
+              <View style={styles.heroCenterContent}>
+                {isEditing ? (
+                  <TextInput
+                    style={[styles.nameInput, { color: colors.textPrimary }]}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Ton nom"
+                    placeholderTextColor={COLORS.textMuted}
+                    textAlign="center"
                   />
                 ) : (
-                  <AvatarSolid
-                    source={null}
-                    size="xl"
-                    backgroundColor={COLORS.avatarBg}
-                  />
+                  <Text style={[styles.profileName, { color: colors.textPrimary }]}>{profile?.name || 'Guerrier'}</Text>
                 )}
-              </LargeRingProgress>
-              {/* Bouton caméra */}
-              <View style={styles.cameraButton}>
-                <Camera size={18} color="#FFF" />
+                <View style={styles.rankBadge}>
+                  <Icon name={rank.icon as any} size={16} color={colors.accent} />
+                  <Text style={[styles.rankName, { color: colors.accent }]}>{rank.name}</Text>
+                </View>
               </View>
-            </TouchableOpacity>
 
-            {/* Name */}
-            {isEditing ? (
-              <TextInput
-                style={styles.nameInput}
-                value={name}
-                onChangeText={setName}
-                placeholder="Ton nom"
-                placeholderTextColor={COLORS.textMuted}
-                textAlign="center"
-              />
-            ) : (
-              <Text style={styles.profileName}>{profile?.name || 'Guerrier'}</Text>
-            )}
-
-            {/* Rank Badge */}
-            <View style={styles.rankBadge}>
-              <Icon name={rank.icon as any} size={20} color="#FFF" />
-              <Text style={styles.rankName}>{rank.name}</Text>
+              {/* Right: Photo de profil */}
+              <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.8} style={styles.heroPhotoContainer}>
+                <LargeRingProgress progress={rankProgress} size={80} strokeWidth={4} accentColor={colors.accent}>
+                  {profilePhoto ? (
+                    <Image
+                      source={{ uri: profilePhoto }}
+                      style={{ width: 68, height: 68, borderRadius: 34 }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.photoPlaceholder, { backgroundColor: colors.card }]}>
+                      <User size={28} color={colors.textMuted} />
+                    </View>
+                  )}
+                </LargeRingProgress>
+                <View style={styles.cameraButton}>
+                  <Camera size={14} color="#FFF" />
+                </View>
+              </TouchableOpacity>
             </View>
 
             {/* Streak */}
@@ -524,7 +597,7 @@ export default function ProfileScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Taille (cm)</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
                     value={heightCm}
                     onChangeText={setHeightCm}
                     placeholder="175"
@@ -533,9 +606,23 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Âge</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    value={userAge}
+                    onChangeText={setUserAge}
+                    placeholder="28"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="number-pad"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputRow}>
+                <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Poids départ (kg)</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
                     value={startWeight}
                     onChangeText={setStartWeight}
                     placeholder="85.0"
@@ -543,18 +630,55 @@ export default function ProfileScreen() {
                     keyboardType="decimal-pad"
                   />
                 </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Objectif (kg)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    value={targetWeight}
+                    onChangeText={setTargetWeight}
+                    placeholder="75.0"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Objectif (kg)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={targetWeight}
-                  onChangeText={setTargetWeight}
-                  placeholder="75.0"
-                  placeholderTextColor={COLORS.textMuted}
-                  keyboardType="decimal-pad"
-                />
+              {/* Weight Goal Selector */}
+              <Text style={styles.inputLabel}>Mon objectif</Text>
+              <View style={styles.goalSelector}>
+                <TouchableOpacity
+                  style={[
+                    styles.goalOption,
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'lose' ? COLORS.success : colors.border },
+                    weightGoal === 'lose' && { borderWidth: 2 }
+                  ]}
+                  onPress={() => setWeightGoal('lose')}
+                >
+                  <TrendingDown size={20} color={weightGoal === 'lose' ? COLORS.success : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? COLORS.success : colors.textPrimary }]}>Perte</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.goalOption,
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'maintain' ? COLORS.info : colors.border },
+                    weightGoal === 'maintain' && { borderWidth: 2 }
+                  ]}
+                  onPress={() => setWeightGoal('maintain')}
+                >
+                  <Minus size={20} color={weightGoal === 'maintain' ? COLORS.info : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? COLORS.info : colors.textPrimary }]}>Maintien</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.goalOption,
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'gain' ? COLORS.warning : colors.border },
+                    weightGoal === 'gain' && { borderWidth: 2 }
+                  ]}
+                  onPress={() => setWeightGoal('gain')}
+                >
+                  <TrendingUp size={20} color={weightGoal === 'gain' ? COLORS.warning : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? COLORS.warning : colors.textPrimary }]}>Prise</Text>
+                </TouchableOpacity>
               </View>
 
               <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
@@ -579,6 +703,13 @@ export default function ProfileScreen() {
                 bgColor={COLORS.infoMuted}
               />
               <InfoRow
+                icon={Calendar}
+                label="Âge"
+                value={profile?.age ? `${profile.age} ans` : '-'}
+                color={COLORS.accent}
+                bgColor={COLORS.accentMuted}
+              />
+              <InfoRow
                 icon={Scale}
                 label="Poids de départ"
                 value={weightProgress?.start ? `${weightProgress.start} kg` : '-'}
@@ -593,34 +724,116 @@ export default function ProfileScreen() {
                 bgColor={COLORS.successMuted}
               />
               <InfoRow
-                icon={Calendar}
-                label="Début du parcours"
-                value={profile?.start_date
-                  ? format(new Date(profile.start_date), 'd MMM yyyy', { locale: fr })
-                  : '-'}
-                color={COLORS.textSecondary}
-                bgColor={COLORS.surfaceLight}
+                icon={profile?.weight_goal === 'lose' ? TrendingDown : profile?.weight_goal === 'gain' ? TrendingUp : Minus}
+                label="Type d'objectif"
+                value={profile?.weight_goal === 'lose' ? 'Perte de poids' : profile?.weight_goal === 'gain' ? 'Prise de masse' : 'Maintien'}
+                color={profile?.weight_goal === 'lose' ? COLORS.success : profile?.weight_goal === 'gain' ? COLORS.warning : COLORS.info}
+                bgColor={profile?.weight_goal === 'lose' ? COLORS.successMuted : profile?.weight_goal === 'gain' ? COLORS.warningMuted : COLORS.infoMuted}
               />
             </View>
           )}
         </View>
 
+        {/* Profil Compétiteur */}
+        <View style={[styles.competitionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Espace Compétiteur</Text>
+
+          <TouchableOpacity
+            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
+            onPress={() => router.push('/competitor-profile')}
+          >
+            <View style={[styles.competitionIcon, { backgroundColor: '#8B5CF620' }]}>
+              <Swords size={20} color="#8B5CF6" />
+            </View>
+            <View style={styles.competitionContent}>
+              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Profil Compétiteur</Text>
+              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Catégorie, ceinture, sport</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
+            onPress={() => router.push('/competitions')}
+          >
+            <View style={[styles.competitionIcon, { backgroundColor: '#06B6D420' }]}>
+              <Calendar size={20} color="#06B6D4" />
+            </View>
+            <View style={styles.competitionContent}>
+              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Compétitions</Text>
+              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Gérer mes compétitions à venir</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
+            onPress={() => router.push('/palmares')}
+          >
+            <View style={[styles.competitionIcon, { backgroundColor: '#F59E0B20' }]}>
+              <Award size={20} color="#F59E0B" />
+            </View>
+            <View style={styles.competitionContent}>
+              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Palmarès</Text>
+              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Mes combats et statistiques</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
+            onPress={() => router.push('/cut-mode')}
+          >
+            <View style={[styles.competitionIcon, { backgroundColor: '#EF444420' }]}>
+              <TrendingDown size={20} color="#EF4444" />
+            </View>
+            <View style={styles.competitionContent}>
+              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Mode Cut</Text>
+              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Gestion du poids pour la pesée</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.competitionItem, { borderBottomWidth: 0 }]}
+            onPress={() => router.push('/hydration')}
+          >
+            <View style={[styles.competitionIcon, { backgroundColor: '#3B82F620' }]}>
+              <Droplet size={20} color="#3B82F6" />
+            </View>
+            <View style={styles.competitionContent}>
+              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Hydratation Cut</Text>
+              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Protocole hydratation compétition</Text>
+            </View>
+            <ChevronRight size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+
         {/* Motivational Quote */}
-        <View style={styles.quoteCard}>
+        <View style={[styles.quoteCard, { borderColor: isDark ? 'rgba(0, 214, 143, 0.3)' : COLORS.accentMuted }]}>
           <LinearGradient
-            colors={['rgba(0, 214, 143, 0.1)', 'rgba(0, 214, 143, 0.05)']}
+            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : ['rgba(0, 214, 143, 0.1)', 'rgba(0, 214, 143, 0.05)']}
             style={styles.quoteGradient}
           >
-            <Text style={styles.quoteEmoji}>⛩️</Text>
-            <Text style={styles.quoteText}>
+            <Trophy size={24} color={colors.accent} />
+            <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
               "La victoire appartient au plus persévérant"
             </Text>
-            <Text style={styles.quoteAuthor}>Napoléon Bonaparte</Text>
+            <Text style={[styles.quoteAuthor, { color: colors.accent }]}>Napoléon Bonaparte</Text>
           </LinearGradient>
         </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* 🔒 SÉCURITÉ: Flou quand l'app est en background */}
+      {isBlurred && (
+        <BlurView
+          style={StyleSheet.absoluteFill}
+          intensity={100}
+          tint={isDark ? 'dark' : 'light'}
+        />
+      )}
     </View>
   );
 }
@@ -1038,5 +1251,114 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: COLORS.surface,
+  },
+
+  // 🔒 SÉCURITÉ: Styles pour l'avertissement screenshot
+  screenshotWarning: {
+    backgroundColor: 'rgba(255, 149, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 149, 0, 0.3)',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  screenshotWarningText: {
+    color: '#FF9500',
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  // Hero Top Row - Avatar Left, Photo Right
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: SPACING.lg,
+  },
+  heroAvatarContainer: {
+    position: 'relative',
+  },
+  rankMini: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.surface,
+  },
+  heroCenterContent: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+  },
+  heroPhotoContainer: {
+    position: 'relative',
+  },
+  photoPlaceholder: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Goal Selector
+  goalSelector: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+  },
+  goalOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+  },
+  goalOptionText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+  },
+
+  // Competition Section
+  competitionCard: {
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  competitionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+  },
+  competitionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.md,
+  },
+  competitionContent: {
+    flex: 1,
+  },
+  competitionLabel: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    marginBottom: 2,
+  },
+  competitionSublabel: {
+    fontSize: TYPOGRAPHY.size.sm,
   },
 });

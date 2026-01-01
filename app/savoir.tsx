@@ -15,11 +15,12 @@ import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
-import { 
-  Heart, 
-  UtensilsCrossed, 
-  Bed, 
-  TrendingUp, 
+import logger from '@/lib/security/logger';
+import {
+  Heart,
+  UtensilsCrossed,
+  Bed,
+  TrendingUp,
   Droplet,
   Activity,
   ChevronDown,
@@ -30,6 +31,12 @@ import {
   Mountain,
   Footprints,
   Calculator,
+  Dumbbell,
+  Pill,
+  Coffee,
+  Flame,
+  AlertTriangle,
+  Maximize2,
 } from 'lucide-react-native';
 
 // Enable LayoutAnimation on Android
@@ -48,6 +55,21 @@ interface ScienceCard {
     how: string;
     sourceName: string;
     sourceUrl: string;
+  };
+}
+
+interface ProtocolCard {
+  id: string;
+  title: string;
+  icon: string;
+  category: string;
+  difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé';
+  content: {
+    objective: string;
+    duration: string;
+    protocol: string[];
+    frequency: string;
+    notes: string;
   };
 }
 
@@ -156,6 +178,381 @@ const scienceData: ScienceCard[] = [
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/12468415/"
     }
   },
+  {
+    id: '9',
+    title: "Entraînement en Force & Longévité",
+    icon: "dumbbell",
+    category: "Force",
+    content: {
+      what: "La musculation 2-3 fois par semaine augmente l'espérance de vie.",
+      why: "Une méta-analyse de 2022 montre que l'entraînement en force réduit la mortalité toutes causes de 15%. Il préserve la masse musculaire (sarcopénie) et améliore la sensibilité à l'insuline.",
+      how: "2 séances minimum par semaine. Travaille tous les groupes musculaires. 3 séries de 8-12 répétitions.",
+      sourceName: "Méta-analyse : Momma et al. (2022) - Br J Sports Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/35228201/"
+    }
+  },
+  {
+    id: '10',
+    title: "Créatine : Le Supplément #1",
+    icon: "supplement",
+    category: "Supplémentation",
+    content: {
+      what: "Composé naturel présent dans la viande, améliore la production d'ATP.",
+      why: "C'est le supplément le plus étudié et efficace. +5-15% de force, +2kg de muscle en 8 semaines, améliore la cognition. Plus de 1000 études confirment son efficacité et sa sécurité.",
+      how: "5g par jour, tous les jours. Monohydrate (la forme la moins chère est la meilleure). Pas besoin de phase de charge.",
+      sourceName: "Position Stand : ISSN (2017) - J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0173-z"
+    }
+  },
+  {
+    id: '11',
+    title: "Repos Inter-Séries : La Durée Compte",
+    icon: "clock",
+    category: "Force",
+    content: {
+      what: "Le temps de repos entre les séries influence l'hypertrophie.",
+      why: "Schoenfeld a démontré que 3 minutes de repos = +20% de gains musculaires vs 1 minute. Le repos permet la restauration des phosphocréatines et maintient l'intensité.",
+      how: "Force (1-5 reps) : 3-5 min. Hypertrophie (8-12 reps) : 2-3 min. Endurance (15+ reps) : 1-2 min.",
+      sourceName: "Étude : Schoenfeld et al. (2016) - J Strength Cond Res",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/26605807/"
+    }
+  },
+  {
+    id: '12',
+    title: "Timing Protéines : Le Mythe de la Fenêtre",
+    icon: "food-steak",
+    category: "Nutrition",
+    content: {
+      what: "La 'fenêtre anabolique' post-training est surestimée.",
+      why: "Aragon & Schoenfeld montrent que le TOTAL protéique quotidien compte plus que le timing. La fenêtre est en réalité de 4-6h, pas 30 minutes.",
+      how: "Assure ton quota journalier (1.6-2.2g/kg). Répartis sur 3-4 repas. Le shake post-training n'est pas obligatoire.",
+      sourceName: "Review : Aragon & Schoenfeld (2013) - J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/1550-2783-10-5"
+    }
+  },
+  {
+    id: '13',
+    title: "Récupération Active vs Passive",
+    icon: "activity",
+    category: "Récupération",
+    content: {
+      what: "Bouger légèrement entre les séances accélère la récupération.",
+      why: "La récupération active (marche, vélo léger) augmente le flux sanguin et élimine le lactate 2x plus vite que rester assis. Réduit les courbatures (DOMS) de 30%.",
+      how: "Jour de repos = 20-30 min de marche ou vélo très léger (Zone 1). Évite le repos total complet.",
+      sourceName: "Étude : Menzies et al. (2010) - Sports Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20199122/"
+    }
+  },
+  {
+    id: '14',
+    title: "Étirements : Quand et Comment",
+    icon: "stretch",
+    category: "Mobilité",
+    content: {
+      what: "Les étirements statiques avant l'effort réduisent la force.",
+      why: "Behm a prouvé que s'étirer avant diminue la production de force de 5-8%. Par contre, après l'effort, ils améliorent la récupération et la flexibilité.",
+      how: "Avant : échauffement dynamique. Après : étirements statiques (30s par muscle). Ou session dédiée mobilité.",
+      sourceName: "Review : Behm & Blazevich (2011) - Scand J Med Sci Sports",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21410544/"
+    }
+  },
+  {
+    id: '15',
+    title: "Masse Musculaire & Métabolisme au Repos",
+    icon: "muscle",
+    category: "Force",
+    content: {
+      what: "Le muscle brûle des calories même au repos.",
+      why: "1 kg de muscle brûle ~13 kcal/jour vs 4 kcal pour la graisse. Gagner 5kg de muscle = +65 kcal/jour soit 24 000 kcal/an (3kg de gras potentiels).",
+      how: "Programme force 3x/semaine. Surplus calorique modéré (+200-300 kcal). Patience : 0.5-1kg muscle/mois max.",
+      sourceName: "Recherche : Wang et al. (2010) - Am J Clin Nutr",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/20200263/"
+    }
+  },
+  {
+    id: '16',
+    title: "Café & Performance",
+    icon: "coffee",
+    category: "Performance",
+    content: {
+      what: "La caféine est l'ergogène légal le plus puissant.",
+      why: "3-6 mg/kg de caféine augmente la performance de 3-7% (endurance, force, sprint). Bloque l'adénosine = moins de fatigue perçue.",
+      how: "200-400mg (2-4 expressos) 45-60 min avant l'effort. Évite si sensible ou entraînement soir.",
+      sourceName: "Position Stand : ISSN (2021) - J Int Soc Sports Nutr",
+      sourceUrl: "https://jissn.biomedcentral.com/articles/10.1186/s12970-020-00383-4"
+    }
+  },
+  {
+    id: '17',
+    title: "Progression : Surcharge Progressive",
+    icon: "trending-up",
+    category: "Force",
+    content: {
+      what: "Le principe fondamental de tous les gains en force et masse.",
+      why: "Sans augmentation du stimulus (poids, reps, volume), le muscle s'adapte et stagne. La surcharge est LA loi de l'adaptation musculaire.",
+      how: "Chaque semaine : ajoute 1-2 reps OU +2.5kg OU 1 série supplémentaire. Tiens un carnet d'entraînement.",
+      sourceName: "Principe : Kraemer & Ratamess (2004) - Med Sci Sports Exerc",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15064596/"
+    }
+  },
+  {
+    id: '18',
+    title: "Cortisol & Stress Chronique",
+    icon: "stress",
+    category: "Récupération",
+    content: {
+      what: "L'hormone du stress détruit le muscle si elle reste élevée.",
+      why: "Le cortisol chroniquement élevé bloque la testostérone, augmente le stockage abdominal et freine la récupération. C'est l'ennemi #1 de la composition corporelle.",
+      how: "Dors 8h. Médite 10 min/jour. Limite le cardio excessif. Prends des jours OFF complets.",
+      sourceName: "Étude : Epel et al. (2000) - Psychosom Med",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/11020090/"
+    }
+  },
+];
+
+const protocolData: ProtocolCard[] = [
+  {
+    id: 'p1',
+    title: "Tabata HIIT (4 minutes)",
+    icon: "activity",
+    category: "Cardio",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Brûler un maximum de calories en 4 minutes et booster le métabolisme pour 24h.",
+      duration: "4 minutes",
+      protocol: [
+        "Choisis un exercice (burpees, sprints, vélo, rameur)",
+        "20 secondes ALL-OUT (intensité maximale)",
+        "10 secondes de repos",
+        "Répète 8 fois (= 4 minutes)",
+        "Retour au calme : 2-3 min de marche"
+      ],
+      frequency: "2-3x par semaine (pas de jours consécutifs)",
+      notes: "⚠️ Nécessite une bonne condition physique. Échauffement obligatoire 5-10 min."
+    }
+  },
+  {
+    id: 'p2',
+    title: "5×5 Stronglifts (Force)",
+    icon: "dumbbell",
+    category: "Force",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Gagner en force pure avec un programme simple et progressif.",
+      duration: "45-60 minutes",
+      protocol: [
+        "Séance A : Squat 5×5, Bench Press 5×5, Rowing Barre 5×5",
+        "Séance B : Squat 5×5, Overhead Press 5×5, Deadlift 1×5",
+        "Alterner A/B/A puis B/A/B chaque semaine",
+        "Repos 3-5 min entre les séries",
+        "Ajoute +2.5kg chaque séance réussie"
+      ],
+      frequency: "3x par semaine (Lun/Mer/Ven)",
+      notes: "Parfait pour débutants. Focus sur la technique avant de charger lourd."
+    }
+  },
+  {
+    id: 'p3',
+    title: "12-3-30 Marche Inclinée",
+    icon: "slope-uphill",
+    category: "Cardio",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Cardio faible impact pour brûler du gras sans détruire les articulations.",
+      duration: "30 minutes",
+      protocol: [
+        "Tapis de course : 12% d'inclinaison",
+        "Vitesse : 5 km/h (3 mph)",
+        "Durée : 30 minutes en continu",
+        "Garde le dos droit, ne te tiens pas à la barre",
+        "Tu dois pouvoir tenir une conversation"
+      ],
+      frequency: "4-5x par semaine (ou après musculation)",
+      notes: "Populaire sur TikTok. Très efficace pour sécher sans perdre de muscle."
+    }
+  },
+  {
+    id: 'p4',
+    title: "PPL (Push/Pull/Legs)",
+    icon: "muscle",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Programme complet pour hypertrophie musculaire équilibrée.",
+      duration: "60-75 minutes",
+      protocol: [
+        "PUSH : Pectoraux, Épaules, Triceps (8-12 reps)",
+        "PULL : Dos, Trapèzes, Biceps (8-12 reps)",
+        "LEGS : Quadriceps, Ischio, Mollets, Abdos (8-15 reps)",
+        "3-4 exercices par groupe musculaire",
+        "3-4 séries par exercice, 2-3 min de repos"
+      ],
+      frequency: "6x par semaine (PPL/PPL) ou 3x (P/P/L)",
+      notes: "Excellent pour gagner du volume. Nécessite une bonne récupération."
+    }
+  },
+  {
+    id: 'p5',
+    title: "Zone 2 Cardio (Mitochondries)",
+    icon: "heart-pulse",
+    category: "Endurance",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Améliorer la capacité à brûler les graisses et la santé métabolique.",
+      duration: "45-60 minutes",
+      protocol: [
+        "Trouve ton seuil : tu peux parler en phrases complètes",
+        "Fréquence cardiaque : 60-70% de ta FC max",
+        "Reste STRICT sur l'intensité (pas plus haut)",
+        "Course, vélo, rameur, natation",
+        "Respiration nasale uniquement (test)"
+      ],
+      frequency: "1-2x par semaine",
+      notes: "C'est l'entraînement préféré des athlètes d'endurance pour la base aérobie."
+    }
+  },
+  {
+    id: 'p6',
+    title: "Récupération Active",
+    icon: "walk",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Accélérer la récupération musculaire entre les séances intenses.",
+      duration: "20-30 minutes",
+      protocol: [
+        "Marche tranquille ou vélo très léger",
+        "Intensité : Zone 1 (50-60% FC max)",
+        "Ajoute des étirements dynamiques (5-10 min)",
+        "Foam roller sur les zones tendues",
+        "Mobilité articulaire (hanches, épaules)"
+      ],
+      frequency: "Jours de repos entre les séances",
+      notes: "Ne sous-estime pas l'importance du repos actif pour les gains à long terme."
+    }
+  },
+  {
+    id: 'p7',
+    title: "Échauffement Dynamique Complet",
+    icon: "stretch",
+    category: "Mobilité",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Préparer le corps à l'effort et réduire le risque de blessure.",
+      duration: "10-15 minutes",
+      protocol: [
+        "Cardio léger : 3-5 min (vélo, rameur, corde à sauter)",
+        "Mobilité articulaire : cercles bras/jambes (2 min)",
+        "Étirements dynamiques : fentes marchées, leg swings (3 min)",
+        "Activation musculaire : bandes élastiques (2 min)",
+        "Sets d'approche : 50% puis 70% du poids de travail"
+      ],
+      frequency: "AVANT chaque séance",
+      notes: "❌ PAS d'étirements statiques avant l'effort (diminue la force de 5-8%)."
+    }
+  },
+  {
+    id: 'p8',
+    title: "Étirements Post-Training",
+    icon: "stretch",
+    category: "Mobilité",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Améliorer la flexibilité et accélérer la récupération musculaire.",
+      duration: "10-15 minutes",
+      protocol: [
+        "Attends 5-10 min après la fin de la séance",
+        "Étirements statiques : 30-60 secondes par muscle",
+        "Cible les groupes travaillés dans la séance",
+        "Respire profondément, ne force pas",
+        "Focus : ischios, fléchisseurs hanches, pectoraux, dorsaux"
+      ],
+      frequency: "APRÈS chaque séance",
+      notes: "Les étirements post-effort réduisent les courbatures de ~30%."
+    }
+  },
+  {
+    id: 'p9',
+    title: "Jeûne Intermittent 16/8",
+    icon: "clock",
+    category: "Nutrition",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Simplifier l'alimentation et créer un déficit calorique naturel.",
+      duration: "Continu",
+      protocol: [
+        "Fenêtre de jeûne : 16 heures (ex: 20h - 12h)",
+        "Fenêtre alimentaire : 8 heures (ex: 12h - 20h)",
+        "Première semaine : commence par 14h de jeûne",
+        "Pendant le jeûne : eau, thé, café noir (sans sucre)",
+        "Casse le jeûne avec des protéines + légumes"
+      ],
+      frequency: "5-7 jours par semaine",
+      notes: "⚠️ Consulte un médecin si tu as des problèmes de santé. Hydrate-toi bien."
+    }
+  },
+  {
+    id: 'p10',
+    title: "Hydratation Pré/Per/Post Training",
+    icon: "water",
+    category: "Performance",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Optimiser la performance et la récupération par une hydratation stratégique.",
+      duration: "Toute la journée",
+      protocol: [
+        "PRÉ-TRAINING : 500ml d'eau 2h avant + 250ml juste avant",
+        "PER-TRAINING : 150-250ml toutes les 15-20 min",
+        "POST-TRAINING : 1.5L par kg de poids perdu",
+        "Ajoute une pincée de sel si séance > 60 min",
+        "Urine claire = bien hydraté, jaune foncé = déshydraté"
+      ],
+      frequency: "À chaque séance",
+      notes: "2% de déshydratation = -10 à 20% de performance. Ne sous-estime pas l'eau."
+    }
+  },
+  {
+    id: 'p11',
+    title: "EMOM (Every Minute On the Minute)",
+    icon: "clock",
+    category: "Force",
+    difficulty: 'Avancé',
+    content: {
+      objective: "Développer force, puissance et capacité de travail sous fatigue.",
+      duration: "10-20 minutes",
+      protocol: [
+        "Choisis 1-3 exercices (ex: thrusters, pull-ups, box jumps)",
+        "Définis un nombre de reps (ex: 10 thrusters)",
+        "Démarre le chrono : fais tes reps en début de minute",
+        "Repose-toi le temps restant",
+        "Chaque nouvelle minute = nouvelle série",
+        "Continue pendant 10-20 min"
+      ],
+      frequency: "1-2x par semaine",
+      notes: "Si tu ne peux plus finir dans la minute, arrête-toi. Très intense."
+    }
+  },
+  {
+    id: 'p12',
+    title: "Pyramid Training (Hypertrophie)",
+    icon: "trending-up",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Maximiser l'hypertrophie en combinant force et volume.",
+      duration: "Par exercice",
+      protocol: [
+        "Série 1 : 12 reps à 60% 1RM",
+        "Série 2 : 10 reps à 70% 1RM",
+        "Série 3 : 8 reps à 80% 1RM",
+        "Série 4 : 6 reps à 85% 1RM",
+        "Redescends : 8 reps → 10 reps → 12 reps",
+        "Repos : 2-3 min entre séries"
+      ],
+      frequency: "1 exercice majeur par séance",
+      notes: "Excellent pour casser la routine et choquer le muscle."
+    }
+  }
 ];
 
 const getIcon = (iconName: string, size: number = 24, color: string) => {
@@ -183,6 +580,20 @@ const getIcon = (iconName: string, size: number = 24, color: string) => {
       return <Activity size={size} color={color} strokeWidth={2.5} />;
     case 'walk':
       return <Footprints size={size} color={color} strokeWidth={2.5} />;
+    case 'clock':
+      return <Clock size={size} color={color} strokeWidth={2.5} />;
+    case 'dumbbell':
+      return <Dumbbell size={size} color={color} strokeWidth={2.5} />;
+    case 'supplement':
+      return <Pill size={size} color={color} strokeWidth={2.5} />;
+    case 'coffee':
+      return <Coffee size={size} color={color} strokeWidth={2.5} />;
+    case 'muscle':
+      return <Flame size={size} color={color} strokeWidth={2.5} />;
+    case 'stress':
+      return <AlertTriangle size={size} color={color} strokeWidth={2.5} />;
+    case 'stretch':
+      return <Maximize2 size={size} color={color} strokeWidth={2.5} />;
     default:
       return <Activity size={size} color={color} strokeWidth={2.5} />;
   }
@@ -201,6 +612,14 @@ const getCategoryColor = (category: string) => {
       return '#DDA0DD'; // Light Purple
     case 'Activité':
       return '#FFD700'; // Light Gold/Yellow
+    case 'Force':
+      return '#FF4500'; // Orange Red
+    case 'Supplémentation':
+      return '#32CD32'; // Lime Green
+    case 'Performance':
+      return '#FF1493'; // Deep Pink
+    case 'Mobilité':
+      return '#00CED1'; // Dark Turquoise
     default:
       return '#D3D3D3'; // Light Gray
   }
@@ -219,8 +638,27 @@ const getCategoryHeaderColor = (category: string) => {
       return '#F3E5F5'; // Light Purple background
     case 'Activité':
       return '#FFF9C4'; // Light Yellow background
+    case 'Force':
+      return '#FFE4CC'; // Light Orange background
+    case 'Supplémentation':
+      return '#E5FFE5'; // Light Lime Green background
+    case 'Performance':
+      return '#FFE4F2'; // Light Pink background
+    case 'Mobilité':
+      return '#E0F7FA'; // Light Turquoise background
     default:
       return '#F5F5F5'; // Light Gray background
+  }
+};
+
+const getDifficultyColor = (difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé') => {
+  switch (difficulty) {
+    case 'Débutant':
+      return '#10B981'; // Green
+    case 'Intermédiaire':
+      return '#F59E0B'; // Orange
+    case 'Avancé':
+      return '#EF4444'; // Red
   }
 };
 
@@ -228,6 +666,7 @@ export default function SavoirScreen() {
   const router = useRouter();
   const { colors: themeColors, isDark } = useTheme();
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set());
 
   const toggleCard = (cardId: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -242,6 +681,19 @@ export default function SavoirScreen() {
     });
   };
 
+  const toggleProtocol = (protocolId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedProtocols((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(protocolId)) {
+        newSet.delete(protocolId);
+      } else {
+        newSet.add(protocolId);
+      }
+      return newSet;
+    });
+  };
+
   const handleSourcePress = async (url: string) => {
     try {
       // Clean URL from markdown format if present
@@ -250,16 +702,16 @@ export default function SavoirScreen() {
       if (canOpen) {
         await Linking.openURL(cleanUrl);
       } else {
-        console.error('Impossible d\'ouvrir l\'URL:', cleanUrl);
+        logger.error('Impossible d\'ouvrir l\'URL:', cleanUrl);
       }
     } catch (error) {
-      console.error('Erreur lors de l\'ouverture de l\'URL:', error);
+      logger.error('Erreur lors de l\'ouverture de l\'URL:', error);
     }
   };
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="LABO" showBack />
+      <Header title="SAVOIR" showBack />
       <ScrollView
         style={[styles.scrollView, { backgroundColor: themeColors.background }]}
         contentContainerStyle={styles.scrollContent}
@@ -371,6 +823,109 @@ export default function SavoirScreen() {
                       </Text>
                       <Text style={[styles.sourceButtonArrow, { color: categoryColor }]}>→</Text>
                     </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+          </View>
+        </View>
+
+        {/* SECTION 3: PROTOCOLES D'ENTRAÎNEMENT */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionHeader}>PROTOCOLES D'ENTRAÎNEMENT</Text>
+
+          {/* Protocol Cards - Accordion */}
+          <View style={styles.cardsContainer}>
+          {protocolData.map((protocol) => {
+            const categoryColor = getCategoryColor(protocol.category);
+            const isExpanded = expandedProtocols.has(protocol.id);
+            const headerBgColor = getCategoryHeaderColor(protocol.category);
+            const difficultyColor = getDifficultyColor(protocol.difficulty);
+
+            return (
+              <View key={protocol.id} style={[styles.card, { backgroundColor: '#FFFFFF' }]}>
+                {/* Header with Colored Background */}
+                <TouchableOpacity
+                  style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}
+                  onPress={() => toggleProtocol(protocol.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={[styles.cardIconContainer, { backgroundColor: '#FFFFFF' }]}>
+                      {getIcon(protocol.icon, 24, categoryColor)}
+                    </View>
+                    <View style={styles.cardHeaderText}>
+                      <View style={styles.protocolHeaderRow}>
+                        <Text style={[styles.cardCategory, { color: categoryColor }]}>
+                          {protocol.category}
+                        </Text>
+                        <View style={[styles.difficultyBadge, { backgroundColor: `${difficultyColor}20` }]}>
+                          <Text style={[styles.difficultyText, { color: difficultyColor }]}>
+                            {protocol.difficulty}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.cardTitle, { color: themeColors.textPrimary }]}>
+                        {protocol.title}
+                      </Text>
+                    </View>
+                  </View>
+                  {isExpanded ? (
+                    <ChevronUp size={20} color={categoryColor} strokeWidth={2.5} />
+                  ) : (
+                    <ChevronDown size={20} color={categoryColor} strokeWidth={2.5} />
+                  )}
+                </TouchableOpacity>
+
+                {/* Expanded Content - White Background */}
+                {isExpanded && (
+                  <View style={styles.expandedContent}>
+                    {/* Objectif */}
+                    <View style={styles.sectionFirst}>
+                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Objectif</Text>
+                      <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
+                        {protocol.content.objective}
+                      </Text>
+                    </View>
+
+                    {/* Durée */}
+                    <View style={styles.section}>
+                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Durée</Text>
+                      <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
+                        {protocol.content.duration}
+                      </Text>
+                    </View>
+
+                    {/* Protocole */}
+                    <View style={styles.section}>
+                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Protocole</Text>
+                      {protocol.content.protocol.map((step, index) => (
+                        <View key={index} style={styles.protocolStep}>
+                          <Text style={[styles.stepNumber, { color: categoryColor }]}>
+                            {index + 1}.
+                          </Text>
+                          <Text style={[styles.stepText, { color: themeColors.textSecondary }]}>
+                            {step}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Fréquence */}
+                    <View style={styles.section}>
+                      <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Fréquence</Text>
+                      <Text style={[styles.sectionBody, { color: themeColors.textSecondary }]}>
+                        {protocol.content.frequency}
+                      </Text>
+                    </View>
+
+                    {/* Notes */}
+                    <View style={[styles.notesBox, { backgroundColor: `${categoryColor}10`, borderColor: `${categoryColor}30` }]}>
+                      <Text style={[styles.notesText, { color: themeColors.textSecondary }]}>
+                        {protocol.content.notes}
+                      </Text>
+                    </View>
                   </View>
                 )}
               </View>
@@ -592,5 +1147,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: '#64748B',
+  },
+  protocolHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  difficultyBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  difficultyText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  protocolStep: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 10,
+  },
+  stepNumber: {
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 24,
+    minWidth: 20,
+  },
+  stepText: {
+    fontSize: 15,
+    lineHeight: 24,
+    letterSpacing: 0.1,
+    fontWeight: '500',
+    flex: 1,
+  },
+  notesBox: {
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 20,
+    borderWidth: 1,
+  },
+  notesText: {
+    fontSize: 14,
+    lineHeight: 22,
+    letterSpacing: 0.1,
+    fontWeight: '600',
   },
 });

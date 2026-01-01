@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
@@ -11,52 +10,57 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import {
-  User,
   Target,
   TrendingDown,
   TrendingUp,
   Minus,
-  Check,
   ChevronRight,
-  UserCircle2,
-  Users,
+  Shield,
+  Swords,
+  Star,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { saveUserSettings } from '@/lib/storage';
+import { saveUserSettings, getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
 export default function SetupScreen() {
   const { colors } = useTheme();
 
-  const [step, setStep] = useState<'name' | 'gender' | 'gender_health' | 'goal'>('name');
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | null>(null);
-  const [selectedOther, setSelectedOther] = useState(false);
+  // L'écran ne demande plus que l'objectif (prénom et genre déjà collectés dans onboarding)
   const [goal, setGoal] = useState<Goal | null>(null);
+  const [existingProfile, setExistingProfile] = useState<{ username?: string; gender?: 'male' | 'female' }>({});
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  const handleNext = () => {
-    if (step === 'name' && name.trim()) {
-      setStep('gender');
-    } else if (step === 'gender' && selectedOther) {
-      setStep('gender_health');
-    } else if (step === 'gender' && gender) {
-      setStep('goal');
-    } else if (step === 'gender_health' && gender) {
-      setStep('goal');
-    } else if (step === 'goal' && goal) {
-      handleComplete();
-    }
+  // Charger le profil existant depuis onboarding
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const settings = await getUserSettings();
+        setExistingProfile({
+          username: settings.username,
+          gender: settings.gender as 'male' | 'female' | undefined,
+        });
+      } catch (error) {
+        logger.error('Erreur chargement profil:', error);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const handleGoalSelected = () => {
+    if (!goal) return;
+    setShowWelcome(true);
   };
 
   const handleComplete = async () => {
     try {
-      // Sauvegarder le profil
+      // Sauvegarder uniquement l'objectif (le reste est déjà sauvegardé)
       await saveUserSettings({
-        username: name.trim(),
-        gender: gender!,
-        goal: goal!,
+        ...existingProfile,
+        goal: goal ?? undefined,
         onboardingCompleted: true,
       });
 
@@ -66,17 +70,70 @@ export default function SetupScreen() {
       // Rediriger vers l'app
       router.replace('/(tabs)');
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
     }
   };
 
   const canContinue = () => {
-    if (step === 'name') return name.trim().length > 0;
-    if (step === 'gender') return gender !== null || selectedOther;
-    if (step === 'gender_health') return gender !== null;
-    if (step === 'goal') return goal !== null;
-    return false;
+    return goal !== null;
   };
+
+  // Page de bienvenue Team Yoroi
+  if (showWelcome) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.welcomeContent}>
+          {/* Logo et animation */}
+          <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '20' }]}>
+            <Shield size={80} color={colors.accent} />
+          </View>
+
+          {/* Titre principal */}
+          <Text style={[styles.welcomeTitle, { color: colors.accent }]}>
+            BIENVENUE
+          </Text>
+          <Text style={[styles.welcomeSubtitle, { color: colors.textPrimary }]}>
+            dans la Team Yoroi
+          </Text>
+
+          {/* Message personnalisé */}
+          <Text style={[styles.welcomeMessage, { color: colors.textSecondary }]}>
+            {existingProfile.username ? `${existingProfile.username}, tu` : 'Tu'} fais maintenant partie de la famille des guerriers.
+            {'\n'}Ensemble, on va atteindre tes objectifs !
+          </Text>
+
+          {/* Badges de bienvenue */}
+          <View style={styles.welcomeBadges}>
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard }]}>
+              <Swords size={20} color={colors.accent} />
+              <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
+                Esprit guerrier
+              </Text>
+            </View>
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard }]}>
+              <Star size={20} color="#FFD700" />
+              <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
+                Premier badge
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Bouton pour commencer */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.continueButton, { backgroundColor: colors.accent }]}
+            onPress={handleComplete}
+          >
+            <Text style={[styles.continueText, { color: colors.textOnGold }]}>
+              C'est parti !
+            </Text>
+            <ChevronRight size={22} color={colors.textOnGold} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -87,335 +144,108 @@ export default function SetupScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Étape 1 : Prénom */}
-        {step === 'name' && (
-          <View style={styles.stepContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-              <User size={48} color={colors.accent} />
-            </View>
-
-            <Text style={[styles.question, { color: colors.textPrimary }]}>
-              Comment tu t'appelles ?
-            </Text>
-
-            <Text style={[styles.hint, { color: colors.textMuted }]}>
-              On va personnaliser ton expérience
-            </Text>
-
-            <TextInput
-              style={[styles.nameInput, {
-                backgroundColor: colors.backgroundElevated,
-                color: colors.textPrimary,
-                borderColor: name.trim() ? colors.accent : 'transparent',
-              }]}
-              value={name}
-              onChangeText={setName}
-              placeholder="Ton prénom"
-              placeholderTextColor={colors.textMuted}
-              autoFocus
-              autoCapitalize="words"
-              returnKeyType="next"
-              onSubmitEditing={handleNext}
-            />
+        {/* Seule étape : Objectif (prénom et genre déjà collectés dans onboarding) */}
+        <View style={styles.stepContainer}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
+            <Target size={48} color={colors.accent} />
           </View>
-        )}
 
-        {/* Étape 2 : Genre */}
-        {step === 'gender' && (
-          <View style={styles.stepContainer}>
+          {existingProfile.username && (
             <Text style={[styles.greeting, { color: colors.textMuted }]}>
-              Enchanté {name} !
+              Parfait {existingProfile.username} !
             </Text>
+          )}
 
-            <Text style={[styles.question, { color: colors.textPrimary }]}>
-              Tu es ?
-            </Text>
+          <Text style={[styles.question, { color: colors.textPrimary }]}>
+            Quel est ton objectif ?
+          </Text>
 
-            <View style={styles.optionsColumn}>
-              <TouchableOpacity
-                style={[
-                  styles.genderOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  gender === 'male' && !selectedOther && {
-                    backgroundColor: colors.accent,
-                    borderColor: colors.accent,
-                  },
-                ]}
-                onPress={() => {
-                  setGender('male');
-                  setSelectedOther(false);
-                }}
-              >
-                <View style={styles.genderIconContainer}>
-                  <User
-                    size={32}
-                    color={gender === 'male' && !selectedOther ? '#FFF' : colors.accent}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.genderText,
-                  { color: gender === 'male' && !selectedOther ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Homme
-                </Text>
-                {gender === 'male' && !selectedOther && (
-                  <View style={styles.checkIcon}>
-                    <Check size={16} color="#FFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
+          <View style={styles.goalsContainer}>
+            <TouchableOpacity
+              style={[
+                styles.goalOption,
+                { backgroundColor: colors.backgroundElevated },
+                goal === 'lose' && {
+                  backgroundColor: '#4CAF50',
+                },
+              ]}
+              onPress={() => setGoal('lose')}
+            >
+              <TrendingDown
+                size={28}
+                color={goal === 'lose' ? '#FFF' : '#4CAF50'}
+              />
+              <Text style={[
+                styles.goalTitle,
+                { color: goal === 'lose' ? '#FFF' : colors.textPrimary },
+              ]}>
+                Perdre du poids
+              </Text>
+              <Text style={[
+                styles.goalDesc,
+                { color: goal === 'lose' ? '#FFF' : colors.textMuted },
+              ]}>
+                Brûler les graisses
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.genderOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  gender === 'female' && !selectedOther && {
-                    backgroundColor: colors.accent,
-                    borderColor: colors.accent,
-                  },
-                ]}
-                onPress={() => {
-                  setGender('female');
-                  setSelectedOther(false);
-                }}
-              >
-                <View style={styles.genderIconContainer}>
-                  <UserCircle2
-                    size={32}
-                    color={gender === 'female' && !selectedOther ? '#FFF' : colors.accent}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.genderText,
-                  { color: gender === 'female' && !selectedOther ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Femme
-                </Text>
-                {gender === 'female' && !selectedOther && (
-                  <View style={styles.checkIcon}>
-                    <Check size={16} color="#FFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.goalOption,
+                { backgroundColor: colors.backgroundElevated },
+                goal === 'maintain' && {
+                  backgroundColor: colors.accent,
+                },
+              ]}
+              onPress={() => setGoal('maintain')}
+            >
+              <Minus
+                size={28}
+                color={goal === 'maintain' ? colors.textOnGold : colors.accent}
+              />
+              <Text style={[
+                styles.goalTitle,
+                { color: goal === 'maintain' ? colors.textOnGold : colors.textPrimary },
+              ]}>
+                Maintenir
+              </Text>
+              <Text style={[
+                styles.goalDesc,
+                { color: goal === 'maintain' ? colors.textOnGold : colors.textMuted },
+              ]}>
+                Garder la forme
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.genderOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  selectedOther && {
-                    backgroundColor: colors.accent,
-                    borderColor: colors.accent,
-                  },
-                ]}
-                onPress={() => {
-                  setSelectedOther(true);
-                  setGender(null);
-                }}
-              >
-                <View style={styles.genderIconContainer}>
-                  <Users
-                    size={32}
-                    color={selectedOther ? '#FFF' : colors.accent}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.genderText,
-                  { color: selectedOther ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Autre
-                </Text>
-                {selectedOther && (
-                  <View style={styles.checkIcon}>
-                    <Check size={16} color="#FFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[
+                styles.goalOption,
+                { backgroundColor: colors.backgroundElevated },
+                goal === 'gain' && {
+                  backgroundColor: '#FF6B6B',
+                },
+              ]}
+              onPress={() => setGoal('gain')}
+            >
+              <TrendingUp
+                size={28}
+                color={goal === 'gain' ? '#FFF' : '#FF6B6B'}
+              />
+              <Text style={[
+                styles.goalTitle,
+                { color: goal === 'gain' ? '#FFF' : colors.textPrimary },
+              ]}>
+                Prendre du muscle
+              </Text>
+              <Text style={[
+                styles.goalDesc,
+                { color: goal === 'gain' ? '#FFF' : colors.textMuted },
+              ]}>
+                Prise de masse
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
-
-        {/* Étape 2.5 : Genre pour calculs de santé (si "Autre" sélectionné) */}
-        {step === 'gender_health' && (
-          <View style={styles.stepContainer}>
-            <Text style={[styles.greeting, { color: colors.textMuted }]}>
-              Merci {name} !
-            </Text>
-
-            <Text style={[styles.question, { color: colors.textPrimary }]}>
-              Pour les calculs de santé
-            </Text>
-
-            <Text style={[styles.hint, { color: colors.textMuted, textAlign: 'center', marginBottom: 20 }]}>
-              Choisis le profil physiologique le plus adapté pour le calcul de tes besoins caloriques et objectifs santé
-            </Text>
-
-            <View style={styles.optionsColumn}>
-              <TouchableOpacity
-                style={[
-                  styles.genderOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  gender === 'male' && {
-                    backgroundColor: colors.accent,
-                    borderColor: colors.accent,
-                  },
-                ]}
-                onPress={() => setGender('male')}
-              >
-                <View style={styles.genderIconContainer}>
-                  <User
-                    size={32}
-                    color={gender === 'male' ? '#FFF' : colors.accent}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.genderText,
-                  { color: gender === 'male' ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Profil Homme
-                </Text>
-                {gender === 'male' && (
-                  <View style={styles.checkIcon}>
-                    <Check size={16} color="#FFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.genderOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  gender === 'female' && {
-                    backgroundColor: colors.accent,
-                    borderColor: colors.accent,
-                  },
-                ]}
-                onPress={() => setGender('female')}
-              >
-                <View style={styles.genderIconContainer}>
-                  <UserCircle2
-                    size={32}
-                    color={gender === 'female' ? '#FFF' : colors.accent}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.genderText,
-                  { color: gender === 'female' ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Profil Femme
-                </Text>
-                {gender === 'female' && (
-                  <View style={styles.checkIcon}>
-                    <Check size={16} color="#FFF" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Étape 3 : Objectif */}
-        {step === 'goal' && (
-          <View style={styles.stepContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-              <Target size={48} color={colors.accent} />
-            </View>
-
-            <Text style={[styles.question, { color: colors.textPrimary }]}>
-              Quel est ton objectif ?
-            </Text>
-
-            <View style={styles.goalsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.goalOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  goal === 'lose' && {
-                    backgroundColor: '#4CAF50',
-                  },
-                ]}
-                onPress={() => setGoal('lose')}
-              >
-                <TrendingDown
-                  size={28}
-                  color={goal === 'lose' ? '#FFF' : '#4CAF50'}
-                />
-                <Text style={[
-                  styles.goalTitle,
-                  { color: goal === 'lose' ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Perdre du poids
-                </Text>
-                <Text style={[
-                  styles.goalDesc,
-                  { color: goal === 'lose' ? '#FFF' : colors.textMuted },
-                ]}>
-                  Brûler les graisses
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.goalOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  goal === 'maintain' && {
-                    backgroundColor: colors.accent,
-                  },
-                ]}
-                onPress={() => setGoal('maintain')}
-              >
-                <Minus
-                  size={28}
-                  color={goal === 'maintain' ? '#FFF' : colors.accent}
-                />
-                <Text style={[
-                  styles.goalTitle,
-                  { color: goal === 'maintain' ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Maintenir
-                </Text>
-                <Text style={[
-                  styles.goalDesc,
-                  { color: goal === 'maintain' ? '#FFF' : colors.textMuted },
-                ]}>
-                  Garder la forme
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.goalOption,
-                  { backgroundColor: colors.backgroundElevated },
-                  goal === 'gain' && {
-                    backgroundColor: '#FF6B6B',
-                  },
-                ]}
-                onPress={() => setGoal('gain')}
-              >
-                <TrendingUp
-                  size={28}
-                  color={goal === 'gain' ? '#FFF' : '#FF6B6B'}
-                />
-                <Text style={[
-                  styles.goalTitle,
-                  { color: goal === 'gain' ? '#FFF' : colors.textPrimary },
-                ]}>
-                  Prendre du muscle
-                </Text>
-                <Text style={[
-                  styles.goalDesc,
-                  { color: goal === 'gain' ? '#FFF' : colors.textMuted },
-                ]}>
-                  Prise de masse
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        </View>
       </ScrollView>
 
       {/* Bouton continuer */}
@@ -429,36 +259,20 @@ export default function SetupScreen() {
                 : colors.backgroundElevated,
             },
           ]}
-          onPress={handleNext}
+          onPress={handleGoalSelected}
           disabled={!canContinue()}
         >
           <Text style={[
             styles.continueText,
-            { color: canContinue() ? '#FFF' : colors.textMuted },
+            { color: canContinue() ? colors.textOnGold : colors.textMuted },
           ]}>
-            {step === 'goal' ? 'Commencer' : 'Continuer'}
+            Commencer
           </Text>
           <ChevronRight
             size={22}
-            color={canContinue() ? '#FFF' : colors.textMuted}
+            color={canContinue() ? colors.textOnGold : colors.textMuted}
           />
         </TouchableOpacity>
-
-        {/* Indicateur d'étape */}
-        <View style={styles.stepIndicator}>
-          <View style={[
-            styles.stepDot,
-            { backgroundColor: colors.accent },
-          ]} />
-          <View style={[
-            styles.stepDot,
-            { backgroundColor: step === 'name' ? colors.backgroundElevated : colors.accent },
-          ]} />
-          <View style={[
-            styles.stepDot,
-            { backgroundColor: step === 'goal' ? colors.accent : colors.backgroundElevated },
-          ]} />
-        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -475,6 +289,55 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     alignItems: 'center',
+  },
+
+  // Welcome screen
+  welcomeContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  welcomeIconContainer: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
+  welcomeTitle: {
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: 4,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 24,
+  },
+  welcomeMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  welcomeBadges: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  welcomeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  welcomeBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Icon
@@ -517,8 +380,16 @@ const styles = StyleSheet.create({
   // Gender options
   optionsRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     marginTop: 32,
+    width: '100%',
+  },
+  optionsRowHealth: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 32,
+    width: '100%',
+    justifyContent: 'center',
   },
   optionsColumn: {
     flexDirection: 'column',
@@ -529,11 +400,24 @@ const styles = StyleSheet.create({
   genderOption: {
     flex: 1,
     alignItems: 'center',
-    padding: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 8,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: 'transparent',
     position: 'relative',
+    minHeight: 140,
+  },
+  genderOptionHealth: {
+    width: '45%',
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    position: 'relative',
+    minHeight: 140,
   },
   genderIconContainer: {
     marginBottom: 12,

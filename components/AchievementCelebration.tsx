@@ -47,7 +47,7 @@ const Confetti: React.FC<{ color: string; delay: number }> = ({ color, delay }) 
         useNativeDriver: true,
       }),
       Animated.timing(translateX, {
-        toValue: translateX._value + (Math.random() - 0.5) * 200,
+        toValue: (Math.random() - 0.5) * 200,
         duration: 3000,
         delay,
         useNativeDriver: true,

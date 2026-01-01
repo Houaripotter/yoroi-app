@@ -8,6 +8,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements } from './storage';
 import { getTrainings, getMeasurements } from './database';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -95,7 +96,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_training',
-    title: 'Guerrier',
+    title: 'Athlète',
     description: 'Faire un entrainement',
     icon: '🥋',
     xp: 50,
@@ -306,7 +307,7 @@ export const loadQuestsState = async (): Promise<QuestsState> => {
 
     return state;
   } catch (error) {
-    console.error('Erreur chargement quetes:', error);
+    logger.error('Erreur chargement quetes:', error);
     return getDefaultState();
   }
 };
@@ -315,7 +316,7 @@ export const saveQuestsState = async (state: QuestsState): Promise<void> => {
   try {
     await AsyncStorage.setItem(QUESTS_STATE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Erreur sauvegarde quetes:', error);
+    logger.error('Erreur sauvegarde quetes:', error);
   }
 };
 

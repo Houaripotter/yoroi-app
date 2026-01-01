@@ -26,6 +26,7 @@ import { importAllData } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // GUIDE SAUVEGARDE - BACKUP iCLOUD
@@ -51,7 +52,7 @@ export default function BackupGuideScreen() {
       await exportDataToJSON();
       successHaptic();
     } catch (error) {
-      console.error('Export error:', error);
+      logger.error('Export error:', error);
       Alert.alert('Erreur', 'Impossible d\'exporter les donnees');
     } finally {
       setIsExporting(false);
@@ -71,12 +72,12 @@ export default function BackupGuideScreen() {
             setIsImporting(true);
             try {
               await importAllData(async (data) => {
-                console.log('Data imported:', data);
+                logger.info('Data imported:', data);
               });
               successHaptic();
               Alert.alert('Succes', 'Donnees importees avec succes !');
             } catch (error) {
-              console.error('Import error:', error);
+              logger.error('Import error:', error);
             } finally {
               setIsImporting(false);
             }

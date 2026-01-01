@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays, differenceInMinutes, parseISO, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -60,7 +61,7 @@ export const getSleepGoal = async (): Promise<number> => {
     const goal = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_GOAL);
     return goal ? parseInt(goal, 10) : DEFAULT_SLEEP_GOAL;
   } catch (error) {
-    console.error('Erreur lecture objectif sommeil:', error);
+    logger.error('Erreur lecture objectif sommeil:', error);
     return DEFAULT_SLEEP_GOAL;
   }
 };
@@ -72,7 +73,7 @@ export const setSleepGoal = async (minutes: number): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_GOAL, minutes.toString());
   } catch (error) {
-    console.error('Erreur sauvegarde objectif sommeil:', error);
+    logger.error('Erreur sauvegarde objectif sommeil:', error);
   }
 };
 
@@ -84,7 +85,7 @@ export const getSleepEntries = async (): Promise<SleepEntry[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.SLEEP_ENTRIES);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur lecture sommeil:', error);
+    logger.error('Erreur lecture sommeil:', error);
     return [];
   }
 };
@@ -132,7 +133,7 @@ export const addSleepEntry = async (
     await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
     return newEntry;
   } catch (error) {
-    console.error('Erreur ajout sommeil:', error);
+    logger.error('Erreur ajout sommeil:', error);
     throw error;
   }
 };
@@ -146,7 +147,7 @@ export const getTodaySleep = async (): Promise<SleepEntry | null> => {
     const today = format(new Date(), 'yyyy-MM-dd');
     return entries.find(e => e.date === today) || null;
   } catch (error) {
-    console.error('Erreur lecture sommeil aujourd\'hui:', error);
+    logger.error('Erreur lecture sommeil aujourd\'hui:', error);
     return null;
   }
 };
@@ -301,7 +302,7 @@ export const getSleepStats = async (): Promise<SleepStats> => {
       totalDays: last30Days.length,
     };
   } catch (error) {
-    console.error('Erreur stats sommeil:', error);
+    logger.error('Erreur stats sommeil:', error);
     return {
       averageDuration: 0,
       averageQuality: 0,
@@ -378,7 +379,7 @@ export const exportSleepToCSV = async (): Promise<string> => {
 
     return csv;
   } catch (error) {
-    console.error('Erreur export CSV sommeil:', error);
+    logger.error('Erreur export CSV sommeil:', error);
     throw error;
   }
 };
@@ -417,7 +418,7 @@ export const generateSleepShareText = async (): Promise<string> => {
 
     return text;
   } catch (error) {
-    console.error('Erreur génération texte partage:', error);
+    logger.error('Erreur génération texte partage:', error);
     throw error;
   }
 };

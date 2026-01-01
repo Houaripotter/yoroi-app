@@ -13,7 +13,7 @@ import { scale } from '@/constants/responsive';
 // ADAPTÉ IPHONE & IPAD
 
 interface AvatarProps {
-  source?: ImageSourcePropType;
+  source?: ImageSourcePropType | null;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showRing?: boolean;
   ringProgress?: number;
@@ -29,8 +29,8 @@ const SIZES = {
   xl: { container: scale(100), image: scale(85), ring: scale(116), strokeWidth: scale(5) },
 };
 
-// Default avatar - TEMPORAIREMENT NULL (en cours de création de nouveaux avatars)
-const DEFAULT_AVATAR = null;
+// Default avatar - placeholder
+const DEFAULT_AVATAR = require('@/assets/avatars/samurai/male/samurai_m_1.png');
 
 // Ring Progress Component
 const RingProgress = ({
@@ -138,7 +138,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           ]}
         >
           <Image
-            source={source}
+            source={source ?? DEFAULT_AVATAR}
             style={[
               styles.image,
               {
@@ -209,7 +209,7 @@ export const AvatarSolid: React.FC<AvatarProps & { backgroundColor?: string }> =
         ]}
       >
         <Image
-          source={source}
+          source={source ?? DEFAULT_AVATAR}
           style={[
             styles.image,
             {
@@ -247,7 +247,7 @@ export const AvatarCompact: React.FC<{
       ]}
     >
       <Image
-        source={source}
+        source={source ?? DEFAULT_AVATAR}
         style={{
           width: size * 0.85,
           height: size * 1.0,

@@ -34,6 +34,7 @@ import { Header } from '@/components/ui/Header';
 import { addCombat, getCompetitions } from '@/lib/fighterModeService';
 import { Competition, CombatResultat, CombatMethode } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 const RESULTATS: { value: CombatResultat; label: string; color: string }[] = [
   { value: 'victoire', label: 'Victoire', color: '#4CAF50' },
@@ -116,7 +117,7 @@ export default function AddCombatScreen() {
 
       router.back();
     } catch (error) {
-      console.error('Error saving combat:', error);
+      logger.error('Error saving combat:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le combat');
       setIsSaving(false);
     }
@@ -166,7 +167,7 @@ export default function AddCombatScreen() {
                     {
                       color:
                         selectedCompetitionId === null
-                          ? '#FFFFFF'
+                          ? colors.textOnGold
                           : colors.textPrimary,
                     },
                   ]}
@@ -202,7 +203,7 @@ export default function AddCombatScreen() {
                       {
                         color:
                           selectedCompetitionId === comp.id
-                            ? '#FFFFFF'
+                            ? colors.textOnGold
                             : colors.textPrimary,
                       },
                     ]}
@@ -352,7 +353,7 @@ export default function AddCombatScreen() {
                     styles.methodeText,
                     {
                       color:
-                        methode === meth.value ? '#FFFFFF' : colors.textPrimary,
+                        methode === meth.value ? colors.textOnGold : colors.textPrimary,
                     },
                   ]}
                 >
@@ -498,8 +499,8 @@ export default function AddCombatScreen() {
           disabled={isSaving}
           activeOpacity={0.8}
         >
-          <Save size={20} color="#FFFFFF" />
-          <Text style={styles.saveButtonText}>
+          <Save size={20} color={colors.textOnGold} />
+          <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
             {isSaving ? 'Enregistrement...' : 'Enregistrer'}
           </Text>
         </TouchableOpacity>

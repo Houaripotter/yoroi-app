@@ -44,6 +44,7 @@ import {
   SleepStats,
 } from '@/lib/sleepService';
 import { notificationService, NotificationSettings } from '@/lib/notificationService';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -83,7 +84,7 @@ export default function SleepScreen() {
       setNotificationsEnabled(notifSettings.sleep.enabled);
       setBedtimeReminder(notifSettings.sleep.bedtimeReminder);
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
     }
   }, []);
 
@@ -220,7 +221,7 @@ export default function SleepScreen() {
             </TouchableOpacity>
             <Text style={[styles.goalValue, { color: colors.textPrimary }]}>{formatSleepDuration(goal)}</Text>
             <TouchableOpacity onPress={() => handleGoalChange(30)} style={[styles.goalBtn, { backgroundColor: colors.accent }]}>
-              <Text style={styles.goalBtnTextLight}>+30min</Text>
+              <Text style={[styles.goalBtnTextLight, { color: colors.textOnGold }]}>+30min</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
   goalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
   goalBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   goalBtnText: { fontSize: 12, fontWeight: '700' },
-  goalBtnTextLight: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  goalBtnTextLight: { fontSize: 12, fontWeight: '700' },
   goalValue: { fontSize: 28, fontWeight: '900' },
 
   // Add

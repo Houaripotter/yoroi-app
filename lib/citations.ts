@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Flame, Dumbbell, Shield, Swords, Target, Sparkles, type LucideIcon } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -58,7 +59,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
   },
   {
     id: 'warrior',
-    label: 'Guerrier',
+    label: 'Athlète',
     labelJp: '戦士',
     icon: '⚔️',  // Gardé pour compatibilité
     iconComponent: Swords,
@@ -144,17 +145,17 @@ const MENTAL_QUOTES: Citation[] = [
 // ═══════════════════════════════════════════════
 
 const WARRIOR_QUOTES: Citation[] = [
-  { text: "Un guerrier ne s'entraine pas pour le combat. Il s'entraine pour ne jamais perdre.", category: 'warrior' },
+  { text: "Un champion ne s'entraine pas pour le combat. Il s'entraine pour ne jamais perdre.", category: 'warrior' },
   { text: "Le combat n'est pas contre les autres. C'est contre toi-meme.", category: 'warrior' },
   { text: "Chaque jour est un combat. Sois pret.", category: 'warrior' },
-  { text: "Un vrai guerrier se releve une fois de plus qu'il ne tombe.", category: 'warrior' },
+  { text: "Un vrai champion se releve une fois de plus qu'il ne tombe.", category: 'warrior' },
   { text: "Ne prie pas pour une vie facile. Prie pour avoir la force d'en affronter une difficile.", category: 'warrior' },
   { text: "Le ring ne ment jamais.", category: 'warrior' },
   { text: "Entraine-toi comme si tu etais le deuxieme. Combats comme si tu etais le premier.", category: 'warrior' },
   { text: "La victoire aime la preparation.", category: 'warrior' },
   { text: "Montre-leur pourquoi ils auraient du croire en toi.", category: 'warrior' },
-  { text: "Sois le guerrier, pas le spectateur.", category: 'warrior' },
-  { text: "Un guerrier tombe, mais il ne reste jamais a terre.", category: 'warrior' },
+  { text: "Sois le champion, pas le spectateur.", category: 'warrior' },
+  { text: "Un champion tombe, mais il ne reste jamais a terre.", category: 'warrior' },
   { text: "Dans l'arene, il n'y a que toi et ton courage.", category: 'warrior' },
 ];
 
@@ -218,7 +219,7 @@ export const getCitationStyle = async (): Promise<CitationStyle> => {
     const style = await AsyncStorage.getItem(CITATION_STYLE_KEY);
     return (style as CitationStyle) || 'all';
   } catch (error) {
-    console.error('Erreur lecture style citation:', error);
+    logger.error('Erreur lecture style citation:', error);
     return 'all';
   }
 };
@@ -232,7 +233,7 @@ export const setCitationStyle = async (style: CitationStyle): Promise<void> => {
     // Reset la citation du jour pour forcer le changement
     await AsyncStorage.removeItem(LAST_CITATION_DATE_KEY);
   } catch (error) {
-    console.error('Erreur sauvegarde style citation:', error);
+    logger.error('Erreur sauvegarde style citation:', error);
   }
 };
 
@@ -279,7 +280,7 @@ export const getDailyQuote = async (): Promise<Citation> => {
 
     return citation;
   } catch (error) {
-    console.error('Erreur citation du jour:', error);
+    logger.error('Erreur citation du jour:', error);
     return getRandomQuote('all');
   }
 };
@@ -324,7 +325,7 @@ export const forceNewCitation = async (): Promise<Citation> => {
 
     return citation;
   } catch (error) {
-    console.error('Erreur nouvelle citation:', error);
+    logger.error('Erreur nouvelle citation:', error);
     return getRandomQuote('all');
   }
 };

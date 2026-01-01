@@ -18,6 +18,7 @@ import {
   addHydratation,
 } from '@/lib/fighterModeService';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 const DAILY_GOAL_ML = 3000; // 3 liters per day
 const QUICK_ADD_AMOUNTS = [250, 500, 750]; // in ml
@@ -50,7 +51,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
       await addHydratation(amount, 'eau');
       setTotalToday((prev) => prev + amount);
     } catch (error) {
-      console.error('Error adding hydration:', error);
+      logger.error('Error adding hydration:', error);
       Alert.alert('Erreur', 'Impossible d\'ajouter l\'hydratation');
     } finally {
       setIsAdding(false);

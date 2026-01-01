@@ -27,6 +27,7 @@ import { WORKOUT_TYPES } from '@/types/workout';
 import { RewardOverlay } from '@/components/RewardOverlay';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import logger from '@/lib/security/logger';
 
 interface RoutineBlock {
   time: string;
@@ -147,7 +148,7 @@ export default function SportScreen() {
       
       setUserClubs(clubs);
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      logger.error('Erreur chargement données:', error);
     } finally {
       setLoading(false);
     }
@@ -251,7 +252,7 @@ export default function SportScreen() {
 
       Alert.alert('✅ Validé !', `Séance ${activity.label} validée pour aujourd'hui.`);
     } catch (error) {
-      console.error('Erreur validation:', error);
+      logger.error('Erreur validation:', error);
       Alert.alert('Erreur', 'Impossible de valider la séance.');
     }
   };
@@ -278,7 +279,7 @@ export default function SportScreen() {
       await saveUserSettings({ weekly_routine: newRoutine });
       setRoutine(newRoutine);
     } catch (error) {
-      console.error('Erreur sauvegarde routine:', error);
+      logger.error('Erreur sauvegarde routine:', error);
     }
   };
 

@@ -1,7 +1,7 @@
 // ============================================
 // YOROI - PAGE DOJO
 // ============================================
-// Ton parcours guerrier : Rangs, Niveaux, Badges, Timeline
+// Ton parcours champion : Rangs, Niveaux, Badges, Timeline
 
 import React, { useState, useCallback, useEffect } from 'react';
 import {
@@ -55,6 +55,7 @@ import { AchievementCelebration } from '@/components/AchievementCelebration';
 import { getAchievementsHistory, getTodayAchievements, AchievementUnlock } from '@/lib/achievementsService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -270,7 +271,7 @@ export default function DojoScreen() {
       const points = weights.length * 5 + trainings.length * 20 + (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
       setTotalPoints(points);
     } catch (error) {
-      console.error('Erreur chargement Dojo:', error);
+      logger.error('Erreur chargement Dojo:', error);
     }
   }, []);
 

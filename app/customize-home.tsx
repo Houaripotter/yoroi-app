@@ -29,7 +29,7 @@ import {
   Activity,
   Heart,
   FileText,
-  Tool,
+  Settings,
   Calendar,
   Sword,
   Info,
@@ -47,6 +47,7 @@ import {
   DEFAULT_HOME_SECTIONS,
 } from '@/lib/homeCustomizationService';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 const ICON_MAP: Record<string, any> = {
   user: User,
@@ -59,7 +60,7 @@ const ICON_MAP: Record<string, any> = {
   activity: Activity,
   heart: Heart,
   'file-text': FileText,
-  tool: Tool,
+  tool: Settings,
   calendar: Calendar,
   sword: Sword,
   award: Award,
@@ -81,7 +82,7 @@ export default function CustomizeHomeScreen() {
       setSections(config);
       setLoading(false);
     } catch (error) {
-      console.error('Erreur chargement:', error);
+      logger.error('Erreur chargement:', error);
       setSections(DEFAULT_HOME_SECTIONS);
       setLoading(false);
     }
@@ -162,7 +163,7 @@ export default function CustomizeHomeScreen() {
       setHasChanges(false);
       router.back();
     } catch (error) {
-      console.error('[CUSTOMIZE] Erreur sauvegarde:', error);
+      logger.error('[CUSTOMIZE] Erreur sauvegarde:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder.');
     }
   };

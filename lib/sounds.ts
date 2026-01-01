@@ -4,6 +4,7 @@
 // ============================================
 
 import { Audio } from 'expo-av';
+import logger from '@/lib/security/logger';
 
 type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup';
 
@@ -35,9 +36,9 @@ class SoundManager {
       await this.loadAllSounds();
 
       this.isInitialized = true;
-      console.log('[SoundManager] Initialise avec succes');
+      logger.info('[SoundManager] Initialise avec succes');
     } catch (error) {
-      console.error('[SoundManager] Erreur initialisation:', error);
+      logger.error('[SoundManager] Erreur initialisation:', error);
     } finally {
       this.isLoading = false;
     }
@@ -62,9 +63,9 @@ class SoundManager {
           volume: 1.0,
         });
         this.sounds.set(key as SoundType, sound);
-        console.log(`[SoundManager] Son charge: ${key}`);
+        logger.info(`[SoundManager] Son charge: ${key}`);
       } catch (error) {
-        console.error(`[SoundManager] Erreur chargement ${key}:`, error);
+        logger.error(`[SoundManager] Erreur chargement ${key}:`, error);
       }
     }
   }
@@ -80,7 +81,7 @@ class SoundManager {
 
     const sound = this.sounds.get(type);
     if (!sound) {
-      console.warn(`[SoundManager] Son non trouve: ${type}`);
+      logger.warn(`[SoundManager] Son non trouve: ${type}`);
       return;
     }
 
@@ -90,7 +91,7 @@ class SoundManager {
       await sound.setVolumeAsync(volume);
       await sound.playAsync();
     } catch (error) {
-      console.error(`[SoundManager] Erreur lecture ${type}:`, error);
+      logger.error(`[SoundManager] Erreur lecture ${type}:`, error);
     }
   }
 
@@ -160,9 +161,9 @@ class SoundManager {
     for (const [key, sound] of this.sounds.entries()) {
       try {
         await sound.unloadAsync();
-        console.log(`[SoundManager] Son decharge: ${key}`);
+        logger.info(`[SoundManager] Son decharge: ${key}`);
       } catch (error) {
-        console.error(`[SoundManager] Erreur dechargement ${key}:`, error);
+        logger.error(`[SoundManager] Erreur dechargement ${key}:`, error);
       }
     }
     this.sounds.clear();

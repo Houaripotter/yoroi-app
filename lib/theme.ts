@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 // ============================================
-// YOROI GUERRIER - THEME SAMOURAI
+// YOROI - THEME SAMOURAI
 // Forge ton armure, deviens legende
 // ============================================
 
@@ -55,6 +55,7 @@ export const darkTheme = {
     textMuted: '#666666',
     textDisabled: '#444444',
     textOnGold: '#0D0D0F',
+    textOnAccent: '#0D0D0F', // Alias pour textOnGold
 
     // === BORDURES ===
     border: 'rgba(255, 255, 255, 0.1)',
@@ -190,7 +191,8 @@ export const lightTheme = {
     textSecondary: '#666666',
     textMuted: '#999999',
     textDisabled: '#CCCCCC',
-    textOnGold: '#FFFFFF',
+    textOnGold: '#1A1A1F', // Texte noir sur fond gold/jaune pour meilleur contraste
+    textOnAccent: '#1A1A1F', // Alias pour textOnGold
 
     // === BORDURES ===
     border: 'rgba(0, 0, 0, 0.08)',

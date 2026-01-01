@@ -21,6 +21,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Club, Training } from '@/lib/database';
 import { getSessionTypesForSport, DURATION_PRESETS, getDefaultSessionType } from '@/lib/sessionTypes';
 import { getClubLogoSource } from '@/lib/sports';
+import logger from '@/lib/security/logger';
 
 interface AddSessionModalProps {
   visible: boolean;
@@ -130,7 +131,7 @@ export function AddSessionModal({
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleClose();
     } catch (error) {
-      console.error('Erreur sauvegarde:', error);
+      logger.error('Erreur sauvegarde:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsSaving(false);

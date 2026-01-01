@@ -5,6 +5,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -131,7 +132,7 @@ class InfirmaryService {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('[Infirmary] Erreur chargement blessures:', error);
+      logger.error('[Infirmary] Erreur chargement blessures:', error);
       return [];
     }
   }

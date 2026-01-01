@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // HOOK AUTO-SAVE UNIVERSEL
@@ -36,7 +37,7 @@ export function useAutoSave({
   enabled = true,
 }: UseAutoSaveOptions) {
   const appState = useRef(AppState.currentState);
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasUnsavedChanges = useRef(false);
   const isInitialMount = useRef(true);
 
@@ -49,9 +50,9 @@ export function useAutoSave({
     try {
       await onSave();
       hasUnsavedChanges.current = false;
-      console.log('[AUTO-SAVE] Data saved successfully');
+      logger.info('[AUTO-SAVE] Data saved successfully');
     } catch (error) {
-      console.error('[AUTO-SAVE] Failed to save:', error);
+      logger.error('[AUTO-SAVE] Failed to save:', error);
     }
   }, [onSave, enabled]);
 
@@ -65,7 +66,7 @@ export function useAutoSave({
         appState.current.match(/active/) &&
         (nextAppState === 'inactive' || nextAppState === 'background')
       ) {
-        console.log('[AUTO-SAVE] App going to background, triggering save...');
+        logger.info('[AUTO-SAVE] App going to background, triggering save...');
         save();
       }
 
@@ -81,7 +82,7 @@ export function useAutoSave({
   useEffect(() => {
     return () => {
       if (enabled && hasUnsavedChanges.current) {
-        console.log('[AUTO-SAVE] Screen unmounting, triggering save...');
+        logger.info('[AUTO-SAVE] Screen unmounting, triggering save...');
         save();
       }
       // Clear any pending timer
@@ -115,7 +116,7 @@ export function useAutoSave({
     // Only set timer if there are unsaved changes
     if (hasUnsavedChanges.current) {
       autoSaveTimerRef.current = setTimeout(() => {
-        console.log(`[AUTO-SAVE] Debounced save triggered after ${debounceMs}ms inactivity`);
+        logger.info(`[AUTO-SAVE] Debounced save triggered after ${debounceMs}ms inactivity`);
         save();
       }, debounceMs);
     }

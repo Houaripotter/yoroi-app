@@ -14,6 +14,7 @@ import { Zap, X, Dumbbell, ChevronRight, Battery, Flame } from 'lucide-react-nat
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const POPUP_KEY = '@yoroi_battery_popup_shown';
@@ -80,7 +81,7 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
         ).start();
       }, 1500);
     } catch (error) {
-      console.error('Erreur popup batterie:', error);
+      logger.error('Erreur popup batterie:', error);
     }
   };
 

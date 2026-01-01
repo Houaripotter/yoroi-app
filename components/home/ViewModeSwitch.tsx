@@ -14,11 +14,11 @@ interface ViewModeSwitchProps {
 
 export const ViewModeSwitch: React.FC<ViewModeSwitchProps> = ({ mode, onToggle }) => {
   const { colors } = useTheme();
-  const rotationAnim = useRef(new Animated.Value(mode === 'guerrier' ? 0 : 1)).current;
+  const rotationAnim = useRef(new Animated.Value(mode === 'complet' ? 0 : 1)).current;
 
   useEffect(() => {
     Animated.timing(rotationAnim, {
-      toValue: mode === 'guerrier' ? 0 : 1,
+      toValue: mode === 'complet' ? 0 : 1,
       duration: 300,
       useNativeDriver: true,
     }).start();

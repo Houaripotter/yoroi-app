@@ -17,7 +17,7 @@ export const EssentielHydrationCard: React.FC<EssentielHydrationCardProps> = ({
   onAdd500,
 }) => {
   const { colors } = useTheme();
-  const percentage = Math.min((current / goal) * 100, 100);
+  const percentage = goal ? Math.min((current / goal) * 100, 100) : 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>

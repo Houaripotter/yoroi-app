@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { Audio } from 'expo-av';
+import logger from '@/lib/security/logger';
 
 interface RewardOverlayProps {
   onComplete?: () => void;
@@ -50,7 +51,7 @@ export const RewardOverlay = React.forwardRef<
       });
     } catch (error) {
       // Le fichier son n'existe pas ou erreur de chargement - on continue sans son
-      console.log('Son de succès non disponible:', error);
+      logger.info('Son de succès non disponible:', error);
     }
   };
 

@@ -13,6 +13,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { Trophy, User, Weight, Award, ChevronRight, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const COMPETITOR_PROFILE_KEY = '@yoroi_competitor_profile';
 
@@ -82,7 +83,7 @@ export default function CompetitorProfileScreen() {
         }
       }
     } catch (error) {
-      console.error('Erreur chargement profil compétiteur:', error);
+      logger.error('Erreur chargement profil compétiteur:', error);
     }
   };
 
@@ -91,7 +92,7 @@ export default function CompetitorProfileScreen() {
       await AsyncStorage.setItem(COMPETITOR_PROFILE_KEY, JSON.stringify(updatedProfile));
       setProfile(updatedProfile);
     } catch (error) {
-      console.error('Erreur sauvegarde profil compétiteur:', error);
+      logger.error('Erreur sauvegarde profil compétiteur:', error);
     }
   };
 
@@ -169,7 +170,7 @@ export default function CompetitorProfileScreen() {
             >
               {profile.gender === 'male' && (
                 <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                  <Check size={12} color="#FFFFFF" />
+                  <Check size={12} color={colors.textOnGold} />
                 </View>
               )}
               <Text style={[styles.genderText, { color: profile.gender === 'male' ? colors.accent : colors.textPrimary }]}>
@@ -189,7 +190,7 @@ export default function CompetitorProfileScreen() {
             >
               {profile.gender === 'female' && (
                 <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                  <Check size={12} color="#FFFFFF" />
+                  <Check size={12} color={colors.textOnGold} />
                 </View>
               )}
               <Text style={[styles.genderText, { color: profile.gender === 'female' ? colors.accent : colors.textPrimary }]}>
@@ -223,7 +224,7 @@ export default function CompetitorProfileScreen() {
                 style={[styles.saveButton, { backgroundColor: colors.accent }]}
                 onPress={handleWeightSave}
               >
-                <Check size={20} color="#FFFFFF" />
+                <Check size={20} color={colors.textOnGold} />
               </TouchableOpacity>
             </View>
 
@@ -266,7 +267,7 @@ export default function CompetitorProfileScreen() {
                 >
                   {profile.category === category.id && (
                     <View style={[styles.checkBadge, { backgroundColor: colors.accent }]}>
-                      <Check size={12} color="#FFFFFF" />
+                      <Check size={12} color={colors.textOnGold} />
                     </View>
                   )}
                   <Text style={[styles.categoryName, { color: profile.category === category.id ? colors.accent : colors.textPrimary }]}>
@@ -311,7 +312,7 @@ export default function CompetitorProfileScreen() {
                 >
                   {profile.belt === belt.id && (
                     <View style={[styles.checkBadge, { backgroundColor: belt.id === 'white' ? colors.accent : belt.color }]}>
-                      <Check size={12} color="#FFFFFF" />
+                      <Check size={12} color={belt.id === 'white' ? colors.textOnGold : '#FFFFFF'} />
                     </View>
                   )}
                   <View style={[styles.beltVisual, { backgroundColor: belt.color, borderColor: belt.borderColor }]} />
@@ -368,8 +369,8 @@ export default function CompetitorProfileScreen() {
               style={[styles.goToCompetitionsButton, { backgroundColor: colors.accent }]}
               onPress={() => router.push('/planning?tab=competitions')}
             >
-              <Text style={styles.goToCompetitionsText}>Voir mes compétitions</Text>
-              <ChevronRight size={20} color="#FFFFFF" />
+              <Text style={[styles.goToCompetitionsText, { color: colors.textOnGold }]}>Voir mes compétitions</Text>
+              <ChevronRight size={20} color={colors.textOnGold} />
             </TouchableOpacity>
           </View>
         )}

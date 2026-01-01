@@ -16,6 +16,7 @@ import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MODAL_CHART_HEIGHT = scale(300);
@@ -745,19 +746,20 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
       const data = await getTrainings();
       setTrainings(data);
     } catch (error) {
-      console.error('Error loading trainings:', error);
+      logger.error('Error loading trainings:', error);
     }
   };
 
   const loadSleepData = async () => {
     try {
       const stats = await getSleepStats();
-      // Simuler les données de sommeil sur 7 jours
-      if (stats?.weeklyHours) {
-        setSleepHours(stats.weeklyHours);
+      // Utiliser weeklyData pour calculer les heures de sommeil par jour
+      if (stats?.weeklyData && stats.weeklyData.length > 0) {
+        const hours = stats.weeklyData.slice(-7).map(d => d.duration / 60);
+        setSleepHours(hours);
       }
     } catch (error) {
-      console.error('Error loading sleep data:', error);
+      logger.error('Error loading sleep data:', error);
     }
   };
 

@@ -37,14 +37,6 @@ interface EnhancedCalendarViewProps {
   selectedDate: Date | null;
 }
 
-// Couleur de fond selon l'intensité (nombre de séances)
-const getIntensityColor = (sessionCount: number): string => {
-  if (sessionCount >= 3) return '#22C55E30'; // Vert fort
-  if (sessionCount >= 2) return '#22C55E20'; // Vert moyen
-  if (sessionCount >= 1) return '#22C55E10'; // Vert léger
-  return 'transparent';
-};
-
 export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   currentMonth,
   workouts,
@@ -158,11 +150,6 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                 const isDayToday = isToday(day);
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
 
-                // Couleur de fond selon l'intensité
-                const bgColor = hasTraining
-                  ? getIntensityColor(dayWorkouts.length)
-                  : 'transparent';
-
                 // Get unique clubs for this day (max 3)
                 const uniqueClubIds = [
                   ...new Set(dayWorkouts.filter((w) => w.club_id).map((w) => w.club_id)),
@@ -179,13 +166,11 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                     key={dayIndex}
                     style={[
                       styles.dayCell,
-                      { backgroundColor: bgColor },
                       isDayToday && {
                         borderWidth: 2,
                         borderColor: colors.accent,
                       },
                       isSelected && {
-                        backgroundColor: colors.accent + '40',
                         borderWidth: 2,
                         borderColor: colors.accent,
                       },
@@ -324,34 +309,34 @@ const styles = StyleSheet.create({
   },
   weekHeader: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   weekHeaderText: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
   weekRow: {
     flexDirection: 'row',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   dayCell: {
     flex: 1,
-    aspectRatio: 0.9, // Réduit la hauteur des cellules
-    margin: 0,
-    borderRadius: 10,
-    padding: 4,
+    aspectRatio: 1.1, // Plus grand et plus carré
+    margin: 1,
+    borderRadius: 12,
+    padding: 6,
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 60,
+    minHeight: 85,
   },
   otherMonthCell: {
     opacity: 0.4,
   },
   dayNumber: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   otherMonthNumber: {
     opacity: 0.5,
@@ -364,10 +349,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   calendarClubLogo: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
     borderColor: '#FFFFFF',
   },
   calendarClubDot: {

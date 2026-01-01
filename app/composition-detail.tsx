@@ -34,6 +34,7 @@ import { getAllBodyCompositions, BodyComposition } from '@/lib/bodyComposition';
 import { useFocusEffect } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_HEIGHT = 250;
@@ -140,7 +141,7 @@ export default function CompositionDetailScreen() {
       const data = await getAllBodyCompositions();
       setCompositionData(data);
     } catch (error) {
-      console.error('Erreur chargement composition:', error);
+      logger.error('Erreur chargement composition:', error);
     }
   }, []);
 

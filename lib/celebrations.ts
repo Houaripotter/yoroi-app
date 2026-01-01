@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CelebrationType } from '@/components/Celebration';
 import { Rank } from './ranks';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES
@@ -49,7 +50,7 @@ export const loadCelebrationState = async (): Promise<CelebrationState> => {
       return JSON.parse(data);
     }
   } catch (error) {
-    console.error('Erreur chargement célébrations:', error);
+    logger.error('Erreur chargement célébrations:', error);
   }
 
   return {
@@ -68,7 +69,7 @@ export const saveCelebrationState = async (state: CelebrationState): Promise<voi
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('Erreur sauvegarde célébrations:', error);
+    logger.error('Erreur sauvegarde célébrations:', error);
   }
 };
 
@@ -117,7 +118,7 @@ export const checkGoalReached = async (
     return {
       type: 'goal_reached',
       title: 'OBJECTIF ATTEINT !',
-      subtitle: `Tu as ${isLossGoal ? 'perdu' : 'pris'} ${weightLost.toFixed(1)} kg. Félicitations, guerrier !`,
+      subtitle: `Tu as ${isLossGoal ? 'perdu' : 'pris'} ${weightLost.toFixed(1)} kg. Félicitations, champion !`,
       xpGained: 1000,
       icon: '🎯',
     };
@@ -203,7 +204,7 @@ export const checkStreakRecord = async (
         subtitle = '21 jours ! L\'habitude est ancrée.';
         xp = 300;
       } else if (currentStreak === 30) {
-        subtitle = 'Un mois entier ! Tu es un vrai guerrier.';
+        subtitle = 'Un mois entier ! Tu es un vrai champion.';
         xp = 500;
       } else if (currentStreak === 50) {
         subtitle = '50 jours ! Détermination légendaire.';

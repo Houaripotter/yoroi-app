@@ -2,10 +2,18 @@
 // 📚 YOROI - SERVICE PROGRAMMES D'ENTRAÎNEMENT
 // ============================================
 
-import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 import { Sport } from './trainingJournalService';
 
-const db = SQLite.openDatabaseSync('yoroi.db');
+// 🔒 Platform-specific: SQLite only available on native
+const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
+let SQLite: any = null;
+let db: any = null;
+
+if (isNativePlatform) {
+  SQLite = require('expo-sqlite');
+  db = SQLite.openDatabaseSync('yoroi.db');
+}
 
 // ============================================
 // TYPES

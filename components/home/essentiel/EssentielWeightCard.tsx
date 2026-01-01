@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Scale, TrendingUp, TrendingDown, Minus, BarChart3, Target } from 'lucide-react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
+import { TrendingUp, TrendingDown, Minus, Target, BarChart3 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -24,365 +25,361 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
   onAddWeight,
   onViewStats,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  const minWeight = weekData.length > 0 ? Math.min(...weekData) : 0;
-  const maxWeight = weekData.length > 0 ? Math.max(...weekData) : 0;
+  // Animations subtiles
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        damping: 20,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [currentWeight]);
 
   const getTrendInfo = () => {
-    switch(trend) {
-      case 'up': return { label: 'EN HAUSSE', color: '#F59E0B', Icon: TrendingUp };
-      case 'down': return { label: 'EN BAISSE', color: '#10B981', Icon: TrendingDown };
-      default: return { label: 'STABLE', color: '#3B82F6', Icon: Minus };
+    switch (trend) {
+      case 'up':
+        return { label: 'EN HAUSSE', color: '#EF4444', Icon: TrendingUp };
+      case 'down':
+        return { label: 'EN BAISSE', color: '#10B981', Icon: TrendingDown };
+      default:
+        return { label: 'STABLE', color: '#94A3B8', Icon: Minus };
     }
   };
 
   const trendInfo = getTrendInfo();
   const TrendIcon = trendInfo.Icon;
 
-  // Calculer la hauteur des barres
-  const getBarHeight = (weight: number) => {
-    if (weekData.length === 0) return 0;
-    const range = maxWeight - minWeight || 1;
-    return ((weight - minWeight) / range) * 50 + 12;
+  // Couleurs professionnelles
+  const accentColor = isDark ? '#818CF8' : '#6366F1';
+  const chartColor = isDark ? '#A78BFA' : '#8B5CF6';
+  const mutedColor = isDark ? '#64748B' : '#94A3B8';
+
+  // Données
+  const chartData = weekData.length > 0 ? weekData.slice(0, 7) : [];
+  const labels = weekLabels.slice(0, chartData.length);
+  const hasData = chartData.length > 0;
+
+  // Générer le path pour la courbe
+  const generateCurvePath = () => {
+    if (!hasData) return { path: '', points: [], width: 0, height: 0 };
+
+    const width = screenWidth - 80;
+    const height = 120;
+    const maxVal = Math.max(...chartData);
+    const minVal = Math.min(...chartData);
+    const range = maxVal - minVal || 1;
+
+    const points = chartData.map((val, i) => ({
+      x: (i / (chartData.length - 1 || 1)) * width,
+      y: height - ((val - minVal) / range) * (height - 20),
+      value: val
+    }));
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const midX = (prev.x + curr.x) / 2;
+      path += ` Q ${prev.x} ${prev.y}, ${midX} ${(prev.y + curr.y) / 2}`;
+      path += ` Q ${curr.x} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+
+    return { path, points, width, height };
   };
 
-  // Calcul des prédictions à 7, 30 et 90 jours
-  const calculatePredictions = () => {
-    // Il faut au moins 2 pesées pour faire une prédiction
-    if (!weekData || weekData.length < 2) return null;
-
-    // Prendre les données récentes (max 7 jours)
-    const recent = weekData.slice(0, Math.min(7, weekData.length));
-
-    // Le poids le plus ancien et le plus récent
-    const oldestWeight = recent[recent.length - 1];
-    const newestWeight = recent[0];
-
-    // Nombre de jours écoulés (si on a 7 mesures = 6 jours d'écart)
-    const daysDiff = recent.length - 1;
-
-    // Éviter division par zéro
-    if (daysDiff === 0 || oldestWeight === newestWeight) return null;
-
-    // Variation moyenne par jour
-    const dailyChange = (newestWeight - oldestWeight) / daysDiff;
-
-    // Si variation très faible, considérer comme stable
-    if (Math.abs(dailyChange) < 0.01) return null;
-
-    // Calculer les prédictions pour 7, 30 et 90 jours
-    const predictions = [
-      { days: 7, label: '7j' },
-      { days: 30, label: '30j' },
-      { days: 90, label: '90j' },
-    ].map(({ days, label }) => {
-      const prediction = dailyChange * days;
-      const predictedWeight = (currentWeight ?? 0) + prediction;
-      const sign = prediction > 0 ? '+' : '';
-      const color = prediction > 0 ? '#F59E0B' : '#10B981';
-
-      return {
-        label,
-        change: `${sign}${prediction.toFixed(1)}`,
-        predictedWeight: predictedWeight.toFixed(1),
-        color,
-      };
-    });
-
-    return predictions;
-  };
-
-  const predictions = calculatePredictions();
+  const { path: curvePath, points: curvePoints, width: chartWidth, height: chartHeight } = generateCurvePath();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.backgroundCard,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Scale size={20} color="#EF4444" />
-          <Text style={styles.title}>POIDS ACTUEL</Text>
-        </View>
-        <TouchableOpacity style={styles.chartButton} onPress={onViewStats}>
-          <BarChart3 size={20} color={colors.textMuted} />
+        <Text style={[styles.title, { color: colors.textMuted }]}>POIDS</Text>
+        <TouchableOpacity onPress={onViewStats} style={styles.iconButton}>
+          <BarChart3 size={22} color={accentColor} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
-      {/* Poids principal - GRAND */}
-      <View style={styles.weightContainer}>
-        <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
-          {currentWeight != null && currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
-        </Text>
-        <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
-      </View>
-
-      {/* Badge tendance */}
-      <View style={[styles.trendBadge, { backgroundColor: `${trendInfo.color}15` }]}>
-        <TrendIcon size={16} color={trendInfo.color} />
-        <Text style={[styles.trendText, { color: trendInfo.color }]}>
-          {trendInfo.label}
-        </Text>
-      </View>
-
-      {/* Graphique 7 jours - Barres simples */}
-      {weekData.length > 0 && (
-        <View style={styles.chartContainer}>
-          <View style={styles.barsContainer}>
-            {weekData.slice(0, 7).map((weight, index) => (
-              <View key={index} style={styles.barColumn}>
-                <Text style={[styles.barValue, { color: colors.textMuted }]}>
-                  {weight.toFixed(1)}
-                </Text>
-                <View style={styles.barWrapper}>
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: getBarHeight(weight),
-                        backgroundColor: index === weekData.length - 1 ? '#EF4444' : `${colors.accent}50`,
-                      }
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.barLabel, { color: index === weekData.length - 1 ? '#EF4444' : colors.textMuted }]}>
-                  {weekLabels[index]}
+      {/* Poids principal */}
+      <View style={styles.weightSection}>
+        <View style={styles.weightRow}>
+          <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
+            {currentWeight != null && currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
+          </Text>
+          <View style={styles.weightMeta}>
+            <Text style={[styles.weightUnit, { color: accentColor }]}>kg</Text>
+            {trend !== 'stable' && (
+              <View style={[styles.trendBadge, { backgroundColor: `${trendInfo.color}15` }]}>
+                <TrendIcon size={16} color={trendInfo.color} strokeWidth={2.5} />
+                <Text style={[styles.trendText, { color: trendInfo.color }]}>
+                  {trendInfo.label}
                 </Text>
               </View>
-            ))}
+            )}
           </View>
         </View>
-      )}
 
-      {/* Stats Min/Objectif/Max */}
-      <View style={[styles.statsRow, { borderTopColor: colors.border }]}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>
-          <Text style={[styles.statValue, { color: '#10B981' }]}>
-            {minWeight > 0 ? minWeight.toFixed(1) : '--.-'} kg
-          </Text>
-        </View>
-
-        {objective && (
-          <View style={styles.statItem}>
-            <Target size={14} color="#EF4444" />
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Objectif</Text>
-            <Text style={[styles.statValue, { color: '#EF4444' }]}>{objective} kg</Text>
+        {/* Objectif */}
+        {objective && currentWeight && (
+          <View style={styles.objectiveRow}>
+            <Target size={18} color={mutedColor} strokeWidth={2} />
+            <Text style={[styles.objectiveLabel, { color: mutedColor }]}>Objectif</Text>
+            <Text style={[styles.objectiveValue, { color: accentColor }]}>{objective} kg</Text>
+            {currentWeight > 0 && (
+              <View style={[styles.diffBadge, { backgroundColor: `${trendInfo.color}12` }]}>
+                <Text style={[styles.diffValue, { color: trendInfo.color }]}>
+                  {currentWeight - objective > 0 ? '+' : ''}
+                  {(currentWeight - objective).toFixed(1)}
+                </Text>
+              </View>
+            )}
           </View>
         )}
-
-        <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Max</Text>
-          <Text style={[styles.statValue, { color: '#F59E0B' }]}>
-            {maxWeight > 0 ? maxWeight.toFixed(1) : '--.-'} kg
-          </Text>
-        </View>
       </View>
 
-      {/* Prédictions 7j / 30j / 90j */}
-      {predictions && (
-        <View style={styles.predictionsSection}>
-          <View style={styles.predictionsTitleRow}>
-            <TrendingUp size={12} color={colors.textMuted} strokeWidth={2.5} />
-            <Text style={[styles.predictionsTitle, { color: colors.textMuted }]}>
-              PRÉDICTIONS
-            </Text>
+      {/* Graphique */}
+      {hasData && (
+        <View style={styles.chartSection}>
+          <View style={styles.chartHeader}>
+            <Text style={[styles.chartTitle, { color: mutedColor }]}>ÉVOLUTION 7 JOURS</Text>
+            <View style={styles.rangeRow}>
+              <Text style={[styles.rangeText, { color: '#10B981' }]}>
+                {Math.min(...chartData).toFixed(1)}
+              </Text>
+              <Text style={[styles.rangeText, { color: mutedColor }]}>→</Text>
+              <Text style={[styles.rangeText, { color: '#EF4444' }]}>
+                {Math.max(...chartData).toFixed(1)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.predictionsRow}>
-            {predictions.map((pred, index) => (
-              <View key={index} style={[styles.predictionCard, { backgroundColor: `${pred.color}15` }]}>
-                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>
-                  {pred.label}
+
+          <View style={styles.chartContainer}>
+            {/* Courbe SVG */}
+            <Svg width={chartWidth} height={chartHeight}>
+              <Defs>
+                <SvgLinearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <Stop offset="0%" stopColor={accentColor} stopOpacity="1" />
+                  <Stop offset="100%" stopColor={chartColor} stopOpacity="1" />
+                </SvgLinearGradient>
+              </Defs>
+
+              {/* Ligne de base */}
+              <Rect
+                x="0"
+                y={chartHeight - 1}
+                width={chartWidth}
+                height="1"
+                fill={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)'}
+              />
+
+              {/* Courbe */}
+              <Path
+                d={curvePath}
+                stroke="url(#gradient)"
+                strokeWidth="4"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Points */}
+              {curvePoints.map((point, i) => (
+                <Circle
+                  key={i}
+                  cx={point.x}
+                  cy={point.y}
+                  r={i === curvePoints.length - 1 ? 7 : 4}
+                  fill={i === curvePoints.length - 1 ? chartColor : colors.backgroundCard}
+                  stroke={i === curvePoints.length - 1 ? chartColor : accentColor}
+                  strokeWidth={2}
+                />
+              ))}
+            </Svg>
+
+            {/* Labels */}
+            <View style={styles.labelsRow}>
+              {labels.map((label, i) => (
+                <Text
+                  key={i}
+                  style={[
+                    styles.dayLabel,
+                    {
+                      color: i === labels.length - 1 ? accentColor : mutedColor,
+                      fontWeight: i === labels.length - 1 ? '700' : '600',
+                    },
+                  ]}
+                >
+                  {label}
                 </Text>
-                <Text style={[styles.predictionChange, { color: pred.color }]}>
-                  {pred.change} kg
-                </Text>
-                <Text style={[styles.predictionWeight, { color: colors.textPrimary }]}>
-                  {pred.predictedWeight} kg
-                </Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         </View>
       )}
 
-      {/* Bouton Ajouter */}
-      <TouchableOpacity style={styles.addButton} onPress={onAddWeight}>
-        <Text style={styles.addButtonText}>+ Nouvelle pesée</Text>
+      {/* Bouton */}
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: accentColor }]}
+        onPress={onAddWeight}
+      >
+        <Text style={styles.addButtonText}>Nouvelle pesée</Text>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 24,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    marginBottom: 16,
   },
   title: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#EF4444',
-    letterSpacing: 1,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
-  chartButton: {
+  iconButton: {
     padding: 4,
   },
-  weightContainer: {
+  weightSection: {
+    marginBottom: 24,
+  },
+  weightRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    marginVertical: 2,
+    alignItems: 'flex-start',
+    gap: 12,
   },
   weightValue: {
-    fontSize: 44,
-    fontWeight: '700',
+    fontSize: 64,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -3,
+    lineHeight: 64,
+  },
+  weightMeta: {
+    marginTop: 6,
+    gap: 10,
   },
   weightUnit: {
-    fontSize: 20,
-    fontWeight: '500',
-    marginLeft: 8,
+    fontSize: 22,
+    fontWeight: '700',
   },
   trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
+    gap: 6,
     paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-    gap: 4,
-    marginBottom: 6,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   trendText: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  chartContainer: {
-    marginVertical: 8,
-  },
-  barsContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 75,
-    paddingHorizontal: 4,
-  },
-  barColumn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  barValue: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  barWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    width: '100%',
-  },
-  bar: {
-    width: '70%',
-    maxWidth: 24,
-    borderRadius: 4,
-    minHeight: 20,
-  },
-  barLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    marginTop: 6,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-  },
-  statItem: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    textTransform: 'uppercase',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
-  statValue: {
-    fontSize: 15,
+  objectiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  objectiveLabel: {
+    fontSize: 14,
     fontWeight: '600',
   },
-  predictionsSection: {
-    marginTop: 12,
-    paddingTop: 8,
-  },
-  predictionsTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  predictionsTitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  predictionsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'space-between',
-  },
-  predictionCard: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  predictionLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-  },
-  predictionChange: {
+  objectiveValue: {
     fontSize: 16,
     fontWeight: '800',
-    marginBottom: 2,
+    fontVariant: ['tabular-nums'],
   },
-  predictionWeight: {
+  diffBadge: {
+    marginLeft: 'auto',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  diffValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  chartSection: {
+    marginBottom: 24,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  chartTitle: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  rangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rangeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  chartContainer: {
+    gap: 12,
+  },
+  labelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  dayLabel: {
+    fontSize: 12,
+    letterSpacing: 0.3,
   },
   addButton: {
-    backgroundColor: '#EF4444',
-    paddingVertical: 10,
-    borderRadius: 12,
-    marginTop: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
   },
   addButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

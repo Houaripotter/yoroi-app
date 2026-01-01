@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { getCompetitions, Competition } from '@/lib/database';
 import { differenceInDays, parseISO } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 interface NextEvent {
   id: number;
@@ -48,8 +49,8 @@ const ObjectiveSwitch = () => {
 
         if (upcoming) {
           setNextEvent({
-            id: upcoming.id,
-            name: upcoming.name,
+            id: upcoming.id ?? 0,
+            name: upcoming.nom,
             date: upcoming.date,
             daysLeft: upcoming.daysLeft,
             sport: upcoming.sport
@@ -61,7 +62,7 @@ const ObjectiveSwitch = () => {
         setNextEvent(null);
       }
     } catch (error) {
-      console.error('Erreur chargement événement:', error);
+      logger.error('Erreur chargement événement:', error);
       setNextEvent(null);
     }
   };

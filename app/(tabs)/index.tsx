@@ -55,6 +55,11 @@ import {
   Apple,
   Clock,
   BookOpen,
+  Plus,
+  Calendar,
+  Share2,
+  List,
+  Building2,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -72,6 +77,7 @@ import { LogoViewer } from '@/components/LogoViewer';
 import { MotivationPopup } from '@/components/MotivationPopup';
 import { getUserMode, getNextEvent } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
+import { calculateReadinessScore, ReadinessScore } from '@/lib/readinessService';
 import { getJournalStats } from '@/lib/trainingJournalService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
@@ -89,8 +95,12 @@ import HealthConnect from '@/lib/healthConnect.ios';
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
+import { ViewModeHint } from '@/components/home/ViewModeHint';
 import { HomeEssentielContent } from '@/components/home/HomeEssentielContent';
 import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
+import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
+import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
+import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -110,6 +120,7 @@ import { getWeeklyLoadStats, formatLoad, getRiskColor, WeeklyLoadStats } from '@
 import { getDailyChallenges, ActiveChallenge } from '@/lib/challengesService';
 import { generateWeeklyReport, formatReportForSharing, WeeklyReport } from '@/lib/weeklyReportService';
 import { getHomeCustomization, isSectionVisible as checkSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -151,6 +162,53 @@ export default function HomeScreen() {
     date: string;
     sport?: string;
   } | null>(null);
+
+  // État readiness pour l'énergie (calculé depuis sommeil, hydratation, charge, streak)
+  const [readinessScore, setReadinessScore] = useState<number>(0);
+  const [batteryFillPercent, setBatteryFillPercent] = useState<number>(0);
+  const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Animation de remplissage de la batterie au focus
+  useFocusEffect(
+    useCallback(() => {
+      // Clear any existing interval
+      if (batteryIntervalRef.current) {
+        clearInterval(batteryIntervalRef.current);
+      }
+
+      // Reset à 0
+      setBatteryFillPercent(0);
+
+      // Variable locale pour suivre la progression
+      let currentValue = 0;
+      const targetValue = readinessScore;
+
+      // Démarrer l'animation après un délai
+      const startTimeout = setTimeout(() => {
+        batteryIntervalRef.current = setInterval(() => {
+          currentValue += 3;
+          if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            setBatteryFillPercent(targetValue);
+            if (batteryIntervalRef.current) {
+              clearInterval(batteryIntervalRef.current);
+              batteryIntervalRef.current = null;
+            }
+          } else {
+            setBatteryFillPercent(currentValue);
+          }
+        }, 40);
+      }, 500);
+
+      return () => {
+        clearTimeout(startTimeout);
+        if (batteryIntervalRef.current) {
+          clearInterval(batteryIntervalRef.current);
+          batteryIntervalRef.current = null;
+        }
+      };
+    }, [readinessScore])
+  );
 
   // Animation toggle compétiteur
   const toggleAnim = useRef(new Animated.Value(isCompetitorMode ? 1 : 0)).current;
@@ -233,7 +291,7 @@ export default function HomeScreen() {
         animateWater(value, goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL);
       }
     } catch (error) {
-      console.error('Erreur hydratation:', error);
+      logger.error('Erreur hydratation:', error);
     }
   }, []);
 
@@ -305,13 +363,23 @@ export default function HomeScreen() {
           setSteps(stepsData.count);
         }
       } catch (error) {
-        console.log('Pas disponibles depuis Apple Health');
+        logger.info('Pas disponibles depuis Apple Health');
       }
 
       setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
       loadHydration();
+
+      // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
+      try {
+        const readiness = await calculateReadinessScore(streakDays);
+        console.log('🔋 Score Energie calculé:', readiness.score, '- Facteurs:', readiness.factors);
+        setReadinessScore(Math.round(readiness.score));
+      } catch (error) {
+        console.log('🔋 Erreur calcul readiness, valeur par défaut 50%');
+        setReadinessScore(50);
+      }
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
     }
   }, [loadHydration]);
 
@@ -386,7 +454,7 @@ export default function HomeScreen() {
       const text = formatReportForSharing(weeklyReport);
       await Share.share({ message: text });
     } catch (error) {
-      console.error('Erreur partage:', error);
+      logger.error('Erreur partage:', error);
     }
   };
 
@@ -547,38 +615,42 @@ export default function HomeScreen() {
     switch (sectionId) {
       case 'header':
         return (
-          <View style={styles.header} key={sectionId}>
-            <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
-              <AvatarDisplay size="small" />
-            </TouchableOpacity>
-            <View style={styles.headerText}>
-              <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
-              <View style={styles.userNameRow}>
-                <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
-                <ViewModeSwitch mode={mode} onToggle={toggleMode} />
-              </View>
-              {dailyQuote && mode === 'complet' && (
-                <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
-                  <Sparkles size={12} color={colors.accent} />
-                  <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
+          <View key={sectionId}>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
+                <AvatarDisplay size="small" />
+              </TouchableOpacity>
+              <View style={styles.headerText}>
+                <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+                <View style={styles.userNameRow}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
+                  <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
-              )}
+                {dailyQuote && mode === 'complet' && (
+                  <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
+                    <Sparkles size={12} color={colors.accent} />
+                    <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity
+                style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
+                onPress={() => router.push('/profile')}
+                activeOpacity={0.8}
+              >
+                {profile?.profile_photo ? (
+                  <Image
+                    source={{ uri: profile.profile_photo }}
+                    style={styles.profilePhotoImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="person" size={24} color={colors.textSecondary} />
+                )}
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
-              onPress={() => router.push('/profile')}
-              activeOpacity={0.8}
-            >
-              {profile?.profile_photo ? (
-                <Image
-                  source={{ uri: profile.profile_photo }}
-                  style={styles.profilePhotoImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Ionicons name="person" size={24} color={colors.textSecondary} />
-              )}
-            </TouchableOpacity>
+            {/* Hint pour informer du switch de mode */}
+            <ViewModeHint />
           </View>
         );
 
@@ -643,99 +715,8 @@ export default function HomeScreen() {
           </View>
         );
 
-      case 'battery_tools':
-        return (
-          <AnimatedCard index={0} key={sectionId}>
-            <View style={styles.batteryToolsRowSingle}>
-              <TouchableOpacity
-                style={[styles.batteryCardSmall, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => router.push('/energy')}
-                activeOpacity={0.8}
-              >
-                <Battery size={24} color={batteryStatus.color} />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Énergie</Text>
-                <View style={styles.batteryHorizontalSmall}>
-                  <View style={[styles.batteryHBodySmall, { borderColor: batteryStatus.color, backgroundColor: `${batteryStatus.color}10` }]}>
-                    <Animated.View
-                      style={[
-                        styles.batteryHLevelSmall,
-                        {
-                          width: batteryAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-                          backgroundColor: batteryStatus.color,
-                        }
-                      ]}
-                    >
-                      <View style={styles.batteryShineSmall} />
-                    </Animated.View>
-                  </View>
-                  <View style={[styles.batteryHHeadSmall, { backgroundColor: batteryStatus.color }]} />
-                </View>
-                <Text style={[styles.batteryPercentSmall, { color: batteryStatus.color }]}>{Math.round(batteryPercent)}%</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/lab')} activeOpacity={0.85}>
-                <FlaskConical size={28} color="#3B82F6" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Dormir moins bête</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/calculators')} activeOpacity={0.85}>
-                <Calculator size={28} color="#10B981" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Outils</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Calculatrice</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/fasting')} activeOpacity={0.85}>
-                <Clock size={28} color="#F59E0B" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Jeûne</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]} numberOfLines={1}>Intermittent</Text>
-              </TouchableOpacity>
-            </View>
-          </AnimatedCard>
-        );
-
-      case 'actions_row':
-        return (
-          <React.Fragment key={sectionId}>
-            <View style={styles.actionsRow4}>
-              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/infirmary')} activeOpacity={0.85}>
-                <MaterialCommunityIcons name="hospital-box" size={28} color="#EF4444" />
-                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Infirmerie</Text>
-                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Suis tes blessures</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/timer')} activeOpacity={0.85}>
-                <Timer size={28} color={colors.accent} />
-                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Timer</Text>
-                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Round / Repos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/photos')} activeOpacity={0.85}>
-                <Camera size={28} color="#10B981" />
-                <Text style={[styles.actionLabel4, { color: colors.textPrimary }]}>Photo</Text>
-                <Text style={[styles.actionSubLabel4, { color: colors.textMuted }]}>Avant / Après</Text>
-              </TouchableOpacity>
-              <View style={[styles.actionBtn4, { backgroundColor: colors.backgroundCard }]}>
-                <CompactObjectiveSwitch onToggle={(isOn) => setIsCompetitorMode(isOn)} />
-              </View>
-            </View>
-            {/* 3 carrés qui apparaissent quand le toggle est ON */}
-            {isCompetitorMode && (
-              <View style={[styles.actionsRow3, { marginTop: 8 }]}>
-                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')} activeOpacity={0.85}>
-                  <Scale size={24} color="#EF4444" />
-                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Mode Cut</Text>
-                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Poids</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')} activeOpacity={0.85}>
-                  <Trophy size={24} color={colors.accent} />
-                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Compétitions</Text>
-                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>À venir</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')} activeOpacity={0.85}>
-                  <Medal size={24} color={colors.gold} />
-                  <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Palmarès</Text>
-                  <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Victoires</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </React.Fragment>
-        );
+      // Anciennes sections remplacees par les nouvelles lignes tools_row_*
+      // Ces cases sont gardes pour la compatibilite avec les anciennes configurations
 
       case 'sleep_charge':
         return (
@@ -867,108 +848,319 @@ export default function HomeScreen() {
           </AnimatedCard>
         );
 
-      case 'streak_calendar':
-        return <StreakCalendar weeks={12} key={sectionId} />;
+      // Grand graphique de poids (style Light)
+      case 'weight_graph_large':
+        return (
+          <View key={sectionId} style={{ marginTop: 16 }}>
+            <EssentielWeightCard
+              currentWeight={currentWeight || undefined}
+              objective={targetWeight || undefined}
+              weekData={last7Weights.map(w => w.weight)}
+              weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
+              trend={trend}
+              onAddWeight={() => router.push('/(tabs)/add')}
+              onViewStats={() => router.push('/(tabs)/stats?tab=poids')}
+            />
+          </View>
+        );
 
+      // Résumé activité (pas)
+      case 'activity_summary':
+        return (
+          <View key={sectionId} style={{ marginTop: 16 }}>
+            <EssentielActivityCard
+              steps={steps}
+              stepsGoal={stepsGoal}
+            />
+          </View>
+        );
+
+      // Anciennes sections supprimees - retournent null pour compatibilite
+      case 'streak_calendar':
       case 'fighter_mode':
-        if (userMode === 'competiteur') {
-          return (
-            <View style={[styles.actionsRow3, { marginTop: 12 }]} key={sectionId}>
-              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/cut-mode')} activeOpacity={0.85}>
-                <Scale size={24} color="#EF4444" />
-                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Mode Cut</Text>
-                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Poids</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/competitions')} activeOpacity={0.85}>
-                <Trophy size={24} color={colors.accent} />
-                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Compétitions</Text>
-                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>À venir</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn3, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/palmares')} activeOpacity={0.85}>
-                <Medal size={24} color={colors.gold} />
-                <Text style={[styles.actionLabel3, { color: colors.textPrimary }]}>Palmarès</Text>
-                <Text style={[styles.actionSubLabel3, { color: colors.textMuted }]}>Victoires</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        }
+      case 'planning_row':
         return null;
 
       case 'training_journal':
-        const journalStats = getJournalStats();
+      case 'actions_row':
+      case 'battery_tools':
+        return null;
+
+      // Ligne 1: Carnet, Timer, Calendrier, Emploi du temps
+      case 'tools_row_1':
         return (
-          <TouchableOpacity
-            key={sectionId}
-            style={[styles.trainingJournalCard, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/quick-log');
-            }}
-            activeOpacity={0.85}
-          >
-            <View style={styles.trainingJournalHeader}>
-              <View style={[styles.trainingJournalIconContainer, { backgroundColor: '#F9731620' }]}>
-                <BookOpen size={24} color="#F97316" />
+          <View style={styles.batteryToolsRowSingle} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/training-journal');
+              }}
+              activeOpacity={0.85}
+            >
+              <BookOpen size={24} color="#F97316" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Carnet</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Entrainement</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/timer');
+              }}
+              activeOpacity={0.85}
+            >
+              <Timer size={24} color={colors.accent} />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Timer</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Round/Repos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/planning');
+              }}
+              activeOpacity={0.85}
+            >
+              <Calendar size={24} color="#3B82F6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calendrier</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Planning</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(tabs)/planning?tab=programme');
+              }}
+              activeOpacity={0.85}
+            >
+              <List size={24} color="#8B5CF6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Planning</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Sportif</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      // Ligne 2: Blessures, Energie, Savoir, Calculateurs
+      case 'tools_row_2':
+        return (
+          <View style={styles.batteryToolsRowSingle} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/infirmary');
+              }}
+              activeOpacity={0.85}
+            >
+              <View style={styles.redCrossIconSmall}>
+                <View style={[styles.crossVerticalIconSmall, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontalIconSmall, { backgroundColor: '#EF4444' }]} />
               </View>
-              <View style={styles.trainingJournalTitleContainer}>
-                <Text style={[styles.trainingJournalTitle, { color: colors.textPrimary }]}>
-                  Carnet d'Entraînement
-                </Text>
-                <Text style={[styles.trainingJournalSubtitle, { color: colors.textMuted }]}>
-                  Logger tes séances rapidement
-                </Text>
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Blessures</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Journal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/energy');
+              }}
+              activeOpacity={0.85}
+            >
+              {/* Pile/Batterie horizontale allongée */}
+              <View style={styles.batteryHorizontal}>
+                {/* Corps de la pile */}
+                <View style={[styles.batteryBodyH, { borderColor: colors.border }]}>
+                  {/* Remplissage */}
+                  <View style={[
+                    styles.batteryFillH,
+                    {
+                      width: `${batteryPercent}%`,
+                      backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444',
+                    }
+                  ]} />
+                  {/* Pourcentage au centre */}
+                  <Text style={[styles.batteryTextH, { color: batteryPercent >= 50 ? '#FFF' : colors.textPrimary }]}>
+                    {Math.round(batteryPercent)}%
+                  </Text>
+                </View>
+                {/* Tête de la pile (à droite) */}
+                <View style={[styles.batteryHeadH, {
+                  backgroundColor: batteryPercent >= 60 ? '#10B981' : batteryPercent >= 30 ? '#F59E0B' : '#EF4444'
+                }]} />
               </View>
-              <ChevronRight size={20} color={colors.textMuted} />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Energie</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/savoir');
+              }}
+              activeOpacity={0.85}
+            >
+              <FlaskConical size={24} color="#8B5CF6" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Savoir</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Culture G</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/calculators');
+              }}
+              activeOpacity={0.85}
+            >
+              <Calculator size={24} color="#F59E0B" />
+              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Calculs</Text>
+              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>IMC, BMR...</Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      // Ligne 3: Mode Compet (toggle avec J-XX), Jeune, Photo, Partager
+      case 'tools_row_3':
+        return (
+          <View key={sectionId}>
+            <View style={styles.batteryToolsRowSingle}>
+              {/* Toggle Mode Compétiteur - Affiche J-XX si activé */}
+              <TouchableOpacity
+                style={[
+                  styles.toolCardSmall,
+                  {
+                    backgroundColor: isCompetitorMode ? colors.accent + '20' : colors.backgroundCard,
+                    borderWidth: isCompetitorMode ? 2 : 0,
+                    borderColor: colors.accent,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsCompetitorMode(!isCompetitorMode);
+                }}
+                activeOpacity={0.85}
+              >
+                {isCompetitorMode && nextEvent ? (
+                  // Afficher J-XX quand activé et qu'il y a un événement
+                  <View style={[styles.countdownBadge, { backgroundColor: colors.accent }]}>
+                    <Text style={styles.countdownText}>J-{nextEvent.daysLeft}</Text>
+                  </View>
+                ) : (
+                  // Afficher l'icône Trophy quand désactivé
+                  <Trophy size={24} color={isCompetitorMode ? colors.accent : colors.textMuted} />
+                )}
+                <Text style={[styles.toolCardTitleSmall, { color: isCompetitorMode ? colors.accent : colors.textPrimary }]}>
+                  Objectif
+                </Text>
+                {/* Mini Switch */}
+                <View style={[styles.miniSwitch, { backgroundColor: isCompetitorMode ? colors.accent : colors.border }]}>
+                  <Animated.View
+                    style={[
+                      styles.miniSwitchThumb,
+                      {
+                        transform: [{
+                          translateX: toggleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 12],
+                          })
+                        }]
+                      }
+                    ]}
+                  />
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/fasting');
+                }}
+                activeOpacity={0.85}
+              >
+                <Clock size={24} color="#F97316" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Jeûne</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Intermittent</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/photos');
+                }}
+                activeOpacity={0.85}
+              >
+                <Camera size={24} color="#10B981" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Photo</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Avant/Apres</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/share-hub');
+                }}
+                activeOpacity={0.85}
+              >
+                <Share2 size={24} color="#EC4899" />
+                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Partager</Text>
+                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Mes reseaux</Text>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.trainingJournalStats}>
-              <View style={styles.trainingJournalStat}>
-                <View style={[styles.trainingJournalStatIcon, { backgroundColor: '#F9731615' }]}>
-                  <Target size={18} color="#F97316" />
-                </View>
-                <View style={styles.trainingJournalStatInfo}>
-                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
-                    {journalStats.in_progress}
-                  </Text>
-                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
-                    En cours
-                  </Text>
-                </View>
+            {/* Section Compétiteur - 4 petits carrés quand toggle ON */}
+            {isCompetitorMode && (
+              <View style={[styles.batteryToolsRowSingle, { marginTop: 8 }]}>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/cut-mode');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <TrendingDown size={24} color="#EF4444" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Mode Cut</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Perte poids</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/palmares');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Medal size={24} color="#F59E0B" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Palmares</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Resultats</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/hydration');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Droplets size={24} color="#06B6D4" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Hydratation</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Suivi eau</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.push('/body-composition');
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Scale size={24} color="#8B5CF6" />
+                  <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Pesee</Text>
+                  <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Composition</Text>
+                </TouchableOpacity>
               </View>
-
-              <View style={[styles.trainingJournalDivider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.trainingJournalStat}>
-                <View style={[styles.trainingJournalStatIcon, { backgroundColor: `${colors.success}15` }]}>
-                  <Trophy size={18} color={colors.success} />
-                </View>
-                <View style={styles.trainingJournalStatInfo}>
-                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
-                    {journalStats.mastered}
-                  </Text>
-                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
-                    Maîtrisés
-                  </Text>
-                </View>
-              </View>
-
-              <View style={[styles.trainingJournalDivider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.trainingJournalStat}>
-                <View style={[styles.trainingJournalStatIcon, { backgroundColor: `${colors.accent}15` }]}>
-                  <Flame size={18} color={colors.accent} />
-                </View>
-                <View style={styles.trainingJournalStatInfo}>
-                  <Text style={[styles.trainingJournalStatValue, { color: colors.textPrimary }]}>
-                    {journalStats.mastered_this_week}
-                  </Text>
-                  <Text style={[styles.trainingJournalStatLabel, { color: colors.textMuted }]}>
-                    Cette semaine
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </TouchableOpacity>
+            )}
+          </View>
         );
 
       default:
@@ -1225,7 +1417,7 @@ const styles = StyleSheet.create({
   quoteCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, marginBottom: 12, gap: 6 },
   quoteText: { flex: 1, fontSize: 11, fontStyle: 'italic', lineHeight: 16 },
   quoteCardInline: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, marginTop: 4, gap: 6 },
-  quoteTextInline: { fontSize: 11, fontStyle: 'italic', lineHeight: 16, flex: 1 },
+  quoteTextInline: { fontSize: 12.5, fontStyle: 'italic', lineHeight: 17, flex: 1 },
 
   // Stats
   // Carte poids principale
@@ -1329,9 +1521,9 @@ const styles = StyleSheet.create({
   // Batterie compacte (quart de largeur)
   batteryCardSmall: {
     flex: 1,
-    padding: 12,
+    padding: 8,
     borderRadius: 14,
-    minHeight: 105,
+    minHeight: 95,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1375,27 +1567,82 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // Pile/Batterie horizontale allongée pour carte Energie
+  batteryHorizontal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  batteryBodyH: {
+    width: 50,
+    height: 24,
+    borderWidth: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  batteryFillH: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 2,
+  },
+  batteryTextH: {
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+    zIndex: 1,
+  },
+  batteryHeadH: {
+    width: 4,
+    height: 10,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
+    marginLeft: -1,
+  },
+
   // Tool cards small (quart de largeur)
   toolCardSmall: {
     flex: 1,
-    padding: 12,
+    padding: 8,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    minHeight: 105,
+    gap: 4,
+    minHeight: 95,
   },
   toolCardTitleSmall: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
     width: '100%',
   },
   toolCardSubtitleSmall: {
-    fontSize: 9,
-    fontWeight: '500',
+    fontSize: 10,
+    fontWeight: '600',
     textAlign: 'center',
     width: '100%',
+  },
+
+  // Tools Scroll - Ligne horizontale scrollable
+  toolsScrollContainer: {
+    marginBottom: 8,
+  },
+  toolsScrollContent: {
+    paddingHorizontal: 8,
+    gap: 8,
+  },
+  toolCardScroll: {
+    width: 80,
+    padding: 10,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: 95,
   },
 
   // Grid 2x2
@@ -1858,6 +2105,41 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
+  // Jauge d'énergie moderne
+  energyGaugeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: 6,
+    paddingHorizontal: 4,
+  },
+  energyBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  energyBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+
+  // Badge J-XX pour le compte à rebours
+  countdownBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countdownText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
   // Mini Switch pour le toggle Mode Compét
   miniSwitch: {
     width: 28,
@@ -1948,5 +2230,73 @@ const styles = StyleSheet.create({
     width: 1,
     height: 30,
     marginHorizontal: 8,
+  },
+
+  // Croix rouge pour Journal des Blessures
+  redCrossIcon: {
+    width: 28,
+    height: 28,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIcon: {
+    position: 'absolute',
+    width: 10,
+    height: 28,
+    borderRadius: 2,
+  },
+  crossHorizontalIcon: {
+    position: 'absolute',
+    width: 28,
+    height: 10,
+    borderRadius: 2,
+  },
+
+  // Croix rouge SMALL pour boutons circulaires
+  redCrossIconSmall: {
+    width: 22,
+    height: 22,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIconSmall: {
+    position: 'absolute',
+    width: 8,
+    height: 22,
+    borderRadius: 2,
+  },
+  crossHorizontalIconSmall: {
+    position: 'absolute',
+    width: 22,
+    height: 8,
+    borderRadius: 2,
+  },
+
+  // Actions Row 4 - CIRCULAR BUTTONS
+  actionBtnCircle: {
+    flex: 1,
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999, // Perfect circle
+    gap: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionLabelCircle: {
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  actionSubLabelCircle: {
+    fontSize: 7,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginTop: -2,
   },
 });

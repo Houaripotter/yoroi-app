@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Check } from 'lucide-react-native';
+import logger from '@/lib/security/logger';
 
 interface AnimatedSuccessButtonProps {
   title: string;
@@ -45,7 +46,7 @@ export function AnimatedSuccessButton({
       await onPress();
       setSuccess(true);
     } catch (error) {
-      console.error('Button action failed:', error);
+      logger.error('Button action failed:', error);
     } finally {
       setLoading(false);
     }

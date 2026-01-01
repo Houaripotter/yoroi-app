@@ -369,10 +369,12 @@ export const getSportCategory = (id: string): string => {
 // Mappage des identifiants de logos vers les images locales
 const CLUB_LOGOS: { [key: string]: any } = {
   'gracie-barra': require('@/assets/images/gracie-barra.png'),
-  // 'gracie-barra-olives': require('@/assets/images/gracie-barra-olives.jpg'), // Image non disponible
+  'gracie-barra-olives': require('@/assets/partenaires/clubs/gracie-barra-olives.jpg'),
+  'graciebarra': require('@/assets/partenaires/clubs/graciebarra.png'),
   'basic-fit': require('@/assets/images/basic-fit.png'),
-  // 'marseille-fight-club': require('@/assets/images/marseille-fight-club.jpg'), // Image non disponible
-  // 'bodygator': require('@/assets/images/bodygator.jpg'), // Image non disponible
+  'marseille-fight-club': require('@/assets/partenaires/clubs/marseille-fight-club.jpg'),
+  'teamsorel': require('@/assets/partenaires/clubs/teamsorel.jpg'),
+  'bodygator': require('@/assets/partenaires/coachs/bodygator.jpg'),
 };
 
 /**
@@ -406,8 +408,12 @@ export const getClubName = (logoUri?: string): string | null => {
 
   const clubNames: { [key: string]: string } = {
     'gracie-barra': 'GB',
+    'gracie-barra-olives': 'GBO',
+    'graciebarra': 'GB',
     'basic-fit': 'BF',
     'marseille-fight-club': 'MFC',
+    'teamsorel': 'TS',
+    'bodygator': 'BG',
   };
 
   return clubNames[logoUri] || logoUri.substring(0, 2).toUpperCase();

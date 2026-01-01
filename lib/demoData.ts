@@ -1,3 +1,4 @@
+import logger from '@/lib/security/logger';
 import {
   openDatabase,
   saveProfile,
@@ -239,8 +240,8 @@ export const generateWeeklyPlan = (clubIds: number[]) => {
 // FONCTION POUR INSERER LES DONNEES DEMO
 // ═══════════════════════════════════════
 export const insertDemoData = async (): Promise<void> => {
-  console.log('⚔️ Fonction insertDemoData désactivée - Aucune donnée de test insérée');
-  console.log('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
+  logger.info('⚔️ Fonction insertDemoData désactivée - Aucune donnée de test insérée');
+  logger.info('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
   // FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
   // Pour charger des données de démo, utilisez screenshotDemoData.ts
 };
@@ -249,7 +250,7 @@ export const insertDemoData = async (): Promise<void> => {
 // FONCTION POUR EFFACER TOUTES LES DONNEES
 // ═══════════════════════════════════════
 export const clearAllData = async (): Promise<void> => {
-  console.log('🗑️ Suppression de toutes les donnees...');
+  logger.info('🗑️ Suppression de toutes les donnees...');
 
   try {
     const database = await openDatabase();
@@ -263,9 +264,9 @@ export const clearAllData = async (): Promise<void> => {
     await database.execAsync('DELETE FROM achievements');
     await database.execAsync('DELETE FROM profile');
 
-    console.log('✅ Toutes les donnees ont ete supprimees');
+    logger.info('✅ Toutes les donnees ont ete supprimees');
   } catch (error) {
-    console.error('❌ Erreur suppression:', error);
+    logger.error('❌ Erreur suppression:', error);
     throw error;
   }
 };

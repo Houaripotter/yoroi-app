@@ -10,6 +10,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -136,7 +137,7 @@ export const FASTING_MODES: FastingMode[] = [
     category: 'intermittent',
     fastingHours: 20,
     eatingHours: 4,
-    description: 'Le regime du guerrier. 20h de jeune, 4h pour manger.',
+    description: "Le regime de l'athlète. 20h de jeune, 4h pour manger.",
   },
   {
     id: 'omad',
@@ -383,7 +384,7 @@ export const getFastingState = async (): Promise<FastingState> => {
       phase,
     };
   } catch (error) {
-    console.error('Erreur getFastingState:', error);
+    logger.error('Erreur getFastingState:', error);
     return {
       isActive: false,
       modeId: null,
@@ -409,10 +410,10 @@ export const startFasting = async (
       AsyncStorage.setItem(STORAGE_KEYS.FASTING_START, startTime.toISOString()),
     ]);
 
-    console.log('Jeune demarre:', modeId);
+    logger.info('Jeune demarre:', modeId);
     return true;
   } catch (error) {
-    console.error('Erreur startFasting:', error);
+    logger.error('Erreur startFasting:', error);
     return false;
   }
 };
@@ -456,10 +457,10 @@ export const stopFasting = async (completed: boolean = false): Promise<boolean> 
       AsyncStorage.removeItem(STORAGE_KEYS.FASTING_START),
     ]);
 
-    console.log('Jeune arrete, complete:', completed);
+    logger.info('Jeune arrete, complete:', completed);
     return true;
   } catch (error) {
-    console.error('Erreur stopFasting:', error);
+    logger.error('Erreur stopFasting:', error);
     return false;
   }
 };
@@ -486,7 +487,7 @@ const addFastingSession = async (session: FastingSession): Promise<void> => {
     const trimmed = history.slice(0, 365);
     await AsyncStorage.setItem(STORAGE_KEYS.FASTING_HISTORY, JSON.stringify(trimmed));
   } catch (error) {
-    console.error('Erreur addFastingSession:', error);
+    logger.error('Erreur addFastingSession:', error);
   }
 };
 
@@ -498,7 +499,7 @@ export const getFastingHistory = async (): Promise<FastingSession[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.FASTING_HISTORY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur getFastingHistory:', error);
+    logger.error('Erreur getFastingHistory:', error);
     return [];
   }
 };
@@ -568,7 +569,7 @@ export const getFastingStats = async (): Promise<FastingStats> => {
       avgFastingDuration,
     };
   } catch (error) {
-    console.error('Erreur getFastingStats:', error);
+    logger.error('Erreur getFastingStats:', error);
     return {
       totalCompleted: 0,
       totalHoursFasted: 0,
@@ -628,7 +629,7 @@ const updateFastingStreak = async (completed: boolean): Promise<void> => {
       await AsyncStorage.setItem(STORAGE_KEYS.LAST_COMPLETED_DATE, today);
     }
   } catch (error) {
-    console.error('Erreur updateFastingStreak:', error);
+    logger.error('Erreur updateFastingStreak:', error);
   }
 };
 
@@ -656,7 +657,7 @@ export const saveCustomFastingSettings = async (settings: CustomFastingSettings)
     await AsyncStorage.setItem(STORAGE_KEYS.CUSTOM_SETTINGS, JSON.stringify(settings));
     return true;
   } catch (error) {
-    console.error('Erreur saveCustomFastingSettings:', error);
+    logger.error('Erreur saveCustomFastingSettings:', error);
     return false;
   }
 };
@@ -685,7 +686,7 @@ export const saveRamadanSettings = async (settings: RamadanSettings): Promise<bo
     await AsyncStorage.setItem(STORAGE_KEYS.RAMADAN_SETTINGS, JSON.stringify(settings));
     return true;
   } catch (error) {
-    console.error('Erreur saveRamadanSettings:', error);
+    logger.error('Erreur saveRamadanSettings:', error);
     return false;
   }
 };
@@ -805,7 +806,7 @@ export const analyzeFastingWeightCorrelation = async (
       recommendation,
     };
   } catch (error) {
-    console.error('Erreur analyzeFastingWeightCorrelation:', error);
+    logger.error('Erreur analyzeFastingWeightCorrelation:', error);
     return null;
   }
 };

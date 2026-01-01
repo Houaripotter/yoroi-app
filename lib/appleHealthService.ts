@@ -1,6 +1,7 @@
 import { Platform, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addMeasurement, getAllMeasurements } from './storage';
+import logger from '@/lib/security/logger';
 
 let AppleHealthKit: any = null; // Déclarer comme any pour gérer l'import conditionnel
 
@@ -10,7 +11,7 @@ try {
     AppleHealthKit = require('react-native-health').default;
   }
 } catch (e) {
-  console.log("ℹ️ Module react-native-health non disponible (Mode Offline/Simulateur):", e);
+  logger.info("ℹ️ Module react-native-health non disponible (Mode Offline/Simulateur):", e);
   AppleHealthKit = null;
 }
 
@@ -30,25 +31,25 @@ const isHealthKitAvailable = (): boolean => {
     
     // Vérification 2: Module chargé
     if (!AppleHealthKit || typeof AppleHealthKit === 'undefined') {
-      console.log("ℹ️ HealthKit non disponible (module non chargé)");
+      logger.info("ℹ️ HealthKit non disponible (module non chargé)");
       return false;
     }
     
     // Vérification 3: Méthode initHealthKit existe
     if (typeof AppleHealthKit.initHealthKit !== 'function') {
-      console.log("ℹ️ HealthKit non disponible (initHealthKit manquant)");
+      logger.info("ℹ️ HealthKit non disponible (initHealthKit manquant)");
       return false;
     }
     
     // Vérification 4: Méthode isAvailable existe
     if (typeof AppleHealthKit.isAvailable !== 'function') {
-      console.log("ℹ️ HealthKit non disponible (isAvailable manquant)");
+      logger.info("ℹ️ HealthKit non disponible (isAvailable manquant)");
       return false;
     }
     
     return true;
   } catch (e) {
-    console.log("ℹ️ HealthKit non disponible (erreur de vérification):", e);
+    logger.info("ℹ️ HealthKit non disponible (erreur de vérification):", e);
     return false;
   }
 };
@@ -80,7 +81,7 @@ const getPermissions = () => {
       },
     };
   } catch (e) {
-    console.log("ℹ️ Impossible de construire les permissions HealthKit:", e);
+    logger.info("ℹ️ Impossible de construire les permissions HealthKit:", e);
     return { permissions: { read: [], write: [] } };
   }
 };
@@ -95,12 +96,12 @@ export const isAppleHealthAvailable = (): boolean => {
 export const initializeAppleHealth = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (!hasHealthKit()) {
-      console.log('⚠️ Apple Health non disponible (initializeAppleHealth)');
+      logger.info('⚠️ Apple Health non disponible (initializeAppleHealth)');
       resolve(false);
       return;
     }
     if (!isHealthKitAvailable()) {
-      console.log('⚠️ Apple Health non disponible ou mal configuré (initializeAppleHealth)');
+      logger.info('⚠️ Apple Health non disponible ou mal configuré (initializeAppleHealth)');
       resolve(false);
       return;
     }
@@ -109,15 +110,15 @@ export const initializeAppleHealth = (): Promise<boolean> => {
       const permissions = getPermissions();
       AppleHealthKit.initHealthKit(permissions, (error: any) => {
         if (error) {
-          console.error('❌ Erreur lors de l\'initialisation Apple Health:', error);
+          logger.error('❌ Erreur lors de l\'initialisation Apple Health:', error);
           resolve(false);
           return;
         }
-        console.log('✅ Apple Health initialisé avec succès');
+        logger.info('✅ Apple Health initialisé avec succès');
         resolve(true);
       });
     } catch (e) {
-      console.error('❌ Erreur HealthKit (init):', e);
+      logger.error('❌ Erreur HealthKit (init):', e);
       resolve(false);
     }
   });
@@ -127,7 +128,7 @@ export const initializeAppleHealth = (): Promise<boolean> => {
 export const checkHealthPermissions = async (): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (checkHealthPermissions)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (checkHealthPermissions)');
     return false;
   }
 
@@ -135,7 +136,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
     try {
       AppleHealthKit.isAvailable((error: any, available: boolean) => {
         if (error || !available) {
-          console.log('⚠️ Apple Health non disponible:', error);
+          logger.info('⚠️ Apple Health non disponible:', error);
           return resolve(false);
         }
 
@@ -143,7 +144,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
         const permissions = getPermissions();
         AppleHealthKit.getAuthStatus(permissions, (authError: any, results: any) => {
           if (authError) {
-            console.log('⚠️ Erreur auth HealthKit:', authError);
+            logger.info('⚠️ Erreur auth HealthKit:', authError);
             return resolve(false);
           }
 
@@ -154,7 +155,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
         });
       });
     } catch (e) {
-      console.error('❌ Erreur HealthKit (checkPermissions):', e);
+      logger.error('❌ Erreur HealthKit (checkPermissions):', e);
       resolve(false);
     }
   });
@@ -185,7 +186,7 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
       try {
         AppleHealthKit.getWeightSamples(options, async (error: any, results: any) => {
           if (error) {
-            console.error('❌ Erreur lors de la récupération des poids:', error);
+            logger.error('❌ Erreur lors de la récupération des poids:', error);
             Alert.alert('Erreur', 'Impossible de récupérer les données de poids.');
             resolve(0);
             return;
@@ -197,7 +198,7 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
             return;
           }
 
-          console.log(`📊 ${results.length} mesures de poids trouvées dans Apple Health`);
+          logger.info(`📊 ${results.length} mesures de poids trouvées dans Apple Health`);
 
           const existingMeasurements = await getAllMeasurements();
           const existingDates = new Set(
@@ -222,7 +223,7 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
           }
           
           if (importedCount > 0) {
-            console.log(`✅ ${importedCount} nouvelles mesures importées`);
+            logger.info(`✅ ${importedCount} nouvelles mesures importées`);
             Alert.alert('Succès', `${importedCount} mesure(s) importée(s) depuis Apple Health`);
           } else {
               Alert.alert('Information', 'Toutes les données sont déjà importées ou aucune nouvelle donnée disponible.');
@@ -230,13 +231,13 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
           resolve(importedCount);
         });
       } catch (e) {
-        console.error('❌ Erreur HealthKit (getWeightSamples):', e);
+        logger.error('❌ Erreur HealthKit (getWeightSamples):', e);
         Alert.alert('Erreur', 'Une erreur est survenue lors de la récupération des poids.');
         resolve(0);
       }
     });
   } catch (error) {
-    console.error('❌ Exception lors de l\'import:', error);
+    logger.error('❌ Exception lors de l\'import:', error);
     Alert.alert('Erreur', 'Une erreur est survenue lors de l\'import.');
     return 0;
   }
@@ -249,14 +250,14 @@ export const exportWeightToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (exportWeightToAppleHealth)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportWeightToAppleHealth)');
     return false;
   }
 
   try {
     const autoExportEnabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     if (autoExportEnabled !== 'true') {
-      console.log('ℹ️  Export vers Apple Health désactivé');
+      logger.info('ℹ️  Export vers Apple Health désactivé');
       return false;
     }
 
@@ -270,20 +271,20 @@ export const exportWeightToAppleHealth = async (
       try {
         AppleHealthKit.saveWeight(options, (error: any) => {
           if (error) {
-            console.error('❌ Erreur lors de l\'export du poids:', error);
+            logger.error('❌ Erreur lors de l\'export du poids:', error);
             resolve(false);
             return;
           }
-          console.log(`✅ Poids exporté vers Apple Health: ${weight} kg`);
+          logger.info(`✅ Poids exporté vers Apple Health: ${weight} kg`);
           resolve(true);
         });
       } catch (e) {
-        console.error('❌ Erreur HealthKit (saveWeight):', e);
+        logger.error('❌ Erreur HealthKit (saveWeight):', e);
         resolve(false);
       }
     });
   } catch (error) {
-    console.error('❌ Exception lors de l\'export:', error);
+    logger.error('❌ Exception lors de l\'export:', error);
     return false;
   }
 };
@@ -295,7 +296,7 @@ export const exportBMIToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (exportBMIToAppleHealth)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportBMIToAppleHealth)');
     return false;
   }
 
@@ -313,20 +314,20 @@ export const exportBMIToAppleHealth = async (
       try {
         AppleHealthKit.saveBmi(options, (error: any) => {
           if (error) {
-            console.error('❌ Erreur lors de l\'export de l\'IMC:', error);
+            logger.error('❌ Erreur lors de l\'export de l\'IMC:', error);
             resolve(false);
             return;
           }
-          console.log(`✅ IMC exporté vers Apple Health: ${bmi}`);
+          logger.info(`✅ IMC exporté vers Apple Health: ${bmi}`);
           resolve(true);
         });
       } catch (e) {
-        console.error('❌ Erreur HealthKit (saveBmi):', e);
+        logger.error('❌ Erreur HealthKit (saveBmi):', e);
         resolve(false);
       }
     });
   } catch (error) {
-    console.error('❌ Exception lors de l\'export de l\'IMC:', error);
+    logger.error('❌ Exception lors de l\'export de l\'IMC:', error);
     return false;
   }
 };
@@ -338,7 +339,7 @@ export const exportBodyFatToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (exportBodyFatToAppleHealth)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportBodyFatToAppleHealth)');
     return false;
   }
 
@@ -356,20 +357,20 @@ export const exportBodyFatToAppleHealth = async (
       try {
         AppleHealthKit.saveBodyFatPercentage(options, (error: any) => {
           if (error) {
-            console.error('❌ Erreur lors de l\'export de la masse grasse:', error);
+            logger.error('❌ Erreur lors de l\'export de la masse grasse:', error);
             resolve(false);
             return;
           }
-          console.log(`✅ Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
+          logger.info(`✅ Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
           resolve(true);
         });
       } catch (e) {
-        console.error('❌ Erreur HealthKit (saveBodyFatPercentage):', e);
+        logger.error('❌ Erreur HealthKit (saveBodyFatPercentage):', e);
         resolve(false);
       }
     });
   } catch (error) {
-    console.error('❌ Exception lors de l\'export de la masse grasse:', error);
+    logger.error('❌ Exception lors de l\'export de la masse grasse:', error);
     return false;
   }
 };
@@ -378,14 +379,14 @@ export const exportBodyFatToAppleHealth = async (
 export const setAppleHealthAutoExport = async (enabled: boolean): Promise<void> => {
   if (!hasHealthKit()) return;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (setAppleHealthAutoExport)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (setAppleHealthAutoExport)');
     return;
   }
   try {
     await AsyncStorage.setItem(APPLE_HEALTH_ENABLED_KEY, enabled ? 'true' : 'false');
-    console.log(`✅ Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
+    logger.info(`✅ Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
   } catch (error) {
-    console.error('❌ Erreur lors de la sauvegarde des préférences:', error);
+    logger.error('❌ Erreur lors de la sauvegarde des préférences:', error);
   }
 };
 
@@ -393,14 +394,14 @@ export const setAppleHealthAutoExport = async (enabled: boolean): Promise<void> 
 export const isAppleHealthAutoExportEnabled = async (): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (isAppleHealthAutoExportEnabled)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (isAppleHealthAutoExportEnabled)');
     return false;
   }
   try {
     const enabled = await AsyncStorage.getItem(APPLE_HEALTH_ENABLED_KEY);
     return enabled === 'true';
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des préférences:', error);
+    logger.error('❌ Erreur lors de la récupération des préférences:', error);
     return false;
   }
 };
@@ -409,7 +410,7 @@ export const isAppleHealthAutoExportEnabled = async (): Promise<boolean> => {
 export const syncFromAppleHealth = async (): Promise<number> => {
   if (!hasHealthKit()) return 0;
   if (!isHealthKitAvailable()) {
-    console.log('⚠️ Apple Health non disponible ou mal configuré (syncFromAppleHealth)');
+    logger.info('⚠️ Apple Health non disponible ou mal configuré (syncFromAppleHealth)');
     return 0;
   }
 
@@ -429,7 +430,7 @@ export const syncFromAppleHealth = async (): Promise<number> => {
       try {
         AppleHealthKit.getWeightSamples(options, async (error: any, results: any) => {
           if (error || !results || results.length === 0) {
-            console.log('⚠️ Aucune donnée ou erreur lors de la récupération HealthKit:', error);
+            logger.info('⚠️ Aucune donnée ou erreur lors de la récupération HealthKit:', error);
             resolve(0);
             return;
           }
@@ -457,19 +458,19 @@ export const syncFromAppleHealth = async (): Promise<number> => {
           }
 
           if (syncedCount > 0) {
-            console.log(`✅ ${syncedCount} nouvelles mesures synchronisées`);
+            logger.info(`✅ ${syncedCount} nouvelles mesures synchronisées`);
           }
           
           await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
           resolve(syncedCount);
         });
       } catch (e) {
-        console.error('❌ Erreur HealthKit (getWeightSamples sync):', e);
+        logger.error('❌ Erreur HealthKit (getWeightSamples sync):', e);
         resolve(0);
       }
     });
   } catch (error) {
-    console.error('❌ Exception lors de la synchronisation:', error);
+    logger.error('❌ Exception lors de la synchronisation:', error);
     return 0;
   }
 };

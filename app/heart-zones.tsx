@@ -13,6 +13,7 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CALCULATEUR ZONES FREQUENCE CARDIAQUE
@@ -89,7 +90,7 @@ export default function HeartZonesScreen() {
       // L'age sera saisi manuellement par l'utilisateur
       // On peut utiliser settings.age si disponible dans le futur
     } catch (error) {
-      console.log('Erreur chargement settings:', error);
+      logger.info('Erreur chargement settings:', error);
     }
   };
 

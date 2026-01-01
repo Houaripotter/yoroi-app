@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getAllMeasurements, getAllWorkouts, Measurement } from './storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CLES DE STOCKAGE
@@ -243,7 +244,7 @@ export const analyzeHabits = async (): Promise<DetectedHabits> => {
 
     return habits;
   } catch (error) {
-    console.error('Erreur analyse habitudes:', error);
+    logger.error('Erreur analyse habitudes:', error);
     return DEFAULT_HABITS;
   }
 };
@@ -269,7 +270,7 @@ export const getDetectedHabits = async (forceRefresh: boolean = false): Promise<
 
     return await analyzeHabits();
   } catch (error) {
-    console.error('Erreur lecture habitudes:', error);
+    logger.error('Erreur lecture habitudes:', error);
     return DEFAULT_HABITS;
   }
 };
@@ -287,7 +288,7 @@ export const getSmartReminderSettings = async (): Promise<SmartReminderSettings>
     if (!data) return DEFAULT_SETTINGS;
     return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
   } catch (error) {
-    console.error('Erreur lecture settings rappels:', error);
+    logger.error('Erreur lecture settings rappels:', error);
     return DEFAULT_SETTINGS;
   }
 };
@@ -301,7 +302,7 @@ export const saveSmartReminderSettings = async (settings: Partial<SmartReminderS
     const updated = { ...current, ...settings };
     await AsyncStorage.setItem(STORAGE_KEY_SMART_REMINDERS, JSON.stringify(updated));
   } catch (error) {
-    console.error('Erreur sauvegarde settings rappels:', error);
+    logger.error('Erreur sauvegarde settings rappels:', error);
   }
 };
 
@@ -512,7 +513,7 @@ export const scheduleSmartNotification = async (
 
     return identifier;
   } catch (error) {
-    console.error('Erreur programmation notification:', error);
+    logger.error('Erreur programmation notification:', error);
     return null;
   }
 };
@@ -525,7 +526,7 @@ export const cancelAllSmartNotifications = async (): Promise<void> => {
     if (Platform.OS === 'web') return;
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
-    console.error('Erreur annulation notifications:', error);
+    logger.error('Erreur annulation notifications:', error);
   }
 };
 

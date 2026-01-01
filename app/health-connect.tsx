@@ -30,7 +30,8 @@ import {
   Smartphone,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { 
+import logger from '@/lib/security/logger';
+import {
   healthConnect, 
   getProviderIcon, 
   getConnectionInstructions,
@@ -78,7 +79,7 @@ export default function HealthConnectScreen() {
       
       setSyncStatus(healthConnect.getSyncStatus());
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      logger.error('Erreur connexion:', error);
     } finally {
       setIsConnecting(false);
     }
@@ -120,7 +121,7 @@ export default function HealthConnectScreen() {
         [{ text: 'OK' }]
       );
     } catch (error) {
-      console.error('Erreur sync:', error);
+      logger.error('Erreur sync:', error);
     } finally {
       setIsSyncing(false);
     }

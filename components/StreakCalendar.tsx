@@ -16,6 +16,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { format, subDays, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getTrainings } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -54,7 +55,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({
 
       setTrainingDays(daysCounts);
     } catch (error) {
-      console.error('Erreur chargement trainings:', error);
+      logger.error('Erreur chargement trainings:', error);
     }
   };
 

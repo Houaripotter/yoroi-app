@@ -12,7 +12,7 @@ import {
 import { X, ZoomIn, ZoomOut } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
-import { AvatarDisplay } from '@/components/AvatarDisplay';
+import AvatarDisplay from '@/components/AvatarDisplay';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 

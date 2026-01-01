@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { getUserSettings } from './storage';
 import { infirmaryService } from './infirmary';
+import logger from '@/lib/security/logger';
 
 const BRIEFING_SETTINGS_KEY = '@yoroi_briefing_settings';
 
@@ -31,7 +32,7 @@ class BriefingService {
       const data = await AsyncStorage.getItem(BRIEFING_SETTINGS_KEY);
       return data ? JSON.parse(data) : DEFAULT_SETTINGS;
     } catch (error) {
-      console.error('[Briefing] Erreur chargement settings:', error);
+      logger.error('[Briefing] Erreur chargement settings:', error);
       return DEFAULT_SETTINGS;
     }
   }
@@ -44,7 +45,7 @@ class BriefingService {
       await AsyncStorage.setItem(BRIEFING_SETTINGS_KEY, JSON.stringify(settings));
       await this.scheduleBriefing();
     } catch (error) {
-      console.error('[Briefing] Erreur sauvegarde settings:', error);
+      logger.error('[Briefing] Erreur sauvegarde settings:', error);
     }
   }
 
@@ -71,7 +72,7 @@ class BriefingService {
   async generateBriefingMessage(): Promise<{ title: string; body: string }> {
     try {
       const userSettings = await getUserSettings();
-      const userName = userSettings?.username || 'Guerrier';
+      const userName = userSettings?.username || 'Athlète';
 
       let message = `Bonjour ${userName} !\n\n`;
 
@@ -105,7 +106,7 @@ class BriefingService {
         body: message,
       };
     } catch (error) {
-      console.error('[Briefing] Erreur génération message:', error);
+      logger.error('[Briefing] Erreur génération message:', error);
       return {
         title: '🌅 Briefing du matin',
         body: 'Bonjour ! Bonne journée, champion !',
@@ -119,13 +120,13 @@ class BriefingService {
   async scheduleBriefing(): Promise<void> {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
-      console.log('[Briefing] Permission refusée');
+      logger.info('[Briefing] Permission refusée');
       return;
     }
 
     const settings = await this.getSettings();
     if (!settings.enabled) {
-      console.log('[Briefing] Briefing désactivé');
+      logger.info('[Briefing] Briefing désactivé');
       await this.cancelBriefing();
       return;
     }
@@ -167,9 +168,9 @@ class BriefingService {
         },
       });
 
-      console.log(`[Briefing] Planifié pour ${hours}:${minutes} tous les jours`);
+      logger.info(`[Briefing] Planifié pour ${hours}:${minutes} tous les jours`);
     } catch (error) {
-      console.error('[Briefing] Erreur planification:', error);
+      logger.error('[Briefing] Erreur planification:', error);
     }
   }
 
@@ -188,9 +189,9 @@ class BriefingService {
         await Notifications.cancelScheduledNotificationAsync(notification.identifier);
       }
 
-      console.log('[Briefing] Notifications annulées');
+      logger.info('[Briefing] Notifications annulées');
     } catch (error) {
-      console.error('[Briefing] Erreur annulation:', error);
+      logger.error('[Briefing] Erreur annulation:', error);
     }
   }
 

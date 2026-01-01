@@ -3,10 +3,20 @@
 // ============================================
 // Intégration Apple Health (iOS) & Google Health Connect (Android)
 // Pour le tracking passif automatique
+//
+// ⚠️ NOTE: Health Connect (Android) est temporairement désactivé
+// car expo-health-connect cause des erreurs de bundling avec
+// @expo/config-plugins qui essaie d'importer le module Node.js "fs"
+//
+// Pour réactiver:
+// 1. npm install expo-health-connect
+// 2. Décommenter le code dans getHealthConnect()
+// 3. Tester que le bundling fonctionne
 // ============================================
 
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // IMPORTS CONDITIONNELS
@@ -18,25 +28,32 @@ if (Platform.OS === 'ios') {
   try {
     Healthkit = require('@kingstinct/react-native-healthkit').default;
   } catch (e) {
-    console.log('HealthKit non disponible');
+    logger.info('HealthKit non disponible');
   }
 }
 
-// Health Connect (Android) - Lazy loading pour éviter l'erreur Node.js
+// Health Connect (Android) - Complètement désactivé pour éviter les erreurs de bundling
+// TODO: Réactiver quand expo-health-connect sera compatible avec le bundler
 let HealthConnect: any = null;
 const getHealthConnect = (): any => {
+  // Temporairement désactivé pour éviter les erreurs de bundling avec @expo/config-plugins
+  logger.info('Health Connect temporairement désactivé');
+  return null;
+
+  /* Code original commenté pour éviter les erreurs
   if (Platform.OS !== 'android') return null;
   if (HealthConnect !== null) return HealthConnect;
-  
+
   try {
     // Import dynamique pour éviter le bundling du code Node.js
     HealthConnect = require('expo-health-connect');
     return HealthConnect;
   } catch (e) {
-    console.log('Health Connect non disponible:', e);
+    logger.info('Health Connect non disponible:', e);
     HealthConnect = false; // Marquer comme non disponible
     return null;
   }
+  */
 };
 
 // ============================================
@@ -141,10 +158,10 @@ class HealthConnectService {
       }
 
       this.isInitialized = true;
-      console.log('HealthConnect initialisé:', this.syncStatus.provider);
+      logger.info('HealthConnect initialisé:', this.syncStatus.provider);
       return true;
     } catch (error) {
-      console.error('Erreur initialisation HealthConnect:', error);
+      logger.error('Erreur initialisation HealthConnect:', error);
       return false;
     }
   }
@@ -223,7 +240,7 @@ class HealthConnectService {
 
       return permissions;
     } catch (error) {
-      console.error('Erreur demande permissions iOS:', error);
+      logger.error('Erreur demande permissions iOS:', error);
       return this.syncStatus.permissions;
     }
   }
@@ -260,7 +277,7 @@ class HealthConnectService {
         distance: true,
       };
     } catch (error) {
-      console.error('Erreur demande permissions Android:', error);
+      logger.error('Erreur demande permissions Android:', error);
       return this.syncStatus.permissions;
     }
   }
@@ -273,7 +290,7 @@ class HealthConnectService {
     try {
       const available = await this.isAvailable();
       if (!available) {
-        console.warn('Health provider non disponible');
+        logger.warn('Health provider non disponible');
         return false;
       }
 
@@ -290,10 +307,10 @@ class HealthConnectService {
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
 
-      console.log('Connecté à', this.getProviderName());
+      logger.info('Connecté à', this.getProviderName());
       return true;
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      logger.error('Erreur connexion:', error);
       return false;
     }
   }
@@ -335,7 +352,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture poids iOS:', error);
+      logger.error('Erreur lecture poids iOS:', error);
     }
     return null;
   }
@@ -360,7 +377,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture pas iOS:', error);
+      logger.error('Erreur lecture pas iOS:', error);
     }
     return null;
   }
@@ -395,7 +412,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture sommeil iOS:', error);
+      logger.error('Erreur lecture sommeil iOS:', error);
     }
     return null;
   }
@@ -429,7 +446,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture poids Android:', error);
+      logger.error('Erreur lecture poids Android:', error);
     }
     return null;
   }
@@ -458,7 +475,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture pas Android:', error);
+      logger.error('Erreur lecture pas Android:', error);
     }
     return null;
   }
@@ -490,7 +507,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture sommeil Android:', error);
+      logger.error('Erreur lecture sommeil Android:', error);
     }
     return null;
   }
@@ -573,7 +590,7 @@ class HealthConnectService {
         }
       }
     } catch (error) {
-      console.error('Erreur écriture poids:', error);
+      logger.error('Erreur écriture poids:', error);
     }
     return false;
   }
@@ -588,7 +605,7 @@ class HealthConnectService {
     }
 
     try {
-      console.log('Synchronisation en cours...');
+      logger.info('Synchronisation en cours...');
       const data = await this.getAllHealthData();
 
       // Sauvegarder en cache local
@@ -605,10 +622,10 @@ class HealthConnectService {
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
 
-      console.log('Synchronisation terminée:', data);
+      logger.info('Synchronisation terminée:', data);
       return data;
     } catch (error) {
-      console.error('Erreur synchronisation:', error);
+      logger.error('Erreur synchronisation:', error);
       return null;
     }
   }

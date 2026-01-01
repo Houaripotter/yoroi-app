@@ -34,6 +34,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -207,7 +208,7 @@ export const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({
     try {
       await Linking.openURL(url);
     } catch (error) {
-      console.error('Cannot open URL:', url);
+      logger.error('Cannot open URL:', url);
     }
   };
 

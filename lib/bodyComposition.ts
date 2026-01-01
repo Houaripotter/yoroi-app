@@ -15,6 +15,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 const BODY_COMP_KEY = '@yoroi_body_composition';
 const MEASUREMENTS_KEY = '@yoroi_measurements';
@@ -78,7 +79,7 @@ export const getAllBodyCompositions = async (): Promise<BodyComposition[]> => {
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   } catch (error) {
-    console.error('Error getting body compositions:', error);
+    logger.error('Error getting body compositions:', error);
     return [];
   }
 };
@@ -99,7 +100,7 @@ export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Pro
     await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(all));
     return newEntry;
   } catch (error) {
-    console.error('Error adding body composition:', error);
+    logger.error('Error adding body composition:', error);
     throw error;
   }
 };
@@ -113,7 +114,7 @@ export const updateBodyComposition = async (id: string, data: Partial<BodyCompos
       await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(all));
     }
   } catch (error) {
-    console.error('Error updating body composition:', error);
+    logger.error('Error updating body composition:', error);
     throw error;
   }
 };
@@ -124,7 +125,7 @@ export const deleteBodyComposition = async (id: string): Promise<void> => {
     const filtered = all.filter(item => item.id !== id);
     await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(filtered));
   } catch (error) {
-    console.error('Error deleting body composition:', error);
+    logger.error('Error deleting body composition:', error);
     throw error;
   }
 };
@@ -142,7 +143,7 @@ export const getAllMeasurements = async (): Promise<BodyMeasurement[]> => {
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   } catch (error) {
-    console.error('Error getting measurements:', error);
+    logger.error('Error getting measurements:', error);
     return [];
   }
 };
@@ -163,7 +164,7 @@ export const addMeasurement = async (data: Omit<BodyMeasurement, 'id'>): Promise
     await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(all));
     return newEntry;
   } catch (error) {
-    console.error('Error adding measurement:', error);
+    logger.error('Error adding measurement:', error);
     throw error;
   }
 };
@@ -177,7 +178,7 @@ export const updateMeasurement = async (id: string, data: Partial<BodyMeasuremen
       await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(all));
     }
   } catch (error) {
-    console.error('Error updating measurement:', error);
+    logger.error('Error updating measurement:', error);
     throw error;
   }
 };
@@ -188,7 +189,7 @@ export const deleteMeasurement = async (id: string): Promise<void> => {
     const filtered = all.filter(item => item.id !== id);
     await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(filtered));
   } catch (error) {
-    console.error('Error deleting measurement:', error);
+    logger.error('Error deleting measurement:', error);
     throw error;
   }
 };

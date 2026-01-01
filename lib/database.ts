@@ -132,6 +132,14 @@ export const initDatabase = async () => {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN technical_theme TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
+  try {
+    await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE competitions ADD COLUMN type_evenement TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -303,8 +311,20 @@ export const initDatabase = async () => {
     );
   `);
 
+  // Table des objectifs d'entrainement
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS training_goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sport_id TEXT NOT NULL UNIQUE,
+      weekly_target INTEGER NOT NULL DEFAULT 1,
+      is_active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Initialiser le carnet d'entraînement
-  initTrainingJournalDB();
+  await initTrainingJournalDB();
 
   console.log('Database initialized successfully');
 };
@@ -322,6 +342,9 @@ export interface Profile {
   start_date?: string;
   avatar_gender?: 'homme' | 'femme';
   profile_photo?: string | null; // URI de la photo custom, null = utiliser avatar
+  birth_date?: string; // Date de naissance au format YYYY-MM-DD
+  weight_goal?: 'lose' | 'maintain' | 'gain'; // Objectif poids
+  age?: number; // Âge calculé ou saisi manuellement
   created_at?: string;
 }
 
@@ -339,6 +362,14 @@ export interface Weight {
   source?: 'manual' | 'body_composition' | 'apple';
   date: string;
   created_at?: string;
+  // Body measurements (optional, can be saved with weight)
+  waist?: number;
+  chest?: number;
+  arm?: number;
+  thigh?: number;
+  hips?: number;
+  neck?: number;
+  calf?: number;
 }
 
 export interface Measurement {
@@ -356,6 +387,9 @@ export interface Measurement {
   neck?: number;
   date: string;
   created_at?: string;
+  // Alias properties for compatibility (uses left values if available)
+  arms?: number;
+  thighs?: number;
 }
 
 export interface Club {
@@ -387,6 +421,9 @@ export interface Training {
   date: string;
   start_time?: string;
   duration_minutes?: number;
+  duration?: number; // Alias for duration_minutes (compatibility)
+  intensity?: number; // RPE 1-10 (compatibility)
+  category?: string; // Alias for session_type (compatibility)
   notes?: string;
   muscles?: string; // JSON array of muscle groups
   technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
@@ -485,6 +522,7 @@ export interface Competition {
   date: string;
   lieu?: string;
   sport: string;
+  type_evenement?: string; // "Combat", "Match", "Course", "Compétition", etc.
   categorie_poids?: string;
   poids_max?: number;
   statut?: 'a_venir' | 'en_cours' | 'termine';
@@ -507,21 +545,43 @@ export const saveProfile = async (profile: Profile): Promise<void> => {
   const database = await openDatabase();
   const existing = await getProfile();
 
+  // Vérification et fallback pour le nom
+  const safeName = profile.name?.trim() || 'Champion';
+  console.log('[DATABASE] saveProfile - nom reçu:', profile.name, '→ nom sûr:', safeName);
+
+  // Migration: ajouter les colonnes si elles n'existent pas
+  try {
+    await database.runAsync(`ALTER TABLE profile ADD COLUMN birth_date TEXT`);
+  } catch (e) {
+    // La colonne existe déjà, on ignore l'erreur
+  }
+  try {
+    await database.runAsync(`ALTER TABLE profile ADD COLUMN weight_goal TEXT`);
+  } catch (e) {
+    // La colonne existe déjà, on ignore l'erreur
+  }
+  try {
+    await database.runAsync(`ALTER TABLE profile ADD COLUMN age INTEGER`);
+  } catch (e) {
+    // La colonne existe déjà, on ignore l'erreur
+  }
+
   if (existing) {
     await database.runAsync(
       `UPDATE profile SET name = ?, height_cm = ?, target_weight = ?, start_weight = ?,
-       start_date = ?, avatar_gender = ?, profile_photo = ? WHERE id = ?`,
-      [profile.name, profile.height_cm || null, profile.target_weight || null,
+       start_date = ?, avatar_gender = ?, profile_photo = ?, birth_date = ?, weight_goal = ?, age = ? WHERE id = ?`,
+      [safeName, profile.height_cm || null, profile.target_weight || null,
        profile.start_weight || null, profile.start_date || null,
-       profile.avatar_gender || 'homme', profile.profile_photo || null, existing.id!]
+       profile.avatar_gender || 'homme', profile.profile_photo || null,
+       profile.birth_date || null, profile.weight_goal || null, profile.age || null, existing.id!]
     );
   } else {
     await database.runAsync(
-      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender, profile_photo)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [profile.name, profile.height_cm || null, profile.target_weight || null,
+      `INSERT INTO profile (name, height_cm, target_weight, start_weight, start_date, avatar_gender, profile_photo, birth_date, weight_goal, age)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [safeName, profile.height_cm || null, profile.target_weight || null,
        profile.start_weight || null, profile.start_date || null, profile.avatar_gender || 'homme',
-       profile.profile_photo || null]
+       profile.profile_photo || null, profile.birth_date || null, profile.weight_goal || null, profile.age || null]
     );
   }
 };
@@ -1361,22 +1421,29 @@ export const resetDatabase = async (): Promise<void> => {
     const database = await openDatabase();
 
     // Supprimer toutes les données de chaque table
-    await database.execAsync('DELETE FROM weights;');
-    await database.execAsync('DELETE FROM trainings;');
-    await database.execAsync('DELETE FROM measurements;');
-    await database.execAsync('DELETE FROM photos;');
-    await database.execAsync('DELETE FROM achievements;');
-    await database.execAsync('DELETE FROM weekly_plan;');
-    await database.execAsync('DELETE FROM clubs;');
-    await database.execAsync('DELETE FROM profile;');
+    // Tables principales
+    try { await database.execAsync('DELETE FROM weights;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM trainings;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM measurements;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM photos;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM achievements;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM weekly_plan;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM profile;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { /* table peut ne pas exister */ }
 
     // Tables YOROI MEDIC
-    await database.execAsync('DELETE FROM treatment_reminders;');
-    await database.execAsync('DELETE FROM injury_treatments;');
-    await database.execAsync('DELETE FROM injury_eva_history;');
-    await database.execAsync('DELETE FROM injuries;');
+    try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injury_treatments;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injury_eva_history;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM injuries;'); } catch (e) { /* table peut ne pas exister */ }
 
-    console.log('✅ Base de données SQLite réinitialisée');
+    // Tables Carnet d'Entraînement
+    try { await database.execAsync('DELETE FROM benchmark_entries;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
+
+    console.log('✅ Base de données SQLite réinitialisée (toutes les tables)');
   } catch (error) {
     console.error('❌ Erreur reset database:', error);
     throw error;

@@ -6,6 +6,7 @@ import { Platform, Alert } from 'react-native';
 import { getAllMeasurements, getUserSettings } from './storage';
 import { getWeights, getTrainings, getProfile, addWeight, addTraining } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // 📤 EXPORT & PARTAGE
@@ -58,7 +59,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur export JSON:', error);
+    logger.error('❌ Erreur export JSON:', error);
     Alert.alert('Erreur', 'Impossible d\'exporter les données');
     return false;
   }
@@ -107,7 +108,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur export CSV:', error);
+    logger.error('❌ Erreur export CSV:', error);
     Alert.alert('Erreur', 'Impossible d\'exporter les données');
     return false;
   }
@@ -177,7 +178,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           });
           importedCount++;
         } catch (error) {
-          console.error('Erreur import poids:', error);
+          logger.error('Erreur import poids:', error);
         }
       }
     }
@@ -196,7 +197,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           });
           importedCount++;
         } catch (error) {
-          console.error('Erreur import training:', error);
+          logger.error('Erreur import training:', error);
         }
       }
     }
@@ -208,7 +209,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           await addBodyComposition(comp);
           importedCount++;
         } catch (error) {
-          console.error('Erreur import composition:', error);
+          logger.error('Erreur import composition:', error);
         }
       }
     }
@@ -220,7 +221,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur import JSON:', error);
+    logger.error('❌ Erreur import JSON:', error);
     Alert.alert('Erreur', 'Impossible d\'importer les données');
     return false;
   }
@@ -251,7 +252,7 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
       return false;
     }
   } catch (error) {
-    console.error('❌ Erreur partage image:', error);
+    logger.error('❌ Erreur partage image:', error);
     Alert.alert('Erreur', 'Impossible de partager l\'image');
     return false;
   }
@@ -266,7 +267,7 @@ export const generateShareText = async (): Promise<string> => {
     const userSettings = await getUserSettings();
 
     if (measurements.length === 0) {
-      return '🥋 Je commence mon parcours de guerrier avec Yoroi ! #Yoroi #Fitness';
+      return '🥋 Je commence mon parcours de champion avec Yoroi ! #Yoroi #Fitness';
     }
 
     const latest = measurements[0];
@@ -287,7 +288,7 @@ export const generateShareText = async (): Promise<string> => {
 
     return text;
   } catch (error) {
-    console.error('❌ Erreur génération texte partage:', error);
+    logger.error('❌ Erreur génération texte partage:', error);
     return '🥋 Mon parcours Yoroi #Yoroi #Fitness';
   }
 };
@@ -315,7 +316,7 @@ export const shareProgress = async (): Promise<boolean> => {
       return false;
     }
   } catch (error) {
-    console.error('❌ Erreur partage progression:', error);
+    logger.error('❌ Erreur partage progression:', error);
     Alert.alert('Erreur', 'Impossible de partager la progression');
     return false;
   }
@@ -348,7 +349,7 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
       return false;
     }
   } catch (error) {
-    console.error('❌ Erreur partage story:', error);
+    logger.error('❌ Erreur partage story:', error);
     Alert.alert('Erreur', 'Impossible de partager la story');
     return false;
   }
@@ -381,7 +382,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     Alert.alert('Succès', 'Image sauvegardée dans votre galerie');
     return true;
   } catch (error) {
-    console.error('❌ Erreur sauvegarde galerie:', error);
+    logger.error('❌ Erreur sauvegarde galerie:', error);
     Alert.alert('Erreur', 'Impossible de sauvegarder l\'image');
     return false;
   }
@@ -418,7 +419,7 @@ export const importAllData = async (
     Alert.alert('✅ Importé', 'Tes données ont été restaurées avec succès !');
     return true;
   } catch (error) {
-    console.error('❌ Erreur import:', error);
+    logger.error('❌ Erreur import:', error);
     Alert.alert('Erreur', "Impossible d'importer les données. Vérifie le format du fichier.");
     return false;
   }
@@ -447,7 +448,7 @@ function escapeCSV(value: string | null | undefined): string {
  */
 export const exportTrainingsToCSV = async (): Promise<boolean> => {
   try {
-    console.log('📊 Début export séances CSV...');
+    logger.info('📊 Début export séances CSV...');
 
     // Importer les fonctions de base de données
     const { getAllTrainings, getAllClubs } = require('./database');
@@ -493,7 +494,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
           sessionTypes = Array.isArray(types) ? types.join('; ') : '';
         }
       } catch (e) {
-        console.error('Erreur parsing session_types:', e);
+        logger.error('Erreur parsing session_types:', e);
       }
 
       let muscles = '';
@@ -503,7 +504,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
           muscles = Array.isArray(musclesList) ? musclesList.join('; ') : '';
         }
       } catch (e) {
-        console.error('Erreur parsing muscles:', e);
+        logger.error('Erreur parsing muscles:', e);
       }
 
       // Créer la ligne
@@ -533,7 +534,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    console.log('✅ Fichier CSV créé:', fileUri);
+    logger.info('✅ Fichier CSV créé:', fileUri);
 
     // Vérifier si le partage est disponible
     const isSharingAvailable = await Sharing.isAvailableAsync();
@@ -546,7 +547,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
         UTI: 'public.comma-separated-values-text',
       });
 
-      console.log('✅ Export séances CSV terminé avec succès');
+      logger.info('✅ Export séances CSV terminé avec succès');
       Alert.alert(
         '✅ Export réussi',
         `${trainings.length} séance(s) exportée(s) en CSV`
@@ -560,7 +561,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur export séances CSV:', error);
+    logger.error('❌ Erreur export séances CSV:', error);
     Alert.alert(
       'Erreur',
       "Impossible d'exporter les séances en CSV. Veuillez réessayer."
@@ -575,7 +576,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
  */
 export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
   try {
-    console.log('📊 Début export Excel CSV...');
+    logger.info('📊 Début export Excel CSV...');
 
     // Importer les fonctions de base de données
     const { getAllTrainings, getAllClubs } = require('./database');
@@ -650,7 +651,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    console.log('✅ Fichier Excel CSV créé:', fileUri);
+    logger.info('✅ Fichier Excel CSV créé:', fileUri);
 
     const isSharingAvailable = await Sharing.isAvailableAsync();
 
@@ -661,7 +662,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
         UTI: 'public.comma-separated-values-text',
       });
 
-      console.log('✅ Export Excel CSV terminé avec succès');
+      logger.info('✅ Export Excel CSV terminé avec succès');
       Alert.alert(
         '✅ Export réussi',
         `${trainings.length} séance(s) exportée(s) en format Excel`
@@ -675,7 +676,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error('❌ Erreur export Excel CSV:', error);
+    logger.error('❌ Erreur export Excel CSV:', error);
     Alert.alert(
       'Erreur',
       "Impossible d'exporter les séances en Excel CSV. Veuillez réessayer."

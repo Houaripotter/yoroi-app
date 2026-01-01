@@ -1,6 +1,7 @@
 import { openDatabase } from './database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 export interface RadarScores {
   force: number;      // 0-100
@@ -101,7 +102,7 @@ export const calculateRadarScores = async (period: 'week' | 'month' = 'week'): P
       mental: Math.round(mentalScore),
     };
   } catch (error) {
-    console.error('Erreur calcul scores radar:', error);
+    logger.error('Erreur calcul scores radar:', error);
     return { force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 };
   }
 };
@@ -175,7 +176,7 @@ export const calculateRadarEvolution = async (): Promise<RadarEvolution> => {
 
     return evolution;
   } catch (error) {
-    console.error('Erreur calcul évolution radar:', error);
+    logger.error('Erreur calcul évolution radar:', error);
     return { force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0, average: 0 };
   }
 };

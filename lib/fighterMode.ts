@@ -3,7 +3,48 @@
 // ============================================
 
 export type UserMode = 'loisir' | 'competiteur';
-export type Sport = 'jjb' | 'mma' | 'boxe' | 'muay_thai' | 'judo' | 'karate' | 'autre';
+export type Sport =
+  | 'jjb'
+  | 'mma'
+  | 'boxe'
+  | 'muay_thai'
+  | 'judo'
+  | 'karate'
+  | 'taekwondo'
+  | 'krav_maga'
+  | 'tennis'
+  | 'padel'
+  | 'badminton'
+  | 'squash'
+  | 'ping_pong'
+  | 'football'
+  | 'basket'
+  | 'handball'
+  | 'rugby'
+  | 'volleyball'
+  | 'trail'
+  | 'running'
+  | 'cyclisme'
+  | 'natation'
+  | 'triathlon'
+  | 'marche_nordique'
+  | 'randonnee'
+  | 'escalade'
+  | 'crossfit'
+  | 'hyrox'
+  | 'musculation'
+  | 'yoga'
+  | 'pilates'
+  | 'hiit'
+  | 'calisthenics'
+  | 'surf'
+  | 'ski'
+  | 'snowboard'
+  | 'skate'
+  | 'golf'
+  | 'equitation'
+  | 'danse'
+  | 'autre';
 export type CombatResultat = 'victoire' | 'defaite' | 'nul';
 export type CombatMethode = 'soumission' | 'ko' | 'tko' | 'points' | 'decision' | 'dq';
 export type CompetitionStatut = 'a_venir' | 'terminee' | 'annulee';
@@ -117,6 +158,7 @@ export interface Competition {
   date: string; // ISO date
   lieu?: string;
   sport: Sport;
+  type_evenement?: string; // "Combat", "Match", "Course", "Compétition", etc.
   categorie_poids?: string;
   poids_max?: number;
   statut: CompetitionStatut;
@@ -218,6 +260,40 @@ export const SPORT_LABELS: Record<Sport, string> = {
   muay_thai: 'Muay Thaï',
   judo: 'Judo',
   karate: 'Karaté',
+  taekwondo: 'Taekwondo',
+  krav_maga: 'Krav Maga',
+  tennis: 'Tennis',
+  padel: 'Padel',
+  badminton: 'Badminton',
+  squash: 'Squash',
+  ping_pong: 'Ping-Pong',
+  football: 'Football',
+  basket: 'Basketball',
+  handball: 'Handball',
+  rugby: 'Rugby',
+  volleyball: 'Volleyball',
+  trail: 'Trail',
+  running: 'Course à pied',
+  cyclisme: 'Cyclisme',
+  natation: 'Natation',
+  triathlon: 'Triathlon',
+  marche_nordique: 'Marche Nordique',
+  randonnee: 'Randonnée',
+  escalade: 'Escalade',
+  crossfit: 'CrossFit',
+  hyrox: 'HYROX',
+  musculation: 'Musculation',
+  yoga: 'Yoga',
+  pilates: 'Pilates',
+  hiit: 'HIIT',
+  calisthenics: 'Calisthenics',
+  surf: 'Surf',
+  ski: 'Ski',
+  snowboard: 'Snowboard',
+  skate: 'Skate',
+  golf: 'Golf',
+  equitation: 'Équitation',
+  danse: 'Danse',
   autre: 'Autre',
 };
 
@@ -228,6 +304,40 @@ export const SPORT_ICONS: Record<Sport, string> = {
   muay_thai: '🥊',
   judo: '🥋',
   karate: '🥋',
+  taekwondo: '🥋',
+  krav_maga: '🥊',
+  tennis: '🎾',
+  padel: '🎾',
+  badminton: '🏸',
+  squash: '🎾',
+  ping_pong: '🏓',
+  football: '⚽',
+  basket: '🏀',
+  handball: '🤾',
+  rugby: '🏉',
+  volleyball: '🏐',
+  trail: '🏃',
+  running: '🏃',
+  cyclisme: '🚴',
+  natation: '🏊',
+  triathlon: '🏊',
+  marche_nordique: '🚶',
+  randonnee: '🥾',
+  escalade: '🧗',
+  crossfit: '💪',
+  hyrox: '⚡',
+  musculation: '🏋️',
+  yoga: '🧘',
+  pilates: '🧘',
+  hiit: '⚡',
+  calisthenics: '💪',
+  surf: '🏄',
+  ski: '⛷️',
+  snowboard: '🏂',
+  skate: '🛹',
+  golf: '⛳',
+  equitation: '🏇',
+  danse: '💃',
   autre: '⚔️',
 };
 

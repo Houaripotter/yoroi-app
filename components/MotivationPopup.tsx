@@ -3,6 +3,7 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Flame } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import logger from '@/lib/security/logger';
 
 const MOTIVATIONS = [
   "La douleur que tu ressens aujourd'hui sera la force que tu ressentiras demain.",
@@ -18,7 +19,7 @@ const MOTIVATIONS = [
   "L'armure se forge dans l'effort. 鎧",
   "Deviens la meilleure version de toi-même.",
   "Chaque jour est une chance de progresser.",
-  "Le guerrier se construit jour après jour.",
+  "Le champion se construit jour après jour.",
 ];
 
 export const MotivationPopup: React.FC = () => {
@@ -43,7 +44,7 @@ export const MotivationPopup: React.FC = () => {
         await AsyncStorage.setItem('last_motivation_date', today);
       }
     } catch (error) {
-      console.error('Erreur motivation:', error);
+      logger.error('Erreur motivation:', error);
     }
   };
 

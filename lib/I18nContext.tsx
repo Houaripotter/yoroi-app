@@ -5,6 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { loadLanguage, changeLanguage, getCurrentLanguage, t, SupportedLanguage } from './i18n';
+import logger from '@/lib/security/logger';
 
 interface I18nContextType {
   language: SupportedLanguage;
@@ -30,7 +31,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
         const lang = await loadLanguage();
         setLanguageState(lang);
       } catch (error) {
-        console.error('[I18nContext] Erreur initialisation langue:', error);
+        logger.error('[I18nContext] Erreur initialisation langue:', error);
         setLanguageState('fr');
       } finally {
         setIsLoading(false);
@@ -46,7 +47,7 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
       await changeLanguage(lang);
       setLanguageState(lang);
     } catch (error) {
-      console.error('[I18nContext] Erreur changement langue:', error);
+      logger.error('[I18nContext] Erreur changement langue:', error);
     }
   }, []);
 

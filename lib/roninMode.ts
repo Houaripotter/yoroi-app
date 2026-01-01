@@ -4,6 +4,7 @@
 // Mode Focus ultra-minimaliste pour la salle de sport
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 const RONIN_MODE_KEY = '@yoroi_ronin_mode';
 
@@ -56,7 +57,7 @@ class RoninModeService {
     try {
       await AsyncStorage.setItem(RONIN_MODE_KEY, 'true');
     } catch (error) {
-      console.error('[RoninMode] Erreur activation:', error);
+      logger.error('[RoninMode] Erreur activation:', error);
     }
   }
 
@@ -67,7 +68,7 @@ class RoninModeService {
     try {
       await AsyncStorage.setItem(RONIN_MODE_KEY, 'false');
     } catch (error) {
-      console.error('[RoninMode] Erreur désactivation:', error);
+      logger.error('[RoninMode] Erreur désactivation:', error);
     }
   }
 
@@ -79,7 +80,7 @@ class RoninModeService {
       const value = await AsyncStorage.getItem(RONIN_MODE_KEY);
       return value === 'true';
     } catch (error) {
-      console.error('[RoninMode] Erreur vérification:', error);
+      logger.error('[RoninMode] Erreur vérification:', error);
       return false;
     }
   }

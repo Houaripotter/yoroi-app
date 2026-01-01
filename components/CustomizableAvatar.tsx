@@ -17,12 +17,9 @@ import {
   EffectType,
   getAvatarCustomization,
 } from '@/lib/avatarCustomization';
-import {
-  AvatarStateInfo,
-  calculateAvatarState,
-  getAvatarImage,
-} from '@/lib/avatarState';
+import { getAvatarConfig, getAvatarImage, type AvatarConfig } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CUSTOMIZABLE AVATAR - AVATAR PERSONNALISABLE
@@ -42,7 +39,7 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors } = useTheme();
-  const [avatarState, setAvatarState] = useState<AvatarStateInfo | null>(null);
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig | null>(null);
   const [currentCustomization, setCurrentCustomization] = useState<AvatarCustomization>({
     frame: 'none',
     background: 'black',
@@ -58,8 +55,8 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
   useEffect(() => {
     const loadData = async () => {
       try {
-        const state = await calculateAvatarState();
-        setAvatarState(state);
+        const config = await getAvatarConfig();
+        setAvatarConfig(config);
 
         if (customization) {
           setCurrentCustomization(customization);
@@ -68,7 +65,7 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
           setCurrentCustomization(saved);
         }
       } catch (error) {
-        console.error('Erreur chargement avatar:', error);
+        logger.error('Erreur chargement avatar:', error);
       }
     };
     loadData();
@@ -127,7 +124,7 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
     };
   }, [currentCustomization]);
 
-  const avatarImage = avatarState ? getAvatarImage(avatarState.state) : null;
+  const avatarImage = avatarConfig ? getAvatarImage(avatarConfig.pack, avatarConfig.gender, avatarConfig.level) : null;
   const frame = AVATAR_FRAMES[currentCustomization.frame];
   const background = AVATAR_BACKGROUNDS[currentCustomization.background];
   const effect = AVATAR_EFFECTS[currentCustomization.effect];

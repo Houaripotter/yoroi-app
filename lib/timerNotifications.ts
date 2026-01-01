@@ -5,6 +5,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // Configuration des notifications
 Notifications.setNotificationHandler({
@@ -45,7 +46,7 @@ class TimerNotificationsService {
   ): Promise<void> {
     const hasPermission = await this.requestPermissions();
     if (!hasPermission) {
-      console.log('[TimerNotifications] Permission refusée');
+      logger.info('[TimerNotifications] Permission refusée');
       return;
     }
 
@@ -69,9 +70,9 @@ class TimerNotificationsService {
         } as Notifications.TimeIntervalTriggerInput,
       });
 
-      console.log(`[TimerNotifications] Notification planifiée pour ${delaySeconds}s`);
+      logger.info(`[TimerNotifications] Notification planifiée pour ${delaySeconds}s`);
     } catch (error) {
-      console.error('[TimerNotifications] Erreur planification:', error);
+      logger.error('[TimerNotifications] Erreur planification:', error);
     }
   }
 
@@ -82,10 +83,10 @@ class TimerNotificationsService {
     if (this.notificationId) {
       try {
         await Notifications.cancelScheduledNotificationAsync(this.notificationId);
-        console.log('[TimerNotifications] Notification annulée');
+        logger.info('[TimerNotifications] Notification annulée');
         this.notificationId = null;
       } catch (error) {
-        console.error('[TimerNotifications] Erreur annulation:', error);
+        logger.error('[TimerNotifications] Erreur annulation:', error);
       }
     }
   }

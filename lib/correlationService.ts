@@ -3,6 +3,7 @@ import { getTrainingLoads } from './trainingLoadService';
 import { getSleepStats, getSleepEntries } from './sleepService';
 import { getHydrationHistory, getAverageHydration } from './storage';
 import { startOfDay, subDays, differenceInDays } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 /**
  * Correlation Analysis Service
@@ -86,7 +87,7 @@ async function analyzeSleepTrainingCorrelation(): Promise<{ correlation: number;
     const correlation = calculateCorrelation(sleepDurations, trainingCounts);
     return { correlation, dataPoints: sleepDurations.length };
   } catch (error) {
-    console.error('Error analyzing sleep-training correlation:', error);
+    logger.error('Error analyzing sleep-training correlation:', error);
     return { correlation: 0, dataPoints: 0 };
   }
 }
@@ -135,7 +136,7 @@ async function analyzeHydrationLoadCorrelation(): Promise<{ correlation: number;
     const correlation = calculateCorrelation(hydrationAmounts, trainingLoads);
     return { correlation, dataPoints: hydrationAmounts.length };
   } catch (error) {
-    console.error('Error analyzing hydration-load correlation:', error);
+    logger.error('Error analyzing hydration-load correlation:', error);
     return { correlation: 0, dataPoints: 0 };
   }
 }
@@ -170,7 +171,7 @@ async function analyzeLoadRecoveryPattern(): Promise<{ avgRecoveryDays: number; 
     const avgRecoveryDays = gaps.reduce((a, b) => a + b, 0) / gaps.length;
     return { avgRecoveryDays, dataPoints: gaps.length };
   } catch (error) {
-    console.error('Error analyzing load-recovery pattern:', error);
+    logger.error('Error analyzing load-recovery pattern:', error);
     return { avgRecoveryDays: 0, dataPoints: 0 };
   }
 }
@@ -215,7 +216,7 @@ async function calculateConsistencyScore(): Promise<{ score: number; dataPoints:
 
     return { score: Math.min(100, Math.max(0, score)), dataPoints: trainings.length };
   } catch (error) {
-    console.error('Error calculating consistency score:', error);
+    logger.error('Error calculating consistency score:', error);
     return { score: 0, dataPoints: 0 };
   }
 }
@@ -389,7 +390,7 @@ export async function generateInsights(): Promise<Insight[]> {
     return insights.slice(0, 5);
 
   } catch (error) {
-    console.error('Error generating insights:', error);
+    logger.error('Error generating insights:', error);
     return [];
   }
 }

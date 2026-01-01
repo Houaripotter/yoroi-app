@@ -1,4 +1,5 @@
 import { NativeModules, Platform } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // WIDGET SERVICE - iOS Widget Integration
@@ -25,7 +26,7 @@ export const updateWidget = async (
   date?: Date
 ): Promise<void> => {
   if (!isWidgetAvailable()) {
-    console.log('Widget: Not available on this platform');
+    logger.info('Widget: Not available on this platform');
     return;
   }
 
@@ -34,9 +35,9 @@ export const updateWidget = async (
     const timestamp = (date || new Date()).getTime() / 1000; // Unix timestamp en secondes
 
     WidgetModule.updateWidgetData(currentWeight, delta, timestamp);
-    console.log('Widget: Data updated', { currentWeight, delta, timestamp });
+    logger.info('Widget: Data updated', { currentWeight, delta, timestamp });
   } catch (error) {
-    console.error('Widget: Error updating data', error);
+    logger.error('Widget: Error updating data', error);
   }
 };
 
@@ -48,9 +49,9 @@ export const clearWidget = async (): Promise<void> => {
 
   try {
     WidgetModule.clearWidgetData();
-    console.log('Widget: Data cleared');
+    logger.info('Widget: Data cleared');
   } catch (error) {
-    console.error('Widget: Error clearing data', error);
+    logger.error('Widget: Error clearing data', error);
   }
 };
 
@@ -62,9 +63,9 @@ export const reloadWidget = async (): Promise<void> => {
 
   try {
     WidgetModule.reloadWidget();
-    console.log('Widget: Reloaded');
+    logger.info('Widget: Reloaded');
   } catch (error) {
-    console.error('Widget: Error reloading', error);
+    logger.error('Widget: Error reloading', error);
   }
 };
 

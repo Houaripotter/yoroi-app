@@ -100,9 +100,10 @@ import { getUserMode, setUserMode, getUserSport } from '@/lib/fighterModeService
 import { UserMode, Sport } from '@/lib/fighterMode';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
-import { loadScreenshotDemoData, clearScreenshotDemoData } from '@/lib/screenshotDemoData';
+// Screenshot mode is handled via /screenshot-mode route
 import { Weight } from '@/lib/database';
 import { getWeightCategoriesForSport, WeightCategory } from '@/lib/weightCategories';
+import logger from '@/lib/security/logger';
 
 // Constants for non-theme values
 const RADIUS = { sm: 8, md: 12, lg: 16, xl: 20 };
@@ -133,6 +134,7 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
   const [weightUnitModalVisible, setWeightUnitModalVisible] = useState(false);
   const [measurementUnitModalVisible, setMeasurementUnitModalVisible] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [resetConfirmationText, setResetConfirmationText] = useState(''); // 🔒 SÉCURITÉ: Confirmation de suppression
   const [badgesModalVisible, setBadgesModalVisible] = useState(false);
   const [partnersModalVisible, setPartnersModalVisible] = useState(false);
   const [customClubLogos, setCustomClubLogos] = useState<{ [key: string]: string }>({});
@@ -207,7 +209,7 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
 
       // Le thème est géré par le contexte, pas besoin de le mettre à jour ici
     } catch (e) {
-      console.log("Erreur chargement settings", e);
+      logger.info("Erreur chargement settings", e);
     }
   }, []);
 
@@ -339,17 +341,26 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     await shareProgress();
   };
 
+  // 🔒 SÉCURITÉ: Réinitialisation avec double confirmation
   const handleResetData = async () => {
     try {
+      // 🔒 Validation: L'utilisateur doit taper exactement "SUPPRIMER"
+      // Validate confirmation text before resetting
+      if (resetConfirmationText !== 'SUPPRIMER') {
+        Alert.alert('Erreur', 'Veuillez taper SUPPRIMER pour confirmer');
+        return;
+      }
       const success = await resetAllData();
       setResetModalVisible(false);
+      setResetConfirmationText(''); // Réinitialiser le champ
       if (success) {
         Alert.alert('Réinitialisé', 'Toutes les données ont été effacées.');
         fetchSettings();
         router.replace('/(tabs)');
       }
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de supprimer.');
+    } catch (error: any) {
+      // L'erreur contient le message de validation
+      Alert.alert('Erreur', error?.message || 'Impossible de supprimer.');
     }
   };
 
@@ -366,7 +377,7 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
               await AsyncStorage.removeItem('yoroi_onboarding_done');
               router.replace('/onboarding');
             } catch (error) {
-              console.error('Erreur reset onboarding:', error);
+              logger.error('Erreur reset onboarding:', error);
               Alert.alert('Erreur', 'Impossible de réinitialiser l\'onboarding.');
             }
           },
@@ -375,57 +386,34 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
     );
   };
 
-  // Mode Screenshot pour captures d'écran App Store
-  const handleLoadScreenshotDemo = async () => {
+  // 🔧 DEV ONLY: Reset premier lancement (Disclaimer + Onboarding)
+  const handleResetFirstLaunch = async () => {
     Alert.alert(
-      '📸 Mode Screenshot',
-      'Charger des données de démonstration complètes pour faire des captures d\'écran professionnelles pour l\'App Store ?\n\n✨ Inclut :\n• 3 mois de transformation (82kg → 75.8kg)\n• Composition corporelle (22% → 16% gras, 38% → 42% muscle)\n• Tour de taille -9cm, biceps +3cm\n• 60+ entraînements (JJB + Musculation)\n• Sommeil & hydratation\n• 2 clubs : Gracie Barra + Basic Fit\n• Planning hebdomadaire équilibré\n• 12 badges débloqués\n\n⚠️ Toutes les données actuelles seront EFFACÉES !',
+      '🔧 Reset First Launch (DEV)',
+      'Réinitialiser le flux de premier lancement ?\n\n• Disclaimer légal\n• Onboarding\n\n⚠️ Les données restent intactes.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Charger',
+          text: 'Reset',
           style: 'destructive',
           onPress: async () => {
             try {
-              const result = await loadScreenshotDemoData();
-              if (result.success) {
-                Alert.alert(
-                  '✅ Mode Screenshot activé !',
-                  'Données complètes chargées.\n\n📱 Profil : Alex Martin\n📊 Transformation : -13kg en 6 mois\n🥋 3 clubs + planning complet\n\nL\'app est prête pour les screenshots !'
-                );
-                fetchSettings();
-                router.replace('/(tabs)');
-              } else {
-                Alert.alert('Erreur', result.error || 'Échec du chargement');
-              }
+              // Supprimer l'acceptation du disclaimer
+              await AsyncStorage.removeItem('@yoroi_legal_accepted');
+              // Supprimer l'onboarding
+              await AsyncStorage.removeItem('yoroi_onboarding_done');
+              // Supprimer les données de profil utilisateur
+              const currentSettings = await getUserSettings();
+              await saveUserSettings({
+                ...currentSettings,
+                username: undefined,
+                gender: undefined,
+              });
+              // Rediriger vers l'index qui va checker et afficher le disclaimer
+              router.replace('/');
             } catch (error) {
-              console.error('Erreur mode screenshot:', error);
-              Alert.alert('Erreur', 'Impossible de charger les données de démonstration.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleClearScreenshotDemo = async () => {
-    Alert.alert(
-      '🧹 Effacer le Mode Screenshot',
-      'Supprimer toutes les données de démonstration et revenir à une app vierge ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Effacer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await clearScreenshotDemoData();
-              Alert.alert('✅ Effacé', 'L\'app est maintenant vierge.');
-              fetchSettings();
-              router.replace('/(tabs)');
-            } catch (error) {
-              console.error('Erreur nettoyage:', error);
-              Alert.alert('Erreur', 'Impossible d\'effacer les données.');
+              logger.error('Erreur reset first launch:', error);
+              Alert.alert('Erreur', 'Impossible de réinitialiser le flux.');
             }
           },
         },
@@ -495,21 +483,28 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
                 icon={Palette}
                 color={colors.accent}
                 label="Apparence"
-                value="Thèmes et personnalisation"
+                value="Themes et personnalisation"
                 onPress={() => router.push('/appearance')}
+            />
+            <MenuRow
+                icon={Target}
+                color={colors.gold}
+                label="Objectifs d'entrainement"
+                value="Definir mes objectifs par sport"
+                onPress={() => router.push('/training-goals')}
             />
             <MenuRow
                 icon={Scale}
                 color={colors.gold}
-                label="Unité de poids"
+                label="Unite de poids"
                 value={weightUnit === 'kg' ? 'Kilogrammes' : 'Livres'}
                 onPress={() => setWeightUnitModalVisible(true)}
             />
             <MenuRow
                 icon={TrendingDown}
                 color={colors.gold}
-                label="Unité de mesure"
-                value={measurementUnit === 'cm' ? 'Centimètres' : 'Pouces'}
+                label="Unite de mesure"
+                value={measurementUnit === 'cm' ? 'Centimetres' : 'Pouces'}
                 onPress={() => setMeasurementUnitModalVisible(true)}
             />
         </View>
@@ -578,12 +573,12 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
               onPress={handleExportJSON}
               activeOpacity={0.8}
             >
-              <CloudUpload size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <CloudUpload size={22} color={colors.textOnGold} strokeWidth={2.5} />
               <View style={styles.backupButtonContent}>
-                <Text style={styles.backupButtonTitle}>Sauvegarder (JSON)</Text>
-                <Text style={styles.backupButtonSubtitle}>Pour réimporter dans l'app</Text>
+                <Text style={[styles.backupButtonTitle, { color: colors.textOnGold }]}>Sauvegarder (JSON)</Text>
+                <Text style={[styles.backupButtonSubtitle, { color: colors.textOnGold, opacity: 0.8 }]}>Pour réimporter dans l'app</Text>
               </View>
-              <ChevronRight size={22} color="#FFFFFF" />
+              <ChevronRight size={22} color={colors.textOnGold} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -604,48 +599,34 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
               onPress={handleImportJSON}
               activeOpacity={0.8}
             >
-              <CloudDownload size={22} color="#FFFFFF" strokeWidth={2.5} />
+              <CloudDownload size={22} color={colors.textOnGold} strokeWidth={2.5} />
               <View style={styles.backupButtonContent}>
-                <Text style={styles.backupButtonTitle}>Restaurer (JSON)</Text>
-                <Text style={styles.backupButtonSubtitle}>Importer une sauvegarde</Text>
+                <Text style={[styles.backupButtonTitle, { color: colors.textOnGold }]}>Restaurer (JSON)</Text>
+                <Text style={[styles.backupButtonSubtitle, { color: colors.textOnGold, opacity: 0.8 }]}>Importer une sauvegarde</Text>
               </View>
-              <ChevronRight size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-        </View>
-
-        {/* MODE SCREENSHOT */}
-        <Text style={styles.sectionHeader}>MODE SCREENSHOT 📸</Text>
-        <View style={[styles.card, { backgroundColor: cardBackground }]}>
-            <TouchableOpacity
-              style={[styles.screenshotButton, { backgroundColor: '#8B5CF6' }]}
-              onPress={handleLoadScreenshotDemo}
-              activeOpacity={0.8}
-            >
-              <Sparkles size={22} color="#FFFFFF" strokeWidth={2.5} />
-              <View style={styles.screenshotButtonContent}>
-                <Text style={styles.screenshotButtonTitle}>Charger données de démo</Text>
-                <Text style={styles.screenshotButtonSubtitle}>Pour captures d'écran App Store</Text>
-              </View>
-              <ChevronRight size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.screenshotButton, { backgroundColor: '#64748B', marginTop: 12 }]}
-              onPress={handleClearScreenshotDemo}
-              activeOpacity={0.8}
-            >
-              <Trash2 size={22} color="#FFFFFF" strokeWidth={2.5} />
-              <View style={styles.screenshotButtonContent}>
-                <Text style={styles.screenshotButtonTitle}>Effacer les données démo</Text>
-                <Text style={styles.screenshotButtonSubtitle}>Revenir à une app vierge</Text>
-              </View>
-              <ChevronRight size={22} color="#FFFFFF" />
+              <ChevronRight size={22} color={colors.textOnGold} />
             </TouchableOpacity>
         </View>
 
         {/* SÉCURITÉ DES DONNÉES */}
         <Text style={styles.sectionHeader}>SÉCURITÉ DES DONNÉES</Text>
         <View style={[styles.card, { backgroundColor: cardBackground }]}>
+            <MenuRow
+                icon={FileText}
+                color={colors.warning}
+                label="Mentions légales"
+                value="Avertissement et conditions"
+                onPress={() => router.push('/legal')}
+            />
+            {isDevMode && (
+              <MenuRow
+                  icon={Sparkles}
+                  color="#FF9800"
+                  label="🔧 Reset First Launch (DEV)"
+                  value="Tester disclaimer + onboarding"
+                  onPress={handleResetFirstLaunch}
+              />
+            )}
             <MenuRow
                 icon={RefreshCw}
                 color={colors.accent}
@@ -809,17 +790,6 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
             </TouchableOpacity>
           )}
 
-          {/* Hidden Demo Data Button */}
-          {showHiddenDemo && (
-            <TouchableOpacity
-              style={styles.hiddenDemoButton}
-              onPress={handleLoadScreenshotDemo}
-              activeOpacity={0.8}
-            >
-              <Sparkles size={18} color="#F59E0B" strokeWidth={2.5} />
-              <Text style={styles.hiddenDemoButtonText}>Charger donnees App Store</Text>
-            </TouchableOpacity>
-          )}
         </View>
       </ScrollView>
 
@@ -899,34 +869,80 @@ export default function SettingsScreen({ onClose }: SettingsScreenProps = { onCl
         </Pressable>
       </Modal>
 
-      {/* Modal Réinitialisation */}
+      {/* Modal Réinitialisation - 🔒 SÉCURISÉ */}
       <Modal visible={resetModalVisible} transparent animationType="fade">
-        <Pressable style={styles.modalOverlay} onPress={() => setResetModalVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => {
+          setResetModalVisible(false);
+          setResetConfirmationText(''); // Réinitialiser le champ
+        }}>
           <Pressable style={[styles.modalContent, { backgroundColor: colors.backgroundElevated }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Réinitialiser les données</Text>
-              <TouchableOpacity onPress={() => setResetModalVisible(false)}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>⚠️ Réinitialiser les données</Text>
+              <TouchableOpacity onPress={() => {
+                setResetModalVisible(false);
+                setResetConfirmationText(''); // Réinitialiser le champ
+              }}>
                 <X size={24} color={colors.textSecondary} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
             <Text style={styles.modalDescription}>
-              Cette action supprimera définitivement toutes vos données (poids, mensurations, entraînements, photos, badges, paramètres). Cette action est irréversible.
+              Cette action supprimera DÉFINITIVEMENT toutes vos données :{'\n'}
+              • Poids et mensurations{'\n'}
+              • Entraînements et historique{'\n'}
+              • Photos de progression{'\n'}
+              • Badges et statistiques{'\n'}
+              • Paramètres utilisateur{'\n\n'}
+              <Text style={{ fontWeight: 'bold', color: '#FF453A' }}>
+                ⚠️ Cette action est IRRÉVERSIBLE.
+              </Text>
             </Text>
+
+            {/* 🔒 SÉCURITÉ: Champ de confirmation obligatoire */}
+            <View style={{ marginVertical: 16 }}>
+              <Text style={[styles.modalDescription, { marginBottom: 8 }]}>
+                Pour confirmer, tapez exactement : <Text style={{ fontWeight: 'bold', color: '#FF453A' }}>SUPPRIMER</Text>
+              </Text>
+              <TextInput
+                style={[
+                  styles.confirmationInput,
+                  {
+                    backgroundColor: colors.background,
+                    color: colors.textPrimary,
+                    borderColor: resetConfirmationText === 'SUPPRIMER' ? '#34C759' : colors.border
+                  }
+                ]}
+                placeholder="Tapez SUPPRIMER ici"
+                placeholderTextColor={colors.textSecondary}
+                value={resetConfirmationText}
+                onChangeText={setResetConfirmationText}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
 
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setResetModalVisible(false)}
+                onPress={() => {
+                  setResetModalVisible(false);
+                  setResetConfirmationText(''); // Réinitialiser le champ
+                }}
               >
                 <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[
+                  styles.deleteButton,
+                  {
+                    opacity: resetConfirmationText === 'SUPPRIMER' ? 1 : 0.5
+                  }
+                ]}
                 onPress={handleResetData}
+                disabled={resetConfirmationText !== 'SUPPRIMER'}
               >
-                <Text style={[styles.deleteButtonText, { color: '#FFFFFF' }]}>Supprimer</Text>
+                <Text style={[styles.deleteButtonText, { color: '#FFFFFF' }]}>Supprimer tout</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -1133,7 +1149,7 @@ function GearManagementModal({
         setNewGearPhoto(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Erreur sélection photo:', error);
+      logger.error('Erreur sélection photo:', error);
       Alert.alert('Erreur', 'Impossible de sélectionner la photo.');
     }
   };
@@ -1178,7 +1194,7 @@ function GearManagementModal({
       
       Alert.alert('✅ Succès', editingGear ? 'Équipement modifié !' : 'Équipement ajouté !');
     } catch (error) {
-      console.error('Erreur sauvegarde équipement:', error);
+      logger.error('Erreur sauvegarde équipement:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder l\'équipement.');
     }
   };
@@ -1309,10 +1325,10 @@ function GearManagementModal({
                       onPress={() => setNewGearType(type.key as any)}
                       activeOpacity={0.7}
                     >
-                      <TypeIcon size={20} color={isSelected ? colors.background : colors.accent} strokeWidth={2} />
+                      <TypeIcon size={20} color={isSelected ? colors.textOnGold : colors.accent} strokeWidth={2} />
                       <Text style={[
                         styles.clubTypeLabel,
-                        { color: isSelected ? colors.background : textColor }
+                        { color: isSelected ? colors.textOnGold : textColor }
                       ]}>
                         {type.label}
                       </Text>
@@ -1346,7 +1362,7 @@ function GearManagementModal({
                 onPress={handleSaveGear}
                 activeOpacity={0.7}
               >
-                <Text style={styles.saveClubText}>
+                <Text style={[styles.saveClubText, { color: colors.textOnGold }]}>
                   {editingGear ? 'Modifier' : 'Ajouter'}
                 </Text>
               </TouchableOpacity>
@@ -1435,7 +1451,7 @@ function ClubsManagementModal({
         setNewClubLogo(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Erreur sélection logo:', error);
+      logger.error('Erreur sélection logo:', error);
       Alert.alert('Erreur', 'Impossible de sélectionner le logo.');
     }
   };
@@ -1473,7 +1489,7 @@ function ClubsManagementModal({
       
       Alert.alert('✅ Succès', editingClub ? 'Club modifié !' : 'Club ajouté !');
     } catch (error) {
-      console.error('Erreur sauvegarde club:', error);
+      logger.error('Erreur sauvegarde club:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder le club.');
     }
   };
@@ -1595,10 +1611,10 @@ function ClubsManagementModal({
                       onPress={() => setNewClubType(type.key as any)}
                       activeOpacity={0.7}
                     >
-                      <TypeIcon size={20} color={isSelected ? colors.background : colors.accent} strokeWidth={2} />
+                      <TypeIcon size={20} color={isSelected ? colors.textOnGold : colors.accent} strokeWidth={2} />
                       <Text style={[
                         styles.clubTypeLabel,
-                        { color: isSelected ? colors.background : textColor }
+                        { color: isSelected ? colors.textOnGold : textColor }
                       ]}>
                         {type.label}
                       </Text>
@@ -1965,6 +1981,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: -0.2,
+  },
+  // 🔒 SÉCURITÉ: Champ de confirmation pour la réinitialisation
+  confirmationInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 1,
   },
   // Logos personnalisés
   logosPreview: {

@@ -68,7 +68,7 @@ export default function RadarPerformanceScreen() {
   const loadData = async () => {
     const radarScores = await calculateRadarScores('week');
     const radarEvolution = await calculateRadarEvolution();
-    const radarInsight = getRadarInsight(radarScores, radarEvolution);
+    const radarInsight = getRadarInsight(radarScores);
 
     setScores(radarScores);
     setEvolution(radarEvolution);

@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check } from 'lucide-react-native';
 import { ProtocolReference } from '@/data/labProtocols';
+import logger from '@/lib/security/logger';
 
 interface ProtocolChecklistProps {
   protocolId: string;
@@ -34,7 +35,7 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
         setCheckedItems(parsed);
       }
     } catch (error) {
-      console.error('Erreur chargement progression protocole:', error);
+      logger.error('Erreur chargement progression protocole:', error);
     }
   };
 
@@ -50,7 +51,7 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
         JSON.stringify(newCheckedItems)
       );
     } catch (error) {
-      console.error('Erreur sauvegarde progression protocole:', error);
+      logger.error('Erreur sauvegarde progression protocole:', error);
     }
   };
 
@@ -60,7 +61,7 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
     try {
       await AsyncStorage.removeItem(`protocol_${protocolId}`);
     } catch (error) {
-      console.error('Erreur reset progression protocole:', error);
+      logger.error('Erreur reset progression protocole:', error);
     }
   };
 

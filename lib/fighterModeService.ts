@@ -2,8 +2,8 @@
 // 🥊 YOROI - SERVICE MODE FIGHTER
 // ============================================
 
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SQLite from 'expo-sqlite';
 import {
   UserMode,
   Sport,
@@ -21,11 +21,15 @@ const STORAGE_KEY_SPORT = '@yoroi_user_sport';
 const STORAGE_KEY_CATEGORY = '@yoroi_weight_category';
 const STORAGE_KEY_BELT = '@yoroi_belt';
 
-// ============================================
-// DATABASE
-// ============================================
+// 🔒 Platform-specific: SQLite only available on native
+const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
+let SQLite: any = null;
+let db: any = null;
 
-const db = SQLite.openDatabaseSync('yoroi.db');
+if (isNativePlatform) {
+  SQLite = require('expo-sqlite');
+  db = SQLite.openDatabaseSync('yoroi.db');
+}
 
 // ============================================
 // USER PROFILE & MODE
@@ -127,9 +131,9 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 
 export const getCompetitions = async (): Promise<Competition[]> => {
   try {
-    const result = db.getAllSync<Competition>(
+    const result = db.getAllSync(
       'SELECT * FROM competitions ORDER BY date ASC'
-    );
+    ) as Competition[];
     return result;
   } catch (error) {
     console.error('Error getting competitions:', error);
@@ -140,10 +144,10 @@ export const getCompetitions = async (): Promise<Competition[]> => {
 export const getUpcomingCompetitions = async (): Promise<Competition[]> => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const result = db.getAllSync<Competition>(
+    const result = db.getAllSync(
       'SELECT * FROM competitions WHERE date >= ? AND statut = ? ORDER BY date ASC',
       [today, 'a_venir']
-    );
+    ) as Competition[];
     return result;
   } catch (error) {
     console.error('Error getting upcoming competitions:', error);
@@ -206,7 +210,8 @@ const formatCompetitionName = (name: string, sport?: Sport): string => {
 };
 
 /**
- * Récupère le prochain événement (compétition ou combat) à venir
+ * Récupère le prochain événement depuis les RDV sauvegardés dans AsyncStorage
+ * (Planning > Prochain RDV)
  * Retourne l'événement le plus proche avec le nombre de jours restants
  */
 export const getNextEvent = async (): Promise<{
@@ -214,40 +219,64 @@ export const getNextEvent = async (): Promise<{
   name: string;
   daysLeft: number;
   date: string;
-  sport?: Sport;
+  sport?: string;
 } | null> => {
   try {
-    const nextCompetition = await getNextCompetition();
-    
-    if (nextCompetition) {
-      const eventDate = new Date(nextCompetition.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      eventDate.setHours(0, 0, 0, 0);
-      
-      const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (daysLeft >= 0) {
-        return {
-          type: 'competition',
-          name: formatCompetitionName(nextCompetition.nom, nextCompetition.sport),
-          daysLeft,
-          date: nextCompetition.date,
-          sport: nextCompetition.sport,
-        };
-      }
-    }
-    
-    return null;
+    // Charger les événements sauvegardés depuis AsyncStorage (Planning > Prochain RDV)
+    const saved = await AsyncStorage.getItem('my_saved_events');
+    if (!saved) return null;
+
+    const events = JSON.parse(saved) as Array<{
+      id: string;
+      title: string;
+      date_start: string;
+      sport_tag?: string;
+      category?: string;
+    }>;
+
+    if (!events || events.length === 0) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Filtrer les événements à venir et trier par date
+    const upcomingEvents = events
+      .filter(event => {
+        const eventDate = new Date(event.date_start);
+        eventDate.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+      })
+      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
+
+    if (upcomingEvents.length === 0) return null;
+
+    const nextEvent = upcomingEvents[0];
+    const eventDate = new Date(nextEvent.date_start);
+    eventDate.setHours(0, 0, 0, 0);
+    const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Formater la date en français
+    const dateFormatted = eventDate.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+    });
+
+    return {
+      type: 'competition',
+      name: nextEvent.title.length > 25 ? nextEvent.title.substring(0, 25) + '...' : nextEvent.title,
+      daysLeft,
+      date: dateFormatted,
+      sport: nextEvent.sport_tag || nextEvent.category,
+    };
   } catch (error) {
-    console.error('Error getting next event:', error);
+    console.error('Error getting next event from saved events:', error);
     return null;
   }
 };
 
 export const getCompetitionById = async (id: number): Promise<Competition | null> => {
   try {
-    const result = db.getFirstSync<Competition>(
+    const result = db.getFirstSync(
       'SELECT * FROM competitions WHERE id = ?',
       [id]
     );
@@ -318,7 +347,7 @@ export const deleteCompetition = async (id: number): Promise<void> => {
 
 export const getCombats = async (): Promise<Combat[]> => {
   try {
-    const result = db.getAllSync<Combat>(
+    const result = db.getAllSync(
       'SELECT * FROM combats ORDER BY date DESC'
     );
     return result;
@@ -330,7 +359,7 @@ export const getCombats = async (): Promise<Combat[]> => {
 
 export const getCombatsByCompetition = async (competitionId: number): Promise<Combat[]> => {
   try {
-    const result = db.getAllSync<Combat>(
+    const result = db.getAllSync(
       'SELECT * FROM combats WHERE competition_id = ? ORDER BY date DESC',
       [competitionId]
     );
@@ -343,7 +372,7 @@ export const getCombatsByCompetition = async (competitionId: number): Promise<Co
 
 export const getCombatById = async (id: number): Promise<Combat | null> => {
   try {
-    const result = db.getFirstSync<Combat>(
+    const result = db.getFirstSync(
       'SELECT * FROM combats WHERE id = ?',
       [id]
     );
@@ -422,7 +451,7 @@ export const deleteCombat = async (id: number): Promise<void> => {
 export const getHydratationToday = async (): Promise<Hydratation[]> => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const result = db.getAllSync<Hydratation>(
+    const result = db.getAllSync(
       'SELECT * FROM hydratation WHERE date = ? ORDER BY heure DESC',
       [today]
     );
@@ -475,7 +504,7 @@ export const deleteHydratation = async (id: number): Promise<void> => {
 
 export const getObjectifsPoids = async (): Promise<ObjectifPoids[]> => {
   try {
-    const result = db.getAllSync<ObjectifPoids>(
+    const result = db.getAllSync(
       'SELECT * FROM objectifs_poids ORDER BY date_pesee ASC'
     );
     return result;

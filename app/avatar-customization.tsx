@@ -14,6 +14,7 @@ import { useDevMode } from '@/lib/DevModeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { CustomizableAvatar } from '@/components/CustomizableAvatar';
+import logger from '@/lib/security/logger';
 import {
   AvatarCustomization,
   FrameType,
@@ -71,7 +72,7 @@ export default function AvatarCustomizationScreen() {
       setUnlocked(unlockResult.unlocked);
       setStatuses(unlockResult.statuses);
     } catch (error) {
-      console.error('Erreur chargement:', error);
+      logger.error('Erreur chargement:', error);
     }
   }, [isPro]);
 

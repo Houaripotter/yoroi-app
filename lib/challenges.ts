@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllMeasurements, getAllWorkouts, getPhotosFromStorage } from './storage';
+import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTES
@@ -59,7 +60,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
   },
   warrior: {
     id: 'warrior',
-    name: 'Guerrier',
+    name: 'Athlète',
     nameJp: '戦士',
     description: '4 entraînements cette semaine',
     target: 4,
@@ -191,7 +192,7 @@ const calculateRegularityProgress = async (): Promise<number> => {
 };
 
 /**
- * Calcule la progression pour le défi "Guerrier" (4 entraînements)
+ * Calcule la progression pour le défi "Athlète" (4 entraînements)
  */
 const calculateWarriorProgress = async (): Promise<number> => {
   try {
@@ -327,7 +328,7 @@ export const loadWeeklyChallenge = async (): Promise<WeeklyChallenge | null> => 
 
     return challenge;
   } catch (error) {
-    console.error('Erreur chargement défi:', error);
+    logger.error('Erreur chargement défi:', error);
     return null;
   }
 };
@@ -339,7 +340,7 @@ export const saveWeeklyChallenge = async (challenge: WeeklyChallenge): Promise<v
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(challenge));
   } catch (error) {
-    console.error('Erreur sauvegarde défi:', error);
+    logger.error('Erreur sauvegarde défi:', error);
   }
 };
 

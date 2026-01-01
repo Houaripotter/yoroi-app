@@ -78,101 +78,111 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           }
         ]}
       >
-        {/* Dégradé */}
-        <LinearGradient
-          colors={isDark
-            ? [`${accentColor}12`, 'transparent']
-            : [`${accentColor}10`, 'transparent']
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-
         <View style={styles.content}>
-          {/* Header avec titre et tendance */}
+          {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textMuted }]}>Poids actuel</Text>
+            <Text style={[styles.title, { color: colors.textMuted }]}>POIDS ACTUEL</Text>
             {trend !== 'stable' && (
-              <View style={[styles.trendBadge, { backgroundColor: `${trendColor}20` }]}>
-                {trend === 'down' ? (
-                  <TrendingDown size={scale(11)} color={trendColor} strokeWidth={2.5} />
-                ) : (
-                  <TrendingUp size={scale(11)} color={trendColor} strokeWidth={2.5} />
-                )}
-              </View>
+              trend === 'down' ? (
+                <TrendingDown size={scale(14)} color="#10B981" strokeWidth={2.5} />
+              ) : (
+                <TrendingUp size={scale(14)} color="#EF4444" strokeWidth={2.5} />
+              )
             )}
           </View>
 
-          {/* Poids actuel */}
+          {/* Poids - GROS et centré */}
           <View style={styles.weightSection}>
             <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
               {currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
             </Text>
-            <Text style={[styles.weightUnit, { color: accentColor }]}>kg</Text>
+            <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
           </View>
 
-          {/* Composition corporelle */}
+          {/* LIGNE 1 : Graisse - Eau - Muscle (Barres horizontales) */}
           {hasComposition && (
-            <View style={styles.compositionSection}>
+            <View style={styles.compBarsContainer}>
               {fatPercent !== undefined && fatKg !== undefined && (
-                <View style={[styles.compositionBadge, { backgroundColor: '#EF444415' }]}>
-                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>GRAISSE</Text>
-                  <View style={styles.compositionRow}>
-                    <Text style={[styles.compositionValue, { color: '#EF4444' }]}>
-                      {fatKg.toFixed(1)}
-                    </Text>
-                    <Text style={[styles.compositionUnit, { color: '#EF4444' }]}>kg</Text>
+                <View style={styles.compBarRow}>
+                  <View style={[styles.compBarDot, { backgroundColor: '#EF4444' }]} />
+                  <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Graisse</Text>
+                  <View style={styles.compBarTrack}>
+                    <View style={[styles.compBarFill, { width: `${Math.min(fatPercent, 100)}%`, backgroundColor: '#EF4444' }]} />
                   </View>
-                  <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>
-                    {fatPercent.toFixed(1)}%
-                  </Text>
-                </View>
-              )}
-              {musclePercent !== undefined && muscleKg !== undefined && (
-                <View style={[styles.compositionBadge, { backgroundColor: '#10B98115' }]}>
-                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>MUSCLE</Text>
-                  <View style={styles.compositionRow}>
-                    <Text style={[styles.compositionValue, { color: '#10B981' }]}>
-                      {muscleKg.toFixed(1)}
-                    </Text>
-                    <Text style={[styles.compositionUnit, { color: '#10B981' }]}>kg</Text>
-                  </View>
-                  <Text style={[styles.compositionPercent, { color: '#10B981' }]}>
-                    {musclePercent.toFixed(1)}%
-                  </Text>
+                  <Text style={[styles.compBarValue, { color: '#EF4444' }]}>{fatPercent.toFixed(0)}%</Text>
+                  <Text style={[styles.compBarKg, { color: '#EF4444' }]}>{fatKg.toFixed(1)}kg</Text>
                 </View>
               )}
               {waterPercent !== undefined && waterKg !== undefined && (
-                <View style={[styles.compositionBadge, { backgroundColor: '#3B82F615' }]}>
-                  <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>EAU</Text>
-                  <View style={styles.compositionRow}>
-                    <Text style={[styles.compositionValue, { color: '#3B82F6' }]}>
-                      {waterKg.toFixed(1)}
-                    </Text>
-                    <Text style={[styles.compositionUnit, { color: '#3B82F6' }]}>kg</Text>
+                <View style={styles.compBarRow}>
+                  <View style={[styles.compBarDot, { backgroundColor: '#3B82F6' }]} />
+                  <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Eau</Text>
+                  <View style={styles.compBarTrack}>
+                    <View style={[styles.compBarFill, { width: `${Math.min(waterPercent, 100)}%`, backgroundColor: '#3B82F6' }]} />
                   </View>
-                  <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>
-                    {waterPercent.toFixed(1)}%
-                  </Text>
+                  <Text style={[styles.compBarValue, { color: '#3B82F6' }]}>{waterPercent.toFixed(0)}%</Text>
+                  <Text style={[styles.compBarKg, { color: '#3B82F6' }]}>{waterKg.toFixed(1)}kg</Text>
+                </View>
+              )}
+              {musclePercent !== undefined && muscleKg !== undefined && (
+                <View style={styles.compBarRow}>
+                  <View style={[styles.compBarDot, { backgroundColor: '#10B981' }]} />
+                  <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Muscle</Text>
+                  <View style={styles.compBarTrack}>
+                    <View style={[styles.compBarFill, { width: `${Math.min(musclePercent, 100)}%`, backgroundColor: '#10B981' }]} />
+                  </View>
+                  <Text style={[styles.compBarValue, { color: '#10B981' }]}>{musclePercent.toFixed(0)}%</Text>
+                  <Text style={[styles.compBarKg, { color: '#10B981' }]}>{muscleKg.toFixed(1)}kg</Text>
                 </View>
               )}
             </View>
           )}
 
-          {/* Footer avec objectif - toujours affiché */}
-          <View style={styles.footer}>
-            <View style={[styles.targetBadge, { backgroundColor: `${accentColor}15` }]}>
-              <Target size={scale(14)} color={accentColor} strokeWidth={2.5} />
-              <View style={styles.targetInfo}>
-                <Text style={[styles.targetLabel, { color: colors.textMuted }]}>
-                  Objectif
-                </Text>
-                <Text style={[styles.targetValue, { color: accentColor }]}>
-                  {target ? `${target} kg` : 'Non défini'}
-                </Text>
+          {/* LIGNE 2 : Perdu - Objectif - Reste */}
+          <View style={styles.row2}>
+            {/* Perdu à gauche - VERT */}
+            {history && history.length > 0 && currentWeight > 0 && (
+              <View style={styles.goalItem}>
+                <Text style={[styles.goalValue, { color: '#10B981' }]}>-{(history[0] - currentWeight).toFixed(1)}</Text>
+                <Text style={[styles.goalLabel, { color: '#10B981' }]}>Perdu</Text>
               </View>
-            </View>
+            )}
+            {(!history || history.length === 0 || currentWeight === 0) && <View style={styles.goalItem} />}
+
+            {/* Objectif au centre - BLEU */}
+            {target && (
+              <View style={styles.goalItemCenter}>
+                <View style={styles.targetRow}>
+                  <Target size={scale(12)} color="#3B82F6" strokeWidth={2.5} />
+                  <Text style={[styles.goalValue, { color: '#3B82F6' }]}>{target}</Text>
+                </View>
+                <Text style={[styles.goalLabel, { color: '#3B82F6' }]}>Objectif</Text>
+              </View>
+            )}
+            {!target && (
+              <View style={styles.goalItemCenter}>
+                <Text style={[styles.goalValue, { color: colors.textMuted }]}>--</Text>
+                <Text style={[styles.goalLabel, { color: colors.textMuted }]}>Objectif</Text>
+              </View>
+            )}
+
+            {/* Reste à droite - ROUGE */}
+            {target && currentWeight > 0 && (
+              <View style={styles.goalItem}>
+                {currentWeight > target ? (
+                  <>
+                    <Text style={[styles.goalValue, { color: '#EF4444' }]}>-{(currentWeight - target).toFixed(1)}</Text>
+                    <Text style={[styles.goalLabel, { color: '#EF4444' }]}>À perdre</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.goalValue, { color: '#EF4444' }]}>+{(target - currentWeight).toFixed(1)}</Text>
+                    <Text style={[styles.goalLabel, { color: '#EF4444' }]}>À prendre</Text>
+                  </>
+                )}
+              </View>
+            )}
+            {(!target || currentWeight === 0) && <View style={styles.goalItem} />}
           </View>
         </View>
       </Animated.View>
@@ -228,73 +238,86 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
   },
   weightUnit: {
-    fontSize: scaleModerate(16, 0.3),
-    fontWeight: '700',
+    fontSize: scaleModerate(14, 0.3),
+    fontWeight: '600',
   },
-  compositionSection: {
+
+  // LIGNE 1 : Composition (Barres horizontales)
+  compBarsContainer: {
+    gap: scale(4),
+    marginVertical: scale(2),
+  },
+  compBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(4),
+  },
+  compBarDot: {
+    width: scale(6),
+    height: scale(6),
+    borderRadius: scale(3),
+  },
+  compBarLabel: {
+    fontSize: scaleModerate(8, 0.3),
+    fontWeight: '600',
+    width: scale(40),
+  },
+  compBarTrack: {
+    flex: 1,
+    height: scale(5),
+    backgroundColor: 'rgba(150,150,150,0.15)',
+    borderRadius: scale(3),
+    overflow: 'hidden',
+  },
+  compBarFill: {
+    height: '100%',
+    borderRadius: scale(3),
+  },
+  compBarValue: {
+    fontSize: scaleModerate(9, 0.3),
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+    width: scale(24),
+    textAlign: 'right',
+  },
+  compBarKg: {
+    fontSize: scaleModerate(8, 0.3),
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+    width: scale(32),
+    textAlign: 'right',
+  },
+
+  // LIGNE 2 : Objectifs (Perdu, Objectif, Reste)
+  row2: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'stretch',
-    gap: scale(6),
+    alignItems: 'center',
   },
-  compositionBadge: {
+  goalItem: {
     flex: 1,
-    paddingVertical: scale(6),
-    paddingHorizontal: scale(4),
-    borderRadius: scale(10),
     alignItems: 'center',
-    justifyContent: 'center',
     gap: scale(2),
   },
-  compositionLabel: {
-    fontSize: scaleModerate(6, 0.3),
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  compositionRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+  goalItemCenter: {
+    flex: 1,
+    alignItems: 'center',
     gap: scale(2),
   },
-  compositionValue: {
-    fontSize: scaleModerate(11, 0.3),
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-  },
-  compositionUnit: {
-    fontSize: scaleModerate(8, 0.3),
-    fontWeight: '700',
-  },
-  compositionPercent: {
-    fontSize: scaleModerate(9, 0.3),
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  footer: {
-    alignItems: 'center',
-  },
-  targetBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(8),
-    paddingVertical: scale(8),
-    paddingHorizontal: scale(12),
-    borderRadius: scale(12),
-  },
-  targetInfo: {
-    gap: scale(1),
-  },
-  targetLabel: {
-    fontSize: scaleModerate(7, 0.3),
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  targetValue: {
+  goalValue: {
     fontSize: scaleModerate(14, 0.3),
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
-    letterSpacing: -0.5,
+  },
+  goalLabel: {
+    fontSize: scaleModerate(7, 0.3),
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  targetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(3),
   },
 });

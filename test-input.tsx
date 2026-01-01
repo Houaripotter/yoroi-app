@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import logger from '@/lib/security/logger';
 
 // Test simple pour voir si le problème vient du TextInput
 export default function TestInput() {
@@ -14,7 +15,7 @@ export default function TestInput() {
         style={styles.input}
         value={inputValue}
         onChangeText={(text) => {
-          console.log('Text changed:', text);
+          logger.info('Text changed:', text);
           setInputValue(text);
           const num = parseFloat(text);
           if (!isNaN(num)) {

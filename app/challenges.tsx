@@ -41,6 +41,7 @@ import {
   ActiveChallenge,
 } from '@/lib/challengesService';
 import { ChallengeConfetti } from '@/components/ChallengeConfetti';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -85,7 +86,7 @@ export default function ChallengesScreen() {
       setWeeklyChallenges(weekly);
       setTotalXP(xp);
     } catch (error) {
-      console.error('Erreur:', error);
+      logger.error('Erreur:', error);
     }
   }, []);
 
@@ -127,9 +128,9 @@ export default function ChallengesScreen() {
 
   const getTabIcon = (tab: string) => {
     switch (tab) {
-      case 'daily': return <Clock size={14} color={activeTab === tab ? '#FFFFFF' : colors.textMuted} />;
-      case 'weekly': return <Calendar size={14} color={activeTab === tab ? '#FFFFFF' : colors.textMuted} />;
-      case 'monthly': return <Trophy size={14} color={activeTab === tab ? '#FFFFFF' : colors.textMuted} />;
+      case 'daily': return <Clock size={14} color={activeTab === tab ? colors.textOnGold : colors.textMuted} />;
+      case 'weekly': return <Calendar size={14} color={activeTab === tab ? colors.textOnGold : colors.textMuted} />;
+      case 'monthly': return <Trophy size={14} color={activeTab === tab ? colors.textOnGold : colors.textMuted} />;
     }
   };
 
@@ -142,8 +143,8 @@ export default function ChallengesScreen() {
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Défis</Text>
         <View style={[styles.xpBadge, { backgroundColor: colors.accent }]}>
-          <Zap size={12} color="#FFFFFF" />
-          <Text style={styles.xpText}>{totalXP} XP</Text>
+          <Zap size={12} color={colors.textOnGold} />
+          <Text style={[styles.xpText, { color: colors.textOnGold }]}>{totalXP} XP</Text>
         </View>
       </View>
 
@@ -156,7 +157,7 @@ export default function ChallengesScreen() {
             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
           >
             {getTabIcon(tab)}
-            <Text style={[styles.tabText, { color: activeTab === tab ? '#FFFFFF' : colors.textMuted }]}>
+            <Text style={[styles.tabText, { color: activeTab === tab ? colors.textOnGold : colors.textMuted }]}>
               {tab === 'daily' ? 'Jour' : tab === 'weekly' ? 'Semaine' : 'Mois'}
             </Text>
           </TouchableOpacity>

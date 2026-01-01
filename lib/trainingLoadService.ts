@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
 import { getTrainings, Training } from '@/lib/database';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // TYPES
@@ -82,7 +83,7 @@ export const getTrainingLoads = async (): Promise<TrainingLoad[]> => {
     const data = await AsyncStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error('Erreur lecture charges:', error);
+    logger.error('Erreur lecture charges:', error);
     return [];
   }
 };
@@ -148,7 +149,7 @@ export const saveTrainingLoad = async (
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(loads));
     return newLoad;
   } catch (error) {
-    console.error('Erreur sauvegarde charge:', error);
+    logger.error('Erreur sauvegarde charge:', error);
     throw error;
   }
 };
@@ -218,7 +219,7 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
       advice,
     };
   } catch (error) {
-    console.error('Erreur stats charge:', error);
+    logger.error('Erreur stats charge:', error);
     return {
       totalLoad: 0,
       averageRPE: 0,
@@ -255,11 +256,26 @@ export const formatLoad = (load: number): string => {
   return load.toString();
 };
 
+// Alias functions for backward compatibility
+export const getWeeklyLoad = async (): Promise<number> => {
+  const stats = await getWeeklyLoadStats();
+  return stats.totalLoad;
+};
+
+export const getRiskLevel = (load: number): 'safe' | 'moderate' | 'high' | 'danger' => {
+  if (load > 3000) return 'danger';
+  if (load > 2500) return 'high';
+  if (load > 2000) return 'moderate';
+  return 'safe';
+};
+
 export default {
   getTrainingLoads,
   saveTrainingLoad,
   calculateSessionLoad,
   getWeeklyLoadStats,
+  getWeeklyLoad,
+  getRiskLevel,
   getRiskColor,
   formatLoad,
   RPE_SCALE,

@@ -1,6 +1,7 @@
 import { getSleepStats, SleepStats } from './sleepService';
 import { getWeeklyLoadStats, WeeklyLoadStats } from './trainingLoadService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 
 export interface ReadinessScore {
   score: number; // 0-100
@@ -126,7 +127,7 @@ export const calculateReadinessScore = async (
       recommendation,
     };
   } catch (error) {
-    console.error('Erreur calcul readiness:', error);
+    logger.error('Erreur calcul readiness:', error);
     return {
       score: 50,
       level: 'moderate',
@@ -175,7 +176,7 @@ export const calculateRecoveryBedtime = async (daysToRecover: number = 3): Promi
       message: `Pour résorber ${debtHours.toFixed(1)}h de dette en ${daysToRecover} jours, couche-toi à ${recommendedBedtime} (${targetSleepHours.toFixed(1)}h de sommeil).`,
     };
   } catch (error) {
-    console.error('Erreur calcul récupération:', error);
+    logger.error('Erreur calcul récupération:', error);
     return null;
   }
 };

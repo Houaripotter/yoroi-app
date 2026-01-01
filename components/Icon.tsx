@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import logger from '@/lib/security/logger';
 import {
   // Navigation & Actions
   Timer,
@@ -348,7 +349,7 @@ export const Icon: React.FC<IconProps> = ({
 }) => {
   const IconComponent = iconMap[name];
   if (!IconComponent) {
-    console.warn(`Icon "${name}" not found`);
+    logger.warn(`Icon "${name}" not found`);
     return null;
   }
   return <IconComponent size={size} color={color} strokeWidth={strokeWidth} />;

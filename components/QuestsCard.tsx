@@ -19,6 +19,7 @@ import {
   QuestProgress,
 } from '@/lib/quests';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // QUESTS CARD - COMPOSANT QUETES JOURNALIERES
@@ -82,7 +83,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       setMonthlyQuests(monthly);
       setHydration(currentHydration);
     } catch (error) {
-      console.error('Erreur chargement quetes:', error);
+      logger.error('Erreur chargement quetes:', error);
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +107,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         onRefresh();
       }
     } catch (error) {
-      console.error('Erreur ajout hydratation:', error);
+      logger.error('Erreur ajout hydratation:', error);
     }
   };
 

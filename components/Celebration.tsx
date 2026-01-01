@@ -15,6 +15,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
 import * as Haptics from 'expo-haptics';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // CELEBRATION - ANIMATIONS DE VICTOIRE
@@ -120,7 +121,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
       await audioSound.playAsync();
     } catch (error) {
       // Son non disponible, continuer sans
-      console.log('Son non disponible:', error);
+      logger.info('Son non disponible:', error);
     }
   };
 

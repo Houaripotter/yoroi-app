@@ -7,9 +7,9 @@ import { router } from 'expo-router';
 import { scale, getGridColumns } from '@/constants/responsive';
 
 const { width: screenWidth } = Dimensions.get('window');
-// paddingHorizontal 8*2 = 16, gaps entre cartes = 8 * (colonnes - 1)
+// paddingHorizontal 16*2 = 32, gaps entre cartes = 8 * (colonnes - 1)
 const columns = getGridColumns(); // 2 sur iPhone, 3 sur iPad
-const CARD_SIZE = (screenWidth - scale(16 + 8 * (columns - 1))) / columns;
+const CARD_SIZE = (screenWidth - 32 - 8 * (columns - 1)) / columns;
 
 interface SleepLottieCardProps {
   hours?: number;
@@ -170,45 +170,46 @@ export const SleepLottieCard: React.FC<SleepLottieCardProps> = ({
   const status = getStatus();
   const StatusIcon = status.icon;
 
-  // Gradients adaptatifs au thème
-  const gradientTop = isDark ? '#1E1B4B30' : '#DDD6FE20'; // Violet foncé en sombre, violet clair en clair
-  const gradientBottom = isDark ? '#0F172A40' : '#C4B5FD15'; // Bleu-noir en sombre, violet très clair en clair
-
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: colors.backgroundCard }]}
       onPress={() => router.push('/sleep')}
       activeOpacity={0.7}
     >
-      {/* Background gradient effect - nuit étoilée */}
-      <View style={styles.gradientBg}>
-        <View style={[styles.gradientTop, { backgroundColor: gradientTop }]} />
-        <View style={[styles.gradientBottom, { backgroundColor: gradientBottom }]} />
-      </View>
-      
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Moon size={12} color="#8B5CF6" />
           <Text style={styles.title}>SOMMEIL</Text>
         </View>
-        <StatusIcon size={14} color={status.color} />
       </View>
 
       {/* Zone animation */}
       <View style={styles.animationContainer}>
-        {/* Étoiles scintillantes */}
+        {/* Vraies étoiles ★ */}
         <Animated.View style={[styles.star, styles.star1, { opacity: starOpacity1 }]}>
-          <View style={[styles.starDot, { backgroundColor: '#C4B5FD' }]} />
+          <Text style={[styles.starIcon, { color: '#DDD6FE' }]}>★</Text>
         </Animated.View>
         <Animated.View style={[styles.star, styles.star2, { opacity: starOpacity2 }]}>
-          <View style={[styles.starDot, styles.starDotSmall, { backgroundColor: '#DDD6FE' }]} />
+          <Text style={[styles.starIconSmall, { color: '#C4B5FD' }]}>★</Text>
         </Animated.View>
         <Animated.View style={[styles.star, styles.star3, { opacity: starOpacity3 }]}>
-          <View style={[styles.starDot, { backgroundColor: '#C4B5FD' }]} />
+          <Text style={[styles.starIcon, { color: '#DDD6FE' }]}>★</Text>
         </Animated.View>
         <Animated.View style={[styles.star, styles.star4, { opacity: starOpacity1 }]}>
-          <View style={[styles.starDot, styles.starDotSmall, { backgroundColor: '#E9D5FF' }]} />
+          <Text style={[styles.starIconSmall, { color: '#E9D5FF' }]}>★</Text>
+        </Animated.View>
+        <Animated.View style={[styles.star, styles.star5, { opacity: starOpacity2 }]}>
+          <Text style={[styles.starIcon, { color: '#C4B5FD' }]}>★</Text>
+        </Animated.View>
+        <Animated.View style={[styles.star, styles.star6, { opacity: starOpacity3 }]}>
+          <Text style={[styles.starIconSmall, { color: '#DDD6FE' }]}>★</Text>
+        </Animated.View>
+        <Animated.View style={[styles.star, styles.star7, { opacity: starOpacity1 }]}>
+          <Text style={[styles.starIconSmall, { color: '#E9D5FF' }]}>★</Text>
+        </Animated.View>
+        <Animated.View style={[styles.star, styles.star8, { opacity: starOpacity2 }]}>
+          <Text style={[styles.starIcon, { color: '#C4B5FD' }]}>★</Text>
         </Animated.View>
         
         {/* Croissant de lune en haut à droite */}
@@ -359,27 +360,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
-  gradientBg: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-  },
-  gradientBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -422,14 +402,33 @@ const styles = StyleSheet.create({
     top: 5,
     right: 40,
   },
-  starDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+  star5: {
+    top: 15,
+    right: 10,
   },
-  starDotSmall: {
-    width: 3,
-    height: 3,
+  star6: {
+    top: 8,
+    left: 60,
+  },
+  star7: {
+    top: 20,
+    left: 8,
+  },
+  star8: {
+    top: 3,
+    right: 25,
+  },
+  starIcon: {
+    fontSize: 12,
+    textShadowColor: 'rgba(221, 214, 254, 0.8)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 4,
+  },
+  starIconSmall: {
+    fontSize: 9,
+    textShadowColor: 'rgba(221, 214, 254, 0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 3,
   },
   moonContainer: {
     position: 'absolute',
@@ -437,7 +436,7 @@ const styles = StyleSheet.create({
     right: 0,
   },
   sleepScene: {
-    marginTop: 5,
+    marginTop: 8,
   },
   zzzContainer: {
     position: 'absolute',
@@ -480,11 +479,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   hours: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '900',
   },
   unit: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
   },
   status: {

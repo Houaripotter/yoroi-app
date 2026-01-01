@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getTrainings, getClubs, Training, Club } from '@/lib/database';
-import { getDay } from 'date-fns';
+import { getDay, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import logger from '@/lib/security/logger';
 
 export interface SessionDetail {
   id?: number;
@@ -30,16 +31,16 @@ export const useWeekSchedule = () => {
 
   const loadData = useCallback(async () => {
     try {
-      console.log('🔄 useWeekSchedule: Chargement des données...');
+      logger.info('🔄 useWeekSchedule: Chargement des données...');
       const [trainingsData, clubsData] = await Promise.all([
         getTrainings(),
         getClubs(),
       ]);
-      console.log('🔄 useWeekSchedule: Trainings chargés:', trainingsData.length);
+      logger.info('🔄 useWeekSchedule: Trainings chargés:', trainingsData.length);
       setWorkouts(trainingsData);
       setClubs(clubsData);
     } catch (error) {
-      console.error('Erreur chargement planning:', error);
+      logger.error('Erreur chargement planning:', error);
     } finally {
       setLoading(false);
     }
@@ -61,11 +62,22 @@ export const useWeekSchedule = () => {
       { id: 'dim', label: 'DIMANCHE' },
     ];
 
+    // Calculer la semaine courante
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Lundi
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 }); // Dimanche
+
     return DAYS.map((day, dayIndex) => {
-      // Récupérer toutes les séances pour ce jour de la semaine
+      // Récupérer seulement les séances de la SEMAINE COURANTE pour ce jour
       const daySessions = workouts
         .filter(workout => {
           const date = new Date(workout.date);
+
+          // Vérifier que la date est dans la semaine courante
+          if (!isWithinInterval(date, { start: weekStart, end: weekEnd })) {
+            return false;
+          }
+
           let dayOfWeek = getDay(date); // 0=Dimanche, 1=Lundi, etc.
           // Convertir: 0=Dimanche->6, 1=Lundi->0, etc.
           dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
@@ -86,14 +98,16 @@ export const useWeekSchedule = () => {
             sessionTypes = workout.session_type ? [workout.session_type] : ['Séance'];
           }
 
-          // Parser les muscles (JSON array)
+          // Parser les muscles (JSON array OU string séparée par virgules)
           let muscles: string[] = [];
-          try {
-            if (workout.muscles) {
+          if (workout.muscles) {
+            try {
+              // Essayer de parser en JSON d'abord
               muscles = JSON.parse(workout.muscles);
+            } catch {
+              // Sinon, split par virgule (pour les anciennes données)
+              muscles = workout.muscles.split(',').map(m => m.trim());
             }
-          } catch {
-            muscles = workout.muscles ? [workout.muscles] : [];
           }
 
           // Détails: muscles pour muscu, thème technique pour combat

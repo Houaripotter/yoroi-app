@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar } from 'lucide-react-native';
+import { ChevronLeft, Info, ExternalLink, User, Weight, Ruler, Calendar, Zap, Coffee, Sun, Sunset, Moon as MoonIcon, Apple, Utensils, Beef, Droplets } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { getLatestWeight, getProfile, Profile } from '@/lib/database';
 import {
@@ -27,6 +28,7 @@ import {
   SCIENTIFIC_SOURCES,
 } from '@/lib/nutrition';
 import { SPACING, RADIUS } from '@/constants/appTheme';
+import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -85,7 +87,7 @@ export default function NutritionPlanScreen() {
         });
       }
     } catch (error) {
-      console.error('Erreur chargement profil:', error);
+      logger.error('Erreur chargement profil:', error);
     }
   };
 
@@ -249,32 +251,62 @@ export default function NutritionPlanScreen() {
           </View>
         </View>
 
-        {/* Carte Calories Principal */}
+        {/* Carte Calories Principal - Design Premium */}
         {results && (
-          <View style={[styles.caloriesCard, { backgroundColor: colors.backgroundCard, borderColor: colors.accent, borderWidth: 2 }]}>
-            <Text style={[styles.caloriesLabel, { color: colors.accent }]}>OBJECTIF CALORIQUE JOURNALIER</Text>
-            <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
-            <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal / jour</Text>
+          <View style={styles.caloriesCardWrapper}>
+            <LinearGradient
+              colors={[colors.accent + '20', colors.accent + '05']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.caloriesGradient}
+            >
+              <View style={[styles.caloriesCard, { backgroundColor: 'transparent' }]}>
+                <View style={[styles.caloriesIconBg, { backgroundColor: colors.accent + '15' }]}>
+                  <Zap size={32} color={colors.accent} strokeWidth={2.5} />
+                </View>
+                <Text style={[styles.caloriesLabel, { color: colors.accent }]}>OBJECTIF CALORIQUE</Text>
+                <View style={styles.caloriesValueContainer}>
+                  <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
+                  <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal</Text>
+                </View>
+                <Text style={[styles.caloriesSubtext, { color: colors.textMuted }]}>par jour</Text>
 
-            {results.deficit > 0 && (
-              <View style={[styles.deficitBadge, { backgroundColor: colors.danger }]}>
-                <Text style={styles.deficitText}>
-                  Déficit de {results.deficit} kcal = {selectedGoal?.weeklyChange}
-                </Text>
+                {results.deficit > 0 && (
+                  <LinearGradient
+                    colors={['#EF4444', '#DC2626']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.deficitBadge}
+                  >
+                    <Text style={styles.deficitText}>
+                      Déficit de {results.deficit} kcal = {selectedGoal?.weeklyChange}
+                    </Text>
+                  </LinearGradient>
+                )}
+                {results.deficit < 0 && (
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.deficitBadge}
+                  >
+                    <Text style={styles.deficitText}>
+                      Surplus de {Math.abs(results.deficit)} kcal = {selectedGoal?.weeklyChange}
+                    </Text>
+                  </LinearGradient>
+                )}
+                {results.deficit === 0 && (
+                  <LinearGradient
+                    colors={['#3B82F6', '#2563EB']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.deficitBadge}
+                  >
+                    <Text style={styles.deficitText}>Maintien du poids actuel</Text>
+                  </LinearGradient>
+                )}
               </View>
-            )}
-            {results.deficit < 0 && (
-              <View style={[styles.deficitBadge, { backgroundColor: colors.success }]}>
-                <Text style={styles.deficitText}>
-                  Surplus de {Math.abs(results.deficit)} kcal = {selectedGoal?.weeklyChange}
-                </Text>
-              </View>
-            )}
-            {results.deficit === 0 && (
-              <View style={[styles.deficitBadge, { backgroundColor: colors.info }]}>
-                <Text style={styles.deficitText}>Maintien du poids actuel</Text>
-              </View>
-            )}
+            </LinearGradient>
           </View>
         )}
 
@@ -451,15 +483,30 @@ export default function NutritionPlanScreen() {
               {/* Protéines */}
               <View style={[styles.macroRow, { borderBottomColor: colors.border }]}>
                 <View style={styles.macroInfo}>
-                  <View style={[styles.macroDot, { backgroundColor: '#E53935' }]} />
-                  <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Protéines</Text>
+                  <LinearGradient
+                    colors={['#E53935', '#C62828']}
+                    style={styles.macroIconGradient}
+                  >
+                    <Beef size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  </LinearGradient>
+                  <View style={styles.macroTextContainer}>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Protéines</Text>
+                    <View style={styles.macroProgressBg}>
+                      <LinearGradient
+                        colors={['#E53935', '#C62828']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.macroProgressBar, { width: `${results.macros.protein.percentage}%` }]}
+                      />
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.macroValues}>
                   <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
                     {results.macros.protein.grams}g
                   </Text>
                   <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.protein.calories} kcal ({results.macros.protein.percentage}%)
+                    {results.macros.protein.percentage}%
                   </Text>
                 </View>
               </View>
@@ -467,15 +514,30 @@ export default function NutritionPlanScreen() {
               {/* Glucides */}
               <View style={[styles.macroRow, { borderBottomColor: colors.border }]}>
                 <View style={styles.macroInfo}>
-                  <View style={[styles.macroDot, { backgroundColor: '#FF9800' }]} />
-                  <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Glucides</Text>
+                  <LinearGradient
+                    colors={['#FF9800', '#F57C00']}
+                    style={styles.macroIconGradient}
+                  >
+                    <Apple size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  </LinearGradient>
+                  <View style={styles.macroTextContainer}>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Glucides</Text>
+                    <View style={styles.macroProgressBg}>
+                      <LinearGradient
+                        colors={['#FF9800', '#F57C00']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.macroProgressBar, { width: `${results.macros.carbs.percentage}%` }]}
+                      />
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.macroValues}>
                   <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
                     {results.macros.carbs.grams}g
                   </Text>
                   <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.carbs.calories} kcal ({results.macros.carbs.percentage}%)
+                    {results.macros.carbs.percentage}%
                   </Text>
                 </View>
               </View>
@@ -483,15 +545,30 @@ export default function NutritionPlanScreen() {
               {/* Lipides */}
               <View style={styles.macroRow}>
                 <View style={styles.macroInfo}>
-                  <View style={[styles.macroDot, { backgroundColor: '#4CAF50' }]} />
-                  <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Lipides</Text>
+                  <LinearGradient
+                    colors={['#4CAF50', '#388E3C']}
+                    style={styles.macroIconGradient}
+                  >
+                    <Droplets size={18} color="#FFFFFF" strokeWidth={2.5} />
+                  </LinearGradient>
+                  <View style={styles.macroTextContainer}>
+                    <Text style={[styles.macroLabel, { color: colors.textPrimary }]}>Lipides</Text>
+                    <View style={styles.macroProgressBg}>
+                      <LinearGradient
+                        colors={['#4CAF50', '#388E3C']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[styles.macroProgressBar, { width: `${results.macros.fat.percentage}%` }]}
+                      />
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.macroValues}>
                   <Text style={[styles.macroGrams, { color: colors.textPrimary }]}>
                     {results.macros.fat.grams}g
                   </Text>
                   <Text style={[styles.macroCal, { color: colors.textMuted }]}>
-                    {results.macros.fat.calories} kcal ({results.macros.fat.percentage}%)
+                    {results.macros.fat.percentage}%
                   </Text>
                 </View>
               </View>
@@ -746,36 +823,68 @@ const styles = StyleSheet.create({
   },
 
   // Calories card
-  caloriesCard: {
-    padding: 24,
-    borderRadius: 20,
-    alignItems: 'center',
+  caloriesCardWrapper: {
     marginBottom: SPACING.xl,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  caloriesGradient: {
+    borderRadius: 24,
+  },
+  caloriesCard: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  caloriesIconBg: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   caloriesLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 2,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 2.5,
+    marginBottom: 12,
+  },
+  caloriesValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
   },
   caloriesValue: {
-    fontSize: 64,
+    fontSize: 68,
     fontWeight: '900',
-    marginVertical: 8,
+    letterSpacing: -2,
+    lineHeight: 68,
   },
   caloriesUnit: {
-    fontSize: 16,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  caloriesSubtext: {
+    fontSize: 14,
     fontWeight: '600',
+    marginTop: 4,
   },
   deficitBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginTop: 20,
   },
   deficitText: {
     color: '#FFF',
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 
   // Sections
@@ -877,41 +986,65 @@ const styles = StyleSheet.create({
 
   // Macros result
   macrosResult: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   macroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
   },
   macroInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 14,
+    flex: 1,
   },
-  macroDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  macroIconGradient: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  macroTextContainer: {
+    flex: 1,
   },
   macroLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  macroProgressBg: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+  },
+  macroProgressBar: {
+    height: '100%',
+    borderRadius: 3,
   },
   macroValues: {
     alignItems: 'flex-end',
   },
   macroGrams: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   macroCal: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
+    fontWeight: '600',
   },
 
   // Protein recommendation

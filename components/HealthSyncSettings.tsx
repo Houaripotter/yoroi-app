@@ -12,6 +12,7 @@ import {
 import { Activity, Download, Upload, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 import {
   isAppleHealthAvailable,
   initializeAppleHealth,
@@ -56,7 +57,7 @@ export function HealthSyncSettings() {
         setLastSync(new Date(lastSyncStr));
       }
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des paramètres:', error);
+      logger.error('❌ Erreur lors du chargement des paramètres:', error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +108,7 @@ export function HealthSyncSettings() {
         await AsyncStorage.setItem(LAST_SYNC_KEY, now.toISOString());
       }
     } catch (error) {
-      console.error('❌ Erreur lors de l\'import:', error);
+      logger.error('❌ Erreur lors de l\'import:', error);
     } finally {
       setSyncing(false);
     }
@@ -130,7 +131,7 @@ export function HealthSyncSettings() {
       setLastSync(now);
       await AsyncStorage.setItem(LAST_SYNC_KEY, now.toISOString());
     } catch (error) {
-      console.error('❌ Erreur lors de la synchronisation:', error);
+      logger.error('❌ Erreur lors de la synchronisation:', error);
       Alert.alert('Erreur', 'Impossible de synchroniser les données');
     } finally {
       setSyncing(false);

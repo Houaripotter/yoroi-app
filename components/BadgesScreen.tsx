@@ -16,6 +16,7 @@ import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types
 import { BadgeItem } from './BadgeItem';
 import { useFocusEffect } from 'expo-router';
 import { getAllMeasurements, getAllWorkouts, getUnlockedBadges, unlockBadge } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 interface BadgesScreenProps {
   visible: boolean;
@@ -66,7 +67,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
       const badges = await calculateUnlockedBadges();
       setUnlockedBadges(badges);
     } catch (error) {
-      console.error('❌ Erreur lors du calcul des badges:', error);
+      logger.error('❌ Erreur lors du calcul des badges:', error);
       Alert.alert('Erreur', 'Impossible de charger les badges.');
     } finally {
       setLoading(false);

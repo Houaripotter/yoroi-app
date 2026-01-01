@@ -13,6 +13,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Bell, Clock, Calendar, Dumbbell } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from '@/lib/security/logger';
 import {
   ReminderSettings as ReminderSettingsType,
   ReminderType,
@@ -70,7 +71,7 @@ export function ReminderSettingsComponent() {
         setSettings(parsed);
       }
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des paramètres:', error);
+      logger.error('❌ Erreur lors du chargement des paramètres:', error);
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export function ReminderSettingsComponent() {
       // Planifier les notifications
       await scheduleNotifications(newSettings);
     } catch (error) {
-      console.error('❌ Erreur lors de la sauvegarde des paramètres:', error);
+      logger.error('❌ Erreur lors de la sauvegarde des paramètres:', error);
       Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres');
     }
   };

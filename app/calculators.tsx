@@ -38,6 +38,7 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // ECRAN CALCULATEURS FITNESS/SANTE
@@ -178,7 +179,7 @@ export default function CalculatorsScreen() {
         setGoal('maintain');
       }
     } catch (error) {
-      console.log('Erreur chargement donnees:', error);
+      logger.info('Erreur chargement donnees:', error);
     }
   };
 

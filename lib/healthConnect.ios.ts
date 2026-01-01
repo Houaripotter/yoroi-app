@@ -7,6 +7,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DemoData from './healthDemoData';
+import logger from '@/lib/security/logger';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -19,7 +20,7 @@ let Healthkit: any = null;
 try {
   Healthkit = require('@kingstinct/react-native-healthkit').default;
 } catch (e) {
-  console.log('HealthKit non disponible');
+  logger.info('HealthKit non disponible');
 }
 
 // ============================================
@@ -184,10 +185,10 @@ class HealthConnectService {
       }
       this.syncStatus.provider = 'apple_health';
       this.isInitialized = true;
-      console.log('HealthConnect iOS initialisé');
+      logger.info('HealthConnect iOS initialisé');
       return true;
     } catch (error) {
-      console.error('Erreur initialisation HealthConnect:', error);
+      logger.error('Erreur initialisation HealthConnect:', error);
       return false;
     }
   }
@@ -266,7 +267,7 @@ class HealthConnectService {
         workouts: true,
       };
     } catch (error) {
-      console.error('Erreur demande permissions iOS:', error);
+      logger.error('Erreur demande permissions iOS:', error);
       return this.syncStatus.permissions;
     }
   }
@@ -283,7 +284,7 @@ class HealthConnectService {
     try {
       const available = await this.isAvailable();
       if (!available) {
-        console.warn('Apple Health non disponible');
+        logger.warn('Apple Health non disponible');
         return false;
       }
 
@@ -295,7 +296,7 @@ class HealthConnectService {
 
       return true;
     } catch (error) {
-      console.error('Erreur connexion:', error);
+      logger.error('Erreur connexion:', error);
       return false;
     }
   }
@@ -342,7 +343,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture poids iOS:', error);
+      logger.error('Erreur lecture poids iOS:', error);
     }
     return null;
   }
@@ -367,7 +368,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture pas iOS:', error);
+      logger.error('Erreur lecture pas iOS:', error);
     }
     return null;
   }
@@ -442,7 +443,7 @@ class HealthConnectService {
         return result;
       }
     } catch (error) {
-      console.error('Erreur lecture sommeil iOS:', error);
+      logger.error('Erreur lecture sommeil iOS:', error);
     }
     return null;
   }
@@ -483,7 +484,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture hydratation iOS:', error);
+      logger.error('Erreur lecture hydratation iOS:', error);
     }
     return null;
   }
@@ -539,7 +540,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture fréquence cardiaque iOS:', error);
+      logger.error('Erreur lecture fréquence cardiaque iOS:', error);
     }
     return null;
   }
@@ -570,7 +571,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture HRV iOS:', error);
+      logger.error('Erreur lecture HRV iOS:', error);
     }
     return null;
   }
@@ -616,7 +617,7 @@ class HealthConnectService {
         total: Math.round(active + basal),
       };
     } catch (error) {
-      console.error('Erreur lecture calories iOS:', error);
+      logger.error('Erreur lecture calories iOS:', error);
     }
     return null;
   }
@@ -651,7 +652,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture distance iOS:', error);
+      logger.error('Erreur lecture distance iOS:', error);
     }
     return null;
   }
@@ -683,7 +684,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture VO2 Max iOS:', error);
+      logger.error('Erreur lecture VO2 Max iOS:', error);
     }
     return null;
   }
@@ -712,7 +713,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture SpO2 iOS:', error);
+      logger.error('Erreur lecture SpO2 iOS:', error);
     }
     return null;
   }
@@ -740,7 +741,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture fréquence respiratoire iOS:', error);
+      logger.error('Erreur lecture fréquence respiratoire iOS:', error);
     }
     return null;
   }
@@ -769,7 +770,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture température corporelle iOS:', error);
+      logger.error('Erreur lecture température corporelle iOS:', error);
     }
     return null;
   }
@@ -818,7 +819,7 @@ class HealthConnectService {
         };
       }
     } catch (error) {
-      console.error('Erreur lecture composition corporelle iOS:', error);
+      logger.error('Erreur lecture composition corporelle iOS:', error);
     }
     return null;
   }
@@ -857,7 +858,7 @@ class HealthConnectService {
         }));
       }
     } catch (error) {
-      console.error('Erreur lecture workouts iOS:', error);
+      logger.error('Erreur lecture workouts iOS:', error);
     }
     return null;
   }
@@ -904,7 +905,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique HRV:', error);
+      logger.error('Erreur lecture historique HRV:', error);
     }
     return [];
   }
@@ -942,7 +943,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique Resting HR:', error);
+      logger.error('Erreur lecture historique Resting HR:', error);
     }
     return [];
   }
@@ -980,7 +981,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique Heart Rate:', error);
+      logger.error('Erreur lecture historique Heart Rate:', error);
     }
     return [];
   }
@@ -1019,7 +1020,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique SpO2:', error);
+      logger.error('Erreur lecture historique SpO2:', error);
     }
     return [];
   }
@@ -1057,7 +1058,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique température:', error);
+      logger.error('Erreur lecture historique température:', error);
     }
     return [];
   }
@@ -1084,7 +1085,7 @@ class HealthConnectService {
         }));
       }
     } catch (error) {
-      console.error('Erreur lecture historique poids:', error);
+      logger.error('Erreur lecture historique poids:', error);
     }
     return [];
   }
@@ -1157,7 +1158,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique sommeil:', error);
+      logger.error('Erreur lecture historique sommeil:', error);
     }
     return [];
   }
@@ -1213,7 +1214,7 @@ class HealthConnectService {
         total: Math.round(caloriesByDate[date].active + caloriesByDate[date].basal),
       })).sort((a, b) => a.date.localeCompare(b.date));
     } catch (error) {
-      console.error('Erreur lecture historique calories:', error);
+      logger.error('Erreur lecture historique calories:', error);
     }
     return [];
   }
@@ -1240,7 +1241,7 @@ class HealthConnectService {
         }));
       }
     } catch (error) {
-      console.error('Erreur lecture historique VO2 Max:', error);
+      logger.error('Erreur lecture historique VO2 Max:', error);
     }
     return [];
   }
@@ -1277,7 +1278,7 @@ class HealthConnectService {
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
-      console.error('Erreur lecture historique pas:', error);
+      logger.error('Erreur lecture historique pas:', error);
     }
     return [];
   }
@@ -1358,7 +1359,7 @@ class HealthConnectService {
       });
       return true;
     } catch (error) {
-      console.error('Erreur écriture poids:', error);
+      logger.error('Erreur écriture poids:', error);
       return false;
     }
   }
@@ -1376,7 +1377,7 @@ class HealthConnectService {
       });
       return true;
     } catch (error) {
-      console.error('Erreur écriture hydratation:', error);
+      logger.error('Erreur écriture hydratation:', error);
       return false;
     }
   }
@@ -1422,10 +1423,10 @@ class HealthConnectService {
         totalEnergyBurned: workout.calories,
       });
 
-      console.log('Workout enregistré dans Apple Health:', workout.activityType);
+      logger.info('Workout enregistré dans Apple Health:', workout.activityType);
       return true;
     } catch (error) {
-      console.error('Erreur écriture workout:', error);
+      logger.error('Erreur écriture workout:', error);
       return false;
     }
   }
@@ -1436,7 +1437,7 @@ class HealthConnectService {
     }
 
     try {
-      console.log('Synchronisation iOS en cours...');
+      logger.info('Synchronisation iOS en cours...');
       const data = await this.getAllHealthData();
 
       if (data.weight) {
@@ -1455,10 +1456,10 @@ class HealthConnectService {
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
 
-      console.log('Synchronisation terminée:', data);
+      logger.info('Synchronisation terminée:', data);
       return data;
     } catch (error) {
-      console.error('Erreur synchronisation:', error);
+      logger.error('Erreur synchronisation:', error);
       return null;
     }
   }

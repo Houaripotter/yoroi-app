@@ -19,6 +19,9 @@ export interface Coach {
   imageUrl?: string;
   featured: boolean;
   rating?: number;
+  bio?: string;
+  phone?: string;
+  education?: string[];
 }
 
 export interface Club {
@@ -70,6 +73,21 @@ export const PARTNER_COACHES: Coach[] = [
     instagramUrl: 'https://instagram.com/karim.bjj',
     featured: false,
     rating: 5,
+  },
+  {
+    id: 'ludovic-fontaine',
+    name: 'Ludovic Fontaine',
+    title: 'Head Trainer',
+    location: 'Marseille',
+    specialties: ['Remise en forme', 'Perte de poids', 'Renforcement musculaire'],
+    instagram: '@ludocoach_marseille',
+    instagramUrl: 'https://instagram.com/ludocoach_marseille',
+    imageUrl: require('../assets/partenaires/coachs/ludovicfontaine.png'),
+    featured: true,
+    rating: 5,
+    bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !',
+    phone: '06.42.19.74.80',
+    education: ['BPJEPS AF', 'Assurance RC Pro: 2872626904', 'Carte Pro: 09209ED0095'],
   },
   // Ajouter d'autres coachs ici
 ];
