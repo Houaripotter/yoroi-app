@@ -49,7 +49,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   unit,
   icon,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
 
   if (data.length === 0) {
@@ -183,7 +183,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <Text
                     style={[
                       styles.periodButtonText,
-                      { color: selectedPeriod === period ? '#FFFFFF' : colors.textPrimary },
+                      { color: selectedPeriod === period ? '#000000' : colors.textPrimary },
                     ]}
                   >
                     {period === 'all' ? 'Tout' : period}
@@ -247,6 +247,17 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                     </LinearGradient>
                   </Defs>
 
+                  {/* Fond du graphique - plus clair en dark mode */}
+                  <Rect
+                    x={PADDING_LEFT}
+                    y={PADDING_TOP - 10}
+                    width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
+                    height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 20}
+                    rx={12}
+                    ry={12}
+                    fill={isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.03)"}
+                  />
+
                   {/* Lignes de grille horizontales */}
                   {[0, 1, 2, 3, 4].map((i) => {
                     const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
@@ -288,7 +299,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                 {/* Labels Y */}
                 <View style={styles.yLabelsContainer}>
                   {yLabels.map((label, index) => (
-                    <Text key={index} style={[styles.yLabel, { color: colors.textMuted }]}>
+                    <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                       {label}
                     </Text>
                   ))}
@@ -307,7 +318,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <View style={styles.xLabelsContainer}>
                     {chartData.map((point, index) => (
                       <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                        <Text style={[styles.xLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                        <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]} numberOfLines={1}>
                           {point.label || point.date || index + 1}
                         </Text>
                       </View>

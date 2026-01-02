@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-nati
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { SPACING, RADIUS } from '@/constants/design';
 import { Target, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - SPACING.lg * 4;
@@ -21,6 +22,8 @@ interface WeightTrendChartProps {
 }
 
 export function WeightTrendChart({ data, goal, colors, period, onPress }: WeightTrendChartProps) {
+  const { isDark } = useTheme();
+
   if (!data || data.length === 0) {
     return (
       <View
@@ -226,7 +229,7 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
         {/* Labels Y */}
         <View style={styles.yLabelsContainer}>
           {yLabels.map((label, index) => (
-            <Text key={index} style={[styles.yLabel, { color: colors.textMuted }]}>
+            <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
               {label}
             </Text>
           ))}
@@ -244,7 +247,7 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
             const label = data.length <= 10 ? `${day} ${months[date.getMonth()]}` : `${day}`;
             return (
               <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                <Text style={[styles.xLabel, { color: colors.textMuted }]}>{label}</Text>
+                <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>{label}</Text>
               </View>
             );
           })}

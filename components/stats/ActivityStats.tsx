@@ -29,7 +29,7 @@ interface ActivityStatsProps {
 type Period = '7j' | '30j' | '90j' | 'year';
 
 export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [period, setPeriod] = useState<Period>('7j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
@@ -352,6 +352,19 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                 </LinearGradient>
               </Defs>
 
+              {/* Fond clair en mode sombre pour améliorer la visibilité */}
+              {isDark && (
+                <Rect
+                  x={PADDING_LEFT - 5}
+                  y={PADDING_TOP - 5}
+                  width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT + 10}
+                  height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
+                  rx={8}
+                  ry={8}
+                  fill="rgba(255, 255, 255, 0.06)"
+                />
+              )}
+
               {/* Zones d'intensité d'entraînement (en fond) */}
               {(() => {
                 // Définir les zones d'entraînement recommandées
@@ -476,7 +489,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
             {/* Labels Y (nombre d'entraînements) */}
             <View style={styles.yLabelsContainer}>
               {[maxCount, Math.floor(maxCount * 0.75), Math.floor(maxCount * 0.5), Math.floor(maxCount * 0.25), 0].map((value, index) => (
-                <Text key={index} style={[styles.yLabel, { color: colors.textMuted }]}>
+                <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                   {value}
                 </Text>
               ))}
@@ -486,10 +499,10 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
             <View style={styles.xLabelsContainer}>
               {chartData.map((point, index) => (
                 <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                  <Text style={[styles.xLabel, { color: colors.textMuted }]}>
+                  <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                     {format(point.weekStart, 'd MMM', { locale: fr })}
                   </Text>
-                  <Text style={[styles.xLabelSub, { color: colors.textMuted }]}>
+                  <Text style={[styles.xLabelSub, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                     S{format(point.weekStart, 'ww', { locale: fr })}
                   </Text>
                 </View>

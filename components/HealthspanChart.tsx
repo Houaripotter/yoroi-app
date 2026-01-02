@@ -19,10 +19,11 @@ interface DayData {
 
 interface HealthspanChartProps {
   days?: number;
+  screenshotMode?: boolean;
 }
 
-export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) => {
-  const { colors } = useTheme();
+export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, screenshotMode = false }) => {
+  const { colors, isDark } = useTheme();
   const [data, setData] = useState<DayData[]>([]);
 
   const chartWidth = SCREEN_WIDTH - 60;
@@ -31,41 +32,86 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
 
   useEffect(() => {
     loadHealthData();
-  }, []);
+  }, [screenshotMode]);
 
   const loadHealthData = async () => {
     try {
-      // Générer des données réalistes pour la démo
-      // En production, on récupérerait depuis la base
+      // IMPORTANT: Ne générer des données de démo que si screenshotMode est activé
+      // Sinon, ne rien afficher (app vierge)
+      if (!screenshotMode) {
+        setData([]);
+        return;
+      }
+
+      // Générer des données de démo pour les screenshots App Store
       const generatedData: DayData[] = [];
-      
+
       for (let i = days - 1; i >= 0; i--) {
         const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-        
+
         // Simuler des patterns réalistes
         const dayOfWeek = new Date(date).getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        
+
         // Sommeil: meilleur le weekend, aléatoire en semaine
         const baseSleep = isWeekend ? 80 : 65;
         const sleep = Math.min(100, Math.max(30, baseSleep + (Math.random() - 0.5) * 30));
-        
+
         // Stress inversé: calme = haut, stressé = bas
         // Plus calme le weekend
         const baseStress = isWeekend ? 75 : 55;
         const stress = Math.min(100, Math.max(20, baseStress + (Math.random() - 0.5) * 40));
-        
+
         generatedData.push({ date, sleep, stress });
       }
-      
+
       setData(generatedData);
     } catch (error) {
       logger.error('Erreur chargement données santé:', error);
     }
   };
 
+  // État vide : afficher une carte avec message
   if (data.length === 0) {
-    return null;
+    return (
+      <TouchableOpacity
+        style={[styles.container, { backgroundColor: colors.backgroundCard }]}
+        onPress={() => router.push('/stats')}
+        activeOpacity={0.8}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Activity size={16} color={colors.accent} />
+            <Text style={[styles.title, { color: colors.textMuted }]}>TENDANCE SANTÉ</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <ChevronRight size={14} color={colors.textMuted} />
+          </View>
+        </View>
+
+        <View style={styles.emptyState}>
+          <Moon size={24} color={colors.textMuted} style={{ opacity: 0.5 }} />
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            Connectez Apple Health pour suivre votre sommeil et stress
+          </Text>
+        </View>
+
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
+            <Moon size={12} color="#8B5CF6" />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Sommeil</Text>
+            <Text style={[styles.legendValue, { color: colors.textMuted }]}>--%</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: '#22D3EE' }]} />
+            <Activity size={12} color="#22D3EE" />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Calme</Text>
+            <Text style={[styles.legendValue, { color: colors.textMuted }]}>--%</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
   }
 
   const xScale = (index: number) => 
@@ -243,11 +289,11 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7 }) =>
         {/* Labels jours */}
         <View style={[styles.xLabels, { paddingLeft: padding.left }]}>
           {data.map((d, i) => (
-            <Text 
-              key={i} 
+            <Text
+              key={i}
               style={[
-                styles.xLabel, 
-                { color: colors.textMuted, width: (chartWidth - padding.left - padding.right) / (data.length - 1) }
+                styles.xLabel,
+                { color: isDark ? '#FFFFFF' : colors.textMuted, width: (chartWidth - padding.left - padding.right) / (data.length - 1) }
               ]}
             >
               {format(new Date(d.date), 'EEE', { locale: fr }).slice(0, 2)}
@@ -336,6 +382,18 @@ const styles = StyleSheet.create({
   legendValue: {
     fontSize: 12,
     fontWeight: '800',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.7,
+    paddingHorizontal: 20,
   },
 });
 

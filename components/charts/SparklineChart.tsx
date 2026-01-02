@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, Rect } from 'react-native-svg';
+import { useTheme } from '@/lib/ThemeContext';
 // import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface DataPoint {
@@ -32,6 +33,7 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
   showLastValues = 0,
   valueUnit = '',
 }) => {
+  const { isDark, colors } = useTheme();
   const gradientId = React.useMemo(() => `sparkline-gradient-${Math.random().toString(36).substr(2, 9)}`, []);
 
   if (data.length < 2) return null;
@@ -100,6 +102,17 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
           </LinearGradient>
         </Defs>
 
+        {/* Fond avec couleur du thème - plus clair en dark mode */}
+        <Rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          rx={6}
+          ry={6}
+          fill={isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.05)"}
+        />
+
         {showGradient && (
           <Path d={gradientPath} fill={`url(#${gradientId})`} />
         )}
@@ -135,7 +148,7 @@ export const SparklineChart: React.FC<SparklineChartProps> = ({
 
       {/* Valeurs au-dessus des points */}
       {lastPoints.map((point, index) => {
-        const displayValue = valueUnit === 'kg' || valueUnit === 'L'
+        const displayValue = valueUnit === 'kg' || valueUnit === 'L' || valueUnit === 'cm'
           ? point.value.toFixed(1)
           : Math.round(point.value);
 

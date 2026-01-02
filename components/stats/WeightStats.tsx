@@ -26,6 +26,8 @@ const STATS_GAP = 12; // Gap fixe pour tous les appareils
 // Largeur carte = (largeur totale - padding container - gaps entre colonnes) / nombre colonnes
 // Pour 2 colonnes: 1 gap de 12px entre elles
 const STATS_CARD_WIDTH = (width - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
+const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
 interface WeightStatsProps {
   data: Weight[];
@@ -34,7 +36,7 @@ interface WeightStatsProps {
 type Period = '7j' | '30j' | '90j' | 'all';
 
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [period, setPeriod] = useState<Period>('7j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
@@ -281,7 +283,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                 <View style={styles.sparklineContainer}>
                   <SparklineChart
                     data={sparklineData}
-                    width={140}
+                    width={SPARKLINE_WIDTH}
                     height={40}
                     color={card.color}
                     showGradient={true}
@@ -307,7 +309,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
         {/* Résumé Actuel/Objectif/Reste */}
         {stats.end > 0 && (
-          <View style={styles.weightSummary}>
+          <View style={[styles.weightSummary, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)' }]}>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>Actuel</Text>
               <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
@@ -345,6 +347,19 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                   <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
                 </LinearGradient>
               </Defs>
+
+              {/* Fond clair en mode sombre pour améliorer la visibilité du graphique */}
+              {isDark && (
+                <Rect
+                  x={PADDING_LEFT - 5}
+                  y={PADDING_TOP - 5}
+                  width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT + 10}
+                  height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
+                  rx={8}
+                  ry={8}
+                  fill="rgba(255, 255, 255, 0.06)"
+                />
+              )}
 
               {/* Zones de poids colorées (en fond) */}
               {(() => {
@@ -490,7 +505,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
             {/* Labels Y */}
             <View style={styles.yLabelsContainer}>
               {yLabels.map((label, index) => (
-                <Text key={index} style={[styles.yLabel, { color: colors.textMuted }]}>
+                <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                   {label}
                 </Text>
               ))}
@@ -504,7 +519,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                 return index % step === 0 || index === chartData.length - 1;
               }).map((point, index) => (
                 <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                  <Text style={[styles.xLabel, { color: colors.textMuted }]}>
+                  <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                     {format(parseISO(point.date), 'd MMM', { locale: fr })}
                   </Text>
                 </View>
@@ -563,7 +578,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
         {/* Légende du graphique */}
         {chartData.length > 0 && (
-          <View style={styles.chartLegend}>
+          <View style={[styles.chartLegend, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
               <Text style={[styles.legendText, { color: colors.textMuted }]}>Poids</Text>
@@ -893,7 +908,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
   },
   summaryItem: {
     alignItems: 'center',
@@ -918,7 +932,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   legendItem: {
     flexDirection: 'row',

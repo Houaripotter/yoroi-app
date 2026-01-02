@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Ruler, TrendingDown, TrendingUp, Minus, Maximize2 } from 'lucide-react-native';
+import { Ruler, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
-import { scale, isIPad } from '@/constants/responsive';
+import { scale, isIPad, getHistoryDays } from '@/constants/responsive';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-// Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
 const STATS_COLUMNS = isIPad() ? 4 : 2;
-const STATS_GAP = 12; // Gap fixe pour tous les appareils
-const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16
+const STATS_GAP = 12;
+const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
 const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
+const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
 interface MeasurementsStatsProps {
   data: any[];
@@ -25,11 +26,10 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
     color: string;
   } | null>(null);
 
-  // Get latest measurements from data
-  const latestMeasurement = data && data.length > 0 ? data[data.length - 1] : null;
-  const firstMeasurement = data && data.length > 0 ? data[0] : null;
+  const latest = data && data.length > 0 ? data[data.length - 1] : null;
+  const previous = data && data.length > 1 ? data[data.length - 2] : null;
 
-  // Définir TOUTES les mensurations
+  // Définir les mensurations avec couleurs
   const measurements = [
     { id: 'waist', label: 'Tour de taille', color: '#EF4444' },
     { id: 'hips', label: 'Hanches', color: '#F97316' },
@@ -40,126 +40,122 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
     { id: 'left_calf', label: 'Mollet', color: '#06B6D4' },
   ];
 
-  // Fonction pour obtenir l'historique d'une mensuration
-  const getMeasurementHistory = (measurementKey: string) => {
+  // Préparer les données pour les sparklines (SEULEMENT 3 dernières prises comme CompositionStats)
+  const getSparklineData = (key: string) => {
+    const historyDays = getHistoryDays(); // 3 sur iPhone, 7 sur iPad
     if (!data || data.length === 0) return [];
-    return data.slice(-30).map(entry => ({
-      value: (entry as any)[measurementKey] || 0,
+    return data.slice(-historyDays).map(entry => ({
+      value: (entry as any)[key] || 0,
     })).filter(d => d.value > 0);
   };
 
-  // Fonction pour obtenir les stats d'une mensuration
-  const getMeasurementStats = (measurementKey: string) => {
-    const history = getMeasurementHistory(measurementKey);
-    if (history.length === 0) return { current: 0, change: 0, min: 0, max: 0, hasData: false };
+  // Calculer la tendance - EXACTEMENT comme CompositionStats
+  const getTrend = (current: number | undefined, prev: number | undefined): 'up' | 'down' | 'stable' => {
+    if (!current || !prev) return 'stable';
+    const diff = current - prev;
+    const percentChange = Math.abs(diff / prev) * 100;
+    if (percentChange < 2) return 'stable';
+    return diff > 0 ? 'up' : 'down';
+  };
 
-    const values = history.map(h => h.value);
-    const current = (latestMeasurement as any)?.[measurementKey] || 0;
-    const start = (firstMeasurement as any)?.[measurementKey] || 0;
-    const change = current - start;
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+  const getChange = (current: number | undefined, prev: number | undefined): string => {
+    if (!current || !prev) return '';
+    const diff = current - prev;
+    return diff > 0 ? `+${diff.toFixed(1)}` : `${diff.toFixed(1)}`;
+  };
 
-    return { current, change, min, max, hasData: true };
+  // Historique complet pour le modal
+  const getFullHistory = (key: string) => {
+    if (!data || data.length === 0) return [];
+    return data.map(entry => ({
+      value: (entry as any)[key] || 0,
+      date: entry.date,
+    })).filter(d => d.value > 0);
   };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Titre de section */}
-      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-        Évolution par zone
-      </Text>
-
-      {/* Grille des mensurations */}
-      <View style={styles.measurementsGrid}>
-        {measurements.map((measurement) => {
-          const stats = getMeasurementStats(measurement.id);
-          const history = getMeasurementHistory(measurement.id);
+      {/* Grille des métriques - EXACTEMENT comme CompositionStats */}
+      <View style={styles.metricsGrid}>
+        {measurements.map((metric) => {
+          const sparklineData = getSparklineData(metric.id);
+          const currentValue = (latest as any)?.[metric.id];
+          const prevValue = (previous as any)?.[metric.id];
+          const trend = getTrend(currentValue, prevValue);
+          const change = getChange(currentValue, prevValue);
+          const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
 
           return (
             <TouchableOpacity
-              key={measurement.id}
-              style={[
-                styles.measurementCard,
-                { backgroundColor: colors.backgroundCard },
-                !stats.hasData && styles.measurementCardEmpty,
-              ]}
+              key={metric.id}
+              style={[styles.metricCard, { backgroundColor: colors.backgroundCard }]}
               activeOpacity={0.7}
-              onPress={() => stats.hasData && setSelectedMeasurement({
-                id: measurement.id,
-                label: measurement.label,
-                color: measurement.color,
+              onPress={() => hasData && setSelectedMeasurement({
+                id: metric.id,
+                label: metric.label,
+                color: metric.color,
               })}
             >
-              {/* Barre de couleur à gauche */}
-              <View style={[styles.colorBar, { backgroundColor: measurement.color }]} />
+              {/* Expand icon - EXACTEMENT comme CompositionStats (à côté de l'icône) */}
+              <View style={styles.expandIcon}>
+                <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+              </View>
 
-              {/* Expand icon */}
-              {stats.hasData && (
-                <View style={styles.expandIcon}>
-                  <Maximize2 size={16} color="#1F2937" opacity={0.9} />
+              {/* Header */}
+              <View style={styles.metricHeader}>
+                <View style={[styles.metricIconContainer, { backgroundColor: metric.color + '20' }]}>
+                  <Ruler size={16} color={metric.color} />
                 </View>
-              )}
-
-              {/* Label */}
-              <Text style={[styles.measurementCardLabel, { color: colors.textMuted }]}>
-                {measurement.label}
-              </Text>
-
-              {stats.hasData ? (
-                <>
-                  {/* Valeur actuelle */}
-                  <Text style={[styles.measurementCardValue, { color: colors.textPrimary }]}>
-                    {stats.current.toFixed(1)}{' '}
-                    <Text style={[styles.measurementUnit, { color: colors.textMuted }]}>cm</Text>
-                  </Text>
-
-                  {/* Évolution */}
-                  <View style={styles.evolutionRow}>
-                    {stats.change < 0 ? (
-                      <TrendingDown size={14} color="#22C55E" />
-                    ) : stats.change > 0 ? (
-                      <TrendingUp size={14} color="#EF4444" />
+                {trend !== 'stable' && change && (
+                  <View style={styles.trendBadge}>
+                    {trend === 'up' ? (
+                      <TrendingUp size={12} color="#EF4444" />
                     ) : (
-                      <Minus size={14} color={colors.textMuted} />
+                      <TrendingDown size={12} color="#10B981" />
                     )}
                     <Text
                       style={[
-                        styles.evolutionText,
-                        {
-                          color:
-                            stats.change < 0
-                              ? '#22C55E'
-                              : stats.change > 0
-                              ? '#EF4444'
-                              : colors.textMuted,
-                        },
+                        styles.changeText,
+                        { color: trend === 'up' ? '#EF4444' : '#10B981' },
                       ]}
                     >
-                      {stats.change > 0 ? '+' : ''}
-                      {stats.change.toFixed(1)} cm
+                      {change}
                     </Text>
                   </View>
+                )}
+              </View>
 
-                  {/* Sparkline */}
-                  <View style={styles.sparklineContainer}>
-                    <SparklineChart
-                      data={history}
-                      width={130}
-                      height={35}
-                      color={measurement.color}
-                      showGradient={true}
-                      thickness={2.5}
-                    />
-                  </View>
-                </>
-              ) : (
+              {/* Label */}
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {metric.label}
+              </Text>
+
+              {/* Value */}
+              <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                {currentValue ? `${currentValue.toFixed(1)}` : '--'}
+                <Text style={[styles.metricUnit, { color: colors.textMuted }]}> cm</Text>
+              </Text>
+
+              {/* Sparkline - EXACTEMENT comme CompositionStats avec showLastValues */}
+              {hasData && (
+                <View style={styles.sparklineContainer}>
+                  <SparklineChart
+                    data={sparklineData}
+                    width={SPARKLINE_WIDTH}
+                    height={40}
+                    color={metric.color}
+                    showGradient={true}
+                    thickness={2.5}
+                    showLastValues={sparklineData.length}
+                    valueUnit="cm"
+                  />
+                </View>
+              )}
+
+              {!hasData && (
                 <View style={styles.noDataContainer}>
                   <Text style={[styles.noDataText, { color: colors.textMuted }]}>
                     Aucune donnée
-                  </Text>
-                  <Text style={[styles.noDataHint, { color: colors.textMuted }]}>
-                    Ajoute ta première mesure
                   </Text>
                 </View>
               )}
@@ -174,10 +170,10 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
           visible={selectedMeasurement !== null}
           onClose={() => setSelectedMeasurement(null)}
           title={selectedMeasurement.label}
-          subtitle="Derniers 30 jours"
-          data={getMeasurementHistory(selectedMeasurement.id).map((entry, index) => ({
+          subtitle="Évolution complète"
+          data={getFullHistory(selectedMeasurement.id).map((entry) => ({
             value: entry.value,
-            label: `Point ${getMeasurementHistory(selectedMeasurement.id).length - index}`,
+            label: new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
           }))}
           color={selectedMeasurement.color}
           unit="cm"
@@ -191,28 +187,22 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: isIPad() ? 0 : 16, // Pas de padding sur iPad, déjà géré par le parent
+    paddingHorizontal: isIPad() ? 0 : 16,
     paddingBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-    marginTop: 8,
-  },
 
-  // Grille des mensurations
-  measurementsGrid: {
+  // Grille des métriques - IDENTIQUE à CompositionStats
+  metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 16,
   },
-  measurementCard: {
+  metricCard: {
     width: STATS_CARD_WIDTH,
     borderRadius: 16,
     padding: 14,
-    paddingLeft: 18,
-    minHeight: 160,
+    minHeight: 140,
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -221,56 +211,59 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: STATS_GAP,
   },
-  measurementCardEmpty: {
-    opacity: 0.6,
-  },
-  colorBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
-  },
   expandIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
+    top: 14,
+    left: 48,
     zIndex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 12,
     padding: 4,
   },
-  measurementCardLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+  metricHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
-  measurementCardValue: {
-    fontSize: 26,
-    fontWeight: '900',
-    marginBottom: 6,
-    letterSpacing: -0.5,
+  metricIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  measurementUnit: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  evolutionRow: {
+  trendBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 8,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  evolutionText: {
-    fontSize: 12,
+  changeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  metricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  metricValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  metricUnit: {
+    fontSize: 15,
     fontWeight: '700',
   },
   sparklineContainer: {
     marginTop: 'auto',
     marginHorizontal: -6,
-    marginBottom: 6,
   },
   noDataContainer: {
     flex: 1,
@@ -279,12 +272,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   noDataText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 4,
-  },
-  noDataHint: {
-    fontSize: 11,
-    textAlign: 'center',
   },
 });

@@ -28,7 +28,7 @@ export const WeeklyActivityChart: React.FC<WeeklyActivityChartProps> = ({
   data = DEFAULT_DATA,
   onPress,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const chartWidth = 300;
   const chartHeight = 120;
@@ -134,7 +134,7 @@ export const WeeklyActivityChart: React.FC<WeeklyActivityChartProps> = ({
           {chartData.map((point, index) => (
             <Text
               key={index}
-              style={[styles.dayLabel, { color: colors.textMuted, left: point.x - 10 }]}
+              style={[styles.dayLabel, { color: isDark ? '#FFFFFF' : colors.textMuted, left: point.x - 10 }]}
             >
               {point.label}
             </Text>

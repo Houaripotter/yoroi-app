@@ -35,7 +35,7 @@ interface VitalityStatsProps {
 }
 
 export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [sleepStats, setSleepStats] = useState<any>(null);
   const [hydrationWeek, setHydrationWeek] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [vitalityScore, setVitalityScore] = useState(0);
@@ -312,6 +312,19 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                 </LinearGradient>
               </Defs>
 
+              {/* Fond clair en mode sombre pour améliorer la visibilité */}
+              {isDark && (
+                <Rect
+                  x={PADDING_LEFT - 5}
+                  y={PADDING_TOP - 5}
+                  width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT + 10}
+                  height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
+                  rx={8}
+                  ry={8}
+                  fill="rgba(255, 255, 255, 0.06)"
+                />
+              )}
+
               {/* Zones colorées (en fond) */}
               {/* Zone Rouge (<5h) */}
               <Rect
@@ -414,7 +427,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
             {/* Labels Y (heures) */}
             <View style={styles.yLabels}>
               {[10, 9, 7, 5, 0].map((hours) => (
-                <Text key={hours} style={[styles.yLabel, { color: colors.textMuted }]}>
+                <Text key={hours} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                   {hours}h
                 </Text>
               ))}
@@ -426,7 +439,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                 const x = PADDING_LEFT + ((CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(sleepHistory.length - 1, 1);
                 return (
                   <View key={index} style={[styles.xLabel, { left: x - 15 }]}>
-                    <Text style={[styles.xLabelText, { color: colors.textMuted }]}>
+                    <Text style={[styles.xLabelText, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                       {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'short' }).substring(0, 1).toUpperCase()}
                     </Text>
                   </View>
@@ -457,7 +470,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
 
         {/* Légende des zones de sommeil */}
         {sleepHistory.length > 0 && (
-          <View style={styles.sleepLegend}>
+          <View style={[styles.sleepLegend, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
             <Text style={[styles.legendTitle, { color: colors.textMuted }]}>Zones de sommeil</Text>
             <View style={styles.legendItems}>
               <View style={styles.legendItem}>
@@ -565,7 +578,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                     ]}
                   />
                 </View>
-                <Text style={[styles.dayLabel, { color: colors.textMuted }]}>{days[index]}</Text>
+                <Text style={[styles.dayLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>{days[index]}</Text>
               </View>
             );
           })}

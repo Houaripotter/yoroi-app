@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -37,6 +36,7 @@ import { getCurrentRank, RANKS } from '@/lib/ranks';
 import { getTrainingStats, calculateStreak, getProfile, getTrainings, getClubs } from '@/lib/database';
 import { getClubLogoSource, SPORTS } from '@/lib/sports';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -45,6 +45,7 @@ import logger from '@/lib/security/logger';
 export default function FighterCardV2Screen() {
   const { colors, isDark } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [stats, setStats] = useState<FighterStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +95,7 @@ export default function FighterCardV2Screen() {
 
       const topClubName = topClubEntry?.[0] || 'Guerrier';
       const topClubLogo = topClubEntry?.[1]?.logo
-        ? getClubLogoSource(topClubEntry[1].logo)
+        ? getClubLogoSource(topClubEntry?.[1]?.logo)
         : null;
 
       // =========================================
@@ -155,10 +156,7 @@ export default function FighterCardV2Screen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission requise',
-          "Yoroi a besoin d'accéder à ton appareil photo."
-        );
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ton appareil photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -174,7 +172,7 @@ export default function FighterCardV2Screen() {
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
-      Alert.alert('Erreur', 'Impossible de prendre la photo');
+      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -182,7 +180,7 @@ export default function FighterCardV2Screen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', "Yoroi a besoin d'accéder à ta galerie.");
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -198,7 +196,7 @@ export default function FighterCardV2Screen() {
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
-      Alert.alert('Erreur', "Impossible de choisir l'image");
+      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -217,7 +215,7 @@ export default function FighterCardV2Screen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -233,11 +231,11 @@ export default function FighterCardV2Screen() {
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        Alert.alert('Erreur', "Le partage n'est pas disponible sur cet appareil");
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (error) {
       logger.error('Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsCapturing(false);
     }
@@ -250,15 +248,12 @@ export default function FighterCardV2Screen() {
 
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission requise',
-          "Yoroi a besoin d'accéder à ta galerie pour sauvegarder l'image."
-        );
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -270,10 +265,10 @@ export default function FighterCardV2Screen() {
       await MediaLibrary.saveToLibraryAsync(uri);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Sauvegardé', 'Ta Fiche Combattant a été ajoutée à ta galerie.');
+      showPopup('Sauvegardé', 'Ta Fiche Combattant a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsCapturing(false);
     }
@@ -529,6 +524,7 @@ export default function FighterCardV2Screen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

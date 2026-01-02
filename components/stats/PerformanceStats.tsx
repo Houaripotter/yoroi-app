@@ -46,7 +46,7 @@ interface WorkRestModalProps {
 }
 
 const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainingData, sleepData }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
   // Calculer les stats
@@ -282,6 +282,19 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
                     </LinearGradient>
                   </Defs>
 
+                  {/* Fond clair en mode sombre pour améliorer la visibilité */}
+                  {isDark && (
+                    <Rect
+                      x={MODAL_PADDING_LEFT - 5}
+                      y={MODAL_PADDING_TOP - 5}
+                      width={chartWidth - MODAL_PADDING_LEFT - MODAL_PADDING_RIGHT + 10}
+                      height={MODAL_CHART_HEIGHT - MODAL_PADDING_TOP - MODAL_PADDING_BOTTOM + 10}
+                      rx={8}
+                      ry={8}
+                      fill="rgba(255, 255, 255, 0.06)"
+                    />
+                  )}
+
                   {/* Zones de sommeil colorées (en fond) */}
                   {/* Zone Rouge (<6h) - Sommeil insuffisant */}
                   <Rect
@@ -385,7 +398,7 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
                 {/* Labels Y */}
                 <View style={modalStyles.yLabels}>
                   {yLabels.map((label, index) => (
-                    <Text key={index} style={[modalStyles.yLabel, { color: colors.textMuted }]}>
+                    <Text key={index} style={[modalStyles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
                       {label}
                     </Text>
                   ))}
@@ -395,7 +408,7 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
                 <View style={modalStyles.xLabels}>
                   {chartData.map((point, index) => (
                     <View key={index} style={[modalStyles.xLabel, { left: point.x - 30 }]}>
-                      <Text style={[modalStyles.xLabelText, { color: colors.textMuted }]} numberOfLines={1}>
+                      <Text style={[modalStyles.xLabelText, { color: isDark ? '#FFFFFF' : colors.textMuted }]} numberOfLines={1}>
                         {days[index].substring(0, 3)}
                       </Text>
                     </View>
@@ -426,7 +439,7 @@ const WorkRestModal: React.FC<WorkRestModalProps> = ({ visible, onClose, trainin
               </View>
 
               {/* Légende */}
-              <View style={modalStyles.legend}>
+              <View style={[modalStyles.legend, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
                 <View style={modalStyles.legendItem}>
                   <View style={[modalStyles.legendDot, { backgroundColor: '#8B5CF6' }]} />
                   <Text style={[modalStyles.legendText, { color: colors.textMuted }]}>Charge d'effort</Text>
@@ -717,7 +730,7 @@ const modalStyles = StyleSheet.create({
 });
 
 export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: propTrainings }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [trainings, setTrainings] = useState<Training[]>(propTrainings || []);
   const [sleepHours, setSleepHours] = useState<number[]>([7, 6.5, 8, 7, 6, 7.5, 8]);
   const [selectedDay, setSelectedDay] = useState<{
@@ -1080,14 +1093,14 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({ trainings: p
                 </View>
 
                 {/* Label jour */}
-                <Text style={[styles.modernDayLabel, { color: colors.textMuted }]}>{day}</Text>
+                <Text style={[styles.modernDayLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>{day}</Text>
               </View>
             );
           })}
         </View>
 
         {/* Légende moderne */}
-        <View style={styles.modernLegend}>
+        <View style={[styles.modernLegend, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
           <View style={styles.modernLegendItem}>
             <View style={[styles.modernLegendBar, { backgroundColor: '#8B5CF6' }]} />
             <Text style={[styles.modernLegendText, { color: colors.textMuted }]}>Charge d'effort</Text>
