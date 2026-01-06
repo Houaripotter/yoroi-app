@@ -10,11 +10,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Palette, Sun, Moon, Smartphone, Check, Crown } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { ThemeColor, ThemeMode, isPremiumTheme, themeColors } from '@/constants/themes';
 import { useDevMode } from '@/lib/DevModeContext';
 
@@ -85,9 +85,10 @@ interface ColorItemProps {
   isSelected: boolean;
   onSelect: () => void;
   isPro: boolean;
+  onPremiumAlert: () => void;
 }
 
-const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro }) => {
+const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro, onPremiumAlert }) => {
   const { colors, isDark } = useTheme();
   const isPremium = isPremiumTheme(item.id);
   const isUnlocked = isPro || !isPremium;
@@ -95,11 +96,7 @@ const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro
   const handlePress = () => {
     if (!isUnlocked) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        'Thème Premium',
-        'Ce thème nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 1.0.0" dans les Réglages et entrez le code 2412.',
-        [{ text: 'OK', style: 'default' }]
-      );
+      onPremiumAlert();
       return;
     }
     onSelect();
@@ -175,7 +172,16 @@ const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro
 
 export const ThemeSelector: React.FC = () => {
   const { colors, themeColor, setThemeColor, theme, isDark, actualMode } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const { isPro } = useDevMode();
+
+  const handlePremiumAlert = () => {
+    showPopup(
+      'Theme Premium',
+      'Ce theme necessite la version Premium.\n\nMode Createur : Tapez 5 fois sur "Version 1.0.0" dans les Reglages et entrez le code 2412.',
+      [{ text: 'OK', style: 'primary' }]
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
@@ -212,6 +218,7 @@ export const ThemeSelector: React.FC = () => {
             isSelected={themeColor === item.id}
             onSelect={() => setThemeColor(item.id as ThemeColor)}
             isPro={isPro}
+            onPremiumAlert={handlePremiumAlert}
           />
         ))}
       </View>
@@ -239,6 +246,7 @@ export const ThemeSelector: React.FC = () => {
           {theme.kanji}
         </Text>
       </View>
+      <PopupComponent />
     </View>
   );
 };

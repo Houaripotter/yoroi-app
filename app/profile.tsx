@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   StatusBar,
   Dimensions,
   Animated,
   Image,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -40,6 +40,10 @@ import {
   Droplet,
   Swords,
   User,
+  Star,
+  Shield,
+  Crown,
+  Sparkles,
 } from 'lucide-react-native';
 import { AvatarSolid } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -123,12 +127,14 @@ const LargeRingProgress = ({
 const StatBadge = ({
   icon: Icon,
   value,
+  unit,
   label,
   color,
   bgColor
 }: {
   icon: any;
   value: string;
+  unit?: string;
   label: string;
   color: string;
   bgColor: string;
@@ -137,7 +143,10 @@ const StatBadge = ({
     <View style={[styles.statBadgeIcon, { backgroundColor: bgColor }]}>
       <Icon size={22} color={color} strokeWidth={2.5} />
     </View>
-    <Text style={styles.statBadgeValue}>{value}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+      <Text style={styles.statBadgeValue}>{value}</Text>
+      {unit && <Text style={[styles.statBadgeUnit, { color: COLORS.text }]}>{unit}</Text>}
+    </View>
     <Text style={styles.statBadgeLabel}>{label}</Text>
   </View>
 );
@@ -227,6 +236,9 @@ export default function ProfileScreen() {
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
 
+  // Custom popup
+  const { showPopup, PopupComponent } = useCustomPopup();
+
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [streak, setStreak] = useState(0);
@@ -240,7 +252,32 @@ export default function ProfileScreen() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [birthDate, setBirthDate] = useState('');
   const [weightGoal, setWeightGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
-  const [userAge, setUserAge] = useState('');
+
+  // Calcul automatique de l'âge à partir de la date de naissance
+  const calculateAge = (dateStr: string): number | null => {
+    if (!dateStr) return null;
+    // Format attendu: DD/MM/YYYY ou YYYY-MM-DD
+    let birthDateObj: Date;
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      birthDateObj = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    } else if (dateStr.includes('-')) {
+      birthDateObj = new Date(dateStr);
+    } else {
+      return null;
+    }
+    if (isNaN(birthDateObj.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDiff = today.getMonth() - birthDateObj.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+    return age > 0 && age < 120 ? age : null;
+  };
+
+  const calculatedAge = calculateAge(birthDate);
 
   const loadData = useCallback(async () => {
     try {
@@ -255,7 +292,6 @@ export default function ProfileScreen() {
         setProfilePhoto(profileData.profile_photo || null);
         setBirthDate(profileData.birth_date || '');
         setWeightGoal(profileData.weight_goal || 'lose');
-        setUserAge(profileData.age?.toString() || '');
       }
 
       const streakDays = await calculateStreak();
@@ -281,7 +317,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Erreur', 'Le nom est requis');
+      showPopup('Erreur', 'Le nom est requis');
       return;
     }
 
@@ -296,113 +332,100 @@ export default function ProfileScreen() {
         profile_photo: profilePhoto,
         birth_date: birthDate || undefined,
         weight_goal: weightGoal,
-        age: userAge ? parseInt(userAge) : undefined,
+        age: calculatedAge || undefined,
       });
 
       await loadData();
       setIsEditing(false);
-      Alert.alert('Profil mis à jour');
+      showPopup('Profil mis a jour', 'Tes informations ont ete sauvegardees.');
     } catch (error) {
       logger.error('Save error:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showPopup('Erreur', 'Impossible de sauvegarder');
     }
   };
 
+  const takeProfilePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showPopup('Permission refusee', 'Acces a la camera requis');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const photoUri = result.assets[0].uri;
+      setProfilePhoto(photoUri);
+      const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+      await saveProfile({
+        name: safeName,
+        height_cm: profile?.height_cm,
+        target_weight: profile?.target_weight,
+        start_weight: profile?.start_weight,
+        start_date: profile?.start_date,
+        avatar_gender: profile?.avatar_gender || 'homme',
+        profile_photo: photoUri,
+      });
+      await loadData();
+    }
+  };
+
+  const pickProfilePhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showPopup('Permission refusee', 'Acces a la galerie requis');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const photoUri = result.assets[0].uri;
+      setProfilePhoto(photoUri);
+      const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+      await saveProfile({
+        name: safeName,
+        height_cm: profile?.height_cm,
+        target_weight: profile?.target_weight,
+        start_weight: profile?.start_weight,
+        start_date: profile?.start_date,
+        avatar_gender: profile?.avatar_gender || 'homme',
+        profile_photo: photoUri,
+      });
+      await loadData();
+    }
+  };
+
+  const useAvatarPhoto = async () => {
+    setProfilePhoto(null);
+    const safeName = (profile?.name || name || 'Champion').trim() || 'Champion';
+    await saveProfile({
+      name: safeName,
+      height_cm: profile?.height_cm,
+      target_weight: profile?.target_weight,
+      start_weight: profile?.start_weight,
+      start_date: profile?.start_date,
+      avatar_gender: profile?.avatar_gender || 'homme',
+      profile_photo: null,
+    });
+    await loadData();
+  };
+
   const handleChangePhoto = () => {
-    Alert.alert(
+    showPopup(
       'Photo de profil',
       'Choisissez une option',
       [
+        { text: 'Camera', style: 'primary', onPress: takeProfilePhoto },
+        { text: 'Galerie', style: 'default', onPress: pickProfilePhoto },
+        { text: 'Avatar', style: 'default', onPress: useAvatarPhoto },
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Prendre une photo',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission refusée', 'Accès à la caméra requis');
-              return;
-            }
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.7,
-            });
-            if (!result.canceled && result.assets[0]) {
-              const photoUri = result.assets[0].uri;
-              setProfilePhoto(photoUri);
-
-              // S'assurer que le nom n'est jamais null ou vide
-              const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-
-              await saveProfile({
-                name: safeName,
-                height_cm: profile?.height_cm,
-                target_weight: profile?.target_weight,
-                start_weight: profile?.start_weight,
-                start_date: profile?.start_date,
-                avatar_gender: profile?.avatar_gender || 'homme',
-                profile_photo: photoUri,
-              });
-              await loadData();
-            }
-          },
-        },
-        {
-          text: 'Choisir depuis la galerie',
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission refusée', 'Accès à la galerie requis');
-              return;
-            }
-            const result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [1, 1],
-              quality: 0.7,
-            });
-            if (!result.canceled && result.assets[0]) {
-              const photoUri = result.assets[0].uri;
-              setProfilePhoto(photoUri);
-
-              // S'assurer que le nom n'est jamais null ou vide
-              const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-
-              await saveProfile({
-                name: safeName,
-                height_cm: profile?.height_cm,
-                target_weight: profile?.target_weight,
-                start_weight: profile?.start_weight,
-                start_date: profile?.start_date,
-                avatar_gender: profile?.avatar_gender || 'homme',
-                profile_photo: photoUri,
-              });
-              await loadData();
-            }
-          },
-        },
-        {
-          text: 'Utiliser avatar du rang',
-          onPress: async () => {
-            setProfilePhoto(null);
-
-            // S'assurer que le nom n'est jamais null
-            const safeName = (profile?.name || name || 'Champion').trim() || 'Champion';
-
-            await saveProfile({
-              name: safeName,
-              height_cm: profile?.height_cm,
-              target_weight: profile?.target_weight,
-              start_weight: profile?.start_weight,
-              start_date: profile?.start_date,
-              avatar_gender: profile?.avatar_gender || 'homme',
-              profile_photo: null,
-            });
-            await loadData();
-          },
-        },
-      ],
-      { cancelable: true }
+      ]
     );
   };
 
@@ -464,123 +487,82 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Profile Hero Card - Avatar Left, Photo Right */}
+        {/* Profile Hero Card - Photo centrée avec nom */}
         <View style={styles.heroCard}>
           <LinearGradient
             colors={[COLORS.surface, COLORS.background]}
             style={styles.heroGradient}
           >
-            {/* Top Row: Avatar + Name + Photo */}
-            <View style={styles.heroTopRow}>
-              {/* Left: Avatar du rang */}
-              <View style={styles.heroAvatarContainer}>
-                <AvatarSolid
-                  source={null}
-                  size="lg"
-                  backgroundColor={COLORS.avatarBg}
-                />
-                <View style={[styles.rankMini, { backgroundColor: colors.accent }]}>
-                  <Icon name={rank.icon as any} size={12} color="#FFF" />
-                </View>
-              </View>
+            {/* Nom au-dessus */}
+            {isEditing ? (
+              <TextInput
+                style={[styles.nameInput, { color: colors.textPrimary, marginBottom: 16 }]}
+                value={name}
+                onChangeText={setName}
+                placeholder="Ton nom"
+                placeholderTextColor={COLORS.textMuted}
+                textAlign="center"
+              />
+            ) : (
+              <Text style={[styles.profileName, { color: colors.textPrimary, marginTop: 0, marginBottom: 16 }]}>
+                {profile?.name || 'Guerrier'}
+              </Text>
+            )}
 
-              {/* Center: Name + Rank */}
-              <View style={styles.heroCenterContent}>
-                {isEditing ? (
-                  <TextInput
-                    style={[styles.nameInput, { color: colors.textPrimary }]}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Ton nom"
-                    placeholderTextColor={COLORS.textMuted}
-                    textAlign="center"
+            {/* Photo de profil centrée */}
+            <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.8} style={{ alignItems: 'center' }}>
+              <View style={{ position: 'relative' }}>
+                {profilePhoto ? (
+                  <Image
+                    source={{ uri: profilePhoto }}
+                    style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors.accent }}
+                    resizeMode="cover"
                   />
                 ) : (
-                  <Text style={[styles.profileName, { color: colors.textPrimary }]}>{profile?.name || 'Guerrier'}</Text>
+                  <View style={[styles.photoPlaceholderLarge, { backgroundColor: colors.card, borderColor: colors.accent }]}>
+                    <User size={48} color={colors.textMuted} />
+                  </View>
                 )}
-                <View style={styles.rankBadge}>
-                  <Icon name={rank.icon as any} size={16} color={colors.accent} />
-                  <Text style={[styles.rankName, { color: colors.accent }]}>{rank.name}</Text>
+                <View style={[styles.cameraButton, { bottom: 4, right: 4 }]}>
+                  <Camera size={16} color="#FFF" />
                 </View>
               </View>
+            </TouchableOpacity>
 
-              {/* Right: Photo de profil */}
-              <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.8} style={styles.heroPhotoContainer}>
-                <LargeRingProgress progress={rankProgress} size={80} strokeWidth={4} accentColor={colors.accent}>
-                  {profilePhoto ? (
-                    <Image
-                      source={{ uri: profilePhoto }}
-                      style={{ width: 68, height: 68, borderRadius: 34 }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.photoPlaceholder, { backgroundColor: colors.card }]}>
-                      <User size={28} color={colors.textMuted} />
-                    </View>
-                  )}
-                </LargeRingProgress>
-                <View style={styles.cameraButton}>
-                  <Camera size={14} color="#FFF" />
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Streak */}
-            <View style={styles.streakBadge}>
-              <Flame size={16} color={COLORS.warning} />
-              <Text style={styles.streakValue}>{streak}</Text>
-              <Text style={styles.streakLabel}>jours de streak</Text>
-            </View>
+            {/* Date d'inscription */}
+            {profile?.start_date && (
+              <Text style={[styles.memberSince, { color: colors.textMuted }]}>
+                Membre depuis {format(new Date(profile.start_date), 'MMMM yyyy', { locale: fr })}
+              </Text>
+            )}
           </LinearGradient>
         </View>
-
-        {/* Next Rank Progress */}
-        {nextRank && (
-          <View style={styles.nextRankCard}>
-            <View style={styles.nextRankHeader}>
-              <View style={styles.nextRankLeft}>
-                <Trophy size={16} color={COLORS.gold} />
-                <Text style={styles.nextRankTitle}>Prochain rang</Text>
-              </View>
-              <View style={styles.nextRankRight}>
-                <Icon name={nextRank.icon as any} size={16} color={COLORS.gold} />
-                <Text style={styles.nextRankName}>{nextRank.name}</Text>
-              </View>
-            </View>
-            <View style={styles.nextRankBarBg}>
-              <LinearGradient
-                colors={GRADIENTS.gold}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.nextRankBarFill, { width: `${rankProgress}%` }]}
-              />
-            </View>
-            <Text style={styles.nextRankDays}>Encore {daysToNext} jours</Text>
-          </View>
-        )}
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           <StatBadge
-            icon={TrendingDown}
-            value={weightProgress?.lost > 0 ? `-${weightProgress.lost.toFixed(1)} kg` : '0 kg'}
-            label="Perdus"
-            color={COLORS.success}
-            bgColor={COLORS.successMuted}
+            icon={weightGoal === 'gain' ? TrendingUp : TrendingDown}
+            value={weightProgress?.lost > 0 ? (weightGoal === 'gain' ? `+${weightProgress.lost.toFixed(1)}` : `-${weightProgress.lost.toFixed(1)}`) : '0'}
+            unit=" kg"
+            label={weightGoal === 'gain' ? 'Pris' : 'Perdus'}
+            color={weightGoal === 'gain' ? COLORS.warning : COLORS.success}
+            bgColor={weightGoal === 'gain' ? COLORS.warningMuted : COLORS.successMuted}
           />
           <StatBadge
             icon={Target}
-            value={weightProgress?.target ? `${weightProgress.target} kg` : '-'}
+            value={weightProgress?.target ? `${weightProgress.target}` : '-'}
+            unit=" kg"
             label="Objectif"
             color={COLORS.accent}
             bgColor={COLORS.accentMuted}
           />
           <StatBadge
             icon={Activity}
-            value={bmi || '-'}
-            label={bmiStatus.text}
-            color={bmiStatus.color}
-            bgColor={`${bmiStatus.color}20`}
+            value={weightProgress?.remaining > 0 ? weightProgress.remaining.toFixed(1) : '0'}
+            unit=" kg"
+            label={weightGoal === 'gain' ? 'À prendre' : weightGoal === 'maintain' ? 'Maintien' : 'À perdre'}
+            color={weightGoal === 'gain' ? COLORS.warning : weightGoal === 'maintain' ? COLORS.info : COLORS.success}
+            bgColor={weightGoal === 'gain' ? COLORS.warningMuted : weightGoal === 'maintain' ? COLORS.infoMuted : COLORS.successMuted}
           />
         </View>
 
@@ -606,15 +588,20 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Âge</Text>
+                  <Text style={styles.inputLabel}>Date de naissance</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
-                    value={userAge}
-                    onChangeText={setUserAge}
-                    placeholder="28"
+                    value={birthDate}
+                    onChangeText={setBirthDate}
+                    placeholder="15/06/1995"
                     placeholderTextColor={COLORS.textMuted}
-                    keyboardType="number-pad"
+                    keyboardType="default"
                   />
+                  {calculatedAge && (
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+                      → {calculatedAge} ans
+                    </Text>
+                  )}
                 </View>
               </View>
 
@@ -705,7 +692,7 @@ export default function ProfileScreen() {
               <InfoRow
                 icon={Calendar}
                 label="Âge"
-                value={profile?.age ? `${profile.age} ans` : '-'}
+                value={calculatedAge ? `${calculatedAge} ans` : (profile?.age ? `${profile.age} ans` : '-')}
                 color={COLORS.accent}
                 bgColor={COLORS.accentMuted}
               />
@@ -734,80 +721,6 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Profil Compétiteur */}
-        <View style={[styles.competitionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Espace Compétiteur</Text>
-
-          <TouchableOpacity
-            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
-            onPress={() => router.push('/competitor-profile')}
-          >
-            <View style={[styles.competitionIcon, { backgroundColor: '#8B5CF620' }]}>
-              <Swords size={20} color="#8B5CF6" />
-            </View>
-            <View style={styles.competitionContent}>
-              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Profil Compétiteur</Text>
-              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Catégorie, ceinture, sport</Text>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
-            onPress={() => router.push('/competitions')}
-          >
-            <View style={[styles.competitionIcon, { backgroundColor: '#06B6D420' }]}>
-              <Calendar size={20} color="#06B6D4" />
-            </View>
-            <View style={styles.competitionContent}>
-              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Compétitions</Text>
-              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Gérer mes compétitions à venir</Text>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
-            onPress={() => router.push('/palmares')}
-          >
-            <View style={[styles.competitionIcon, { backgroundColor: '#F59E0B20' }]}>
-              <Award size={20} color="#F59E0B" />
-            </View>
-            <View style={styles.competitionContent}>
-              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Palmarès</Text>
-              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Mes combats et statistiques</Text>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.competitionItem, { borderBottomColor: colors.border }]}
-            onPress={() => router.push('/cut-mode')}
-          >
-            <View style={[styles.competitionIcon, { backgroundColor: '#EF444420' }]}>
-              <TrendingDown size={20} color="#EF4444" />
-            </View>
-            <View style={styles.competitionContent}>
-              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Mode Cut</Text>
-              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Gestion du poids pour la pesée</Text>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.competitionItem, { borderBottomWidth: 0 }]}
-            onPress={() => router.push('/hydration')}
-          >
-            <View style={[styles.competitionIcon, { backgroundColor: '#3B82F620' }]}>
-              <Droplet size={20} color="#3B82F6" />
-            </View>
-            <View style={styles.competitionContent}>
-              <Text style={[styles.competitionLabel, { color: colors.textPrimary }]}>Hydratation Cut</Text>
-              <Text style={[styles.competitionSublabel, { color: colors.textMuted }]}>Protocole hydratation compétition</Text>
-            </View>
-            <ChevronRight size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
 
         {/* Motivational Quote */}
         <View style={[styles.quoteCard, { borderColor: isDark ? 'rgba(0, 214, 143, 0.3)' : COLORS.accentMuted }]}>
@@ -834,6 +747,8 @@ export default function ProfileScreen() {
           tint={isDark ? 'dark' : 'light'}
         />
       )}
+
+      <PopupComponent />
     </View>
   );
 }
@@ -1036,13 +951,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   statBadgeValue: {
-    fontSize: TYPOGRAPHY.size.xxl,
+    fontSize: TYPOGRAPHY.size.xl,
     fontWeight: '900',
     color: COLORS.text,
-    marginBottom: SPACING.xs,
     letterSpacing: -0.5,
   },
+  statBadgeUnit: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: '700',
+  },
   statBadgeLabel: {
+    marginTop: SPACING.xs,
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
     color: COLORS.textMuted,
@@ -1306,6 +1225,19 @@ const styles = StyleSheet.create({
     borderRadius: 34,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  photoPlaceholderLarge: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+  },
+  memberSince: {
+    fontSize: TYPOGRAPHY.size.sm,
+    marginTop: SPACING.lg,
+    textAlign: 'center',
   },
 
   // Goal Selector

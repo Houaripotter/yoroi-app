@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -26,6 +25,7 @@ import { MonthlyRecapCard } from '@/components/social-cards/MonthlyRecapCard';
 import { useMonthStats } from '@/lib/social-cards/useMonthStats';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -34,6 +34,7 @@ import logger from '@/lib/security/logger';
 export default function MonthlyRecapScreen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format, setFormat] = useState<'stories' | 'square'>('stories');
   const [isSaving, setIsSaving] = useState(false);
@@ -69,7 +70,7 @@ export default function MonthlyRecapScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -82,7 +83,7 @@ export default function MonthlyRecapScreen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -93,10 +94,10 @@ export default function MonthlyRecapScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegardé !', 'Monthly Recap enregistré dans ta galerie !');
+      showPopup('Sauvegardé !', 'Monthly Recap enregistré dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
     } catch (err) {
       logger.error('Erreur sauvegarde:', err);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -110,7 +111,7 @@ export default function MonthlyRecapScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -127,11 +128,11 @@ export default function MonthlyRecapScreen() {
           dialogTitle: 'Partager mon Monthly Recap Yoroi',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (err) {
       logger.error('Erreur partage:', err);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -313,6 +314,7 @@ export default function MonthlyRecapScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

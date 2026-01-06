@@ -6,9 +6,9 @@ import {
   StyleSheet,
   Modal,
   ScrollView,
-  Alert,
   Image,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Plus, Trash2, Clock, Edit3, Calendar } from 'lucide-react-native';
 import { format } from 'date-fns';
@@ -39,6 +39,7 @@ export function DayDetailModal({
   onEditSession,
 }: DayDetailModalProps) {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const insets = useSafeAreaInsets();
 
   const formatDateTitle = (d: Date) => {
@@ -69,7 +70,7 @@ export function DayDetailModal({
 
   const handleDelete = (session: Training) => {
     const club = getClub(session.club_id);
-    Alert.alert(
+    showPopup(
       'Supprimer la seance',
       `Supprimer ${club?.name || session.sport}${session.start_time ? ` a ${session.start_time}` : ''} ?`,
       [
@@ -224,6 +225,7 @@ export function DayDetailModal({
           >
             <Text style={[styles.closeButtonText, { color: colors.textPrimary }]}>Fermer</Text>
           </TouchableOpacity>
+          <PopupComponent />
         </View>
       </View>
     </Modal>

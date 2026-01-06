@@ -225,15 +225,9 @@ export default function HistoryScreen() {
         setCustomLogos((settings as any).custom_club_logos);
       }
       
-      if (measurements.length < 3) {
-        const today = new Date();
-        const mockData = generateMockData(today, 180);
-        setRecords(mockData);
-        setUseMockData(true);
-      } else {
-        setRecords(measurements);
-        setUseMockData(false);
-      }
+      // PRODUCTION: Toujours utiliser les vraies données (pas de mock)
+      setRecords(measurements);
+      setUseMockData(false);
     } catch (error) {
       logger.error('❌ Erreur chargement historique:', error);
       setRecords([]);

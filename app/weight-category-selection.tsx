@@ -9,8 +9,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Scale, ChevronRight, Trophy, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -28,6 +28,7 @@ import {
 export default function WeightCategorySelectionScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams<{ sport?: string; gender?: 'male' | 'female'; currentWeight?: string }>();
 
   const sport = params.sport || 'jjb';
@@ -45,10 +46,10 @@ export default function WeightCategorySelectionScreen() {
   const loadCategories = () => {
     // Vérifier si le sport a des catégories
     if (!sportHasWeightCategories(sport)) {
-      Alert.alert(
+      showPopup(
         'Sport sans catégories',
         'Ce sport n\'a pas de catégories de poids officielles. Vous serez redirigé vers la configuration.',
-        [{ text: 'OK', onPress: () => router.replace('/setup') }]
+        [{ text: 'OK', style: 'primary', onPress: () => router.replace('/setup') }]
       );
       return;
     }
@@ -74,7 +75,7 @@ export default function WeightCategorySelectionScreen() {
 
   const handleContinue = async () => {
     if (!selectedCategory) {
-      Alert.alert('Sélection requise', 'Veuillez choisir une catégorie de poids.');
+      showPopup('Sélection requise', 'Veuillez choisir une catégorie de poids.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -88,7 +89,7 @@ export default function WeightCategorySelectionScreen() {
       router.replace('/setup');
     } catch (error) {
       logger.error('Erreur sauvegarde catégorie:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la catégorie.');
+      showPopup('Erreur', 'Impossible de sauvegarder la catégorie.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -222,6 +223,7 @@ export default function WeightCategorySelectionScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <PopupComponent />
     </View>
   );
 }

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  Alert,
   Platform,
   ActivityIndicator,
   RefreshControl,
@@ -15,6 +14,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
@@ -39,6 +39,9 @@ export default function PhotosScreen() {
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred: isScreenshotBlurred, screenshotDetected } = useSensitiveScreen();
+
+  // Custom popup
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,33 +69,31 @@ export default function PhotosScreen() {
     }
   }, []);
 
-  const handleDeletePhoto = useCallback(async (id: string) => {
-    Alert.alert(
+  const doDeletePhoto = useCallback(async (id: string) => {
+    const success = await deletePhotoFromStorage(id);
+    if (success) {
+      fetchPhotos();
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } else {
+      showPopup('Erreur', 'Impossible de supprimer la photo.');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    }
+  }, [fetchPhotos, showPopup]);
+
+  const handleDeletePhoto = useCallback((id: string) => {
+    showPopup(
       'Supprimer la photo',
-      'Êtes-vous sûr de vouloir supprimer cette photo ?',
+      'Es-tu sur de vouloir supprimer cette photo ?',
       [
         { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            const success = await deletePhotoFromStorage(id);
-            if (success) {
-              fetchPhotos();
-              if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              }
-            } else {
-              Alert.alert('Erreur', 'Impossible de supprimer la photo.');
-              if (Platform.OS !== 'web') {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              }
-            }
-          },
-        },
+        { text: 'Supprimer', style: 'destructive', onPress: () => doDeletePhoto(id) },
       ]
     );
-  }, [fetchPhotos]);
+  }, [showPopup, doDeletePhoto]);
 
   // Vérifier si le Privacy Challenge a déjà été montré
   const checkPrivacyChallenge = useCallback(async () => {
@@ -127,9 +128,9 @@ export default function PhotosScreen() {
     const mediaStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (cameraStatus.status !== 'granted' || mediaStatus.status !== 'granted') {
-      Alert.alert(
+      showPopup(
         'Permissions requises',
-        'Nous avons besoin d\'accéder à votre caméra et à votre galerie pour cette fonctionnalité.'
+        'Nous avons besoin d\'acceder a ta camera et ta galerie pour cette fonctionnalite.'
       );
       return false;
     }
@@ -230,12 +231,12 @@ export default function PhotosScreen() {
   };
 
   const showPhotoOptions = () => {
-    Alert.alert(
+    showPopup(
       'Ajouter une photo',
       'Choisissez une option',
       [
-        { text: 'Prendre une photo', onPress: takePhoto },
-        { text: 'Choisir depuis la galerie', onPress: pickImage },
+        { text: 'Camera', style: 'primary', onPress: takePhoto },
+        { text: 'Galerie', style: 'default', onPress: pickImage },
         { text: 'Annuler', style: 'cancel' },
       ]
     );
@@ -243,7 +244,7 @@ export default function PhotosScreen() {
 
   const openComparison = () => {
     if (photos.length < 2) {
-      Alert.alert('Pas assez de photos', 'Ajoutez au moins 2 photos pour utiliser la comparaison');
+      showPopup('Pas assez de photos', 'Ajoute au moins 2 photos pour utiliser la comparaison');
       return;
     }
     setComparisonVisible(true);
@@ -761,6 +762,8 @@ export default function PhotosScreen() {
           tint={isDark ? 'dark' : 'light'}
         />
       )}
+
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

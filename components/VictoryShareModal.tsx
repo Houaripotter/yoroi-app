@@ -12,10 +12,10 @@ import {
   Modal,
   Image,
   Dimensions,
-  Alert,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
@@ -75,6 +75,7 @@ export default function VictoryShareModal({
   clubName = '',
 }: VictoryShareModalProps) {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
 
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export default function VictoryShareModal({
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.');
+      showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -117,7 +118,7 @@ export default function VictoryShareModal({
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.');
+      showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -150,7 +151,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       console.error('Error sharing:', error);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +176,7 @@ export default function VictoryShareModal({
       }
     } catch (error) {
       console.error('Error saving:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsLoading(false);
     }
@@ -617,7 +618,7 @@ export default function VictoryShareModal({
                 >
                   <Text style={[
                     styles.templateBtnText,
-                    { color: selectedTemplate === key ? '#FFFFFF' : colors.textPrimary }
+                    { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
                   ]}>
                     {label}
                   </Text>
@@ -698,6 +699,7 @@ export default function VictoryShareModal({
               <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
             </TouchableOpacity>
         </>
+        <PopupComponent />
       </View>
     </Modal>
   );

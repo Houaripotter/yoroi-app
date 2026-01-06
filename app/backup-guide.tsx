@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import {
   Shield,
   Cloud,
@@ -41,6 +41,7 @@ interface Step {
 
 export default function BackupGuideScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -53,14 +54,14 @@ export default function BackupGuideScreen() {
       successHaptic();
     } catch (error) {
       logger.error('Export error:', error);
-      Alert.alert('Erreur', 'Impossible d\'exporter les donnees');
+      showPopup('Erreur', 'Impossible d\'exporter les donnees', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleImport = async () => {
-    Alert.alert(
+    showPopup(
       'Importer une sauvegarde',
       'Cette action remplacera tes donnees actuelles. Es-tu sur ?',
       [
@@ -75,7 +76,7 @@ export default function BackupGuideScreen() {
                 logger.info('Data imported:', data);
               });
               successHaptic();
-              Alert.alert('Succes', 'Donnees importees avec succes !');
+              showPopup('Succes', 'Donnees importees avec succes !', [{ text: 'OK', style: 'primary' }]);
             } catch (error) {
               logger.error('Import error:', error);
             } finally {
@@ -241,6 +242,7 @@ export default function BackupGuideScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

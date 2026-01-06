@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - INFIRMERIE
+// 🩺 YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
 import React, { useState, useCallback } from 'react';

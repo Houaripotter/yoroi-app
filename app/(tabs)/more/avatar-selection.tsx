@@ -1,2 +1,3 @@
-// Re-export du composant AvatarSelection pour navigation imbriquée
-export { default } from '@/app/avatar-selection';
+// Import et re-export du composant AvatarSelection pour navigation imbriquée
+import AvatarSelectionScreen from '@/app/avatar-selection';
+export default AvatarSelectionScreen;

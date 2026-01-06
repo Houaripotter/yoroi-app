@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Linking,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,7 @@ const CATEGORIES = [
 export default function IdeasScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [ideaText, setIdeaText] = useState('');
   const [category, setCategory] = useState<IdeaCategory>('feature');
@@ -61,7 +62,7 @@ export default function IdeasScreen() {
 
   const sendIdea = async () => {
     if (!ideaText.trim()) {
-      Alert.alert('Oups', 'Écris ton idée avant de l\'envoyer !');
+      showPopup('Oups', 'Écris ton idée avant de l\'envoyer !', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -102,7 +103,7 @@ export default function IdeasScreen() {
         safeOpenURL(webUrl);
       }
     }).catch(() => {
-      Alert.alert('Erreur', 'Impossible d\'ouvrir Instagram');
+      showPopup('Erreur', 'Impossible d\'ouvrir Instagram', [{ text: 'OK', style: 'primary' }]);
     });
   };
 
@@ -218,6 +219,7 @@ export default function IdeasScreen() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+        <PopupComponent />
       </View>
     </KeyboardAvoidingView>
   );

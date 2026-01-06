@@ -11,10 +11,10 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert,
   Modal,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -62,6 +62,7 @@ interface Plate {
 export default function QuickLogMuscuScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
   const [exerciseName, setExerciseName] = useState('');
@@ -218,12 +219,16 @@ export default function QuickLogMuscuScreen() {
 
   const handleSave = () => {
     if (!exerciseName.trim()) {
-      Alert.alert('Erreur', 'Entre le nom de l\'exercice');
+      showPopup('Erreur', 'Entre le nom de l\'exercice', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
     if (series.length === 0) {
-      Alert.alert('Erreur', 'Ajoute au moins une série');
+      showPopup('Erreur', 'Ajoute au moins une série', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -255,12 +260,13 @@ export default function QuickLogMuscuScreen() {
       });
     });
 
-    Alert.alert(
+    showPopup(
       'Séance enregistrée',
       `${series.length} série(s) de ${exerciseName}`,
       [
         {
           text: 'OK',
+          style: 'primary',
           onPress: () => router.back(),
         },
       ]
@@ -703,6 +709,7 @@ export default function QuickLogMuscuScreen() {
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </View>
   );
 }

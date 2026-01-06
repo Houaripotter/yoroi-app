@@ -10,9 +10,9 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
@@ -53,6 +53,7 @@ const METHODES: { value: CombatMethode; label: string }[] = [
 
 export default function AddCombatScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
   const competitionIdParam = params.competitionId as string | undefined;
 
@@ -92,7 +93,7 @@ export default function AddCombatScreen() {
 
   const handleSave = async () => {
     if (!adversaireNom.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir le nom de l\'adversaire');
+      showPopup('Erreur', 'Veuillez saisir le nom de l\'adversaire', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -118,7 +119,7 @@ export default function AddCombatScreen() {
       router.back();
     } catch (error) {
       logger.error('Error saving combat:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le combat');
+      showPopup('Erreur', 'Impossible de sauvegarder le combat', [{ text: 'OK', style: 'primary' }]);
       setIsSaving(false);
     }
   };
@@ -505,6 +506,7 @@ export default function AddCombatScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

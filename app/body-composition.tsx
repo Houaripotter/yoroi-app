@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -220,6 +220,7 @@ export default function BodyCompositionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Form state
   const [weight, setWeight] = useState('');
@@ -266,7 +267,7 @@ export default function BodyCompositionScreen() {
 
   const handleSave = async () => {
     if (!weight || !bodyFat) {
-      Alert.alert('Erreur', 'Le poids et le % de masse grasse sont requis');
+      showPopup('Erreur', 'Le poids et le % de masse grasse sont requis', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -288,14 +289,14 @@ export default function BodyCompositionScreen() {
       await addBodyComposition(data);
       successHaptic();
 
-      Alert.alert(
-        'Enregistré !',
-        'Ta composition corporelle a été sauvegardée.',
-        [{ text: 'OK', onPress: () => router.back() }]
+      showPopup(
+        'Enregistre !',
+        'Ta composition corporelle a ete sauvegardee.',
+        [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
       );
     } catch (error) {
       logger.error('Error saving:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showPopup('Erreur', 'Impossible de sauvegarder', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSubmitting(false);
     }
@@ -465,6 +466,7 @@ export default function BodyCompositionScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

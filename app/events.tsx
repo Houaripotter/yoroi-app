@@ -13,9 +13,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -70,6 +70,7 @@ const ITEM_HEIGHT = 160;
 
 export default function EventsScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [selectedLocation, setSelectedLocation] = useState<LocationFilter>('monde');
@@ -192,21 +193,27 @@ export default function EventsScreen() {
           newSet.delete(event.id);
           return newSet;
         });
-        Alert.alert('Retiré', `"${event.title.substring(0, 40)}..." retiré de votre planning`);
+        showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de votre planning`, [
+          { text: 'OK', style: 'primary' }
+        ]);
       } else {
         // Add to planning
         savedEvents.push(event);
         setSavedEventIds(prev => new Set(prev).add(event.id));
-        Alert.alert('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à votre planning`);
+        showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à votre planning`, [
+          { text: 'OK', style: 'primary' }
+        ]);
       }
 
       await AsyncStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(savedEvents));
       logger.info(`Event ${isAlreadySaved ? 'removed from' : 'added to'} planning:`, event.id);
     } catch (error) {
       logger.error('Error toggling event in planning:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'événement');
+      showPopup('Erreur', 'Impossible de sauvegarder l\'événement', [
+        { text: 'OK', style: 'primary' }
+      ]);
     }
-  }, []);
+  }, [showPopup]);
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
@@ -383,7 +390,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'monde' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'monde' ? '#000000' : colors.text },
             ]}
           >
             🌍 Monde ({eventCounts.monde})
@@ -406,7 +413,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'europe' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'europe' ? '#000000' : colors.text },
             ]}
           >
             🇪🇺 Europe ({eventCounts.europe})
@@ -429,7 +436,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'france' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'france' ? '#000000' : colors.text },
             ]}
           >
             🇫🇷 France ({eventCounts.france})
@@ -455,7 +462,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'all' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'all' ? '#000000' : colors.text },
             ]}
           >
             Tous ({eventCounts.all})
@@ -478,7 +485,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'combat' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'combat' ? '#000000' : colors.text },
             ]}
           >
             Combat ({eventCounts.combat})
@@ -501,7 +508,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'endurance' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'endurance' ? '#000000' : colors.text },
             ]}
           >
             Endurance ({eventCounts.endurance})
@@ -528,7 +535,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'all' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'all' ? '#000000' : colors.text },
               ]}
             >
               Tout Combat ({eventCounts.combat})
@@ -551,7 +558,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'jjb' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'jjb' ? '#000000' : colors.text },
               ]}
             >
               JJB ({eventCounts.jjb})
@@ -574,7 +581,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'grappling' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'grappling' ? '#000000' : colors.text },
               ]}
             >
               Grappling ({eventCounts.grappling})
@@ -601,7 +608,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'all' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'all' ? '#000000' : colors.text },
               ]}
             >
               Tout Endurance ({eventCounts.endurance})
@@ -624,7 +631,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'hyrox' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'hyrox' ? '#000000' : colors.text },
               ]}
             >
               Hyrox ({eventCounts.hyrox})
@@ -647,7 +654,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'marathon' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'marathon' ? '#000000' : colors.text },
               ]}
             >
               Marathon ({eventCounts.marathon})
@@ -670,7 +677,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'running' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'running' ? '#000000' : colors.text },
               ]}
             >
               Running ({eventCounts.running})
@@ -693,7 +700,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'trail' ? '#FFFFFF' : colors.text },
+                { color: selectedSportTag === 'trail' ? '#000000' : colors.text },
               ]}
             >
               Trail ({eventCounts.trail})
@@ -718,6 +725,7 @@ export default function EventsScreen() {
         getItemLayout={getItemLayout}
         updateCellsBatchingPeriod={50}
       />
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

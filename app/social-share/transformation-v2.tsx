@@ -10,7 +10,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Image,
   Dimensions,
@@ -37,6 +36,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { TransformationCardV2, TransformationStats } from '@/components/social-cards/TransformationCardV2';
 import { Photo, getPhotosFromStorage } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,6 +53,7 @@ type Step = 'select_before' | 'select_after' | 'preview';
 export default function TransformationV2Screen() {
   const { colors, isDark } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,7 +165,7 @@ export default function TransformationV2Screen() {
         setStep('preview');
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       } else {
-        Alert.alert('Photo identique', 'Choisis une photo différente pour la comparaison');
+        showPopup('Photo identique', 'Choisis une photo différente pour la comparaison', [{ text: 'OK', style: 'primary' }]);
       }
     }
   };
@@ -186,7 +187,7 @@ export default function TransformationV2Screen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -202,11 +203,11 @@ export default function TransformationV2Screen() {
         });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (error) {
       logger.error('Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsCapturing(false);
     }
@@ -219,15 +220,12 @@ export default function TransformationV2Screen() {
 
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Permission requise',
-          'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.'
-        );
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -239,10 +237,10 @@ export default function TransformationV2Screen() {
       await MediaLibrary.saveToLibraryAsync(uri);
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert('Sauvegardé', 'Ta transformation a été ajoutée à ta galerie.');
+      showPopup('Sauvegardé', 'Ta transformation a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsCapturing(false);
     }
@@ -569,6 +567,7 @@ export default function TransformationV2Screen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { X, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types/badges';
 import { BadgeItem } from './BadgeItem';
 import { useFocusEffect } from 'expo-router';
@@ -54,6 +54,7 @@ const calculateUnlockedBadges = async (): Promise<Set<BadgeId>> => {
 
 export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
   const { colors, themeName } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const isWellness = false;
 
   const [unlockedBadges, setUnlockedBadges] = useState<Set<BadgeId>>(new Set());
@@ -68,7 +69,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
       setUnlockedBadges(badges);
     } catch (error) {
       logger.error('❌ Erreur lors du calcul des badges:', error);
-      Alert.alert('Erreur', 'Impossible de charger les badges.');
+      showPopup('Erreur', 'Impossible de charger les badges.', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -233,6 +234,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
             </TouchableOpacity>
           </Modal>
         )}
+        <PopupComponent />
       </View>
     </Modal>
   );

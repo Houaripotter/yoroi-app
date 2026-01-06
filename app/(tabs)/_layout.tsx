@@ -23,12 +23,12 @@ const triggerHaptic = () => {
 };
 
 export default function TabLayout() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
-  // Couleurs inversées pour la tab bar (contraste avec l'interface)
-  const tabBarBg = isDark ? '#FFFFFF' : '#0a0a0a';
-  const tabBarInactiveColor = isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
-  const tabBarBorderColor = isDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+  // Tab bar TOUJOURS noire (mode clair et sombre)
+  const tabBarBg = '#0D0D0F';
+  const tabBarInactiveColor = 'rgba(255,255,255,0.45)';
+  const tabBarBorderColor = 'rgba(255,255,255,0.08)';
 
   // Bouton FAB Central avec glow accent
   const FABButton = () => (
@@ -40,7 +40,7 @@ export default function TabLayout() {
           shadowColor: colors.accent,
         }
       ]}>
-        <Plus size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
+        <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
       </View>
     </View>
   );
@@ -56,10 +56,10 @@ export default function TabLayout() {
           {
             backgroundColor: tabBarBg,
             borderTopColor: tabBarBorderColor,
-            // Glow effect en bas avec couleur accent en mode sombre
-            shadowColor: isDark ? colors.accent : 'transparent',
+            // Glow effect subtil avec couleur accent
+            shadowColor: colors.accent,
             shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: isDark ? 0.3 : 0,
+            shadowOpacity: 0.25,
             shadowRadius: 12,
           }
         ],

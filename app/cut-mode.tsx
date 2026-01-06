@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Animated,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -95,7 +95,8 @@ const WEIGHT_CATEGORIES = {
 export default function CutModeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  
+  const { showPopup, PopupComponent } = useCustomPopup();
+
   const [cutData, setCutData] = useState<CutModeData | null>(null);
   const [currentWeight, setCurrentWeight] = useState<number>(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -144,18 +145,18 @@ export default function CutModeScreen() {
   const startCut = async () => {
     const target = parseFloat(targetWeight);
     if (isNaN(target) || target <= 0) {
-      Alert.alert('Erreur', 'Entre un poids cible valide');
+      showPopup('Erreur', 'Entre un poids cible valide');
       return;
     }
 
     if (target >= currentWeight) {
-      Alert.alert('Attention', 'Le poids cible doit être inférieur à ton poids actuel');
+      showPopup('Attention', 'Le poids cible doit être inférieur à ton poids actuel');
       return;
     }
 
     const dateMatch = targetDate.match(/^(\d{1,2})\/(\d{1,2})$/);
     if (!dateMatch) {
-      Alert.alert('Erreur', 'Format de date invalide (JJ/MM)');
+      showPopup('Erreur', 'Format de date invalide (JJ/MM)');
       return;
     }
 
@@ -176,26 +177,35 @@ export default function CutModeScreen() {
       notes: '',
     };
 
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newCutData));
-    setCutData(newCutData);
-    setIsEditing(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newCutData));
+      setCutData(newCutData);
+      setIsEditing(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      logger.error('Erreur sauvegarde cut mode:', error);
+      showPopup('Erreur', 'Impossible de sauvegarder');
+    }
   };
 
   const stopCut = async () => {
-    Alert.alert(
+    showPopup(
       'Arrêter le Cut ?',
       'Es-tu sûr de vouloir arrêter ton cut ? Les données seront effacées.',
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: 'Annuler', style: 'secondary' },
         {
           text: 'Arrêter',
           style: 'destructive',
           onPress: async () => {
-            await AsyncStorage.removeItem(STORAGE_KEY);
-            setCutData(null);
-            progressAnim.setValue(0);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            try {
+              await AsyncStorage.removeItem(STORAGE_KEY);
+              setCutData(null);
+              progressAnim.setValue(0);
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            } catch (error) {
+              logger.error('Erreur arrêt cut mode:', error);
+            }
           },
         },
       ]
@@ -460,7 +470,7 @@ export default function CutModeScreen() {
                   >
                     <Text style={[
                       styles.sportTabText,
-                      { color: selectedSport === sport ? '#FFFFFF' : colors.textMuted },
+                      { color: selectedSport === sport ? '#000000' : colors.textMuted },
                     ]}>
                       {sport.toUpperCase()}
                     </Text>
@@ -502,6 +512,7 @@ export default function CutModeScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

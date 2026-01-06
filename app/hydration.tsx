@@ -9,9 +9,9 @@ import {
   Animated,
   Easing,
   TextInput,
-  Alert,
   Switch,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
@@ -51,6 +51,7 @@ interface DayData {
 export default function HydrationScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [currentAmount, setCurrentAmount] = useState(0);
   const [goal, setGoal] = useState(2.5);
@@ -204,7 +205,7 @@ export default function HydrationScreen() {
     });
 
     if (value) {
-      Alert.alert('✅ Activé', 'Tu recevras des rappels pour boire de l\'eau !');
+      showPopup('Activé', 'Tu recevras des rappels pour boire de l\'eau !');
     }
   };
 
@@ -235,7 +236,7 @@ export default function HydrationScreen() {
     });
     setShowNotificationSettings(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('✅ Enregistré', 'Tes rappels ont été programmés !');
+    showPopup('Enregistré', 'Tes rappels ont été programmés !');
   };
 
   const percentage = Math.min((currentAmount / goal) * 100, 100);
@@ -664,6 +665,7 @@ export default function HydrationScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

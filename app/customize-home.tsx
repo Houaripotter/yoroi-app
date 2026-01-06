@@ -8,9 +8,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ScrollView,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -70,6 +70,7 @@ const ICON_MAP: Record<string, any> = {
 export default function CustomizeHomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [sections, setSections] = useState<HomeSection[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
@@ -96,10 +97,10 @@ export default function CustomizeHomeScreen() {
   const toggleVisibility = (id: string) => {
     const section = sections.find(s => s.id === id);
     if (section?.mandatory) {
-      Alert.alert(
+      showPopup(
         'Section obligatoire',
         'Cette section ne peut pas être cachée car elle est essentielle à l\'interface.',
-        [{ text: 'OK' }]
+        [{ text: 'OK', style: 'primary' }]
       );
       return;
     }
@@ -164,13 +165,13 @@ export default function CustomizeHomeScreen() {
       router.back();
     } catch (error) {
       logger.error('[CUSTOMIZE] Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder.');
+      showPopup('Erreur', 'Impossible de sauvegarder.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
   // Reset
   const handleReset = () => {
-    Alert.alert(
+    showPopup(
       'Réinitialiser ?',
       'Cela restaurera la disposition par défaut de l\'accueil.',
       [
@@ -185,7 +186,7 @@ export default function CustomizeHomeScreen() {
               setSections(DEFAULT_HOME_SECTIONS);
               setHasChanges(true);
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de réinitialiser.');
+              showPopup('Erreur', 'Impossible de réinitialiser.', [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
@@ -320,6 +321,8 @@ export default function CustomizeHomeScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <PopupComponent />
     </View>
   );
 }

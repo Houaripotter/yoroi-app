@@ -1,2 +1,3 @@
-// Re-export du composant Badges pour navigation imbriquée
-export { default } from '@/app/badges';
+// Import et re-export du composant Badges pour navigation imbriquée
+import BadgesScreen from '@/app/badges';
+export default BadgesScreen;

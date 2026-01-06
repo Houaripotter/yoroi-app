@@ -9,7 +9,6 @@ import {
   Animated,
   PanResponder,
   Share,
-  Alert,
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +17,7 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { successHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
 
@@ -51,6 +51,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   style,
 }) => {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
   const sliderWidth = SCREEN_WIDTH - 40;
 
@@ -124,19 +125,20 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       // Capturer l'image
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
-        Alert.alert('Erreur', 'Impossible de capturer l\'image');
+        showPopup('Erreur', 'Impossible de capturer l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       successHaptic();
 
       // Options de partage
-      Alert.alert(
+      showPopup(
         'Partager',
         'Que veux-tu faire ?',
         [
           {
             text: 'Partager',
+            style: 'primary',
             onPress: async () => {
               if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(uri);
@@ -147,13 +149,14 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           },
           {
             text: 'Sauvegarder',
+            style: 'primary',
             onPress: async () => {
               const { status } = await MediaLibrary.requestPermissionsAsync();
               if (status === 'granted') {
                 await MediaLibrary.saveToLibraryAsync(uri);
-                Alert.alert('Sauvegardé !', 'Image enregistrée dans ta galerie');
+                showPopup('Sauvegarde !', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
               } else {
-                Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie');
+                showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
               }
             },
           },
@@ -162,7 +165,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       );
     } catch (error) {
       logger.error('Erreur capture:', error);
-      Alert.alert('Erreur', 'Impossible de créer l\'image');
+      showPopup('Erreur', 'Impossible de creer l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -307,6 +310,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           </Text>
         </TouchableOpacity>
       )}
+      <PopupComponent />
     </View>
   );
 };

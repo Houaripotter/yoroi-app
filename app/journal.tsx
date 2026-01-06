@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Animated,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   BookOpen,
@@ -127,6 +127,7 @@ const formatFullDate = (dateStr: string): string => {
 
 export default function JournalScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // State
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -183,7 +184,9 @@ export default function JournalScreen() {
 
   const saveEntry = async () => {
     if (!selectedMood) {
-      Alert.alert('Humeur requise', 'Selectionne comment tu te sens aujourd\'hui');
+      showPopup('Humeur requise', 'Selectionne comment tu te sens aujourd\'hui', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -220,17 +223,21 @@ export default function JournalScreen() {
         Animated.timing(saveAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
       ]).start();
 
-      Alert.alert('Enregistre !', 'Ton ressenti du jour est sauvegarde.');
+      showPopup('Enregistré !', 'Ton ressenti du jour est sauvegardé.', [
+        { text: 'OK', style: 'primary' }
+      ]);
     } catch (error) {
       logger.error('Erreur sauvegarde journal:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showPopup('Erreur', 'Impossible de sauvegarder', [
+        { text: 'OK', style: 'primary' }
+      ]);
     }
   };
 
   const deleteEntry = async (id: string) => {
-    Alert.alert(
+    showPopup(
       'Supprimer ?',
-      'Cette entree sera definitivement supprimee.',
+      'Cette entrée sera définitivement supprimée.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -708,6 +715,7 @@ export default function JournalScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

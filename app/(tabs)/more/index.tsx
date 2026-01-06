@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Linking,
   Dimensions,
   Modal,
   TextInput,
   Switch,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
+import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
@@ -63,6 +64,7 @@ import {
   RefreshCw,
   Moon,
   Trash2,
+  Search,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -111,78 +113,71 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: 'timer',
     label: 'Timer',
     Icon: Timer,
-    route: './timer',
+    route: '/timer',
     gradient: ['#4ECDC4', '#3DBDB5'],
   },
   {
     id: 'calculator',
     label: 'Calculateurs',
     Icon: Calculator,
-    route: './calculators',
+    route: '/calculators',
     gradient: ['#F59E0B', '#D97706'],
   },
   {
     id: 'fasting',
     label: 'Jeûne',
     Icon: Utensils,
-    route: './fasting',
+    route: '/fasting',
     gradient: ['#A855F7', '#9333EA'],
   },
   {
     id: 'training-journal',
     label: 'Carnet',
     Icon: BookOpen,
-    route: './training-journal',
+    route: '/training-journal',
     gradient: ['#F97316', '#EA580C'],
   },
   {
     id: 'lab',
     label: 'Savoir',
     Icon: FlaskConical,
-    route: './savoir',
+    route: '/savoir',
     gradient: ['#8B5CF6', '#7C3AED'],
   },
   {
     id: 'nutrition',
     label: 'Nutrition',
     Icon: Apple,
-    route: './nutrition-plan',
+    route: '/nutrition-plan',
     gradient: ['#10B981', '#059669'],
   },
   {
     id: 'share-hub',
     label: 'Partager',
     Icon: Share2,
-    route: './share-hub',
+    route: '/share-hub',
     gradient: ['#EC4899', '#BE185D'],
   },
   {
     id: 'profile',
     label: 'Profil',
     Icon: User,
-    route: './profile',
+    route: '/profile',
     gradient: ['#60A5FA', '#3B82F6'],
   },
   {
     id: 'photos',
     label: 'Photos',
     Icon: Camera,
-    route: './photos',
+    route: '/photos',
     gradient: ['#F472B6', '#EC4899'],
   },
   {
     id: 'appearance',
     label: 'Thèmes',
     Icon: Palette,
-    route: './appearance',
+    route: '/appearance',
     gradient: ['#A78BFA', '#8B5CF6'],
-  },
-  {
-    id: 'settings',
-    label: 'Réglages',
-    Icon: Settings,
-    route: './settings',
-    gradient: ['#6B7280', '#4B5563'],
   },
 ];
 
@@ -193,9 +188,9 @@ const PROFILE_ITEMS: MenuItem[] = [
   {
     id: 'profile',
     label: 'Mon Profil',
-    sublabel: 'Statistiques et progression',
+    sublabel: 'Informations personnelles',
     Icon: User,
-    route: './profile',
+    route: '/profile',
     iconColor: '#60A5FA',
     iconBg: '#60A5FA20',
   },
@@ -204,18 +199,27 @@ const PROFILE_ITEMS: MenuItem[] = [
     label: 'Transformation',
     sublabel: 'Photos avant/après',
     Icon: Camera,
-    route: './photos',
+    route: '/photos',
     iconColor: '#F472B6',
     iconBg: '#F472B620',
   },
   {
-    id: 'avatars',
-    label: 'Avatars',
-    sublabel: 'Débloque des guerriers',
+    id: 'dojo',
+    label: 'Mon Dojo',
+    sublabel: 'XP, badges, avatars et défis',
     Icon: Sparkles,
-    route: './avatar-selection',
+    route: '/gamification',
     iconColor: '#FBBF24',
     iconBg: '#FBBF2420',
+  },
+  {
+    id: 'competitor',
+    label: 'Espace Compétiteur',
+    sublabel: 'Compétitions, palmarès, cut',
+    Icon: Swords,
+    route: '/competitor-space',
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
   },
 ];
 
@@ -228,7 +232,7 @@ const TOOLS_ITEMS: MenuItem[] = [
     label: 'Timer',
     sublabel: 'Chrono musculation, combat, HIIT',
     Icon: Timer,
-    route: './timer',
+    route: '/timer',
     iconColor: '#4ECDC4',
     iconBg: '#4ECDC420',
   },
@@ -237,7 +241,7 @@ const TOOLS_ITEMS: MenuItem[] = [
     label: 'Calculateurs',
     sublabel: 'Macros, IMC, calories',
     Icon: Calculator,
-    route: './calculators',
+    route: '/calculators',
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
   },
@@ -246,25 +250,16 @@ const TOOLS_ITEMS: MenuItem[] = [
     label: 'Jeûne',
     sublabel: 'Intermittent, OMAD, Ramadan, Kippur',
     Icon: Utensils,
-    route: './fasting',
+    route: '/fasting',
     iconColor: '#A855F7',
     iconBg: '#A855F720',
-  },
-  {
-    id: 'training-journal',
-    label: 'Carnet d\'Entraînement',
-    sublabel: 'Suivi techniques et objectifs',
-    Icon: BookOpen,
-    route: './training-journal',
-    iconColor: '#F97316',
-    iconBg: '#F9731620',
   },
   {
     id: 'lab',
     label: 'Savoir',
     sublabel: 'Dormir moins bête · Peer-reviewed',
     Icon: FlaskConical,
-    route: './savoir',
+    route: '/savoir',
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
   },
@@ -273,7 +268,7 @@ const TOOLS_ITEMS: MenuItem[] = [
     label: 'Nutrition',
     sublabel: 'Plan personnalisé',
     Icon: Apple,
-    route: './nutrition-plan',
+    route: '/nutrition-plan',
     iconColor: '#10B981',
     iconBg: '#10B98120',
   },
@@ -282,7 +277,7 @@ const TOOLS_ITEMS: MenuItem[] = [
     label: 'Partager ma progression',
     sublabel: '6 cartes pour réseaux sociaux',
     Icon: Share2,
-    route: './share-hub',
+    route: '/share-hub',
     iconColor: '#EC4899',
     iconBg: '#EC489920',
   },
@@ -297,7 +292,7 @@ const COMMUNITY_ITEMS: MenuItem[] = [
     label: 'Clubs & Coach',
     sublabel: 'Partenaires et salles',
     Icon: Building2,
-    route: './partners',
+    route: '/partners',
     iconColor: '#818CF8',
     iconBg: '#818CF820',
   },
@@ -306,7 +301,7 @@ const COMMUNITY_ITEMS: MenuItem[] = [
     label: 'Pros de Santé',
     sublabel: 'Kinés, nutritionnistes',
     Icon: Heart,
-    route: './partners',
+    route: '/partners',
     iconColor: '#F87171',
     iconBg: '#F8717120',
   },
@@ -321,27 +316,27 @@ const DISPLAY_ITEMS: MenuItem[] = [
     label: 'Apparence',
     sublabel: 'Thèmes et personnalisation',
     Icon: Palette,
-    route: './appearance',
+    route: '/appearance',
     iconColor: '#A78BFA',
     iconBg: '#A78BFA20',
-  },
-  {
-    id: 'screenshot',
-    label: 'Mode Screenshot',
-    sublabel: 'Données de démo pour l\'App Store',
-    Icon: Camera,
-    route: './screenshot-mode',
-    iconColor: '#10B981',
-    iconBg: '#10B98120',
   },
   {
     id: 'preferences',
     label: 'Unités',
     sublabel: 'Kg/Lbs, Cm/Inches',
     Icon: Sliders,
-    route: './settings',
+    onPress: () => {},
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
+  },
+  {
+    id: 'screenshot-mode',
+    label: 'Mode Screenshot',
+    sublabel: 'Données démo pour captures',
+    Icon: Camera,
+    route: '/screenshot-mode',
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
   },
 ];
 
@@ -387,7 +382,7 @@ const HEALTH_ITEMS: MenuItem[] = [
     label: 'Apple Health',
     sublabel: 'Synchronise tes données santé',
     Icon: Watch,
-    route: './health-connect',
+    route: '/health-connect',
     iconColor: '#EC4899',
     iconBg: '#EC489920',
   },
@@ -470,7 +465,7 @@ const SUPPORT_ITEMS: MenuItem[] = [
     label: 'Boîte à idées',
     sublabel: 'Proposer des idées et signaler des bugs',
     Icon: Lightbulb,
-    route: './settings',
+    onPress: () => {},
     iconColor: '#FCD34D',
     iconBg: '#FCD34D20',
   },
@@ -494,10 +489,50 @@ const SUPPORT_ITEMS: MenuItem[] = [
   },
 ];
 
+// Liste complète des fonctionnalités pour la recherche
+const ALL_FEATURES: MenuItem[] = [
+  ...PROFILE_ITEMS,
+  ...TOOLS_ITEMS,
+  ...COMMUNITY_ITEMS,
+  ...DISPLAY_ITEMS,
+  ...REMINDERS_ITEMS,
+  ...HEALTH_ITEMS,
+  ...BACKUP_ITEMS,
+  ...SUPPORT_ITEMS,
+  ...SECURITY_ITEMS,
+];
+
+// Mots-clés supplémentaires pour améliorer la recherche
+const SEARCH_KEYWORDS: Record<string, string[]> = {
+  'timer': ['chrono', 'chronometre', 'temps', 'round', 'hiit', 'tabata'],
+  'calculator': ['macro', 'imc', 'calorie', 'poids', 'calcul'],
+  'fasting': ['jeune', 'intermittent', 'ramadan', 'kippur', 'omad'],
+  'profile': ['profil', 'info', 'personnel', 'moi'],
+  'photos': ['photo', 'transformation', 'avant', 'apres', 'image'],
+  'dojo': ['badge', 'xp', 'niveau', 'avatar', 'defi', 'gamification'],
+  'competitor': ['competition', 'palmares', 'cut', 'tournoi'],
+  'lab': ['savoir', 'science', 'article', 'apprendre'],
+  'nutrition': ['regime', 'alimentation', 'manger', 'repas'],
+  'share-hub': ['partage', 'social', 'instagram', 'story', 'carte'],
+  'appearance': ['theme', 'sombre', 'clair', 'couleur', 'dark', 'light'],
+  'health-sync': ['apple', 'health', 'sante', 'montre', 'watch'],
+  'export': ['sauvegarde', 'backup', 'json', 'csv'],
+  'import': ['restaurer', 'restore', 'backup'],
+  'rate': ['noter', 'avis', 'etoile', 'review'],
+  'contact': ['email', 'message', 'aide', 'support'],
+  'reset-all': ['supprimer', 'effacer', 'reinitialiser', 'donnees'],
+  'reminders': ['rappel', 'notification', 'alerte'],
+  'screenshot-mode': ['demo', 'capture', 'ecran'],
+};
+
 export default function MoreScreen() {
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
-  // Mode Compétiteur state
+  // Recherche
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Mode Competiteur state
   const [userModeSetting, setUserModeSetting] = useState<UserMode>('loisir');
   const [userSports, setUserSports] = useState<Sport[]>([]);
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
@@ -505,6 +540,88 @@ export default function MoreScreen() {
   const [sportsModalVisible, setSportsModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [upcomingModalVisible, setUpcomingModalVisible] = useState(false);
+  const [resetModalVisible, setResetModalVisible] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [unitsModalVisible, setUnitsModalVisible] = useState(false);
+  const [useMetric, setUseMetric] = useState(true);
+
+  // Mode Créateur secret
+  const [versionTapCount, setVersionTapCount] = useState(0);
+  const [showCreatorInput, setShowCreatorInput] = useState(false);
+  const [creatorCode, setCreatorCode] = useState('');
+  const [creatorModeActive, setCreatorModeActive] = useState(false);
+  const [lastTapTime, setLastTapTime] = useState(0);
+  const [longPressActive, setLongPressActive] = useState(false);
+  const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
+
+  // Clé secrète (obfusquée)
+  const getSecretKey = () => {
+    const k = [50, 48, 50, 50]; // ASCII codes
+    return k.map(c => String.fromCharCode(c)).join('');
+  };
+
+  const handleVersionTap = () => {
+    const now = Date.now();
+    // Reset si plus de 2 secondes entre les taps
+    if (now - lastTapTime > 2000) {
+      setVersionTapCount(1);
+    } else {
+      setVersionTapCount(prev => prev + 1);
+    }
+    setLastTapTime(now);
+
+    // Après 5 taps rapides, activer le long press
+    if (versionTapCount >= 4) {
+      setLongPressActive(true);
+      setTimeout(() => setLongPressActive(false), 3000);
+    }
+  };
+
+  const handleVersionLongPress = () => {
+    if (versionTapCount >= 5 || longPressActive) {
+      setShowCreatorInput(true);
+      setVersionTapCount(0);
+      setLongPressActive(false);
+    }
+  };
+
+  const handleCreatorCodeSubmit = async () => {
+    // Vérifier le code ET le geste secret (3 taps sur le titre)
+    if (creatorCode === getSecretKey() && secretGestureDone >= 3) {
+      setCreatorModeActive(true);
+      setShowCreatorInput(false);
+      setCreatorCode('');
+      setSecretGestureDone(0);
+      await AsyncStorage.setItem('@yoroi_creator_mode', 'true');
+      showPopup('Mode Createur', 'Active avec succes. Acces aux fonctionnalites avancees debloque.', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+      router.push('/screenshot-mode');
+    } else if (creatorCode === getSecretKey() && secretGestureDone < 3) {
+      // Code correct mais geste secret pas fait - message générique pour ne pas révéler le secret
+      showPopup('Erreur', 'Activation incomplete.', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+    } else {
+      showPopup('Code incorrect', 'Essayez encore.', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      setCreatorCode('');
+    }
+  };
+
+  const handleSecretGesture = () => {
+    setSecretGestureDone(prev => prev + 1);
+  };
+
+  const handleCloseCreatorModal = () => {
+    setShowCreatorInput(false);
+    setCreatorCode('');
+    setSecretGestureDone(0);
+  };
+
+  // Charger l'état du mode créateur
+  useEffect(() => {
+    const loadCreatorMode = async () => {
+      const mode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      setCreatorModeActive(mode === 'true');
+    };
+    loadCreatorMode();
+  }, []);
 
   // Load user settings on mount
   useEffect(() => {
@@ -544,11 +661,11 @@ export default function MoreScreen() {
   };
 
   const handleChangeUserMode = async (newMode: UserMode) => {
-    // Si on désactive le mode compétiteur, demander confirmation
+    // Si on desactive le mode competiteur, demander confirmation
     if (newMode === 'loisir' && userModeSetting === 'competiteur') {
-      Alert.alert(
-        'Désactiver le Mode Compétiteur ?',
-        'Êtes-vous sûr de vouloir revenir au Mode Loisir ? Vos sports et catégorie de poids seront conservés.',
+      showPopup(
+        'Desactiver le Mode Competiteur ?',
+        'Etes-vous sur de vouloir revenir au Mode Loisir ? Vos sports et categorie de poids seront conserves.',
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -559,62 +676,66 @@ export default function MoreScreen() {
                 await saveUserMode(newMode);
                 await saveUserSettings({ userMode: newMode });
                 setUserModeSetting(newMode);
-                Alert.alert('Mode changé', 'Vous êtes maintenant en Mode Loisir');
+                showPopup('Mode change', 'Vous etes maintenant en Mode Loisir', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
               } catch (error) {
                 logger.error('[MoreScreen] Error changing mode:', error);
-                Alert.alert('Erreur', 'Impossible de changer le mode');
+                showPopup('Erreur', 'Impossible de changer le mode', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
               }
             },
           },
-        ]
+        ],
+        <AlertTriangle size={32} color="#F59E0B" />
       );
     } else {
-      // Activation du mode compétiteur sans confirmation
+      // Activation du mode competiteur sans confirmation
       try {
         await saveUserMode(newMode);
         await saveUserSettings({ userMode: newMode });
         setUserModeSetting(newMode);
         if (newMode === 'competiteur') {
-          Alert.alert(
-            'Mode Compétiteur activé',
-            'Configurez vos sports et votre catégorie de poids ci-dessous'
+          showPopup(
+            'Mode Competiteur active',
+            'Configurez vos sports et votre categorie de poids ci-dessous',
+            [{ text: 'OK', style: 'primary' }],
+            <CheckCircle size={32} color="#10B981" />
           );
         }
       } catch (error) {
         logger.error('[MoreScreen] Error changing mode:', error);
-        Alert.alert('Erreur', 'Impossible de changer le mode');
+        showPopup('Erreur', 'Impossible de changer le mode', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
       }
     }
   };
 
   const handleShowTutorial = async () => {
-    Alert.alert(
+    showPopup(
       'Tutoriel',
-      'La fonctionnalité de tutoriel sera bientôt disponible.',
-      [{ text: 'OK' }]
+      'La fonctionnalite de tutoriel sera bientot disponible.',
+      [{ text: 'OK', style: 'primary' }]
     );
   };
 
   const handleExport = async () => {
-    Alert.alert(
-      'Exporter mes données',
+    showPopup(
+      'Exporter mes donnees',
       'Choisis le format d\'export',
       [
         { text: 'Annuler', style: 'cancel' },
-        { text: 'JSON (complet)', onPress: () => exportDataToJSON() },
-        { text: 'CSV (tableur)', onPress: () => exportDataToCSV() },
+        { text: 'JSON', style: 'default', onPress: () => exportDataToJSON() },
+        { text: 'CSV', style: 'primary', onPress: () => exportDataToCSV() },
       ]
     );
   };
 
   const handleImport = async () => {
-    Alert.alert(
-      'Importer des données',
-      'Cette action remplacera tes données actuelles.',
+    showPopup(
+      'Importer des donnees',
+      'Cette action remplacera tes donnees actuelles.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Choisir un fichier',
+          style: 'primary',
           onPress: async () => {
             try {
               await importAllData(async (data) => {
@@ -625,7 +746,8 @@ export default function MoreScreen() {
             }
           }
         },
-      ]
+      ],
+      <AlertTriangle size={32} color="#F59E0B" />
     );
   };
 
@@ -635,7 +757,7 @@ export default function MoreScreen() {
       if (isAvailable) {
         await StoreReview.requestReview();
       } else {
-        Alert.alert('Merci !', 'Tu peux nous noter sur l\'App Store');
+        showPopup('Merci !', 'Tu peux nous noter sur l\'App Store', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
       }
     } catch (e) {
       logger.info('Rate error:', e);
@@ -647,28 +769,30 @@ export default function MoreScreen() {
   };
 
   const handleExportPDF = async () => {
-    Alert.alert(
+    showPopup(
       'Rapport PDF',
-      'Choisis la période du rapport',
+      'Choisis la periode du rapport',
       [
         { text: 'Annuler', style: 'cancel' },
         {
-          text: '30 derniers jours',
+          text: '30 jours',
+          style: 'default',
           onPress: async () => {
             try {
               await generateProgressPDF('30j');
             } catch (e) {
-              Alert.alert('Erreur', 'Impossible de générer le PDF');
+              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
             }
           }
         },
         {
-          text: '90 derniers jours',
+          text: '90 jours',
+          style: 'primary',
           onPress: async () => {
             try {
               await generateProgressPDF('90j');
             } catch (e) {
-              Alert.alert('Erreur', 'Impossible de générer le PDF');
+              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
             }
           }
         },
@@ -676,62 +800,77 @@ export default function MoreScreen() {
     );
   };
 
-  // 🔒 SÉCURITÉ: Cette fonction a été désactivée pour forcer l'utilisation du modal sécurisé
-  // Pour réinitialiser les données, l'utilisateur doit aller dans Paramètres où il devra taper "SUPPRIMER"
-  const handleResetAll = async () => {
-    Alert.alert(
-      '⚠️ Réinitialiser les données',
-      'Pour des raisons de sécurité, la réinitialisation des données doit se faire depuis l\'écran Paramètres.\n\nVous devrez taper "SUPPRIMER" pour confirmer cette action irréversible.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Ouvrir Paramètres',
-          onPress: () => {
-            router.push('./settings');
-          }
-        },
-      ]
-    );
+  // 🔒 SÉCURITÉ: Modal sécurisé avec confirmation par texte
+  const handleResetAll = () => {
+    setResetConfirmText('');
+    setResetModalVisible(true);
+  };
+
+  // Helper pour vérifier le texte de confirmation (accepte variantes courantes)
+  const normalizedText = resetConfirmText.trim().toUpperCase();
+  const isResetConfirmed = normalizedText === 'SUPPRIMER' || normalizedText === 'SUPRIMER' || normalizedText === 'EFFACER' || normalizedText === 'OUI';
+
+  const confirmReset = async () => {
+    if (isResetConfirmed) {
+      try {
+        await resetAllData();
+        setResetModalVisible(false);
+        setResetConfirmText('');
+        showPopup(
+          'Donnees supprimees',
+          'Toutes vos donnees ont ete effacees. L\'application va redemarrer.',
+          [
+            {
+              text: 'OK',
+              style: 'primary',
+              onPress: () => router.replace('/onboarding'),
+            },
+          ],
+          <CheckCircle size={32} color="#10B981" />
+        );
+      } catch (error) {
+        logger.error('[MoreScreen] Error resetting data:', error);
+        showPopup('Erreur', 'Impossible de reinitialiser les donnees', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      }
+    } else {
+      showPopup('Erreur', 'Tapez "SUPPRIMER", "EFFACER" ou "OUI" pour confirmer', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+    }
   };
 
   const handleLanguage = () => {
-    Alert.alert(
+    showPopup(
       'Langue',
-      'La sélection de langue sera bientôt disponible.\n\nPour l\'instant, YOROI est disponible en français.',
-      [{ text: 'OK' }]
+      'La selection de langue sera bientot disponible.\n\nPour l\'instant, YOROI est disponible en francais.',
+      [{ text: 'OK', style: 'primary' }]
     );
   };
 
   const handleReminders = () => {
-    Alert.alert(
-      'Rappels',
-      'Les rappels personnalisés seront bientôt disponibles.\n\nTu pourras configurer des notifications pour :\n- Entraînements\n- Hydratation\n- Pesées\n- Et bien plus !',
-      [{ text: 'OK' }]
-    );
+    router.push('/notifications');
   };
 
   const handleSmartReminders = () => {
-    Alert.alert(
-      'Rappels Intelligents',
-      'Les rappels intelligents seront bientôt disponibles.\n\nIls s\'adapteront automatiquement à ton rythme et tes habitudes d\'entraînement.',
-      [{ text: 'OK' }]
-    );
+    router.push('/notifications');
   };
 
   const handleBriefing = () => {
-    Alert.alert(
-      'Briefing du Matin',
-      'Le briefing quotidien sera bientôt disponible.\n\nChaque matin, tu recevras un résumé personnalisé de tes objectifs et ta progression.',
-      [{ text: 'OK' }]
-    );
+    router.push('/notifications');
   };
 
   const handleICloudSync = () => {
-    Alert.alert(
+    showPopup(
       'Synchronisation iCloud',
-      'La synchronisation iCloud sera bientôt disponible.\n\nTes données seront automatiquement sauvegardées et synchronisées entre tous tes appareils Apple.',
-      [{ text: 'OK' }]
+      'La synchronisation iCloud sera bientot disponible.\n\nTes donnees seront automatiquement sauvegardees et synchronisees entre tous tes appareils Apple.',
+      [{ text: 'OK', style: 'primary' }]
     );
+  };
+
+  const handleUnits = () => {
+    setUnitsModalVisible(true);
+  };
+
+  const handleIdeas = () => {
+    Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Idée%20pour%20YOROI&body=Bonjour,%0A%0AVoici%20mon%20idée%20:%0A%0A');
   };
 
   const handleQuickAction = (action: QuickAction) => {
@@ -789,6 +928,14 @@ export default function MoreScreen() {
     }
     if (item.id === 'icloud-sync') {
       handleICloudSync();
+      return;
+    }
+    if (item.id === 'preferences') {
+      handleUnits();
+      return;
+    }
+    if (item.id === 'ideas') {
+      handleIdeas();
       return;
     }
 
@@ -866,6 +1013,69 @@ export default function MoreScreen() {
     </View>
   );
 
+  // Rendu d'une section en GRILLE 3x3
+  const renderGridSection = (title: string, items: MenuItem[]) => (
+    <View style={styles.sectionContainer}>
+      <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{title}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
+        {items.map((item) => {
+          const IconComponent = item.Icon;
+          const iconColor = item.iconColor || colors.textSecondary;
+          const iconBg = item.iconBg || colors.cardHover;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={{
+                width: '33.33%',
+                padding: 4,
+              }}
+              onPress={() => handleMenuItem(item)}
+              activeOpacity={0.7}
+            >
+              <View style={{
+                backgroundColor: colors.card,
+                borderRadius: 16,
+                padding: 10,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                minHeight: 105,
+              }}>
+                <View style={{
+                  backgroundColor: iconBg,
+                  borderRadius: 12,
+                  padding: 8,
+                  marginBottom: 6,
+                }}>
+                  <IconComponent size={22} color={iconColor} strokeWidth={2} />
+                </View>
+                <Text style={{
+                  fontSize: 12,
+                  fontWeight: '700',
+                  color: colors.textPrimary,
+                  textAlign: 'center',
+                }} numberOfLines={1}>
+                  {item.label}
+                </Text>
+                {item.sublabel && (
+                  <Text style={{
+                    fontSize: 9,
+                    color: colors.textMuted,
+                    textAlign: 'center',
+                    marginTop: 3,
+                    lineHeight: 11,
+                  }} numberOfLines={2}>
+                    {item.sublabel}
+                  </Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+
   return (
     <ScreenWrapper noPadding>
       <ScrollView
@@ -886,28 +1096,78 @@ export default function MoreScreen() {
           </Text>
         </View>
 
-        {/* QUICK ACTIONS GRID */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.quickActionsContainer}
-          style={styles.quickActionsScroll}
-        >
-          {QUICK_ACTIONS.map(renderQuickAction)}
-        </ScrollView>
+        {/* BARRE DE RECHERCHE */}
+        <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Search size={20} color={colors.textMuted} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.textPrimary }]}
+            placeholder="Rechercher une fonctionnalité..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <X size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
 
-        {/* SECTIONS */}
-        {renderSection('PROFIL', PROFILE_ITEMS)}
-        {renderSection('OUTILS', TOOLS_ITEMS)}
-        {renderSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
-        {renderSection('AFFICHAGE', DISPLAY_ITEMS)}
-        {renderSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
-        {renderSection('APPLE HEALTH', HEALTH_ITEMS)}
-        {renderSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
-        {renderSection('SUPPORT', SUPPORT_ITEMS)}
-        {renderSection('SÉCURITÉ', SECURITY_ITEMS)}
+        {/* RÉSULTATS DE RECHERCHE */}
+        {searchQuery.length > 0 ? (
+          <View style={styles.searchResults}>
+            {(() => {
+              const query = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+              const filtered = ALL_FEATURES.filter(item => {
+                const label = item.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const sublabel = (item.sublabel || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const keywords = SEARCH_KEYWORDS[item.id] || [];
 
-        {/* MODE UTILISATEUR */}
+                return label.includes(query) ||
+                       sublabel.includes(query) ||
+                       keywords.some(kw => kw.includes(query));
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <View style={[styles.noResultsContainer, { backgroundColor: colors.card }]}>
+                    <Search size={40} color={colors.textMuted} />
+                    <Text style={[styles.noResultsText, { color: colors.textMuted }]}>
+                      Aucun résultat pour "{searchQuery}"
+                    </Text>
+                  </View>
+                );
+              }
+
+              return (
+                <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  {filtered.map((item, index) => (
+                    <View key={item.id}>
+                      {renderMenuItem(item)}
+                      {index < filtered.length - 1 && (
+                        <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+                      )}
+                    </View>
+                  ))}
+                </View>
+              );
+            })()}
+          </View>
+        ) : (
+          <>
+            {/* QUICK ACTIONS GRID */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickActionsContainer}
+              style={styles.quickActionsScroll}
+            >
+              {QUICK_ACTIONS.map(renderQuickAction)}
+            </ScrollView>
+
+            {/* MODE UTILISATEUR - En haut */}
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MODE</Text>
           <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -947,10 +1207,10 @@ export default function MoreScreen() {
           </View>
         </View>
 
-        {/* MODE COMPÉTITEUR - PROFIL */}
+        {/* MODE COMPÉTITEUR - Config sports/catégorie */}
         {userModeSetting === 'competiteur' && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PROFIL COMPÉTITEUR</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CONFIG COMPÉTITEUR</Text>
             <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
               {/* Catégorie de poids */}
@@ -1003,31 +1263,17 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* MODE COMPÉTITEUR - Raccourci vers profil */}
-        {userModeSetting === 'competiteur' && (
-          <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ESPACE COMPÉTITEUR</Text>
-            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: colors.card }]}
-                onPress={() => router.push('./profile')}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuItemIcon, { backgroundColor: '#8B5CF620' }]}>
-                  <Swords size={20} color="#8B5CF6" strokeWidth={2} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                    Espace Compétiteur
-                  </Text>
-                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
-                    Compétitions, palmarès, cut, hydratation
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
+        {/* SECTIONS */}
+        {renderGridSection('PROFIL', PROFILE_ITEMS)}
+        {renderGridSection('OUTILS', TOOLS_ITEMS)}
+        {renderGridSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
+        {renderGridSection('AFFICHAGE', DISPLAY_ITEMS)}
+        {renderGridSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
+        {renderGridSection('APPLE HEALTH', HEALTH_ITEMS)}
+        {renderGridSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
+        {renderGridSection('SUPPORT', SUPPORT_ITEMS)}
+        {renderGridSection('SÉCURITÉ', SECURITY_ITEMS)}
+          </>
         )}
 
         {/* BIENTÔT DISPONIBLE */}
@@ -1074,6 +1320,35 @@ export default function MoreScreen() {
             <Heart size={14} color="#EF4444" fill="#EF4444" />
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>in France</Text>
           </View>
+
+          {/* Version - Secret tap zone */}
+          <TouchableOpacity
+            onPress={handleVersionTap}
+            onLongPress={handleVersionLongPress}
+            delayLongPress={800}
+            activeOpacity={1}
+          >
+            <Text style={{
+              color: longPressActive ? colors.accent : colors.textMuted,
+              fontSize: 12,
+              marginTop: 12,
+              textAlign: 'center'
+            }}>
+              YOROI v1.0.0
+            </Text>
+          </TouchableOpacity>
+
+          {/* Mode Créateur activé - accès rapide */}
+          {creatorModeActive && (
+            <TouchableOpacity
+              onPress={() => router.push('/screenshot-mode')}
+              style={{ marginTop: 8 }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 11, textAlign: 'center' }}>
+                ⚙️ Mode Créateur actif
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={{ height: 120 }} />
@@ -1135,7 +1410,7 @@ export default function MoreScreen() {
               onPress={async () => {
                 await saveUserSettings({ userSports });
                 setSportsModalVisible(false);
-                Alert.alert('Enregistré', `${userSports.length} sport(s) sélectionné(s)`);
+                showPopup('Enregistre', `${userSports.length} sport(s) selectionne(s)`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
               }}
             >
               <Text style={styles.modalButtonText}>Enregistrer</Text>
@@ -1311,7 +1586,7 @@ export default function MoreScreen() {
                 if (selectedWeightCategory) {
                   await saveUserSettings({ selectedWeightCategory, userGender });
                   setCategoryModalVisible(false);
-                  Alert.alert('Enregistré', `Catégorie: ${selectedWeightCategory.name}`);
+                  showPopup('Enregistre', `Categorie: ${selectedWeightCategory.name}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
                 }
               }}
               disabled={!selectedWeightCategory}
@@ -1396,23 +1671,288 @@ export default function MoreScreen() {
                 style={[styles.feedbackButton, { backgroundColor: colors.accent }]}
                 onPress={() => {
                   setUpcomingModalVisible(false);
-                  router.push('./settings');
-                  // On pourrait aussi ouvrir directement le lien de feedback
-                  // Linking.openURL('mailto:yoroiapp@hotmail.com');
+                  Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Idée%20pour%20YOROI');
                 }}
               >
                 <MessageCircle size={18} color="#FFF" />
-                <Text style={styles.feedbackButtonText}>Ouvrir la Boite a Outils</Text>
+                <Text style={styles.feedbackButtonText}>Envoyer une idée</Text>
               </TouchableOpacity>
 
               <Text style={[styles.upcomingNote, { color: colors.textMuted }]}>
-                N'hesite pas a nous contacter via les parametres pour suggerer des ameliorations !
+                N'hésite pas à nous contacter pour suggérer des améliorations !
               </Text>
             </ScrollView>
           </View>
         </View>
       </Modal>
 
+      {/* Modal - Réinitialisation Sécurisée */}
+      <Modal
+        visible={resetModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setResetModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                Réinitialiser les données
+              </Text>
+              <TouchableOpacity onPress={() => setResetModalVisible(false)}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={[styles.warningCard, { backgroundColor: '#EF444420', borderColor: '#EF4444' }]}>
+                <Trash2 size={32} color="#EF4444" />
+                <Text style={[styles.warningTitle, { color: '#EF4444' }]}>
+                  Action irréversible
+                </Text>
+                <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+                  Cette action supprimera définitivement toutes vos données :
+                </Text>
+                <View style={styles.warningList}>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Poids et mesures</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Photos de transformation</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Entraînements et planning</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Badges et progression</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Tous les paramètres</Text>
+                </View>
+              </View>
+
+              <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>
+                Pour confirmer, tapez <Text style={{ fontWeight: '800', color: '#EF4444' }}>OUI</Text> ci-dessous :
+              </Text>
+
+              <TextInput
+                style={[
+                  styles.confirmInput,
+                  {
+                    backgroundColor: colors.backgroundElevated,
+                    borderColor: isResetConfirmed ? '#10B981' : colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                value={resetConfirmText}
+                onChangeText={setResetConfirmText}
+                placeholder="Tapez OUI"
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.resetButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.resetCancelButton, { backgroundColor: colors.backgroundElevated }]}
+                onPress={() => {
+                  setResetModalVisible(false);
+                  setResetConfirmText('');
+                }}
+              >
+                <Text style={[styles.resetCancelButtonText, { color: colors.textPrimary }]}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.resetConfirmButton,
+                  {
+                    backgroundColor: isResetConfirmed ? '#EF4444' : colors.backgroundElevated,
+                    opacity: isResetConfirmed ? 1 : 0.5,
+                  },
+                ]}
+                onPress={confirmReset}
+                disabled={!isResetConfirmed}
+              >
+                <Trash2 size={18} color={isResetConfirmed ? '#FFF' : colors.textMuted} />
+                <Text
+                  style={[
+                    styles.resetConfirmButtonText,
+                    { color: isResetConfirmed ? '#FFF' : colors.textMuted },
+                  ]}
+                >
+                  Supprimer tout
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal - Unités */}
+      <Modal
+        visible={unitsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setUnitsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                Unités de mesure
+              </Text>
+              <TouchableOpacity onPress={() => setUnitsModalVisible(false)}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.unitsOptionContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.unitsOption,
+                    {
+                      backgroundColor: useMetric ? colors.accent + '20' : colors.backgroundElevated,
+                      borderColor: useMetric ? colors.accent : colors.border,
+                    },
+                  ]}
+                  onPress={() => setUseMetric(true)}
+                >
+                  <View style={styles.unitsOptionContent}>
+                    <Ruler size={24} color={useMetric ? colors.accent : colors.textMuted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.unitsOptionTitle, { color: colors.textPrimary }]}>
+                        Métrique
+                      </Text>
+                      <Text style={[styles.unitsOptionDesc, { color: colors.textMuted }]}>
+                        Kilogrammes (kg) et Centimètres (cm)
+                      </Text>
+                    </View>
+                    {useMetric && (
+                      <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
+                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.unitsOption,
+                    {
+                      backgroundColor: !useMetric ? colors.accent + '20' : colors.backgroundElevated,
+                      borderColor: !useMetric ? colors.accent : colors.border,
+                    },
+                  ]}
+                  onPress={() => setUseMetric(false)}
+                >
+                  <View style={styles.unitsOptionContent}>
+                    <Ruler size={24} color={!useMetric ? colors.accent : colors.textMuted} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.unitsOptionTitle, { color: colors.textPrimary }]}>
+                        Impérial
+                      </Text>
+                      <Text style={[styles.unitsOptionDesc, { color: colors.textMuted }]}>
+                        Livres (lbs) et Pouces (inches)
+                      </Text>
+                    </View>
+                    {!useMetric && (
+                      <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
+                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: colors.accent }]}
+              onPress={async () => {
+                await saveUserSettings({ useMetric });
+                setUnitsModalVisible(false);
+                showPopup('Enregistre', `Unites : ${useMetric ? 'Metrique (kg/cm)' : 'Imperial (lbs/in)'}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+              }}
+            >
+              <Text style={styles.modalButtonText}>Enregistrer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal - Mode Créateur Secret */}
+      <Modal
+        visible={showCreatorInput}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseCreatorModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              {/* Titre tappable - geste secret */}
+              <TouchableOpacity onPress={handleSecretGesture} activeOpacity={1}>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                  Activation
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleCloseCreatorModal}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={[styles.creatorDescription, { color: colors.textSecondary }]}>
+                Entrez le code d'activation
+              </Text>
+
+              <TextInput
+                style={[
+                  styles.creatorInput,
+                  {
+                    backgroundColor: colors.backgroundElevated,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                value={creatorCode}
+                onChangeText={setCreatorCode}
+                placeholder="••••"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                maxLength={4}
+                secureTextEntry
+                textAlign="center"
+              />
+            </View>
+
+            <View style={styles.creatorButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.creatorCancelButton, { backgroundColor: colors.backgroundElevated }]}
+                onPress={handleCloseCreatorModal}
+              >
+                <Text style={[styles.creatorCancelButtonText, { color: colors.textPrimary }]}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.creatorConfirmButton,
+                  {
+                    backgroundColor: creatorCode.length === 4 ? colors.accent : colors.backgroundElevated,
+                    opacity: creatorCode.length === 4 ? 1 : 0.5,
+                  },
+                ]}
+                onPress={handleCreatorCodeSubmit}
+                disabled={creatorCode.length !== 4}
+              >
+                <Text
+                  style={[
+                    styles.creatorConfirmButtonText,
+                    { color: creatorCode.length === 4 ? '#FFF' : colors.textMuted },
+                  ]}
+                >
+                  Valider
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <PopupComponent />
     </ScreenWrapper>
   );
 }
@@ -1454,6 +1994,38 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     marginTop: 4,
+  },
+
+  // SEARCH
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 20,
+    gap: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  searchResults: {
+    marginBottom: 16,
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    borderRadius: 16,
+    gap: 12,
+  },
+  noResultsText: {
+    fontSize: 15,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 
   // QUICK ACTIONS
@@ -1782,5 +2354,140 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 15,
     textAlign: 'center',
+  },
+
+  // Reset Modal
+  warningCard: {
+    alignItems: 'center',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginBottom: 20,
+  },
+  warningTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  warningList: {
+    alignSelf: 'stretch',
+    paddingLeft: 8,
+  },
+  warningListItem: {
+    fontSize: 13,
+    marginVertical: 2,
+  },
+  confirmLabel: {
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  confirmInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  resetButtonsContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  resetCancelButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  resetCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  resetConfirmButton: {
+    flex: 1,
+    flexDirection: 'row',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  resetConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // Units Modal
+  unitsOptionContainer: {
+    gap: 12,
+  },
+  unitsOption: {
+    borderWidth: 2,
+    borderRadius: 16,
+    padding: 16,
+  },
+  unitsOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  unitsOptionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  unitsOptionDesc: {
+    fontSize: 13,
+  },
+
+  // Creator Mode Modal
+  creatorDescription: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  creatorInput: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: 8,
+  },
+  creatorButtonsContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  creatorCancelButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  creatorCancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  creatorConfirmButton: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  creatorConfirmButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

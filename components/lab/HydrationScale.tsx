@@ -90,11 +90,11 @@ export const HydrationScale: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <Droplet size={20} color="#3B82F6" strokeWidth={2} />
-        <Text style={styles.title}>ÉCHELLE DE DIAGNOSTIC URINAIRE</Text>
+        <Text style={styles.title}>ÉCHELLE D'HYDRATATION</Text>
       </View>
 
       <Text style={styles.subtitle}>
-        Vérifiez la couleur de vos urines pour évaluer votre niveau d'hydratation
+        Vérifie la couleur de tes urines pour évaluer ton niveau d'hydratation
       </Text>
 
       {/* Échelle des niveaux */}
@@ -132,12 +132,12 @@ export const HydrationScale: React.FC = () => {
 
       {/* Note scientifique */}
       <View style={styles.noteContainer}>
-        <Text style={styles.noteTitle}>NOTE CLINIQUE</Text>
+        <Text style={styles.noteTitle}>À SAVOIR</Text>
         <Text style={styles.noteText}>
-          La couleur des urines est un indicateur fiable de l'état d'hydratation
-          (Armstrong et al., 1994). Une couleur jaune pâle (niveaux 1-3) indique une
-          hydratation optimale. Au-delà du niveau 5, les performances physiques et
-          cognitives sont significativement altérées.
+          La couleur des urines est un indicateur simple de ton état d'hydratation.
+          Une couleur jaune pâle (niveaux 1-3) indique une bonne hydratation.
+          Au-delà du niveau 5, tes performances physiques et ta concentration
+          peuvent être affectées.
         </Text>
       </View>
 

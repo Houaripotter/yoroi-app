@@ -90,7 +90,7 @@ export default function StatsScreen() {
     { key: 'mesures', label: 'Mesures', icon: Ruler, color: '#0EA5E9' },
     { key: 'vitalite', label: 'Vitalite', icon: Heart, color: '#EF4444' },
     { key: 'performance', label: 'Perf', icon: Activity, color: '#EC4899' },
-    { key: 'sante', label: 'Sante', icon: Watch, color: '#EC4899' },
+    { key: 'sante', label: 'Montre', icon: Watch, color: '#EC4899' },
   ];
 
   useFocusEffect(

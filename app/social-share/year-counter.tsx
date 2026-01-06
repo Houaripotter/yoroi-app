@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -26,6 +25,7 @@ import { YearCounterCard } from '@/components/social-cards/YearCounterCard';
 import { useYearStats } from '@/lib/social-cards/useYearStats';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -34,6 +34,7 @@ import logger from '@/lib/security/logger';
 export default function YearCounterScreen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format, setFormat] = useState<'stories' | 'square'>('stories');
   const [isSaving, setIsSaving] = useState(false);
@@ -67,7 +68,7 @@ export default function YearCounterScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -80,7 +81,7 @@ export default function YearCounterScreen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -91,10 +92,10 @@ export default function YearCounterScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegardé !', 'Year Counter enregistré dans ta galerie !');
+      showPopup('Sauvegardé !', 'Year Counter enregistré dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
     } catch (err) {
       logger.error('Erreur sauvegarde:', err);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -108,7 +109,7 @@ export default function YearCounterScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -125,11 +126,11 @@ export default function YearCounterScreen() {
           dialogTitle: 'Partager mon Year Counter Yoroi',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (err) {
       logger.error('Erreur partage:', err);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -311,6 +312,7 @@ export default function YearCounterScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

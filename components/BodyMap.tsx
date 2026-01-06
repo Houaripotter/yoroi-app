@@ -3,14 +3,13 @@
 // ============================================
 // 70 zones anatomiques pour sportifs
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +25,7 @@ import {
   Copy,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { BodyZone as BodyZoneData } from '@/constants/bodyZones';
 
@@ -193,8 +193,9 @@ const FORCED_ASPECT_RATIO = 0.45;
 // COMPOSANT PRINCIPAL
 // ============================================
 
-export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = [], isCreatorMode = false }) => {
+export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones = [], isCreatorMode = false }) => {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [view, setView] = useState<'front' | 'back'>('front');
   const [zones, setZones] = useState(INITIAL_DATA);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -205,8 +206,8 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
   const isUpperBody = selectedZone ? selectedZone.y < 50 : true;
 
   const imageSource = view === 'front'
-    ? require('@/assets/infirmerie/body_front.png')
-    : require('@/assets/infirmerie/body_back.png');
+    ? require('@/assets/body-images/body_front.png')
+    : require('@/assets/body-images/body_back.png');
 
   // Fonctions d'édition
   const updateZone = (updates: Partial<BodyZone>) => {
@@ -264,7 +265,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
 
     await Clipboard.setStringAsync(code);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('✅ Copié !', `${activeZones.length} zones copiées dans le presse-papier`);
+    showPopup('Copie !', `${activeZones.length} zones copiees dans le presse-papier`, [{ text: 'OK', style: 'primary' }]);
   };
 
   const copySelectedZone = async () => {
@@ -272,7 +273,7 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
     const code = `{ id: '${selectedZone.id}', label: '${selectedZone.label}', x: ${selectedZone.x}, y: ${selectedZone.y}, w: ${selectedZone.w}, h: ${selectedZone.h} }`;
     await Clipboard.setStringAsync(code);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('✅ Copié !', `Zone "${selectedZone.label}" copiée`);
+    showPopup('Copie !', `Zone "${selectedZone.label}" copiee`, [{ text: 'OK', style: 'primary' }]);
   };
 
   return (
@@ -487,18 +488,19 @@ export const BodyMap: React.FC<BodyMapProps> = ({ onZonePress, injuredZones = []
       {debug && !selectedZone && (
         <View style={[styles.helpBox, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.helpText, { color: colors.textSecondary }]}>
-            👆 Touche une zone pour la modifier
+            Touche une zone pour la modifier
           </Text>
           <TouchableOpacity onPress={copyAllZones} style={styles.copyAllBtn}>
             <Copy size={18} color="white" />
-            <Text style={styles.copyAllBtnText}>📋 COPIER TOUTES LES ZONES ({activeZones.length})</Text>
+            <Text style={styles.copyAllBtnText}>COPIER TOUTES LES ZONES ({activeZones.length})</Text>
           </TouchableOpacity>
         </View>
       )}
 
+      <PopupComponent />
     </View>
   );
-};
+});
 
 // ============================================
 // STYLES

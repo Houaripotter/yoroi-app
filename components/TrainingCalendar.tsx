@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ interface TrainingCalendarProps {
   onAddTraining?: (date: string) => void;
 }
 
-export function TrainingCalendar({
+export const TrainingCalendar = memo(function TrainingCalendar({
   workouts,
   clubs,
   onDayPress,
@@ -234,7 +234,7 @@ export function TrainingCalendar({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

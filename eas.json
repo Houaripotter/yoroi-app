@@ -18,10 +18,19 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "credentialsSource": "remote"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "houari24@example.com",
+        "ascAppId": "6745892310",
+        "appleTeamId": "LTMAN6D7GZ"
+      }
+    }
   }
 }

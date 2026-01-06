@@ -68,7 +68,7 @@ import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
 import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings, Profile, Weight, Training } from '@/lib/database';
 import { getLatestBodyComposition } from '@/lib/bodyComposition';
-import { getDailyQuote, Citation } from '@/lib/citations';
+import { getSessionQuote, Citation } from '@/lib/citations';
 import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
 import AvatarDisplay from '@/components/AvatarDisplay';
@@ -166,6 +166,9 @@ export default function HomeScreen() {
   // État readiness pour l'énergie (calculé depuis sommeil, hydratation, charge, streak)
   const [readinessScore, setReadinessScore] = useState<number>(0);
   const [batteryFillPercent, setBatteryFillPercent] = useState<number>(0);
+
+  // Mode Screenshot pour les données de démo
+  const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
   const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Animation de remplissage de la batterie au focus
@@ -325,7 +328,7 @@ export default function HomeScreen() {
         getLatestWeight(),
         getWeights(30),
         calculateStreak(),
-        getDailyQuote(),
+        getSessionQuote(),
         getTrainings(),
         getUserMode(),
         getSleepStats(),
@@ -353,6 +356,10 @@ export default function HomeScreen() {
       const bodyComp = await getLatestBodyComposition();
       setBodyComposition(bodyComp);
 
+      // Vérifier le mode screenshot
+      const screenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
+      setIsScreenshotMode(screenshotMode === 'true');
+
       const goal = await getSleepGoal();
       setSleepGoal(goal);
 
@@ -372,10 +379,8 @@ export default function HomeScreen() {
       // Calculer le score de readiness basé sur : sommeil, charge, hydratation, streak
       try {
         const readiness = await calculateReadinessScore(streakDays);
-        if (__DEV__) console.log('🔋 Score Energie calculé:', readiness.score, '- Facteurs:', readiness.factors);
         setReadinessScore(Math.round(readiness.score));
-      } catch (error) {
-        if (__DEV__) console.log('🔋 Erreur calcul readiness, valeur par défaut 50%');
+      } catch {
         setReadinessScore(50);
       }
     } catch (error) {
@@ -393,7 +398,7 @@ export default function HomeScreen() {
   // Rotation automatique des citations toutes les 5 minutes
   useEffect(() => {
     const interval = setInterval(async () => {
-      const newQuote = await getDailyQuote();
+      const newQuote = await getSessionQuote();
       setDailyQuote(newQuote);
     }, 5 * 60 * 1000); // 5 minutes
 
@@ -609,7 +614,8 @@ export default function HomeScreen() {
   }, [homeSections]);
 
   // Fonction pour rendre chaque section dans l'ordre personnalisé
-  const renderDynamicSection = (sectionId: string) => {
+  // PERF: useCallback pour éviter les re-créations à chaque render
+  const renderDynamicSection = useCallback((sectionId: string) => {
     if (!isSectionVisible(sectionId)) return null;
 
     switch (sectionId) {
@@ -681,9 +687,9 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-              <Trophy size={14} color={rank.color} />
+              <Trophy size={14} color={rank?.color} />
               <View style={styles.statTextColumn}>
-                <AnimatedRank rank={rank.name.split(' ')[0]} color={rank.color} style={styles.statValueCompactHorizontal} delay={300} />
+                <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>rang</Text>
               </View>
             </TouchableOpacity>
@@ -734,11 +740,17 @@ export default function HomeScreen() {
                 level={loadStats?.riskLevel || 'optimal'}
                 totalLoad={loadStats?.totalLoad || 0}
                 maxLoad={2000}
-                sessions={trainings.filter(t => {
+                sessions={(() => {
+                  // Compter les jours uniques avec au moins une séance (pas le total de séances)
                   const weekAgo = new Date();
                   weekAgo.setDate(weekAgo.getDate() - 7);
-                  return new Date(t.date) >= weekAgo;
-                }).length}
+                  const uniqueDays = new Set(
+                    trainings
+                      .filter(t => new Date(t.date) >= weekAgo)
+                      .map(t => t.date.split('T')[0]) // Extraire juste la date (YYYY-MM-DD)
+                  );
+                  return uniqueDays.size;
+                })()}
               />
             </TouchableOpacity>
           </View>
@@ -798,7 +810,7 @@ export default function HomeScreen() {
         return (
           <AnimatedCard index={3} key={sectionId}>
             <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
-              <HealthspanChart />
+              <HealthspanChart screenshotMode={isScreenshotMode} />
             </TouchableOpacity>
           </AnimatedCard>
         );
@@ -821,10 +833,10 @@ export default function HomeScreen() {
                   shadowRadius: 8,
                   elevation: 6,
                 }]}>
-                  <Text style={styles.gradeText}>{weeklyReport.verdict.grade}</Text>
+                  <Text style={styles.gradeText}>{weeklyReport?.verdict?.grade ?? '-'}</Text>
                 </View>
                 <View style={styles.reportInfo}>
-                  <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport.verdict.title}</Text>
+                  <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport?.verdict?.title ?? 'Rapport'}</Text>
                   <View style={styles.scoreContainer}>
                     <Text style={[styles.reportScore, { color: colors.textPrimary }]}>
                       Score: <Text style={{ fontWeight: '900', fontSize: 16 }}>{weeklyReport.overallScore}</Text>/100
@@ -1166,7 +1178,7 @@ export default function HomeScreen() {
       default:
         return null;
     }
-  };
+  }, [colors, profile, dailyQuote, mode, hydration, sleepStats, bodyComposition, batteryFillPercent, isSectionVisible]);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -1276,9 +1288,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   logo: { width: 70, height: 70, borderRadius: 14 },
   profilePhotoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 2,
     justifyContent: 'center',
@@ -1287,20 +1299,20 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   profilePhotoImage: {
-    width: 70,
-    height: 70,
+    width: 80,
+    height: 80,
   },
   headerText: { flex: 1, marginLeft: 12 },
   greeting: { fontSize: 14, fontWeight: '600' },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
   avatarBtn: {
-    width: 70,
-    height: 70,
+    width: 75,
+    height: 95,
   },
   avatarContainer: {
-    height: 70,
-    width: 70,
+    height: 95,
+    width: 75,
     overflow: 'visible',
   },
 
@@ -1315,7 +1327,7 @@ const styles = StyleSheet.create({
   decorEmoji: { fontSize: 12 },
   decorTorii: { fontSize: 14 },
 
-  // Ligne de 5 actions : Infirmerie, Timer, Compétiteur?, Photo, Savoir
+  // Ligne de 5 actions : Blessures, Timer, Compétiteur?, Photo, Savoir
   actionsRow5: {
     flexDirection: 'row',
     gap: 6,

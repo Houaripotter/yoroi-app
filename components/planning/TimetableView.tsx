@@ -8,8 +8,8 @@ import {
   Image,
   Modal,
   Dimensions,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useTheme } from '@/lib/ThemeContext';
 import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar } from 'lucide-react-native';
 import { useWeekSchedule } from '@/hooks/useWeekSchedule';
@@ -36,6 +36,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   refreshTrigger,
 }) => {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const { weekSchedule, loading, refresh } = useWeekSchedule();
 
   // Calculer les dates de la semaine courante
@@ -184,10 +185,10 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                           // Marquer manuellement en repos (seulement si pas déjà en repos auto)
                           setManualRestDays(prev => [...prev, day.id]);
                           logger.info('🌙 Marquer TOUTE LA JOURNÉE en repos pour', day.label);
-                          Alert.alert(
-                            '🌙 Jour de repos',
+                          showPopup(
+                            'Jour de repos',
                             `Toute la journée ${day.label} marquée en repos`,
-                            [{ text: 'OK' }]
+                            [{ text: 'OK', style: 'primary' }]
                           );
                         }
                       }}
@@ -237,10 +238,10 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                         onPress={() => {
                           if (isRest) {
                             // Si jour en repos, afficher un message
-                            Alert.alert(
-                              '🌙 Jour de repos',
+                            showPopup(
+                              'Jour de repos',
                               `${day.label} est marqué comme jour de repos. Cliquez sur la lune en haut pour retirer le repos.`,
-                              [{ text: 'OK' }]
+                              [{ text: 'OK', style: 'primary' }]
                             );
                             return;
                           }
@@ -671,10 +672,10 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                 onPress={() => {
                   logger.info('🌙 Marquer repos pour', showAddMenu?.dayLabel, showAddMenu?.slotId);
                   // TODO: Implémenter la fonctionnalité repos dans la base de données
-                  Alert.alert(
-                    '🌙 Repos',
+                  showPopup(
+                    'Repos',
                     `Jour de repos marqué pour ${showAddMenu?.dayLabel} ${showAddMenu?.slotId}`,
-                    [{ text: 'OK' }]
+                    [{ text: 'OK', style: 'primary' }]
                   );
                   setShowAddMenu(null);
                 }}
@@ -788,6 +789,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </View>
   );
 };

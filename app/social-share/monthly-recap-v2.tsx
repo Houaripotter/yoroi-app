@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -27,6 +26,7 @@ import { MonthlyRecapCardV2 } from '@/components/social-cards/MonthlyRecapCardV2
 import { useMonthStats } from '@/lib/social-cards/useMonthStats';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -35,6 +35,7 @@ import logger from '@/lib/security/logger';
 export default function MonthlyRecapV2Screen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format, setFormat] = useState<'stories' | 'square'>('stories');
   const [isSaving, setIsSaving] = useState(false);
@@ -66,7 +67,7 @@ export default function MonthlyRecapV2Screen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'accéder à la caméra');
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à la caméra', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -84,7 +85,7 @@ export default function MonthlyRecapV2Screen() {
       }
     } catch (err) {
       logger.error('Erreur prise de photo:', err);
-      Alert.alert('Erreur', 'Impossible de prendre la photo');
+      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -93,7 +94,7 @@ export default function MonthlyRecapV2Screen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie');
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -111,7 +112,7 @@ export default function MonthlyRecapV2Screen() {
       }
     } catch (err) {
       logger.error('Erreur sélection photo:', err);
-      Alert.alert('Erreur', 'Impossible de sélectionner la photo');
+      showPopup('Erreur', 'Impossible de sélectionner la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -133,7 +134,7 @@ export default function MonthlyRecapV2Screen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -146,7 +147,7 @@ export default function MonthlyRecapV2Screen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -157,10 +158,10 @@ export default function MonthlyRecapV2Screen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegardé', 'Ton Récap Mensuel est dans ta galerie.');
+      showPopup('Sauvegardé', 'Ton Récap Mensuel est dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (err) {
       logger.error('Erreur sauvegarde:', err);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -174,7 +175,7 @@ export default function MonthlyRecapV2Screen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -191,11 +192,11 @@ export default function MonthlyRecapV2Screen() {
           dialogTitle: 'Partager mon Récap Mensuel Yoroi',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (err) {
       logger.error('Erreur partage:', err);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -387,6 +388,7 @@ export default function MonthlyRecapV2Screen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

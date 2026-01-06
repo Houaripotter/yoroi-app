@@ -1,2 +1,3 @@
-// Re-export du composant NutritionPlan pour navigation imbriquée
-export { default } from '@/app/nutrition-plan';
+// Import et re-export du composant NutritionPlan pour navigation imbriquée
+import NutritionPlanScreen from '@/app/nutrition-plan';
+export default NutritionPlanScreen;

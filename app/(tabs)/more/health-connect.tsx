@@ -1,2 +1,3 @@
-// Re-export du composant HealthConnect pour navigation imbriquée
-export { default } from '@/app/health-connect';
+// Import et re-export du composant HealthConnect pour navigation imbriquée
+import HealthConnectScreen from '@/app/health-connect';
+export default HealthConnectScreen;

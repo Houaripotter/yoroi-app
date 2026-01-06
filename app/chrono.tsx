@@ -9,8 +9,8 @@ import {
   ScrollView,
   Vibration,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { Play, Pause, RotateCcw, Plus, Minus, Clock, ChevronDown, ChevronUp, Save, Check, Shirt, Moon, Footprints, Award, Activity, LucideIcon } from 'lucide-react-native';
 import { Audio } from 'expo-av';
@@ -119,6 +119,7 @@ export default function ChronoScreen() {
   useKeepAwake();
   const router = useRouter();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [mode, setMode] = useState<TimerMode>('combat');
   const [selectedPreset, setSelectedPreset] = useState<SportPreset>(SPORT_PRESETS[0]);
@@ -200,7 +201,7 @@ export default function ChronoScreen() {
 
   const saveCustomPreset = async () => {
     if (!customPresetName.trim()) {
-      Alert.alert('Erreur', 'Donne un nom à ton preset');
+      showPopup('Erreur', 'Donne un nom à ton preset');
       return;
     }
 
@@ -214,16 +215,24 @@ export default function ChronoScreen() {
 
     const updated = [...customPresets, newPreset];
     setCustomPresets(updated);
-    await AsyncStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated));
+    try {
+      await AsyncStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated));
+    } catch (error) {
+      logger.error('Erreur sauvegarde preset:', error);
+    }
     setCustomPresetName('');
     successHaptic();
-    Alert.alert('Sauvegardé !', `Preset "${newPreset.name}" créé`);
+    showPopup('Sauvegardé !', `Preset "${newPreset.name}" créé`);
   };
 
   const deleteCustomPreset = async (id: string) => {
     const updated = customPresets.filter(p => p.id !== id);
     setCustomPresets(updated);
-    await AsyncStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated));
+    try {
+      await AsyncStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated));
+    } catch (error) {
+      logger.error('Erreur suppression preset:', error);
+    }
   };
 
   const playGong = async () => {
@@ -1026,11 +1035,11 @@ export default function ChronoScreen() {
                         style={styles.savedPresetItem}
                         onPress={() => selectCustomPreset(preset)}
                         onLongPress={() => {
-                          Alert.alert(
+                          showPopup(
                             'Supprimer',
                             `Supprimer "${preset.name}" ?`,
                             [
-                              { text: 'Annuler', style: 'cancel' },
+                              { text: 'Annuler', style: 'secondary' },
                               { text: 'Supprimer', style: 'destructive', onPress: () => deleteCustomPreset(preset.id) },
                             ]
                           );

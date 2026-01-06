@@ -13,9 +13,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -69,6 +69,7 @@ const ITEM_HEIGHT = 160;
 
 export default function EventsSimpleScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [selectedLocation, setSelectedLocation] = useState<LocationFilter>('monde');
@@ -159,21 +160,27 @@ export default function EventsSimpleScreen() {
           newSet.delete(event.id);
           return newSet;
         });
-        Alert.alert('Retiré', `"${event.title.substring(0, 40)}..." retiré de votre planning`);
+        showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de votre planning`, [
+          { text: 'OK', style: 'primary' }
+        ]);
       } else {
         // Add to planning
         savedEvents.push(event);
         setSavedEventIds(prev => new Set(prev).add(event.id));
-        Alert.alert('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à votre planning`);
+        showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à votre planning`, [
+          { text: 'OK', style: 'primary' }
+        ]);
       }
 
       await AsyncStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(savedEvents));
       logger.info(`Event ${isAlreadySaved ? 'removed from' : 'added to'} planning:`, event.id);
     } catch (error) {
       logger.error('Error toggling event in planning:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'événement');
+      showPopup('Erreur', 'Impossible de sauvegarder l\'événement', [
+        { text: 'OK', style: 'primary' }
+      ]);
     }
-  }, []);
+  }, [showPopup]);
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
@@ -350,7 +357,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'monde' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'monde' ? '#000000' : colors.text },
             ]}
           >
             🌍 Monde ({eventCounts.monde})
@@ -373,7 +380,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'europe' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'europe' ? '#000000' : colors.text },
             ]}
           >
             🇪🇺 Europe ({eventCounts.europe})
@@ -396,7 +403,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'france' ? '#FFFFFF' : colors.text },
+              { color: selectedLocation === 'france' ? '#000000' : colors.text },
             ]}
           >
             🇫🇷 France ({eventCounts.france})
@@ -422,7 +429,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'all' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'all' ? '#000000' : colors.text },
             ]}
           >
             Tous ({eventCounts.all})
@@ -445,7 +452,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'combat' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'combat' ? '#000000' : colors.text },
             ]}
           >
             🥋 Combat ({eventCounts.combat})
@@ -468,7 +475,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'endurance' ? '#FFFFFF' : colors.text },
+              { color: selectedCategory === 'endurance' ? '#000000' : colors.text },
             ]}
           >
             🏃 Endurance ({eventCounts.endurance})
@@ -492,6 +499,7 @@ export default function EventsSimpleScreen() {
         getItemLayout={getItemLayout}
         updateCellsBatchingPeriod={50}
       />
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

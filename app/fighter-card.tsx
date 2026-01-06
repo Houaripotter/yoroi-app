@@ -14,8 +14,8 @@ import {
   Dimensions,
   Platform,
   Share,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -76,6 +76,7 @@ interface FighterStats {
 
 export default function FighterCardScreen() {
   const { colors, isDark, gradients } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const cardRef = useRef<View>(null);
 
   const [stats, setStats] = useState<FighterStats | null>(null);
@@ -158,7 +159,9 @@ export default function FighterCardScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [
+          { text: 'OK', style: 'primary' }
+        ]);
         return;
       }
 
@@ -171,7 +174,9 @@ export default function FighterCardScreen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image', [
+          { text: 'OK', style: 'primary' }
+        ]);
         return;
       }
 
@@ -182,10 +187,14 @@ export default function FighterCardScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegarde!', 'Fiche Combattant enregistree dans ta galerie!');
+      showPopup('Sauvegarde!', 'Fiche Combattant enregistree dans ta galerie!', [
+        { text: 'OK', style: 'primary' }
+      ]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [
+        { text: 'OK', style: 'primary' }
+      ]);
     } finally {
       setIsSaving(false);
     }
@@ -199,7 +208,9 @@ export default function FighterCardScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [
+          { text: 'OK', style: 'primary' }
+        ]);
         return;
       }
 
@@ -466,6 +477,7 @@ export default function FighterCardScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

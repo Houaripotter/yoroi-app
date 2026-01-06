@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -48,6 +48,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function ChallengesScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
   const [weeklyChallenges, setWeeklyChallenges] = useState<ActiveChallenge[]>([]);
@@ -93,7 +94,7 @@ export default function ChallengesScreen() {
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const handleClaim = async (challenge: ActiveChallenge) => {
-    if (!challenge.progress.completed || challenge.progress.claimed) return;
+    if (!challenge?.progress?.completed || challenge?.progress?.claimed) return;
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const xp = await claimChallengeReward(challenge.id);
@@ -102,12 +103,12 @@ export default function ChallengesScreen() {
       setCompletedChallengeId(challenge.id);
       setConfettiVisible(true);
       
-      // Alert après l'animation
+      // Popup après l'animation
       setTimeout(() => {
-        Alert.alert(
+        showPopup(
           'Récompense réclamée !',
           `Tu as gagné +${xp} XP !`,
-          [{ text: 'Super !', style: 'default' }]
+          [{ text: 'Super !', style: 'primary' }]
         );
       }, 500);
       
@@ -188,9 +189,9 @@ export default function ChallengesScreen() {
 
         {/* Challenges */}
         {getChallenges().map((challenge) => {
-          const progress = Math.min(100, (challenge.progress.current / challenge.progress.target) * 100);
-          const isCompleted = challenge.progress.completed;
-          const isClaimed = challenge.progress.claimed;
+          const progress = Math.min(100, ((challenge?.progress?.current ?? 0) / (challenge?.progress?.target || 1)) * 100);
+          const isCompleted = challenge?.progress?.completed;
+          const isClaimed = challenge?.progress?.claimed;
 
           return (
             <View key={challenge.id} style={[styles.challengeCard, { backgroundColor: colors.backgroundCard }]}>
@@ -224,8 +225,8 @@ export default function ChallengesScreen() {
               <View style={styles.challengeFooter}>
                 <View style={[styles.rewardBadge, { backgroundColor: colors.accentMuted }]}>
                   <Gift size={12} color={colors.accent} />
-                  <Text style={[styles.rewardText, { color: colors.accent }]}>+{challenge.reward.xp} XP</Text>
-                  {challenge.reward.badge && (
+                  <Text style={[styles.rewardText, { color: colors.accent }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
+                  {challenge?.reward?.badge && (
                     <Text style={[styles.rewardBadgeText, { color: colors.accent }]}>+ Badge</Text>
                   )}
                 </View>

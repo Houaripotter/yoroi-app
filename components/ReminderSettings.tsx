@@ -6,12 +6,12 @@ import {
   Switch,
   TouchableOpacity,
   Platform,
-  Alert,
   ScrollView,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Bell, Clock, Calendar, Dumbbell } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 import {
@@ -44,6 +44,7 @@ const STORAGE_KEY = '@yoroi_reminder_settings';
 
 export function ReminderSettingsComponent() {
   const { colors, themeName } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const isWellness = false;
 
   const [settings, setSettings] = useState<ReminderSettingsType>({
@@ -86,7 +87,7 @@ export function ReminderSettingsComponent() {
       await scheduleNotifications(newSettings);
     } catch (error) {
       logger.error('❌ Erreur lors de la sauvegarde des paramètres:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres');
+      showPopup('Erreur', 'Impossible de sauvegarder les paramètres', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -102,10 +103,10 @@ export function ReminderSettingsComponent() {
       setHasPermission(granted);
 
       if (!granted) {
-        Alert.alert(
+        showPopup(
           'Permission requise',
           'Les notifications sont nécessaires pour les rappels. Veuillez autoriser les notifications dans les paramètres de votre appareil.',
-          [{ text: 'OK' }]
+          [{ text: 'OK', style: 'primary' }]
         );
         return;
       }
@@ -134,7 +135,7 @@ export function ReminderSettingsComponent() {
       : [...settings.days, day].sort();
 
     if (newDays.length === 0) {
-      Alert.alert('Erreur', 'Sélectionnez au moins un jour');
+      showPopup('Erreur', 'Sélectionnez au moins un jour', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -161,7 +162,7 @@ export function ReminderSettingsComponent() {
 
   const handleTestNotification = async () => {
     await testNotification(settings.type);
-    Alert.alert('Test', 'Une notification de test sera affichée dans 2 secondes');
+    showPopup('Test', 'Une notification de test sera affichée dans 2 secondes', [{ text: 'OK', style: 'primary' }]);
   };
 
   if (loading) {
@@ -332,6 +333,7 @@ export function ReminderSettingsComponent() {
           </TouchableOpacity>
         </View>
       )}
+      <PopupComponent />
     </View>
   );
 }

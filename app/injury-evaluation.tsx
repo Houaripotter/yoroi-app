@@ -10,8 +10,8 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
@@ -72,6 +72,7 @@ const renderIcon = (iconName: string, color: string, size: number = 24) => {
 export default function InjuryEvaluationScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const zoneId = params.zoneId as string;
   const zoneView = params.zoneView as 'front' | 'back';
@@ -94,7 +95,9 @@ export default function InjuryEvaluationScreen() {
 
   const handleSubmit = async () => {
     if (!isEditMode && (!painType || !cause)) {
-      Alert.alert('Champs requis', 'Veuillez sélectionner le type de douleur et la cause');
+      showPopup('Champs requis', 'Veuillez sélectionner le type de douleur et la cause', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
 
@@ -110,8 +113,8 @@ export default function InjuryEvaluationScreen() {
         });
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert('✅ Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
-          { text: 'OK', onPress: () => router.back() },
+        showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
+          { text: 'OK', style: 'primary', onPress: () => router.back() },
         ]);
       } else {
         // Mode création - créer une nouvelle blessure
@@ -130,10 +133,10 @@ export default function InjuryEvaluationScreen() {
         // Vérifier récurrence
         const recurrence = await checkZoneRecurrence(zoneId, zoneView);
         if (recurrence.isRecurring) {
-          Alert.alert(
-            '⚠️ Récurrence détectée',
+          showPopup(
+            'Récurrence détectée',
             `Cette zone a été blessée ${recurrence.count} fois dans les 30 derniers jours.`,
-            [{ text: 'OK' }]
+            [{ text: 'OK', style: 'primary' }]
           );
         }
 
@@ -141,7 +144,9 @@ export default function InjuryEvaluationScreen() {
       }
     } catch (error) {
       logger.error('[InjuryEvaluation] Erreur:', error);
-      Alert.alert('Erreur', `Impossible d'${isEditMode ? 'mettre à jour' : 'enregistrer'} la blessure`);
+      showPopup('Erreur', `Impossible d'${isEditMode ? 'mettre à jour' : 'enregistrer'} la blessure`, [
+        { text: 'OK', style: 'primary' },
+      ]);
     } finally {
       setIsSubmitting(false);
     }
@@ -436,6 +441,7 @@ export default function InjuryEvaluationScreen() {
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
+        <PopupComponent />
       </ScrollView>
     </ScreenWrapper>
   );

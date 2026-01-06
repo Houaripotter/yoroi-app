@@ -10,9 +10,9 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
@@ -32,6 +32,7 @@ import logger from '@/lib/security/logger';
 
 export default function AddCompetitionScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [nom, setNom] = useState('');
   const [lieu, setLieu] = useState('');
   const [date, setDate] = useState(new Date());
@@ -76,7 +77,7 @@ export default function AddCompetitionScreen() {
 
   const handleSave = async () => {
     if (!nom.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir un nom de compétition');
+      showPopup('Erreur', 'Veuillez saisir un nom de competition', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -100,7 +101,7 @@ export default function AddCompetitionScreen() {
       router.back();
     } catch (error) {
       logger.error('Error saving competition:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la compétition');
+      showPopup('Erreur', 'Impossible de sauvegarder la competition', [{ text: 'OK', style: 'primary' }]);
       setIsSaving(false);
     }
   };
@@ -362,6 +363,7 @@ export default function AddCompetitionScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

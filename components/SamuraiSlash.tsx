@@ -24,14 +24,15 @@ import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Images de samourai disponibles
-const SAMURAI_IMAGES = {
-  man1: require('@/assets/images/samurai_man_1.png'),
-  man2: require('@/assets/images/samurai_man_2.png'),
-  man3: require('@/assets/images/samurai_man_3.png'),
-  woman1: require('@/assets/images/samurai_woman_1.png'),
-  woman2: require('@/assets/images/samurai_woman_2.png'),
-  woman3: require('@/assets/images/samurai_woman_3.png'),
+// Images de samourai - désactivées car non incluses dans les assets
+// Pour activer: ajouter les images samurai_man_1.png, etc. dans assets/images/
+const SAMURAI_IMAGES: Record<string, any> = {
+  // man1: require('@/assets/images/samurai_man_1.png'),
+  // man2: require('@/assets/images/samurai_man_2.png'),
+  // man3: require('@/assets/images/samurai_man_3.png'),
+  // woman1: require('@/assets/images/samurai_woman_1.png'),
+  // woman2: require('@/assets/images/samurai_woman_2.png'),
+  // woman3: require('@/assets/images/samurai_woman_3.png'),
 };
 
 type SamuraiImage = keyof typeof SAMURAI_IMAGES;
@@ -51,7 +52,7 @@ export const SamuraiSlash: React.FC<SamuraiSlashProps> = ({
   isVisible,
   onAnimationComplete,
   showLogo = true,
-  showSamurai = true,
+  showSamurai = false, // Désactivé - images non disponibles
   samuraiImage = 'man1',
   duration = 2000,
   message,
@@ -324,8 +325,8 @@ export const SamuraiSlash: React.FC<SamuraiSlashProps> = ({
         />
       </Animated.View>
 
-      {/* Silhouette Samourai */}
-      {showSamurai && (
+      {/* Silhouette Samourai - désactivé car images non disponibles */}
+      {showSamurai && SAMURAI_IMAGES[samuraiImage] && (
         <Animated.View
           style={[
             styles.samuraiContainer,

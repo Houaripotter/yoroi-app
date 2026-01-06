@@ -12,7 +12,6 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  Alert,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -20,6 +19,7 @@ import {
   SafeAreaView,
   Animated,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -161,6 +161,7 @@ const getRelativeDate = (dateString: string): string => {
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Data state
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
@@ -174,6 +175,7 @@ export default function TrainingJournalScreen() {
     totalDrills: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Anti-spam protection
 
   // Modal state
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -367,18 +369,31 @@ export default function TrainingJournalScreen() {
   // ============================================
 
   const handleAddBenchmark = async () => {
+    if (isSubmitting) return; // Anti-spam protection
     if (!newBenchmarkName.trim()) {
-      Alert.alert('Erreur', 'Entre un nom pour le suivi');
+      showPopup({
+        title: 'Erreur',
+        message: 'Entre un nom pour le suivi',
+        buttons: [{ text: 'OK', style: 'default' }],
+      });
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const result = await createBenchmark(newBenchmarkName, newBenchmarkCategory, newBenchmarkUnit);
-    if (result) {
-      setShowAddBenchmarkModal(false);
-      setNewBenchmarkName('');
-      showToast('Enregistrement sauvegardé');
-      loadData();
+    try {
+      setIsSubmitting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const result = await createBenchmark(newBenchmarkName, newBenchmarkCategory, newBenchmarkUnit);
+      if (result) {
+        setShowAddBenchmarkModal(false);
+        setNewBenchmarkName('');
+        showToast('Enregistrement sauvegardé');
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error adding benchmark:', error);
+      showPopup({ title: 'Erreur', message: 'Impossible de créer le suivi', buttons: [{ text: 'OK', style: 'default' }] });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -410,7 +425,11 @@ export default function TrainingJournalScreen() {
   const pickSkillVideo = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie pour ajouter une vidéo.');
+      showPopup({
+        title: 'Permission refusee',
+        message: 'Autorise l\'acces a la galerie pour ajouter une video.',
+        buttons: [{ text: 'OK', style: 'default' }],
+      });
       return;
     }
 
@@ -427,7 +446,11 @@ export default function TrainingJournalScreen() {
       if (permanentUri) {
         setNewSkillVideoUri(permanentUri);
       } else {
-        Alert.alert('Erreur', 'Impossible de sauvegarder la vidéo');
+        showPopup({
+          title: 'Erreur',
+          message: 'Impossible de sauvegarder la video',
+          buttons: [{ text: 'OK', style: 'default' }],
+        });
       }
     }
   };
@@ -435,7 +458,7 @@ export default function TrainingJournalScreen() {
   const recordSkillVideo = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Autorise l\'accès à la caméra pour filmer.');
+      showPopup('Permission refusee', 'Autorise l\'acces a la camera pour filmer.');
       return;
     }
 
@@ -453,32 +476,41 @@ export default function TrainingJournalScreen() {
       if (permanentUri) {
         setNewSkillVideoUri(permanentUri);
       } else {
-        Alert.alert('Erreur', 'Impossible de sauvegarder la vidéo');
+        showPopup('Erreur', 'Impossible de sauvegarder la video');
       }
     }
   };
 
   const handleAddSkill = async () => {
+    if (isSubmitting) return; // Anti-spam protection
     if (!newSkillName.trim()) {
-      Alert.alert('Erreur', 'Entre un nom pour la technique');
+      showPopup('Erreur', 'Entre un nom pour la technique');
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Create skill with video URI if available
-    const result = await createSkill(newSkillName, newSkillCategory, newSkillStatus, newSkillNotes);
-    if (result && newSkillVideoUri) {
-      // Save video URI to skill (using videoUrl field for local URI)
-      await updateSkillVideoUrl(result.id, newSkillVideoUri);
-    }
-    if (result) {
-      setShowAddSkillModal(false);
-      setNewSkillName('');
-      setNewSkillStatus('to_learn');
-      setNewSkillNotes('');
-      setNewSkillVideoUri(null);
-      showToast('Technique sauvegardée');
-      loadData();
+    try {
+      setIsSubmitting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      // Create skill with video URI if available
+      const result = await createSkill(newSkillName, newSkillCategory, newSkillStatus, newSkillNotes);
+      if (result && newSkillVideoUri) {
+        // Save video URI to skill (using videoUrl field for local URI)
+        await updateSkillVideoUrl(result.id, newSkillVideoUri);
+      }
+      if (result) {
+        setShowAddSkillModal(false);
+        setNewSkillName('');
+        setNewSkillStatus('to_learn');
+        setNewSkillNotes('');
+        setNewSkillVideoUri(null);
+        showToast('Technique sauvegardée');
+        loadData();
+      }
+    } catch (error) {
+      console.error('Error adding skill:', error);
+      showPopup({ title: 'Erreur', message: 'Impossible de créer la technique', buttons: [{ text: 'OK', style: 'default' }] });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -502,6 +534,7 @@ export default function TrainingJournalScreen() {
   };
 
   const handleAddEntry = async () => {
+    if (isSubmitting) return; // Anti-spam protection
     if (!selectedBenchmark || !newEntryValue.trim()) return;
 
     // For Force exercises (kg/lbs), reps is mandatory
@@ -509,11 +542,13 @@ export default function TrainingJournalScreen() {
       (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
 
     if (isForceExercise && !newEntryReps.trim()) {
-      Alert.alert('Erreur', 'Le nombre de répétitions est obligatoire');
+      showPopup('Erreur', 'Le nombre de repetitions est obligatoire');
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      setIsSubmitting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     let value: number;
 
     if (selectedBenchmark.unit === 'time') {
@@ -523,7 +558,7 @@ export default function TrainingJournalScreen() {
     }
 
     if (isNaN(value)) {
-      Alert.alert('Erreur', 'Valeur invalide');
+      showPopup('Erreur', 'Valeur invalide');
       return;
     }
 
@@ -605,10 +640,16 @@ export default function TrainingJournalScreen() {
       const refreshed = updated.find(b => b.id === selectedBenchmark.id);
       if (refreshed) setSelectedBenchmark(refreshed);
     }
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      showPopup({ title: 'Erreur', message: 'Impossible d\'enregistrer', buttons: [{ text: 'OK', style: 'default' }] });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteBenchmark = async (id: string) => {
-    Alert.alert(
+    showPopup(
       'Supprimer',
       'Supprimer ce suivi et tout son historique ?',
       [
@@ -639,16 +680,25 @@ export default function TrainingJournalScreen() {
   };
 
   const handleAddNote = async () => {
+    if (isSubmitting) return; // Anti-spam protection
     if (!selectedSkill || !newNoteText.trim()) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await addSkillNote(selectedSkill.id, newNoteText);
-    setNewNoteText('');
-    // Refresh
-    const updated = await getSkills();
-    const refreshed = updated.find(s => s.id === selectedSkill.id);
-    if (refreshed) setSelectedSkill(refreshed);
-    loadData();
+    try {
+      setIsSubmitting(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await addSkillNote(selectedSkill.id, newNoteText);
+      setNewNoteText('');
+      // Refresh
+      const updated = await getSkills();
+      const refreshed = updated.find(s => s.id === selectedSkill.id);
+      if (refreshed) setSelectedSkill(refreshed);
+      loadData();
+    } catch (error) {
+      console.error('Error adding note:', error);
+      showPopup({ title: 'Erreur', message: 'Impossible d\'ajouter la note', buttons: [{ text: 'OK', style: 'default' }] });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleIncrementDrill = async () => {
@@ -665,7 +715,7 @@ export default function TrainingJournalScreen() {
   };
 
   const handleDeleteSkill = async (id: string) => {
-    Alert.alert(
+    showPopup(
       'Supprimer',
       'Supprimer cette technique et toutes ses notes ?',
       [
@@ -695,7 +745,11 @@ export default function TrainingJournalScreen() {
   const renderCompactBenchmarkCard = (benchmark: Benchmark) => {
     const pr = getBenchmarkPR(benchmark);
     const last = getBenchmarkLast(benchmark);
-    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category];
+    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category] || {
+      label: 'Autre',
+      color: '#6B7280',
+      iconName: 'circle'
+    };
     const isPR = pr && last && last.value === pr.value;
 
     // Format performance string: "100 kg × 5" for Force, "10km • 5:30 /km" for Running, etc.
@@ -799,7 +853,11 @@ export default function TrainingJournalScreen() {
   const renderBenchmarkCard = (benchmark: Benchmark) => {
     const pr = getBenchmarkPR(benchmark);
     const last = getBenchmarkLast(benchmark);
-    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category];
+    const categoryConfig = BENCHMARK_CATEGORIES[benchmark.category] || {
+      label: 'Autre',
+      color: '#6B7280',
+      iconName: 'circle'
+    };
 
     const getPerformanceString = () => {
       if (!last) return '--';
@@ -881,7 +939,11 @@ export default function TrainingJournalScreen() {
 
   const renderSkillCard = (skill: Skill) => {
     const statusConfig = SKILL_STATUS_CONFIG[skill.status];
-    const categoryConfig = SKILL_CATEGORIES[skill.category];
+    const categoryConfig = SKILL_CATEGORIES[skill.category] || {
+      label: 'Autre',
+      color: '#6B7280',
+      iconName: 'circle'
+    };
     const hasNotes = skill.notes && skill.notes.length > 0;
     const hasVideo = !!skill.videoUrl;
 
@@ -1074,6 +1136,7 @@ export default function TrainingJournalScreen() {
             placeholderTextColor={colors.textMuted}
             value={newBenchmarkName}
             onChangeText={setNewBenchmarkName}
+            maxLength={50}
           />
 
           {/* Only show Unit selector if NOT using a preset (Running/Force) */}
@@ -1122,10 +1185,11 @@ export default function TrainingJournalScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.modalButton, { backgroundColor: colors.accent }]}
+            style={[styles.modalButton, { backgroundColor: colors.accent, opacity: isSubmitting ? 0.6 : 1 }]}
             onPress={handleAddBenchmark}
+            disabled={isSubmitting}
           >
-            <Text style={[styles.modalButtonText, { color: colors.textOnGold }]}>Créer le Suivi</Text>
+            <Text style={[styles.modalButtonText, { color: colors.textOnGold }]}>{isSubmitting ? 'Création...' : 'Créer le Suivi'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -1155,6 +1219,7 @@ export default function TrainingJournalScreen() {
               placeholderTextColor={colors.textMuted}
               value={newSkillName}
               onChangeText={setNewSkillName}
+              maxLength={50}
             />
 
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Discipline</Text>
@@ -1228,6 +1293,7 @@ export default function TrainingJournalScreen() {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
+              maxLength={500}
             />
 
             {/* TASK 3: Video Picker Section */}
@@ -1267,10 +1333,11 @@ export default function TrainingJournalScreen() {
             )}
 
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: '#8B5CF6' }]}
+              style={[styles.modalButton, { backgroundColor: '#8B5CF6', opacity: isSubmitting ? 0.6 : 1 }]}
               onPress={handleAddSkill}
+              disabled={isSubmitting}
             >
-              <Text style={styles.modalButtonText}>Ajouter la Technique</Text>
+              <Text style={styles.modalButtonText}>{isSubmitting ? 'Ajout...' : 'Ajouter la Technique'}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -1802,10 +1869,11 @@ export default function TrainingJournalScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: selectedBenchmark?.color || colors.accent }]}
+                style={[styles.modalButton, { backgroundColor: selectedBenchmark?.color || colors.accent, opacity: isSubmitting ? 0.6 : 1 }]}
                 onPress={handleAddEntry}
+                disabled={isSubmitting}
               >
-                <Text style={styles.modalButtonText}>Enregistrer</Text>
+                <Text style={styles.modalButtonText}>{isSubmitting ? 'Enregistrement...' : 'Enregistrer'}</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -1962,7 +2030,11 @@ export default function TrainingJournalScreen() {
     if (!selectedSkill) return null;
 
     const statusConfig = SKILL_STATUS_CONFIG[selectedSkill.status];
-    const categoryConfig = SKILL_CATEGORIES[selectedSkill.category];
+    const categoryConfig = SKILL_CATEGORIES[selectedSkill.category] || {
+      label: 'Autre',
+      color: '#6B7280',
+      iconName: 'circle'
+    };
 
     return (
       <Modal visible={showSkillDetail} animationType="slide" presentationStyle="fullScreen">
@@ -2063,11 +2135,12 @@ export default function TrainingJournalScreen() {
                 value={newNoteText}
                 onChangeText={setNewNoteText}
                 multiline
+                maxLength={500}
               />
               <TouchableOpacity
-                style={[styles.noteAddBtn, { backgroundColor: categoryConfig.color }]}
+                style={[styles.noteAddBtn, { backgroundColor: categoryConfig.color, opacity: (!newNoteText.trim() || isSubmitting) ? 0.6 : 1 }]}
                 onPress={handleAddNote}
-                disabled={!newNoteText.trim()}
+                disabled={!newNoteText.trim() || isSubmitting}
               >
                 <Plus size={18} color="#FFFFFF" strokeWidth={3} />
               </TouchableOpacity>
@@ -2116,6 +2189,7 @@ export default function TrainingJournalScreen() {
                 onChangeText={setEditingVideoUrl}
                 autoCapitalize="none"
                 keyboardType="url"
+                maxLength={500}
               />
               {(editingVideoUrl || selectedSkill.videoUrl) && (
                 <TouchableOpacity
@@ -2205,6 +2279,7 @@ export default function TrainingJournalScreen() {
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            maxLength={100}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -2466,6 +2541,8 @@ export default function TrainingJournalScreen() {
           <Text style={styles.toastText}>{toastMessage}</Text>
         </Animated.View>
       )}
+
+      <PopupComponent />
     </View>
   );
 }

@@ -6,9 +6,9 @@ import {
   Switch,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { Activity, Download, Upload, Check, X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +27,7 @@ const LAST_SYNC_KEY = '@yoroi_last_health_sync';
 
 export function HealthSyncSettings() {
   const { colors, themeName } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const isWellness = false;
 
   const [autoExportEnabled, setAutoExportEnabled] = useState(false);
@@ -75,10 +76,10 @@ export function HealthSyncSettings() {
       setHasPermission(granted);
 
       if (!granted) {
-        Alert.alert(
+        showPopup(
           'Permission requise',
           'L\'accès à Apple Health est nécessaire pour l\'export automatique. Veuillez autoriser l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
-          [{ text: 'OK' }]
+          [{ text: 'OK', style: 'primary' }]
         );
         return;
       }
@@ -87,11 +88,12 @@ export function HealthSyncSettings() {
     await setAppleHealthAutoExport(value);
     setAutoExportEnabled(value);
 
-    Alert.alert(
+    showPopup(
       'Succès',
       value
         ? 'Les nouvelles mesures seront automatiquement envoyées vers Apple Health'
-        : 'L\'export automatique vers Apple Health a été désactivé'
+        : 'L\'export automatique vers Apple Health a été désactivé',
+      [{ text: 'OK', style: 'primary' }]
     );
   };
 
@@ -121,9 +123,9 @@ export function HealthSyncSettings() {
       const count = await syncFromAppleHealth();
 
       if (count > 0) {
-        Alert.alert('Succès', `${count} nouvelle(s) mesure(s) synchronisée(s)`);
+        showPopup('Succès', `${count} nouvelle(s) mesure(s) synchronisee(s)`, [{ text: 'OK', style: 'primary' }]);
       } else {
-        Alert.alert('Information', 'Aucune nouvelle donnée à synchroniser');
+        showPopup('Information', 'Aucune nouvelle donnee a synchroniser', [{ text: 'OK', style: 'primary' }]);
       }
 
       // Mettre à jour la dernière sync
@@ -132,7 +134,7 @@ export function HealthSyncSettings() {
       await AsyncStorage.setItem(LAST_SYNC_KEY, now.toISOString());
     } catch (error) {
       logger.error('❌ Erreur lors de la synchronisation:', error);
-      Alert.alert('Erreur', 'Impossible de synchroniser les données');
+      showPopup('Erreur', 'Impossible de synchroniser les donnees', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setSyncing(false);
     }
@@ -283,6 +285,7 @@ export function HealthSyncSettings() {
           </View>
         </View>
       </TouchableOpacity>
+      <PopupComponent />
     </View>
   );
 }

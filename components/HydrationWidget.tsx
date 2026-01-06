@@ -8,11 +8,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Droplet, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import {
   getTotalHydratationToday,
   addHydratation,
@@ -29,6 +29,7 @@ interface HydrationWidgetProps {
 
 export function HydrationWidget({ onPress }: HydrationWidgetProps) {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [totalToday, setTotalToday] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -52,7 +53,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
       setTotalToday((prev) => prev + amount);
     } catch (error) {
       logger.error('Error adding hydration:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'hydratation');
+      showPopup('Erreur', 'Impossible d\'ajouter l\'hydratation', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsAdding(false);
     }
@@ -160,6 +161,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
           ))}
         </View>
       </View>
+      <PopupComponent />
     </TouchableOpacity>
   );
 }

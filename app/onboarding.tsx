@@ -9,10 +9,10 @@ import {
   Animated,
   Image,
   TextInput,
-  Alert,
   Platform,
   ScrollView,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -49,6 +49,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { saveProfile } from '@/lib/database';
+import { saveUserSettings } from '@/lib/storage';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -82,6 +83,7 @@ interface Slide {
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Couleur du texte du bouton adaptée à la couleur d'accent
   const buttonTextColor = isLightColor(colors.accent) ? '#000000' : '#FFFFFF';
@@ -217,7 +219,7 @@ export default function OnboardingScreen() {
   const handlePickPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Accès à la galerie requis');
+      showPopup('Permission refusee', 'Acces a la galerie requis');
       return;
     }
 
@@ -236,7 +238,7 @@ export default function OnboardingScreen() {
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission refusée', 'Accès à la caméra requis');
+      showPopup('Permission refusee', 'Acces a la camera requis');
       return;
     }
 
@@ -253,6 +255,7 @@ export default function OnboardingScreen() {
 
   const handleSaveProfile = async () => {
     try {
+      // Sauvegarder dans SQLite
       await saveProfile({
         name: userName.trim() || 'Champion',
         height_cm: heightCm ? parseInt(heightCm) : undefined,
@@ -262,6 +265,16 @@ export default function OnboardingScreen() {
         profile_photo: profilePhoto,
         birth_date: birthDate ? format(birthDate, 'yyyy-MM-dd') : undefined,
       });
+
+      // IMPORTANT: Aussi sauvegarder dans AsyncStorage pour que index.tsx sache que l'onboarding est termine
+      await saveUserSettings({
+        username: userName.trim() || 'Champion',
+        gender: gender === 'femme' ? 'female' : 'male',
+        height: heightCm ? parseInt(heightCm) : undefined,
+        targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
+        onboardingCompleted: true,
+      });
+
       router.replace('/mode-selection');
     } catch (error) {
       console.error('Erreur sauvegarde profil:', error);
@@ -691,6 +704,8 @@ export default function OnboardingScreen() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <PopupComponent />
       </View>
     );
   }
@@ -787,6 +802,8 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      <PopupComponent />
     </View>
   );
 }

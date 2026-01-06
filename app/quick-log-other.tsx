@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -101,6 +101,7 @@ const ACTIVITIES: ActivityConfig[] = [
 export default function QuickLogOtherScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
   const [selectedActivity, setSelectedActivity] = useState<ActivityConfig | null>(null);
@@ -131,13 +132,17 @@ export default function QuickLogOtherScreen() {
 
   const handleSave = () => {
     if (!selectedActivity) {
-      Alert.alert('Erreur', 'Sélectionne une activité');
+      showPopup('Erreur', 'Sélectionne une activité', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
     const duration = parseInt(durationMinutes) || 0;
     if (duration === 0) {
-      Alert.alert('Erreur', 'Entre une durée valide');
+      showPopup('Erreur', 'Entre une durée valide', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -171,12 +176,13 @@ export default function QuickLogOtherScreen() {
       notes: notes || undefined,
     });
 
-    Alert.alert(
+    showPopup(
       'Séance enregistrée',
       `${activityName} : ${duration} minutes`,
       [
         {
           text: 'OK',
+          style: 'primary',
           onPress: () => router.back(),
         },
       ]
@@ -249,6 +255,7 @@ export default function QuickLogOtherScreen() {
             ))}
           </View>
         </ScrollView>
+        <PopupComponent />
       </View>
     );
   }
@@ -456,6 +463,7 @@ export default function QuickLogOtherScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

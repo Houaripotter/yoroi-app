@@ -1,2 +1,3 @@
-// Re-export du composant Calculators pour navigation imbriquée
-export { default } from '@/app/calculators';
+// Import et re-export du composant Calculators pour navigation imbriquée
+import CalculatorsScreen from '@/app/calculators';
+export default CalculatorsScreen;

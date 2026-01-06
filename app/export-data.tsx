@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -73,6 +73,7 @@ const EXPORT_OPTIONS: ExportOption[] = [
 export default function ExportDataScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -106,7 +107,9 @@ export default function ExportDataScreen() {
       }
     } catch (error) {
       logger.error('Erreur export:', error);
-      Alert.alert('Erreur', 'Impossible d\'exporter les données');
+      showPopup('Erreur', 'Impossible d\'exporter les données', [
+        { text: 'OK', style: 'primary' }
+      ]);
     } finally {
       setExporting(false);
     }
@@ -267,6 +270,7 @@ export default function ExportDataScreen() {
           tint={isDark ? 'dark' : 'light'}
         />
       )}
+      <PopupComponent />
     </View>
   );
 }

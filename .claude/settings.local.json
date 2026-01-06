@@ -90,7 +90,15 @@
       "Bash(git -C /Users/houari/Desktop/APP_Houari/yoroi_app log --oneline -10)",
       "Bash(git -C /Users/houari/Desktop/APP_Houari/yoroi_app remote -v)",
       "Bash(timeout 60 npx expo export:*)",
-      "Bash(node check-json-parse.js:*)"
+      "Bash(node check-json-parse.js:*)",
+      "Bash(pgrep:*)",
+      "Bash(timeout 15 npx expo export:*)",
+      "Bash(du -sh:*)",
+      "Bash(sort:*)",
+      "Bash(for f in /Users/houari/Desktop/APP_Houari/yoroi_app/assets/logo dapp/*.png)",
+      "Bash(do echo '=== $\\(basename $f\\) ===')",
+      "Bash(timeout 120 npx expo export:*)",
+      "Bash(eas submit:*)"
     ],
     "deny": [],
     "ask": []

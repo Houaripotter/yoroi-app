@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getUserSettings } from "@/lib/storage";
+import { getUserSettings, saveUserSettings } from "@/lib/storage";
+import { getProfile } from "@/lib/database";
 import logger from '@/lib/security/logger';
 
 const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
@@ -25,7 +26,28 @@ export default function Index() {
 
         // 2. Vérifier si l'utilisateur a complété l'onboarding
         const settings = await getUserSettings();
+
+        // Si les données AsyncStorage sont manquantes, vérifier SQLite et synchroniser
         if (!settings.username || !settings.gender) {
+          try {
+            const profile = await getProfile();
+            if (profile && profile.name) {
+              // Le profil existe dans SQLite, synchroniser vers AsyncStorage
+              await saveUserSettings({
+                username: profile.name,
+                gender: profile.avatar_gender === 'femme' ? 'female' : 'male',
+                height: profile.height_cm,
+                targetWeight: profile.target_weight,
+                onboardingCompleted: true,
+              });
+              // Ne pas rediriger vers onboarding, les données sont maintenant synchronisées
+              setIsLoading(false);
+              return;
+            }
+          } catch (dbError) {
+            logger.warn("Erreur lecture profil SQLite:", dbError);
+          }
+          // Aucun profil trouvé, onboarding nécessaire
           setNeedsOnboarding(true);
         }
       } catch (error) {

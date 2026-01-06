@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useFocusEffect, router } from 'expo-router';
 import { Camera, ChevronRight, RefreshCw, ArrowRight, TrendingDown, TrendingUp, Calendar, Zap, Target, Award } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -28,6 +28,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function TransformationScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBefore, setSelectedBefore] = useState<Photo | null>(null);
@@ -116,7 +117,7 @@ export default function TransformationScreen() {
         setSelectedAfter(photo);
         setStep('compare');
       } else {
-        Alert.alert('Photo identique', 'Choisis une photo differente pour la comparaison');
+        showPopup('Photo identique', 'Choisis une photo differente pour la comparaison', [{ text: 'OK', style: 'primary' }]);
       }
     }
   };
@@ -499,6 +500,7 @@ export default function TransformationScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

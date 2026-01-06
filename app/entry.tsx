@@ -8,11 +8,11 @@ import {
   ScrollView,
   Platform,
   KeyboardAvoidingView,
-  Alert,
   Animated,
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
@@ -99,6 +99,7 @@ export default function EntryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { checkBadges } = useBadges();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // States
   const [date, setDate] = useState(new Date());
@@ -171,7 +172,7 @@ export default function EntryScreen() {
 
   const handleSave = async () => {
     if (!weight || parseFloat(weight.replace(',', '.')) <= 0) {
-      Alert.alert('Erreur', 'Entre un poids valide');
+      showPopup('Erreur', 'Entre un poids valide', [{ text: 'OK', style: 'primary' }]);
       errorHaptic();
       return;
     }
@@ -232,16 +233,16 @@ export default function EntryScreen() {
 
       if (newRecords.length > 0) {
         const recordMessages = newRecords.map(r => `${r.emoji} ${r.message}`).join('\n');
-        Alert.alert(
-          '🏆 Nouveau record !',
+        showPopup(
+          'Nouveau record !',
           `${message}\n\n${recordMessages}`,
-          [{ text: 'Super !', onPress: () => router.back() }]
+          [{ text: 'Super !', style: 'primary', onPress: () => router.back() }]
         );
       } else {
-        Alert.alert(
-          '✓ Enregistré',
+        showPopup(
+          'Enregistre',
           message,
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
         );
       }
 
@@ -249,7 +250,7 @@ export default function EntryScreen() {
       setDate(new Date());
     } catch (error) {
       logger.error('Save error:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showPopup('Erreur', 'Impossible de sauvegarder', [{ text: 'OK', style: 'primary' }]);
       errorHaptic();
     } finally {
       setIsSubmitting(false);
@@ -442,6 +443,7 @@ export default function EntryScreen() {
           </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
+      <PopupComponent />
     </View>
   );
 }

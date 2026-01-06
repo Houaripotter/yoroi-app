@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Modal,
   Image,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -45,6 +45,7 @@ const CLUB_COLORS = [
 export default function ClubsScreen() {
   const { colors, gradients } = useTheme();
   const router = useRouter();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
@@ -109,7 +110,9 @@ export default function ClubsScreen() {
   const pickImageFromGallery = async () => {
     const hasPermission = await requestPermission('gallery');
     if (!hasPermission) {
-      Alert.alert('Permission requise', 'Autorisez l\'acces a la galerie pour ajouter un logo');
+      showPopup('Permission requise', 'Autorisez l\'acces a la galerie pour ajouter un logo', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -128,7 +131,9 @@ export default function ClubsScreen() {
   const takePhoto = async () => {
     const hasPermission = await requestPermission('camera');
     if (!hasPermission) {
-      Alert.alert('Permission requise', 'Autorisez l\'acces a la camera pour prendre une photo');
+      showPopup('Permission requise', 'Autorisez l\'acces a la camera pour prendre une photo', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -144,12 +149,12 @@ export default function ClubsScreen() {
   };
 
   const showImageOptions = () => {
-    Alert.alert(
+    showPopup(
       'Logo du club',
       'Comment voulez-vous ajouter le logo ?',
       [
-        { text: 'Galerie', onPress: pickImageFromGallery },
-        { text: 'Camera', onPress: takePhoto },
+        { text: 'Galerie', onPress: pickImageFromGallery, style: 'primary' },
+        { text: 'Camera', onPress: takePhoto, style: 'primary' },
         { text: 'Annuler', style: 'cancel' },
       ]
     );
@@ -157,7 +162,9 @@ export default function ClubsScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Erreur', 'Le nom du club est requis');
+      showPopup('Erreur', 'Le nom du club est requis', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -182,12 +189,14 @@ export default function ClubsScreen() {
       handleCloseModal();
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le club');
+      showPopup('Erreur', 'Impossible de sauvegarder le club', [
+        { text: 'OK', style: 'primary' }
+      ]);
     }
   };
 
   const handleDelete = (club: Club) => {
-    Alert.alert(
+    showPopup(
       'Supprimer le club ?',
       `Voulez-vous vraiment supprimer "${club.name}" ?`,
       [
@@ -201,7 +210,9 @@ export default function ClubsScreen() {
               await loadClubs();
             } catch (error) {
               console.error('Erreur suppression:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer le club');
+              showPopup('Erreur', 'Impossible de supprimer le club', [
+                { text: 'OK', style: 'primary' }
+              ]);
             }
           },
         },
@@ -518,6 +529,7 @@ export default function ClubsScreen() {
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

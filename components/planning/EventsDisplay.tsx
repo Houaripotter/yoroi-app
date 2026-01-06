@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import EventTicket from './EventTicket';
 import { Competition } from '@/lib/database';
 
@@ -21,6 +22,7 @@ interface EventsDisplayProps {
 const EventsDisplay: React.FC<EventsDisplayProps> = ({ groupedByCategory }) => {
   const router = useRouter();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
 
   const getOrganizer = (competitionName: string): string => {
@@ -146,7 +148,7 @@ const EventsDisplay: React.FC<EventsDisplayProps> = ({ groupedByCategory }) => {
                       onPress={() => router.push('/competitions')}
                       onReminderPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        Alert.alert('Rappels', 'Les rappels J-30, J-7, J-1 et H-2 sont activés !');
+                        showPopup('Rappels', 'Les rappels J-30, J-7, J-1 et H-2 sont actives !', [{ text: 'OK', style: 'primary' }]);
                       }}
                     />
                   );
@@ -183,8 +185,10 @@ const EventsDisplay: React.FC<EventsDisplayProps> = ({ groupedByCategory }) => {
       {/* COURSE */}
       {renderCategory('COURSE', groupedByCategory.course, '', '#10B981')}
 
-      {/* COMPÉTITION */}
-      {renderCategory('COMPÉTITION', groupedByCategory.competition, '', '#6B7280')}
+      {/* COMPETITION */}
+      {renderCategory('COMPETITION', groupedByCategory.competition, '', '#6B7280')}
+
+      <PopupComponent />
     </View>
   );
 };

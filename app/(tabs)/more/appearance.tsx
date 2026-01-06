@@ -1,2 +1,3 @@
-// Re-export du composant Appearance pour navigation imbriquée
-export { default } from '@/app/appearance';
+// Import et re-export du composant Appearance pour navigation imbriquée
+import AppearanceScreen from '@/app/appearance';
+export default AppearanceScreen;

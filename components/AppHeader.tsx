@@ -29,7 +29,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     if (onAvatarPress) {
       onAvatarPress();
     } else {
-      router.push('/settings');
+      router.push('/profile');
     }
   };
 

@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -60,6 +60,7 @@ interface CompetitorProfile {
 
 export default function CompetitorProfileScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [profile, setProfile] = useState<CompetitorProfile>({
     gender: null,
     category: null,
@@ -114,12 +115,16 @@ export default function CompetitorProfileScreen() {
   const handleWeightSave = () => {
     const weight = parseFloat(weightInput);
     if (isNaN(weight) || weight <= 0) {
-      Alert.alert('Erreur', 'Veuillez entrer un poids valide');
+      showPopup('Erreur', 'Veuillez entrer un poids valide', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
     const updated = { ...profile, currentWeight: weight };
     saveProfile(updated);
-    Alert.alert('Succès', 'Poids enregistré !');
+    showPopup('Succès', 'Poids enregistré !', [
+      { text: 'OK', style: 'primary' }
+    ]);
   };
 
   const getCurrentCategories = () => {
@@ -377,6 +382,7 @@ export default function CompetitorProfileScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

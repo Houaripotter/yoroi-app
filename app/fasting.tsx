@@ -5,11 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Modal,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useFocusEffect } from 'expo-router';
 import {
   Clock,
@@ -93,6 +93,7 @@ const getIconComponent = (iconName: string, size: number = 24, color: string = '
 
 export default function FastingScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Etats
   const [fastingState, setFastingState] = useState<FastingState | null>(null);
@@ -194,10 +195,10 @@ export default function FastingScreen() {
     await completeFasting();
     await loadData();
 
-    Alert.alert(
-      '🎉 Bravo !',
-      'Tu as complete ton jeûne avec succes !',
-      [{ text: 'Super !' }]
+    showPopup(
+      'Bravo !',
+      'Tu as completé ton jeûne avec succès !',
+      [{ text: 'Super !', style: 'primary' }]
     );
   };
 
@@ -208,13 +209,14 @@ export default function FastingScreen() {
       ? 'Le jeûne prolongé peut être dangereux. Consultez un médecin avant de commencer et assurez-vous de bien vous hydrater.\n\n⚠️ IMPORTANT : Ne mettez pas votre santé en danger. Si vous ne savez pas si le jeûne est adapté pour vous, consultez un professionnel de santé.'
       : '⚠️ IMPORTANT : Consultez un médecin avant de commencer le jeûne si vous avez des problèmes de santé, prenez des médicaments, êtes enceinte ou allaitez.\n\nNe mettez pas votre santé en danger.';
 
-    Alert.alert(
-      '⚠️ Avertissement médical',
+    showPopup(
+      'Avertissement médical',
       warningMessage,
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: 'Annuler', style: 'secondary' },
         {
           text: 'Je comprends',
+          style: 'primary',
           onPress: () => {
             if (mode.id === 'ramadan') {
               setShowRamadanModal(true);
@@ -239,19 +241,19 @@ export default function FastingScreen() {
       await loadData();
     } else {
       errorHaptic();
-      Alert.alert('Erreur', 'Impossible de demarrer le jeûne.');
+      showPopup('Erreur', 'Impossible de démarrer le jeûne.');
     }
   };
 
   // Arreter le jeûne
   const handleStopFasting = () => {
-    Alert.alert(
-      'Arreter le jeûne ?',
-      'Es-tu sur de vouloir arreter ton jeûne maintenant ?',
+    showPopup(
+      'Arrêter le jeûne ?',
+      'Es-tu sûr de vouloir arrêter ton jeûne maintenant ?',
       [
-        { text: 'Continuer', style: 'cancel' },
+        { text: 'Continuer', style: 'secondary' },
         {
-          text: 'Arreter',
+          text: 'Arrêter',
           style: 'destructive',
           onPress: async () => {
             await stopFasting(false);
@@ -767,6 +769,7 @@ export default function FastingScreen() {
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   Switch,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { ChevronLeft, Camera, Trash2, Check, AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -19,6 +19,7 @@ import * as Haptics from 'expo-haptics';
 export default function ScreenshotModeScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [loading, setLoading] = useState(false);
   const [isEnabled, setIsEnabled] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -37,7 +38,7 @@ export default function ScreenshotModeScreen() {
   };
 
   const handleActivateScreenshotMode = async () => {
-    Alert.alert(
+    showPopup(
       'Activer le mode Screenshot',
       'Cela va charger des données de démonstration complètes pour tous les écrans de l\'app. Tes données actuelles seront écrasées.\n\nContinuer ?',
       [
@@ -54,12 +55,13 @@ export default function ScreenshotModeScreen() {
 
               if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                  'Mode Screenshot activé ! 📸',
-                  'Toutes les données de démonstration ont été chargées.\n\n✅ Poids actuel avec composition\n✅ Hydratation du jour\n✅ Sommeil d\'hier\n✅ Charge actuelle\n✅ 90 jours d\'historique\n✅ Compétitions à venir\n✅ Événements sauvegardés\n\nTu peux maintenant prendre de beaux screenshots !',
+                showPopup(
+                  'Mode Screenshot activé !',
+                  'Toutes les données de démonstration ont été chargées.\n\nPoids actuel avec composition\nHydratation du jour\nSommeil d\'hier\nCharge actuelle\n90 jours d\'historique\nCompétitions à venir\nÉvénements sauvegardés\n\nTu peux maintenant prendre de beaux screenshots !',
                   [
                     {
                       text: 'OK',
+                      style: 'primary',
                       onPress: () => {
                         setIsEnabled(true);
                         router.back();
@@ -69,11 +71,15 @@ export default function ScreenshotModeScreen() {
                 );
               } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Erreur', result.error || 'Une erreur est survenue');
+                showPopup('Erreur', result.error || 'Une erreur est survenue', [
+                  { text: 'OK', style: 'primary' }
+                ]);
               }
             } catch (error) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert('Erreur', 'Impossible de charger les données de démonstration');
+              showPopup('Erreur', 'Impossible de charger les données de démonstration', [
+                { text: 'OK', style: 'primary' }
+              ]);
               console.error(error);
             } finally {
               setLoading(false);
@@ -85,9 +91,9 @@ export default function ScreenshotModeScreen() {
   };
 
   const handleDeactivateScreenshotMode = async () => {
-    Alert.alert(
+    showPopup(
       'Désactiver le mode Screenshot',
-      'Cela va effacer TOUTES les données de démonstration et réinitialiser complètement l\'app.\n\n⚠️ IMPORTANT : Ferme et réouvre l\'app après pour appliquer les changements.\n\nContinuer ?',
+      'Cela va effacer TOUTES les données de démonstration et réinitialiser complètement l\'app.\n\nIMPORTANT : Ferme et réouvre l\'app après pour appliquer les changements.\n\nContinuer ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -102,12 +108,13 @@ export default function ScreenshotModeScreen() {
 
               if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                  '✅ Mode Screenshot désactivé',
-                  `${result.message}\n\n⚠️ IMPORTANT : Ferme et réouvre l\'app maintenant pour que les changements soient visibles !`,
+                showPopup(
+                  'Mode Screenshot désactivé',
+                  `${result.message}\n\nIMPORTANT : Ferme et réouvre l\'app maintenant pour que les changements soient visibles !`,
                   [
                     {
                       text: 'OK',
+                      style: 'primary',
                       onPress: () => {
                         setIsEnabled(false);
                         router.replace('/(tabs)');
@@ -117,11 +124,15 @@ export default function ScreenshotModeScreen() {
                 );
               } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Erreur', result.message);
+                showPopup('Erreur', result.message, [
+                  { text: 'OK', style: 'primary' }
+                ]);
               }
             } catch (error) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert('Erreur', 'Impossible d\'effacer les données');
+              showPopup('Erreur', 'Impossible d\'effacer les données', [
+                { text: 'OK', style: 'primary' }
+              ]);
               console.error(error);
             } finally {
               setLoading(false);
@@ -133,7 +144,7 @@ export default function ScreenshotModeScreen() {
   };
 
   const handleCleanTrainings = async () => {
-    Alert.alert(
+    showPopup(
       'Nettoyer les entraînements',
       'Cela va supprimer TOUS les entraînements actuels et en générer de nouveaux propres (~70 sessions sur 90 jours, 1 par jour max).\n\nContinuer ?',
       [
@@ -150,12 +161,13 @@ export default function ScreenshotModeScreen() {
 
               if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                  'Entraînements nettoyés ! ✅',
-                  `${result.removed} entraînements supprimés.\n\nTu as maintenant un planning propre et lisible avec ~70 sessions sur 3 mois (5 par semaine, 1 par jour max).\n\n✅ Calendrier lisible\n✅ Logos des clubs visibles\n✅ Planning réaliste\n\n⚠️ IMPORTANT : Ferme et réouvre l'app pour voir les changements !`,
+                showPopup(
+                  'Entraînements nettoyés !',
+                  `${result.removed} entraînements supprimés.\n\nTu as maintenant un planning propre et lisible avec ~70 sessions sur 3 mois (5 par semaine, 1 par jour max).\n\nCalendrier lisible\nLogos des clubs visibles\nPlanning réaliste\n\nIMPORTANT : Ferme et réouvre l'app pour voir les changements !`,
                   [
                     {
                       text: 'OK',
+                      style: 'primary',
                       onPress: () => {
                         // Naviguer vers l'accueil pour forcer un refresh
                         router.replace('/(tabs)');
@@ -165,11 +177,15 @@ export default function ScreenshotModeScreen() {
                 );
               } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Erreur', 'Une erreur est survenue lors du nettoyage');
+                showPopup('Erreur', 'Une erreur est survenue lors du nettoyage', [
+                  { text: 'OK', style: 'primary' }
+                ]);
               }
             } catch (error) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert('Erreur', 'Impossible de nettoyer les entraînements');
+              showPopup('Erreur', 'Impossible de nettoyer les entraînements', [
+                { text: 'OK', style: 'primary' }
+              ]);
               console.error(error);
             } finally {
               setCleaning(false);
@@ -181,9 +197,9 @@ export default function ScreenshotModeScreen() {
   };
 
   const handleResetComplete = async () => {
-    Alert.alert(
-      '⚠️ RESET COMPLET',
-      'ATTENTION : Cela va TOUT effacer :\n• TOUS les entraînements\n• TOUS les clubs\n• TOUTES les pesées\n• TOUT le profil\n• AsyncStorage\n\nTu repartiras de ZÉRO.\n\nVraiment continuer ?',
+    showPopup(
+      'RESET COMPLET',
+      'ATTENTION : Cela va TOUT effacer :\n\nTOUS les entraînements\nTOUS les clubs\nTOUTES les pesées\nTOUT le profil\nAsyncStorage\n\nTu repartiras de ZÉRO.\n\nVraiment continuer ?',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -198,12 +214,13 @@ export default function ScreenshotModeScreen() {
 
               if (result.success) {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                  '✅ RESET COMPLET RÉUSSI !',
-                  `${result.message}\n\n✅ Base de données complètement vidée\n✅ AsyncStorage effacé\n\n⚠️ IMPORTANT : Ferme et réouvre l'app maintenant !`,
+                showPopup(
+                  'RESET COMPLET RÉUSSI !',
+                  `${result.message}\n\nBase de données complètement vidée\nAsyncStorage effacé\n\nIMPORTANT : Ferme et réouvre l'app maintenant !`,
                   [
                     {
                       text: 'OK',
+                      style: 'primary',
                       onPress: () => {
                         setIsEnabled(false);
                         router.replace('/(tabs)');
@@ -213,11 +230,15 @@ export default function ScreenshotModeScreen() {
                 );
               } else {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Erreur', result.message);
+                showPopup('Erreur', result.message, [
+                  { text: 'OK', style: 'primary' }
+                ]);
               }
             } catch (error) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert('Erreur', 'Impossible de réinitialiser la base de données');
+              showPopup('Erreur', 'Impossible de réinitialiser la base de données', [
+                { text: 'OK', style: 'primary' }
+              ]);
               console.error(error);
             } finally {
               setResetting(false);
@@ -435,6 +456,7 @@ export default function ScreenshotModeScreen() {
           )}
         </View>
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

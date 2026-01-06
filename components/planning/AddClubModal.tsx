@@ -13,10 +13,10 @@ import {
   TextInput,
   ScrollView,
   Image,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import {
@@ -68,6 +68,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   editingClub,
 }) => {
   const { colors, gradients } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Form state
   const [name, setName] = useState('');
@@ -162,7 +163,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Erreur sauvegarde club:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le club');
+      showPopup('Erreur', 'Impossible de sauvegarder le club', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSubmitting(false);
     }
@@ -175,7 +176,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       if (source === 'camera') {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('Permission requise', 'Autorise l\'acces a la camera');
+          showPopup('Permission requise', 'Autorise l\'acces a la camera', [{ text: 'OK', style: 'primary' }]);
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -186,7 +187,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       } else {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('Permission requise', 'Autorise l\'acces a la galerie');
+          showPopup('Permission requise', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
           return;
         }
         result = await ImagePicker.launchImageLibraryAsync({
@@ -257,9 +258,9 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
             <TouchableOpacity
               style={styles.logoPreview}
               onPress={() => {
-                Alert.alert('Logo du club', 'Comment ajouter le logo ?', [
-                  { text: 'Galerie', onPress: () => pickImage('gallery') },
-                  { text: 'Camera', onPress: () => pickImage('camera') },
+                showPopup('Logo du club', 'Comment ajouter le logo ?', [
+                  { text: 'Galerie', onPress: () => pickImage('gallery'), style: 'primary' },
+                  { text: 'Camera', onPress: () => pickImage('camera'), style: 'primary' },
                   { text: 'Annuler', style: 'cancel' },
                 ]);
               }}
@@ -472,6 +473,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
+        <PopupComponent />
       </KeyboardAvoidingView>
     </Modal>
   );

@@ -9,8 +9,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
@@ -46,6 +46,7 @@ export default function CompetitionDetailScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams();
   const competitionId = params.id as string;
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [combats, setCombats] = useState<Combat[]>([]);
@@ -66,15 +67,16 @@ export default function CompetitionDetailScreen() {
       setCombats(fights);
     } catch (error) {
       logger.error('Error loading competition:', error);
-      Alert.alert('Erreur', 'Impossible de charger la compétition');
-      router.back();
+      showPopup('Erreur', 'Impossible de charger la compétition', [
+        { text: 'OK', style: 'primary', onPress: () => router.back() }
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    showPopup(
       'Supprimer la compétition',
       'Êtes-vous sûr de vouloir supprimer cette compétition ? Cette action est irréversible.',
       [
@@ -89,7 +91,9 @@ export default function CompetitionDetailScreen() {
               router.back();
             } catch (error) {
               logger.error('Error deleting competition:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer la compétition');
+              showPopup('Erreur', 'Impossible de supprimer la compétition', [
+                { text: 'OK', style: 'primary' }
+              ]);
             }
           },
         },
@@ -363,6 +367,7 @@ export default function CompetitionDetailScreen() {
         </View>
 
         <View style={{ height: 40 }} />
+        <PopupComponent />
       </ScrollView>
     </ScreenWrapper>
   );

@@ -10,10 +10,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
@@ -34,6 +34,7 @@ import logger from '@/lib/security/logger';
 
 export default function EditCompetitionScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
   const competitionId = params.id as string;
 
@@ -65,8 +66,9 @@ export default function EditCompetitionScreen() {
     try {
       const comp = await getCompetitionById(parseInt(competitionId));
       if (!comp) {
-        Alert.alert('Erreur', 'Compétition introuvable');
-        router.back();
+        showPopup('Erreur', 'Compétition introuvable', [
+          { text: 'OK', style: 'primary', onPress: () => router.back() }
+        ]);
         return;
       }
 
@@ -86,8 +88,9 @@ export default function EditCompetitionScreen() {
       }
     } catch (error) {
       logger.error('Error loading competition:', error);
-      Alert.alert('Erreur', 'Impossible de charger la compétition');
-      router.back();
+      showPopup('Erreur', 'Impossible de charger la compétition', [
+        { text: 'OK', style: 'primary', onPress: () => router.back() }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -109,7 +112,9 @@ export default function EditCompetitionScreen() {
 
   const handleSave = async () => {
     if (!nom.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir un nom de compétition');
+      showPopup('Erreur', 'Veuillez saisir un nom de compétition', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -132,7 +137,9 @@ export default function EditCompetitionScreen() {
       router.back();
     } catch (error) {
       logger.error('Error updating competition:', error);
-      Alert.alert('Erreur', 'Impossible de mettre à jour la compétition');
+      showPopup('Erreur', 'Impossible de mettre à jour la compétition', [
+        { text: 'OK', style: 'primary' }
+      ]);
       setIsSaving(false);
     }
   };
@@ -423,7 +430,7 @@ export default function EditCompetitionScreen() {
                     <Text
                       style={[
                         styles.categoryName,
-                        { color: isSelected ? '#FFFFFF' : colors.textPrimary },
+                        { color: isSelected ? '#000000' : colors.textPrimary },
                       ]}
                     >
                       {category.name}
@@ -433,7 +440,7 @@ export default function EditCompetitionScreen() {
                         styles.categoryWeight,
                         {
                           color: isSelected
-                            ? 'rgba(255, 255, 255, 0.8)'
+                            ? 'rgba(0, 0, 0, 0.7)'
                             : colors.textMuted,
                         },
                       ]}
@@ -467,6 +474,7 @@ export default function EditCompetitionScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

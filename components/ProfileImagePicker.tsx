@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Camera, User } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 interface ProfileImagePickerProps {
   currentImage?: string | null;
@@ -17,6 +18,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
   size = 120,
 }) => {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [image, setImage] = useState<string | null>(currentImage || null);
 
   const pickImage = async () => {
@@ -24,9 +26,10 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert(
+      showPopup(
         'Permission requise',
-        'Nous avons besoin d\'accéder à vos photos.'
+        'Nous avons besoin d\'acceder a vos photos.',
+        [{ text: 'OK', style: 'primary' }]
       );
       return;
     }
@@ -56,7 +59,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Nous avons besoin d\'accéder à la caméra.');
+      showPopup('Permission requise', 'Nous avons besoin d\'acceder a la camera.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -79,12 +82,12 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
   };
 
   const showOptions = () => {
-    Alert.alert(
+    showPopup(
       'Photo de profil',
       'Comment voulez-vous ajouter votre photo ?',
       [
-        { text: 'Prendre une photo', onPress: takePhoto },
-        { text: 'Choisir dans la galerie', onPress: pickImage },
+        { text: 'Prendre une photo', style: 'primary', onPress: takePhoto },
+        { text: 'Choisir dans la galerie', style: 'primary', onPress: pickImage },
         { text: 'Annuler', style: 'cancel' },
       ]
     );
@@ -126,6 +129,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
       <View style={[styles.cameraBadge, { backgroundColor: colors.accent }]}>
         <Camera size={16} color="#FFF" />
       </View>
+      <PopupComponent />
     </TouchableOpacity>
   );
 };

@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -26,6 +25,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { WeightProgressCard } from '@/components/social-cards/WeightProgressCard';
 import { useWeightProgress } from '@/lib/social-cards/useWeightProgress';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -34,6 +34,7 @@ import logger from '@/lib/security/logger';
 export default function WeightProgressScreen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format, setFormat] = useState<'stories' | 'square'>('stories');
   const [isSaving, setIsSaving] = useState(false);
@@ -47,7 +48,7 @@ export default function WeightProgressScreen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'acceder a la camera');
+        showPopup('Permission requise', 'Yoroi a besoin d\'acceder a la camera', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -65,7 +66,7 @@ export default function WeightProgressScreen() {
       }
     } catch (err) {
       logger.error('Erreur prise de photo:', err);
-      Alert.alert('Erreur', 'Impossible de prendre la photo');
+      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -74,7 +75,7 @@ export default function WeightProgressScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'acceder a ta galerie');
+        showPopup('Permission requise', 'Yoroi a besoin d\'acceder a ta galerie', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -92,7 +93,7 @@ export default function WeightProgressScreen() {
       }
     } catch (err) {
       logger.error('Erreur selection photo:', err);
-      Alert.alert('Erreur', 'Impossible de selectionner la photo');
+      showPopup('Erreur', 'Impossible de selectionner la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -114,7 +115,7 @@ export default function WeightProgressScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -127,7 +128,7 @@ export default function WeightProgressScreen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -138,10 +139,10 @@ export default function WeightProgressScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegarde', 'Ta carte poids est dans ta galerie !');
+      showPopup('Sauvegarde', 'Ta carte poids est dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
     } catch (err) {
       logger.error('Erreur sauvegarde:', err);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -155,7 +156,7 @@ export default function WeightProgressScreen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -171,11 +172,11 @@ export default function WeightProgressScreen() {
           dialogTitle: 'Partager ma progression poids Yoroi',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (err) {
       logger.error('Erreur partage:', err);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -347,6 +348,7 @@ export default function WeightProgressScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

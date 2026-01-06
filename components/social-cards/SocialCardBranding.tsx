@@ -112,15 +112,24 @@ export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> =
 
 // ============================================
 // WATERMARK LOGO - Grand logo derrière quand pas de photo
+// Utilise logo2010.png
 // ============================================
-export const SocialCardWatermark: React.FC<{ show?: boolean }> = ({ show = true }) => {
+export const SocialCardWatermark: React.FC<{ show?: boolean; variant?: 'dark' | 'light' }> = ({
+  show = true,
+  variant = 'dark'
+}) => {
   if (!show) return null;
+
+  const isLight = variant === 'light';
 
   return (
     <View style={styles.watermarkContainer}>
       <Image
         source={require('@/assets/images/logo2010.png')}
-        style={styles.watermarkLogo}
+        style={[
+          styles.watermarkLogo,
+          { opacity: isLight ? 0.15 : 0.2 }
+        ]}
         resizeMode="contain"
       />
     </View>
@@ -259,9 +268,8 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   watermarkLogo: {
-    width: 200,
-    height: 200,
-    opacity: 0.08,
+    width: 280,
+    height: 280,
   },
 });
 

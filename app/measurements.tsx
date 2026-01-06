@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   StatusBar,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -246,6 +246,7 @@ export default function MeasurementsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -295,7 +296,9 @@ export default function MeasurementsScreen() {
   const handleSave = async () => {
     // Check if at least one measurement is provided
     if (!chest && !waist && !hips && !rightArm && !leftArm && !rightThigh && !leftThigh && !neck && !shoulders) {
-      Alert.alert('Erreur', 'Entre au moins une mesure');
+      showPopup('Erreur', 'Entre au moins une mesure', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
 
@@ -318,14 +321,14 @@ export default function MeasurementsScreen() {
       await addMeasurement(data);
       successHaptic();
 
-      Alert.alert(
-        'Enregistré !',
-        'Tes mensurations ont été sauvegardées.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      showPopup('Enregistré !', 'Tes mensurations ont été sauvegardées.', [
+        { text: 'OK', style: 'primary', onPress: () => router.back() },
+      ]);
     } catch (error) {
       logger.error('Error saving:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder');
+      showPopup('Erreur', 'Impossible de sauvegarder', [
+        { text: 'OK', style: 'primary' },
+      ]);
     } finally {
       setIsSubmitting(false);
     }
@@ -495,6 +498,8 @@ export default function MeasurementsScreen() {
           tint={isDark ? 'dark' : 'light'}
         />
       )}
+
+      <PopupComponent />
     </View>
   );
 }

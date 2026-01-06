@@ -10,9 +10,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   StatusBar,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Check, Crown, Sparkles } from 'lucide-react-native';
@@ -33,6 +33,7 @@ export default function LogoSelectionScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { isPro } = useDevMode();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [currentLogo, setCurrentLogo] = useState<LogoVariant>('default');
   const [selectedLogo, setSelectedLogo] = useState<LogoVariant>('default');
@@ -54,10 +55,10 @@ export default function LogoSelectionScreen() {
 
     if (!isUnlocked) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
+      showPopup(
         'Logo Premium',
         'Ce logo nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 1.0.0" dans les Réglages et entrez le code 2412.',
-        [{ text: 'OK', style: 'default' }]
+        [{ text: 'OK', style: 'primary' }]
       );
       return;
     }
@@ -78,14 +79,14 @@ export default function LogoSelectionScreen() {
     try {
       await saveSelectedLogo(selectedLogo);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        '✨ Logo mis a jour !',
+      showPopup(
+        'Logo mis a jour !',
         'Ton nouveau logo est maintenant actif.',
-        [{ text: 'Super !', onPress: () => router.back() }]
+        [{ text: 'Super !', style: 'primary', onPress: () => router.back() }]
       );
     } catch (error) {
       logger.error('Erreur sauvegarde logo:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le logo');
+      showPopup('Erreur', 'Impossible de sauvegarder le logo', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -250,6 +251,7 @@ export default function LogoSelectionScreen() {
           </TouchableOpacity>
         </View>
       )}
+      <PopupComponent />
     </View>
   );
 }

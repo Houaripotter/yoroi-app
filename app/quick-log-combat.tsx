@@ -12,8 +12,8 @@ import {
   ScrollView,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -48,6 +48,7 @@ type FilterType = 'all' | 'todo' | 'in_progress' | 'mastered';
 export default function QuickLogCombatScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
   const [techniques, setTechniques] = useState<ProgressionItem[]>([]);
@@ -81,7 +82,7 @@ export default function QuickLogCombatScreen() {
 
   const handleAddTechnique = () => {
     if (!newTechniqueName.trim()) {
-      Alert.alert('Erreur', 'Entre le nom de la technique');
+      showPopup('Erreur', 'Entre le nom de la technique', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -121,7 +122,7 @@ export default function QuickLogCombatScreen() {
   };
 
   const handleDelete = (technique: ProgressionItem) => {
-    Alert.alert(
+    showPopup(
       'Supprimer',
       `Supprimer "${technique.name}" ?`,
       [
@@ -483,6 +484,7 @@ export default function QuickLogCombatScreen() {
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </View>
   );
 }

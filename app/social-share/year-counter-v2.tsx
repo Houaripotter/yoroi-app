@@ -11,7 +11,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -20,13 +19,14 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
-import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon } from 'lucide-react-native';
+import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon, Moon, Sun } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { YearCounterCardV2 } from '@/components/social-cards/YearCounterCardV2';
 import { useYearStats } from '@/lib/social-cards/useYearStats';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
+import { useCustomPopup } from '@/components/CustomPopup';
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -35,11 +35,13 @@ import logger from '@/lib/security/logger';
 export default function YearCounterV2Screen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format, setFormat] = useState<'stories' | 'square'>('stories');
   const [isSaving, setIsSaving] = useState(false);
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
+  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('photo'); // Type de fond
 
   // Charger les stats de l'année
   const currentYear = new Date().getFullYear();
@@ -64,7 +66,7 @@ export default function YearCounterV2Screen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'accéder à la caméra');
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à la caméra', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -76,13 +78,14 @@ export default function YearCounterV2Screen() {
 
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
+        setBackgroundType('photo');
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
       }
     } catch (err) {
       logger.error('Erreur prise de photo:', err);
-      Alert.alert('Erreur', 'Impossible de prendre la photo');
+      showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -91,7 +94,7 @@ export default function YearCounterV2Screen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie');
+        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -103,13 +106,32 @@ export default function YearCounterV2Screen() {
 
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
+        setBackgroundType('photo');
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
       }
     } catch (err) {
       logger.error('Erreur sélection photo:', err);
-      Alert.alert('Erreur', 'Impossible de sélectionner la photo');
+      showPopup('Erreur', 'Impossible de sélectionner la photo', [{ text: 'OK', style: 'primary' }]);
+    }
+  };
+
+  // Sélectionner fond noir
+  const selectBlackBackground = () => {
+    setBackgroundImage(undefined);
+    setBackgroundType('black');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  // Sélectionner fond blanc
+  const selectWhiteBackground = () => {
+    setBackgroundImage(undefined);
+    setBackgroundType('white');
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -131,7 +153,7 @@ export default function YearCounterV2Screen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -144,7 +166,7 @@ export default function YearCounterV2Screen() {
       // Demander permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -155,10 +177,10 @@ export default function YearCounterV2Screen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Sauvegardé', 'Ton Compteur Annuel est dans ta galerie !');
+      showPopup('Sauvegardé', 'Ton Compteur Annuel est dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
     } catch (err) {
       logger.error('Erreur sauvegarde:', err);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la carte');
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
       setIsSaving(false);
     }
@@ -172,7 +194,7 @@ export default function YearCounterV2Screen() {
       }
 
       if (!cardRef.current) {
-        Alert.alert('Erreur', 'Impossible de capturer la carte');
+        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -189,11 +211,11 @@ export default function YearCounterV2Screen() {
           dialogTitle: 'Partager mon Compteur Annuel Yoroi',
         });
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (err) {
       logger.error('Erreur partage:', err);
-      Alert.alert('Erreur', 'Impossible de partager la carte');
+      showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -288,10 +310,10 @@ export default function YearCounterV2Screen() {
           {/* Photo buttons */}
           <View style={styles.toolbarSection}>
             <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.accent }]}
+              style={[styles.toolbarButton, backgroundType === 'photo' && backgroundImage ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
               onPress={takePhoto}
             >
-              <Camera size={16} color={colors.textOnGold} />
+              <Camera size={16} color={backgroundType === 'photo' && backgroundImage ? colors.textOnGold : colors.textPrimary} />
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolbarButton, { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
@@ -299,14 +321,18 @@ export default function YearCounterV2Screen() {
             >
               <ImageIcon size={16} color={colors.textPrimary} />
             </TouchableOpacity>
-            {backgroundImage && (
-              <TouchableOpacity
-                style={[styles.toolbarButtonText, { backgroundColor: '#EF444420' }]}
-                onPress={removePhoto}
-              >
-                <Text style={[styles.removeText, { color: '#EF4444' }]}>Retirer</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.toolbarButton, backgroundType === 'black' ? { backgroundColor: '#1a1a1a', borderWidth: 2, borderColor: colors.accent } : { backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: colors.border }]}
+              onPress={selectBlackBackground}
+            >
+              <Moon size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toolbarButton, backgroundType === 'white' ? { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.accent } : { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border }]}
+              onPress={selectWhiteBackground}
+            >
+              <Sun size={16} color="#1a1a1a" />
+            </TouchableOpacity>
           </View>
 
           {/* Format selector */}
@@ -345,6 +371,7 @@ export default function YearCounterV2Screen() {
             stats={stats}
             format={format}
             backgroundImage={backgroundImage}
+            backgroundType={backgroundType}
             username="yoroiapp"
           />
         </View>
@@ -385,6 +412,7 @@ export default function YearCounterV2Screen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

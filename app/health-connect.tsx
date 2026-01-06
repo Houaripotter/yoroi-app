@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Switch,
   Platform,
-  Alert,
   Linking,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -42,7 +42,8 @@ import {
 export default function HealthConnectScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  
+  const { showPopup, PopupComponent } = useCustomPopup();
+
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -62,21 +63,21 @@ export default function HealthConnectScreen() {
     
     try {
       const success = await healthConnect.connect();
-      
+
       if (success) {
-        Alert.alert(
-          '✅ Connecté !',
-          `YOROI est maintenant connecté à ${healthConnect.getProviderName()}. Tes données seront synchronisées automatiquement.`,
-          [{ text: 'Super !' }]
+        showPopup(
+          'Connecte !',
+          `YOROI est maintenant connecte a ${healthConnect.getProviderName()}. Tes donnees seront synchronisees automatiquement.`,
+          [{ text: 'Super !', style: 'primary' }]
         );
       } else {
-        Alert.alert(
+        showPopup(
           'Erreur',
-          `Impossible de se connecter à ${healthConnect.getProviderName()}. Vérifie que l'app est installée et réessaie.`,
-          [{ text: 'OK' }]
+          `Impossible de se connecter a ${healthConnect.getProviderName()}. Verifie que l'app est installee et reessaie.`,
+          [{ text: 'OK', style: 'primary' }]
         );
       }
-      
+
       setSyncStatus(healthConnect.getSyncStatus());
     } catch (error) {
       logger.error('Erreur connexion:', error);
@@ -87,14 +88,14 @@ export default function HealthConnectScreen() {
 
   const handleDisconnect = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    Alert.alert(
-      'Déconnecter ?',
-      `Veux-tu vraiment déconnecter YOROI de ${healthConnect.getProviderName()} ? Tes données ne seront plus synchronisées automatiquement.`,
+
+    showPopup(
+      'Deconnecter ?',
+      `Veux-tu vraiment deconnecter YOROI de ${healthConnect.getProviderName()} ? Tes donnees ne seront plus synchronisees automatiquement.`,
       [
         { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Déconnecter', 
+        {
+          text: 'Deconnecter',
           style: 'destructive',
           onPress: async () => {
             await healthConnect.disconnect();
@@ -114,11 +115,11 @@ export default function HealthConnectScreen() {
     try {
       await healthConnect.syncAll();
       setSyncStatus(healthConnect.getSyncStatus());
-      
-      Alert.alert(
-        '✅ Synchronisé !',
-        'Tes données de santé ont été mises à jour.',
-        [{ text: 'OK' }]
+
+      showPopup(
+        'Synchronise !',
+        'Tes donnees de sante ont ete mises a jour.',
+        [{ text: 'OK', style: 'primary' }]
       );
     } catch (error) {
       logger.error('Erreur sync:', error);
@@ -356,12 +357,13 @@ export default function HealthConnectScreen() {
 
         {/* Note */}
         <Text style={[styles.note, { color: colors.textMuted }]}>
-          💡 Astuce : Pour une meilleure précision, utilise une balance connectée 
+          Astuce : Pour une meilleure precision, utilise une balance connectee
           et porte ta montre pendant ton sommeil.
         </Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

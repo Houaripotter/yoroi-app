@@ -21,11 +21,12 @@ import { getCompetitions, getUpcomingCompetitions } from '@/lib/fighterModeServi
 import { Competition, calculateDaysUntil, SPORT_ICONS } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { importAllCompetitions, getAvailableCompetitionsCount } from '@/lib/importCompetitionsService';
-import { Alert } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
 
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
   const [pastCompetitions, setPastCompetitions] = useState<Competition[]>([]);
@@ -66,15 +67,16 @@ export default function CompetitionsScreen() {
     try {
       const available = getAvailableCompetitionsCount();
 
-      Alert.alert(
-        'Importer les compétitions',
-        `Voulez-vous importer ${available.total} compétitions IBJJF et CFJJB ?\n\n` +
-        `• ${available.ibjjf} compétitions IBJJF (2025-2026)\n` +
-        `• ${available.cfjjb} compétitions CFJJB (2026)`,
+      showPopup(
+        'Importer les competitions',
+        `Voulez-vous importer ${available.total} competitions IBJJF et CFJJB ?\n\n` +
+        `- ${available.ibjjf} competitions IBJJF (2025-2026)\n` +
+        `- ${available.cfjjb} competitions CFJJB (2026)`,
         [
           { text: 'Annuler', style: 'cancel' },
           {
             text: 'Importer',
+            style: 'primary',
             onPress: async () => {
               setImporting(true);
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -84,15 +86,15 @@ export default function CompetitionsScreen() {
 
                 await loadCompetitions();
 
-                Alert.alert(
-                  'Import terminé !',
-                  `${result.total} compétitions ajoutées\n\n` +
-                  `IBJJF : ${result.ibjjf.imported} importées, ${result.ibjjf.skipped} déjà présentes\n` +
-                  `CFJJB : ${result.cfjjb.imported} importées, ${result.cfjjb.skipped} déjà présentes`,
-                  [{ text: 'OK' }]
+                showPopup(
+                  'Import termine !',
+                  `${result.total} competitions ajoutees\n\n` +
+                  `IBJJF : ${result.ibjjf.imported} importees, ${result.ibjjf.skipped} deja presentes\n` +
+                  `CFJJB : ${result.cfjjb.imported} importees, ${result.cfjjb.skipped} deja presentes`,
+                  [{ text: 'OK', style: 'primary' }]
                 );
               } catch (error) {
-                Alert.alert('Erreur', 'Impossible d\'importer les compétitions');
+                showPopup('Erreur', 'Impossible d\'importer les competitions', [{ text: 'OK', style: 'primary' }]);
               } finally {
                 setImporting(false);
               }
@@ -101,7 +103,7 @@ export default function CompetitionsScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert('Erreur', 'Une erreur est survenue');
+      showPopup('Erreur', 'Une erreur est survenue', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -345,6 +347,7 @@ export default function CompetitionsScreen() {
       >
         <Plus size={24} color={colors.textOnGold} />
       </TouchableOpacity>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

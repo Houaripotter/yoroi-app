@@ -35,7 +35,7 @@ export const RewardOverlay = React.forwardRef<
     try {
       // Charger le son
       const { sound } = await Audio.Sound.createAsync(
-        require('@/assets/sounds/success.mp3')
+        require('@/assets/sounds/victory.mp3')
       );
       soundRef.current = sound;
       

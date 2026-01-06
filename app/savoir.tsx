@@ -16,6 +16,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
+import { ProtocolChecklist } from '@/components/lab/ProtocolChecklist';
+import { HydrationScale } from '@/components/lab/HydrationScale';
+import { LAB_PROTOCOLS } from '@/data/labProtocols';
 import {
   Heart,
   UtensilsCrossed,
@@ -30,13 +33,13 @@ import {
   Clock,
   Mountain,
   Footprints,
-  Calculator,
   Dumbbell,
   Pill,
   Coffee,
   Flame,
   AlertTriangle,
   Maximize2,
+  Brain,
 } from 'lucide-react-native';
 
 // Enable LayoutAnimation on Android
@@ -308,6 +311,19 @@ const scienceData: ScienceCard[] = [
       sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/11020090/"
     }
   },
+  {
+    id: '19',
+    title: "La Règle des 66 Jours",
+    icon: "brain",
+    category: "Mental",
+    content: {
+      what: "Le temps moyen nécessaire pour qu'un nouveau comportement devienne automatique. Ce n'est PAS 21 jours (mythe populaire sans fondement scientifique).",
+      why: "Lally et al. (2010) ont suivi 96 personnes pendant 12 semaines. Résultat : en moyenne 66 jours pour atteindre l'automaticité. La fourchette va de 18 à 254 jours selon la complexité de l'habitude.",
+      how: "Commence petit (2 min d'exercice suffit). Attache la nouvelle habitude à une existante (après le café du matin). Ne casse jamais la chaîne 2 jours de suite. Sois patient : les 3 premières semaines sont les plus difficiles.",
+      sourceName: "Étude : Lally et al. (2010) - Eur J Soc Psychol",
+      sourceUrl: "https://onlinelibrary.wiley.com/doi/abs/10.1002/ejsp.674"
+    }
+  },
 ];
 
 const protocolData: ProtocolCard[] = [
@@ -552,6 +568,90 @@ const protocolData: ProtocolCard[] = [
       frequency: "1 exercice majeur par séance",
       notes: "Excellent pour casser la routine et choquer le muscle."
     }
+  },
+  {
+    id: 'p13',
+    title: "Protocole Pré-Sommeil",
+    icon: "bed-clock",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Optimiser la qualité du sommeil et la récupération nocturne.",
+      duration: "60-90 min avant coucher",
+      protocol: [
+        "Température chambre entre 16-19°C",
+        "Arrêt des écrans 60 min avant coucher (lumière bleue)",
+        "Dernière prise de caféine > 6h avant",
+        "Dîner terminé > 2-3h avant coucher",
+        "Éviter l'alcool (perturbe le sommeil profond)",
+        "5-10 min de respiration diaphragmatique ou méditation"
+      ],
+      frequency: "Tous les soirs",
+      notes: "⚠️ Dormir < 8h = risque de blessure x1.7 (Milewski et al., 2014)"
+    }
+  },
+  {
+    id: 'p14',
+    title: "Protocole Jour de Compétition",
+    icon: "activity",
+    category: "Performance",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Préparer le corps et l'esprit pour une performance optimale le jour J.",
+      duration: "Les 4h avant compétition",
+      protocol: [
+        "Dernier repas solide 3-4h avant la compétition",
+        "Hydratation : 5-7ml/kg dans les 4h précédentes",
+        "Échauffement progressif 15-20 min (aérobie léger)",
+        "Activation musculaire spécifique au sport",
+        "Routine de visualisation mentale 5 min",
+        "Dernière prise de glucides 30-60 min avant (si endurance)"
+      ],
+      frequency: "Chaque jour de compétition",
+      notes: "Sources : Thomas et al. (2016), ACSM Position Stand (2007)"
+    }
+  },
+  {
+    id: 'p15',
+    title: "Protocole Récupération Post-Séance",
+    icon: "activity",
+    category: "Récupération",
+    difficulty: 'Débutant',
+    content: {
+      objective: "Maximiser la récupération après un entraînement intense.",
+      duration: "2h post-training",
+      protocol: [
+        "Réhydratation : 1.5L par kg de poids perdu",
+        "Protéines : 20-40g dans les 2h post-effort",
+        "Glucides : uniquement si re-compétition < 24h",
+        "Étirements légers ou mobilité 5-10 min",
+        "Bain froid/contraste (si entraînement intense)",
+        "Coucher avant 23h pour maximiser GH nocturne"
+      ],
+      frequency: "Après chaque séance intense",
+      notes: "Sources : Shirreffs et al. (2004), Morton et al. (2018)"
+    }
+  },
+  {
+    id: 'p16',
+    title: "Protocole Semaine de Décharge (Deload)",
+    icon: "trending-up",
+    category: "Force",
+    difficulty: 'Intermédiaire',
+    content: {
+      objective: "Permettre la récupération complète et prévenir le surentraînement.",
+      duration: "1 semaine",
+      protocol: [
+        "Réduire le volume total de 40-60% (séries × répétitions)",
+        "Maintenir l'intensité (charges) à 70-80% du max",
+        "Fréquence : 2-3 séances max dans la semaine",
+        "Focus sur la technique et la connexion neuromusculaire",
+        "Privilégier le sommeil (objectif 8-9h)",
+        "Planifier tous les 4-8 semaines selon fatigue"
+      ],
+      frequency: "Toutes les 4-8 semaines",
+      notes: "Sources : Zourdos et al. (2016), Pritchard et al. (2015)"
+    }
   }
 ];
 
@@ -594,6 +694,8 @@ const getIcon = (iconName: string, size: number = 24, color: string) => {
       return <AlertTriangle size={size} color={color} strokeWidth={2.5} />;
     case 'stretch':
       return <Maximize2 size={size} color={color} strokeWidth={2.5} />;
+    case 'brain':
+      return <Brain size={size} color={color} strokeWidth={2.5} />;
     default:
       return <Activity size={size} color={color} strokeWidth={2.5} />;
   }
@@ -620,12 +722,43 @@ const getCategoryColor = (category: string) => {
       return '#FF1493'; // Deep Pink
     case 'Mobilité':
       return '#00CED1'; // Dark Turquoise
+    case 'Mental':
+      return '#8B5CF6'; // Purple
     default:
       return '#D3D3D3'; // Light Gray
   }
 };
 
-const getCategoryHeaderColor = (category: string) => {
+const getCategoryHeaderColor = (category: string, isDark: boolean) => {
+  // En mode sombre, on utilise des versions plus foncées/transparentes
+  if (isDark) {
+    switch (category) {
+      case 'Cardio':
+      case 'Endurance':
+        return '#FF6B9D20'; // Pink with opacity
+      case 'Nutrition':
+        return '#90EE9020'; // Green with opacity
+      case 'Récupération':
+        return '#87CEEB20'; // Blue with opacity
+      case 'Métabolisme':
+        return '#DDA0DD20'; // Purple with opacity
+      case 'Activité':
+        return '#FFD70020'; // Yellow with opacity
+      case 'Force':
+        return '#FF450020'; // Orange with opacity
+      case 'Supplémentation':
+        return '#32CD3220'; // Lime with opacity
+      case 'Performance':
+        return '#FF149320'; // Pink with opacity
+      case 'Mobilité':
+        return '#00CED120'; // Turquoise with opacity
+      case 'Mental':
+        return '#8B5CF620'; // Purple with opacity
+      default:
+        return '#FFFFFF10'; // Gray with opacity
+    }
+  }
+  // Mode clair - couleurs originales
   switch (category) {
     case 'Cardio':
     case 'Endurance':
@@ -646,6 +779,8 @@ const getCategoryHeaderColor = (category: string) => {
       return '#FFE4F2'; // Light Pink background
     case 'Mobilité':
       return '#E0F7FA'; // Light Turquoise background
+    case 'Mental':
+      return '#EDE9FE'; // Light Purple background
     default:
       return '#F5F5F5'; // Light Gray background
   }
@@ -662,9 +797,12 @@ const getDifficultyColor = (difficulty: 'Débutant' | 'Intermédiaire' | 'Avanc�
   }
 };
 
+type TabType = 'ARTICLES' | 'PROTOCOLES';
+
 export default function SavoirScreen() {
   const router = useRouter();
   const { colors: themeColors, isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<TabType>('ARTICLES');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [expandedProtocols, setExpandedProtocols] = useState<Set<string>>(new Set());
 
@@ -703,53 +841,65 @@ export default function SavoirScreen() {
   return (
     <ScreenWrapper noPadding>
       <Header title="SAVOIR" showBack />
+
+      {/* Tabs */}
+      <View style={[styles.tabsContainer, { borderBottomColor: themeColors.border, backgroundColor: themeColors.card }]}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'ARTICLES' && styles.tabActive]}
+          onPress={() => setActiveTab('ARTICLES')}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'ARTICLES' ? themeColors.textPrimary : themeColors.textMuted },
+            ]}
+          >
+            ARTICLES
+          </Text>
+          {activeTab === 'ARTICLES' && <View style={[styles.tabIndicator, { backgroundColor: themeColors.accent }]} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'PROTOCOLES' && styles.tabActive]}
+          onPress={() => setActiveTab('PROTOCOLES')}
+          activeOpacity={0.7}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'PROTOCOLES' ? themeColors.textPrimary : themeColors.textMuted },
+            ]}
+          >
+            PROTOCOLES
+          </Text>
+          {activeTab === 'PROTOCOLES' && <View style={[styles.tabIndicator, { backgroundColor: themeColors.accent }]} />}
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         style={[styles.scrollView, { backgroundColor: themeColors.background }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header description */}
-        <View style={styles.header}>
-          <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
-            Outils cliniques & Base de donnees scientifique
+        {activeTab === 'ARTICLES' ? (
+        <>
+        {/* BASE DE DONNÉES SCIENTIFIQUE */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
+            {scienceData.length} ARTICLES SCIENTIFIQUES
           </Text>
-        </View>
-
-        {/* SECTION 1: OUTILS CLINIQUES */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>OUTILS CLINIQUES</Text>
-          
-          <TouchableOpacity
-            style={styles.clinicalToolCard}
-            onPress={() => router.push('/calculator' as any)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.clinicalToolContent}>
-              <View style={styles.clinicalToolIconContainer}>
-                <Calculator size={28} color="#1F2937" strokeWidth={2.5} />
-              </View>
-              <View style={styles.clinicalToolText}>
-                <Text style={styles.clinicalToolTitle}>Calculateur Métabolique</Text>
-                <Text style={styles.clinicalToolSubtitle}>BMR & TDEE (Mifflin-St Jeor)</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* SECTION 2: BASE DE DONNÉES */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>BASE DE DONNÉES</Text>
           
           {/* Scientific Cards - Accordion */}
           <View style={styles.cardsContainer}>
           {scienceData.map((card) => {
             const categoryColor = getCategoryColor(card.category);
             const isExpanded = expandedCards.has(card.id);
-            
-            const headerBgColor = getCategoryHeaderColor(card.category);
-            
+
+            const headerBgColor = getCategoryHeaderColor(card.category, isDark);
+
             return (
-              <View key={card.id} style={[styles.card, { backgroundColor: '#FFFFFF' }]}>
+              <View key={card.id} style={[styles.card, { backgroundColor: themeColors.card }]}>
                 {/* Header with Colored Background */}
                 <TouchableOpacity
                   style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}
@@ -757,7 +907,7 @@ export default function SavoirScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.cardHeader}>
-                    <View style={[styles.cardIconContainer, { backgroundColor: '#FFFFFF' }]}>
+                    <View style={[styles.cardIconContainer, { backgroundColor: themeColors.background }]}>
                       {getIcon(card.icon, 24, categoryColor)}
                     </View>
                     <View style={styles.cardHeaderText}>
@@ -776,9 +926,9 @@ export default function SavoirScreen() {
                   )}
                 </TouchableOpacity>
 
-                {/* Expanded Content - White Background */}
+                {/* Expanded Content */}
                 {isExpanded && (
-                  <View style={styles.expandedContent}>
+                  <View style={[styles.expandedContent, { backgroundColor: themeColors.card }]}>
                     {/* C'est quoi ? */}
                     <View style={styles.sectionFirst}>
                       <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>C'est quoi ?</Text>
@@ -821,21 +971,25 @@ export default function SavoirScreen() {
           })}
           </View>
         </View>
-
-        {/* SECTION 3: PROTOCOLES D'ENTRAÎNEMENT */}
+        </>
+        ) : (
+        <>
+        {/* SECTION: PROTOCOLES D'ENTRAÎNEMENT */}
         <View style={styles.sectionContainer}>
-          <Text style={styles.sectionHeader}>PROTOCOLES D'ENTRAÎNEMENT</Text>
+          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
+            {protocolData.length} PROTOCOLES D'ENTRAÎNEMENT
+          </Text>
 
           {/* Protocol Cards - Accordion */}
           <View style={styles.cardsContainer}>
           {protocolData.map((protocol) => {
             const categoryColor = getCategoryColor(protocol.category);
             const isExpanded = expandedProtocols.has(protocol.id);
-            const headerBgColor = getCategoryHeaderColor(protocol.category);
+            const headerBgColor = getCategoryHeaderColor(protocol.category, isDark);
             const difficultyColor = getDifficultyColor(protocol.difficulty);
 
             return (
-              <View key={protocol.id} style={[styles.card, { backgroundColor: '#FFFFFF' }]}>
+              <View key={protocol.id} style={[styles.card, { backgroundColor: themeColors.card }]}>
                 {/* Header with Colored Background */}
                 <TouchableOpacity
                   style={[styles.cardHeaderButton, { backgroundColor: headerBgColor }]}
@@ -843,7 +997,7 @@ export default function SavoirScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.cardHeader}>
-                    <View style={[styles.cardIconContainer, { backgroundColor: '#FFFFFF' }]}>
+                    <View style={[styles.cardIconContainer, { backgroundColor: themeColors.background }]}>
                       {getIcon(protocol.icon, 24, categoryColor)}
                     </View>
                     <View style={styles.cardHeaderText}>
@@ -869,9 +1023,9 @@ export default function SavoirScreen() {
                   )}
                 </TouchableOpacity>
 
-                {/* Expanded Content - White Background */}
+                {/* Expanded Content */}
                 {isExpanded && (
-                  <View style={styles.expandedContent}>
+                  <View style={[styles.expandedContent, { backgroundColor: themeColors.card }]}>
                     {/* Objectif */}
                     <View style={styles.sectionFirst}>
                       <Text style={[styles.cardSectionHeader, { color: categoryColor }]}>Objectif</Text>
@@ -925,6 +1079,33 @@ export default function SavoirScreen() {
           </View>
         </View>
 
+        {/* PROTOCOLES AVEC CHECKBOXES */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
+            PROTOCOLES AVEC CHECKLIST
+          </Text>
+          {LAB_PROTOCOLS.map((protocol) => (
+            <ProtocolChecklist
+              key={protocol.id}
+              protocolId={protocol.id}
+              title={protocol.title}
+              categoryColor={protocol.categoryColor}
+              items={protocol.items}
+              references={protocol.references}
+            />
+          ))}
+        </View>
+
+        {/* ÉCHELLE D'HYDRATATION */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionHeader, { color: themeColors.textMuted }]}>
+            INDICATEUR D'HYDRATATION
+          </Text>
+          <HydrationScale />
+        </View>
+        </>
+        )}
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </ScreenWrapper>
@@ -935,12 +1116,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  // Tabs
+  tabsContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  tabActive: {
+    // Active styling handled by indicator
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderRadius: 2,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   header: {
@@ -1018,7 +1226,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
+    // backgroundColor sera appliqué inline avec themeColors.card
   },
   sectionFirst: {
     marginTop: 0,
@@ -1098,10 +1306,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   clinicalToolCard: {
-    backgroundColor: '#FFFFFF',
+    // backgroundColor sera appliqué inline avec themeColors.card
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    // borderColor sera appliqué inline avec themeColors.border
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -1118,11 +1326,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
+    // backgroundColor sera appliqué inline
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    // borderColor sera appliqué inline
   },
   clinicalToolText: {
     flex: 1,
@@ -1131,13 +1339,13 @@ const styles = StyleSheet.create({
   clinicalToolTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
+    // color sera appliqué inline avec themeColors.textPrimary
     letterSpacing: -0.2,
   },
   clinicalToolSubtitle: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
+    // color sera appliqué inline avec themeColors.textSecondary
   },
   protocolHeaderRow: {
     flexDirection: 'row',

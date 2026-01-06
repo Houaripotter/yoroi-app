@@ -53,10 +53,10 @@ export const YearCounterCard = forwardRef<View, YearCounterCardProps>(
           {/* SEPARATOR */}
           <View style={[styles.separator, { backgroundColor: colors.gold || colors.accent }]} />
 
-          {/* HERO COUNTER */}
+          {/* HERO COUNTER - Utilise l'objectif utilisateur */}
           <View style={[styles.heroSection, { gap }]}>
             <Text style={[styles.heroNumber, { fontSize: heroFontSize, color: colors.accent }]}>
-              {stats.totalDays}/{stats.totalDaysInYear}
+              {stats.totalDays}/{stats.yearlyGoal || stats.totalDaysInYear}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>
               jours d'entraînement

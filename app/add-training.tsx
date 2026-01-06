@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Platform,
   Image,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -51,9 +51,10 @@ import logger from '@/lib/security/logger';
 // ============================================
 
 export default function AddTrainingScreen() {
-  const { colors, gradients } = useTheme();
+  const { colors, gradients, isDark } = useTheme();
   const router = useRouter();
   const { checkBadges } = useBadges();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams<{ date?: string }>();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,21 +153,21 @@ export default function AddTrainingScreen() {
       if (shouldShowBackupReminder) {
         // Afficher le rappel de sauvegarde avec option de backup
         await backupReminderService.showReminder(() => {
-          // Rediriger vers les paramètres/export
-          router.push('/settings');
+          // Rediriger vers le menu Plus (export disponible)
+          router.push('/(tabs)/more');
         });
         router.back();
       } else {
-        Alert.alert(
+        showPopup(
           'Entrainement ajoute',
           `${getSportName(selectedSport)} enregistre !`,
-          [{ text: 'OK', onPress: () => router.back() }]
+          [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
         );
       }
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
       errorHaptic();
-      Alert.alert('Erreur', "Impossible d'enregistrer l'entrainement");
+      showPopup('Erreur', "Impossible d'enregistrer l'entrainement");
     } finally {
       setIsSubmitting(false);
     }
@@ -369,6 +370,7 @@ export default function AddTrainingScreen() {
             value={date}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
             onChange={handleDateChange}
             maximumDate={new Date()}
             locale="fr"
@@ -393,6 +395,7 @@ export default function AddTrainingScreen() {
             mode="time"
             is24Hour={true}
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            themeVariant={isDark ? 'dark' : 'light'}
             onChange={(event, selectedTime) => {
               setShowTimePicker(Platform.OS === 'ios');
               if (selectedTime) setStartTime(selectedTime);
@@ -597,6 +600,8 @@ export default function AddTrainingScreen() {
         onClose={() => setShowExerciseModal(false)}
         onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
       />
+
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

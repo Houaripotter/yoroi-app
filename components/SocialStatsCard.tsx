@@ -4,12 +4,13 @@
 // Carte de partage pour les réseaux sociaux
 
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, TrendingDown, Flame, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SPACING } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
@@ -35,6 +36,7 @@ export function SocialStatsCard({
   stats,
 }: SocialStatsCardProps) {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
 
   // Capturer et partager
@@ -44,7 +46,7 @@ export function SocialStatsCard({
 
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
-        Alert.alert('Erreur', 'Impossible de créer l\'image');
+        showPopup('Erreur', 'Impossible de créer l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
@@ -57,7 +59,7 @@ export function SocialStatsCard({
       }
     } catch (error) {
       logger.error('[SocialStatsCard] Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager');
+      showPopup('Erreur', 'Impossible de partager', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -168,6 +170,7 @@ export function SocialStatsCard({
           Partager mes stats
         </Text>
       </TouchableOpacity>
+      <PopupComponent />
     </View>
   );
 }

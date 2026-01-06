@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -40,6 +40,7 @@ import {
 export default function QuickLogRunningScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
   const [runType, setRunType] = useState('Course Libre');
@@ -111,12 +112,16 @@ export default function QuickLogRunningScreen() {
     const secs = parseInt(timeSeconds);
 
     if (!dist || dist <= 0) {
-      Alert.alert('Erreur', 'Entre une distance valide');
+      showPopup('Erreur', 'Entre une distance valide', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
     if (!mins && !secs) {
-      Alert.alert('Erreur', 'Entre un temps valide');
+      showPopup('Erreur', 'Entre un temps valide', [
+        { text: 'OK', style: 'primary' }
+      ]);
       return;
     }
 
@@ -147,12 +152,13 @@ export default function QuickLogRunningScreen() {
       quality_rating: feeling,
     });
 
-    Alert.alert(
+    showPopup(
       'Run enregistré',
       `${dist}km en ${mins}min ${secs}s (${pace()})`,
       [
         {
           text: 'OK',
+          style: 'primary',
           onPress: () => router.back(),
         },
       ]
@@ -443,6 +449,7 @@ export default function QuickLogRunningScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

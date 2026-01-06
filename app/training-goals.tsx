@@ -10,9 +10,9 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import {
@@ -56,6 +56,7 @@ const SPORT_CATEGORIES = {
 
 export default function TrainingGoalsScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [goals, setGoals] = useState<TrainingGoal[]>([]);
   const [progressList, setProgressList] = useState<GoalProgress[]>([]);
   const [globalStats, setGlobalStats] = useState<GlobalGoalStats | null>(null);
@@ -98,12 +99,14 @@ export default function TrainingGoalsScreen() {
       setWeeklyTarget(2);
       setShowSportSelector(false);
     } catch (error) {
-      Alert.alert('Erreur', "Impossible d'ajouter l'objectif");
+      showPopup('Erreur', "Impossible d'ajouter l'objectif", [
+        { text: 'OK', style: 'primary' }
+      ]);
     }
   };
 
   const handleDeleteGoal = (sportId: string, sportName: string) => {
-    Alert.alert(
+    showPopup(
       'Supprimer objectif',
       `Supprimer l'objectif pour ${sportName} ?`,
       [
@@ -509,6 +512,7 @@ export default function TrainingGoalsScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </SafeAreaView>
   );
 }

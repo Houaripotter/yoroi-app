@@ -17,6 +17,7 @@ export interface YearCounterCardV2Props {
   stats: YearStats;
   format: 'stories' | 'square';
   backgroundImage?: string;
+  backgroundType?: 'photo' | 'black' | 'white'; // Type de fond
   username?: string;
   weeklyGoal?: number; // Objectif hebdo (ex: 4 séances/semaine)
 }
@@ -39,44 +40,68 @@ const getSportName = (clubName: string): string => {
 };
 
 export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
-  ({ stats, format, backgroundImage, weeklyGoal = 4 }, ref) => {
+  ({ stats, format, backgroundImage, backgroundType = 'photo', weeklyGoal = 4 }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
-    // Calculer l'objectif annuel basé sur l'objectif hebdo
-    const yearlyGoal = weeklyGoal * 52;
+    // Utiliser l'objectif annuel des stats s'il est disponible, sinon calculer
+    const yearlyGoal = stats.yearlyGoal || weeklyGoal * 52;
     const progressPercent = Math.min((stats.totalDays / yearlyGoal) * 100, 100);
+
+    // Déterminer les couleurs selon le type de fond
+    const isLightBackground = backgroundType === 'white';
+    const isDarkBackground = backgroundType === 'black';
+    const hasSolidBackground = backgroundType === 'black' || backgroundType === 'white';
+
+    // Variant pour les composants de branding
+    const brandingVariant = isLightBackground ? 'light' : 'dark';
+
+    // Couleurs dynamiques selon le fond
+    const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
+    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+    const textMuted = isLightBackground ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+    const goldColor = '#D4AF37';
+    const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+    const statsRowBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+    const dividerColor = isLightBackground ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
+    const progressBarBgColor = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
 
     const content = (
       <>
         <LinearGradient
-          colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
+          colors={isLightBackground
+            ? ['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.9)']
+            : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
           style={styles.overlay}
         >
           {/* TOP BANNER - YOROI */}
-          <SocialCardTopBanner variant="dark" />
+          <SocialCardTopBanner variant={brandingVariant} />
 
           {/* TITRE ANNÉE */}
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <Trophy size={20} color="#D4AF37" />
-              <Text style={styles.titleText}>ANNÉE {stats.year}</Text>
+              <Trophy size={20} color={goldColor} />
+              <Text style={[styles.titleText, { color: goldColor }]}>ANNÉE {stats.year}</Text>
             </View>
           </View>
 
-          {/* COMPTEUR PRINCIPAL */}
+          {/* COMPTEUR PRINCIPAL - Format X/OBJECTIF en grand */}
           <View style={styles.counterSection}>
-            <Text style={styles.counterNumber}>{stats.totalDays}</Text>
-            <Text style={styles.counterLabel}>JOURS D'ENTRAÎNEMENT</Text>
+            <View style={styles.counterRow}>
+              <Text style={[styles.counterNumber, { color: textPrimary }]}>{stats.totalDays}</Text>
+              <Text style={[styles.counterSlash, { color: textSecondary }]}>/</Text>
+              <Text style={[styles.counterGoal, { color: goldColor }]}>{yearlyGoal}</Text>
+            </View>
+            <Text style={[styles.counterLabel, { color: goldColor }]}>JOURS D'ENTRAÎNEMENT</Text>
           </View>
 
           {/* BARRE DE PROGRESSION */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>Objectif {yearlyGoal} jours</Text>
-              <Text style={styles.progressPercent}>{Math.round(progressPercent)}%</Text>
+              <Text style={[styles.progressLabel, { color: textSecondary }]}>Objectif {yearlyGoal} jours</Text>
+              <Text style={[styles.progressPercent, { color: goldColor }]}>{Math.round(progressPercent)}%</Text>
             </View>
-            <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarBg, { backgroundColor: progressBarBgColor }]}>
               <LinearGradient
                 colors={['#D4AF37', '#F4E5B0', '#D4AF37']}
                 start={{ x: 0, y: 0 }}
@@ -84,7 +109,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                 style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
               />
             </View>
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: isLightBackground ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
               {stats.totalDays}/{yearlyGoal} jours
             </Text>
           </View>
@@ -103,54 +128,55 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                   {club.clubLogo ? (
                     <Image source={club.clubLogo} style={styles.clubBubbleLogo} resizeMode="cover" />
                   ) : (
-                    <View style={styles.clubBubbleLogoPlaceholder}>
+                    <View style={[styles.clubBubbleLogoPlaceholder, { backgroundColor: isLightBackground ? 'rgba(212,175,55,0.15)' : 'rgba(212, 175, 55, 0.2)' }]}>
                       <Text style={styles.clubBubbleInitial}>{club.clubName.charAt(0)}</Text>
                     </View>
                   )}
 
                   {/* Nom du club */}
-                  <Text style={styles.clubBubbleName} numberOfLines={2}>{club.clubName}</Text>
+                  <Text style={[styles.clubBubbleName, { color: textPrimary }]} numberOfLines={2}>{club.clubName}</Text>
                   {/* Sport */}
-                  <Text style={styles.clubBubbleSport} numberOfLines={1}>{getSportName(club.clubName)}</Text>
+                  <Text style={[styles.clubBubbleSport, { color: goldColor }]} numberOfLines={1}>{getSportName(club.clubName)}</Text>
                 </View>
               ))}
             </View>
           )}
 
           {/* STATS SECONDAIRES */}
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
               <Flame size={16} color="#FF6B00" />
-              <Text style={styles.statValue}>{stats.currentStreak || stats.bestStreak}</Text>
-              <Text style={styles.statLabel}>{stats.currentStreak > 0 ? 'STREAK' : 'BEST'}</Text>
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.currentStreak || stats.bestStreak}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>{stats.currentStreak > 0 ? 'STREAK' : 'BEST'}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <Calendar size={16} color="#D4AF37" />
-              <Text style={styles.statValue}>{stats.busiestMonth.month.substring(0, 3)}</Text>
-              <Text style={styles.statLabel}>TOP MOIS</Text>
+              <Calendar size={16} color={goldColor} />
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.busiestMonth.month.substring(0, 3)}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>TOP MOIS</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <BarChart2 size={16} color="#D4AF37" />
-              <Text style={styles.statValue}>{stats.percentage.toFixed(0)}%</Text>
-              <Text style={styles.statLabel}>DE L'ANNÉE</Text>
+              <BarChart2 size={16} color={goldColor} />
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.percentage.toFixed(0)}%</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>DE L'ANNÉE</Text>
             </View>
           </View>
 
           {/* FOOTER - YOROI */}
-          <SocialCardFooter variant="dark" />
+          <SocialCardFooter variant={brandingVariant} />
         </LinearGradient>
       </>
     );
 
-    return (
-      <View
-        ref={ref}
-        style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
-        collapsable={false}
-      >
-        {backgroundImage ? (
+    // Fond avec photo
+    if (backgroundImage) {
+      return (
+        <View
+          ref={ref}
+          style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
+          collapsable={false}
+        >
           <ImageBackground
             source={{ uri: backgroundImage }}
             style={styles.backgroundImage}
@@ -158,15 +184,38 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
           >
             {content}
           </ImageBackground>
-        ) : (
-          <LinearGradient
-            colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
-            style={styles.defaultBackground}
-          >
-            <SocialCardWatermark show={!backgroundImage} />
-            {content}
-          </LinearGradient>
-        )}
+        </View>
+      );
+    }
+
+    // Fond blanc avec logo samurai
+    if (isLightBackground) {
+      return (
+        <View
+          ref={ref}
+          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#FFFFFF' }]}
+          collapsable={false}
+        >
+          <SocialCardWatermark show={true} variant="light" />
+          {content}
+        </View>
+      );
+    }
+
+    // Fond noir avec logo samurai (défaut)
+    return (
+      <View
+        ref={ref}
+        style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
+        collapsable={false}
+      >
+        <LinearGradient
+          colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
+          style={styles.defaultBackground}
+        >
+          <SocialCardWatermark show={true} variant="dark" />
+          {content}
+        </LinearGradient>
       </View>
     );
   }
@@ -213,6 +262,10 @@ const styles = StyleSheet.create({
   counterSection: {
     alignItems: 'center',
   },
+  counterRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
   counterNumber: {
     fontSize: 72,
     fontWeight: '900',
@@ -222,12 +275,30 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 3 },
     textShadowRadius: 10,
   },
+  counterSlash: {
+    fontSize: 48,
+    fontWeight: '300',
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginHorizontal: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  counterGoal: {
+    fontSize: 48,
+    fontWeight: '900',
+    color: '#D4AF37',
+    letterSpacing: -1,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
   counterLabel: {
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 2,
     color: '#D4AF37',
-    marginTop: -4,
+    marginTop: 4,
   },
 
   // Progress

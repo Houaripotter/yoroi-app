@@ -1,2 +1,3 @@
-// Re-export du composant ShareHub pour navigation imbriquée
-export { default } from '@/app/share-hub';
+// Import et re-export du composant ShareHub pour navigation imbriquée
+import ShareHubScreen from '@/app/share-hub';
+export default ShareHubScreen;

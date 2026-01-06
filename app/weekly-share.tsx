@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -51,6 +51,7 @@ export default function WeeklyShareScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const cardRef = useRef<View>(null);
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -168,7 +169,9 @@ export default function WeeklyShareScreen() {
       });
     } catch (error) {
       logger.error('Erreur chargement stats:', error);
-      Alert.alert('Erreur', 'Impossible de charger les statistiques');
+      showPopup('Erreur', 'Impossible de charger les statistiques', [
+        { text: 'OK', style: 'primary' },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -193,11 +196,15 @@ export default function WeeklyShareScreen() {
         });
         successHaptic();
       } else {
-        Alert.alert('Erreur', 'Le partage n\'est pas disponible sur cet appareil');
+        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [
+          { text: 'OK', style: 'primary' },
+        ]);
       }
     } catch (error) {
       logger.error('Erreur partage:', error);
-      Alert.alert('Erreur', 'Impossible de partager l\'image');
+      showPopup('Erreur', 'Impossible de partager l\'image', [
+        { text: 'OK', style: 'primary' },
+      ]);
     }
   };
 
@@ -208,7 +215,9 @@ export default function WeeklyShareScreen() {
       // Demander la permission
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission requise', 'Autorise l\'accès à la galerie pour sauvegarder l\'image');
+        showPopup('Permission requise', 'Autorise l\'accès à la galerie pour sauvegarder l\'image', [
+          { text: 'OK', style: 'primary' },
+        ]);
         return;
       }
 
@@ -220,10 +229,14 @@ export default function WeeklyShareScreen() {
 
       await MediaLibrary.saveToLibraryAsync(uri);
       successHaptic();
-      Alert.alert('Sauvegardé !', 'L\'image a été ajoutée à ta galerie');
+      showPopup('Sauvegardé !', 'L\'image a été ajoutée à ta galerie', [
+        { text: 'OK', style: 'primary' },
+      ]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'image');
+      showPopup('Erreur', 'Impossible de sauvegarder l\'image', [
+        { text: 'OK', style: 'primary' },
+      ]);
     }
   };
 
@@ -331,6 +344,7 @@ export default function WeeklyShareScreen() {
         </TouchableOpacity>
 
         <View style={{ height: 100 }} />
+        <PopupComponent />
       </ScrollView>
     </ScreenWrapper>
   );

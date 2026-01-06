@@ -9,8 +9,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
@@ -44,6 +44,7 @@ export default function CombatDetailScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams();
   const combatId = params.id as string;
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [combat, setCombat] = useState<Combat | null>(null);
   const [competition, setCompetition] = useState<Competition | null>(null);
@@ -64,17 +65,16 @@ export default function CombatDetailScreen() {
       }
     } catch (error) {
       logger.error('Error loading combat:', error);
-      Alert.alert('Erreur', 'Impossible de charger le combat');
-      router.back();
+      showPopup('Erreur', 'Impossible de charger le combat', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    showPopup(
       'Supprimer le combat',
-      'Êtes-vous sûr de vouloir supprimer ce combat ? Cette action est irréversible.',
+      'Etes-vous sur de vouloir supprimer ce combat ? Cette action est irreversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -87,7 +87,7 @@ export default function CombatDetailScreen() {
               router.back();
             } catch (error) {
               logger.error('Error deleting combat:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer le combat');
+              showPopup('Erreur', 'Impossible de supprimer le combat', [{ text: 'OK', style: 'primary' }]);
             }
           },
         },
@@ -337,6 +337,7 @@ export default function CombatDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

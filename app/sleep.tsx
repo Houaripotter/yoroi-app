@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Dimensions,
   Switch,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -51,6 +51,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function SleepScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
@@ -100,9 +101,9 @@ export default function SleepScreen() {
       setQuality(3);
       setNotes('');
       loadData();
-      Alert.alert('✅ Enregistré', 'Ton sommeil a été enregistré !');
+      showPopup('Enregistre', 'Ton sommeil a ete enregistre !', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'enregistrer.');
+      showPopup('Erreur', 'Impossible d\'enregistrer.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -126,7 +127,7 @@ export default function SleepScreen() {
     });
 
     if (value) {
-      Alert.alert('✅ Activé', 'Tu recevras un rappel pour aller dormir !');
+      showPopup('Active', 'Tu recevras un rappel pour aller dormir !', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -140,7 +141,7 @@ export default function SleepScreen() {
     });
     setShowNotificationSettings(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('✅ Enregistré', `Rappel programmé à ${bedtimeReminder}`);
+    showPopup('Enregistre', `Rappel programme a ${bedtimeReminder}`, [{ text: 'OK', style: 'primary' }]);
   };
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
@@ -381,6 +382,7 @@ export default function SleepScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      <PopupComponent />
     </View>
   );
 }

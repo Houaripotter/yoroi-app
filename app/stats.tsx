@@ -67,10 +67,10 @@ export default function StatsScreen() {
                 ]}
                 onPress={() => setActiveTab(tab.id)}
               >
-                <Icon size={14} color={isActive ? '#FFFFFF' : colors.textMuted} />
+                <Icon size={14} color={isActive ? '#000000' : colors.textMuted} />
                 <Text style={[
                   styles.tabLabel,
-                  { color: isActive ? '#FFFFFF' : colors.textMuted },
+                  { color: isActive ? '#000000' : colors.textMuted },
                 ]}>
                   {tab.label}
                 </Text>

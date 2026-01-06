@@ -1,2 +1,3 @@
-// Re-export du composant Fasting pour navigation imbriquée
-export { default } from '@/app/fasting';
+// Import et re-export du composant Fasting pour navigation imbriquée
+import FastingScreen from '@/app/fasting';
+export default FastingScreen;

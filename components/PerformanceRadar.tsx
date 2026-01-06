@@ -16,7 +16,7 @@ interface PerformanceRadarProps {
 }
 
 export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
-  size = 400,
+  size = 300,
 }) => {
   const { colors, isDark } = useTheme();
   const [scores, setScores] = useState<RadarScores>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
@@ -85,13 +85,14 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
 
   // Positions des labels DANS le SVG
   const getLabelTextPosition = (index: number) => {
-    const labelDist = RADIUS + 80;
+    const labelDist = RADIUS + 40;
     const axis = axes[index];
     const coord = angleToCoord(axis.angle, labelDist);
 
     // Anchor text basé sur la position
     let textAnchor: 'start' | 'middle' | 'end' = 'middle';
     let dy = 0;
+    let offsetX = 0;
 
     if (index === 0) { // Force (top)
       textAnchor = 'middle';
@@ -103,14 +104,16 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
       textAnchor = 'start';
       dy = 10;
     } else if (index === 3) { // Mental (bottom-left)
-      textAnchor = 'end';
+      textAnchor = 'start';
       dy = 10;
+      offsetX = -50;
     } else if (index === 4) { // Technique (top-left)
-      textAnchor = 'end';
+      textAnchor = 'start';
       dy = -5;
+      offsetX = -55;
     }
 
-    return { x: coord.x, y: coord.y, textAnchor, dy };
+    return { x: coord.x + offsetX, y: coord.y, textAnchor, dy };
   };
 
   // Score moyen
@@ -150,7 +153,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
 
       {/* Radar SVG */}
       <Animated.View style={[styles.radarContainer, { opacity: fadeAnim }]}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Svg width={size + 60} height={size} viewBox={`-30 0 ${size + 60} ${size}`}>
           <Defs>
             <RadialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
               <Stop offset="0%" stopColor={colors.accent} stopOpacity="0.08" />
@@ -197,7 +200,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
                     textAnchor="middle"
                     opacity={0.5}
                   >
-                    {level * 100}%
+                    {level * 100} %
                   </SvgText>
                 )}
               </React.Fragment>
@@ -277,7 +280,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
                   fontWeight="900"
                   textAnchor={pos.textAnchor}
                 >
-                  {Math.round(value)}%
+                  {`${Math.round(value)}  %`}
                 </SvgText>
               </React.Fragment>
             );
@@ -289,7 +292,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
       <View style={styles.footer}>
         <View style={styles.scoreContainer}>
           <Text style={[styles.avgValue, { color: colors.accent }]}>
-            {avgScore}%
+            {avgScore}  %
           </Text>
           <Text style={[styles.avgLabel, { color: colors.textMuted }]}>Score Global</Text>
         </View>
@@ -297,7 +300,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
           <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>
             <TrendIcon size={12} color={trendColor} />
             <Text style={[styles.evolutionText, { color: trendColor }]}>
-              {evolution.average > 0 ? '+' : ''}{evolution.average}%
+              {evolution.average > 0 ? '+' : ''}{evolution.average} %
             </Text>
           </View>
         )}

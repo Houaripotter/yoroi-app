@@ -8,7 +8,6 @@ import {
   Dimensions,
   StatusBar,
   Image,
-  Alert,
   Linking,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,6 +15,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,7 +50,8 @@ import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { getTrainings, getClubs, addTraining, deleteTraining, Club, Training, getCompetitions, Competition } from '@/lib/database';
 import { getSportIcon } from '@/constants/sportIcons';
-import { getJournalStats, getProgressionItems, ProgressionItem } from '@/lib/trainingJournalService';
+import { getProgressionItems, ProgressionItem } from '@/lib/trainingJournalService';
+import { getCarnetStats, getSkills, getBenchmarks, Skill, Benchmark } from '@/lib/carnetService';
 import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
@@ -105,6 +106,7 @@ const SAVED_EVENTS_KEY = 'my_saved_events';
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -138,9 +140,10 @@ export default function PlanningScreen() {
   const [catalogLocationFilter, setCatalogLocationFilter] = useState<CatalogLocationFilter>('monde');
   const [catalogLoading, setCatalogLoading] = useState(false);
 
-  // Journal/Carnet state
-  const [journalStats, setJournalStats] = useState({ total: 0, in_progress: 0, mastered: 0, mastered_this_week: 0 });
-  const [recentTechniques, setRecentTechniques] = useState<ProgressionItem[]>([]);
+  // Journal/Carnet state - Now uses carnetService
+  const [journalStats, setJournalStats] = useState({ total: 0, in_progress: 0, mastered: 0, totalRecords: 0 });
+  const [recentSkills, setRecentSkills] = useState<Skill[]>([]);
+  const [recentBenchmarks, setRecentBenchmarks] = useState<Benchmark[]>([]);
 
   // Clubs & Objectifs state
   const [showAddClubModal, setShowAddClubModal] = useState(false);
@@ -288,8 +291,6 @@ export default function PlanningScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      if (__DEV__) console.log('[PLANNING] Chargement des donnees...');
-
       // Charger les donnees de base
       const [trainingsData, clubsData, competitionsData] = await Promise.all([
         getTrainings(),
@@ -301,25 +302,30 @@ export default function PlanningScreen() {
       let goalsData: any[] = [];
       try {
         goalsData = await getAllGoalsProgress();
-      } catch (goalsError) {
-        console.warn('[PLANNING] Erreur chargement objectifs (ignoree):', goalsError);
+      } catch {
+        // Ignorer silencieusement les erreurs de chargement d'objectifs
       }
-
-      if (__DEV__) console.log('[PLANNING] Trainings charges:', trainingsData.length);
-      if (__DEV__) console.log('[PLANNING] Clubs charges:', clubsData.length, '-', clubsData.map((c: Club) => c.name).join(', '));
-      if (__DEV__) console.log('[PLANNING] Competitions chargees:', competitionsData.length);
-      if (__DEV__) console.log('[PLANNING] Objectifs charges:', goalsData.length);
       setWorkouts(trainingsData);
       setClubs(clubsData);
       setCompetitions(competitionsData);
       setGoalsProgress(goalsData);
 
-      // Charger les stats du carnet
-      const stats = getJournalStats();
-      setJournalStats(stats);
-      // Garder les 5 dernieres techniques modifiees
-      const items = getProgressionItems();
-      setRecentTechniques(items.slice(0, 5));
+      // Charger les stats du carnet depuis carnetService
+      const carnetStats = await getCarnetStats();
+      setJournalStats({
+        total: carnetStats.totalSkills,
+        in_progress: carnetStats.skillsInProgress,
+        mastered: carnetStats.skillsMastered,
+        totalRecords: carnetStats.totalBenchmarks,
+      });
+      // Garder les 6 dernières techniques/skills (2 lignes de 3)
+      const skills = await getSkills();
+      setRecentSkills(skills.slice(0, 6));
+      // Garder les 6 derniers records/benchmarks (2 lignes de 3)
+      const benchmarks = await getBenchmarks();
+      // Filter benchmarks that have entries (PRs)
+      const benchmarksWithPRs = benchmarks.filter(b => b.entries && b.entries.length > 0);
+      setRecentBenchmarks(benchmarksWithPRs.slice(0, 6));
     } catch (error) {
       console.error('Erreur chargement planning:', error);
     }
@@ -360,11 +366,11 @@ export default function PlanningScreen() {
     // Filter by location
     if (catalogLocationFilter === 'france') {
       filtered = filtered.filter(event =>
-        event.location.country.toLowerCase() === 'france'
+        event?.location?.country?.toLowerCase() === 'france'
       );
     } else if (catalogLocationFilter === 'europe') {
       filtered = filtered.filter(event =>
-        EUROPEAN_COUNTRIES.includes(event.location.country)
+        EUROPEAN_COUNTRIES.includes(event?.location?.country ?? '')
       );
     }
 
@@ -377,10 +383,10 @@ export default function PlanningScreen() {
     if (catalogSearchQuery.trim()) {
       const query = catalogSearchQuery.toLowerCase();
       filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(query) ||
-        event.location.city.toLowerCase().includes(query) ||
-        event.location.country.toLowerCase().includes(query) ||
-        (event.federation && event.federation.toLowerCase().includes(query))
+        event?.title?.toLowerCase()?.includes(query) ||
+        event?.location?.city?.toLowerCase()?.includes(query) ||
+        event?.location?.country?.toLowerCase()?.includes(query) ||
+        (event?.federation && event?.federation?.toLowerCase()?.includes(query))
       );
     }
 
@@ -407,12 +413,12 @@ export default function PlanningScreen() {
       setSavedExternalEventIds(prev => new Set(prev).add(event.id));
       await AsyncStorage.setItem(SAVED_EVENTS_KEY, JSON.stringify(newSavedEvents));
 
-      Alert.alert('Ajoute', `"${event.title.substring(0, 30)}..." ajoute a ton planning`);
+      showPopup('Ajoute', `"${event.title.substring(0, 30)}..." ajoute a ton planning`);
     } catch (error) {
       console.error('Error adding external event:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter l\'evenement');
+      showPopup('Erreur', 'Impossible d\'ajouter l\'evenement');
     }
-  }, [savedExternalEvents]);
+  }, [savedExternalEvents, showPopup]);
 
   // Remove external event from saved list
   const removeExternalEventFromSaved = useCallback(async (eventId: string) => {
@@ -504,27 +510,18 @@ export default function PlanningScreen() {
   // Handler: sauvegarder une nouvelle seance
   const handleSaveSession = async (session: Omit<Training, 'id' | 'created_at'>) => {
     try {
-      if (__DEV__) console.log('💾 Ajout de la séance...', session);
       await addTraining(session);
-      if (__DEV__) console.log('✅ Séance ajoutée en DB');
 
       // Petit délai pour s'assurer que la DB est à jour
       await new Promise(resolve => setTimeout(resolve, 300));
 
       await loadData();
-      if (__DEV__) console.log('✅ Données rechargées');
-      if (__DEV__) console.log('📊 Nombre de workouts après reload:', workouts.length);
 
       // Incrémenter le trigger pour rafraîchir le TimetableView
-      setRefreshTrigger(prev => {
-        const newVal = prev + 1;
-        if (__DEV__) console.log('✅ Refresh trigger incrémenté:', newVal);
-        return newVal;
-      });
+      setRefreshTrigger(prev => prev + 1);
 
       // Fermer le modal
       setShowAddModal(false);
-      if (__DEV__) console.log('✅ Modal fermé');
 
       // TASK 4: Trigger Victory Modal after saving
       // Map sport to category type
@@ -563,7 +560,7 @@ export default function PlanningScreen() {
 
     } catch (error) {
       console.error('❌ Erreur ajout seance:', error);
-      Alert.alert('Erreur', "Impossible d'ajouter la seance");
+      showPopup('Erreur', "Impossible d'ajouter la seance");
       throw error;
     }
   };
@@ -576,7 +573,7 @@ export default function PlanningScreen() {
       await loadData();
     } catch (error) {
       console.error('Erreur suppression seance:', error);
-      Alert.alert('Erreur', 'Impossible de supprimer la seance');
+      showPopup('Erreur', 'Impossible de supprimer la seance');
     }
   };
 
@@ -595,30 +592,24 @@ export default function PlanningScreen() {
   const handleToggleRest = (dayId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // TODO: Implémenter la logique de repos avec une table dédiée
-    Alert.alert('Repos', `Fonction repos pour ${dayId} à implémenter`);
+    showPopup('Repos', `Fonction repos pour ${dayId} a implementer`);
   };
 
   // Handler: Ouvrir une séance depuis la vue programme
   const handleSessionPress = (dayId: string, sessionIndex: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // TODO: Ouvrir le modal de détail de la séance
-    Alert.alert('Séance', `Ouvrir la séance ${sessionIndex} du ${dayId}`);
+    showPopup('Seance', `Ouvrir la seance ${sessionIndex} du ${dayId}`);
   };
 
   // Handler: Ajouter une séance depuis la vue emploi du temps
-  const handleAddSessionFromProgramme = (dayId: string, timeSlot?: string) => {
+  const handleAddSessionFromProgramme = (dayId: string, _timeSlot?: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (__DEV__) console.log('🔥 handleAddSessionFromProgramme appelé', { dayId, timeSlot });
-    if (__DEV__) console.log('🔥 Nombre de clubs:', clubs.length);
-    if (__DEV__) console.log('🔥 Liste clubs:', clubs.map(c => c.name).join(', '));
     // Calculer la prochaine date pour ce jour de la semaine
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
     const nextDate = getNextDateForDayOfWeek(dayIndex);
     setSelectedDate(nextDate);
-    if (__DEV__) console.log('🔥 Date sélectionnée:', nextDate);
-    // TODO: Pré-remplir l'heure selon le timeSlot (morning, afternoon, evening)
     setShowAddModal(true);
-    if (__DEV__) console.log('🔥 Modal ouvert');
   };
 
   // Gérer le clic sur un onglet
@@ -813,17 +804,17 @@ export default function PlanningScreen() {
           >
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Carnet d'Entraînement</Text>
 
-            {/* Stats du carnet */}
+            {/* Stats du carnet - Records + Techniques */}
             <View style={[styles.journalStatsContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.journalStatsRow}>
                 <View style={styles.journalStatItem}>
-                  <Text style={[styles.journalStatValue, { color: colors.accent }]}>{journalStats.total}</Text>
-                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Techniques</Text>
+                  <Text style={[styles.journalStatValue, { color: '#EF4444' }]}>{journalStats.totalRecords}</Text>
+                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Records</Text>
                 </View>
                 <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.journalStatItem}>
-                  <Text style={[styles.journalStatValue, { color: '#F97316' }]}>{journalStats.in_progress}</Text>
-                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>En cours</Text>
+                  <Text style={[styles.journalStatValue, { color: colors.accent }]}>{journalStats.total}</Text>
+                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Techniques</Text>
                 </View>
                 <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.journalStatItem}>
@@ -833,45 +824,359 @@ export default function PlanningScreen() {
               </View>
             </View>
 
-            {/* Techniques récentes */}
-            <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 20 }]}>Dernières techniques</Text>
-            {recentTechniques.length === 0 ? (
-              <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                <BookOpen size={48} color={colors.textMuted} />
-                <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary }]}>Aucune technique</Text>
-                <Text style={[styles.emptyJournalText, { color: colors.textMuted }]}>Commence à ajouter des techniques à ton carnet</Text>
+            {/* Mes Records - GRID 3 colonnes groupés par catégorie */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+              <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
+              <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
+                <ChevronRight size={14} color={colors.accent} />
+              </TouchableOpacity>
+            </View>
+            {recentBenchmarks.length === 0 ? (
+              <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
+                <Trophy size={32} color={colors.textMuted} />
+                <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucun record</Text>
               </View>
             ) : (
-              <View style={styles.techniquesListPreview}>
-                {recentTechniques.map((item, index) => (
-                  <TouchableOpacity
-                    key={item.id || index}
-                    style={[styles.techniquePreviewItem, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                    onPress={() => router.push('/training-journal')}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.techniqueIcon, { backgroundColor: `${colors.accent}20` }]}>
-                      <BookOpen size={18} color={colors.accent} />
-                    </View>
-                    <View style={styles.techniqueInfo}>
-                      <Text style={[styles.techniqueName, { color: colors.textPrimary }]} numberOfLines={1}>{item.name}</Text>
-                      <Text style={[styles.techniqueCategory, { color: colors.textMuted }]} numberOfLines={1}>{item.type || 'Technique'}</Text>
-                    </View>
-                    <View style={[
-                      styles.masteryBadge,
-                      { backgroundColor: item.status === 'mastered' ? '#10B98120' : item.status === 'in_progress' ? '#F9731620' : '#EF444420' }
-                    ]}>
-                      <Text style={[
-                        styles.masteryText,
-                        { color: item.status === 'mastered' ? '#10B981' : item.status === 'in_progress' ? '#F97316' : '#EF4444' }
-                      ]}>
-                        {item.status === 'mastered' ? 'Maitrise' : item.status === 'in_progress' ? 'En cours' : 'A faire'}
+              <>
+                {/* Grouper les benchmarks par catégorie */}
+                {(() => {
+                  const categoryLabels: Record<string, string> = {
+                    force: 'Musculation',
+                    running: 'Running',
+                    trail: 'Trail',
+                    hyrox: 'Hyrox',
+                    bodyweight: 'Poids de corps',
+                  };
+                  const categoryColors: Record<string, string> = {
+                    force: '#EF4444',
+                    running: '#3B82F6',
+                    trail: '#10B981',
+                    hyrox: '#F97316',
+                    bodyweight: '#8B5CF6',
+                  };
+                  // Grouper par catégorie
+                  const grouped = recentBenchmarks.reduce((acc, b) => {
+                    const cat = b.category || 'other';
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(b);
+                    return acc;
+                  }, {} as Record<string, typeof recentBenchmarks>);
+
+                  return Object.entries(grouped).map(([category, benchmarks]) => (
+                    <View key={category}>
+                      {/* Titre de la catégorie */}
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: '700',
+                        color: categoryColors[category] || colors.textMuted,
+                        marginTop: 12,
+                        marginBottom: 6,
+                        marginLeft: 4,
+                      }}>
+                        {categoryLabels[category] || category}
                       </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
+                        {/* Limiter à 3 éléments par catégorie pour un beau screenshot */}
+                        {benchmarks.slice(0, 3).map((benchmark, index) => {
+                          const lastEntry = benchmark.entries?.length > 0
+                            ? benchmark.entries[benchmark.entries.length - 1]
+                            : null;
+                          const color = categoryColors[benchmark.category] || colors.accent;
+
+                          // Format date
+                          const formatDate = (dateStr: string) => {
+                            const date = new Date(dateStr);
+                            const day = date.getDate();
+                            const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                            return `${day} ${month}`;
+                          };
+
+                          // Format display based on category
+                          const getDisplay = () => {
+                            if (!lastEntry) return { main: '--', sub: 'Pas de record' };
+
+                            if (benchmark.category === 'force') {
+                              // Force: show weight + kg, then reps
+                              return {
+                                main: `${lastEntry.value} ${benchmark.unit}`,
+                                sub: lastEntry.reps ? `× ${lastEntry.reps} reps` : '',
+                              };
+                            }
+                            if (benchmark.category === 'bodyweight' || benchmark.unit === 'reps') {
+                              // Bodyweight: show reps
+                              return {
+                                main: `${lastEntry.value} reps`,
+                                sub: '',
+                              };
+                            }
+                            // Running/Trail - show time in h:min format with unit
+                            if (lastEntry.duration && lastEntry.value) {
+                              const totalMin = lastEntry.duration;
+                              const hours = Math.floor(totalMin / 60);
+                              const mins = Math.round(totalMin % 60);
+                              const pacePerKm = totalMin / lastEntry.value;
+                              const paceMin = Math.floor(pacePerKm);
+                              const paceSec = Math.round((pacePerKm - paceMin) * 60);
+
+                              let timeStr;
+                              if (hours > 0) {
+                                timeStr = `${hours}h${mins.toString().padStart(2, '0')}min`;
+                              } else {
+                                timeStr = `${mins}min`;
+                              }
+                              return {
+                                main: timeStr,
+                                sub: `${paceMin}:${paceSec.toString().padStart(2, '0')}/km`,
+                              };
+                            }
+                            return { main: `${lastEntry.value}`, sub: benchmark.unit };
+                          };
+                          const display = getDisplay();
+
+                          return (
+                            <TouchableOpacity
+                              key={benchmark.id || index}
+                              style={{ width: '33.33%', padding: 4 }}
+                              onPress={() => router.push('/training-journal')}
+                              activeOpacity={0.7}
+                            >
+                              <View style={{
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: 12,
+                                padding: 10,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                alignItems: 'center',
+                                minHeight: 110,
+                              }}>
+                                {/* Icon + PR badge */}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                                  <View style={{
+                                    backgroundColor: `${color}20`,
+                                    borderRadius: 8,
+                                    padding: 5,
+                                  }}>
+                                    <Trophy size={14} color={color} />
+                                  </View>
+                                  {lastEntry && (
+                                    <View style={{
+                                      backgroundColor: `${color}20`,
+                                      borderRadius: 4,
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 2,
+                                      marginLeft: 4,
+                                    }}>
+                                      <Text style={{ color, fontSize: 9, fontWeight: '700' }}>PR</Text>
+                                    </View>
+                                  )}
+                                </View>
+                                {/* Main value - BIG */}
+                                <Text style={{
+                                  fontSize: 17,
+                                  fontWeight: '800',
+                                  color: lastEntry ? color : colors.textMuted,
+                                  textAlign: 'center',
+                                }} numberOfLines={1}>
+                                  {display.main}
+                                </Text>
+                                {/* Sub info (reps or pace) */}
+                                {display.sub ? (
+                                  <Text style={{
+                                    fontSize: 11,
+                                    color: colors.textMuted,
+                                    textAlign: 'center',
+                                    marginTop: 2,
+                                  }} numberOfLines={1}>
+                                    {display.sub}
+                                  </Text>
+                                ) : null}
+                                {/* Name */}
+                                <Text style={{
+                                  fontSize: 11,
+                                  fontWeight: '600',
+                                  color: colors.textSecondary,
+                                  textAlign: 'center',
+                                  marginTop: 4,
+                                }} numberOfLines={1}>
+                                  {benchmark.name}
+                                </Text>
+                                {/* Date */}
+                                {lastEntry && (
+                                  <Text style={{
+                                    fontSize: 10,
+                                    color: colors.textMuted,
+                                    textAlign: 'center',
+                                    marginTop: 3,
+                                  }}>
+                                    {formatDate(lastEntry.date)}
+                                  </Text>
+                                )}
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
                     </View>
-                    <ChevronRight size={16} color={colors.textMuted} />
-                  </TouchableOpacity>
-                ))}
+                  ));
+                })()}
+              </>
+            )}
+
+            {/* Mes Techniques - GRID 3 colonnes groupées par catégorie */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+              <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Techniques</Text>
+              <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
+                <ChevronRight size={14} color={colors.accent} />
+              </TouchableOpacity>
+            </View>
+            {recentSkills.length === 0 ? (
+              <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
+                <BookOpen size={32} color={colors.textMuted} />
+                <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucune technique</Text>
               </View>
+            ) : (
+              <>
+                {/* Grouper les techniques par catégorie */}
+                {(() => {
+                  const categoryLabels: Record<string, string> = {
+                    jjb_garde: 'JJB - Garde',
+                    jjb_passage: 'JJB - Passage',
+                    jjb_soumission: 'JJB - Soumission',
+                    lutte: 'Lutte',
+                    striking: 'Striking',
+                    other: 'Autre',
+                  };
+                  const categoryColors: Record<string, string> = {
+                    jjb_garde: '#8B5CF6',
+                    jjb_passage: '#0ABAB5',
+                    jjb_soumission: '#EC4899',
+                    lutte: '#F97316',
+                    striking: '#EF4444',
+                    other: '#6B7280',
+                  };
+                  // Grouper par catégorie
+                  const grouped = recentSkills.reduce((acc, s) => {
+                    const cat = s.category || 'other';
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(s);
+                    return acc;
+                  }, {} as Record<string, typeof recentSkills>);
+
+                  return Object.entries(grouped).map(([category, skills]) => (
+                    <View key={category}>
+                      {/* Titre de la catégorie */}
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: '700',
+                        color: categoryColors[category] || colors.textMuted,
+                        marginTop: 12,
+                        marginBottom: 6,
+                        marginLeft: 4,
+                      }}>
+                        {categoryLabels[category] || category}
+                      </Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
+                        {/* Limiter à 3 éléments par catégorie pour un beau screenshot */}
+                        {skills.slice(0, 3).map((skill, index) => {
+                          const color = categoryColors[skill.category] || colors.accent;
+                          const statusColor = skill.status === 'mastered' ? '#10B981' : skill.status === 'in_progress' ? '#F97316' : '#EF4444';
+                          const statusLabel = skill.status === 'mastered' ? 'Maîtrisé' : skill.status === 'in_progress' ? 'En cours' : 'À faire';
+
+                          // Format date
+                          const formatDate = (dateStr: string) => {
+                            const date = new Date(dateStr);
+                            const day = date.getDate();
+                            const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                            return `${day} ${month}`;
+                          };
+
+                          return (
+                            <TouchableOpacity
+                              key={skill.id || index}
+                              style={{ width: '33.33%', padding: 4 }}
+                              onPress={() => router.push('/training-journal')}
+                              activeOpacity={0.7}
+                            >
+                              <View style={{
+                                backgroundColor: colors.backgroundCard,
+                                borderRadius: 12,
+                                padding: 10,
+                                borderWidth: 1,
+                                borderColor: colors.border,
+                                alignItems: 'center',
+                                minHeight: 110,
+                              }}>
+                                {/* Icon + Status badge */}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                                  <View style={{
+                                    backgroundColor: `${color}20`,
+                                    borderRadius: 8,
+                                    padding: 5,
+                                  }}>
+                                    <BookOpen size={14} color={color} />
+                                  </View>
+                                  <View style={{
+                                    backgroundColor: `${statusColor}20`,
+                                    borderRadius: 4,
+                                    paddingHorizontal: 5,
+                                    paddingVertical: 2,
+                                    marginLeft: 4,
+                                  }}>
+                                    <Text style={{ color: statusColor, fontSize: 8, fontWeight: '700' }}>
+                                      {skill.status === 'mastered' ? '✓' : skill.status === 'in_progress' ? '⟳' : '○'}
+                                    </Text>
+                                  </View>
+                                </View>
+                                {/* Status text */}
+                                <Text style={{
+                                  fontSize: 12,
+                                  fontWeight: '700',
+                                  color: statusColor,
+                                  textAlign: 'center',
+                                }}>
+                                  {statusLabel}
+                                </Text>
+                                {/* Name */}
+                                <Text style={{
+                                  fontSize: 11,
+                                  fontWeight: '600',
+                                  color: colors.textPrimary,
+                                  textAlign: 'center',
+                                  marginTop: 4,
+                                }} numberOfLines={2}>
+                                  {skill.name}
+                                </Text>
+                                {/* Drill count if any */}
+                                {skill.drillCount > 0 && (
+                                  <Text style={{
+                                    fontSize: 10,
+                                    color: colors.textMuted,
+                                    textAlign: 'center',
+                                    marginTop: 2,
+                                  }}>
+                                    {skill.drillCount} drills
+                                  </Text>
+                                )}
+                                {/* Date */}
+                                <Text style={{
+                                  fontSize: 10,
+                                  color: colors.textMuted,
+                                  textAlign: 'center',
+                                  marginTop: 3,
+                                }}>
+                                  {formatDate(skill.updatedAt || skill.createdAt)}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  ));
+                })()}
+              </>
             )}
 
             {/* Bouton pour accéder au carnet complet */}
@@ -1431,6 +1736,8 @@ export default function PlanningScreen() {
           loadData(); // Rafraîchir les données
         }}
       />
+
+      <PopupComponent />
     </View>
   );
 }
@@ -2577,7 +2884,8 @@ const styles = StyleSheet.create({
 
   // Journal/Carnet styles
   journalStatsContainer: {
-    padding: 20,
+    padding: 12,
+    paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1,
     marginTop: 12,

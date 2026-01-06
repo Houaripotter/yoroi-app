@@ -15,8 +15,8 @@ import {
   Image,
   StyleSheet,
   Dimensions,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +25,7 @@ import * as Haptics from 'expo-haptics';
 
 import {
   getAvatarConfig,
-  setAvatarConfig,
+  setFullAvatarConfig,
   getAllAvatarUnlockInfo,
   getUnlockedLevel,
   getLevelProgress,
@@ -37,6 +37,7 @@ import {
   type LevelProgress,
 } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
 const { width } = Dimensions.get('window');
@@ -48,13 +49,16 @@ const AVATAR_SIZE = (width - 80) / 5; // 5 avatars par ligne sur mobile
 
 export default function AvatarSelectionScreen() {
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedGender, setSelectedGender] = useState<AvatarGender>('male');
   const [currentPack, setCurrentPack] = useState<AvatarPack>('samurai');
   const [currentGender, setCurrentGender] = useState<AvatarGender>('male');
-  const [unlockedLevel, setUnlockedLevel] = useState<AvatarLevel>(1);
+  const [currentLevel, setCurrentLevel] = useState<AvatarLevel>(1); // Niveau actuellement équipé
+  const [unlockedLevel, setUnlockedLevel] = useState<AvatarLevel>(1); // Niveau max débloqué
   const [unlockInfo, setUnlockInfo] = useState<AvatarUnlockInfo[]>([]);
   const [progress, setProgress] = useState<LevelProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [creatorModeActive, setCreatorModeActive] = useState(false);
 
   // Charger les données
   useEffect(() => {
@@ -65,15 +69,25 @@ export default function AvatarSelectionScreen() {
     try {
       setIsLoading(true);
 
-      // Config actuelle
+      // Vérifier si Mode Créateur actif
+      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      const isCreator = creatorMode === 'true';
+      setCreatorModeActive(isCreator);
+
+      // Config actuelle (inclut le niveau choisi par l'utilisateur)
       const config = await getAvatarConfig();
       setCurrentPack(config.pack);
       setCurrentGender(config.gender);
+      setCurrentLevel(config.level); // Niveau actuellement équipé
       setSelectedGender(config.gender);
 
-      // Niveau débloqué
-      const level = await getUnlockedLevel();
-      setUnlockedLevel(level);
+      // Niveau débloqué - Mode Créateur = tous débloqués (niveau 9)
+      if (isCreator) {
+        setUnlockedLevel(9 as AvatarLevel);
+      } else {
+        const level = await getUnlockedLevel();
+        setUnlockedLevel(level);
+      }
 
       // Infos de déblocage
       const info = await getAllAvatarUnlockInfo();
@@ -100,10 +114,9 @@ export default function AvatarSelectionScreen() {
   const handleSelectAvatar = async (pack: AvatarPack, gender: AvatarGender, level: AvatarLevel) => {
     // Vérifier si débloqué
     if (level > unlockedLevel) {
-      Alert.alert(
-        'Avatar verrouillé',
-        `Cet avatar sera débloqué au rang ${levelToRankName(level)}.\n\nContinue ton entraînement pour le débloquer !`,
-        [{ text: 'OK' }]
+      showPopup(
+        'Avatar verrouille',
+        `Cet avatar sera debloque au rang ${levelToRankName(level)}. Continue ton entrainement pour le debloquer !`
       );
       return;
     }
@@ -111,24 +124,25 @@ export default function AvatarSelectionScreen() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      await setAvatarConfig(pack, gender);
+      // Sauvegarder le pack, genre ET le niveau choisi
+      const success = await setFullAvatarConfig(pack, gender, level);
 
-      Alert.alert(
-        'Avatar équipé !',
-        `Tu es maintenant un ${pack === 'samurai' ? 'Samouraï' : 'Ninja'} ${gender === 'male' ? '' : 'female '}niveau ${level}.`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              router.back();
-            },
-          },
-        ]
+      if (!success) {
+        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        return;
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showPopup(
+        'Avatar equipe !',
+        `Tu es maintenant un ${pack === 'samurai' ? 'Samourai' : 'Ninja'} ${gender === 'male' ? '' : 'femme '}${levelToRankName(level)}.`
       );
+      setTimeout(() => {
+        router.back();
+      }, 1500);
     } catch (error) {
       logger.error('[AvatarSelection] Erreur sélection:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder l\'avatar.');
+      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
     }
   };
 
@@ -151,7 +165,8 @@ export default function AvatarSelectionScreen() {
   // Rendu d'un avatar
   const renderAvatar = (pack: AvatarPack, level: AvatarLevel) => {
     const isUnlocked = level <= unlockedLevel;
-    const isCurrent = pack === currentPack && selectedGender === currentGender && level === unlockedLevel;
+    // Un avatar est "current" s'il correspond au pack, genre ET niveau actuellement équipés
+    const isCurrent = pack === currentPack && selectedGender === currentGender && level === currentLevel;
 
     const image = getAvatarImage(pack, selectedGender, level);
 
@@ -373,10 +388,13 @@ export default function AvatarSelectionScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
           <Ionicons name="information-circle" size={24} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Les avatars se débloquent automatiquement en montant de rang dans le Dojo. Continue ton entraînement quotidien pour débloquer de nouveaux avatars !
+            {creatorModeActive
+              ? '⚙️ Mode Créateur actif - Tous les avatars sont débloqués !'
+              : 'Les avatars se débloquent automatiquement en montant de rang dans le Dojo. Continue ton entraînement quotidien pour débloquer de nouveaux avatars !'}
           </Text>
         </View>
       </ScrollView>
+      <PopupComponent />
     </SafeAreaView>
   );
 }

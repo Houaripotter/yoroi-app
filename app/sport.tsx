@@ -7,13 +7,13 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Alert,
   TextInput,
   Modal,
   Platform,
   KeyboardAvoidingView,
   Dimensions,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -37,6 +37,7 @@ interface RoutineBlock {
 
 export default function SportScreen() {
   const { colors: themeColors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [routine, setRoutine] = useState<{ [key: string]: Array<RoutineBlock> }>({});
   const [loading, setLoading] = useState(true);
   const [customLogos, setCustomLogos] = useState<{ [key: string]: string }>({});
@@ -222,12 +223,16 @@ export default function SportScreen() {
     const activity = getActivityForDay(dayKey);
 
     if (!activity) {
-      Alert.alert('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.');
+      showPopup('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
 
     if (activity.type === 'rest' || activity.type === null) {
-      Alert.alert('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.');
+      showPopup('Aucune activité', 'Aucune activité prévue pour aujourd\'hui.', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
 
@@ -237,7 +242,9 @@ export default function SportScreen() {
       const todayWorkouts = allWorkouts.filter(w => w.date === todayString);
       
       if (todayWorkouts.length > 0) {
-        Alert.alert('Déjà validé', 'Vous avez déjà validé une séance aujourd\'hui.');
+        showPopup('Déjà validé', 'Vous avez déjà validé une séance aujourd\'hui.', [
+          { text: 'OK', style: 'primary' },
+        ]);
         return;
       }
 
@@ -250,10 +257,14 @@ export default function SportScreen() {
       // Déclencher l'animation de récompense
       rewardOverlayRef.current?.trigger();
 
-      Alert.alert('✅ Validé !', `Séance ${activity.label} validée pour aujourd'hui.`);
+      showPopup('Validé !', `Séance ${activity.label} validée pour aujourd'hui.`, [
+        { text: 'OK', style: 'primary' },
+      ]);
     } catch (error) {
       logger.error('Erreur validation:', error);
-      Alert.alert('Erreur', 'Impossible de valider la séance.');
+      showPopup('Erreur', 'Impossible de valider la séance.', [
+        { text: 'OK', style: 'primary' },
+      ]);
     }
   };
 
@@ -319,14 +330,18 @@ export default function SportScreen() {
 
   const addRoutineBlock = (dayKey: string) => {
     if (!selectedClubModal) {
-      Alert.alert('Club requis', 'Veuillez sélectionner un club.');
+      showPopup('Club requis', 'Veuillez sélectionner un club.', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
-    
+
     // Limiter à 3 entraînements par jour
     const currentRoutine = routine[dayKey] || [];
     if (currentRoutine.length >= 3) {
-      Alert.alert('Limite atteinte', 'Vous ne pouvez pas ajouter plus de 3 entraînements par jour.');
+      showPopup('Limite atteinte', 'Vous ne pouvez pas ajouter plus de 3 entraînements par jour.', [
+        { text: 'OK', style: 'primary' },
+      ]);
       return;
     }
     
@@ -688,6 +703,8 @@ export default function SportScreen() {
       <RewardOverlay ref={rewardOverlayRef} />
 
       {/* Time Picker Modal - En dehors du Modal parent pour éviter les conflits */}
+      <PopupComponent />
+
       {showTimePicker && Platform.OS === 'ios' && (
         <Modal
           visible={showTimePicker}

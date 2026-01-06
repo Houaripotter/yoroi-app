@@ -9,9 +9,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   TextInput,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
@@ -22,7 +22,12 @@ import {
   Activity,
   Check,
   Trash2,
+  Stethoscope,
+  RotateCcw,
+  Edit3,
+  Calendar,
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -51,6 +56,7 @@ import logger from '@/lib/security/logger';
 
 export default function InjuryDetailScreen() {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
   const injuryId = parseInt(params.id as string);
 
@@ -59,9 +65,15 @@ export default function InjuryDetailScreen() {
   const [treatments, setTreatments] = useState<any[]>([]);
   const [newEva, setNewEva] = useState<number | null>(null);
   const [evaNote, setEvaNote] = useState('');
+  const [creatorModeActive, setCreatorModeActive] = useState(false);
+  const [showSurgeonMode, setShowSurgeonMode] = useState(false);
 
   const loadData = async () => {
     try {
+      // Vérifier si Mode Créateur actif
+      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      setCreatorModeActive(creatorMode === 'true');
+
       const injuryData = await getInjuryById(injuryId);
       if (injuryData) {
         setInjury(injuryData);
@@ -93,15 +105,20 @@ export default function InjuryDetailScreen() {
       setEvaNote('');
       loadData();
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de mettre à jour l EVA');
+      showPopup({
+        title: 'Erreur',
+        message: 'Impossible de mettre a jour l EVA',
+        type: 'error',
+      });
     }
   };
 
   const handleMarkHealed = async () => {
-    Alert.alert(
-      'Marquer comme guéri ?',
-      'Cette blessure sera archivée.',
-      [
+    showPopup({
+      title: 'Marquer comme gueri ?',
+      message: 'Cette blessure sera archivee.',
+      type: 'warning',
+      buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Confirmer',
@@ -111,19 +128,24 @@ export default function InjuryDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de marquer comme guéri');
+              showPopup({
+                title: 'Erreur',
+                message: 'Impossible de marquer comme gueri',
+                type: 'error',
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleDelete = async () => {
-    Alert.alert(
-      'Supprimer la blessure ?',
-      'Cette action est irréversible.',
-      [
+    showPopup({
+      title: 'Supprimer la blessure ?',
+      message: 'Cette action est irreversible.',
+      type: 'error',
+      buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Supprimer',
@@ -134,19 +156,24 @@ export default function InjuryDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer');
+              showPopup({
+                title: 'Erreur',
+                message: 'Impossible de supprimer',
+                type: 'error',
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleAddTreatment = (treatmentType: string) => {
-    Alert.alert(
-      'Enregistrer traitement',
-      `Marquer comme effectué aujourd hui ?`,
-      [
+    showPopup({
+      title: 'Enregistrer traitement',
+      message: 'Marquer comme effectue aujourd hui ?',
+      type: 'info',
+      buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Confirmer',
@@ -159,12 +186,16 @@ export default function InjuryDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
               loadData();
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible d enregistrer le traitement');
+              showPopup({
+                title: 'Erreur',
+                message: 'Impossible d enregistrer le traitement',
+                type: 'error',
+              });
             }
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   if (!injury) {
@@ -400,6 +431,123 @@ export default function InjuryDetailScreen() {
           )}
         </View>
 
+        {/* Mode Chirurgien - Visible uniquement si Mode Créateur actif */}
+        {creatorModeActive && (
+          <View style={[styles.section, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6', borderWidth: 2 }]}>
+            <TouchableOpacity
+              style={styles.surgeonHeader}
+              onPress={() => setShowSurgeonMode(!showSurgeonMode)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.surgeonTitleRow}>
+                <Stethoscope size={20} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: '#8B5CF6', marginBottom: 0, marginLeft: 8 }]}>
+                  Mode Chirurgien
+                </Text>
+              </View>
+              <Text style={[styles.surgeonToggle, { color: colors.textMuted }]}>
+                {showSurgeonMode ? '▲' : '▼'}
+              </Text>
+            </TouchableOpacity>
+
+            {showSurgeonMode && (
+              <View style={styles.surgeonContent}>
+                <Text style={[styles.surgeonWarning, { color: colors.textMuted }]}>
+                  ⚠️ Fonctionnalités avancées - À utiliser avec précaution
+                </Text>
+
+                {/* Tous les types de traitement */}
+                <Text style={[styles.surgeonSubtitle, { color: colors.textPrimary }]}>
+                  Tous les traitements disponibles
+                </Text>
+                <View style={styles.treatmentGrid}>
+                  {TREATMENT_TYPES.map((treatment) => (
+                    <TouchableOpacity
+                      key={treatment.id}
+                      style={[styles.treatmentButton, { backgroundColor: colors.backgroundElevated }]}
+                      onPress={() => handleAddTreatment(treatment.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.treatmentIcon}>{treatment.icon}</Text>
+                      <Text style={[styles.treatmentLabel, { color: colors.textPrimary }]}>
+                        {treatment.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Reinitialiser EVA a 0 */}
+                <TouchableOpacity
+                  style={[styles.surgeonAction, { backgroundColor: '#10B981' }]}
+                  onPress={() => {
+                    showPopup({
+                      title: 'Reinitialiser EVA ?',
+                      message: 'Mettre le score EVA a 0 (gueri)',
+                      type: 'info',
+                      buttons: [
+                        { text: 'Annuler', style: 'cancel' },
+                        {
+                          text: 'Confirmer',
+                          onPress: async () => {
+                            await updateInjuryEva(injuryId, 0, 'Reset via Mode Chirurgien');
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            loadData();
+                          },
+                        },
+                      ],
+                    });
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <RotateCcw size={18} color="#FFFFFF" />
+                  <Text style={styles.surgeonActionText}>Reinitialiser EVA a 0</Text>
+                </TouchableOpacity>
+
+                {/* Forcer EVA max */}
+                <TouchableOpacity
+                  style={[styles.surgeonAction, { backgroundColor: '#EF4444' }]}
+                  onPress={() => {
+                    showPopup({
+                      title: 'EVA Maximum ?',
+                      message: 'Mettre le score EVA a 10 (douleur maximale)',
+                      type: 'warning',
+                      buttons: [
+                        { text: 'Annuler', style: 'cancel' },
+                        {
+                          text: 'Confirmer',
+                          onPress: async () => {
+                            await updateInjuryEva(injuryId, 10, 'EVA Max via Mode Chirurgien');
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            loadData();
+                          },
+                        },
+                      ],
+                    });
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Edit3 size={18} color="#FFFFFF" />
+                  <Text style={styles.surgeonActionText}>Forcer EVA a 10</Text>
+                </TouchableOpacity>
+
+                {/* Info blessure brute */}
+                <View style={[styles.surgeonInfo, { backgroundColor: colors.backgroundElevated }]}>
+                  <Text style={[styles.surgeonInfoTitle, { color: colors.textPrimary }]}>
+                    Données brutes
+                  </Text>
+                  <Text style={[styles.surgeonInfoText, { color: colors.textMuted }]}>
+                    ID: {injury?.id}{'\n'}
+                    Zone: {injury?.zone_id}{'\n'}
+                    Date: {injury?.date}{'\n'}
+                    EVA: {injury?.eva_score}{'\n'}
+                    Status: {injury?.status}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
@@ -475,4 +623,16 @@ const styles = StyleSheet.create({
   actionsSection: { gap: SPACING.sm },
   actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: 14, borderRadius: RADIUS.md },
   actionButtonText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  // Mode Chirurgien
+  surgeonHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  surgeonTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  surgeonToggle: { fontSize: 14 },
+  surgeonContent: { marginTop: SPACING.md },
+  surgeonWarning: { fontSize: 12, fontStyle: 'italic', marginBottom: SPACING.md, textAlign: 'center' },
+  surgeonSubtitle: { fontSize: 14, fontWeight: '600', marginBottom: SPACING.sm },
+  surgeonAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: 12, borderRadius: RADIUS.md, marginTop: SPACING.sm },
+  surgeonActionText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  surgeonInfo: { marginTop: SPACING.md, padding: SPACING.md, borderRadius: RADIUS.md },
+  surgeonInfoTitle: { fontSize: 13, fontWeight: '700', marginBottom: SPACING.xs },
+  surgeonInfoText: { fontSize: 11, fontFamily: 'monospace', lineHeight: 18 },
 });

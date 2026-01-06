@@ -9,9 +9,9 @@ import {
   StatusBar,
   Platform,
   KeyboardAvoidingView,
-  Alert,
   Modal,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,6 +71,7 @@ export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
 
   // Weight input ref - Isolé pour éviter les re-renders
   const weightInputRef = useRef<WeightInputHandle>(null);
@@ -144,8 +145,8 @@ export default function AddScreen() {
 
         message += '\n\nVeux-tu restaurer ces données ?';
 
-        Alert.alert(
-          '📝 Brouillon trouvé',
+        showPopup(
+          'Brouillon trouvé',
           message,
           [
             {
@@ -157,6 +158,7 @@ export default function AddScreen() {
             },
             {
               text: 'Restaurer',
+              style: 'primary',
               onPress: () => {
                 // Restaurer les valeurs
                 if (draft.weight && weightInputRef.current) {
@@ -283,9 +285,10 @@ export default function AddScreen() {
     const hasComposition = fatPercent || musclePercent || waterPercent || boneMass || visceralFat || metabolicAge || bmr;
 
     if (!weight && !hasMeasurements && !hasComposition) {
-      Alert.alert(
+      showPopup(
         'Aucune donnée',
-        'Veuillez entrer au moins :\n• Votre poids\n• Des mensurations (tour de taille, etc.)\n• Votre composition corporelle (% de graisse, etc.)'
+        'Veuillez entrer au moins :\n\nVotre poids\nDes mensurations (tour de taille, etc.)\nVotre composition corporelle (% de graisse, etc.)',
+        [{ text: 'OK', style: 'primary' }]
       );
       return;
     }
@@ -323,7 +326,9 @@ export default function AddScreen() {
       setShowSuccessModal(true);
     } catch (error) {
       logger.error('Erreur:', error);
-      Alert.alert('Erreur', "Impossible d'enregistrer");
+      showPopup('Erreur', "Impossible d'enregistrer", [
+        { text: 'OK', style: 'primary' }
+      ]);
     } finally {
       setIsSaving(false);
     }
@@ -336,7 +341,7 @@ export default function AddScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     // Proposer les deux formats
-    Alert.alert(
+    showPopup(
       'Choisir le format',
       'Quel format veux-tu utiliser pour sauvegarder tes données ?',
       [
@@ -347,6 +352,7 @@ export default function AddScreen() {
         },
         {
           text: 'CSV (Excel/Numbers)',
+          style: 'primary',
           onPress: async () => {
             const success = await exportDataToCSV();
             if (success) {
@@ -358,6 +364,7 @@ export default function AddScreen() {
         },
         {
           text: 'JSON (Réimport)',
+          style: 'primary',
           onPress: async () => {
             const success = await exportDataToJSON();
             if (success) {
@@ -367,8 +374,7 @@ export default function AddScreen() {
             }
           },
         },
-      ],
-      { cancelable: true }
+      ]
     );
   };
 
@@ -976,6 +982,7 @@ export default function AddScreen() {
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </KeyboardAvoidingView>
   );
 }

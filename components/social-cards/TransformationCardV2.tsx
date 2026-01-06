@@ -96,7 +96,7 @@ export const TransformationCardV2 = forwardRef<View, TransformationCardV2Props>(
 
             {/* Séparateur vertical avec foudre */}
             <View style={styles.separator}>
-              <View style={styles.separatorBolt}>
+              <View style={styles.separatorIcon}>
                 <Zap size={28} color="#FFD700" fill="#FFD700" />
               </View>
             </View>
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  separatorBolt: {
+  separatorIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,

@@ -11,8 +11,8 @@ import {
   Animated,
   PanResponder,
   Share,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2, TrendingDown, Calendar, Trophy, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
@@ -43,6 +43,7 @@ const SLIDER_WIDTH = screenWidth - 40;
 
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedBefore, setSelectedBefore] = useState<ProgressPhoto | null>(null);
   const [selectedAfter, setSelectedAfter] = useState<ProgressPhoto | null>(null);
   const [step, setStep] = useState<'before' | 'after' | 'compare'>('before');
@@ -159,18 +160,19 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       if (!viewShotRef.current) return;
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
-        Alert.alert('Erreur', 'Impossible de capturer l\'image');
+        showPopup('Erreur', 'Impossible de capturer l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       successHaptic();
 
-      Alert.alert(
+      showPopup(
         'Partager',
         'Que veux-tu faire ?',
         [
           {
             text: 'Partager',
+            style: 'primary',
             onPress: async () => {
               if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(uri);
@@ -181,13 +183,14 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
           },
           {
             text: 'Sauvegarder',
+            style: 'primary',
             onPress: async () => {
               const { status } = await MediaLibrary.requestPermissionsAsync();
               if (status === 'granted') {
                 await MediaLibrary.saveToLibraryAsync(uri);
-                Alert.alert('Sauvegardé !', 'Image enregistrée dans ta galerie');
+                showPopup('Sauvegarde', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
               } else {
-                Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie');
+                showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
               }
             },
           },
@@ -196,7 +199,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
       );
     } catch (error) {
       logger.error('Erreur capture:', error);
-      Alert.alert('Erreur', 'Impossible de créer l\'image');
+      showPopup('Erreur', 'Impossible de creer l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -610,6 +613,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
             </View>
           )}
         </ScrollView>
+        <PopupComponent />
       </View>
     </Modal>
   );

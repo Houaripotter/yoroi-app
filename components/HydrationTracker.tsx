@@ -7,8 +7,8 @@ import {
   Animated,
   Modal,
   TextInput,
-  Alert,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { Droplet, Plus, ChevronRight, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
@@ -42,6 +42,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
   onUpdate,
 }) => {
   const { colors } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [todayAmount, setTodayAmount] = useState(0); // en ml
   const [dailyGoal, setDailyGoal] = useState(2500); // en ml
   const [isTrainingDay, setIsTrainingDay] = useState(false);
@@ -108,7 +109,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
   const handleCustomAdd = () => {
     const amount = parseInt(customAmount, 10);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Erreur', 'Veuillez entrer une quantite valide');
+      showPopup('Erreur', 'Veuillez entrer une quantite valide', [{ text: 'OK', style: 'primary' }]);
       return;
     }
     addWater(amount);
@@ -363,6 +364,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
           </View>
         </View>
       </Modal>
+      <PopupComponent />
     </Card>
   );
 };

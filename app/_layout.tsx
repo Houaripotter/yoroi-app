@@ -13,8 +13,20 @@ import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { notificationService } from '@/lib/notificationService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
+import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
+
+// ============================================
+// PRODUCTION: Désactiver tous les console.log
+// ============================================
+if (!__DEV__) {
+  console.log = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+  console.debug = () => {};
+  console.info = () => {};
+}
 
 // Couleurs pour le loading screen (avant que ThemeProvider soit monte)
 const LOADING_COLORS = {
@@ -100,6 +112,8 @@ function RootLayoutContent() {
         <Stack.Screen name="gamification" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep" options={{ presentation: 'card' }} />
         <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
+        <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
+        <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
@@ -135,6 +149,10 @@ export default function RootLayout() {
         } else {
           logger.warn('⚠️ Service de notifications non disponible (simulateur ou permissions refusées)');
         }
+
+        // Initialiser les notifications de citations (replanifie si nécessaire)
+        await initCitationNotifications();
+        logger.info('✅ Notifications citations initialisées');
 
       } catch (error) {
         logger.error('❌ Erreur initialisation', error);

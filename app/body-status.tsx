@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Alert,
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X, AlertTriangle, CheckCircle, Activity } from 'lucide-react-native';
@@ -46,6 +46,7 @@ const BODY_ZONES: Array<{ key: BodyZone; label: string; icon: string }> = [
 
 export default function BodyStatusScreen() {
   const router = useRouter();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [bodyStatus, setBodyStatus] = useState<BodyStatusData>({});
   const [selectedZone, setSelectedZone] = useState<BodyZone | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,7 +93,7 @@ export default function BodyStatusScreen() {
       zoneData.pain = painLevel;
     } else if (selectedStatus === 'injury') {
       if (!medicalNote.trim()) {
-        Alert.alert('Note requise', 'Veuillez ajouter une note médicale pour cette blessure.');
+        showPopup('Note requise', 'Veuillez ajouter une note medicale pour cette blessure.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
       zoneData.note = medicalNote.trim();
@@ -111,7 +112,7 @@ export default function BodyStatusScreen() {
       setMedicalNote('');
     } catch (error) {
       logger.error('Erreur sauvegarde statut:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder le statut.');
+      showPopup('Erreur', 'Impossible de sauvegarder le statut.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -128,7 +129,7 @@ export default function BodyStatusScreen() {
       setSelectedZone(null);
     } catch (error) {
       logger.error('Erreur suppression statut:', error);
-      Alert.alert('Erreur', 'Impossible de supprimer le statut.');
+      showPopup('Erreur', 'Impossible de supprimer le statut.', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -359,6 +360,7 @@ export default function BodyStatusScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      <PopupComponent />
     </ScreenWrapper>
   );
 }

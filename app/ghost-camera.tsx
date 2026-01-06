@@ -11,9 +11,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Alert,
   Platform,
 } from 'react-native';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Video, ResizeMode } from 'expo-av';
@@ -49,6 +49,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function GhostCameraScreen() {
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const videoRef = useRef<Video>(null);
@@ -88,7 +89,9 @@ export default function GhostCameraScreen() {
       }
     } catch (error) {
       logger.error('Erreur chargement video:', error);
-      Alert.alert('Erreur', 'Impossible de charger la video');
+      showPopup('Erreur', 'Impossible de charger la video', [
+        { text: 'OK', style: 'primary' },
+      ]);
     }
   };
 
@@ -317,7 +320,9 @@ export default function GhostCameraScreen() {
               if (recordedVideo) {
                 setShowComparison(true);
               } else {
-                Alert.alert('Info', 'Enregistre d\'abord une video');
+                showPopup('Info', 'Enregistre d\'abord une video', [
+                  { text: 'OK', style: 'primary' },
+                ]);
               }
             }}
           >
@@ -350,6 +355,8 @@ export default function GhostCameraScreen() {
           </View>
         </View>
       )}
+
+      <PopupComponent />
     </View>
   );
 }

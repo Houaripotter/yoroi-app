@@ -16,6 +16,8 @@ const STATS_COLUMNS = isIPad() ? 4 : 2;
 const STATS_GAP = 12; // Gap fixe pour tous les appareils
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16
 const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+// Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
+const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
 interface CompositionStatsProps {
   data: Weight[];
@@ -200,7 +202,7 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
                 <View style={styles.sparklineContainer}>
                   <SparklineChart
                     data={sparklineData}
-                    width={140}
+                    width={SPARKLINE_WIDTH}
                     height={40}
                     color={metric.color}
                     showGradient={true}
