@@ -366,15 +366,18 @@ export default function AddTrainingScreen() {
         </TouchableOpacity>
 
         {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            themeVariant={isDark ? 'dark' : 'light'}
-            onChange={handleDateChange}
-            maximumDate={new Date()}
-            locale="fr"
-          />
+          <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 12, padding: 8 }}>
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant={isDark ? 'dark' : 'light'}
+              textColor={colors.textPrimary}
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+              locale="fr"
+            />
+          </View>
         )}
 
         {/* HEURE DE DÉBUT */}
@@ -390,17 +393,20 @@ export default function AddTrainingScreen() {
         </TouchableOpacity>
 
         {showTimePicker && (
-          <DateTimePicker
-            value={startTime}
-            mode="time"
-            is24Hour={true}
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            themeVariant={isDark ? 'dark' : 'light'}
-            onChange={(event, selectedTime) => {
-              setShowTimePicker(Platform.OS === 'ios');
-              if (selectedTime) setStartTime(selectedTime);
-            }}
-          />
+          <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 12, padding: 8 }}>
+            <DateTimePicker
+              value={startTime}
+              mode="time"
+              is24Hour={true}
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              themeVariant={isDark ? 'dark' : 'light'}
+              textColor={colors.textPrimary}
+              onChange={(event, selectedTime) => {
+                setShowTimePicker(Platform.OS === 'ios');
+                if (selectedTime) setStartTime(selectedTime);
+              }}
+            />
+          </View>
         )}
 
         {/* DURÉE ESTIMÉE */}

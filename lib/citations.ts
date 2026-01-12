@@ -206,6 +206,11 @@ export const QUOTES_BY_CATEGORY: Record<CitationStyle, Citation[]> = {
 const CITATION_STYLE_KEY = '@yoroi_citationStyle';
 const LAST_CITATION_KEY = '@yoroi_lastCitation';
 const LAST_CITATION_DATE_KEY = '@yoroi_lastCitationDate';
+const SESSION_CITATION_KEY = '@yoroi_sessionCitation';
+const SESSION_ID_KEY = '@yoroi_sessionId';
+const CITATION_NOTIF_ENABLED_KEY = '@yoroi_citation_notif_enabled';
+const CITATION_NOTIF_FREQUENCY_KEY = '@yoroi_citation_notif_frequency';
+const CITATION_NOTIF_TIME_KEY = '@yoroi_citation_notif_time';
 
 // ═══════════════════════════════════════════════
 // FONCTIONS - STYLE
@@ -338,6 +343,102 @@ export const getDailyQuoteText = async (): Promise<string> => {
   return citation.text;
 };
 
+// ═══════════════════════════════════════════════
+// CITATION DE SESSION (change à chaque ouverture)
+// ═══════════════════════════════════════════════
+
+/**
+ * Génère un ID de session unique
+ */
+const generateSessionId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+/**
+ * Obtient une nouvelle citation pour cette session d'app
+ * Change à chaque ouverture de l'application
+ */
+export const getSessionQuote = async (): Promise<Citation> => {
+  try {
+    const style = await getCitationStyle();
+    const citation = getRandomQuote(style);
+
+    // Sauvegarder pour cette session
+    await AsyncStorage.setItem(SESSION_CITATION_KEY, JSON.stringify(citation));
+    await AsyncStorage.setItem(SESSION_ID_KEY, generateSessionId());
+
+    return citation;
+  } catch (error) {
+    logger.error('Erreur citation session:', error);
+    return getRandomQuote('all');
+  }
+};
+
+// ═══════════════════════════════════════════════
+// NOTIFICATIONS DE CITATIONS
+// ═══════════════════════════════════════════════
+
+export interface CitationNotifSettings {
+  enabled: boolean;
+  frequency: number; // Nombre de notifications par jour (1, 2, 3, etc.)
+  time: string; // Heure préférée HH:MM
+}
+
+/**
+ * Récupère les paramètres de notification des citations
+ */
+export const getCitationNotifSettings = async (): Promise<CitationNotifSettings> => {
+  try {
+    const enabled = await AsyncStorage.getItem(CITATION_NOTIF_ENABLED_KEY);
+    const frequency = await AsyncStorage.getItem(CITATION_NOTIF_FREQUENCY_KEY);
+    const time = await AsyncStorage.getItem(CITATION_NOTIF_TIME_KEY);
+
+    return {
+      enabled: enabled === 'true',
+      frequency: frequency ? parseInt(frequency, 10) : 1,
+      time: time || '08:00',
+    };
+  } catch (error) {
+    logger.error('Erreur lecture paramètres notif citations:', error);
+    return { enabled: false, frequency: 1, time: '08:00' };
+  }
+};
+
+/**
+ * Sauvegarde les paramètres de notification des citations
+ */
+export const setCitationNotifSettings = async (settings: CitationNotifSettings): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CITATION_NOTIF_ENABLED_KEY, settings.enabled.toString());
+    await AsyncStorage.setItem(CITATION_NOTIF_FREQUENCY_KEY, settings.frequency.toString());
+    await AsyncStorage.setItem(CITATION_NOTIF_TIME_KEY, settings.time);
+  } catch (error) {
+    logger.error('Erreur sauvegarde paramètres notif citations:', error);
+  }
+};
+
+/**
+ * Active/désactive les notifications de citations
+ */
+export const setCitationNotifEnabled = async (enabled: boolean): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CITATION_NOTIF_ENABLED_KEY, enabled.toString());
+  } catch (error) {
+    logger.error('Erreur activation notif citations:', error);
+  }
+};
+
+/**
+ * Définit la fréquence des notifications (nombre par jour)
+ */
+export const setCitationNotifFrequency = async (frequency: number): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(CITATION_NOTIF_FREQUENCY_KEY, frequency.toString());
+  } catch (error) {
+    logger.error('Erreur fréquence notif citations:', error);
+  }
+};
+
 export default {
   getCitationStyle,
   setCitationStyle,
@@ -346,6 +447,11 @@ export default {
   getDailyQuoteByStyle,
   getDailyQuoteText,
   forceNewCitation,
+  getSessionQuote,
+  getCitationNotifSettings,
+  setCitationNotifSettings,
+  setCitationNotifEnabled,
+  setCitationNotifFrequency,
   ALL_QUOTES,
   QUOTES_BY_CATEGORY,
   CITATION_STYLE_OPTIONS,

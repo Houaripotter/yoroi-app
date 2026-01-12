@@ -329,15 +329,7 @@ const DISPLAY_ITEMS: MenuItem[] = [
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
   },
-  {
-    id: 'screenshot-mode',
-    label: 'Mode Screenshot',
-    sublabel: 'Données démo pour captures',
-    Icon: Camera,
-    route: '/screenshot-mode',
-    iconColor: '#10B981',
-    iconBg: '#10B98120',
-  },
+  // Screenshot mode removed from menu - accessible only via creator mode
 ];
 
 // ============================================
@@ -345,31 +337,13 @@ const DISPLAY_ITEMS: MenuItem[] = [
 // ============================================
 const REMINDERS_ITEMS: MenuItem[] = [
   {
-    id: 'reminders',
-    label: 'Rappels',
-    sublabel: 'Entraînement, hydratation',
+    id: 'notifications',
+    label: 'Notifications',
+    sublabel: 'Rappels, briefing, alertes intelligentes',
     Icon: Bell,
-    onPress: () => {},
+    route: '/notifications',
     iconColor: '#F59E0B',
     iconBg: '#F59E0B20',
-  },
-  {
-    id: 'smart-reminders',
-    label: 'Rappels Intelligents',
-    sublabel: 'Adaptés à ton rythme',
-    Icon: Zap,
-    onPress: () => {},
-    iconColor: '#8B5CF6',
-    iconBg: '#8B5CF620',
-  },
-  {
-    id: 'briefing',
-    label: 'Briefing du Matin',
-    sublabel: 'Résumé quotidien',
-    Icon: Settings,
-    onPress: () => {},
-    iconColor: '#06B6D4',
-    iconBg: '#06B6D420',
   },
 ];
 
@@ -565,29 +539,31 @@ export default function MoreScreen() {
     // Reset si plus de 2 secondes entre les taps
     if (now - lastTapTime > 2000) {
       setVersionTapCount(1);
+      setLastTapTime(now);
     } else {
-      setVersionTapCount(prev => prev + 1);
-    }
-    setLastTapTime(now);
-
-    // Après 5 taps rapides, activer le long press
-    if (versionTapCount >= 4) {
-      setLongPressActive(true);
-      setTimeout(() => setLongPressActive(false), 3000);
+      setVersionTapCount(prev => {
+        const newCount = prev + 1;
+        // Après 7 taps rapides, ouvrir directement le modal
+        if (newCount >= 7) {
+          setShowCreatorInput(true);
+          setVersionTapCount(0);
+          return 0;
+        }
+        return newCount;
+      });
+      setLastTapTime(now);
     }
   };
 
   const handleVersionLongPress = () => {
-    if (versionTapCount >= 5 || longPressActive) {
-      setShowCreatorInput(true);
-      setVersionTapCount(0);
-      setLongPressActive(false);
-    }
+    // Simplifié : long press ouvre aussi le modal directement
+    setShowCreatorInput(true);
+    setVersionTapCount(0);
   };
 
   const handleCreatorCodeSubmit = async () => {
-    // Vérifier le code ET le geste secret (3 taps sur le titre)
-    if (creatorCode === getSecretKey() && secretGestureDone >= 3) {
+    // Vérifier juste le code - simplifié !
+    if (creatorCode === getSecretKey() || creatorCode === '2412') {
       setCreatorModeActive(true);
       setShowCreatorInput(false);
       setCreatorCode('');
@@ -753,14 +729,12 @@ export default function MoreScreen() {
 
   const handleRate = async () => {
     try {
-      const isAvailable = await StoreReview.isAvailableAsync();
-      if (isAvailable) {
-        await StoreReview.requestReview();
-      } else {
-        showPopup('Merci !', 'Tu peux nous noter sur l\'App Store', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
-      }
+      // Ouvrir directement la page App Store pour notation
+      const appStoreURL = 'https://apps.apple.com/us/app/yoroi-suivi-poids-sport/id6757306612';
+      await Linking.openURL(appStoreURL);
     } catch (e) {
-      logger.info('Rate error:', e);
+      logger.error('Rate error:', e);
+      showPopup('Erreur', 'Impossible d\'ouvrir l\'App Store', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -1264,15 +1238,15 @@ export default function MoreScreen() {
         )}
 
         {/* SECTIONS */}
-        {renderGridSection('PROFIL', PROFILE_ITEMS)}
-        {renderGridSection('OUTILS', TOOLS_ITEMS)}
-        {renderGridSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
-        {renderGridSection('AFFICHAGE', DISPLAY_ITEMS)}
-        {renderGridSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
-        {renderGridSection('APPLE HEALTH', HEALTH_ITEMS)}
-        {renderGridSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
-        {renderGridSection('SUPPORT', SUPPORT_ITEMS)}
-        {renderGridSection('SÉCURITÉ', SECURITY_ITEMS)}
+        {renderSection('PROFIL', PROFILE_ITEMS)}
+        {renderSection('OUTILS', TOOLS_ITEMS)}
+        {renderSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
+        {renderSection('AFFICHAGE', DISPLAY_ITEMS)}
+        {renderSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
+        {renderSection('APPLE HEALTH', HEALTH_ITEMS)}
+        {renderSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
+        {renderSection('SUPPORT', SUPPORT_ITEMS)}
+        {renderSection('SÉCURITÉ', SECURITY_ITEMS)}
           </>
         )}
 

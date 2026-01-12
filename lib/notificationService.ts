@@ -9,6 +9,8 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { calculateStreak, getLatestWeight, getWeeklyPlan, getProfile, getTrainings, type Training } from '@/lib/database';
+import { getCurrentRank } from '@/lib/ranks';
 
 // ============================================
 // TYPES
@@ -63,6 +65,23 @@ export interface NotificationSettings {
     bedtimeReminder: string; // HH:mm - rappel pour aller dormir
     days: number[]; // jours de la semaine (0-6)
   };
+  socialCards: {
+    enabled: boolean;
+    weeklyTime: string; // HH:mm - rappel chaque dimanche
+    monthlyTime: string; // HH:mm - rappel chaque 1er du mois
+  };
+  briefing: {
+    enabled: boolean;
+    time: string; // HH:mm - heure du briefing matinal
+    days: number[]; // jours de la semaine (0-6)
+  };
+  smartReminders: {
+    enabled: boolean;
+    missedTrainingAlert: boolean; // Alerte si jour habituel sans entraînement
+    restDaySuggestion: boolean; // Suggérer repos après plusieurs jours consécutifs
+    frequencyAlert: boolean; // Alerte si fréquence en baisse
+    checkTime: string; // HH:mm - heure de vérification (soir)
+  };
 }
 
 // ============================================
@@ -72,49 +91,66 @@ export interface NotificationSettings {
 const STORAGE_KEY = '@yoroi_notification_settings';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
-  enabled: true,
+  enabled: false, // Désactivé par défaut - l'utilisateur choisit
   training: {
-    enabled: true,
+    enabled: false,
     time: '18:00',
     days: [1, 2, 3, 4, 5], // Lundi à vendredi
   },
   hydration: {
-    enabled: true,
+    enabled: false,
     useSlots: true, // Par défaut, utiliser les tranches personnalisées
     interval: 2,
     startTime: '08:00',
     endTime: '22:00',
     slots: {
       morning: {
-        enabled: true,
+        enabled: false,
         time: '09:00',
         amount: 750, // ml
       },
       afternoon: {
-        enabled: true,
+        enabled: false,
         time: '14:00',
         amount: 750, // ml
       },
       evening: {
-        enabled: true,
+        enabled: false,
         time: '19:00',
         amount: 750, // ml
       },
     },
   },
   weighing: {
-    enabled: true,
+    enabled: false,
     time: '07:00',
     days: [1, 3, 5], // Lundi, mercredi, vendredi
   },
   streak: {
-    enabled: true,
+    enabled: false,
     time: '20:00',
   },
   sleep: {
     enabled: false, // Désactivé par défaut, l'utilisateur doit l'activer
     bedtimeReminder: '22:30', // Rappel à 22h30 par défaut
     days: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
+  },
+  socialCards: {
+    enabled: false, // Désactivé par défaut - l'utilisateur choisit
+    weeklyTime: '10:00', // Dimanche matin
+    monthlyTime: '10:00', // 1er du mois
+  },
+  briefing: {
+    enabled: false, // Désactivé par défaut - l'utilisateur choisit
+    time: '07:30', // 7h30 du matin
+    days: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
+  },
+  smartReminders: {
+    enabled: false, // Désactivé par défaut - l'utilisateur choisit
+    missedTrainingAlert: false, // Alerte si jour habituel manqué
+    restDaySuggestion: false, // Suggérer repos
+    frequencyAlert: false, // Alerte fréquence en baisse
+    checkTime: '19:00', // Vérification à 19h
   },
 };
 
@@ -150,6 +186,61 @@ const SLEEP_MESSAGES = [
   { title: '💤 Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
   { title: '🛌 Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
 ];
+
+const WEEKLY_CARD_MESSAGES = [
+  { title: '📊 Ta semaine en image !', body: 'Ta carte hebdo est prête. Partage tes progrès sur les réseaux !' },
+  { title: '🏆 Bilan de la semaine', body: 'Montre ta progression ! Ta carte sociale t\'attend.' },
+  { title: '💪 Semaine terminée !', body: 'Partage ta carte de la semaine et inspire les autres !' },
+  { title: '🔥 Stats de la semaine', body: 'Ta carte est prête à être partagée. Fais voir tes résultats !' },
+];
+
+const MONTHLY_CARD_MESSAGES = [
+  { title: '📅 Nouveau mois, nouvelle carte !', body: 'Ta carte du mois est disponible. Partage ta progression !' },
+  { title: '🎯 Bilan mensuel', body: 'Un mois de plus dans ta transformation ! Partage ta carte.' },
+  { title: '⭐ Carte du mois prête !', body: 'Montre à tous tes progrès du mois dernier !' },
+  { title: '🥋 Résumé mensuel', body: 'Ta carte mensuelle t\'attend. Partage-la sur tes réseaux !' },
+];
+
+// Salutations selon l'heure
+const BRIEFING_GREETINGS = [
+  'Ohayo Sensei !',
+  'Bonjour Guerrier !',
+  'Salut Champion !',
+  'Réveil du Samouraï !',
+  'Hajime !',
+];
+
+// Messages motivants du matin
+const BRIEFING_MOTIVATIONS = [
+  'Chaque jour est une nouvelle victoire.',
+  'La discipline fait la différence.',
+  'Un pas de plus vers ton objectif.',
+  'Le tatami t\'attend.',
+  'Aujourd\'hui tu deviens plus fort.',
+  'Le chemin du guerrier continue.',
+  'Ta transformation se construit jour après jour.',
+];
+
+// Messages pour rappels intelligents
+const SMART_MISSED_TRAINING_MESSAGES = [
+  { title: '🤔 Jour d\'entraînement habituel', body: 'Tu t\'entraînes souvent le {day}. Pas de session aujourd\'hui ?' },
+  { title: '📅 C\'est {day} !', body: 'D\'habitude tu es sur le tatami ce jour-là. On y va ?' },
+  { title: '💪 {day} = Entraînement ?', body: 'Ton corps s\'attend à bouger. Ne le déçois pas !' },
+];
+
+const SMART_REST_SUGGESTION_MESSAGES = [
+  { title: '😴 Repos mérité ?', body: 'Tu t\'es entraîné {days} jours d\'affilée. Le repos fait partie du progrès !' },
+  { title: '🛌 Récupération', body: '{days} jours consécutifs d\'entraînement ! Pense à récupérer.' },
+  { title: '⚡ Recharge tes batteries', body: 'Après {days} jours, une pause peut booster tes performances.' },
+];
+
+const SMART_FREQUENCY_ALERT_MESSAGES = [
+  { title: '📉 Rythme en baisse', body: 'Tu faisais {usual} séances/semaine, seulement {current} cette semaine. Besoin de motivation ?' },
+  { title: '🔔 Rappel amical', body: 'Ta fréquence d\'entraînement a diminué. Tout va bien ?' },
+  { title: '💭 On en parle ?', body: 'Moins actif que d\'habitude. N\'oublie pas tes objectifs !' },
+];
+
+const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 
 // ============================================
 // CONFIGURATION
@@ -271,6 +362,15 @@ class NotificationService {
     }
     if (this.settings.sleep.enabled) {
       await this.scheduleSleepNotifications();
+    }
+    if (this.settings.socialCards?.enabled) {
+      await this.scheduleSocialCardsNotifications();
+    }
+    if (this.settings.briefing?.enabled) {
+      await this.scheduleBriefingNotifications();
+    }
+    if (this.settings.smartReminders?.enabled) {
+      await this.scheduleSmartRemindersCheck();
     }
 
     logger.info('Notifications programmées');
@@ -425,6 +525,348 @@ class NotificationService {
     }
   }
 
+  private async scheduleSocialCardsNotifications(): Promise<void> {
+    const { weeklyTime, monthlyTime } = this.settings.socialCards || { weeklyTime: '10:00', monthlyTime: '10:00' };
+
+    // Notification hebdomadaire (chaque dimanche)
+    const [weeklyHours, weeklyMinutes] = weeklyTime.split(':').map(Number);
+    const weeklyMessage = WEEKLY_CARD_MESSAGES[Math.floor(Math.random() * WEEKLY_CARD_MESSAGES.length)];
+
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: weeklyMessage.title,
+        body: weeklyMessage.body,
+        data: { type: 'social_card_weekly', screen: 'share-hub' },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday: 1, // Dimanche = 1 dans Expo
+        hour: weeklyHours,
+        minute: weeklyMinutes,
+      },
+    });
+
+    // Notification mensuelle (chaque 1er du mois)
+    // On programme pour les 12 prochains mois
+    const [monthlyHours, monthlyMinutes] = monthlyTime.split(':').map(Number);
+    const now = new Date();
+
+    for (let i = 0; i < 12; i++) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth() + i + 1, 1, monthlyHours, monthlyMinutes, 0);
+
+      // Si la date est dans le passé (pour le mois actuel), passer au suivant
+      if (targetDate <= now) continue;
+
+      const monthlyMessage = MONTHLY_CARD_MESSAGES[Math.floor(Math.random() * MONTHLY_CARD_MESSAGES.length)];
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: monthlyMessage.title,
+          body: monthlyMessage.body,
+          data: { type: 'social_card_monthly', screen: 'share-hub' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: targetDate,
+        } as Notifications.DateTriggerInput,
+      });
+    }
+  }
+
+  private async scheduleBriefingNotifications(): Promise<void> {
+    const { time, days } = this.settings.briefing || { time: '07:30', days: [0, 1, 2, 3, 4, 5, 6] };
+    const [hours, minutes] = time.split(':').map(Number);
+
+    for (const day of days) {
+      // Générer le contenu du briefing
+      const briefingContent = await this.generateBriefingContent();
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: briefingContent.title,
+          body: briefingContent.body,
+          data: { type: 'briefing', screen: 'home' },
+          sound: true,
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday: day === 0 ? 1 : day + 1, // Expo utilise 1-7 (dimanche = 1)
+          hour: hours,
+          minute: minutes,
+        },
+      });
+    }
+  }
+
+  /**
+   * Génère le contenu personnalisé du briefing matinal
+   */
+  private async generateBriefingContent(): Promise<{ title: string; body: string }> {
+    try {
+      // Récupérer les données utilisateur
+      const streak = await calculateStreak();
+      const latestWeight = await getLatestWeight();
+      const profile = await getProfile();
+      const weeklyPlan = await getWeeklyPlan();
+      const rank = getCurrentRank(streak);
+
+      // Jour actuel (0 = dimanche, 1 = lundi, etc.)
+      const today = new Date().getDay();
+      const todayPlan = weeklyPlan?.filter(p => p.day_of_week === today) || [];
+
+      // Salutation aléatoire
+      const greeting = BRIEFING_GREETINGS[Math.floor(Math.random() * BRIEFING_GREETINGS.length)];
+
+      // Construire le corps du message
+      const parts: string[] = [];
+
+      // Streak
+      if (streak > 0) {
+        parts.push(`🔥 ${streak}j streak`);
+      }
+
+      // Rang
+      if (rank) {
+        parts.push(`⚔️ ${rank.name}`);
+      }
+
+      // Poids et objectif
+      const currentWeight = latestWeight?.weight;
+      const targetWeight = profile?.target_weight;
+      if (currentWeight && targetWeight) {
+        const diff = Math.abs(currentWeight - targetWeight);
+        if (diff < 0.5) {
+          parts.push(`⚖️ Objectif atteint !`);
+        } else if (currentWeight > targetWeight) {
+          parts.push(`⚖️ -${diff.toFixed(1)}kg`);
+        } else {
+          parts.push(`⚖️ +${diff.toFixed(1)}kg`);
+        }
+      } else if (currentWeight) {
+        parts.push(`⚖️ ${currentWeight.toFixed(1)}kg`);
+      }
+
+      // Entraînements prévus aujourd'hui
+      if (todayPlan.length > 0) {
+        const sports = todayPlan.map(p => p.sport).join(', ');
+        parts.push(`📅 ${sports}`);
+      }
+
+      // Message motivant
+      const motivation = BRIEFING_MOTIVATIONS[Math.floor(Math.random() * BRIEFING_MOTIVATIONS.length)];
+
+      // Construire le body final
+      let body = parts.length > 0 ? parts.join(' • ') : motivation;
+      if (parts.length > 0) {
+        body += `\n${motivation}`;
+      }
+
+      return {
+        title: `☀️ ${greeting}`,
+        body,
+      };
+    } catch (error) {
+      logger.error('[NotificationService] Erreur génération briefing:', error);
+      // Fallback en cas d'erreur
+      const greeting = BRIEFING_GREETINGS[Math.floor(Math.random() * BRIEFING_GREETINGS.length)];
+      const motivation = BRIEFING_MOTIVATIONS[Math.floor(Math.random() * BRIEFING_MOTIVATIONS.length)];
+      return {
+        title: `☀️ ${greeting}`,
+        body: motivation,
+      };
+    }
+  }
+
+  /**
+   * Programme la vérification quotidienne des rappels intelligents
+   */
+  private async scheduleSmartRemindersCheck(): Promise<void> {
+    const { checkTime } = this.settings.smartReminders || { checkTime: '19:00' };
+    const [hours, minutes] = checkTime.split(':').map(Number);
+
+    // Programmer une vérification quotidienne
+    for (let day = 0; day < 7; day++) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '🧠 Vérification intelligente',
+          body: 'Analyse de tes habitudes...',
+          data: { type: 'smart_check', silent: true },
+          sound: false, // Silencieux - déclenchera une analyse
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday: day === 0 ? 1 : day + 1,
+          hour: hours,
+          minute: minutes,
+        },
+      });
+    }
+  }
+
+  /**
+   * Analyse les habitudes d'entraînement de l'utilisateur
+   */
+  async analyzeTrainingPatterns(): Promise<{
+    usualDays: number[]; // Jours habituels (0-6)
+    avgFrequency: number; // Séances par semaine en moyenne
+    consecutiveDays: number; // Jours consécutifs d'entraînement actuels
+    currentWeekCount: number; // Nombre de séances cette semaine
+    trainedToday: boolean; // S'est entraîné aujourd'hui
+  }> {
+    try {
+      const trainings = await getTrainings(60); // 60 derniers jours
+
+      if (!trainings || trainings.length === 0) {
+        return {
+          usualDays: [],
+          avgFrequency: 0,
+          consecutiveDays: 0,
+          currentWeekCount: 0,
+          trainedToday: false,
+        };
+      }
+
+      // Compter les entraînements par jour de la semaine
+      const dayCount: Record<number, number> = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      let trainedToday = false;
+
+      // Calculer le début de la semaine actuelle (lundi)
+      const startOfWeek = new Date(today);
+      const dayOfWeek = today.getDay();
+      const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Lundi = 0
+      startOfWeek.setDate(today.getDate() - diff);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      let currentWeekCount = 0;
+
+      for (const training of trainings) {
+        const trainingDate = new Date(training.date);
+        const dayOfWeek = trainingDate.getDay();
+        dayCount[dayOfWeek]++;
+
+        // Vérifier si entraînement aujourd'hui
+        if (training.date === todayStr) {
+          trainedToday = true;
+        }
+
+        // Compter les entraînements de la semaine en cours
+        if (trainingDate >= startOfWeek) {
+          currentWeekCount++;
+        }
+      }
+
+      // Déterminer les jours habituels (plus de 30% des semaines)
+      const weeksAnalyzed = 60 / 7;
+      const threshold = weeksAnalyzed * 0.3; // 30% des semaines
+      const usualDays = Object.entries(dayCount)
+        .filter(([, count]) => count >= threshold)
+        .map(([day]) => parseInt(day))
+        .sort((a, b) => a - b);
+
+      // Calculer la fréquence moyenne
+      const totalTrainings = trainings.length;
+      const avgFrequency = Math.round((totalTrainings / 60) * 7 * 10) / 10; // Arrondi à 1 décimale
+
+      // Calculer les jours consécutifs d'entraînement
+      let consecutiveDays = 0;
+      const sortedDates = [...new Set(trainings.map(t => t.date))].sort().reverse();
+
+      for (let i = 0; i < sortedDates.length; i++) {
+        const expectedDate = new Date(today);
+        expectedDate.setDate(today.getDate() - i);
+        const expectedStr = expectedDate.toISOString().split('T')[0];
+
+        if (sortedDates.includes(expectedStr)) {
+          consecutiveDays++;
+        } else {
+          break;
+        }
+      }
+
+      return {
+        usualDays,
+        avgFrequency,
+        consecutiveDays,
+        currentWeekCount,
+        trainedToday,
+      };
+    } catch (error) {
+      logger.error('[NotificationService] Erreur analyse patterns:', error);
+      return {
+        usualDays: [],
+        avgFrequency: 0,
+        consecutiveDays: 0,
+        currentWeekCount: 0,
+        trainedToday: false,
+      };
+    }
+  }
+
+  /**
+   * Vérifie et envoie les rappels intelligents appropriés
+   */
+  async checkAndSendSmartReminders(): Promise<void> {
+    if (!this.settings.smartReminders?.enabled) return;
+
+    try {
+      const patterns = await this.analyzeTrainingPatterns();
+      const today = new Date().getDay();
+      const { missedTrainingAlert, restDaySuggestion, frequencyAlert } = this.settings.smartReminders;
+
+      // 1. Alerte jour habituel manqué
+      if (missedTrainingAlert && patterns.usualDays.includes(today) && !patterns.trainedToday) {
+        const message = SMART_MISSED_TRAINING_MESSAGES[
+          Math.floor(Math.random() * SMART_MISSED_TRAINING_MESSAGES.length)
+        ];
+        const dayName = DAY_NAMES[today];
+        await this.sendInstantNotification(
+          message.title.replace('{day}', dayName),
+          message.body.replace('{day}', dayName),
+          { type: 'smart_missed', screen: 'add-training' }
+        );
+        return; // Une seule notification par jour
+      }
+
+      // 2. Suggestion de repos (après 4+ jours consécutifs)
+      if (restDaySuggestion && patterns.consecutiveDays >= 4) {
+        const message = SMART_REST_SUGGESTION_MESSAGES[
+          Math.floor(Math.random() * SMART_REST_SUGGESTION_MESSAGES.length)
+        ];
+        await this.sendInstantNotification(
+          message.title.replace('{days}', patterns.consecutiveDays.toString()),
+          message.body.replace('{days}', patterns.consecutiveDays.toString()),
+          { type: 'smart_rest' }
+        );
+        return;
+      }
+
+      // 3. Alerte fréquence en baisse (dimanche soir uniquement)
+      if (frequencyAlert && today === 0 && patterns.avgFrequency > 0) {
+        const expectedThisWeek = Math.round(patterns.avgFrequency);
+        if (patterns.currentWeekCount < expectedThisWeek - 1) {
+          const message = SMART_FREQUENCY_ALERT_MESSAGES[
+            Math.floor(Math.random() * SMART_FREQUENCY_ALERT_MESSAGES.length)
+          ];
+          await this.sendInstantNotification(
+            message.title
+              .replace('{usual}', expectedThisWeek.toString())
+              .replace('{current}', patterns.currentWeekCount.toString()),
+            message.body
+              .replace('{usual}', expectedThisWeek.toString())
+              .replace('{current}', patterns.currentWeekCount.toString()),
+            { type: 'smart_frequency' }
+          );
+        }
+      }
+    } catch (error) {
+      logger.error('[NotificationService] Erreur rappels intelligents:', error);
+    }
+  }
+
   // ============================================
   // NOTIFICATIONS INSTANTANÉES
   // ============================================
@@ -461,6 +903,59 @@ class NotificationService {
 
   async sendCongratulation(message: string): Promise<void> {
     await this.sendInstantNotification('🎉 Félicitations !', message, { type: 'achievement' });
+  }
+
+  async sendWeeklyCardReminder(): Promise<void> {
+    const message = WEEKLY_CARD_MESSAGES[Math.floor(Math.random() * WEEKLY_CARD_MESSAGES.length)];
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_weekly', screen: 'share-hub' });
+  }
+
+  async sendMonthlyCardReminder(): Promise<void> {
+    const message = MONTHLY_CARD_MESSAGES[Math.floor(Math.random() * MONTHLY_CARD_MESSAGES.length)];
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_monthly', screen: 'share-hub' });
+  }
+
+  async sendBriefing(): Promise<void> {
+    const content = await this.generateBriefingContent();
+    await this.sendInstantNotification(content.title, content.body, { type: 'briefing', screen: 'home' });
+  }
+
+  async sendSmartReminderTest(): Promise<{ type: string; message: string }> {
+    const patterns = await this.analyzeTrainingPatterns();
+    const today = new Date().getDay();
+    const dayName = DAY_NAMES[today];
+
+    // Générer un message de test basé sur les vraies données
+    let testType = '';
+    let testMessage = '';
+
+    if (patterns.usualDays.length > 0) {
+      const usualDayNames = patterns.usualDays.map(d => DAY_NAMES[d]).join(', ');
+      testMessage = `Jours habituels: ${usualDayNames}`;
+      testType = 'patterns';
+    }
+
+    if (patterns.consecutiveDays >= 3) {
+      testMessage += `\n${patterns.consecutiveDays} jours d'entraînement consécutifs`;
+      testType = 'rest';
+    }
+
+    if (patterns.avgFrequency > 0) {
+      testMessage += `\nMoyenne: ${patterns.avgFrequency} séances/sem`;
+      testMessage += `\nCette semaine: ${patterns.currentWeekCount} séance(s)`;
+    }
+
+    if (!testMessage) {
+      testMessage = 'Pas assez de données pour analyser tes habitudes. Continue à t\'entraîner !';
+    }
+
+    await this.sendInstantNotification(
+      '🧠 Analyse de tes habitudes',
+      testMessage,
+      { type: 'smart_test' }
+    );
+
+    return { type: testType, message: testMessage };
   }
 
   // ============================================

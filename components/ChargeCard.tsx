@@ -4,8 +4,8 @@ import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Activity } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
-const CIRCLE_SIZE = 90;
-const CIRCLE_RADIUS = CIRCLE_SIZE / 2 - 8;
+const CIRCLE_SIZE = 100;
+const CIRCLE_RADIUS = CIRCLE_SIZE / 2 - 7;
 const CIRCLE_CENTER = CIRCLE_SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
 
@@ -122,13 +122,13 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
   const getRiskText = () => {
     switch (riskLevel) {
       case 'safe':
-        return 'Léger';
+        return 'Récupération';
       case 'moderate':
-        return 'Modéré';
+        return 'Équilibré';
       case 'high':
-        return 'Élevé';
+        return 'Intense';
       case 'danger':
-        return 'Danger';
+        return 'Très intense';
       default:
         return 'Normal';
     }
@@ -168,7 +168,7 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
             r={CIRCLE_RADIUS}
             fill="none"
             stroke={`${start}20`}
-            strokeWidth="6"
+            strokeWidth="5"
           />
 
           {/* Cercle de progression animé */}
@@ -178,7 +178,7 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
             r={CIRCLE_RADIUS}
             fill="none"
             stroke="url(#chargeGradient)"
-            strokeWidth="6"
+            strokeWidth="5"
             strokeDasharray={CIRCUMFERENCE}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
@@ -203,7 +203,10 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
           {riskText}
         </Text>
         <Text style={[styles.explanation, { color: colors.textMuted }]}>
-          Charge d'entraînement
+          Charge hebdomadaire
+        </Text>
+        <Text style={[styles.subExplanation, { color: colors.textMuted }]}>
+          Mesure ton intensité d'entraînement
         </Text>
       </View>
     </View>
@@ -213,8 +216,8 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     height: '100%',
     justifyContent: 'space-between',
   },
@@ -250,8 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   value: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '900',
+    letterSpacing: -1,
   },
   label: {
     fontSize: 9,
@@ -260,15 +264,20 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
   level: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
   explanation: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600',
+  },
+  subExplanation: {
+    fontSize: 8,
+    fontWeight: '500',
+    marginTop: 1,
   },
 });
 

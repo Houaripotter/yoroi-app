@@ -31,11 +31,12 @@ export interface AvatarConfig {
 }
 
 /**
- * Sélection stockée dans AsyncStorage (sans level)
+ * Sélection stockée dans AsyncStorage (avec level optionnel)
  */
 export interface AvatarSelection {
   pack: AvatarPack;
   gender: AvatarGender;
+  selectedLevel?: AvatarLevel; // Niveau choisi par l'utilisateur (si différent du niveau max)
 }
 
 /**
@@ -228,7 +229,7 @@ export function getAvatarImage(
 // ============================================================================
 
 /**
- * Récupère la sélection stockée (pack + genre)
+ * Récupère la sélection stockée (pack + genre + niveau optionnel)
  */
 async function getStoredSelection(): Promise<AvatarSelection> {
   try {
@@ -238,7 +239,22 @@ async function getStoredSelection(): Promise<AvatarSelection> {
       return {
         pack: parsed.pack || DEFAULT_AVATAR.pack,
         gender: parsed.gender || DEFAULT_AVATAR.gender,
+        selectedLevel: parsed.selectedLevel, // Peut être undefined
       };
+    }
+
+    // Si pas de sélection stockée, définir l'avatar par défaut selon le genre de l'utilisateur
+    try {
+      const { getUserSettings } = await import('./storage');
+      const settings = await getUserSettings();
+      const userGender = settings.gender || 'male';
+
+      return {
+        pack: userGender === 'female' ? 'ninja' : 'samurai',
+        gender: userGender === 'female' ? 'female' : 'male',
+      };
+    } catch (err) {
+      logger.warn('[AvatarSystem] Impossible de récupérer le genre utilisateur:', err);
     }
   } catch (error) {
     logger.error('[AvatarSystem] Erreur lecture storage:', error);
@@ -247,7 +263,7 @@ async function getStoredSelection(): Promise<AvatarSelection> {
 }
 
 /**
- * Sauvegarde la sélection (pack + genre)
+ * Sauvegarde la sélection (pack + genre + niveau optionnel)
  */
 async function saveSelection(selection: AvatarSelection): Promise<void> {
   try {
@@ -268,16 +284,20 @@ async function saveSelection(selection: AvatarSelection): Promise<void> {
  */
 export async function getUnlockedLevel(): Promise<AvatarLevel> {
   try {
-    // MODE CRÉATEUR : Tous les avatars débloqués
-    return 9;
+    // Vérifier si le mode screenshot est activé
+    const screenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
+    if (screenshotMode === 'true') {
+      // Mode screenshot : afficher niveau max pour les captures App Store
+      return 9;
+    }
 
-    // Code normal (commenté temporairement) :
-    // const streak = await calculateStreak();
-    // const currentRank = getCurrentRank(streak);
-    // return rankToLevel(currentRank);
+    // Calcul normal basé sur le streak réel
+    const streak = await calculateStreak();
+    const currentRank = getCurrentRank(streak);
+    return rankToLevel(currentRank);
   } catch (error) {
     logger.error('[AvatarSystem] Erreur getUnlockedLevel:', error);
-    return 9; // MODE CRÉATEUR: niveau max
+    return 1; // En cas d'erreur, niveau Recrue par défaut
   }
 }
 
@@ -299,11 +319,18 @@ export async function isAvatarUnlocked(
 
 /**
  * Obtient la configuration complète de l'avatar actuel
- * @returns Configuration avec pack, genre et niveau auto-calculé
+ * @returns Configuration avec pack, genre et niveau (choisi par l'utilisateur ou max débloqué)
  */
 export async function getAvatarConfig(): Promise<AvatarConfig> {
   const selection = await getStoredSelection();
-  const level = await getUnlockedLevel();
+  const unlockedLevel = await getUnlockedLevel();
+
+  // Utiliser le niveau choisi par l'utilisateur s'il est valide (débloqué)
+  // Sinon, utiliser le niveau maximum débloqué
+  let level = unlockedLevel;
+  if (selection.selectedLevel && selection.selectedLevel <= unlockedLevel) {
+    level = selection.selectedLevel;
+  }
 
   return {
     pack: selection.pack,
@@ -355,16 +382,50 @@ export async function setAvatarGender(gender: AvatarGender): Promise<void> {
 }
 
 /**
- * Change le pack ET le genre de l'avatar
+ * Change le pack ET le genre de l'avatar (sans changer le niveau)
  */
 export async function setAvatarConfig(pack: AvatarPack, gender: AvatarGender): Promise<boolean> {
   try {
-    await saveSelection({ pack, gender });
+    const currentSelection = await getStoredSelection();
+    await saveSelection({ pack, gender, selectedLevel: currentSelection.selectedLevel });
     return true;
   } catch (error) {
     logger.error('[AvatarSystem] Erreur setAvatarConfig:', error);
     return false;
   }
+}
+
+/**
+ * Change le pack, le genre ET le niveau de l'avatar
+ * Le niveau doit être débloqué (sinon il sera ignoré)
+ */
+export async function setFullAvatarConfig(
+  pack: AvatarPack,
+  gender: AvatarGender,
+  level: AvatarLevel
+): Promise<boolean> {
+  try {
+    // Vérifier que le niveau est débloqué
+    const unlockedLevel = await getUnlockedLevel();
+    if (level > unlockedLevel) {
+      logger.warn(`[AvatarSystem] Niveau ${level} non débloqué, max: ${unlockedLevel}`);
+      return false;
+    }
+
+    await saveSelection({ pack, gender, selectedLevel: level });
+    return true;
+  } catch (error) {
+    logger.error('[AvatarSystem] Erreur setFullAvatarConfig:', error);
+    return false;
+  }
+}
+
+/**
+ * Obtient le niveau actuellement sélectionné (ou undefined si aucun)
+ */
+export async function getSelectedLevel(): Promise<AvatarLevel | undefined> {
+  const selection = await getStoredSelection();
+  return selection.selectedLevel;
 }
 
 /**

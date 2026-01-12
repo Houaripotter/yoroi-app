@@ -178,7 +178,7 @@ export const initDatabase = async () => {
   `);
 
   // ============================================
-  // TABLES YOROI MEDIC - INFIRMERIE
+  // TABLES YOROI MEDIC - SUIVI BLESSURES
   // ============================================
 
   // Table Blessures
@@ -448,7 +448,7 @@ export interface Photo {
 }
 
 // ============================================
-// TYPES YOROI MEDIC - INFIRMERIE
+// TYPES YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
 export interface Injury {
@@ -882,7 +882,7 @@ export const isAchievementUnlocked = async (id: string): Promise<boolean> => {
 };
 
 // ============================================
-// FONCTIONS CRUD - YOROI MEDIC INFIRMERIE
+// FONCTIONS CRUD - YOROI MEDIC SUIVI BLESSURES
 // ============================================
 
 // ---------- BLESSURES ----------
@@ -1061,7 +1061,7 @@ export const deleteReminder = async (id: number): Promise<void> => {
   await database.runAsync('DELETE FROM treatment_reminders WHERE id = ?', [id]);
 };
 
-// ---------- STATISTIQUES INFIRMERIE ----------
+// ---------- STATISTIQUES BLESSURES ----------
 
 export const getInjuryStats = async (): Promise<{
   totalInjuries: number;

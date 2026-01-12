@@ -56,6 +56,7 @@ import {
   Clock,
   BookOpen,
   Plus,
+  Award,
   Calendar,
   Share2,
   List,
@@ -85,6 +86,7 @@ import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { HydrationCard2 } from '@/components/cards/HydrationCard2';
 import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
+import { WeightFullCard } from '@/components/cards/WeightFullCard';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
 import { ChargeLottieCard } from '@/components/cards/ChargeLottieCard';
 import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircle';
@@ -101,6 +103,7 @@ import CompactObjectiveSwitch from '@/components/home/CompactObjectiveSwitch';
 import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeightCard';
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
 import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
+import { HomeTabView } from '@/components/home/HomeTabView';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -137,6 +140,9 @@ export default function HomeScreen() {
 
   // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
+
+  // État "Voir plus" pour mode Complet
+  const [showMoreSections, setShowMoreSections] = useState(false);
 
   // États de base
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -381,7 +387,7 @@ export default function HomeScreen() {
         const readiness = await calculateReadinessScore(streakDays);
         setReadinessScore(Math.round(readiness.score));
       } catch {
-        setReadinessScore(50);
+        setReadinessScore(0);
       }
     } catch (error) {
       logger.error('Erreur:', error);
@@ -435,7 +441,7 @@ export default function HomeScreen() {
 
   // Calcul Batterie Athlète
   const calculateBatteryPercent = () => {
-    let score = 50;
+    let score = 15; // Base minimum pour un nouvel utilisateur
     score += Math.min(streak * 2, 20);
     score += (hydration / hydrationGoal) * 15;
     if (sleepStats && sleepStats.averageDuration >= 420) score += 15;
@@ -698,26 +704,17 @@ export default function HomeScreen() {
 
       case 'weight_hydration':
         return (
-          <View style={styles.gridLottieContainer} key={sectionId}>
-            <View style={styles.gridLottieRow}>
-              <WeightLottieCard
-                weight={currentWeight || 0}
-                target={targetWeight || undefined}
-                trend={trend}
-                history={last7Weights.map(w => w.weight)}
-                fatPercent={latestWeight?.fat_percent}
-                musclePercent={latestWeight?.muscle_percent}
-                waterPercent={latestWeight?.water_percent}
-                onPress={() => {
-                  router.push('/(tabs)/stats?tab=poids');
-                }}
-              />
-              <HydrationCard2
-                currentMl={hydration}
-                goalMl={hydrationGoal}
-                onAddMl={(amountMl) => addWater(amountMl)}
-              />
-            </View>
+          <View key={sectionId} style={{ marginBottom: 20 }}>
+            {/* Poids - Full Width Premium */}
+            <WeightFullCard
+              currentWeight={currentWeight || 0}
+              targetWeight={targetWeight ?? undefined}
+              startWeight={weightHistory[0]?.weight ?? undefined}
+              history={last7Weights.map(w => w.weight)}
+              onPress={() => {
+                router.push('/(tabs)/stats?tab=poids');
+              }}
+            />
           </View>
         );
 
@@ -726,32 +723,83 @@ export default function HomeScreen() {
 
       case 'sleep_charge':
         return (
-          <View style={styles.gridLottieRow} key={sectionId}>
-            <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9}>
-              <SleepLottieCard
-                hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
-                quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
-                debt={sleepStats?.sleepDebtHours || 0}
-                goal={sleepGoal / 60}
-              />
+          <View style={styles.gridLottieContainer} key={sectionId}>
+            {/* 3 cartes compactes : Hydratation | Sommeil | Charge */}
+            <View style={styles.threeCardsRow}>
+              <View style={styles.compactCard}>
+                <HydrationCard2
+                  currentMl={hydration}
+                  goalMl={hydrationGoal}
+                  onAddMl={(amountMl) => addWater(amountMl)}
+                />
+              </View>
+              <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9} style={styles.compactCard}>
+                <SleepLottieCard
+                  hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+                  quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
+                  debt={sleepStats?.sleepDebtHours || 0}
+                  goal={sleepGoal / 60}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9} style={styles.compactCard}>
+                <ChargeLottieCard
+                  level={loadStats?.riskLevel || 'optimal'}
+                  totalLoad={loadStats?.totalLoad || 0}
+                  maxLoad={2000}
+                  sessions={(() => {
+                    // Compter les jours uniques avec au moins une séance (pas le total de séances)
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    const uniqueDays = new Set(
+                      trainings
+                        .filter(t => new Date(t.date) >= weekAgo)
+                        .map(t => t.date.split('T')[0]) // Extraire juste la date (YYYY-MM-DD)
+                    );
+                    return uniqueDays.size;
+                  })()}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+
+      case 'quick_tools':
+        return (
+          <View style={styles.quickToolsContainer} key={sectionId}>
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/training-journal');
+              }}
+              activeOpacity={0.8}
+            >
+              <BookOpen size={20} color="#F97316" strokeWidth={2} />
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Carnet</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9}>
-              <ChargeLottieCard
-                level={loadStats?.riskLevel || 'optimal'}
-                totalLoad={loadStats?.totalLoad || 0}
-                maxLoad={2000}
-                sessions={(() => {
-                  // Compter les jours uniques avec au moins une séance (pas le total de séances)
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  const uniqueDays = new Set(
-                    trainings
-                      .filter(t => new Date(t.date) >= weekAgo)
-                      .map(t => t.date.split('T')[0]) // Extraire juste la date (YYYY-MM-DD)
-                  );
-                  return uniqueDays.size;
-                })()}
-              />
+
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/infirmary');
+              }}
+              activeOpacity={0.8}
+            >
+              <Plus size={20} color="#EF4444" strokeWidth={2} />
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Blessures</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/challenges');
+              }}
+              activeOpacity={0.8}
+            >
+              <Award size={20} color="#8B5CF6" strokeWidth={2} />
+              <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Objectifs</Text>
             </TouchableOpacity>
           </View>
         );
@@ -1180,93 +1228,65 @@ export default function HomeScreen() {
     }
   }, [colors, profile, dailyQuote, mode, hydration, sleepStats, bodyComposition, batteryFillPercent, isSectionVisible]);
 
+  // Défis du jour formatés
+  const formattedChallenges = useMemo(() => {
+    return dailyChallenges.map(challenge => ({
+      id: challenge.id,
+      title: challenge.title,
+      completed: challenge.progress.completed,
+    }));
+  }, [dailyChallenges]);
+
+  // Workload status
+  const workloadStatus = useMemo<'light' | 'moderate' | 'intense'>(() => {
+    if (!loadStats) return 'moderate';
+    const totalLoad = loadStats.totalLoad;
+    if (totalLoad < 1500) return 'light';
+    if (totalLoad > 2500) return 'intense';
+    return 'moderate';
+  }, [loadStats]);
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <MotivationPopup />
-      
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* MODE COMPLET - Contenu complet actuel */}
-        {mode === 'complet' && (
-          <>
-            {/* === RENDU DYNAMIQUE DES SECTIONS SELON L'ORDRE PERSONNALISÉ === */}
-            {sortedSections.map(section => renderDynamicSection(section.id))}
 
-            {/* Bouton personnaliser l'accueil */}
-            <TouchableOpacity
-              style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/customize-home');
-              }}
-              activeOpacity={0.7}
-            >
-              <Palette size={20} color={colors.accent} strokeWidth={2} />
-              <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
-                Personnaliser l'Accueil
-              </Text>
-              <ChevronRight size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <View style={{ height: 120 }} />
-          </>
-        )}
-
-        {/* MODE ESSENTIEL - Vue simplifiée */}
-        {mode === 'essentiel' && (
-          <>
-            <HomeEssentielContent
-              userName={profile?.name}
-              viewMode={mode}
-              onToggleMode={toggleMode}
-              profile={profile}
-              currentWeight={currentWeight ?? undefined}
-              targetWeight={targetWeight ?? undefined}
-              weightHistory={weightHistory.map(w => w.weight)}
-              weightTrend={trend}
-              hydration={hydration}
-              hydrationGoal={hydrationGoal}
-              onAddWater={(ml) => addWater(ml)}
-              sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
-              sleepDebt={sleepStats?.sleepDebtHours || 0}
-              sleepGoal={sleepGoal / 60}
-              steps={steps}
-              stepsGoal={stepsGoal}
-              calories={0}
-              caloriesGoal={0}
-              weekWeightChange={
-                weightHistory.length >= 7
-                  ? (weightHistory[0]?.weight || 0) - (weightHistory[6]?.weight || 0)
-                  : 0
-              }
-              weekHydrationRate={0}
-              weekAvgSleep={sleepStats?.averageDuration ? sleepStats.averageDuration / 60 : 0}
-            />
-
-            {/* Bouton personnaliser l'accueil */}
-            <TouchableOpacity
-              style={[styles.customizeButton, { backgroundColor: colors.backgroundElevated, borderColor: colors.border }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/customize-home');
-              }}
-              activeOpacity={0.7}
-            >
-              <Palette size={20} color={colors.accent} strokeWidth={2} />
-              <Text style={[styles.customizeButtonText, { color: colors.textPrimary }]}>
-                Personnaliser l'Accueil
-              </Text>
-              <ChevronRight size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <View style={{ height: 120 }} />
-          </>
-        )}
-
-            </ScrollView>
+      <HomeTabView
+        userName={profile?.name}
+        profilePhoto={profile?.profile_photo}
+        dailyQuote={dailyQuote?.text}
+        steps={steps}
+        streak={streak}
+        level={level.level}
+        rankName={rank?.name}
+        rankColor={rank?.color}
+        currentWeight={currentWeight ?? undefined}
+        targetWeight={targetWeight ?? undefined}
+        startWeight={startWeight ?? undefined}
+        weightHistory={weightHistory.map(w => w.weight)}
+        weightTrend={trend as 'up' | 'down' | 'stable'}
+        hydration={hydration}
+        hydrationGoal={hydrationGoal}
+        sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
+        sleepDebt={sleepStats?.sleepDebtHours || 0}
+        sleepGoal={sleepGoal / 60}
+        workloadStatus={workloadStatus}
+        dailyChallenges={formattedChallenges}
+        stepsGoal={stepsGoal}
+        calories={0}
+        bodyFat={bodyComposition?.bodyFat}
+        muscleMass={bodyComposition?.muscleMass}
+        waterPercentage={bodyComposition?.waterPercentage}
+        weeklyReport={weeklyReport ? {
+          weightChange: weeklyReport.weightChange,
+          trainingsCount: weeklyReport.trainingsCount,
+          avgSleepHours: weeklyReport.avgSleepHours,
+          hydrationRate: weeklyReport.hydrationRate,
+          totalSteps: weeklyReport.totalSteps,
+        } : undefined}
+        onAddWeight={() => router.push('/(tabs)/add')}
+        onAddWater={(ml) => addWater(ml)}
+        onShareReport={shareReport}
+      />
 
       <RanksModal visible={ranksModalVisible} onClose={() => setRanksModalVisible(false)} currentStreak={streak} />
       <LogoViewer visible={logoViewerVisible} onClose={() => setLogoViewerVisible(false)} />
@@ -1662,9 +1682,43 @@ const styles = StyleSheet.create({
   gridRow: { flexDirection: 'row', gap: 12 },
   squareCard: { flex: 1, aspectRatio: 1, borderRadius: 14, overflow: 'hidden' },
 
-  // Grid Lottie - Layout simplifié pour cartes uniformes
-  gridLottieContainer: { marginBottom: 8, paddingHorizontal: 8 },
-  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
+  // Grid Lottie - Layout simplifié pour cartes uniformes avec PLUS D'AIR
+  gridLottieContainer: { marginBottom: 20, paddingHorizontal: 8 },
+  gridLottieRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+
+  // Layout 3 cartes compactes
+  threeCardsRow: { flexDirection: 'row', gap: 6, marginBottom: 8, paddingHorizontal: 16 },
+  compactCard: {
+    flex: 1,
+    height: 120, // HAUTEUR FIXE
+    overflow: 'hidden',
+  },
+
+  // Quick Tools (3 boutons) - ULTRA COMPACTS
+  quickToolsContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  quickToolButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 8,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  quickToolText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
   gridCard: { flex: 1, padding: 16, borderRadius: 14, minHeight: 180, overflow: 'hidden' },
   gridCardLarge: { flex: 1, padding: 16, borderRadius: 14, minHeight: 160 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
@@ -1979,6 +2033,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     marginLeft: 12,
+  },
+
+  // Bouton Voir plus
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    marginHorizontal: 16,
+    gap: 8,
+  },
+  showMoreButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
 
   // Competition Toggle - État actif (avec compétition)

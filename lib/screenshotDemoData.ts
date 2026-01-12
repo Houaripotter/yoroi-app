@@ -629,7 +629,7 @@ const generateUnlockedBadges = () => {
 };
 
 // ============================================
-// GÉNÉRATION DES BLESSURES/INFIRMERIE
+// GÉNÉRATION DES BLESSURES
 // ============================================
 const generateInjuries = () => {
   return [
@@ -676,17 +676,19 @@ const generateTrainingLoads = () => {
   const loads: any[] = [];
   const days = 14; // 2 semaines de données
 
-  // Pattern de variation pour un graphique intéressant
-  // Lun/Mar/Jeu/Ven = entraînement, Mer/Dim = repos, Sam = léger
+  // Pattern équilibré pour charge hebdomadaire ~2000-2200 (niveau "Modéré" - vert)
+  // Formule: charge = RPE x durée
+  // Objectif semaine: 5 séances x ~400 = 2000 points
   const weekPattern = [
-    { hasTraining: true, rpe: 7, duration: 90 },   // Lun - JJB intense
-    { hasTraining: true, rpe: 8, duration: 75 },   // Mar - MMA dur
+    { hasTraining: true, rpe: 7, duration: 60 },   // Lun - JJB (420)
+    { hasTraining: true, rpe: 7, duration: 55 },   // Mar - MMA (385)
     { hasTraining: false, rpe: 0, duration: 0 },   // Mer - REPOS
-    { hasTraining: true, rpe: 6, duration: 60 },   // Jeu - Muscu modéré
-    { hasTraining: true, rpe: 7, duration: 90 },   // Ven - Grappling
-    { hasTraining: true, rpe: 5, duration: 120 },  // Sam - Open Mat léger
+    { hasTraining: true, rpe: 6, duration: 50 },   // Jeu - Muscu (300)
+    { hasTraining: true, rpe: 7, duration: 60 },   // Ven - Grappling (420)
+    { hasTraining: true, rpe: 5, duration: 60 },   // Sam - Open Mat (300)
     { hasTraining: false, rpe: 0, duration: 0 },   // Dim - REPOS
   ];
+  // Total semaine: 420+385+300+420+300 = 1825 (~safe/modéré)
 
   for (let i = days - 1; i >= 0; i--) {
     const date = subDays(new Date(), i);
@@ -697,12 +699,12 @@ const generateTrainingLoads = () => {
     const pattern = weekPattern[patternIndex];
 
     if (pattern.hasTraining) {
-      // Ajouter une variation aléatoire pour rendre le graphique plus vivant
-      const rpeVariation = Math.random() * 2 - 1; // -1 à +1
-      const durationVariation = Math.random() * 20 - 10; // -10 à +10 min
+      // Légère variation pour rendre le graphique naturel
+      const rpeVariation = Math.round(Math.random() * 1 - 0.5); // -0.5 à +0.5
+      const durationVariation = Math.round(Math.random() * 10 - 5); // -5 à +5 min
 
-      const rpe = Math.max(1, Math.min(10, Math.round(pattern.rpe + rpeVariation)));
-      const duration = Math.max(30, Math.round(pattern.duration + durationVariation));
+      const rpe = Math.max(1, Math.min(10, pattern.rpe + rpeVariation));
+      const duration = Math.max(30, pattern.duration + durationVariation);
       const load = duration * rpe;
 
       loads.push({
@@ -717,21 +719,6 @@ const generateTrainingLoads = () => {
         mode: 'combat',
       });
 
-      // Certains jours ont 2 séances (Lun, Mar, Jeu, Ven)
-      if ([0, 1, 3, 4].includes(patternIndex) && Math.random() > 0.3) {
-        const secondRpe = Math.max(1, Math.min(10, Math.round(6 + Math.random() * 2)));
-        const secondDuration = Math.round(60 + Math.random() * 30);
-
-        loads.push({
-          trainingId: 2000 + (days - i),
-          date: format(date, 'yyyy-MM-dd'),
-          duration: secondDuration,
-          rpe: secondRpe,
-          load: secondDuration * secondRpe,
-          sport: patternIndex % 2 === 0 ? 'musculation' : 'grappling',
-          mode: 'musculation',
-        });
-      }
     }
   }
 
@@ -858,18 +845,23 @@ const generatePhotos = async (): Promise<void> => {
 const generateCompetitions = async (): Promise<void> => {
   const database = await openDatabase();
 
+  // S'assurer que la colonne type_evenement existe
+  try {
+    await database.execAsync(`ALTER TABLE competitions ADD COLUMN type_evenement TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Compétition 1 : Open de JJB dans 15 jours
   const comp1Date = format(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
   await database.runAsync(
-    `INSERT INTO competitions (nom, date, lieu, type_evenement, sport, categorie_poids, statut, lien_inscription) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ['Open de Marseille JJB', comp1Date, 'Marseille', 'Compétition', 'jjb', '-77kg', 'a_venir', 'https://smoothcomp.com']
+    `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, statut, lien_inscription) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ['Open de Marseille JJB', comp1Date, 'Marseille', 'jjb', '-77kg', 'a_venir', 'https://smoothcomp.com']
   );
 
   // Compétition 2 : HYROX dans 45 jours
   const comp2Date = format(new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
   await database.runAsync(
-    `INSERT INTO competitions (nom, date, lieu, type_evenement, sport, categorie_poids, statut, lien_inscription) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ['HYROX Paris', comp2Date, 'Paris', 'Compétition', 'autre', 'Open', 'a_venir', 'https://hyroxfrance.com']
+    `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, statut, lien_inscription) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ['HYROX Paris', comp2Date, 'Paris', 'autre', 'Open', 'a_venir', 'https://hyroxfrance.com']
   );
 
   logger.info('✅ 2 compétitions à venir ajoutées');
@@ -880,6 +872,38 @@ const generateCompetitions = async (): Promise<void> => {
 // ============================================
 const generateTodayData = async (): Promise<void> => {
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // ============================================
+  // OBJECTIF DE POIDS - Bien visible pour screenshots
+  // ============================================
+  // Poids départ: 85kg → Objectif: 77kg → Actuel: 78.2kg
+  // Perdu: 6.8kg | Reste: 1.2kg
+  await AsyncStorage.setItem('@yoroi_start_weight', '85.0');
+  await AsyncStorage.setItem('@yoroi_target_weight', '77.0');
+  await AsyncStorage.setItem('@yoroi_current_weight', '78.2');
+  // Poids perdu calculé: 85 - 78.2 = 6.8kg
+  await AsyncStorage.setItem('@yoroi_weight_lost', '6.8');
+  // Reste à perdre: 78.2 - 77 = 1.2kg
+  await AsyncStorage.setItem('@yoroi_weight_remaining', '1.2');
+  // Progression: (6.8 / 8) * 100 = 85%
+  await AsyncStorage.setItem('@yoroi_weight_progress', '85');
+
+  // ============================================
+  // PAS QUOTIDIENS - 7329 pas
+  // ============================================
+  await AsyncStorage.setItem('@yoroi_steps_today', '7329');
+  await AsyncStorage.setItem('@yoroi_steps_goal', '8000');
+  // Historique des pas sur 7 jours
+  const stepsHistory = [
+    { date: format(subDays(new Date(), 6), 'yyyy-MM-dd'), steps: 6842 },
+    { date: format(subDays(new Date(), 5), 'yyyy-MM-dd'), steps: 8156 },
+    { date: format(subDays(new Date(), 4), 'yyyy-MM-dd'), steps: 7523 },
+    { date: format(subDays(new Date(), 3), 'yyyy-MM-dd'), steps: 9012 },
+    { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), steps: 5634 },
+    { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), steps: 8245 },
+    { date: today, steps: 7329 },
+  ];
+  await AsyncStorage.setItem('@yoroi_steps_history', JSON.stringify(stepsHistory));
 
   // Hydratation d'aujourd'hui : 2.8L / 3L
   await AsyncStorage.setItem(`hydration_${today}`, '2800');
@@ -1027,6 +1051,112 @@ const generateCarnetData = async (): Promise<number> => {
     logger.info('   ✅ Semi-Marathon: 1h45');
   }
 
+  // ============================================
+  // NOUVEAUX BENCHMARKS MUSCULATION
+  // ============================================
+
+  // 5. SOULEVÉ DE TERRE - 140kg x 3 reps (PR!)
+  const deadlift = await createBenchmark(
+    'Soulevé de Terre',
+    'force' as BenchmarkCategory,
+    'kg' as BenchmarkUnit,
+    'dumbbell',
+    '#EF4444'
+  );
+  if (deadlift) {
+    await addBenchmarkEntry(deadlift.id, 120, 7, 'Reprise après pause', subDays(today, 21), 5, 45, 350);
+    await addBenchmarkEntry(deadlift.id, 130, 8, 'Bonne forme', subDays(today, 14), 4, 50, 380);
+    await addBenchmarkEntry(deadlift.id, 140, 9, 'PR! 💪 Forme parfaite', subDays(today, 3), 3, 55, 420);
+    count += 3;
+    logger.info('   ✅ Soulevé de Terre: 140kg × 3 reps (PR)');
+  }
+
+  // 6. TRACTIONS - 15 reps (bodyweight)
+  const pullups = await createBenchmark(
+    'Tractions',
+    'force' as BenchmarkCategory,
+    'reps' as BenchmarkUnit,
+    'dumbbell',
+    '#EF4444'
+  );
+  if (pullups) {
+    await addBenchmarkEntry(pullups.id, 10, 7, 'Série propre', subDays(today, 20), undefined, undefined, 80);
+    await addBenchmarkEntry(pullups.id, 12, 8, 'Progression!', subDays(today, 10), undefined, undefined, 95);
+    await addBenchmarkEntry(pullups.id, 15, 9, 'Nouveau record! 🔥', subDays(today, 2), undefined, undefined, 120);
+    count += 3;
+    logger.info('   ✅ Tractions: 15 reps (PR)');
+  }
+
+  // 7. MILITARY PRESS - 60kg x 6 reps
+  const militaryPress = await createBenchmark(
+    'Military Press',
+    'force' as BenchmarkCategory,
+    'kg' as BenchmarkUnit,
+    'dumbbell',
+    '#EF4444'
+  );
+  if (militaryPress) {
+    await addBenchmarkEntry(militaryPress.id, 50, 7, '', subDays(today, 18), 8, 35, 200);
+    await addBenchmarkEntry(militaryPress.id, 55, 8, 'Bon contrôle', subDays(today, 8), 6, 40, 230);
+    await addBenchmarkEntry(militaryPress.id, 60, 8, 'PR épaules!', yesterday, 6, 42, 260);
+    count += 3;
+    logger.info('   ✅ Military Press: 60kg × 6 reps (PR)');
+  }
+
+  // 8. ROWING BARRE - 70kg x 8 reps
+  const rowingBarre = await createBenchmark(
+    'Rowing Barre',
+    'force' as BenchmarkCategory,
+    'kg' as BenchmarkUnit,
+    'dumbbell',
+    '#EF4444'
+  );
+  if (rowingBarre) {
+    await addBenchmarkEntry(rowingBarre.id, 60, 7, '', subDays(today, 15), 10, 30, 180);
+    await addBenchmarkEntry(rowingBarre.id, 65, 8, '', subDays(today, 7), 8, 35, 210);
+    await addBenchmarkEntry(rowingBarre.id, 70, 8, 'Dos bien contracté', twoDaysAgo, 8, 38, 240);
+    count += 3;
+    logger.info('   ✅ Rowing Barre: 70kg × 8 reps');
+  }
+
+  // ============================================
+  // NOUVEAUX BENCHMARKS RUNNING
+  // ============================================
+
+  // 9. 5KM - 19:30 (pace: 3:54/km)
+  const running5k = await createBenchmark(
+    '5km',
+    'running' as BenchmarkCategory,
+    'km' as BenchmarkUnit,
+    'footprints',
+    '#3B82F6'
+  );
+  if (running5k) {
+    await addBenchmarkEntry(running5k.id, 5, 7, 'Sortie facile', subDays(today, 25), undefined, 22, 280); // 22min
+    await addBenchmarkEntry(running5k.id, 5, 8, 'Tempo run', subDays(today, 12), undefined, 20, 260); // 20min
+    await addBenchmarkEntry(running5k.id, 5, 9, 'PR! Sub 20 🚀', subDays(today, 4), undefined, 19.5, 245); // 19:30
+    count += 3;
+    logger.info('   ✅ 5km: 19:30 (allure 3:54/km) - PR!');
+  }
+
+  // 10. TRAIL 15KM - 1h35
+  const trail15k = await createBenchmark(
+    'Trail 15km',
+    'running' as BenchmarkCategory,
+    'km' as BenchmarkUnit,
+    'mountain',
+    '#10B981'
+  );
+  if (trail15k) {
+    await addBenchmarkEntry(trail15k.id, 15, 8, 'Calanques de Marseille 🏔️', subDays(today, 20), undefined, 95, 980);
+    count += 1;
+    logger.info('   ✅ Trail 15km: 1h35 (Calanques)');
+  }
+
+  // ============================================
+  // TECHNIQUES JJB (existantes + nouvelles)
+  // ============================================
+
   // 5. TECHNIQUES JJB
 
   // Berimbolo - En cours
@@ -1077,6 +1207,66 @@ const generateCarnetData = async (): Promise<number> => {
     logger.info('   ✅ Passage Toreando: En cours');
   }
 
+  // Kimura - Maîtrisé
+  const kimura = await createSkill(
+    'Kimura',
+    'jjb_soumission' as SkillCategory,
+    'mastered' as SkillStatus,
+    'Maîtrisée depuis la side control et la garde. Bonne grip et rotation.'
+  );
+  if (kimura) {
+    count++;
+    logger.info('   ✅ Kimura: Maîtrisé');
+  }
+
+  // Back Take - En cours
+  const backTake = await createSkill(
+    'Back Take',
+    'jjb_garde' as SkillCategory,
+    'in_progress' as SkillStatus,
+    'Travail sur les transitions depuis la side control. Focus sur les crochets.'
+  );
+  if (backTake) {
+    count++;
+    logger.info('   ✅ Back Take: En cours');
+  }
+
+  // Scissor Sweep - Maîtrisé
+  const scissorSweep = await createSkill(
+    'Scissor Sweep',
+    'jjb_passage' as SkillCategory,
+    'mastered' as SkillStatus,
+    'Sweep de base efficace. Bon timing sur le déséquilibre.'
+  );
+  if (scissorSweep) {
+    count++;
+    logger.info('   ✅ Scissor Sweep: Maîtrisé');
+  }
+
+  // Guillotine - En cours
+  const guillotine = await createSkill(
+    'Guillotine',
+    'jjb_soumission' as SkillCategory,
+    'in_progress' as SkillStatus,
+    'Travail sur la finition et la pression du bras. Version arm-in à perfectionner.'
+  );
+  if (guillotine) {
+    count++;
+    logger.info('   ✅ Guillotine: En cours');
+  }
+
+  // Omoplata - À apprendre
+  const omoplata = await createSkill(
+    'Omoplata',
+    'jjb_soumission' as SkillCategory,
+    'to_learn' as SkillStatus,
+    'Objectif prochain: maîtriser la position et les transitions.'
+  );
+  if (omoplata) {
+    count++;
+    logger.info('   ✅ Omoplata: À apprendre');
+  }
+
   return count;
 };
 
@@ -1100,12 +1290,18 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     await AsyncStorage.setItem('@yoroi_user_mode', DEMO_PROFILE.mode);
 
     // 2b. Sauvegarder le profil dans la base de données SQLite
+    // D'abord supprimer tout profil existant pour éviter les conflits
     const startDate = format(DEMO_PROFILE.startDate, 'yyyy-MM-dd');
+    await database.runAsync(`DELETE FROM profile`);
     await database.runAsync(
       `INSERT INTO profile (name, height_cm, start_weight, target_weight, start_date, avatar_gender) VALUES (?, ?, ?, ?, ?, ?)`,
       [DEMO_PROFILE.name, DEMO_PROFILE.height_cm, DEMO_PROFILE.start_weight, DEMO_PROFILE.target_weight, startDate, 'homme']
     );
-    logger.info('✅ Profil créé dans la base de données avec objectif de poids: 77kg');
+    logger.info('✅ Profil créé dans la base de données:');
+    logger.info(`   • Nom: ${DEMO_PROFILE.name}`);
+    logger.info(`   • Poids départ: ${DEMO_PROFILE.start_weight}kg`);
+    logger.info(`   • Objectif: ${DEMO_PROFILE.target_weight}kg`);
+    logger.info(`   • Sport: ${DEMO_PROFILE.sport}`);
 
     // 3. Générer et insérer les pesées avec composition corporelle complète
     logger.info('📊 Génération des pesées...');
@@ -1182,7 +1378,7 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     await AsyncStorage.setItem('@yoroi_unlocked_badges', JSON.stringify(badges));
     logger.info(`✅ ${badges.length} badges débloqués`);
 
-    // 12. Sauvegarder les blessures/infirmerie
+    // 12. Sauvegarder les blessures
     logger.info('🏥 Génération des blessures...');
     const injuries = generateInjuries();
     await AsyncStorage.setItem('@yoroi_injuries', JSON.stringify(injuries));
@@ -1351,50 +1547,61 @@ export const resetCompleteDatabase = async (): Promise<{ success: boolean; messa
   try {
     logger.info('🔥 RESET COMPLET DE LA BASE DE DONNÉES...');
 
-    const database = await openDatabase();
-
-    // Compter AVANT suppression
-    const trainingsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM trainings`);
-    const clubsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM clubs`);
-    const weightsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM weights`);
-
-    logger.info(`📊 AVANT RESET:`);
-    logger.info(`   - Entraînements: ${trainingsCount?.count || 0}`);
-    logger.info(`   - Clubs: ${clubsCount?.count || 0}`);
-    logger.info(`   - Pesées: ${weightsCount?.count || 0}`);
-
-    // Supprimer TOUTES les tables
-    await database.runAsync(`DELETE FROM trainings`);
-    await database.runAsync(`DELETE FROM clubs`);
-    await database.runAsync(`DELETE FROM weights`);
-    await database.runAsync(`DELETE FROM measurements`);
-    await database.runAsync(`DELETE FROM profile`);
-    await database.runAsync(`DELETE FROM competitions`);
-
-    // Vérifier que TOUT est vide
-    const afterTrainings = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM trainings`);
-    const afterClubs = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM clubs`);
-    const afterWeights = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM weights`);
-
-    logger.info(`✅ APRÈS RESET:`);
-    logger.info(`   - Entraînements: ${afterTrainings?.count || 0}`);
-    logger.info(`   - Clubs: ${afterClubs?.count || 0}`);
-    logger.info(`   - Pesées: ${afterWeights?.count || 0}`);
-
-    // Effacer AsyncStorage aussi
+    // 1. D'abord, effacer AsyncStorage (ne dépend pas de SQLite)
     const keys = await AsyncStorage.getAllKeys();
     const yoroiKeys = keys.filter(key =>
       key.startsWith('@yoroi_') ||
       key.startsWith('hydration_') ||
-      key.startsWith('sleep_')
+      key.startsWith('sleep_') ||
+      key.startsWith('@onboarding') ||
+      key.includes('yoroi')
     );
-    await AsyncStorage.multiRemove(yoroiKeys);
+    if (yoroiKeys.length > 0) {
+      await AsyncStorage.multiRemove(yoroiKeys);
+      logger.info(`✅ ${yoroiKeys.length} clés AsyncStorage supprimées`);
+    }
 
-    logger.info('✅ Base de données et AsyncStorage complètement vidés');
+    // 2. Tenter d'ouvrir et vider la base SQLite
+    let deletedCount = { trainings: 0, clubs: 0, weights: 0 };
+
+    try {
+      const database = await openDatabase();
+
+      // Compter AVANT suppression
+      const trainingsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM trainings`);
+      const clubsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM clubs`);
+      const weightsCount = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM weights`);
+
+      deletedCount = {
+        trainings: trainingsCount?.count || 0,
+        clubs: clubsCount?.count || 0,
+        weights: weightsCount?.count || 0,
+      };
+
+      logger.info(`📊 AVANT RESET: ${deletedCount.trainings} entraînements, ${deletedCount.clubs} clubs, ${deletedCount.weights} pesées`);
+
+      // Supprimer TOUTES les tables
+      await database.runAsync(`DELETE FROM trainings`);
+      await database.runAsync(`DELETE FROM clubs`);
+      await database.runAsync(`DELETE FROM weights`);
+      await database.runAsync(`DELETE FROM measurements`);
+      await database.runAsync(`DELETE FROM profile`);
+      await database.runAsync(`DELETE FROM competitions`);
+      await database.runAsync(`DELETE FROM photos`);
+      await database.runAsync(`DELETE FROM achievements`);
+      await database.runAsync(`DELETE FROM weekly_plan`);
+
+      logger.info('✅ Toutes les tables SQLite vidées');
+    } catch (dbError) {
+      logger.warn('⚠️ Impossible de vider SQLite (sera recréée au prochain lancement):', dbError);
+      // On continue quand même - AsyncStorage a été vidé
+    }
+
+    logger.info('✅ Reset complet terminé');
 
     return {
       success: true,
-      message: `Tout effacé : ${trainingsCount?.count || 0} entraînements, ${clubsCount?.count || 0} clubs, ${weightsCount?.count || 0} pesées`,
+      message: `Tout effacé : ${deletedCount.trainings} entraînements, ${deletedCount.clubs} clubs, ${deletedCount.weights} pesées`,
     };
   } catch (error) {
     logger.error('❌ Erreur lors du reset:', error);

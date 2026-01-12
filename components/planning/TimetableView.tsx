@@ -61,16 +61,11 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   const [showAllSessions, setShowAllSessions] = useState<{ day: string; dayLabel: string; slotLabel: string; sessions: any[] } | null>(null);
   const [manualRestDays, setManualRestDays] = useState<string[]>([]); // Jours marqués manuellement en repos
 
-  // Détecter automatiquement les jours sans aucune séance comme jours de repos
+  // NE PAS détecter automatiquement les jours de repos
+  // Seulement utiliser les jours marqués manuellement par l'utilisateur
   const getRestDays = () => {
-    const autoRestDays: string[] = [];
-    weekSchedule.forEach(day => {
-      if (day.sessions.length === 0) {
-        autoRestDays.push(day.id);
-      }
-    });
-    // Combiner les jours auto-détectés et manuels
-    return [...new Set([...autoRestDays, ...manualRestDays])];
+    // Retourner uniquement les jours marqués manuellement en repos
+    return manualRestDays;
   };
 
   const restDays = getRestDays();

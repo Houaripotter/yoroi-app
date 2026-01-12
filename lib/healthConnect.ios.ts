@@ -13,7 +13,8 @@ import logger from '@/lib/security/logger';
 // MODE DÉMO - Active les fausses données
 // ============================================
 // ATTENTION: Mettre à FALSE pour utiliser les vraies données Apple Health
-const DEMO_MODE = true;
+// PRODUCTION: Désactivé pour l'App Store
+const DEMO_MODE = false;
 
 // Apple HealthKit (iOS)
 let Healthkit: any = null;
@@ -247,24 +248,30 @@ class HealthConnectService {
         'HKWorkoutTypeIdentifier', // Permettre l'écriture des workouts
       ];
 
-      await Healthkit.requestAuthorization(readTypes, writeTypes);
+      // L'API attend un objet avec read et write, pas 2 arguments séparés
+      await Healthkit.requestAuthorization({
+        read: readTypes,
+        write: writeTypes,
+      });
 
+      // Apple Health ne permet pas de vérifier directement les permissions
+      // On retourne false par défaut - l'utilisateur doit autoriser manuellement dans Réglages iOS
       return {
-        weight: true,
-        steps: true,
-        sleep: true,
-        hydration: true,
-        heartRate: true,
-        heartRateVariability: true,
-        restingHeartRate: true,
-        calories: true,
-        distance: true,
-        vo2Max: true,
-        oxygenSaturation: true,
-        respiratoryRate: true,
-        bodyTemperature: true,
-        bodyComposition: true,
-        workouts: true,
+        weight: false,
+        steps: false,
+        sleep: false,
+        hydration: false,
+        heartRate: false,
+        heartRateVariability: false,
+        restingHeartRate: false,
+        calories: false,
+        distance: false,
+        vo2Max: false,
+        oxygenSaturation: false,
+        respiratoryRate: false,
+        bodyTemperature: false,
+        bodyComposition: false,
+        workouts: false,
       };
     } catch (error) {
       logger.error('Erreur demande permissions iOS:', error);
@@ -288,15 +295,48 @@ class HealthConnectService {
         return false;
       }
 
-      const permissions = await this.requestIOSPermissions();
-      this.syncStatus.permissions = permissions;
-      this.syncStatus.isConnected = true;
-      this.syncStatus.lastSync = new Date().toISOString();
-      await this.saveSyncStatus();
+      // Demander les permissions (ouvre le popup iOS)
+      await this.requestIOSPermissions();
 
-      return true;
+      // NE PAS marquer comme connecté automatiquement
+      // L'utilisateur doit autoriser dans les Réglages iOS
+      // On vérifie si on peut vraiment lire des données
+      const canRead = await this.verifyPermissions();
+
+      if (canRead) {
+        this.syncStatus.isConnected = true;
+        this.syncStatus.lastSync = new Date().toISOString();
+        await this.saveSyncStatus();
+        return true;
+      } else {
+        // Permissions pas encore accordées
+        this.syncStatus.isConnected = false;
+        await this.saveSyncStatus();
+        return false;
+      }
     } catch (error) {
       logger.error('Erreur connexion:', error);
+      return false;
+    }
+  }
+
+  // Vérifier si on peut réellement lire des données
+  private async verifyPermissions(): Promise<boolean> {
+    if (!Healthkit) return false;
+
+    try {
+      // Essayer de lire les pas du jour
+      const samples = await Healthkit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
+        from: new Date(new Date().setHours(0, 0, 0, 0)),
+        to: new Date(),
+        limit: 1,
+      });
+
+      // Si on peut lire (même si vide), c'est que les permissions sont OK
+      return true;
+    } catch (error) {
+      // Si erreur, c'est que les permissions ne sont pas accordées
+      logger.info('Permissions Apple Health pas encore accordées');
       return false;
     }
   }

@@ -260,15 +260,15 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                Je m'entraîne pour la forme
+                Je veux me sentir mieux
               </Text>
 
               {/* Features */}
               <View style={styles.featuresList}>
                 {[
-                  'Je veux me défouler',
+                  'Perte de poids et bien-être',
                   'Je progresse à mon rythme',
-                  'Je cherche le bien-être',
+                  'Sans pression, juste pour moi',
                 ].map((feature, index) => (
                   <View key={index} style={styles.featureItem}>
                     <Text

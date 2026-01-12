@@ -365,7 +365,6 @@ export const initializeStarterPack = async (): Promise<void> => {
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify([]));
 
     await AsyncStorage.setItem(INITIALIZED_KEY, 'true');
-    if (__DEV__) console.log('Carnet initialized with starter pack');
   } catch (error) {
     console.error('Error initializing starter pack:', error);
   }

@@ -111,7 +111,6 @@ export const initTrainingGoalsDB = async () => {
     );
   `);
 
-  if (__DEV__) console.log('[TrainingGoals] Table initialisee');
 };
 
 // ============================================
@@ -332,7 +331,7 @@ export const getAllGoalsProgress = async (): Promise<GoalProgress[]> => {
       const progress = await getGoalProgress(goal);
       progressList.push(progress);
     } catch (e) {
-      console.warn(`[TrainingGoals] Erreur pour ${goal.sport_id}:`, e);
+      // Erreur ignorée silencieusement
     }
   }
 

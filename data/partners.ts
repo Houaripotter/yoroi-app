@@ -125,7 +125,7 @@ export const COACHES: Coach[] = [
     instagram: '@ludocoach_marseille',
     phone: '06.42.19.74.80',
     imageUrl: require('@/assets/partenaires/coachs/ludovicfontaine.png'),
-    featured: true,
+    featured: false,
   },
 ];
 

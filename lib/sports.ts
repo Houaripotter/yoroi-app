@@ -92,7 +92,7 @@ export const SPORTS: Sport[] = [
   {
     id: 'lutte',
     name: 'Lutte',
-    icon: 'wrestling',
+    icon: 'account-multiple',
     color: '#E53E3E',
     category: 'combat_grappling',
   },
@@ -113,7 +113,7 @@ export const SPORTS: Sport[] = [
   {
     id: 'catch',
     name: 'Catch',
-    icon: 'wrestling',
+    icon: 'arm-flex',
     color: '#D69E2E',
     category: 'combat_grappling',
   },
@@ -278,7 +278,7 @@ export const SPORTS: Sport[] = [
   {
     id: 'escalade',
     name: 'Escalade',
-    icon: 'climbing',
+    icon: 'hiking',
     color: '#78716C',
     category: 'autre',
   },

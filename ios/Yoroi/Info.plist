@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
-          <string>com.tonnom.yoroi</string>
+          <string>yoroi</string>
+          <string>com.houari.yoroi</string>
         </array>
       </dict>
       <dict>
@@ -40,6 +40,8 @@
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
@@ -54,7 +56,7 @@
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your calendars</string>
     <key>NSCalendarsUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your calendars</string>
+    <string>YOROI utilise votre calendrier pour planifier vos entraînements.</string>
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSHealthShareUsageDescription</key>
@@ -70,7 +72,7 @@
     <key>NSRemindersFullAccessUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your reminders</string>
     <key>NSRemindersUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your reminders</string>
+    <string>YOROI utilise les rappels pour vos notifications d'entraînement.</string>
     <key>NSSupportsLiveActivities</key>
     <true/>
     <key>NSUserActivityTypes</key>

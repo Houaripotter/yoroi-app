@@ -24,7 +24,6 @@ const isFileSystemAvailable = (): boolean => {
  */
 const getDocumentDirectory = (): string | null => {
   if (Platform.OS === 'web') {
-    if (__DEV__) console.log('ℹ️ FileSystem non disponible sur le web');
     return null;
   }
   
@@ -78,7 +77,7 @@ const STORAGE_KEYS = {
 // LOGOS PREMIUM - Personnalisation
 // ============================================
 
-export type LogoVariant = 'default' | 'logo_new' | 'logo1' | 'logo2' | 'logo3' | 'logo4' | 'logo5';
+export type LogoVariant = 'default' | 'logo_new' | 'logo1' | 'logo2' | 'logo3' | 'logo4' | 'logo5' | 'logo6';
 
 export interface LogoOption {
   id: LogoVariant;
@@ -96,6 +95,7 @@ export const LOGO_OPTIONS: LogoOption[] = [
   { id: 'logo3', name: 'Yoroi 3', description: 'Variante 3', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo3.png') },
   { id: 'logo4', name: 'Yoroi 4', description: 'Variante 4', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo4.png') },
   { id: 'logo5', name: 'Yoroi 5', description: 'Variante 5', isPremium: true, image: require('@/assets/logo d\'app/yoroi-logo5.png') },
+  { id: 'logo6', name: 'Yoroi 6', description: 'Variante 6', isPremium: false, image: require('@/assets/logo d\'app/yoroi-logo6.png') },
 ];
 
 export const getSelectedLogo = async (): Promise<LogoVariant> => {
@@ -330,7 +330,6 @@ const ensurePhotosDirectoryExists = async (): Promise<string | null> => {
   const docDir = getDocumentDirectory();
   
   if (!docDir) {
-    if (__DEV__) console.log('ℹ️ Mode web/simulateur : photos stockées en base64');
     return null; // On utilisera le stockage base64
   }
 
@@ -408,7 +407,6 @@ export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'crea
   measurements.push(newMeasurement);
   await saveData(STORAGE_KEYS.MEASUREMENTS, measurements);
 
-  if (__DEV__) console.log('✅ Mesure ajoutée localement:', newMeasurement.id);
   return newMeasurement;
 };
 
@@ -473,7 +471,6 @@ export const addWorkout = async (workout: Omit<Workout, 'id' | 'created_at'>): P
   workouts.push(newWorkout);
   await saveData(STORAGE_KEYS.WORKOUTS, workouts);
 
-  if (__DEV__) console.log('✅ Entraînement ajouté localement:', newWorkout.id);
   return newWorkout;
 };
 
@@ -514,22 +511,18 @@ export const savePhotoToStorage = async (
         const destinationUri = `${photosDir}${filename}`;
         await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
         finalUri = destinationUri;
-        if (__DEV__) console.log('✅ Photo copiée vers:', destinationUri);
       } catch (copyError) {
         console.warn('⚠️ Impossible de copier, utilisation de l\'URI original:', copyError);
         // Fallback : utiliser l'URI d'origine
       }
     } else {
       // Mode web/simulateur : essayer de lire en base64
-      if (__DEV__) console.log('ℹ️ Mode sans FileSystem : stockage URI direct');
       if (Platform.OS !== 'web' && FileSystem.EncodingType) {
         try {
           base64Data = await FileSystem.readAsStringAsync(sourceUri, {
             encoding: FileSystem.EncodingType.Base64,
           });
-          if (__DEV__) console.log('✅ Photo convertie en base64');
         } catch (b64Error) {
-          if (__DEV__) console.log('ℹ️ Conversion base64 non disponible, utilisation URI direct');
         }
       }
     }
@@ -548,7 +541,6 @@ export const savePhotoToStorage = async (
     photos.push(newPhoto);
     await saveData(STORAGE_KEYS.PHOTOS, photos);
 
-    if (__DEV__) console.log('✅ Photo sauvegardée avec ID:', id);
     return newPhoto;
   } catch (error: any) {
     console.error('❌ Erreur sauvegarde photo:', error?.message || error);
@@ -567,7 +559,6 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
   const photoToDelete = photos.find(p => p.id === id);
 
   if (!photoToDelete) {
-    if (__DEV__) console.log('ℹ️ Photo non trouvée pour suppression:', id);
     return false;
   }
 
@@ -577,7 +568,6 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
       const fileInfo = await FileSystem.getInfoAsync(photoToDelete.file_uri);
       if (fileInfo.exists) {
         await FileSystem.deleteAsync(photoToDelete.file_uri);
-        if (__DEV__) console.log('✅ Fichier photo supprimé:', photoToDelete.file_uri);
       }
     } catch (error) {
       console.warn('⚠️ Erreur suppression fichier photo:', error);
@@ -586,7 +576,6 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
 
   const filteredPhotos = photos.filter(p => p.id !== id);
   await saveData(STORAGE_KEYS.PHOTOS, filteredPhotos);
-  if (__DEV__) console.log('✅ Photo supprimée de AsyncStorage:', id);
   return true;
 };
 
@@ -622,14 +611,14 @@ export const getUserSettings = async (): Promise<UserSettings> => {
     return data ? JSON.parse(data) : {
       weight_unit: 'kg',
       measurement_unit: 'cm',
-      theme: 'tiffany',
+      theme: 'classic',
     };
   } catch (error) {
     console.error('❌ Erreur lecture paramètres:', error);
     return {
       weight_unit: 'kg',
       measurement_unit: 'cm',
-      theme: 'tiffany',
+      theme: 'classic',
     };
   }
 };
@@ -639,7 +628,6 @@ export const saveUserSettings = async (settings: Partial<UserSettings>): Promise
     const currentSettings = await getUserSettings();
     const newSettings = { ...currentSettings, ...settings };
     await AsyncStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(newSettings));
-    if (__DEV__) console.log('✅ Paramètres sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde paramètres:', error);
@@ -692,7 +680,6 @@ export const getUserClubs = async (): Promise<UserClub[]> => {
 export const saveUserClubs = async (clubs: UserClub[]): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_CLUBS, JSON.stringify(clubs));
-    if (__DEV__) console.log('✅ Clubs sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde clubs:', error);
@@ -776,7 +763,6 @@ export const getUserGear = async (): Promise<UserGear[]> => {
 export const saveUserGear = async (gear: UserGear[]): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_GEAR, JSON.stringify(gear));
-    if (__DEV__) console.log('✅ Équipements sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde équipements:', error);
@@ -842,7 +828,6 @@ export const getUserBodyStatus = async (): Promise<BodyStatusData> => {
 export const saveUserBodyStatus = async (status: BodyStatusData): Promise<boolean> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.USER_BODY_STATUS, JSON.stringify(status));
-    if (__DEV__) console.log('✅ Statut corporel sauvegardé');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde statut corporel:', error);
@@ -878,7 +863,6 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
   badges.push(newBadge);
   await saveData(STORAGE_KEYS.USER_BADGES, badges);
 
-  if (__DEV__) console.log('🏆 Badge débloqué:', badgeId);
   return true;
 };
 
@@ -972,7 +956,6 @@ export const importData = async (): Promise<boolean> => {
     });
 
     if (result.canceled) {
-      if (__DEV__) console.log('Importation annulée par l\'utilisateur.');
       return false;
     }
 
@@ -1023,7 +1006,6 @@ export const importData = async (): Promise<boolean> => {
     await saveData(STORAGE_KEYS.USER_BADGES, backup.badges || []);
 
     Alert.alert('Succès', 'Données restaurées avec succès !');
-    if (__DEV__) console.log('📥 Données importées depuis le backup.');
     return true;
   } catch (error: any) {
     console.error('❌ Erreur importation:', error);
@@ -1041,7 +1023,6 @@ export const resetAllData = async (): Promise<boolean> => {
     try {
       const { resetDatabase } = await import('./database');
       await resetDatabase();
-      if (__DEV__) console.log('✅ Base SQLite réinitialisée');
     } catch (dbError) {
       console.warn('⚠️ Erreur reset SQLite (peut être normal si non initialisé):', dbError);
     }
@@ -1085,8 +1066,6 @@ export const resetAllData = async (): Promise<boolean> => {
       await AsyncStorage.multiRemove(yoroiKeys);
     }
 
-    if (__DEV__) console.log('✅ Toutes les données supprimées:', yoroiKeys.length, 'clés');
-    if (__DEV__) console.log('🔑 Clés supprimées:', yoroiKeys);
 
     return true;
   } catch (error) {
@@ -1102,11 +1081,9 @@ export const debugShowAllData = async (): Promise<void> => {
 
   try {
     const allKeys = await AsyncStorage.getAllKeys();
-    if (__DEV__) console.log('📦 Clés restantes:', allKeys.length);
 
     for (const key of allKeys) {
       const value = await AsyncStorage.getItem(key);
-      if (__DEV__) console.log(`  ${key}:`, value?.substring(0, 100));
     }
   } catch (error) {
     console.error('❌ Erreur debug:', error);
@@ -1185,7 +1162,6 @@ export const saveHydrationSettings = async (settings: Partial<HydrationSettings>
     const currentSettings = await getHydrationSettings();
     const newSettings = { ...currentSettings, ...settings };
     await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_SETTINGS, JSON.stringify(newSettings));
-    if (__DEV__) console.log('✅ Paramètres hydratation sauvegardés');
     return true;
   } catch (error) {
     console.error('❌ Erreur sauvegarde paramètres hydratation:', error);
@@ -1239,7 +1215,6 @@ export const addHydrationEntry = async (amount: number, date?: string): Promise<
 
   entries.push(newEntry);
   await AsyncStorage.setItem(STORAGE_KEYS.HYDRATION_LOG, JSON.stringify(entries));
-  if (__DEV__) console.log('💧 Hydratation ajoutée:', amount, 'ml');
   return newEntry;
 };
 

@@ -15,16 +15,19 @@ import {
   ArrowLeft,
   Activity,
   Zap,
-  AlertTriangle,
+  AlertCircle,
   CheckCircle,
   TrendingUp,
   Coffee,
   Info,
   Calendar,
   Target,
+  Sparkles,
+  Heart,
 } from 'lucide-react-native';
 import { getWeeklyLoad, getRiskLevel, formatLoad } from '@/lib/trainingLoadService';
 import logger from '@/lib/security/logger';
+import { FeatureTutorial } from '@/components/FeatureTutorial';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -55,44 +58,44 @@ export default function ChargeScreen() {
   // Niveaux expliqués
   const levelInfo = [
     {
-      level: 'Léger',
+      level: 'Récupération',
       range: '0 - 500 pts',
       color: '#0EA5E9',
-      icon: Coffee,
-      description: 'Repos actif. Ta charge est basse, c\'est le moment idéal pour récupérer ou faire une séance légère.',
-      advice: 'Tu peux augmenter progressivement l\'intensité cette semaine.',
+      icon: Heart,
+      description: 'Phase de récupération. Ta charge est légère, ton corps se régénère. C\'est le moment parfait pour des activités douces.',
+      advice: 'Profite de cette période pour bien récupérer et te préparer pour la suite.',
     },
     {
-      level: 'Modéré',
+      level: 'Équilibré',
       range: '500 - 1000 pts',
       color: '#10B981',
       icon: CheckCircle,
-      description: 'Bonne charge. Tu es dans une zone de progression optimale avec un bon équilibre effort/récupération.',
-      advice: 'Maintiens ce rythme, c\'est parfait pour progresser.',
+      description: 'Zone équilibrée. Tu maintiens un bon rythme avec un équilibre sain entre effort et récupération.',
+      advice: 'Continue sur cette lancée, c\'est un excellent rythme pour progresser.',
     },
     {
       level: 'Optimal',
       range: '1000 - 1500 pts',
       color: '#22C55E',
-      icon: TrendingUp,
-      description: 'Zone idéale. Tu pousses suffisamment pour progresser sans te surentraîner.',
-      advice: 'Tu es dans la zone, continue comme ça !',
+      icon: Sparkles,
+      description: 'Zone de performance optimale. Tu es dans la zone idéale pour développer tes capacités tout en restant frais.',
+      advice: 'Tu es au top ! Continue à écouter ton corps.',
     },
     {
-      level: 'Élevé',
+      level: 'Intense',
       range: '1500 - 2000 pts',
       color: '#F59E0B',
-      icon: Zap,
-      description: 'Attention fatigue. Ta charge est élevée, surveille tes sensations et ta récupération.',
-      advice: 'Pense à bien dormir et t\'hydrater. Évite d\'enchaîner les séances intenses.',
+      icon: TrendingUp,
+      description: 'Entraînement intensif. Ta charge est élevée. Veille à bien récupérer entre les séances.',
+      advice: 'Assure-toi de bien dormir, t\'hydrater et t\'alimenter pour optimiser ta récupération.',
     },
     {
-      level: 'Danger',
+      level: 'Très intense',
       range: '> 2000 pts',
       color: '#EF4444',
-      icon: AlertTriangle,
-      description: 'Risque de blessure. Ta charge est très élevée, ton corps a besoin de récupérer.',
-      advice: 'Prends 1-2 jours de repos complet. Privilégie le sommeil et la nutrition.',
+      icon: AlertCircle,
+      description: 'Zone très intense. Ta charge est très élevée. Ton corps a besoin de plus de temps pour récupérer.',
+      advice: 'Considère une journée de repos actif ou complet. Priorise le sommeil et la récupération.',
     },
   ];
 
@@ -112,6 +115,20 @@ export default function ChargeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
+
+      {/* Tutoriel de fonctionnalité */}
+      <FeatureTutorial
+        featureId="charge"
+        title="Charge d'entraînement"
+        description="La charge d'entraînement mesure l'intensité de tes séances pour optimiser tes performances et éviter le surmenage."
+        keyPoints={[
+          'Visualise ta charge hebdomadaire en un coup d\'œil',
+          'Reçois des conseils adaptés selon ton niveau d\'intensité',
+          'Évite le surentraînement et les blessures',
+          'Trouve l\'équilibre parfait entre effort et récupération',
+        ]}
+        icon="flash"
+      />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -140,13 +157,14 @@ export default function ChargeScreen() {
             <View style={[styles.gaugeBg, { borderColor: colors.border }]} />
             <View style={[
               styles.gaugeFill,
-              { 
+              {
                 borderColor: currentLevel.color,
                 transform: [{ rotate: `${(percentage / 100) * 180 - 90}deg` }],
               }
             ]} />
             <View style={styles.gaugeCenter}>
-              <CurrentIcon size={32} color={currentLevel.color} />
+              <CurrentIcon size={40} color={currentLevel.color} strokeWidth={1.5} />
+              <View style={{ height: 8 }} />
               <Text style={[styles.gaugeValue, { color: colors.textPrimary }]}>
                 {formatLoad(weeklyLoad)}
               </Text>
@@ -273,9 +291,9 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     borderRadius: 20,
-    padding: 24,
+    padding: 28,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   mainCardHeader: {
     flexDirection: 'row',
@@ -288,28 +306,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gaugeContainer: {
-    width: 150,
-    height: 90,
+    width: 180,
+    height: 110,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 8,
   },
   gaugeBg: {
     position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 10,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 12,
     borderBottomColor: 'transparent',
     top: 0,
   },
   gaugeFill: {
     position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 10,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 12,
     borderBottomColor: 'transparent',
     borderRightColor: 'transparent',
     top: 0,
@@ -318,18 +337,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gaugeValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
+    letterSpacing: -1,
   },
   gaugeUnit: {
     fontSize: 12,
     fontWeight: '600',
   },
   currentLevelBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   currentLevelText: {
     fontSize: 14,
@@ -338,8 +358,9 @@ const styles = StyleSheet.create({
   currentDescription: {
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 16,
+    lineHeight: 22,
+    marginBottom: 20,
+    paddingHorizontal: 12,
   },
   adviceBox: {
     flexDirection: 'row',
@@ -390,9 +411,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   levelIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,

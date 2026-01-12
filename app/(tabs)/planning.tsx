@@ -204,10 +204,13 @@ export default function PlanningScreen() {
         { id: 'boxe', name: 'Boxe' },
         { id: 'judo', name: 'Judo' },
         { id: 'karate', name: 'Karaté' },
+        { id: 'taekwondo', name: 'Taekwondo' },
         { id: 'lutte', name: 'Lutte' },
         { id: 'sambo', name: 'Sambo' },
         { id: 'kickboxing', name: 'Kickboxing' },
-        { id: 'muay-thai', name: 'Muay Thai' }
+        { id: 'muay-thai', name: 'Muay Thai' },
+        { id: 'aikido', name: 'Aikido' },
+        { id: 'capoeira', name: 'Capoeira' }
       ]
     },
     endurance: {
@@ -220,7 +223,9 @@ export default function PlanningScreen() {
         { id: 'trail', name: 'Trail' },
         { id: 'triathlon', name: 'Triathlon' },
         { id: 'cyclisme', name: 'Cyclisme' },
-        { id: 'natation', name: 'Natation' }
+        { id: 'natation', name: 'Natation' },
+        { id: 'hyrox', name: 'HYROX' },
+        { id: 'aviron', name: 'Aviron' }
       ]
     },
     force: {
@@ -231,7 +236,9 @@ export default function PlanningScreen() {
         { id: 'crossfit', name: 'CrossFit' },
         { id: 'powerlifting', name: 'Powerlifting' },
         { id: 'haltérophilie', name: 'Haltérophilie' },
-        { id: 'strongman', name: 'Strongman' }
+        { id: 'strongman', name: 'Strongman' },
+        { id: 'musculation', name: 'Musculation' },
+        { id: 'calisthenics', name: 'Calisthenics' }
       ]
     },
     collectif: {
@@ -243,7 +250,27 @@ export default function PlanningScreen() {
         { id: 'basket', name: 'Basketball' },
         { id: 'rugby', name: 'Rugby' },
         { id: 'handball', name: 'Handball' },
-        { id: 'volley', name: 'Volleyball' }
+        { id: 'volley', name: 'Volleyball' },
+        { id: 'hockey', name: 'Hockey' },
+        { id: 'water-polo', name: 'Water-Polo' }
+      ]
+    },
+    autres: {
+      name: 'Autres Sports',
+      color: '#8B5CF6',
+      sports: [
+        { id: 'all', name: 'Tous' },
+        { id: 'escalade', name: 'Escalade' },
+        { id: 'yoga', name: 'Yoga' },
+        { id: 'pilates', name: 'Pilates' },
+        { id: 'tennis', name: 'Tennis' },
+        { id: 'padel', name: 'Padel' },
+        { id: 'surf', name: 'Surf' },
+        { id: 'skateboard', name: 'Skateboard' },
+        { id: 'parkour', name: 'Parkour' },
+        { id: 'gymnastique', name: 'Gymnastique' },
+        { id: 'equitation', name: 'Équitation' },
+        { id: 'golf', name: 'Golf' }
       ]
     },
   };

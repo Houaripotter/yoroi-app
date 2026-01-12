@@ -109,15 +109,15 @@ export const generateWeeklyReport = async (): Promise<WeeklyReport> => {
   const avgSleepHours = Math.round(sleepStats.averageDuration / 60 * 10) / 10;
   
   // Calcul du score global (0-100)
-  let overallScore = 50; // Base
-  
+  let overallScore = 0; // Base - commence à 0 pour un nouvel utilisateur
+
   // Entraînements (max +25)
   overallScore += Math.min(weekTrainings.length * 5, 25);
-  
+
   // Sommeil (max +20)
   if (avgSleepHours >= 7) overallScore += 20;
   else if (avgSleepHours >= 6) overallScore += 10;
-  else overallScore -= 10;
+  else if (avgSleepHours > 0) overallScore -= 10; // Seulement si des données existent
   
   // Charge OK (max +15)
   if (loadStats.riskLevel === 'safe') overallScore += 15;

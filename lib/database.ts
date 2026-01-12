@@ -136,10 +136,6 @@ export const initDatabase = async () => {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
-  try {
-    await database.execAsync(`ALTER TABLE competitions ADD COLUMN type_evenement TEXT;`);
-  } catch (e) { /* colonne existe déjà */ }
-
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -179,7 +175,7 @@ export const initDatabase = async () => {
   `);
 
   // ============================================
-  // TABLES YOROI MEDIC - INFIRMERIE
+  // TABLES YOROI MEDIC - SUIVI BLESSURES
   // ============================================
 
   // Table Blessures
@@ -254,6 +250,7 @@ export const initDatabase = async () => {
       nom TEXT NOT NULL,
       date TEXT NOT NULL,
       lieu TEXT,
+      type_evenement TEXT,
       sport TEXT NOT NULL,
       categorie_poids TEXT,
       poids_max REAL,
@@ -263,6 +260,11 @@ export const initDatabase = async () => {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Migration: Ajouter type_evenement pour les bases existantes
+  try {
+    await database.execAsync(`ALTER TABLE competitions ADD COLUMN type_evenement TEXT;`);
+  } catch (e) { /* colonne existe déjà */ }
 
   // Table Combats
   await database.execAsync(`
@@ -326,7 +328,6 @@ export const initDatabase = async () => {
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
 
-  if (__DEV__) console.log('Database initialized successfully');
 };
 
 // ============================================
@@ -464,7 +465,7 @@ export interface Photo {
 }
 
 // ============================================
-// TYPES YOROI MEDIC - INFIRMERIE
+// TYPES YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
 export interface Injury {
@@ -919,7 +920,7 @@ export const isAchievementUnlocked = async (id: string): Promise<boolean> => {
 };
 
 // ============================================
-// FONCTIONS CRUD - YOROI MEDIC INFIRMERIE
+// FONCTIONS CRUD - YOROI MEDIC SUIVI BLESSURES
 // ============================================
 
 // ---------- BLESSURES ----------
@@ -1098,7 +1099,7 @@ export const deleteReminder = async (id: number): Promise<void> => {
   await database.runAsync('DELETE FROM treatment_reminders WHERE id = ?', [id]);
 };
 
-// ---------- STATISTIQUES INFIRMERIE ----------
+// ---------- STATISTIQUES BLESSURES ----------
 
 export const getInjuryStats = async (): Promise<{
   totalInjuries: number;
@@ -1462,7 +1463,6 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
 
-    if (__DEV__) console.log('✅ Base de données SQLite réinitialisée (toutes les tables)');
   } catch (error) {
     console.error('❌ Erreur reset database:', error);
     throw error;

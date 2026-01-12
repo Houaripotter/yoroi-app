@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - SERVICE INFIRMERIE
+// 🩺 YOROI MEDIC - SERVICE SUIVI BLESSURES
 // ============================================
 // Business logic pour la gestion des blessures
 

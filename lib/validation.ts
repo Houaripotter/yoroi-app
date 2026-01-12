@@ -420,7 +420,7 @@ export const VALIDATION_RULES: Record<string, ValidationRule> = {
     errorMessage: 'Objectif entre 0.5 et 10 litres'
   },
 
-  // ===== INFIRMERIE =====
+  // ===== SUIVI BLESSURES =====
   eva_score: {
     type: 'number',
     min: 0,

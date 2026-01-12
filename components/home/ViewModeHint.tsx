@@ -83,10 +83,7 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
     );
     pulseLoop.start();
 
-    // Auto-dismiss après 8 secondes
-    setTimeout(() => {
-      dismissHint();
-    }, 8000);
+    // Ne plus auto-dismiss - l'utilisateur doit cliquer pour fermer
   };
 
   const dismissHint = async () => {
@@ -139,14 +136,37 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
         <View style={[styles.arrow, { borderBottomColor: colors.accent }]} />
 
         <View style={styles.content}>
-          <Ionicons name="swap-horizontal" size={20} color="#FFFFFF" />
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>Change de vue</Text>
-            <Text style={styles.subtitle}>
-              Appuie sur le bouton pour basculer{'\n'}entre mode Complet et Essentiel
-            </Text>
+          <View style={styles.mainContent}>
+            <View style={styles.iconHeader}>
+              <Ionicons name="swap-horizontal" size={24} color="#FFFFFF" />
+              <Text style={styles.mainTitle}>Personnalise ton Accueil</Text>
+            </View>
+
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>2 modes d'affichage</Text>
+              <Text style={styles.sectionText}>
+                • Mode Complet : Toutes tes stats et outils{'\n'}
+                • Mode Light : Vue simplifiée, essentiel seulement
+              </Text>
+              <Text style={styles.switchText}>
+                ↻ Change avec le bouton en haut à droite
+              </Text>
+            </View>
+
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>Personnalisation avancée</Text>
+              <Text style={styles.sectionText}>
+                En bas de l'écran d'accueil, tu peux :{'\n'}
+                • Réorganiser l'ordre des sections{'\n'}
+                • Masquer/afficher les cartes{'\n'}
+                • Créer ton dashboard sur mesure
+              </Text>
+            </View>
+
+            <TouchableOpacity onPress={dismissHint} style={styles.dismissBtn}>
+              <Text style={styles.dismissText}>J'ai compris</Text>
+            </TouchableOpacity>
           </View>
-          <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.7)" />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -157,19 +177,19 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     top: 75,
-    right: 60,
+    right: 20,
+    left: 20,
     zIndex: 1000,
-    maxWidth: SCREEN_WIDTH - 80,
   },
   hintBox: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 12,
+    elevation: 10,
   },
   arrow: {
     position: 'absolute',
@@ -184,10 +204,55 @@ const styles = StyleSheet.create({
     borderRightColor: 'transparent',
   },
   content: {
+    width: '100%',
+  },
+  mainContent: {
+    gap: 16,
+  },
+  iconHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginBottom: 4,
   },
+  mainTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  infoSection: {
+    gap: 6,
+  },
+  sectionTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sectionText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  switchText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  dismissBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  dismissText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  // Anciens styles pour compatibilité
   textContainer: {
     flex: 1,
   },

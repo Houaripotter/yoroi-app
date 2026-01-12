@@ -85,12 +85,10 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
     router.push('/stats');
   };
 
+  const { colors } = useTheme();
+
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.content}
-    >
+    <View style={styles.container}>
       {/* Salutation et citation */}
       <EssentielHeader
         userName={userName}
@@ -99,81 +97,57 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
         profile={profile}
       />
 
-      {/* CARTE POIDS - GRANDE */}
-      <EssentielWeightCard
-        currentWeight={currentWeight}
-        objective={targetWeight}
-        weekData={weightHistory}
-        weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
-        trend={weightTrend}
-        onAddWeight={handleAddWeight}
-        onViewStats={handleViewWeightStats}
-      />
-
-      {/* Hydratation + Sommeil côte à côte */}
-      <View style={styles.row}>
-        <HydrationCard2
-          currentMl={hydration}
-          goalMl={hydrationGoal}
-          onAddMl={onAddWater}
-        />
-        <SleepLottieCard
-          hours={sleepHours}
-          quality={0}
-          debt={sleepDebt}
-          goal={sleepGoal}
+      {/* CARTE POIDS - FULL WIDTH */}
+      <View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
+        <EssentielWeightCard
+          currentWeight={currentWeight}
+          objective={targetWeight}
+          weekData={weightHistory}
+          weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
+          trend={weightTrend}
+          onAddWeight={handleAddWeight}
+          onViewStats={handleViewWeightStats}
         />
       </View>
 
-      {/* Activité / Calories */}
-      <EssentielActivityCard
-        steps={steps}
-        stepsGoal={stepsGoal}
-        calories={calories}
-        caloriesGoal={caloriesGoal}
-      />
-
-      {/* Résumé de la semaine */}
-      <EssentielWeekSummary
-        weightChange={weekWeightChange}
-        hydrationRate={weekHydrationRate}
-        avgSleep={weekAvgSleep}
-        onPress={handleWeekSummaryPress}
-      />
-
-      {/* Outils rapides - 3 boutons */}
-      <QuickToolsRow />
-
-      {/* Défis du jour */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
-        <QuestsCard />
-      </View>
-
-      {/* Radar Performance */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>RADAR PERFORMANCE</Text>
-        <TouchableOpacity onPress={() => router.push('/radar-performance')} activeOpacity={0.8}>
-          <PerformanceRadar />
+      {/* 3 CARTES COMPACTES : Hydratation | Sommeil | Activité */}
+      <View style={styles.threeCardsRow}>
+        <View style={styles.compactCard}>
+          <HydrationCard2
+            currentMl={hydration}
+            goalMl={hydrationGoal}
+            onAddMl={onAddWater}
+          />
+        </View>
+        <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9} style={styles.compactCard}>
+          <SleepLottieCard
+            hours={sleepHours}
+            quality={0}
+            debt={sleepDebt}
+            goal={sleepGoal}
+          />
         </TouchableOpacity>
+        <View style={styles.compactCard}>
+          <EssentielActivityCard
+            steps={steps}
+            stepsGoal={stepsGoal}
+            calories={calories}
+            caloriesGoal={caloriesGoal}
+          />
+        </View>
       </View>
 
-      {/* Rapport de mission */}
-      <TouchableOpacity
-        style={styles.reportCard}
-        onPress={() => router.push('/weekly-report')}
-        activeOpacity={0.85}
-      >
-        <View style={styles.reportIcon}>
-          <FileText size={24} color="#10B981" />
+      {/* Citation motivante du jour */}
+      <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+        <View style={[styles.citationCard, { backgroundColor: colors.backgroundCard }]}>
+          <Text style={[styles.citationText, { color: colors.textSecondary }]}>
+            💪 Reste focus sur tes objectifs
+          </Text>
         </View>
-        <View style={styles.reportContent}>
-          <Text style={styles.reportTitle}>Rapport de Mission</Text>
-          <Text style={styles.reportSubtitle}>Bilan hebdomadaire complet</Text>
-        </View>
-        <ChevronRight size={20} color="#9CA3AF" />
-      </TouchableOpacity>
-    </ScrollView>
+      </View>
+
+      <View style={{ height: 120 }} />
+    </View>
   );
 };
 
@@ -282,5 +256,28 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#16A34A',
     marginTop: 2,
+  },
+  // 3 cartes compactes
+  threeCardsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  compactCard: {
+    flex: 1,
+  },
+  // Citation
+  citationCard: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  citationText: {
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

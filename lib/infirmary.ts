@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - SERVICE INFIRMERIE
+// YOROI - SERVICE SUIVI BLESSURES
 // ============================================
 // Gestion des blessures et suivi EVA
 

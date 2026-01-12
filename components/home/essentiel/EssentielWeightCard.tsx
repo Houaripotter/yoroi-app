@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
-import { TrendingUp, TrendingDown, Minus, Target, BarChart3 } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, Target, BarChart3, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 
@@ -70,6 +70,34 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
   const chartData = weekData.length > 0 ? weekData.slice(0, 7) : [];
   const labels = weekLabels.slice(0, chartData.length);
   const hasData = chartData.length > 0;
+
+  // Prédiction basée sur la tendance
+  const getPrediction = () => {
+    if (chartData.length < 3 || !currentWeight) return null;
+
+    const firstWeight = chartData[0];
+    const lastWeight = chartData[chartData.length - 1];
+    const days = chartData.length;
+    const dailyChange = (lastWeight - firstWeight) / days;
+
+    if (Math.abs(dailyChange) < 0.01) return null;
+
+    const prediction7Days = currentWeight + (dailyChange * 7);
+
+    let daysToTarget = null;
+    if (objective && currentWeight && Math.abs(objective - currentWeight) > 0.1) {
+      const remaining = objective - currentWeight;
+      daysToTarget = Math.round(remaining / dailyChange);
+      if (daysToTarget < 0 || daysToTarget > 365) daysToTarget = null;
+    }
+
+    return {
+      weight7Days: prediction7Days,
+      dailyChange,
+      daysToTarget,
+    };
+  };
+  const prediction = getPrediction();
 
   // Générer le path pour la courbe
   const generateCurvePath = () => {
@@ -156,6 +184,28 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
           </View>
         )}
       </View>
+
+      {/* Prédiction */}
+      {prediction && (
+        <View style={[styles.predictionBanner, {
+          backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+          borderColor: isDark ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.2)',
+        }]}>
+          <Sparkles size={16} color="#8B5CF6" strokeWidth={2} />
+          <View style={styles.predictionTextContainer}>
+            <Text style={[styles.predictionTitle, { color: colors.textPrimary }]}>
+              Prédiction
+            </Text>
+            <Text style={[styles.predictionText, { color: colors.textSecondary }]}>
+              {prediction.daysToTarget && prediction.daysToTarget > 0 ? (
+                `Objectif atteint dans ${prediction.daysToTarget} jour${prediction.daysToTarget > 1 ? 's' : ''}`
+              ) : (
+                `${prediction.weight7Days.toFixed(1)} kg dans 7 jours`
+              )}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Graphique */}
       {hasData && (
@@ -381,5 +431,29 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  predictionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  predictionTextContainer: {
+    flex: 1,
+    gap: 2,
+  },
+  predictionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  predictionText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

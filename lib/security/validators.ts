@@ -533,7 +533,7 @@ export async function safeOpenURL(url: string): Promise<boolean> {
 
   if (!validation.valid) {
     if (__DEV__) {
-      console.warn('🚨 safeOpenURL - URL rejetée:', url, validation.error);
+      // URL rejetée pour raisons de sécurité
     }
     return false;
   }
@@ -545,7 +545,7 @@ export async function safeOpenURL(url: string): Promise<boolean> {
       return true;
     } else {
       if (__DEV__) {
-        console.warn('🚨 safeOpenURL - Impossible d\'ouvrir:', url);
+        // Impossible d'ouvrir l'URL
       }
       return false;
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTrainings } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
+import { getGlobalGoalStats } from '@/lib/trainingGoalsService';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -12,6 +13,8 @@ export interface YearStats {
   totalDays: number;              // Jours UNIQUES avec training
   totalDaysInYear: number;        // 365 ou 366
   percentage: number;             // Progression %
+  weeklyGoal: number;             // Objectif hebdo total de l'utilisateur
+  yearlyGoal: number;             // Objectif annuel (weeklyGoal * 52)
   activityBreakdown: Array<{      // Top 5 clubs
     clubName: string;
     clubLogo?: any;                // Source du logo (require ou {uri})
@@ -167,7 +170,7 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
       yearStart.setHours(0, 0, 0, 0);
 
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setHours(23, 59, 59, 999); // Fin de journée pour inclure toutes les séances d'aujourd'hui
 
       const yearEnd = new Date(targetYear, 11, 31, 23, 59, 59); // 31 décembre
       const isCurrentYear = targetYear === today.getFullYear();
@@ -249,12 +252,26 @@ export const useYearStats = (year?: number): { stats: YearStats | null; isLoadin
         };
       }
 
+      // 6. RÉCUPÉRER L'OBJECTIF HEBDOMADAIRE TOTAL
+      let weeklyGoal = 4; // Valeur par défaut
+      try {
+        const goalStats = await getGlobalGoalStats();
+        if (goalStats.totalWeeklyTarget > 0) {
+          weeklyGoal = goalStats.totalWeeklyTarget;
+        }
+      } catch (e) {
+        // Si pas d'objectifs définis, utiliser la valeur par défaut
+      }
+      const yearlyGoal = weeklyGoal * 52;
+
       // Construire les stats finales
       const yearStats: YearStats = {
         year: targetYear,
         totalDays,
         totalDaysInYear,
         percentage: Math.round(percentage * 10) / 10, // 1 décimale
+        weeklyGoal,
+        yearlyGoal,
         activityBreakdown,
         bestStreak,
         currentStreak,

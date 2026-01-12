@@ -83,7 +83,7 @@ export const PARTNER_COACHES: Coach[] = [
     instagram: '@ludocoach_marseille',
     instagramUrl: 'https://instagram.com/ludocoach_marseille',
     imageUrl: require('../assets/partenaires/coachs/ludovicfontaine.png'),
-    featured: true,
+    featured: false,
     rating: 5,
     bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !',
     phone: '06.42.19.74.80',

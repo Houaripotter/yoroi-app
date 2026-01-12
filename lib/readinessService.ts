@@ -45,18 +45,18 @@ export const calculateReadinessScore = async (
     ]);
 
     // Score Sommeil (0-100)
-    let sleepScore = 50;
+    let sleepScore = 0;
     if (sleepStats) {
       const debtImpact = Math.max(0, 50 - sleepStats.sleepDebtHours * 5);
       const qualityImpact = sleepStats.averageQuality * 10;
       const durationImpact = Math.min(30, (sleepStats.lastNightDuration / 480) * 30);
       sleepScore = debtImpact * 0.4 + qualityImpact * 0.3 + durationImpact * 0.3;
     }
-    const sleepImpact: 'positive' | 'neutral' | 'negative' = 
+    const sleepImpact: 'positive' | 'neutral' | 'negative' =
       sleepScore >= 70 ? 'positive' : sleepScore >= 40 ? 'neutral' : 'negative';
 
     // Score Charge (0-100)
-    let chargeScore = 50;
+    let chargeScore = 0;
     if (loadStats) {
       const loadRatio = loadStats.totalLoad / 2000;
       if (loadRatio < 0.75) chargeScore = 80; // Zone optimale

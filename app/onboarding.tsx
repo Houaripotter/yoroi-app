@@ -67,6 +67,20 @@ const isLightColor = (hexColor: string): boolean => {
 
 const { width, height } = Dimensions.get('window');
 
+// Responsive scaling basé sur l'iPhone 14 (390px)
+const baseWidth = 390;
+const scale = width / baseWidth;
+const normalize = (size: number) => Math.round(size * scale);
+const moderateScale = (size: number, factor = 0.5) => Math.round(size + (scale - 1) * factor * size);
+
+// Tailles responsive
+const ICON_SIZES = {
+  small: moderateScale(60),
+  medium: moderateScale(110),
+  large: moderateScale(130),
+  xlarge: moderateScale(180),
+};
+
 interface Highlight {
   icon: React.ReactNode;
   text: string;
