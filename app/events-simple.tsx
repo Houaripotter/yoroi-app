@@ -357,7 +357,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'monde' ? '#000000' : colors.text },
+              { color: selectedLocation === 'monde' ? colors.textOnAccent : colors.text },
             ]}
           >
             🌍 Monde ({eventCounts.monde})
@@ -380,7 +380,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'europe' ? '#000000' : colors.text },
+              { color: selectedLocation === 'europe' ? colors.textOnAccent : colors.text },
             ]}
           >
             🇪🇺 Europe ({eventCounts.europe})
@@ -403,7 +403,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'france' ? '#000000' : colors.text },
+              { color: selectedLocation === 'france' ? colors.textOnAccent : colors.text },
             ]}
           >
             🇫🇷 France ({eventCounts.france})
@@ -429,7 +429,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'all' ? '#000000' : colors.text },
+              { color: selectedCategory === 'all' ? colors.textOnAccent : colors.text },
             ]}
           >
             Tous ({eventCounts.all})
@@ -452,7 +452,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'combat' ? '#000000' : colors.text },
+              { color: selectedCategory === 'combat' ? colors.textOnAccent : colors.text },
             ]}
           >
             Combat ({eventCounts.combat})
@@ -475,7 +475,7 @@ export default function EventsSimpleScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'endurance' ? '#000000' : colors.text },
+              { color: selectedCategory === 'endurance' ? colors.textOnAccent : colors.text },
             ]}
           >
             Endurance ({eventCounts.endurance})

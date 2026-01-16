@@ -618,7 +618,7 @@ export default function VictoryShareModal({
                 >
                   <Text style={[
                     styles.templateBtnText,
-                    { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+                    { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
                   ]}>
                     {label}
                   </Text>

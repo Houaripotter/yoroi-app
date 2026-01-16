@@ -264,7 +264,7 @@ export default function WeeklyRecapV2Screen() {
             >
               <Text style={[
                 styles.templateBtnText,
-                { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+                { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
               ]}>
                 {label}
               </Text>
@@ -283,8 +283,8 @@ export default function WeeklyRecapV2Screen() {
                 style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
                 onPress={takePhoto}
               >
-                <Camera size={20} color="#000000" />
-                <Text style={[styles.photoPickerBtnText, { color: '#000000' }]}>Photo</Text>
+                <Camera size={20} color={colors.textOnAccent} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}

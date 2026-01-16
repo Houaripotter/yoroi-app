@@ -59,6 +59,12 @@ export default function HydrationScreen() {
   const [goalInput, setGoalInput] = useState('2.5');
   const [history, setHistory] = useState<DayData[]>([]);
 
+  // Toast notification (comme Apple Watch)
+  const [showToast, setShowToast] = useState(false);
+  const [lastAmount, setLastAmount] = useState(0);
+  const [animateBubbles, setAnimateBubbles] = useState(false);
+  const toastAnim = useRef(new Animated.Value(0)).current;
+
   // Notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
@@ -168,6 +174,32 @@ export default function HydrationScreen() {
     const newAmount = Math.max(0, currentAmount + amountL);
     setCurrentAmount(newAmount);
     saveAmount(newAmount);
+
+    // Afficher le toast (comme sur Apple Watch)
+    const amountMl = Math.round(amountL * 1000);
+    setLastAmount(amountMl);
+    setShowToast(true);
+
+    // Animation des bulles si on ajoute de l'eau
+    if (amountL > 0) {
+      setAnimateBubbles(true);
+      setTimeout(() => setAnimateBubbles(false), 500);
+    }
+
+    // Animation du toast
+    Animated.sequence([
+      Animated.timing(toastAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1200),
+      Animated.timing(toastAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowToast(false));
   };
 
   const handleToggleNotifications = async (value: boolean) => {
@@ -249,23 +281,14 @@ export default function HydrationScreen() {
       >
         {/* Grande bouteille animée */}
         <Animated.View style={[styles.bottleCard, { backgroundColor: colors.backgroundCard, transform: [{ scale: scaleAnim }] }]}>
-          {/* Nouvelle bouteille animée avec vagues et bulles */}
+          {/* Bouteille animée avec vagues et bulles (comme Apple Watch) */}
           <AnimatedWaterBottle
-            fillPercentage={percentage}
+            fillPercentage={percentage / 100}
             width={140}
             height={220}
             color="#0EA5E9"
-            showBubbles={true}
+            showBubbles={animateBubbles}
           />
-
-          {/* Graduations labels sur le côté */}
-          <View style={styles.graduationLabels}>
-            {[0.75, 0.5, 0.25].map((ratio) => (
-              <Text key={ratio} style={[styles.gradLabelSide, { color: '#0EA5E9' }]}>
-                {(goal * ratio).toFixed(1)}L
-              </Text>
-            ))}
-          </View>
 
           {/* Valeur centrale */}
           <View style={styles.valueOverlay}>
@@ -281,6 +304,42 @@ export default function HydrationScreen() {
               <Check size={20} color="#FFFFFF" />
               <Text style={styles.successText}>Objectif atteint !</Text>
             </View>
+          )}
+
+          {/* Toast notification (comme Apple Watch) */}
+          {showToast && (
+            <Animated.View
+              style={[
+                styles.toast,
+                {
+                  backgroundColor: isDark ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
+                  opacity: toastAnim,
+                  transform: [{
+                    translateY: toastAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-20, 0],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              <View style={[
+                styles.toastIcon,
+                { backgroundColor: lastAmount > 0 ? '#10B98120' : '#EF444420' }
+              ]}>
+                {lastAmount > 0 ? (
+                  <Check size={16} color="#10B981" strokeWidth={3} />
+                ) : (
+                  <Minus size={16} color="#EF4444" strokeWidth={3} />
+                )}
+              </View>
+              <Text style={[
+                styles.toastText,
+                { color: lastAmount > 0 ? '#10B981' : '#EF4444' }
+              ]}>
+                {lastAmount > 0 ? `+${lastAmount}ml` : `${lastAmount}ml`}
+              </Text>
+            </Animated.View>
           )}
         </Animated.View>
 
@@ -660,18 +719,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     position: 'relative',
-  },
-  graduationLabels: {
-    position: 'absolute',
-    right: 30,
-    top: 60,
-    height: 180,
-    justifyContent: 'space-around',
-  },
-  gradLabelSide: {
-    fontSize: 11,
-    fontWeight: '700',
-    opacity: 0.6,
+    overflow: 'hidden',
   },
   valueOverlay: {
     alignItems: 'center',
@@ -700,6 +748,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
+  },
+  toast: {
+    position: 'absolute',
+    top: 10,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  toastIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toastText: {
+    fontSize: 16,
+    fontWeight: '800',
   },
   buttonsCard: {
     borderRadius: 20,

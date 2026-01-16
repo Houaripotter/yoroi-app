@@ -1297,13 +1297,13 @@ export default function MoreScreen() {
                     >
                       <Icon
                         size={20}
-                        color={isActive ? '#000000' : colors.textPrimary}
+                        color={isActive ? colors.textOnAccent : colors.textPrimary}
                       />
                       <Text
                         style={[
                           styles.modeLabel,
                           {
-                            color: isActive ? '#000000' : colors.textPrimary,
+                            color: isActive ? colors.textOnAccent : colors.textPrimary,
                             fontWeight: isActive ? '700' : '500',
                           },
                         ]}

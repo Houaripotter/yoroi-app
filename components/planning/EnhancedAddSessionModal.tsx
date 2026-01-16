@@ -591,13 +591,13 @@ export function EnhancedAddSessionModal({
                       <Text
                         style={[
                           styles.typeButtonText,
-                          { color: isSelected ? '#000000' : colors.textPrimary },
+                          { color: isSelected ? colors.textOnAccent : colors.textPrimary },
                         ]}
                       >
                         {type.label}
                       </Text>
                       {isSelected && (
-                        <Check size={14} color="#000000" style={{ marginLeft: 4 }} />
+                        <Check size={14} color={colors.textOnAccent} style={{ marginLeft: 4 }} />
                       )}
                     </TouchableOpacity>
                   );
@@ -635,7 +635,7 @@ export function EnhancedAddSessionModal({
                           <Text
                             style={[
                               styles.tagText,
-                              { color: isSelected ? '#000000' : colors.textPrimary },
+                              { color: isSelected ? colors.textOnAccent : colors.textPrimary },
                             ]}
                           >
                             {muscle.label}
@@ -643,7 +643,7 @@ export function EnhancedAddSessionModal({
                           {isSelected && (
                             <Check
                               size={14}
-                              color="#000000"
+                              color={colors.textOnAccent}
                               style={{ marginLeft: 4 }}
                             />
                           )}

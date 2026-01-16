@@ -6,12 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useLocalSearchParams } from 'expo-router';
 import { StatsTabViewNew } from '@/components/stats/StatsTabViewNew';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 export default function StatsScreen() {
   const { colors } = useTheme();
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Vérifier si c'est la première visite
@@ -32,7 +34,7 @@ export default function StatsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatsTabViewNew />
+      <StatsTabViewNew initialTab={tab} />
 
       {/* Tutoriel de découverte */}
       {showTutorial && (

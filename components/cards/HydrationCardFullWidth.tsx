@@ -1,15 +1,15 @@
 // ============================================
-// HYDRATION CARD - Pleine Largeur Premium avec Animations
+// HYDRATION CARD - Style Apple Watch avec Animation
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { Droplets, Plus, Minus, Settings, Target } from 'lucide-react-native';
+import { Droplets, Plus, Minus, Settings, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import AnimatedCounter from '@/components/AnimatedCounter';
 import { router } from 'expo-router';
+import Svg, { Path, Defs, ClipPath, LinearGradient as SvgGradient, Stop, Circle } from 'react-native-svg';
 
 interface HydrationCardFullWidthProps {
   currentMl?: number;
@@ -24,115 +24,179 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const percentage = Math.min((currentMl / goalMl) * 100, 100);
-  const remaining = Math.max(goalMl - currentMl, 0);
 
-  // Animations bouteille
-  const BOTTLE_HEIGHT = 140;
-  const waterHeight = (percentage / 100) * BOTTLE_HEIGHT;
-  const waveAnim = useRef(new Animated.Value(0)).current;
-  const waterHeightAnim = useRef(new Animated.Value(waterHeight)).current;
-  const pourAnim = useRef(new Animated.Value(0)).current;
-  const capRotateAnim = useRef(new Animated.Value(0)).current;
-  const [isPouringWater, setIsPouringWater] = useState(false);
+  // Toast state (comme Apple Watch)
+  const [showToast, setShowToast] = useState(false);
+  const [lastAmount, setLastAmount] = useState(0);
+  const toastAnim = useRef(new Animated.Value(0)).current;
 
   // Animation vague
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  const [waveOffset, setWaveOffset] = useState(0);
+  const [showBubbles, setShowBubbles] = useState(false);
+  const [bubbles, setBubbles] = useState<Array<{id: number, x: number, y: number, size: number}>>([]);
+
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(waveAnim, {
-          toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(waveAnim, {
-          toValue: 0,
-          duration: 2500,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    const animation = Animated.loop(
+      Animated.timing(waveAnim, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      })
+    );
+    animation.start();
+
+    const listener = waveAnim.addListener(({ value }) => {
+      setWaveOffset(value * Math.PI * 2);
+    });
+
+    return () => {
+      animation.stop();
+      waveAnim.removeListener(listener);
+    };
   }, []);
 
-  // Animer la hauteur de l'eau
+  // Générer bulles
   useEffect(() => {
-    Animated.spring(waterHeightAnim, {
-      toValue: waterHeight,
-      tension: 40,
-      friction: 8,
-      useNativeDriver: false,
-    }).start();
-  }, [currentMl, goalMl]);
-
-  // Animation de versement avec bouchon
-  const triggerPourAnimation = () => {
-    setIsPouringWater(true);
-    pourAnim.setValue(0);
-    capRotateAnim.setValue(0);
-
-    Animated.parallel([
-      Animated.timing(capRotateAnim, {
-        toValue: 1,
-        duration: 400,
-        easing: Easing.out(Easing.back(1.2)),
-        useNativeDriver: true,
-      }),
-      Animated.sequence([
-        Animated.delay(300),
-        Animated.timing(pourAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ])
-    ]).start(() => {
-      Animated.timing(capRotateAnim, {
-        toValue: 0,
-        duration: 400,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }).start(() => {
-        setIsPouringWater(false);
-      });
-    });
-  };
+    if (showBubbles && percentage > 5) {
+      const newBubbles = Array.from({ length: 5 }, (_, i) => ({
+        id: Date.now() + i,
+        x: 20 + Math.random() * 40,
+        y: 80 + Math.random() * 40,
+        size: 3 + Math.random() * 4,
+      }));
+      setBubbles(newBubbles);
+      setTimeout(() => setBubbles([]), 600);
+    }
+  }, [showBubbles]);
 
   const handleAdd = (amount: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Afficher le toast
+    setLastAmount(amount);
+    setShowToast(true);
+
+    // Bulles si ajout
     if (amount > 0) {
-      triggerPourAnimation();
+      setShowBubbles(true);
+      setTimeout(() => setShowBubbles(false), 100);
     }
+
+    // Animation toast
+    Animated.sequence([
+      Animated.timing(toastAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1200),
+      Animated.timing(toastAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowToast(false));
+
     onAddMl?.(amount);
   };
 
-  // Générer les graduations intelligemment en fonction de l'objectif
+  // Bouteille dimensions
+  const bottleWidth = 80;
+  const bottleHeight = 130;
+  const neckWidth = bottleWidth * 0.35;
+  const neckHeight = bottleHeight * 0.1;
+  const neckX = (bottleWidth - neckWidth) / 2;
+  const cornerRadius = bottleWidth * 0.12;
+
+  const bottlePath = `
+    M ${neckX} ${neckHeight}
+    L ${neckX} 2
+    Q ${neckX} 0 ${neckX + 3} 0
+    L ${neckX + neckWidth - 3} 0
+    Q ${neckX + neckWidth} 0 ${neckX + neckWidth} 2
+    L ${neckX + neckWidth} ${neckHeight}
+    Q ${bottleWidth} ${neckHeight} ${bottleWidth - cornerRadius} ${neckHeight + cornerRadius}
+    L ${bottleWidth - cornerRadius} ${bottleHeight - cornerRadius}
+    Q ${bottleWidth - cornerRadius} ${bottleHeight} ${bottleWidth - cornerRadius * 2} ${bottleHeight}
+    L ${cornerRadius * 2} ${bottleHeight}
+    Q ${cornerRadius} ${bottleHeight} ${cornerRadius} ${bottleHeight - cornerRadius}
+    L ${cornerRadius} ${neckHeight + cornerRadius}
+    Q 0 ${neckHeight} ${neckX} ${neckHeight}
+    Z
+  `;
+
+  // Water path
+  const clampedFill = Math.min(Math.max(percentage / 100, 0), 1);
+  const bodyHeight = bottleHeight - neckHeight;
+  const waterFillHeight = bodyHeight * clampedFill;
+  const waterTopY = bottleHeight - waterFillHeight;
+
+  const generateWaterPath = () => {
+    if (clampedFill <= 0) return '';
+    let path = `M 0 ${bottleHeight} L 0 ${waterTopY}`;
+    for (let x = 0; x <= bottleWidth; x += 2) {
+      const y = waterTopY + Math.sin((x / bottleWidth) * Math.PI * 2 + waveOffset) * 3;
+      path += ` L ${x} ${y}`;
+    }
+    path += ` L ${bottleWidth} ${bottleHeight} Z`;
+    return path;
+  };
+
+  // Graduations
   const getGraduations = () => {
     const goalL = goalMl / 1000;
-
-    if (goalL <= 2) {
-      return [0.5, 1, 1.5, 2];
-    } else if (goalL <= 2.5) {
-      return [0.5, 1, 1.5, 2, 2.5];
-    } else if (goalL <= 3) {
-      return [0.5, 1, 1.5, 2, 2.5, 3];
-    } else if (goalL <= 3.5) {
-      return [0.5, 1, 1.5, 2, 2.5, 3, 3.5];
-    } else if (goalL <= 4) {
-      return [1, 2, 3, 4];
-    } else {
-      return [1, 2, 3, 4, 5];
-    }
+    if (goalL <= 2) return [0.5, 1, 1.5, 2];
+    if (goalL <= 2.5) return [0.5, 1, 1.5, 2, 2.5];
+    if (goalL <= 3) return [0.5, 1, 1.5, 2, 2.5, 3];
+    if (goalL <= 3.5) return [0.5, 1, 1.5, 2, 2.5, 3, 3.5];
+    return [1, 2, 3, 4];
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
+      {/* Toast notification (comme Apple Watch) */}
+      {showToast && (
+        <Animated.View
+          style={[
+            styles.toast,
+            {
+              backgroundColor: isDark ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.98)',
+              opacity: toastAnim,
+              transform: [{
+                translateY: toastAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              }],
+            },
+          ]}
+        >
+          <View style={[
+            styles.toastIcon,
+            { backgroundColor: lastAmount > 0 ? '#10B98120' : '#EF444420' }
+          ]}>
+            {lastAmount > 0 ? (
+              <Check size={14} color="#10B981" strokeWidth={3} />
+            ) : (
+              <Minus size={14} color="#EF4444" strokeWidth={3} />
+            )}
+          </View>
+          <Text style={[
+            styles.toastText,
+            { color: lastAmount > 0 ? '#10B981' : '#EF4444' }
+          ]}>
+            {lastAmount > 0 ? `+${lastAmount}ml` : `${lastAmount}ml`}
+          </Text>
+        </Animated.View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <LinearGradient
-            colors={['#3B82F6', '#2563EB']}
+            colors={['#06B6D4', '#0891B2']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.icon}
@@ -150,20 +214,20 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)' }]}
+          style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)' }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push('/hydration');
           }}
           activeOpacity={0.7}
         >
-          <Settings size={20} color="#3B82F6" strokeWidth={2.5} />
+          <Settings size={20} color="#06B6D4" strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
-      {/* Section horizontale : Métriques à gauche + Bouteille à droite */}
+      {/* Section principale */}
       <View style={styles.contentRow}>
-        {/* Valeur principale et métriques à gauche */}
+        {/* Valeur à gauche */}
         <View style={styles.mainSection}>
           <View style={styles.valueRow}>
             <Text style={[styles.valueLarge, { color: colors.textPrimary }]}>
@@ -171,171 +235,82 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
             </Text>
             <Text style={[styles.unit, { color: colors.textSecondary }]}>L</Text>
           </View>
-
-          <View style={styles.metricsColumn}>
-            <View style={styles.metricItem}>
-              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-                RESTE
-              </Text>
-              <Text style={[styles.metricValue, { color: '#3B82F6' }]}>
-                {(remaining / 1000).toFixed(1)}L
-              </Text>
-            </View>
-
-            <View style={styles.metricItem}>
-              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-                COMPLÉTÉ
-              </Text>
-              <Text style={[styles.metricValue, { color: colors.accent }]}>
-                {percentage.toFixed(0)}%
-              </Text>
-            </View>
-          </View>
         </View>
 
-        {/* Bouteille d'eau animée à droite */}
+        {/* Bouteille style Apple Watch */}
         <TouchableOpacity
           style={styles.bottleContainer}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/hydration');
-          }}
+          onPress={() => router.push('/hydration')}
           activeOpacity={0.7}
         >
-        <View style={styles.bottleWithGraduations}>
-          {/* Graduations à gauche */}
-          <View style={styles.graduationsExternal}>
-            {getGraduations().map((literValue) => {
-              // Position exacte par rapport à la hauteur de la bouteille (140px)
-              // Limiter à 90% de la hauteur (126px) pour garder les graduations dans le corps
-              const pixelsFromBottom = (literValue / (goalMl / 1000)) * 126;
-              return (
-                <View
-                  key={literValue}
-                  style={[styles.graduationRowExternal, { bottom: pixelsFromBottom }]}
-                >
-                  <Text style={[styles.graduationTextExternal, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)' }]}>
-                    {literValue}L
-                  </Text>
-                  <View
-                    style={[
-                      styles.graduationLineExternal,
-                      {
-                        backgroundColor: isDark ? '#FFFFFF' : '#000000',
-                        opacity: isDark ? 0.5 : 0.4,
-                      },
-                    ]}
+          <View style={styles.bottleWithGraduations}>
+            {/* Graduations */}
+            <View style={styles.graduations}>
+              {getGraduations().map((literValue) => {
+                // Position alignée avec le niveau d'eau
+                const ratio = literValue / (goalMl / 1000);
+                const posY = bottleHeight - (ratio * bodyHeight);
+                if (posY < neckHeight + 5 || posY > bottleHeight - 5) return null;
+                return (
+                  <View key={literValue} style={[styles.gradRow, { top: posY }]}>
+                    <Text style={[styles.gradText, { color: colors.textMuted }]}>
+                      {literValue}L
+                    </Text>
+                    <View style={[styles.gradLine, { backgroundColor: colors.textMuted }]} />
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Bouteille SVG */}
+            <View style={{ width: bottleWidth, height: bottleHeight }}>
+              <Svg width={bottleWidth} height={bottleHeight} viewBox={`0 0 ${bottleWidth} ${bottleHeight}`}>
+                <Defs>
+                  <SvgGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor="#06B6D4" stopOpacity="1" />
+                    <Stop offset="1" stopColor="#06B6D4" stopOpacity="0.5" />
+                  </SvgGradient>
+                  <ClipPath id="bottleClip">
+                    <Path d={bottlePath} />
+                  </ClipPath>
+                </Defs>
+
+                {/* Fond bouteille */}
+                <Path d={bottlePath} fill={`${isDark ? '#06B6D4' : '#06B6D4'}10`} />
+
+                {/* Eau */}
+                {clampedFill > 0 && (
+                  <Path
+                    d={generateWaterPath()}
+                    fill="url(#waterGrad)"
+                    clipPath="url(#bottleClip)"
                   />
-                </View>
-              );
-            })}
+                )}
+
+                {/* Bulles */}
+                {bubbles.map(b => (
+                  <Circle key={b.id} cx={b.x} cy={b.y} r={b.size} fill="white" opacity={0.6} />
+                ))}
+
+                {/* Contour */}
+                <Path d={bottlePath} fill="none" stroke="#06B6D4" strokeWidth={2.5} opacity={0.5} />
+              </Svg>
+            </View>
           </View>
-
-          <View style={styles.bottleWrapper}>
-            {/* Bouchon */}
-            <Animated.View style={[
-              styles.bottleCap,
-              {
-                transform: [
-                  {
-                    translateY: capRotateAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, -15]
-                    })
-                  }
-                ]
-              }
-            ]} />
-
-            {/* Goulot */}
-            <View style={styles.bottleNeck} />
-
-            {/* Corps de la bouteille */}
-            <View style={styles.bottleBody}>
-
-            {/* Eau qui monte */}
-            <Animated.View
-              style={[
-                styles.waterLevel,
-                {
-                  height: waterHeightAnim,
-                }
-              ]}
-            >
-              {/* Vague au sommet */}
-              {percentage > 0 && (
-                <Animated.View style={[
-                  styles.waterWave,
-                  {
-                    transform: [{
-                      translateX: waveAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-8, 8]
-                      })
-                    }],
-                  }
-                ]} />
-              )}
-
-              {/* Bulles montantes */}
-              {isPouringWater && (
-                <>
-                  <Animated.View style={[
-                    styles.bubble,
-                    { left: '25%', bottom: '20%' },
-                    {
-                      transform: [{
-                        translateY: pourAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, -50]
-                        })
-                      }],
-                      opacity: pourAnim.interpolate({
-                        inputRange: [0, 0.3, 0.8, 1],
-                        outputRange: [0, 1, 0.5, 0]
-                      })
-                    }
-                  ]}>
-                    <View style={styles.bubbleCircle} />
-                  </Animated.View>
-                  <Animated.View style={[
-                    styles.bubble,
-                    { left: '60%', bottom: '30%' },
-                    {
-                      transform: [{
-                        translateY: pourAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [5, -55]
-                        })
-                      }],
-                      opacity: pourAnim.interpolate({
-                        inputRange: [0, 0.2, 0.7, 1],
-                        outputRange: [0, 1, 0.5, 0]
-                      })
-                    }
-                  ]}>
-                    <View style={[styles.bubbleCircle, { width: 8, height: 8 }]} />
-                  </Animated.View>
-                </>
-              )}
-            </Animated.View>
-          </View>
-        </View>
-        </View>
         </TouchableOpacity>
       </View>
 
       {/* Progress Bar */}
       <View style={[styles.progressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
         <LinearGradient
-          colors={['#3B82F6', '#2563EB']}
+          colors={['#06B6D4', '#0891B2']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.progressFill, { width: `${percentage}%` }]}
         />
       </View>
 
-      {/* Boutons d'action */}
+      {/* Boutons */}
       <View style={styles.actionsRow}>
         <TouchableOpacity
           style={[styles.actionButtonSmall, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)' }]}
@@ -346,21 +321,21 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)' }]}
+          style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)' }]}
           onPress={() => handleAdd(250)}
           activeOpacity={0.7}
         >
-          <Plus size={18} color="#3B82F6" strokeWidth={2.5} />
-          <Text style={[styles.actionText, { color: '#3B82F6' }]}>250ml</Text>
+          <Plus size={18} color="#06B6D4" strokeWidth={2.5} />
+          <Text style={[styles.actionText, { color: '#06B6D4' }]}>250ml</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)' }]}
+          style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)' }]}
           onPress={() => handleAdd(500)}
           activeOpacity={0.7}
         >
-          <Plus size={18} color="#3B82F6" strokeWidth={2.5} />
-          <Text style={[styles.actionText, { color: '#3B82F6' }]}>500ml</Text>
+          <Plus size={18} color="#06B6D4" strokeWidth={2.5} />
+          <Text style={[styles.actionText, { color: '#06B6D4' }]}>500ml</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -385,6 +360,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  toast: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+    zIndex: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  toastIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toastText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
   header: {
     flexDirection: 'row',
@@ -414,18 +419,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-    borderRadius: 8,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
   settingsButton: {
     width: 40,
     height: 40,
@@ -442,13 +435,11 @@ const styles = StyleSheet.create({
   },
   mainSection: {
     flex: 1,
-    minWidth: 0,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 5,
-    marginBottom: 10,
   },
   valueLarge: {
     fontSize: 40,
@@ -459,129 +450,34 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  metricsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metricsColumn: {
-    flexDirection: 'column',
-    gap: 8,
-  },
-  metricItem: {
-    flex: 1,
-  },
-  metricLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 3,
-  },
-  metricValue: {
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  metricDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginHorizontal: 12,
-  },
   bottleContainer: {
     alignItems: 'flex-end',
-    justifyContent: 'center',
-    maxWidth: 140,
   },
   bottleWithGraduations: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'flex-end',
   },
-  graduationsExternal: {
-    height: 126,
-    width: 45,
-    justifyContent: 'flex-start',
+  graduations: {
+    height: 130,
+    width: 40,
     position: 'relative',
-    marginRight: -2,
-    marginBottom: 7,
+    marginRight: 4,
   },
-  graduationRowExternal: {
+  gradRow: {
     position: 'absolute',
-    left: 0,
     right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 2,
+    gap: 3,
   },
-  graduationTextExternal: {
-    fontSize: 10,
+  gradText: {
+    fontSize: 9,
     fontWeight: '700',
   },
-  graduationLineExternal: {
-    width: 8,
-    height: 2,
-  },
-  bottleWrapper: {
-    alignItems: 'center',
-  },
-  bottleCap: {
-    width: 40,
-    height: 12,
-    backgroundColor: '#3B82F6',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    zIndex: 10,
-  },
-  bottleNeck: {
-    width: 32,
-    height: 10,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderLeftWidth: 3,
-    borderRightWidth: 3,
-    borderColor: '#3B82F6',
-  },
-  bottleBody: {
-    width: 80,
-    height: 140,
-    borderWidth: 3,
-    borderColor: '#3B82F6',
-    borderRadius: 12,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  waterLevel: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#3B82F6',
-    opacity: 0.9,
-    overflow: 'visible',
-  },
-  waterWave: {
-    position: 'absolute',
-    top: -5,
-    left: -8,
-    right: -8,
-    height: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-    borderRadius: 50,
-  },
-  bubble: {
-    position: 'absolute',
-  },
-  bubbleCircle: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.9)',
+  gradLine: {
+    width: 6,
+    height: 1.5,
+    opacity: 0.4,
   },
   progressBar: {
     height: 8,

@@ -390,7 +390,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'monde' ? '#000000' : colors.text },
+              { color: selectedLocation === 'monde' ? colors.textOnAccent : colors.text },
             ]}
           >
             🌍 Monde ({eventCounts.monde})
@@ -413,7 +413,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'europe' ? '#000000' : colors.text },
+              { color: selectedLocation === 'europe' ? colors.textOnAccent : colors.text },
             ]}
           >
             🇪🇺 Europe ({eventCounts.europe})
@@ -436,7 +436,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.locationFilterText,
-              { color: selectedLocation === 'france' ? '#000000' : colors.text },
+              { color: selectedLocation === 'france' ? colors.textOnAccent : colors.text },
             ]}
           >
             🇫🇷 France ({eventCounts.france})
@@ -462,7 +462,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'all' ? '#000000' : colors.text },
+              { color: selectedCategory === 'all' ? colors.textOnAccent : colors.text },
             ]}
           >
             Tous ({eventCounts.all})
@@ -485,7 +485,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'combat' ? '#000000' : colors.text },
+              { color: selectedCategory === 'combat' ? colors.textOnAccent : colors.text },
             ]}
           >
             Combat ({eventCounts.combat})
@@ -508,7 +508,7 @@ export default function EventsScreen() {
           <Text
             style={[
               styles.categoryFilterText,
-              { color: selectedCategory === 'endurance' ? '#000000' : colors.text },
+              { color: selectedCategory === 'endurance' ? colors.textOnAccent : colors.text },
             ]}
           >
             Endurance ({eventCounts.endurance})
@@ -535,7 +535,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'all' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'all' ? colors.textOnAccent : colors.text },
               ]}
             >
               Tout Combat ({eventCounts.combat})
@@ -558,7 +558,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'jjb' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'jjb' ? colors.textOnAccent : colors.text },
               ]}
             >
               JJB ({eventCounts.jjb})
@@ -581,7 +581,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'grappling' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'grappling' ? colors.textOnAccent : colors.text },
               ]}
             >
               Grappling ({eventCounts.grappling})
@@ -608,7 +608,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'all' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'all' ? colors.textOnAccent : colors.text },
               ]}
             >
               Tout Endurance ({eventCounts.endurance})
@@ -631,7 +631,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'hyrox' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'hyrox' ? colors.textOnAccent : colors.text },
               ]}
             >
               Hyrox ({eventCounts.hyrox})
@@ -654,7 +654,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'marathon' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'marathon' ? colors.textOnAccent : colors.text },
               ]}
             >
               Marathon ({eventCounts.marathon})
@@ -677,7 +677,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'running' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'running' ? colors.textOnAccent : colors.text },
               ]}
             >
               Running ({eventCounts.running})
@@ -700,7 +700,7 @@ export default function EventsScreen() {
             <Text
               style={[
                 styles.sportFilterText,
-                { color: selectedSportTag === 'trail' ? '#000000' : colors.text },
+                { color: selectedSportTag === 'trail' ? colors.textOnAccent : colors.text },
               ]}
             >
               Trail ({eventCounts.trail})

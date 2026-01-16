@@ -184,7 +184,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   <Text
                     style={[
                       styles.periodButtonText,
-                      { color: selectedPeriod === period ? '#000000' : colors.textPrimary },
+                      { color: selectedPeriod === period ? colors.textOnAccent : colors.textPrimary },
                     ]}
                   >
                     {period === 'all' ? 'Tout' : period}

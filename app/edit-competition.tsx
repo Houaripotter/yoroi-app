@@ -430,7 +430,7 @@ export default function EditCompetitionScreen() {
                     <Text
                       style={[
                         styles.categoryName,
-                        { color: isSelected ? '#000000' : colors.textPrimary },
+                        { color: isSelected ? colors.textOnAccent : colors.textPrimary },
                       ]}
                     >
                       {category.name}
@@ -440,7 +440,7 @@ export default function EditCompetitionScreen() {
                         styles.categoryWeight,
                         {
                           color: isSelected
-                            ? 'rgba(0, 0, 0, 0.7)'
+                            ? colors.textOnAccent + 'B3'
                             : colors.textMuted,
                         },
                       ]}

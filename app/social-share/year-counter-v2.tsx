@@ -308,7 +308,7 @@ export default function YearCounterV2Screen() {
               >
                 <Text style={[
                   styles.templateBtnText,
-                  { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+                  { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
                 ]}>
                   {label}
                 </Text>
@@ -327,8 +327,8 @@ export default function YearCounterV2Screen() {
                   style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
                   onPress={takePhoto}
                 >
-                  <Camera size={20} color="#000000" />
-                  <Text style={[styles.photoPickerBtnText, { color: '#000000' }]}>Photo</Text>
+                  <Camera size={20} color={colors.textOnAccent} />
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
@@ -367,11 +367,11 @@ export default function YearCounterV2Screen() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color="#000000" />
+                <ActivityIndicator color={colors.textOnAccent} />
               ) : (
                 <>
-                  <Share2 size={20} color="#000000" />
-                  <Text style={[styles.shareBtnText, { color: '#000000' }]}>Partager</Text>
+                  <Share2 size={20} color={colors.textOnAccent} />
+                  <Text style={[styles.shareBtnText, { color: colors.textOnAccent }]}>Partager</Text>
                 </>
               )}
             </TouchableOpacity>

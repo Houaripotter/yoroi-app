@@ -109,10 +109,10 @@ export const PlanningTabView: React.FC<PlanningTabViewProps> = (props) => {
                 onPress={() => scrollToPage(index)}
                 activeOpacity={0.7}
               >
-                <Icon size={14} color={isActive ? '#000000' : colors.textMuted} />
+                <Icon size={14} color={isActive ? colors.textOnAccent : colors.textMuted} />
                 <Text style={[
                   styles.tabLabel,
-                  { color: isActive ? '#000000' : colors.textMuted },
+                  { color: isActive ? colors.textOnAccent : colors.textMuted },
                 ]}>
                   {cleanLabel}
                 </Text>

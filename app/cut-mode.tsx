@@ -470,7 +470,7 @@ export default function CutModeScreen() {
                   >
                     <Text style={[
                       styles.sportTabText,
-                      { color: selectedSport === sport ? '#000000' : colors.textMuted },
+                      { color: selectedSport === sport ? colors.textOnAccent : colors.textMuted },
                     ]}>
                       {sport.toUpperCase()}
                     </Text>

@@ -1,13 +1,12 @@
 // ============================================
 // STATS TAB VIEW - 6 onglets avec navigation visible
-// Design avec tabs horizontaux en haut + FAB
+// Design avec tabs horizontaux en haut
 // ============================================
 
-import React, { useRef, useState } from 'react';
-import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Animated } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { PoidsPage } from './pages/PoidsPage';
 import { CompositionPage } from './pages/CompositionPage';
@@ -15,7 +14,7 @@ import { MensurationsPage } from './pages/MensurationsPage';
 import { DisciplinePage } from './pages/DisciplinePage';
 import { PerformancePage } from './pages/PerformancePage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Plus, Scale, Activity, Ruler, Flame, Award, Heart } from 'lucide-react-native';
+import { Scale, Activity, Ruler, Flame, Award, Heart } from 'lucide-react-native';
 import { ShareFloatingButton } from './ShareFloatingButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -30,7 +29,11 @@ const PAGE_DEFS = [
   { id: 'vitalite', titleKey: 'stats.vitality', icon: Heart, component: VitalitePage },
 ];
 
-export const StatsTabViewNew: React.FC = () => {
+interface StatsTabViewNewProps {
+  initialTab?: string;
+}
+
+export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
 
@@ -42,13 +45,28 @@ export const StatsTabViewNew: React.FC = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Calculer si tous les onglets rentrent dans l'écran
   const tabWidth = 44;
   const tabGap = 12;
   const totalTabsWidth = (PAGES.length * (tabWidth + tabGap)) + 32;
   const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
+
+  // Naviguer vers l'onglet initial si spécifié
+  useEffect(() => {
+    if (initialTab) {
+      const tabIndex = PAGE_DEFS.findIndex(p => p.id === initialTab);
+      if (tabIndex >= 0) {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            x: tabIndex * SCREEN_WIDTH,
+            animated: false,
+          });
+          setCurrentPage(tabIndex);
+        }, 100);
+      }
+    }
+  }, [initialTab]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -81,37 +99,6 @@ export const StatsTabViewNew: React.FC = () => {
       animated: true,
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const handleAddPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // Animation du bouton
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.85,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Navigate selon la page actuelle
-    if (currentPage === 0) {
-      router.push('/body-composition');
-    } else if (currentPage === 1) {
-      router.push('/body-composition');
-    } else if (currentPage === 2) {
-      router.push('/measurements-detail');
-    } else if (currentPage === 3 || currentPage === 4) {
-      router.push('/add-training');
-    } else if (currentPage === 5) {
-      router.push('/connected-devices');
-    }
   };
 
   return (
@@ -151,14 +138,14 @@ export const StatsTabViewNew: React.FC = () => {
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? '#000000' : colors.textMuted}
+                    color={isActive ? colors.textOnAccent : colors.textMuted}
                     strokeWidth={2.5}
                   />
                 </View>
                 <Text style={[
                   styles.tabTitle,
                   {
-                    color: isActive ? '#000000' : colors.textMuted,
+                    color: isActive ? colors.accent : colors.textMuted,
                     fontWeight: isActive ? '800' : '600',
                   }
                 ]}>
@@ -210,20 +197,6 @@ export const StatsTabViewNew: React.FC = () => {
           );
         })}
       </ScrollView>
-
-      {/* FAB Button flottant en bas à droite */}
-      <Animated.View style={[styles.fabContainer, { transform: [{ scale: scaleAnim }] }]}>
-        <TouchableOpacity
-          onPress={handleAddPress}
-          activeOpacity={0.85}
-          style={[styles.fabButton, {
-            backgroundColor: colors.accent,
-            shadowColor: colors.accent,
-          }]}
-        >
-          <Plus size={26} color={colors.textOnAccent} strokeWidth={3} />
-        </TouchableOpacity>
-      </Animated.View>
 
       {/* Bouton de partage social flottant en bas à gauche */}
       <ShareFloatingButton />
@@ -288,22 +261,5 @@ const styles = StyleSheet.create({
   page: {
     width: SCREEN_WIDTH,
     minHeight: SCREEN_HEIGHT,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    zIndex: 100,
-  },
-  fabButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
   },
 });

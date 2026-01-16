@@ -345,7 +345,7 @@ export default function HealthMetricsScreen() {
               <Text
                 style={[
                   styles.periodButtonText,
-                  { color: period === 7 ? '#000' : colors.textSecondary },
+                  { color: period === 7 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
                 7 jours
@@ -367,7 +367,7 @@ export default function HealthMetricsScreen() {
               <Text
                 style={[
                   styles.periodButtonText,
-                  { color: period === 30 ? '#000' : colors.textSecondary },
+                  { color: period === 30 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
                 30 jours
@@ -389,7 +389,7 @@ export default function HealthMetricsScreen() {
               <Text
                 style={[
                   styles.periodButtonText,
-                  { color: period === 90 ? '#000' : colors.textSecondary },
+                  { color: period === 90 ? colors.textOnAccent : colors.textSecondary },
                 ]}
               >
                 3 mois
