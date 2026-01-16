@@ -58,7 +58,7 @@ export const ShareableProgressCard = React.forwardRef<View, ShareableProgressCar
         <View style={[styles.statsGrid, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.statItem}>
             <View style={[styles.statIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-              <Target size={20} color={colors.accent} />
+              <Target size={20} color={colors.accentText} />
             </View>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Actuel</Text>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
@@ -72,7 +72,7 @@ export const ShareableProgressCard = React.forwardRef<View, ShareableProgressCar
             <>
               <View style={styles.statItem}>
                 <View style={[styles.statIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-                  <Trophy size={20} color={colors.accent} />
+                  <Trophy size={20} color={colors.accentText} />
                 </View>
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Objectif</Text>
                 <Text style={[styles.statValue, { color: colors.textPrimary }]}>
@@ -110,7 +110,7 @@ export const ShareableProgressCard = React.forwardRef<View, ShareableProgressCar
               <Text style={[styles.progressLabel, { color: colors.textSecondary }]}>
                 Progression
               </Text>
-              <Text style={[styles.progressPercent, { color: colors.accent }]}>
+              <Text style={[styles.progressPercent, { color: colors.accentText }]}>
                 {Math.min(100, progressPercent)}%
               </Text>
             </View>

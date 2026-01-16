@@ -304,7 +304,7 @@ export function HealthTab() {
         activeOpacity={0.8}
       >
         <View style={styles.moreDetailsContent}>
-          <TrendingUp size={20} color={colors.accent} />
+          <TrendingUp size={20} color={colors.accentText} />
           <View style={styles.moreDetailsText}>
             <Text style={[styles.moreDetailsTitle, { color: colors.textPrimary }]}>
               Voir toutes les metriques

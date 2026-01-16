@@ -151,7 +151,7 @@ const EMOM_PRESETS = [10, 15, 20, 30]; // minutes
 
 export default function TimerScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Ronin Mode (mode focus ultra-minimaliste)
   const [isRoninMode, setIsRoninMode] = useState(false);
@@ -1528,7 +1528,7 @@ export default function TimerScreen() {
         {mode === 'amrap' && timerState === 'running' && (
           <View style={[styles.amrapCounter, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
             <Text style={[styles.amrapLabel, { color: colors.textMuted }]}>ROUNDS COMPLETES</Text>
-            <Text style={[styles.amrapCount, { color: colors.accent }]}>{amrapRoundsCompleted}</Text>
+            <Text style={[styles.amrapCount, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>{amrapRoundsCompleted}</Text>
             <TouchableOpacity
               style={[styles.amrapButton, { backgroundColor: colors.accent }]}
               onPress={() => {
@@ -1563,7 +1563,7 @@ export default function TimerScreen() {
         {mode === 'musculation' && (
           <View style={[styles.seriesCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
             <Text style={[styles.seriesLabel, { color: colors.textMuted }]}>SERIES COMPLETEES</Text>
-            <Text style={[styles.seriesCount, { color: colors.accent }]}>{seriesCount}</Text>
+            <Text style={[styles.seriesCount, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>{seriesCount}</Text>
 
             {seriesHistory.length > 0 && (
               <View style={styles.seriesHistoryContainer}>
@@ -1574,7 +1574,7 @@ export default function TimerScreen() {
                         Série {serie.seriesNumber}
                       </Text>
                       {(serie.reps || serie.weight) && (
-                        <Text style={[styles.seriesHistoryReps, { color: colors.accent }]}>
+                        <Text style={[styles.seriesHistoryReps, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
                           {serie.reps} reps × {serie.weight}kg
                         </Text>
                       )}

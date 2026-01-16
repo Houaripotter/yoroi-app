@@ -111,7 +111,7 @@ export const StatsPage1Overview: React.FC<StatsPage1OverviewProps> = ({
       {/* Section objectifs */}
       <View style={[styles.goalsCard, { backgroundColor: colors.backgroundCard }]}>
         <View style={styles.goalsHeader}>
-          <TrendingUp size={24} color={colors.accent} strokeWidth={2} />
+          <TrendingUp size={24} color={colors.accentText} strokeWidth={2} />
           <Text style={[styles.goalsTitle, { color: colors.textPrimary }]}>
             Progression vers tes objectifs
           </Text>

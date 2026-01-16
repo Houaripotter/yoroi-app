@@ -129,7 +129,7 @@ export const StreakCalendar: React.FC<StreakCalendarProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Calendar size={18} color={colors.accent} />
+          <Calendar size={18} color={colors.accentText} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Calendrier d'entraînement
           </Text>

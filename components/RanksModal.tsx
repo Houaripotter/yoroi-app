@@ -59,7 +59,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
   currentStreak,
   gender = 'male',
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const currentRank = getCurrentRank(currentStreak);
   const nextRank = getNextRank(currentStreak);
   const daysToNext = getDaysToNextRank(currentStreak);
@@ -265,7 +265,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
               <Text style={[styles.motivationText, { color: colors.textMuted }]}>
                 "La discipline est le pont entre les objectifs et l'accomplissement."
               </Text>
-              <Text style={[styles.motivationAuthor, { color: colors.accent }]}>
+              <Text style={[styles.motivationAuthor, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
                 — Proverbe japonais
               </Text>
             </View>

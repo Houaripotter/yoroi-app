@@ -276,7 +276,7 @@ export default function CutModeScreen() {
             {/* Progression principale */}
             <View style={[styles.mainCard, { backgroundColor: colors.backgroundCard }]}>
               <View style={styles.targetHeader}>
-                <Target size={24} color={colors.accent} />
+                <Target size={24} color={colors.accentText} />
                 <Text style={[styles.targetTitle, { color: colors.textPrimary }]}>
                   Objectif : {cutData.targetWeight} kg
                 </Text>
@@ -311,7 +311,7 @@ export default function CutModeScreen() {
               {/* Stats rapides */}
               <View style={styles.quickStats}>
                 <View style={styles.quickStat}>
-                  <Scale size={18} color={colors.accent} />
+                  <Scale size={18} color={colors.accentText} />
                   <Text style={[styles.quickStatValue, { color: colors.textPrimary }]}>
                     {currentWeight} kg
                   </Text>

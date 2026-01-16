@@ -109,7 +109,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
               {/* Header avec icône */}
               <View style={styles.header}>
                 <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-                  <Sparkles size={40} color={colors.accent} />
+                  <Sparkles size={40} color={colors.accentText} />
                 </View>
                 <Text style={[styles.title, { color: colors.textPrimary }]}>
                   Nouveautés v2.1

@@ -67,7 +67,7 @@ export const Page5Reports: React.FC<Page5ReportsProps> = ({
         <View style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.reportHeader}>
             <View style={styles.reportTitleRow}>
-              <FileText size={24} color={colors.accent} strokeWidth={2} />
+              <FileText size={24} color={colors.accentText} strokeWidth={2} />
               <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
                 Rapport Hebdomadaire
               </Text>
@@ -81,8 +81,8 @@ export const Page5Reports: React.FC<Page5ReportsProps> = ({
                 }}
                 activeOpacity={0.7}
               >
-                <Share2 size={18} color={colors.accent} strokeWidth={2} />
-                <Text style={[styles.shareButtonText, { color: colors.accent }]}>
+                <Share2 size={18} color={isDark ? colors.accentText : '#000000'} strokeWidth={2} />
+                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
                   Partager
                 </Text>
               </TouchableOpacity>
@@ -121,7 +121,7 @@ export const Page5Reports: React.FC<Page5ReportsProps> = ({
                 <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
                   Entraînements
                 </Text>
-                <Text style={[styles.reportStatValue, { color: colors.accent }]}>
+                <Text style={[styles.reportStatValue, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
                   {weeklyReport.trainingsCount}
                 </Text>
               </View>

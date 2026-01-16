@@ -153,7 +153,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
               disabled={isAdding}
               activeOpacity={0.7}
             >
-              <Plus size={14} color={colors.accent} />
+              <Plus size={14} color={colors.accentText} />
               <Text style={[styles.quickAddText, { color: colors.textPrimary }]}>
                 {amount} ml
               </Text>

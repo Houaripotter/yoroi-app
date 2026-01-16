@@ -47,7 +47,7 @@ export const ViewModeSwitch: React.FC<ViewModeSwitchProps> = ({ mode, onToggle }
       <Ionicons
         name="swap-horizontal"
         size={22}
-        color={colors.accent}
+        color={colors.accentText}
       />
     </AnimatedTouchable>
   );

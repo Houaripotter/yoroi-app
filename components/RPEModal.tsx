@@ -82,7 +82,7 @@ export function RPEModal({ visible, durationMinutes, onClose, onSubmit }: RPEMod
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Target size={20} color={colors.accent} />
+              <Target size={20} color={colors.accentText} />
               <Text style={[styles.title, { color: colors.textPrimary }]}>
                 Ressenti de l'effort
               </Text>
@@ -138,7 +138,7 @@ export function RPEModal({ visible, durationMinutes, onClose, onSubmit }: RPEMod
               
               <View style={styles.loadPreview}>
                 <View style={styles.loadItem}>
-                  <Zap size={14} color={colors.accent} />
+                  <Zap size={14} color={colors.accentText} />
                   <Text style={[styles.loadLabel, { color: colors.textMuted }]}>Charge</Text>
                   <Text style={[styles.loadValue, { color: colors.textPrimary }]}>
                     {estimatedLoad} pts

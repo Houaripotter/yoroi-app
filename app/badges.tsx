@@ -270,7 +270,7 @@ export default function BadgesScreen() {
                   ]}
                 />
               </View>
-              <Text style={[styles.statsProgressText, { color: '#D4AF37' }]}>
+              <Text style={[styles.statsProgressText, { color: '#8B7535' }]}>
                 {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
               </Text>
             </View>

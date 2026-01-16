@@ -134,7 +134,22 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             }
 
             self.lastSyncTime = Date()
+
+            // Sync avec les complications
+            self.syncComplicationData()
         }
+    }
+
+    // MARK: - Complication Sync
+
+    private func syncComplicationData() {
+        let complicationManager = ComplicationDataManager.shared
+        complicationManager.hydrationCurrent = watchData.hydrationCurrent
+        complicationManager.hydrationGoal = watchData.hydrationGoal
+        complicationManager.currentWeight = watchData.currentWeight
+        complicationManager.targetWeight = watchData.targetWeight
+        complicationManager.sleepDuration = watchData.sleepDuration
+        complicationManager.stepsGoal = watchData.stepsGoal
     }
 }
 

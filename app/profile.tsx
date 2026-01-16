@@ -840,11 +840,11 @@ export default function ProfileScreen() {
             colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : ['rgba(0, 214, 143, 0.1)', 'rgba(0, 214, 143, 0.05)']}
             style={styles.quoteGradient}
           >
-            <Trophy size={24} color={colors.accent} />
+            <Trophy size={24} color={colors.accentText} />
             <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
               "La victoire appartient au plus persévérant"
             </Text>
-            <Text style={[styles.quoteAuthor, { color: colors.accent }]}>Napoléon Bonaparte</Text>
+            <Text style={[styles.quoteAuthor, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>Napoléon Bonaparte</Text>
           </LinearGradient>
         </View>
 

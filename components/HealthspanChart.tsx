@@ -81,7 +81,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
       >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Activity size={16} color={colors.accent} />
+            <Activity size={16} color={colors.accentText} />
             <Text style={[styles.title, { color: colors.textMuted }]}>TENDANCE SANTÉ</Text>
           </View>
           <View style={styles.headerRight}>
@@ -197,7 +197,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
     >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Activity size={16} color={colors.accent} />
+          <Activity size={16} color={colors.accentText} />
           <Text style={[styles.title, { color: colors.textMuted }]}>TENDANCE SANTÉ</Text>
         </View>
         <View style={styles.headerRight}>

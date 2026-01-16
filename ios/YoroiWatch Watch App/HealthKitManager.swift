@@ -58,6 +58,8 @@ class HealthKitManager: NSObject, ObservableObject {
             DispatchQueue.main.async {
                 if let sum = result?.sumQuantity() {
                     self.todaySteps = Int(sum.doubleValue(for: HKUnit.count()))
+                    // Sync avec complications
+                    ComplicationDataManager.shared.todaySteps = self.todaySteps
                 }
             }
         }

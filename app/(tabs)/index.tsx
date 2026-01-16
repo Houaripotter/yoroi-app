@@ -745,7 +745,7 @@ export default function HomeScreen() {
                   {/* Cerveau animé */}
                   <Animated.View style={[styles.brainContainer, { transform: [{ scale: quotePulseAnim }] }]}>
                     <View style={[styles.brainCircle, { backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}40` }]}>
-                      <Brain size={28} color={colors.accent} strokeWidth={2.5} />
+                      <Brain size={28} color={colors.accentText} strokeWidth={2.5} />
                     </View>
                     {/* Mini éclairs d'idée */}
                     <View style={styles.ideaSparks}>
@@ -807,9 +807,9 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
-              <Zap size={14} color={colors.accent} />
+              <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
-                <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: colors.accent }]} duration={800} />
+                <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
               </View>
             </TouchableOpacity>
@@ -933,7 +933,7 @@ export default function HomeScreen() {
           <AnimatedCard index={1} key={sectionId}>
             <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
               <View style={styles.challengesHeader}>
-                <Target size={16} color={colors.accent} />
+                <Target size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
                 <ChevronRight size={14} color={colors.textMuted} />
               </View>
@@ -993,7 +993,7 @@ export default function HomeScreen() {
           <AnimatedCard index={4} key={sectionId}>
             <TouchableOpacity style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]} onPress={shareReport}>
               <View style={styles.reportHeader}>
-                <FileText size={16} color={colors.accent} />
+                <FileText size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>RAPPORT DE MISSION</Text>
               </View>
               <View style={styles.reportContent}>
@@ -1094,7 +1094,7 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.85}
             >
-              <Timer size={24} color={colors.accent} />
+              <Timer size={24} color={colors.accentText} />
               <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Timer</Text>
               <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Round/Repos</Text>
             </TouchableOpacity>

@@ -98,13 +98,16 @@ export const MoreTabView: React.FC<MoreTabViewProps> = ({ children }) => {
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    color={isActive ? '#000000' : colors.textMuted}
                     strokeWidth={2.5}
                   />
                 </View>
                 <Text style={[
                   styles.tabTitle,
-                  { color: isActive ? colors.accent : colors.textMuted }
+                  {
+                    color: isActive ? '#000000' : colors.textMuted,
+                    fontWeight: isActive ? '800' : '600',
+                  }
                 ]}>
                   {page.title}
                 </Text>

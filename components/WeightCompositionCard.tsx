@@ -42,7 +42,7 @@ export const WeightCompositionCard: React.FC<WeightCompositionCardProps> = ({
       <View style={styles.weightSection}>
         <View style={styles.weightHeader}>
           <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-            <Scale size={20} color={colors.accent} />
+            <Scale size={20} color={colors.accentText} />
           </View>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
             POIDS ACTUEL

@@ -246,7 +246,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
                     </Text>
                   </View>
                   <View style={[styles.selectButton, { backgroundColor: colors.accent + '20' }]}>
-                    <ChevronRight size={18} color={colors.accent} />
+                    <ChevronRight size={18} color={colors.accentText} />
                   </View>
                 </TouchableOpacity>
               );

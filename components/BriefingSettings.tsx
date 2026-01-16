@@ -58,7 +58,7 @@ export function BriefingSettings() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={[styles.iconContainer, { backgroundColor: colors.accentMuted }]}>
-            <Bell size={20} color={colors.accent} />
+            <Bell size={20} color={colors.accentText} />
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>

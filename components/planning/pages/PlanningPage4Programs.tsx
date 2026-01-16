@@ -154,7 +154,7 @@ export const PlanningPage4Programs: React.FC<PlanningPage4ProgramsProps> = ({
         activeOpacity={0.8}
       >
         <View style={styles.createContent}>
-          <TrendingUp size={24} color={colors.accent} strokeWidth={2} />
+          <TrendingUp size={24} color={colors.accentText} strokeWidth={2} />
           <Text style={[styles.createTitle, { color: colors.textPrimary }]}>
             Créer un programme personnalisé
           </Text>

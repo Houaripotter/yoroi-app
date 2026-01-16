@@ -156,7 +156,7 @@ export default function CompetitorProfileScreen() {
         {/* Section 1: Genre */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <User size={20} color={colors.accent} />
+            <User size={20} color={colors.accentText} />
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
               1. Genre
             </Text>
@@ -209,7 +209,7 @@ export default function CompetitorProfileScreen() {
         {profile.gender && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Weight size={20} color={colors.accent} />
+              <Weight size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                 2. Poids actuel
               </Text>
@@ -247,7 +247,7 @@ export default function CompetitorProfileScreen() {
         {profile.gender && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Trophy size={20} color={colors.accent} />
+              <Trophy size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                 3. Catégorie IBJJF
               </Text>
@@ -291,7 +291,7 @@ export default function CompetitorProfileScreen() {
         {profile.gender && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Award size={20} color={colors.accent} />
+              <Award size={20} color={colors.accentText} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
                 4. Ceinture BJJ
               </Text>

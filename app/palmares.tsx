@@ -104,7 +104,7 @@ export default function PalmaresScreen() {
         {/* Record Card */}
         <View style={[styles.recordCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.recordHeader}>
-            <Trophy size={32} color={colors.accent} />
+            <Trophy size={32} color={colors.accentText} />
             <Text style={[styles.recordTitle, { color: colors.textPrimary }]}>
               Bilan Global
             </Text>

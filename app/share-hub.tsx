@@ -19,9 +19,9 @@ import {
   Trophy,
   Calendar,
   TrendingUp,
-  Dumbbell,
   Share2,
   Camera,
+  Lightbulb,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -72,16 +72,6 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     icon: TrendingUp,
     route: '/social-share/monthly-recap-v2',
     gradient: ['#3B82F6', '#60A5FA'],
-  },
-  {
-    id: 'last-session',
-    title: 'Dernière Séance',
-    subtitle: 'J\'ai réalisé...',
-    description: 'Partage ta dernière session avec ta photo. Style Strava - fais-toi remarquer ! 💪',
-    icon: Dumbbell,
-    route: '/social-share/last-session',
-    gradient: ['#8B5CF6', '#A78BFA'],
-    badge: 'NOUVEAU',
   },
 ];
 
@@ -173,13 +163,12 @@ export default function ShareHubScreen() {
           colors={isDark ? ['#1A1A1A', '#2D2D2D'] : ['#F3F4F6', '#E5E7EB']}
           style={[styles.heroBanner, { borderColor: colors.border }]}
         >
-          <Share2 size={40} color={colors.accent} strokeWidth={2.5} />
+          <Share2 size={40} color={isDark ? colors.accent : '#1A1A1A'} strokeWidth={2.5} />
           <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
             Fais-toi remarquer
           </Text>
           <Text style={[styles.heroText, { color: colors.textSecondary }]}>
             Choisis un template, ajoute ta photo, et deviens la star de ta communauté !
-            Style Strava addictif 🔥
           </Text>
         </LinearGradient>
 
@@ -199,13 +188,16 @@ export default function ShareHubScreen() {
         </View>
 
         {/* Tips */}
-        <View style={[styles.tipCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.tipTitle, { color: colors.accent }]}>
-            💡 Astuce Pro
-          </Text>
+        <View style={[styles.tipCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+          <View style={styles.tipTitleRow}>
+            <Lightbulb size={18} color={isDark ? colors.accent : '#1A1A1A'} />
+            <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>
+              Astuce Pro
+            </Text>
+          </View>
           <Text style={[styles.tipText, { color: colors.textSecondary }]}>
             Ajoute ta photo pour que tes followers voient ton visage ! Tu peux prendre un selfie ou
-            choisir depuis ta galerie. Plus tu es visible, plus tu vas faire fureur ! 🌟
+            choisir depuis ta galerie. Plus tu es visible, plus tu vas faire fureur !
           </Text>
         </View>
 
@@ -381,10 +373,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
   },
+  tipTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   tipTitle: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 8,
   },
   tipText: {
     fontSize: 13,

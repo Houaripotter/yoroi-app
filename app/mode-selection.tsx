@@ -64,8 +64,8 @@ export default function ModeSelectionScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Shield size={40} color={colors.accent} strokeWidth={2.5} />
-            <Text style={[styles.logo, { color: colors.accent }]}>YOROI</Text>
+            <Shield size={40} color={colors.accentText} strokeWidth={2.5} />
+            <Text style={[styles.logo, { color: colors.accentText }]}>YOROI</Text>
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Quel champion es-tu ?

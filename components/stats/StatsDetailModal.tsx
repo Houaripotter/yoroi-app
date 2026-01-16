@@ -21,7 +21,7 @@ const PERIODS: Array<{ value: Period; label: string }> = [
   { value: '90j', label: '90J' },
   { value: '6m', label: '6M' },
   { value: '1a', label: '1A' },
-  { value: 'tout', label: 'Tout' },
+  { value: 'tout', label: 'TOUT' },
 ];
 
 const getPeriodDays = (period: Period): number => {
@@ -193,9 +193,9 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
     const iconSize = 16;
     switch (stats.trend) {
       case 'up':
-        return <TrendingUp size={iconSize} color="#10B981" strokeWidth={2.5} />;
+        return <TrendingUp size={iconSize} color="#2BCBBA" strokeWidth={2.5} />;
       case 'down':
-        return <TrendingDown size={iconSize} color="#EF4444" strokeWidth={2.5} />;
+        return <TrendingDown size={iconSize} color="#FC5C65" strokeWidth={2.5} />;
       default:
         return <Minus size={iconSize} color={colors.textMuted} strokeWidth={2.5} />;
     }
@@ -287,9 +287,9 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                       <Text style={[styles.currentValueUnit, { color: colors.textMuted }]}> {unit}</Text>
                     </Text>
                   </View>
-                  <View style={[styles.trendBadge, { backgroundColor: stats.trend === 'up' ? '#10B98120' : stats.trend === 'down' ? '#EF444420' : colors.border }]}>
+                  <View style={[styles.trendBadge, { backgroundColor: stats.trend === 'up' ? '#2BCBBA20' : stats.trend === 'down' ? '#FC5C6520' : colors.border }]}>
                     {getTrendIcon()}
-                    <Text style={[styles.trendText, { color: stats.trend === 'up' ? '#10B981' : stats.trend === 'down' ? '#EF4444' : colors.textMuted }]}>
+                    <Text style={[styles.trendText, { color: stats.trend === 'up' ? '#2BCBBA' : stats.trend === 'down' ? '#FC5C65' : colors.textMuted }]}>
                       {stats.change >= 0 ? '+' : ''}{stats.change.toFixed(1)} {unit}
                     </Text>
                   </View>
@@ -327,7 +327,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             {metricRange?.explanation && (
               <View style={[styles.scienceCard, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.scienceHeader}>
-                  <BookOpen size={18} color={colors.accent} strokeWidth={2.5} />
+                  <BookOpen size={18} color={colors.accentText} strokeWidth={2.5} />
                   <Text style={[styles.scienceTitle, { color: colors.textPrimary }]}>
                     Explication scientifique
                   </Text>
@@ -407,7 +407,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
                     <Text style={[styles.statLabel, { color: colors.textMuted }]}>ÉVOL</Text>
-                    <Text style={[styles.statValue, { color: stats.changePercent >= 0 ? '#10B981' : '#EF4444' }]}>
+                    <Text style={[styles.statValue, { color: stats.changePercent >= 0 ? '#2BCBBA' : '#FC5C65' }]}>
                       {stats.changePercent >= 0 ? '+' : ''}{stats.changePercent.toFixed(1)}%
                     </Text>
                   </View>

@@ -48,7 +48,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
   // Créer le dégradé de couleurs
   const gradientColors = range.zones.length >= 2
     ? (range.zones.map(zone => zone.color) as unknown as readonly [string, string, ...string[]])
-    : ['#10B981', '#EF4444'] as const;
+    : ['#2BCBBA', '#FC5C65'] as const;
   const gradientLocations = range.zones.length >= 2
     ? (range.zones.map((zone, index) => (zone.start - range.min) / (range.max - range.min)) as unknown as readonly [number, number, ...number[]])
     : [0, 1] as const;
@@ -77,7 +77,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
             onPress={onInfoPress}
             activeOpacity={0.7}
           >
-            <Info size={16} color={colors.accent} strokeWidth={2.5} />
+            <Info size={16} color={colors.accentText} strokeWidth={2.5} />
           </TouchableOpacity>
         )}
       </View>

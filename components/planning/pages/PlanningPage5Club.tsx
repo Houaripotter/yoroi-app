@@ -124,7 +124,7 @@ export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
       {/* Classement */}
       <View style={styles.leaderboardSection}>
         <View style={styles.sectionHeader}>
-          <Trophy size={20} color={colors.accent} strokeWidth={2} />
+          <Trophy size={20} color={colors.accentText} strokeWidth={2} />
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Classement du Mois
           </Text>
@@ -180,7 +180,7 @@ export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
       {/* Défis actifs */}
       <View style={styles.challengesSection}>
         <View style={styles.sectionHeader}>
-          <Target size={20} color={colors.accent} strokeWidth={2} />
+          <Target size={20} color={colors.accentText} strokeWidth={2} />
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Défis Actifs
           </Text>

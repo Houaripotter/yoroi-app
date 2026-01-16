@@ -308,7 +308,7 @@ export function AddSessionModal({
                 style={[styles.timeButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={() => setShowTimePicker(true)}
               >
-                <Clock size={20} color={colors.accent} />
+                <Clock size={20} color={colors.accentText} />
                 <Text style={[styles.timeText, { color: colors.textPrimary }]}>
                   {format(startTime, 'HH:mm')}
                 </Text>

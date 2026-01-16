@@ -67,7 +67,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
         <View style={styles.topContent}>
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <Trophy size={18} color={goldColor} />
+              <Trophy size={14} color={goldColor} />
               <Text style={[styles.titleText, { color: goldColor }]}>ANNÉE {stats.year}</Text>
             </View>
           </View>
@@ -129,22 +129,22 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             </View>
           )}
 
-          {/* STATS SECONDAIRES */}
+          {/* STATS SECONDAIRES - Compact */}
           <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
-              <Flame size={16} color="#FF6B00" />
-              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.currentStreak || stats.bestStreak}</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>{stats.currentStreak > 0 ? 'SÉRIE' : 'RECORD'}</Text>
+              <Flame size={14} color="#FF6B00" />
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.totalDays}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>ENTRAÎNEMENTS</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <Calendar size={16} color={goldColor} />
+              <Calendar size={14} color={goldColor} />
               <Text style={[styles.statValue, { color: textPrimary }]}>{stats.busiestMonth.month.substring(0, 3)}</Text>
               <Text style={[styles.statLabel, { color: textMuted }]}>TOP MOIS</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <BarChart2 size={16} color={goldColor} />
+              <BarChart2 size={14} color={goldColor} />
               <Text style={[styles.statValue, { color: textPrimary }]}>{stats.percentage.toFixed(0)}%</Text>
               <Text style={[styles.statLabel, { color: textMuted }]}>DE L'ANNÉE</Text>
             </View>
@@ -169,15 +169,19 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             style={styles.backgroundImage}
             resizeMode="cover"
           >
-            {/* Gradient transparent en haut, sombre SEULEMENT en bas */}
+            {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
             <LinearGradient
               colors={[
-                'rgba(0,0,0,0)',      // 0% - Transparent (haut)
-                'rgba(0,0,0,0)',      // 40% - Transparent (centre)
-                'rgba(0,0,0,0.5)',    // 60% - Commence à assombrir
-                'rgba(0,0,0,0.85)',   // 100% - Sombre (bas avec infos)
+                'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
+                'rgba(0,0,0,0.4)',     // 15% - Transition
+                'rgba(0,0,0,0)',       // 30% - Transparent
+                'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
+                'rgba(0,0,0,0)',       // 55% - Transparent
+                'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
+                'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
+                'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
               ]}
-              locations={[0, 0.4, 0.6, 1]}
+              locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
               style={StyleSheet.absoluteFill}
             />
             {content}
@@ -247,60 +251,60 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   bottomContent: {
-    gap: 12,
+    gap: 8,
     paddingBottom: 0,
   },
 
-  // Title
+  // Title - Plus petit
   titleSection: {
     alignItems: 'center',
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   titleText: {
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 3,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 2,
   },
 
-  // Counter
+  // Counter - Plus compact
   counterSection: {
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   counterNumber: {
-    fontSize: 64,
+    fontSize: 52,
     fontWeight: '900',
     letterSpacing: -2,
   },
   counterSlash: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '300',
-    marginHorizontal: 4,
+    marginHorizontal: 3,
   },
   counterGoal: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '900',
     letterSpacing: -1,
   },
   counterLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 3,
-    marginTop: -4,
+    letterSpacing: 2,
+    marginTop: -2,
   },
 
-  // Progress
+  // Progress - Plus compact
   progressSection: {
-    paddingHorizontal: 24,
-    gap: 6,
+    paddingHorizontal: 20,
+    gap: 4,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -308,119 +312,120 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressLabelBold: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 1.5,
+    letterSpacing: 1,
   },
   progressPercent: {
-    fontSize: 13,
+    fontSize: 10,
     fontWeight: '800',
   },
   progressBarBg: {
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 4,
   },
   progressText: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '700',
     textAlign: 'center',
   },
 
-  // Clubs Bubbles
+  // Clubs Bubbles - Plus compact
   clubsBubblesContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
     paddingHorizontal: 16,
   },
   clubBubble: {
     alignItems: 'center',
-    width: 72,
+    width: 60,
     position: 'relative',
   },
   clubBubbleCount: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -3,
+    right: -3,
     backgroundColor: '#D4AF37',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 8,
     zIndex: 1,
-    minWidth: 28,
+    minWidth: 24,
     alignItems: 'center',
   },
   clubBubbleCountText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '900',
     color: '#000000',
   },
   clubBubbleLogo: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     borderWidth: 2,
     borderColor: '#D4AF37',
+    backgroundColor: '#FFFFFF',
   },
   clubBubbleLogoPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#D4AF37',
   },
   clubBubbleInitial: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '900',
     color: '#D4AF37',
   },
   clubBubbleName: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    marginTop: 4,
+    marginTop: 3,
     textAlign: 'center',
   },
   clubBubbleSport: {
-    fontSize: 8,
+    fontSize: 7,
     fontWeight: '600',
     textAlign: 'center',
   },
 
-  // Stats Row
+  // Stats Row - Plus compact
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 20,
-    borderRadius: 16,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingVertical: 10,
     borderWidth: 1,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
+    gap: 2,
   },
   statDivider: {
     width: 1,
-    height: 32,
+    height: 26,
   },
   statValue: {
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '900',
   },
   statLabel: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });
 

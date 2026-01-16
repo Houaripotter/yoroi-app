@@ -839,7 +839,7 @@ export default function PlanningScreen() {
             {monthlyClubStats.length > 0 && (
               <View style={[styles.monthlyStatsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
                 <View style={styles.monthlyStatsHeader}>
-                  <TrendingUp size={16} color={colors.accent} />
+                  <TrendingUp size={16} color={colors.accentText} />
                   <Text style={[styles.monthlyStatsTitle, { color: colors.textPrimary }]}>Ce mois</Text>
                 </View>
                 <ScrollView

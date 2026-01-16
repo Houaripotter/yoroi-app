@@ -243,7 +243,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
             style={styles.headerButton}
             disabled={isSubmitting}
           >
-            <Check size={24} color={colors.accent} />
+            <Check size={24} color={colors.accentText} />
           </TouchableOpacity>
         </View>
 
@@ -371,7 +371,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
           {/* OBJECTIF HEBDOMADAIRE - OBLIGATOIRE */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Target size={16} color={colors.accent} />
+              <Target size={16} color={colors.accentText} />
               <Text style={[styles.label, { color: colors.textSecondary, marginBottom: 0 }]}>
                 Objectif hebdomadaire <Text style={{ color: colors.danger }}>*</Text>
               </Text>

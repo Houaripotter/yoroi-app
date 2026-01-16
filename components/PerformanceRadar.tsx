@@ -147,7 +147,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.textMuted }]}>RADAR PERFORMANCE</Text>
         <View style={[styles.infoBtn, { backgroundColor: colors.accent + '20' }]}>
-          <Info size={12} color={colors.accent} />
+          <Info size={12} color={colors.accentText} />
         </View>
       </View>
 
@@ -291,7 +291,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
       {/* Score global */}
       <View style={styles.footer}>
         <View style={styles.scoreContainer}>
-          <Text style={[styles.avgValue, { color: colors.accent }]}>
+          <Text style={[styles.avgValue, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>
             {avgScore}  %
           </Text>
           <Text style={[styles.avgLabel, { color: colors.textMuted }]}>Score Global</Text>

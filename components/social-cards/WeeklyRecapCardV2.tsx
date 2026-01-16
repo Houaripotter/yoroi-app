@@ -73,15 +73,16 @@ export const WeeklyRecapCardV2 = forwardRef<View, WeeklyRecapCardV2Props>(
               const parts = stats.weekLabel.split('•');
               const weekNumber = parts[0]?.trim() || stats.weekLabel;
               const dateRange = parts[1]?.trim() || '';
+              const currentYear = new Date().getFullYear();
               return (
                 <>
                   <View style={styles.titleRow}>
-                    <Calendar size={18} color={goldColor} />
+                    <Calendar size={14} color={goldColor} />
                     <Text style={[styles.titleText, { color: goldColor }]}>{weekNumber.toUpperCase()}</Text>
                   </View>
-                  {dateRange && (
-                    <Text style={[styles.titleDateText, { color: textSecondary }]}>{dateRange.toUpperCase()}</Text>
-                  )}
+                  <Text style={[styles.titleDateText, { color: textSecondary }]}>
+                    {dateRange ? `${dateRange.toUpperCase()} ${currentYear}` : currentYear.toString()}
+                  </Text>
                 </>
               );
             })()}
@@ -170,9 +171,9 @@ export const WeeklyRecapCardV2 = forwardRef<View, WeeklyRecapCardV2Props>(
           {/* STATS SECONDAIRES */}
           <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
-              <Flame size={16} color="#FF6B00" />
-              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.activeDays}</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>JOURS ACTIFS</Text>
+              <Flame size={14} color="#FF6B00" />
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.totalSessions}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>ENTRAÎNEMENTS</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
@@ -207,15 +208,19 @@ export const WeeklyRecapCardV2 = forwardRef<View, WeeklyRecapCardV2Props>(
             style={styles.backgroundImage}
             resizeMode="cover"
           >
-            {/* Gradient transparent en haut, sombre SEULEMENT en bas */}
+            {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
             <LinearGradient
               colors={[
-                'rgba(0,0,0,0)',      // 0% - Transparent (haut)
-                'rgba(0,0,0,0)',      // 40% - Transparent (centre)
-                'rgba(0,0,0,0.5)',    // 60% - Commence à assombrir
-                'rgba(0,0,0,0.85)',   // 100% - Sombre (bas avec infos)
+                'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
+                'rgba(0,0,0,0.4)',     // 15% - Transition
+                'rgba(0,0,0,0)',       // 30% - Transparent
+                'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
+                'rgba(0,0,0,0)',       // 55% - Transparent
+                'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
+                'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
+                'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
               ]}
-              locations={[0, 0.4, 0.6, 1]}
+              locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
               style={StyleSheet.absoluteFill}
             />
             {content}
@@ -435,6 +440,7 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     borderWidth: 2,
     borderColor: '#D4AF37',
+    backgroundColor: '#FFFFFF',
   },
   clubBubbleLogoPlaceholder: {
     width: 52,

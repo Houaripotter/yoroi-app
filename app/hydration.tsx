@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
-  Easing,
   TextInput,
   Switch,
 } from 'react-native';
@@ -36,6 +35,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
+import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
 
 const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -73,38 +73,17 @@ export default function HydrationScreen() {
   const [eveningEnabled, setEveningEnabled] = useState(true);
 
   // Animations
-  const waveAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   useEffect(() => {
     loadData();
 
-    // Animation vague
-    const wave = Animated.loop(
-      Animated.sequence([
-        Animated.timing(waveAnim, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(waveAnim, {
-          toValue: 0,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    wave.start();
-
+    // Animation d'entrée
     Animated.spring(scaleAnim, {
       toValue: 1,
       damping: 12,
       useNativeDriver: true,
     }).start();
-
-    return () => wave.stop();
   }, []);
 
   const loadData = async () => {
@@ -240,10 +219,6 @@ export default function HydrationScreen() {
   };
 
   const percentage = Math.min((currentAmount / goal) * 100, 100);
-  const waveTranslate = waveAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-5, 5],
-  });
 
   // Statistiques
   const last7Days = history.slice(0, 7);
@@ -274,37 +249,22 @@ export default function HydrationScreen() {
       >
         {/* Grande bouteille animée */}
         <Animated.View style={[styles.bottleCard, { backgroundColor: colors.backgroundCard, transform: [{ scale: scaleAnim }] }]}>
-          <View style={styles.bigBottle}>
-            {/* Bouchon */}
-            <View style={[styles.bottleCap, { backgroundColor: '#0EA5E9' }]} />
-            
-            {/* Corps */}
-            <View style={[styles.bottleBody, { borderColor: '#0EA5E9' }]}>
-              {/* Eau animée */}
-              <Animated.View
-                style={[
-                  styles.water,
-                  {
-                    height: `${percentage}%`,
-                    transform: [{ translateX: waveTranslate }],
-                  }
-                ]}
-              >
-                <View style={styles.waterWave} />
-              </Animated.View>
-              
-              {/* Graduations */}
-              <View style={styles.graduations}>
-                {[0.75, 0.5, 0.25].map((ratio) => (
-                  <View key={ratio} style={styles.graduation}>
-                    <View style={[styles.gradLine, { backgroundColor: '#0EA5E930' }]} />
-                    <Text style={[styles.gradLabel, { color: '#0EA5E9' }]}>
-                      {(goal * ratio).toFixed(1)}L
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          {/* Nouvelle bouteille animée avec vagues et bulles */}
+          <AnimatedWaterBottle
+            fillPercentage={percentage}
+            width={140}
+            height={220}
+            color="#0EA5E9"
+            showBubbles={true}
+          />
+
+          {/* Graduations labels sur le côté */}
+          <View style={styles.graduationLabels}>
+            {[0.75, 0.5, 0.25].map((ratio) => (
+              <Text key={ratio} style={[styles.gradLabelSide, { color: '#0EA5E9' }]}>
+                {(goal * ratio).toFixed(1)}L
+              </Text>
+            ))}
           </View>
 
           {/* Valeur centrale */}
@@ -699,69 +659,23 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
-  },
-  bigBottle: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  bottleCap: {
-    width: 50,
-    height: 20,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-  },
-  bottleBody: {
-    width: 120,
-    height: 180,
-    borderWidth: 4,
-    borderRadius: 20,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    overflow: 'hidden',
     position: 'relative',
-    backgroundColor: 'rgba(14, 165, 233, 0.05)',
   },
-  water: {
+  graduationLabels: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#0EA5E9',
-    opacity: 0.7,
-  },
-  waterWave: {
-    position: 'absolute',
-    top: -5,
-    left: -10,
-    right: -10,
-    height: 15,
-    backgroundColor: '#0EA5E9',
-    borderRadius: 10,
-    opacity: 0.9,
-  },
-  graduations: {
-    position: 'absolute',
-    right: 8,
-    top: 10,
-    bottom: 10,
+    right: 30,
+    top: 60,
+    height: 180,
     justifyContent: 'space-around',
   },
-  graduation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  gradLine: {
-    width: 15,
-    height: 2,
-    borderRadius: 1,
-  },
-  gradLabel: {
-    fontSize: 8,
-    fontWeight: '600',
+  gradLabelSide: {
+    fontSize: 11,
+    fontWeight: '700',
+    opacity: 0.6,
   },
   valueOverlay: {
     alignItems: 'center',
+    marginTop: 16,
   },
   bigValue: {
     fontSize: 48,

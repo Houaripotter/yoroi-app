@@ -100,7 +100,7 @@ export const ProgrammeView: React.FC<ProgrammeViewProps> = ({
           ]}
           onPress={() => onAddSession('lun')}
         >
-          <Plus size={18} color={colors.accent} />
+          <Plus size={18} color={colors.accentText} />
           <Text style={[styles.addButtonText, { color: colors.accent }]}>
             Ajouter
           </Text>

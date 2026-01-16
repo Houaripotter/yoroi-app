@@ -31,7 +31,7 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
       {/* Icône */}
       <View style={[styles.iconCircle, { backgroundColor: `${colors.accent}15` }]}>
-        <Heart size={48} color={colors.accent} strokeWidth={2.5} />
+        <Heart size={48} color={colors.accentText} strokeWidth={2.5} />
       </View>
 
       {/* Titre */}

@@ -63,7 +63,7 @@ export const MotivationPopup: React.FC = () => {
         <View style={[styles.popup, { backgroundColor: colors.backgroundElevated }]}>
           {/* Icône */}
           <View style={[styles.iconContainer, { backgroundColor: colors.accent + '20' }]}>
-            <Flame size={32} color={colors.accent} />
+            <Flame size={32} color={colors.accentText} />
           </View>
 
           {/* Citation */}

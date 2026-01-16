@@ -31,7 +31,7 @@ import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 export default function AddCompetitionScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [nom, setNom] = useState('');
   const [lieu, setLieu] = useState('');
@@ -243,7 +243,7 @@ export default function AddCompetitionScreen() {
                 onPress={() => setShowDatePicker(false)}
                 style={styles.datePickerButton}
               >
-                <Text style={[styles.datePickerButtonText, { color: colors.accent }]}>
+                <Text style={[styles.datePickerButtonText, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
                   OK
                 </Text>
               </TouchableOpacity>

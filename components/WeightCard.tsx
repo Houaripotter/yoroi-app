@@ -87,7 +87,7 @@ export const WeightCard: React.FC<WeightCardProps> = ({
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Scale size={14} color={colors.accent} />
+        <Scale size={14} color={colors.accentText} />
         <Text style={[styles.title, { color: colors.textMuted }]}>POIDS</Text>
         {renderTrendIcon()}
       </View>

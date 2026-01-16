@@ -155,8 +155,8 @@ export default function NotificationsScreen() {
 
         {/* CITATIONS - ACTIVÉ PAR DÉFAUT */}
         <View style={styles.recommendedBadge}>
-          <Sparkles size={14} color={colors.accent} />
-          <Text style={[styles.recommendedText, { color: colors.accent }]}>
+          <Sparkles size={14} color={colors.accentText} />
+          <Text style={[styles.recommendedText, { color: colors.accentText }]}>
             RECOMMANDÉ
           </Text>
         </View>
@@ -171,7 +171,7 @@ export default function NotificationsScreen() {
           <View style={styles.featuredHeader}>
             <View style={styles.featuredLeft}>
               <View style={[styles.featuredIconBg, { backgroundColor: `${colors.accent}20` }]}>
-                <Quote size={24} color={colors.accent} />
+                <Quote size={24} color={colors.accentText} />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -244,7 +244,7 @@ export default function NotificationsScreen() {
         <View style={[styles.masterCard, { backgroundColor: settings.enabled ? `${colors.accent}08` : colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.masterLeft}>
             {settings.enabled ? (
-              <Bell size={24} color={colors.accent} />
+              <Bell size={24} color={colors.accentText} />
             ) : (
               <BellOff size={24} color={colors.textMuted} />
             )}

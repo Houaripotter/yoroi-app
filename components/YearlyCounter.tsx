@@ -18,7 +18,7 @@ import {
 } from '@/lib/trainingGoalsService';
 
 export const YearlyCounter: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [yearCount, setYearCount] = useState(0);
   const [monthCount, setMonthCount] = useState(0);
   const [goalProgress, setGoalProgress] = useState<GoalProgress[]>([]);
@@ -96,7 +96,7 @@ export const YearlyCounter: React.FC = () => {
         style={[styles.container, { backgroundColor: colors.backgroundElevated }]}
       >
         <View style={styles.header}>
-          <Target size={24} color={colors.accent} />
+          <Target size={24} color={colors.accentText} />
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Objectifs {now.getFullYear()}
           </Text>
@@ -218,7 +218,7 @@ export const YearlyCounter: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundElevated }]}>
       <View style={styles.header}>
-        <Flame size={24} color={colors.accent} />
+        <Flame size={24} color={colors.accentText} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           Compteur {now.getFullYear()}
         </Text>
@@ -263,11 +263,11 @@ export const YearlyCounter: React.FC = () => {
         onPress={() => router.push('/training-goals')}
         style={[styles.customizeLink, { borderColor: colors.border }]}
       >
-        <Target size={16} color={colors.accent} />
-        <Text style={[styles.customizeLinkText, { color: colors.accent }]}>
+        <Target size={16} color={colors.accentText} />
+        <Text style={[styles.customizeLinkText, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>
           Definir mes objectifs par sport
         </Text>
-        <ChevronRight size={16} color={colors.accent} />
+        <ChevronRight size={16} color={colors.accentText} />
       </TouchableOpacity>
 
       {/* Stats detaillees */}

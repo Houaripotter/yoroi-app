@@ -167,7 +167,7 @@ export const FeatureTutorial: React.FC<FeatureTutorialProps> = ({
           <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
             {/* Icône */}
             <View style={[styles.iconContainer, { backgroundColor: colors.accent + '20' }]}>
-              <Ionicons name={icon} size={40} color={colors.accent} />
+              <Ionicons name={icon} size={40} color={colors.accentText} />
             </View>
 
             {/* Titre */}

@@ -239,7 +239,7 @@ export default function EnergyScreen() {
           const icon = key === 'hydration' ? <Droplets size={18} color="#06B6D4" />
             : key === 'sleep' ? <Moon size={18} color="#8B5CF6" />
             : key === 'streak' ? <Flame size={18} color="#F97316" />
-            : key === 'training' ? <Dumbbell size={18} color={colors.accent} />
+            : key === 'training' ? <Dumbbell size={18} color={colors.accentText} />
             : <Zap size={18} color="#F59E0B" />;
           
           const percent = (contrib.value / contrib.max) * 100;
@@ -285,7 +285,7 @@ export default function EnergyScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.tipCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/add-training')}>
-          <Dumbbell size={20} color={colors.accent} />
+          <Dumbbell size={20} color={colors.accentText} />
           <View style={styles.tipContent}>
             <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Entraînement</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>

@@ -51,7 +51,7 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
     return (
       <View style={[styles.miniContainer, { backgroundColor: colors.backgroundLight }]}>
         <View style={styles.miniHeader}>
-          <Target size={14} color={colors.accent} />
+          <Target size={14} color={colors.accentText} />
           <Text style={[styles.miniTitle, { color: colors.textPrimary }]}>
             Objectifs
           </Text>
@@ -84,7 +84,7 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
     return (
       <View style={[styles.compactContainer, { backgroundColor: colors.backgroundLight }]}>
         <View style={styles.compactHeader}>
-          <Target size={18} color={colors.accent} />
+          <Target size={18} color={colors.accentText} />
           <Text style={[styles.compactTitle, { color: colors.textPrimary }]}>
             Objectifs cette semaine
           </Text>
@@ -141,7 +141,7 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundLight }]}>
       <View style={styles.header}>
-        <Target size={20} color={colors.accent} />
+        <Target size={20} color={colors.accentText} />
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           Mes Objectifs
         </Text>

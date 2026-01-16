@@ -256,7 +256,7 @@ export default function CustomizeHomeScreen() {
               >
                 {/* Icon */}
                 <View style={[styles.iconContainer, { backgroundColor: `${colors.accent}15` }]}>
-                  <Icon size={22} color={item.visible ? colors.accent : colors.textMuted} />
+                  <Icon size={22} color={item.visible ? colors.accentText : colors.textMuted} />
                 </View>
 
                 {/* Info */}
@@ -268,7 +268,7 @@ export default function CustomizeHomeScreen() {
                     {item.description}
                   </Text>
                   {item.mandatory && (
-                    <Text style={[styles.mandatoryLabel, { color: colors.accent }]}>
+                    <Text style={[styles.mandatoryLabel, { color: colors.accentText }]}>
                       Toujours visible
                     </Text>
                   )}
@@ -299,7 +299,7 @@ export default function CustomizeHomeScreen() {
                   style={styles.toggleBtn}
                 >
                   {item.visible ? (
-                    <Eye size={24} color={colors.accent} />
+                    <Eye size={24} color={colors.accentText} />
                   ) : (
                     <EyeOff size={24} color={colors.textMuted} />
                   )}

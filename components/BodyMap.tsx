@@ -194,7 +194,7 @@ const FORCED_ASPECT_RATIO = 0.45;
 // ============================================
 
 export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones = [], isCreatorMode = false }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [view, setView] = useState<'front' | 'back'>('front');
   const [zones, setZones] = useState(INITIAL_DATA);
@@ -282,7 +282,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
       {isCreatorMode && (
         <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
           <View>
-            <Text style={[styles.title, { color: colors.accent }]}>
+            <Text style={[styles.title, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
               {debug ? 'Mode Chirurgien' : 'Sélecteur'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>

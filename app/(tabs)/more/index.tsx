@@ -358,6 +358,15 @@ const getDisplayItems = (t: TranslateFunction): MenuItem[] => [
     iconBg: '#A78BFA20',
   },
   {
+    id: 'language',
+    label: t('menu.language') || 'Langue',
+    sublabel: t('menu.languageDescription') || 'Choisir la langue de l\'app',
+    Icon: Globe,
+    onPress: () => {},
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
+  {
     id: 'preferences',
     label: t('menu.units'),
     sublabel: t('menu.unitsDescription'),
@@ -1288,12 +1297,15 @@ export default function MoreScreen() {
                     >
                       <Icon
                         size={20}
-                        color={isActive ? colors.textOnAccent : colors.textPrimary}
+                        color={isActive ? '#000000' : colors.textPrimary}
                       />
                       <Text
                         style={[
                           styles.modeLabel,
-                          { color: isActive ? colors.textOnAccent : colors.textPrimary },
+                          {
+                            color: isActive ? '#000000' : colors.textPrimary,
+                            fontWeight: isActive ? '700' : '500',
+                          },
                         ]}
                       >
                         {label}
@@ -1316,7 +1328,7 @@ export default function MoreScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '15' }]}>
-                  <Palette size={20} color={colors.accent} strokeWidth={2} />
+                  <Palette size={20} color={colors.accentText} strokeWidth={2} />
                 </View>
                 <View style={styles.menuItemContent}>
                   <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
@@ -1390,6 +1402,31 @@ export default function MoreScreen() {
                   </Text>
                   <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
                     {t('menu.avatarDescription')}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* LANGUE */}
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.language') || 'Langue'}</Text>
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.card }]}
+                onPress={() => setLanguageModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: '#10B98115' }]}>
+                  <Globe size={20} color="#10B981" strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {supportedLanguages.find(l => l.code === language)?.flag} {supportedLanguages.find(l => l.code === language)?.nativeName || 'Français'}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.languageDescription') || 'Choisir la langue de l\'app'}
                   </Text>
                 </View>
                 <ChevronRight size={18} color={colors.textMuted} />

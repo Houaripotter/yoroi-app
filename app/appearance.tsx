@@ -102,7 +102,7 @@ export default function AppearanceScreen() {
 
           <View style={styles.header}>
             <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-              <Palette size={28} color={colors.accent} />
+              <Palette size={28} color={colors.accentText} />
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>

@@ -38,7 +38,7 @@ export function LanguageSelector() {
       {/* Header */}
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-          <Globe size={20} color={colors.accent} />
+          <Globe size={20} color={colors.accentText} />
         </View>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Langue</Text>
       </View>

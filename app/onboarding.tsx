@@ -120,14 +120,14 @@ export default function OnboardingScreen() {
       const slides: Slide[] = [
     {
       id: 'welcome',
-      icon: <Sparkles size={64} color={colors.accent} />,
+      icon: <Sparkles size={64} color={colors.accentText} />,
       title: 'Ton Armure Digitale',
       description: 'YOROI fonctionne 100% HORS LIGNE. Desert, foret, mer, montagne sans reseau ? Pas de probleme. Tes donnees restent sur TON telephone. Pas de compte, pas de cloud, pas de tracking.',
       color: colors.accent,
       highlights: [
-        { icon: <Target size={14} color={colors.accent} />, text: '100% hors ligne - Meme sans reseau' },
-        { icon: <Timer size={14} color={colors.accent} />, text: '100% confidentiel - Donnees privees' },
-        { icon: <Medal size={14} color={colors.accent} />, text: 'Pas de compte - Pas de cloud' },
+        { icon: <Target size={14} color={colors.accentText} />, text: '100% hors ligne - Meme sans reseau' },
+        { icon: <Timer size={14} color={colors.accentText} />, text: '100% confidentiel - Donnees privees' },
+        { icon: <Medal size={14} color={colors.accentText} />, text: 'Pas de compte - Pas de cloud' },
       ],
     },
     {
@@ -492,7 +492,7 @@ export default function OnboardingScreen() {
           {setupStep === 0 && (
             <View style={styles.setupStep}>
               <View style={[styles.setupIconContainer, { backgroundColor: `${colors.accent}20` }]}>
-                <User size={48} color={colors.accent} />
+                <User size={48} color={colors.accentText} />
               </View>
               <Text style={[styles.setupTitle, { color: colors.textPrimary }]}>
                 Comment t'appelles-tu ?
@@ -515,7 +515,7 @@ export default function OnboardingScreen() {
           {setupStep === 1 && (
             <View style={styles.setupStep}>
               <View style={[styles.setupIconContainer, { backgroundColor: `${colors.accent}20` }]}>
-                <User size={48} color={colors.accent} />
+                <User size={48} color={colors.accentText} />
               </View>
               <Text style={[styles.setupTitle, { color: colors.textPrimary }]}>
                 Tu es...
@@ -633,7 +633,7 @@ export default function OnboardingScreen() {
                 style={[styles.dateButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={() => setShowDatePicker(true)}
               >
-                <CalendarDays size={24} color={colors.accent} />
+                <CalendarDays size={24} color={colors.accentText} />
                 <Text style={[styles.dateButtonText, { color: birthDate ? colors.textPrimary : colors.textMuted }]}>
                   {birthDate ? format(birthDate, 'd MMMM yyyy', { locale: fr }) : 'Sélectionner une date'}
                 </Text>

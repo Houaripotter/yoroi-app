@@ -550,7 +550,7 @@ export default function AddScreen() {
             setShowDatePicker(true);
           }}
         >
-          <Calendar size={20} color={colors.accent} />
+          <Calendar size={20} color={colors.accentText} />
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
             {format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })}
           </Text>
@@ -561,7 +561,7 @@ export default function AddScreen() {
         {/* POIDS - SECTION PRINCIPALE */}
         {/* ═══════════════════════════════════════════ */}
         <Card style={styles.weightCard}>
-          <SectionHeader icon={Scale} color={colors.accent} title="Mon Poids" />
+          <SectionHeader icon={Scale} color={colors.accentText} title="Mon Poids" />
 
           {/* Weight Input - Isolé pour éviter les bugs de re-render */}
           <WeightInput
@@ -846,7 +846,7 @@ export default function AddScreen() {
           <View style={styles.photoTransformationContent}>
             <View style={styles.photoHeader}>
               <View style={[styles.photoIconLarge, { backgroundColor: `${colors.accent}20` }]}>
-                <Camera size={32} color={colors.accent} />
+                <Camera size={32} color={colors.accentText} />
               </View>
               <View style={styles.photoTextContainer}>
                 <Text style={[styles.photoTitleLarge, { color: colors.textPrimary }]}>
@@ -868,7 +868,7 @@ export default function AddScreen() {
               </View>
 
               <View style={styles.photoArrowContainer}>
-                <ChevronRight size={20} color={colors.accent} strokeWidth={3} />
+                <ChevronRight size={20} color={colors.accentText} strokeWidth={3} />
               </View>
 
               <View style={styles.photoAfterBox}>
@@ -920,10 +920,10 @@ export default function AddScreen() {
               <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.datePickerHeader}>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={[styles.datePickerButton, { color: colors.accent }]}>Annuler</Text>
+                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000' }]}>Annuler</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={[styles.datePickerButton, { color: colors.accent, fontWeight: '700' }]}>OK</Text>
+                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>OK</Text>
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
@@ -971,13 +971,13 @@ export default function AddScreen() {
             {/* Détails */}
             <View style={styles.successDetails}>
               <View style={styles.successDetailRow}>
-                <Scale size={18} color={colors.accent} />
+                <Scale size={18} color={colors.accentText} />
                 <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
                   Poids : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
                 </Text>
               </View>
               <View style={styles.successDetailRow}>
-                <Calendar size={18} color={colors.accent} />
+                <Calendar size={18} color={colors.accentText} />
                 <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
                   {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
                 </Text>

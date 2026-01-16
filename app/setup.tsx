@@ -85,7 +85,7 @@ export default function SetupScreen() {
         <View style={styles.welcomeContent}>
           {/* Logo et animation */}
           <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '20' }]}>
-            <Shield size={80} color={colors.accent} />
+            <Shield size={80} color={colors.accentText} />
           </View>
 
           {/* Titre principal */}
@@ -105,7 +105,7 @@ export default function SetupScreen() {
           {/* Badges de bienvenue */}
           <View style={styles.welcomeBadges}>
             <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard }]}>
-              <Swords size={20} color={colors.accent} />
+              <Swords size={20} color={colors.accentText} />
               <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
                 Esprit guerrier
               </Text>
@@ -147,7 +147,7 @@ export default function SetupScreen() {
         {/* Seule étape : Objectif (prénom et genre déjà collectés dans onboarding) */}
         <View style={styles.stepContainer}>
           <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-            <Target size={48} color={colors.accent} />
+            <Target size={48} color={colors.accentText} />
           </View>
 
           {existingProfile.username && (

@@ -283,15 +283,15 @@ export default function WeeklyRecapV2Screen() {
                 style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
                 onPress={takePhoto}
               >
-                <Camera size={22} color="#FFFFFF" />
-                <Text style={styles.photoPickerBtnText}>Prendre une photo</Text>
+                <Camera size={20} color="#000000" />
+                <Text style={[styles.photoPickerBtnText, { color: '#000000' }]}>Photo</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.photoPickerBtn, styles.photoPickerBtnSecondary, { borderColor: colors.accent }]}
+                style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
                 onPress={pickImage}
               >
-                <ImageIcon size={22} color={colors.accent} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.accent }]}>Galerie</Text>
+                <ImageIcon size={20} color={colors.textPrimary} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
               </TouchableOpacity>
             </View>
           </View>

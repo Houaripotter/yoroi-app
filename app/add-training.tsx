@@ -1037,14 +1037,14 @@ export default function AddTrainingScreen() {
                     style={[
                       styles.clubCard,
                       { backgroundColor: colors.card, borderColor: colors.border },
-                      !selectedClub && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
+                      !selectedClub && { borderColor: colors.accent, backgroundColor: colors.accent + '15' },
                     ]}
                     onPress={() => setSelectedClub(null)}
                   >
-                    <View style={[styles.clubCardIcon, { backgroundColor: colors.cardHover }]}>
-                      <Home size={24} color={!selectedClub ? colors.gold : colors.textSecondary} strokeWidth={2} />
+                    <View style={[styles.clubCardIcon, { backgroundColor: !selectedClub ? colors.accent + '20' : colors.cardHover }]}>
+                      <Home size={24} color={!selectedClub ? (isDark ? colors.accent : '#000000') : colors.textSecondary} strokeWidth={2} />
                     </View>
-                    <Text style={[styles.clubCardName, { color: !selectedClub ? colors.gold : colors.textSecondary }]}>
+                    <Text style={[styles.clubCardName, { color: !selectedClub ? (isDark ? colors.accent : '#000000') : colors.textSecondary, fontWeight: !selectedClub ? '700' : '500' }]}>
                       Libre
                     </Text>
                   </TouchableOpacity>
@@ -1104,7 +1104,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.accent, marginTop: SPACING.lg }]}>
+            <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
               2. Configure ta seance
             </Text>
           </>

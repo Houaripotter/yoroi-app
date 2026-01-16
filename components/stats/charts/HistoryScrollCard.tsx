@@ -63,18 +63,18 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
     const isLoss = diff < -0.1;
 
     if (userGoal === 'lose') {
-      if (isLoss) return { color: '#10B981', label: 'EN BAISSE' }; // Vert = bien (perte)
-      if (isGain) return { color: '#EF4444', label: 'EN HAUSSE' }; // Rouge = mal (prise)
-      return { color: '#F59E0B', label: 'STABLE' }; // Orange = stable
+      if (isLoss) return { color: '#2BCBBA', label: 'EN BAISSE' }; // Teal = bien (perte)
+      if (isGain) return { color: '#FC5C65', label: 'EN HAUSSE' }; // Coral = mal (prise)
+      return { color: '#FED330', label: 'STABLE' }; // Gold = stable
     } else if (userGoal === 'gain') {
-      if (isGain) return { color: '#10B981', label: 'EN HAUSSE' }; // Vert = bien (prise)
-      if (isLoss) return { color: '#EF4444', label: 'EN BAISSE' }; // Rouge = mal (perte)
-      return { color: '#F59E0B', label: 'STABLE' }; // Orange = stable
+      if (isGain) return { color: '#2BCBBA', label: 'EN HAUSSE' }; // Teal = bien (prise)
+      if (isLoss) return { color: '#FC5C65', label: 'EN BAISSE' }; // Coral = mal (perte)
+      return { color: '#FED330', label: 'STABLE' }; // Gold = stable
     } else {
       // maintain
-      if (Math.abs(diff) < 0.3) return { color: '#10B981', label: 'STABLE' }; // Vert = stable
-      if (isGain) return { color: '#F59E0B', label: 'EN HAUSSE' };
-      return { color: '#F59E0B', label: 'EN BAISSE' }; // Orange = variation
+      if (Math.abs(diff) < 0.3) return { color: '#2BCBBA', label: 'STABLE' }; // Teal = stable
+      if (isGain) return { color: '#FED330', label: 'EN HAUSSE' };
+      return { color: '#FED330', label: 'EN BAISSE' }; // Gold = variation
     }
   };
 
@@ -93,18 +93,18 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
     const isDecrease = diff < -threshold;
 
     if (evolutionGoal === 'increase') {
-      if (isIncrease) return { color: '#10B981', label: 'EN HAUSSE' }; // Vert = bien
-      if (isDecrease) return { color: '#EF4444', label: 'EN BAISSE' }; // Rouge = mal
-      return { color: '#F59E0B', label: 'STABLE' };
+      if (isIncrease) return { color: '#2BCBBA', label: 'EN HAUSSE' }; // Teal = bien
+      if (isDecrease) return { color: '#FC5C65', label: 'EN BAISSE' }; // Coral = mal
+      return { color: '#FED330', label: 'STABLE' };
     } else if (evolutionGoal === 'decrease') {
-      if (isDecrease) return { color: '#10B981', label: 'EN BAISSE' }; // Vert = bien
-      if (isIncrease) return { color: '#EF4444', label: 'EN HAUSSE' }; // Rouge = mal
-      return { color: '#F59E0B', label: 'STABLE' };
+      if (isDecrease) return { color: '#2BCBBA', label: 'EN BAISSE' }; // Teal = bien
+      if (isIncrease) return { color: '#FC5C65', label: 'EN HAUSSE' }; // Coral = mal
+      return { color: '#FED330', label: 'STABLE' };
     } else {
       // stable
-      if (!isIncrease && !isDecrease) return { color: '#10B981', label: 'STABLE' }; // Vert = bien
-      if (isIncrease) return { color: '#F59E0B', label: 'EN HAUSSE' };
-      return { color: '#F59E0B', label: 'EN BAISSE' };
+      if (!isIncrease && !isDecrease) return { color: '#2BCBBA', label: 'STABLE' }; // Teal = bien
+      if (isIncrease) return { color: '#FED330', label: 'EN HAUSSE' };
+      return { color: '#FED330', label: 'EN BAISSE' };
     }
   };
 

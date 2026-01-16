@@ -76,8 +76,16 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
     const content = (
       <>
         <LinearGradient
-          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.9)']}
-          locations={[0, 0.5, 1]}
+          colors={[
+            'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
+            'rgba(0,0,0,0.4)',     // 15% - Transition
+            'rgba(0,0,0,0)',       // 30% - Transparent
+            'rgba(0,0,0,0)',       // 50% - Transparent (centre - photo bien visible)
+            'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
+            'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
+            'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
+          ]}
+          locations={[0, 0.15, 0.3, 0.5, 0.65, 0.85, 1]}
           style={styles.overlay}
         >
           {/* HAUT: Titre mois (minimaliste) */}
@@ -154,9 +162,9 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
           {/* STATS SECONDAIRES */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Flame size={16} color="#FF6B00" />
-              <Text style={styles.statValue}>{stats.activeDays}</Text>
-              <Text style={styles.statLabel}>JOURS ACTIFS</Text>
+              <Flame size={14} color="#FF6B00" />
+              <Text style={styles.statValue}>{stats.totalTrainings}</Text>
+              <Text style={styles.statLabel}>ENTRAÎNEMENTS</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -413,6 +421,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 2,
     borderColor: '#D4AF37',
+    backgroundColor: '#FFFFFF',
   },
   clubBubbleLogoPlaceholder: {
     width: 50,

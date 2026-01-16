@@ -163,7 +163,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* INDICATEUR DE SEMAINE */}
       <View style={[styles.weekIndicator, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-        <Calendar size={16} color={colors.accent} />
+        <Calendar size={16} color={colors.accentText} />
         <Text style={[styles.weekIndicatorText, { color: colors.textPrimary }]}>
           {getWeekDates()}
         </Text>
@@ -556,7 +556,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                                   onAddSession(day.id, slot.id);
                                 }}
                               >
-                                <Plus size={14} color={colors.accent} />
+                                <Plus size={14} color={colors.accentText} />
                                 <Text style={[styles.addButtonSmallText, { color: colors.accent }]}>
                                   Ajouter
                                 </Text>

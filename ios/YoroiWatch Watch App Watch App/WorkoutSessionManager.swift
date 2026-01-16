@@ -90,6 +90,9 @@ class WorkoutSessionManager: NSObject, ObservableObject {
                         self.workoutState = .active
                         self.startTime = startDate
                         self.startTimer()
+                        // Sync avec complications
+                        ComplicationDataManager.shared.isWorkoutActive = true
+                        ComplicationDataManager.shared.workoutStartTime = startDate
                     }
                 }
             }
@@ -156,6 +159,9 @@ class WorkoutSessionManager: NSObject, ObservableObject {
         elapsedTime = 0
         startTime = nil
         workoutState = .notStarted
+        // Sync avec complications
+        ComplicationDataManager.shared.isWorkoutActive = false
+        ComplicationDataManager.shared.workoutStartTime = nil
     }
 
     // MARK: - Helpers

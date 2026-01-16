@@ -511,7 +511,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
                   <View style={styles.statItemEnhanced}>
                     <View style={[styles.statIconSmall, { backgroundColor: colors.accent + '15' }]}>
-                      <Calendar size={18} color={colors.accent} strokeWidth={2.5} />
+                      <Calendar size={18} color={colors.accentText} strokeWidth={2.5} />
                     </View>
                     <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Durée</Text>
                     {daysDifference !== null ? (
@@ -554,7 +554,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
               {/* Instruction Card */}
               <View style={[styles.instructionCard, { backgroundColor: colors.card }]}>
                 <View style={[styles.instructionIconContainer, { backgroundColor: colors.accent + '15' }]}>
-                  <Zap size={24} color={colors.accent} strokeWidth={2.5} />
+                  <Zap size={24} color={colors.accentText} strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.instructionTitle, { color: colors.textPrimary }]}>
                   {step === 'before' ? 'Choisis ta photo de départ' : 'Choisis ta photo actuelle'}

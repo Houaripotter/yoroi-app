@@ -61,10 +61,10 @@ export default function ChallengesScreen() {
   const renderChallengeIcon = (iconName: string) => {
     const iconSize = 28;
     switch (iconName) {
-      case 'dumbbell': return <Dumbbell size={iconSize} color={colors.accent} />;
+      case 'dumbbell': return <Dumbbell size={iconSize} color={colors.accentText} />;
       case 'droplets': return <Droplets size={iconSize} color="#06B6D4" />;
       case 'moon': return <Moon size={iconSize} color="#8B5CF6" />;
-      case 'scale': return <Scale size={iconSize} color={colors.accent} />;
+      case 'scale': return <Scale size={iconSize} color={colors.accentText} />;
       case 'flame': return <Flame size={iconSize} color="#F97316" />;
       case 'zap': return <Zap size={iconSize} color="#F59E0B" />;
       case 'waves': return <Waves size={iconSize} color="#06B6D4" />;
@@ -72,7 +72,7 @@ export default function ChallengesScreen() {
       case 'trophy': return <Trophy size={iconSize} color="#F59E0B" />;
       case 'trending-down': return <TrendingDown size={iconSize} color={colors.success} />;
       case 'crown': return <Crown size={iconSize} color="#F59E0B" />;
-      default: return <Target size={iconSize} color={colors.accent} />;
+      default: return <Target size={iconSize} color={colors.accentText} />;
     }
   };
 
@@ -177,7 +177,7 @@ export default function ChallengesScreen() {
         
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
-          <Target size={16} color={colors.accent} />
+          <Target size={16} color={colors.accentText} />
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
             {activeTab === 'daily' 
               ? 'Les défis quotidiens se réinitialisent chaque matin'
@@ -224,7 +224,7 @@ export default function ChallengesScreen() {
               {/* Reward */}
               <View style={styles.challengeFooter}>
                 <View style={[styles.rewardBadge, { backgroundColor: colors.accentMuted }]}>
-                  <Gift size={12} color={colors.accent} />
+                  <Gift size={12} color={colors.accentText} />
                   <Text style={[styles.rewardText, { color: colors.accent }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
                   {challenge?.reward?.badge && (
                     <Text style={[styles.rewardBadgeText, { color: colors.accent }]}>+ Badge</Text>

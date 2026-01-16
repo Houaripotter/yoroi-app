@@ -188,7 +188,7 @@ export const ThemeSelector: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={[styles.headerIcon, { backgroundColor: `${colors.accent}20` }]}>
-          <Palette size={20} color={colors.accent} />
+          <Palette size={20} color={colors.accentText} />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>

@@ -113,7 +113,7 @@ export const AnalysePage: React.FC = () => {
         {/* Insight Entraînement */}
         <View style={styles.insightCard}>
           <View style={[styles.insightIconContainer, { backgroundColor: `${colors.accent}15` }]}>
-            <Zap size={24} color={colors.accent} strokeWidth={2.5} />
+            <Zap size={24} color={colors.accentText} strokeWidth={2.5} />
           </View>
           <View style={styles.insightContent}>
             <Text style={[styles.insightTitle, { color: colors.textPrimary }]}>

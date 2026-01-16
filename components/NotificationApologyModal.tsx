@@ -102,7 +102,7 @@ export const NotificationApologyModal: React.FC = () => {
             {/* Icône principale */}
             <View style={styles.iconContainer}>
               <View style={[styles.iconCircle, { backgroundColor: `${colors.accent}15` }]}>
-                <Bell size={48} color={colors.accent} strokeWidth={2} />
+                <Bell size={48} color={colors.accentText} strokeWidth={2} />
               </View>
             </View>
 

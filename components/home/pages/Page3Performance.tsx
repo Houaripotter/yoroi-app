@@ -130,7 +130,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
         <View style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.reportHeader}>
             <View style={styles.reportTitleRow}>
-              <FileText size={24} color={colors.accent} strokeWidth={2} />
+              <FileText size={24} color={colors.accentText} strokeWidth={2} />
               <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
                 {t('analysis.weeklyReport')}
               </Text>
@@ -144,8 +144,8 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
                 }}
                 activeOpacity={0.7}
               >
-                <Share2 size={18} color={colors.accent} strokeWidth={2} />
-                <Text style={[styles.shareButtonText, { color: colors.accent }]}>
+                <Share2 size={18} color={isDark ? colors.accentText : '#000000'} strokeWidth={2} />
+                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
                   {t('analysis.share')}
                 </Text>
               </TouchableOpacity>
