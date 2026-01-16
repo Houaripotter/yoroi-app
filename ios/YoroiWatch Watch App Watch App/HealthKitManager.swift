@@ -24,12 +24,15 @@ class HealthKitManager: NSObject, ObservableObject {
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
-            HKObjectType.quantityType(forIdentifier: .bodyMass)!
+            HKObjectType.quantityType(forIdentifier: .bodyMass)!,
+            HKObjectType.workoutType()
         ]
 
         let typesToWrite: Set<HKSampleType> = [
             HKObjectType.quantityType(forIdentifier: .bodyMass)!,
-            HKObjectType.quantityType(forIdentifier: .dietaryWater)!
+            HKObjectType.quantityType(forIdentifier: .dietaryWater)!,
+            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
+            HKObjectType.workoutType()
         ]
 
         healthStore.requestAuthorization(toShare: typesToWrite, read: typesToRead) { success, _ in

@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -265,122 +266,129 @@ export default function YearCounterV2Screen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Card Preview */}
-        <View style={styles.cardContainer}>
-          <YearCounterCardV2
-            ref={cardRef}
-            stats={stats}
-            format={format}
-            backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
-            backgroundType={getBackgroundType()}
-            username="yoroiapp"
-          />
-        </View>
+        {/* Scrollable Content */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Card Preview */}
+          <View style={styles.cardContainer}>
+            <YearCounterCardV2
+              ref={cardRef}
+              stats={stats}
+              format={format}
+              backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
+              backgroundType={getBackgroundType()}
+              username="yoroiapp"
+            />
+          </View>
 
-        {/* Template Selector */}
-        <View style={styles.templateRow}>
-          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
-          {([
-            { key: 'photo', label: 'Photo' },
-            { key: 'dark', label: 'Sombre' },
-            { key: 'light', label: 'Clair' },
-          ] as const).map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.templateBtn,
-                {
-                  backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
-                  borderColor: selectedTemplate === key ? colors.accent : colors.border,
-                }
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedTemplate(key);
-              }}
-            >
-              <Text style={[
-                styles.templateBtnText,
-                { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
-              ]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
-        {selectedTemplate === 'photo' && !backgroundImage && (
-          <View style={styles.photoPickerContainer}>
-            <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
-              Ajoute ta photo
-            </Text>
-            <View style={styles.photoPickerButtons}>
+          {/* Template Selector */}
+          <View style={styles.templateRow}>
+            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+            {([
+              { key: 'photo', label: 'Photo' },
+              { key: 'dark', label: 'Sombre' },
+              { key: 'light', label: 'Clair' },
+            ] as const).map(({ key, label }) => (
               <TouchableOpacity
-                style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
-                onPress={takePhoto}
+                key={key}
+                style={[
+                  styles.templateBtn,
+                  {
+                    backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
+                    borderColor: selectedTemplate === key ? colors.accent : colors.border,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedTemplate(key);
+                }}
               >
-                <Camera size={22} color="#FFFFFF" />
-                <Text style={styles.photoPickerBtnText}>Prendre une photo</Text>
+                <Text style={[
+                  styles.templateBtnText,
+                  { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+                ]}>
+                  {label}
+                </Text>
               </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
+          {selectedTemplate === 'photo' && !backgroundImage && (
+            <View style={styles.photoPickerContainer}>
+              <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
+                Ajoute ta photo
+              </Text>
+              <View style={styles.photoPickerButtons}>
+                <TouchableOpacity
+                  style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
+                  onPress={takePhoto}
+                >
+                  <Camera size={20} color="#000000" />
+                  <Text style={[styles.photoPickerBtnText, { color: '#000000' }]}>Photo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
+                  onPress={pickImage}
+                >
+                  <ImageIcon size={20} color={colors.textPrimary} />
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          {selectedTemplate === 'photo' && backgroundImage && (
+            <View style={styles.photoActions}>
               <TouchableOpacity
-                style={[styles.photoPickerBtn, styles.photoPickerBtnSecondary, { borderColor: colors.accent }]}
+                style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={pickImage}
               >
-                <ImageIcon size={22} color={colors.accent} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.accent }]}>Galerie</Text>
+                <ImageIcon size={18} color={colors.textPrimary} />
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                onPress={takePhoto}
+              >
+                <Camera size={18} color={colors.textPrimary} />
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-        {selectedTemplate === 'photo' && backgroundImage && (
-          <View style={styles.photoActions}>
+          )}
+
+          {/* Share Actions */}
+          <View style={styles.shareActions}>
             <TouchableOpacity
-              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              onPress={pickImage}
+              style={[styles.shareBtn, { backgroundColor: colors.accent }]}
+              onPress={shareCard}
+              disabled={isLoading}
             >
-              <ImageIcon size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#000000" />
+              ) : (
+                <>
+                  <Share2 size={20} color="#000000" />
+                  <Text style={[styles.shareBtnText, { color: '#000000' }]}>Partager</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              onPress={takePhoto}
+              style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={saveToGallery}
+              disabled={isLoading}
             >
-              <Camera size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+              <Download size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
-        )}
 
-        {/* Share Actions */}
-        <View style={styles.shareActions}>
-          <TouchableOpacity
-            style={[styles.shareBtn, { backgroundColor: colors.accent }]}
-            onPress={shareCard}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Share2 size={20} color="#FFFFFF" />
-                <Text style={styles.shareBtnText}>Partager</Text>
-              </>
-            )}
+          {/* Close Button */}
+          <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+            <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-            onPress={saveToGallery}
-            disabled={isLoading}
-          >
-            <Download size={20} color={colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Close Button */}
-        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
-          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
-        </TouchableOpacity>
+        </ScrollView>
       </View>
       <PopupComponent />
     </ScreenWrapper>
@@ -394,6 +402,12 @@ export default function YearCounterV2Screen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   loadingContainer: {
     flex: 1,
@@ -455,7 +469,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingVertical: 8,
   },
   closeBtn: {
     width: 40,
@@ -476,7 +490,7 @@ const styles = StyleSheet.create({
   // Card
   cardContainer: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
 
   // Template Selector
@@ -486,21 +500,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 24,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   templateLabel: {
     fontSize: 13,
+    fontWeight: '600',
     marginRight: 8,
   },
   templateBtn: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   templateBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   // Photo Picker (when no photo selected)
@@ -510,7 +525,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoPickerTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     marginBottom: 12,
   },
@@ -525,7 +540,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     gap: 8,
   },
   photoPickerBtnSecondary: {
@@ -533,9 +548,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   photoPickerBtnText: {
-    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   // Photo Actions (when photo exists)
@@ -543,7 +557,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 24,
-    marginBottom: 12,
+    marginBottom: 16,
     justifyContent: 'center',
   },
   photoBtn: {
@@ -566,7 +580,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 24,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   shareBtn: {
     flex: 1,
@@ -575,26 +589,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 16,
     borderRadius: 14,
-    gap: 8,
+    gap: 10,
   },
   shareBtnText: {
-    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   saveBtn: {
     width: 56,
     height: 56,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   skipBtn: {
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   skipText: {
     fontSize: 14,
+    fontWeight: '500',
   },
 });

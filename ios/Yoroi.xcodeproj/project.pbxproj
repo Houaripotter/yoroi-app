@@ -75,18 +75,8 @@
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		9770F0A42F1AAA9100C506A7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"YoroiWatch-Watch-App-Watch-App-Info.plist",
-			);
-			target = 9770F0642F1A98D500C506A7 /* YoroiWatch Watch App Watch App */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9770F0692F1A98D500C506A7 /* YoroiWatch Watch App Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (9770F0A42F1AAA9100C506A7 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App Watch App"; sourceTree = "<group>"; };
+		9770F0692F1A98D500C506A7 /* YoroiWatch Watch App Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App Watch App"; sourceTree = "<group>"; };
 		9770F0772F1A98D800C506A7 /* YoroiWatch Watch App Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App Watch AppTests"; sourceTree = "<group>"; };
 		9770F0812F1A98D800C506A7 /* YoroiWatch Watch App Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App Watch AppUITests"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */

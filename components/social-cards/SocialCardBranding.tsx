@@ -33,8 +33,8 @@ export const SocialCardTopBanner: React.FC<{ variant?: 'dark' | 'light' }> = ({
 };
 
 // ============================================
-// FOOTER PRO - Identique à VictoryShareModal
-// Trait doré + YOROI + L'APP DES WARRIORS + Instagram + App Store
+// FOOTER PRO - Design compact
+// Trait doré + YOROI + Suivi du poids & sport + @yoroiapp
 // ============================================
 export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
   variant = 'dark'
@@ -42,7 +42,7 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
   const isLight = variant === 'light';
   const goldColor = '#D4AF37';
   const textColor = isLight ? '#1a1a1a' : goldColor;
-  const subTextColor = isLight ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)';
+  const subTextColor = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
   const separatorColor = isLight ? 'rgba(0,0,0,0.2)' : goldColor;
 
   return (
@@ -50,26 +50,19 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
       {/* Ligne de séparation dorée */}
       <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
 
-      {/* Brand Block */}
+      {/* Brand Block - Compact */}
       <View style={styles.footerBrandBlock}>
         <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
-        <Text style={[styles.footerTagline, { color: textColor }]}>L'APP DES WARRIORS</Text>
+        <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
 
-        {/* Social Row - Instagram + App Store côte à côte */}
+        {/* Social Row - Juste Instagram */}
         <View style={styles.footerSocialRow}>
-          <View style={styles.footerSocialItem}>
-            <Image
-              source={require('@/assets/images/instagram.png')}
-              style={styles.footerInstagramIcon}
-              resizeMode="contain"
-            />
-            <Text style={[styles.footerSocialText, { color: subTextColor }]}>@yoroiapp</Text>
-          </View>
           <Image
-            source={require('@/assets/images/appstore.png')}
-            style={styles.footerAppStoreIcon}
+            source={require('@/assets/images/instagram.png')}
+            style={styles.footerInstagramIconSmall}
             resizeMode="contain"
           />
+          <Text style={[styles.footerSocialText, { color: subTextColor }]}>@yoroiapp</Text>
         </View>
       </View>
     </View>
@@ -92,7 +85,7 @@ export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> =
     <View style={styles.footerCompact}>
       <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
       <Text style={[styles.footerBrandNameCompact, { color: textColor }]}>YOROI</Text>
-      <Text style={[styles.footerTaglineCompact, { color: textColor }]}>L'APP DES WARRIORS</Text>
+      <Text style={[styles.footerTaglineCompact, { color: textColor }]}>Suivi du poids & sport</Text>
       <View style={styles.footerSocialRowCompact}>
         <Image
           source={require('@/assets/images/instagram.png')}
@@ -100,11 +93,6 @@ export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> =
           resizeMode="contain"
         />
         <Text style={[styles.footerSocialTextCompact, { color: subTextColor }]}>@yoroiapp</Text>
-        <Image
-          source={require('@/assets/images/appstore.png')}
-          style={styles.appStoreIconSmall}
-          resizeMode="contain"
-        />
       </View>
     </View>
   );
@@ -167,53 +155,44 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
 
-  // Footer Pro (identique VictoryShareModal)
+  // Footer Pro - Compact
   footer: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 8,
     alignItems: 'center',
   },
   footerSeparator: {
     width: '100%',
     height: 2,
     borderRadius: 1,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   footerBrandBlock: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   footerBrandName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 6,
+    letterSpacing: 5,
     textAlign: 'center',
   },
   footerTagline: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 1,
     marginTop: 1,
     textAlign: 'center',
   },
   footerSocialRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    marginTop: 8,
-  },
-  footerSocialItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
+    marginTop: 6,
   },
-  footerInstagramIcon: {
-    width: 24,
-    height: 24,
-  },
-  footerAppStoreIcon: {
-    width: 80,
-    height: 24,
+  footerInstagramIconSmall: {
+    width: 16,
+    height: 16,
   },
   footerSocialText: {
     fontSize: 11,
