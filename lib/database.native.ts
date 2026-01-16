@@ -625,12 +625,12 @@ export const addTraining = async (data: Training): Promise<number> => {
 export const getTrainings = async (days?: number): Promise<Training[]> => {
   const database = await openDatabase();
   const query = days
-    ? `SELECT t.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+    ? `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
        WHERE t.date >= date('now', '-${days} days')
        ORDER BY t.date DESC, t.start_time ASC`
-    : `SELECT t.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+    : `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
        ORDER BY t.date DESC, t.start_time ASC`;
@@ -652,7 +652,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
   const database = await openDatabase();
   const results = await database.getAllAsync<Training & { exercises?: string }>(
-    `SELECT t.*, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+    `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
      FROM trainings t
      LEFT JOIN clubs c ON t.club_id = c.id
      WHERE strftime('%Y', t.date) = ? AND strftime('%m', t.date) = ?

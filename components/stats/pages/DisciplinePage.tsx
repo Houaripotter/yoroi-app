@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
@@ -21,8 +21,8 @@ import { fr, enUS } from 'date-fns/locale';
 
 export const DisciplinePage: React.FC = () => {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'fr' ? fr : enUS;
+  const { t, language } = useI18n();
+  const dateLocale = language === 'fr' ? fr : enUS;
 
   // Plage pour l'intensité d'entraînement
   const INTENSITY_RANGES = {

@@ -6,7 +6,7 @@
 import React, { useRef, useState } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Animated } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { PoidsPage } from './pages/PoidsPage';
@@ -32,7 +32,7 @@ const PAGE_DEFS = [
 
 export const StatsTabViewNew: React.FC = () => {
   const { colors, isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
 
   // Create pages with translated titles
   const PAGES = PAGE_DEFS.map(page => ({
@@ -151,13 +151,16 @@ export const StatsTabViewNew: React.FC = () => {
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? '#FFFFFF' : colors.textMuted}
+                    color={isActive ? '#000000' : colors.textMuted}
                     strokeWidth={2.5}
                   />
                 </View>
                 <Text style={[
                   styles.tabTitle,
-                  { color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted }
+                  {
+                    color: isActive ? '#000000' : colors.textMuted,
+                    fontWeight: isActive ? '800' : '600',
+                  }
                 ]}>
                   {page.title}
                 </Text>

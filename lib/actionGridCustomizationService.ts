@@ -19,7 +19,16 @@ export interface ActionGridItem {
 
 // Configuration par défaut - Organisée par thème (3 par ligne)
 export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
-  // LIGNE 1 - ENTRAÎNEMENT
+  // LIGNE 1 - BLESSURES, TIMER, CARNET
+  {
+    id: 'blessures',
+    label: 'Blessures',
+    description: 'Suivi de vos blessures',
+    icon: 'Plus',
+    color: '#EF4444',
+    route: '/infirmary',
+    order: 0,
+  },
   {
     id: 'timer',
     label: 'Timer',
@@ -27,7 +36,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Timer',
     color: '#4ECDC4',
     route: '/timer',
-    order: 0,
+    order: 1,
   },
   {
     id: 'carnet',
@@ -36,8 +45,10 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'BookOpen',
     color: '#F97316',
     route: '/training-journal',
-    order: 1,
+    order: 2,
   },
+
+  // LIGNE 2 - CALCULS & SANTÉ
   {
     id: 'calculateurs',
     label: 'Calculs',
@@ -45,10 +56,8 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Calculator',
     color: '#F59E0B',
     route: '/calculators',
-    order: 2,
+    order: 3,
   },
-
-  // LIGNE 2 - SANTÉ & BIEN-ÊTRE
   {
     id: 'jeune',
     label: 'Jeûne',
@@ -56,7 +65,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Clock',
     color: '#A855F7',
     route: '/fasting',
-    order: 3,
+    order: 4,
   },
   {
     id: 'nutrition',
@@ -65,8 +74,10 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Utensils',
     color: '#10B981',
     route: '/nutrition-plan',
-    order: 4,
+    order: 5,
   },
+
+  // LIGNE 3 - SANTÉ & GAMIFICATION
   {
     id: 'health',
     label: 'Apple Health',
@@ -74,10 +85,8 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Heart',
     color: '#EC4899',
     route: '/health-connect',
-    order: 5,
+    order: 6,
   },
-
-  // LIGNE 3 - CONNAISSANCE & GAMIFICATION
   {
     id: 'savoir',
     label: 'Savoir',
@@ -85,7 +94,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'BookMarked',
     color: '#8B5CF6',
     route: '/savoir',
-    order: 6,
+    order: 7,
   },
   {
     id: 'dojo',
@@ -94,8 +103,10 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Sparkles',
     color: '#FBBF24',
     route: '/gamification',
-    order: 7,
+    order: 8,
   },
+
+  // LIGNE 4 - NOTIFS & SOCIAL
   {
     id: 'notifications',
     label: 'Notifs',
@@ -103,10 +114,8 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Bell',
     color: '#F59E0B',
     route: '/notifications',
-    order: 8,
+    order: 9,
   },
-
-  // LIGNE 4 - SOCIAL
   {
     id: 'partager',
     label: 'Partager',
@@ -114,7 +123,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Share2',
     color: '#EC4899',
     route: '/share-hub',
-    order: 9,
+    order: 10,
   },
   {
     id: 'clubs',
@@ -123,8 +132,10 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Users',
     color: '#818CF8',
     route: '/partners',
-    order: 10,
+    order: 11,
   },
+
+  // LIGNE 5 - COMPÉTITIONS & PERSONNALISATION
   {
     id: 'competiteur',
     label: 'Compète',
@@ -132,10 +143,8 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Trophy',
     color: '#EF4444',
     route: '/competitor-space',
-    order: 11,
+    order: 12,
   },
-
-  // LIGNE 5 - PERSONNALISATION
   {
     id: 'profil',
     label: 'Profil',
@@ -143,7 +152,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'User',
     color: '#60A5FA',
     route: '/profile',
-    order: 12,
+    order: 13,
   },
   {
     id: 'themes',
@@ -152,8 +161,10 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Palette',
     color: '#A78BFA',
     route: '/appearance',
-    order: 13,
+    order: 14,
   },
+
+  // LIGNE 6 - PHOTOS
   {
     id: 'photos',
     label: 'Photos',
@@ -161,7 +172,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Camera',
     color: '#F472B6',
     route: '/photos',
-    order: 14,
+    order: 15,
   },
 ];
 

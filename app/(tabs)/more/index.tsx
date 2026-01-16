@@ -82,9 +82,10 @@ import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeServi
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
 import logger from '@/lib/security/logger';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
-import { SUPPORTED_LANGUAGES, changeLanguage, getCurrentLanguage } from '@/lib/i18n';
+import { useI18n } from '@/lib/I18nContext';
+
+// Type pour la fonction de traduction
+type TranslateFunction = (key: string, options?: any) => string;
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
@@ -117,7 +118,7 @@ interface MenuItem {
 // ============================================
 // ACTIONS RAPIDES (Grille en haut - Défilable)
 // ============================================
-const getQuickActions = (t: TFunction): QuickAction[] => [
+const getQuickActions = (t: TranslateFunction): QuickAction[] => [
   {
     id: 'timer',
     label: t('tools.timer'),
@@ -193,7 +194,7 @@ const getQuickActions = (t: TFunction): QuickAction[] => [
 // ============================================
 // SECTION PROFIL & APPARENCE
 // ============================================
-const getProfileItems = (t: TFunction): MenuItem[] => [
+const getProfileItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'profile',
     label: t('menu.profile'),
@@ -262,7 +263,7 @@ const getProfileItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION OUTILS
 // ============================================
-const getToolsItems = (t: TFunction): MenuItem[] => [
+const getToolsItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'timer',
     label: t('tools.timer'),
@@ -322,7 +323,7 @@ const getToolsItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION COMMUNAUTÉ
 // ============================================
-const getCommunityItems = (t: TFunction): MenuItem[] => [
+const getCommunityItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'clubs',
     label: t('menu.clubsCoach'),
@@ -346,7 +347,7 @@ const getCommunityItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION AFFICHAGE
 // ============================================
-const getDisplayItems = (t: TFunction): MenuItem[] => [
+const getDisplayItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'appearance',
     label: t('menu.appearance'),
@@ -371,7 +372,7 @@ const getDisplayItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION RAPPELS & NOTIFICATIONS
 // ============================================
-const getRemindersItems = (t: TFunction): MenuItem[] => [
+const getRemindersItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'notifications',
     label: t('menu.notifications'),
@@ -386,7 +387,7 @@ const getRemindersItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION APPLE HEALTH
 // ============================================
-const getHealthItems = (t: TFunction): MenuItem[] => [
+const getHealthItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'health-sync',
     label: t('tools.appleHealth'),
@@ -402,7 +403,7 @@ const getHealthItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION SAUVEGARDE & RESTAURATION
 // ============================================
-const getBackupItems = (t: TFunction): MenuItem[] => [
+const getBackupItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'icloud-sync',
     label: t('menu.icloudSync'),
@@ -445,7 +446,7 @@ const getBackupItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION SÉCURITÉ
 // ============================================
-const getSecurityItems = (t: TFunction): MenuItem[] => [
+const getSecurityItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'tutorial',
     label: t('menu.tutorial'),
@@ -469,7 +470,7 @@ const getSecurityItems = (t: TFunction): MenuItem[] => [
 // ============================================
 // SECTION SUPPORT
 // ============================================
-const getSupportItems = (t: TFunction): MenuItem[] => [
+const getSupportItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'help-tutorials',
     label: t('menu.helpAndTutorials'),
@@ -537,7 +538,7 @@ const SEARCH_KEYWORDS: Record<string, string[]> = {
 export default function MoreScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const { t, i18n } = useTranslation();
+  const { t, language, setLanguage, supportedLanguages } = useI18n();
 
   // Generate menu items with translations
   const QUICK_ACTIONS = getQuickActions(t);
@@ -569,7 +570,7 @@ export default function MoreScreen() {
 
   // Language state
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
+  const currentLang = language; // Utilise la langue du contexte
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
@@ -888,8 +889,7 @@ export default function MoreScreen() {
 
   const handleChangeLanguage = async (langCode: string) => {
     try {
-      await changeLanguage(langCode);
-      setCurrentLang(langCode);
+      await setLanguage(langCode);
       setLanguageModalVisible(false);
       showPopup(
         t('common.success'),
@@ -2121,7 +2121,7 @@ export default function MoreScreen() {
             </View>
 
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {SUPPORTED_LANGUAGES.map((lang) => {
+              {supportedLanguages.map((lang) => {
                 const isSelected = currentLang === lang.code;
                 return (
                   <TouchableOpacity

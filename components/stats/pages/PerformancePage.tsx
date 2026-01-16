@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
@@ -13,7 +13,7 @@ import { Award, TrendingUp, Target, Zap } from 'lucide-react-native';
 
 export const PerformancePage: React.FC = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
 
   return (

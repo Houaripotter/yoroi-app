@@ -9,11 +9,10 @@ import * as Haptics from 'expo-haptics';
 import { Globe } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import { SupportedLanguage } from '@/lib/i18n';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
-const LANGUAGES: { code: SupportedLanguage; label: string; flag: string }[] = [
+const LANGUAGES = [
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
   { code: 'en', label: 'English', flag: '🇬🇧' },
 ];
@@ -22,7 +21,7 @@ export function LanguageSelector() {
   const { colors } = useTheme();
   const { language, setLanguage } = useI18n();
 
-  const handleLanguageChange = async (newLanguage: SupportedLanguage) => {
+  const handleLanguageChange = async (newLanguage: string) => {
     if (newLanguage === language) return;
 
     try {

@@ -1,13 +1,13 @@
 //
-//  YoroiWatch_Watch_AppUITests.swift
-//  YoroiWatch Watch AppUITests
+//  YoroiWatch_Watch_App_Watch_AppUITests.swift
+//  YoroiWatch Watch App Watch AppUITests
 //
 //  Created by Houari BOUKEROUCHA on 16/01/2026.
 //
 
 import XCTest
 
-final class YoroiWatch_Watch_AppUITests: XCTestCase {
+final class YoroiWatch_Watch_App_Watch_AppUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

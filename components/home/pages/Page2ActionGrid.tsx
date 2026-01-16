@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import {
   BookOpen,
   Timer,
@@ -24,6 +24,7 @@ import {
   Heart,
   Users,
   BookMarked,
+  Plus,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { getActionGridOrder, ActionGridItem } from '@/lib/actionGridCustomizationService';
@@ -50,6 +51,7 @@ const ICON_MAP: { [key: string]: React.ComponentType<any> } = {
   'Bell': Bell,
   'Heart': Heart,
   'Users': Users,
+  'Plus': Plus,
 };
 
 const getIconComponent = (iconName: string) => {
@@ -60,7 +62,7 @@ const cardWidth = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) /
 
 export const Page2ActionGrid: React.FC = () => {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const [gridItems, setGridItems] = useState<ActionGridItem[]>([]);
 
   useEffect(() => {

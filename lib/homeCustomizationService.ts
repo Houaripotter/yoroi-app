@@ -61,12 +61,20 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     order: 4,
   },
   {
-    id: 'tools_row_2',
-    name: 'Sante & Outils',
-    description: 'Blessures, Energie, Savoir, Calculateurs',
-    icon: 'heart',
+    id: 'blessures_banner',
+    name: 'Suivi Blessures',
+    description: 'Journal des blessures avec croix rouge',
+    icon: 'plus',
     visible: true,
     order: 5,
+  },
+  {
+    id: 'tools_row_2',
+    name: 'Sante & Outils',
+    description: 'Energie, Savoir, Calculateurs',
+    icon: 'heart',
+    visible: true,
+    order: 6,
   },
   {
     id: 'tools_row_3',
@@ -74,7 +82,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Prochain objectif, Jeune, Photo, Partager',
     icon: 'share-2',
     visible: true,
-    order: 6,
+    order: 7,
   },
   {
     id: 'healthspan',
@@ -82,7 +90,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Ton esperance de vie en bonne sante',
     icon: 'heart',
     visible: true,
-    order: 7,
+    order: 8,
   },
   {
     id: 'challenges',
@@ -90,7 +98,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Tes objectifs quotidiens',
     icon: 'target',
     visible: true,
-    order: 8,
+    order: 9,
     mandatory: true, // Toujours visible - fonctionnalité importante
   },
   {
@@ -99,7 +107,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Vue d\'ensemble de tes stats',
     icon: 'activity',
     visible: true,
-    order: 9,
+    order: 10,
   },
   {
     id: 'weekly_report',
@@ -107,7 +115,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Bilan hebdomadaire',
     icon: 'file-text',
     visible: true,
-    order: 10,
+    order: 11,
   },
   {
     id: 'weight_graph_large',
@@ -115,7 +123,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Grand graphique de suivi du poids',
     icon: 'trending-down',
     visible: true,
-    order: 11,
+    order: 12,
   },
   {
     id: 'activity_summary',
@@ -123,7 +131,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     description: 'Pas et calories brûlées',
     icon: 'activity',
     visible: true,
-    order: 12,
+    order: 13,
   },
 ];
 

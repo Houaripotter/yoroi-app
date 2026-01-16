@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
@@ -25,8 +25,8 @@ import { fr, enUS } from 'date-fns/locale';
 
 export const VitalitePage: React.FC = () => {
   const { colors } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'fr' ? fr : enUS;
+  const { t, language } = useI18n();
+  const dateLocale = language === 'fr' ? fr : enUS;
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);

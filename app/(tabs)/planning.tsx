@@ -16,7 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,7 +110,7 @@ const SAVED_EVENTS_KEY = 'my_saved_events';
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);

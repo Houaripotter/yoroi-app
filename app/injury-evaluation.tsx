@@ -29,6 +29,7 @@ import {
   RotateCcw,
   HelpCircle,
   LucideIcon,
+  Info,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -92,6 +93,14 @@ export default function InjuryEvaluationScreen() {
   );
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Suggestion simple basée sur l'EVA (juste une aide, pas un avis médical)
+  const getSuggestedDays = (eva: number): number => {
+    if (eva <= 3) return 7;
+    if (eva <= 6) return 14;
+    return 21;
+  };
+  const suggestedDays = getSuggestedDays(evaScore);
 
   const handleSubmit = async () => {
     if (!isEditMode && (!painType || !cause)) {
@@ -350,8 +359,29 @@ export default function InjuryEvaluationScreen() {
             Durée de récupération estimée
           </Text>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-            Nombre de jours pour guérison complète
+            Modifiable plus tard si besoin
           </Text>
+
+          {/* Suggestion cliquable basée sur EVA */}
+          <TouchableOpacity
+            style={[
+              styles.suggestionButton,
+              {
+                backgroundColor: estimatedRecoveryDays === suggestedDays ? '#10B98120' : colors.backgroundElevated,
+                borderColor: estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.border,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setEstimatedRecoveryDays(suggestedDays);
+            }}
+            activeOpacity={0.7}
+          >
+            <Info size={18} color={estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.textMuted} />
+            <Text style={[styles.suggestionText, { color: estimatedRecoveryDays === suggestedDays ? '#10B981' : colors.textPrimary }]}>
+              Suggestion : {suggestedDays} jours (EVA {evaScore}/10)
+            </Text>
+          </TouchableOpacity>
 
           <View style={styles.durationContainer}>
             <TouchableOpacity
@@ -617,6 +647,22 @@ const styles = StyleSheet.create({
   presetButtonText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  // Suggestion Button
+  suggestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  suggestionText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
   },
   // Submit Button
   submitButton: {

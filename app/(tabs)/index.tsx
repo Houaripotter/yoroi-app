@@ -907,7 +907,10 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.8}
             >
-              <Plus size={20} color="#EF4444" strokeWidth={2} />
+              <View style={styles.redCrossIconSmall}>
+                <View style={[styles.crossVerticalIconSmall, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontalIconSmall, { backgroundColor: '#EF4444' }]} />
+              </View>
               <Text style={[styles.quickToolText, { color: colors.textPrimary }]}>Blessures</Text>
             </TouchableOpacity>
 
@@ -1122,25 +1125,36 @@ export default function HomeScreen() {
           </View>
         );
 
-      // Ligne 2: Blessures, Energie, Savoir, Calculateurs
+      // Carte Blessures (full width avec croix rouge)
+      case 'blessures_banner':
+        return (
+          <TouchableOpacity
+            key={sectionId}
+            style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/infirmary');
+            }}
+            activeOpacity={0.85}
+          >
+            <View style={styles.blessuresCrossContainer}>
+              <View style={styles.redCrossIconLarge}>
+                <View style={[styles.crossVerticalIconLarge, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.crossHorizontalIconLarge, { backgroundColor: '#EF4444' }]} />
+              </View>
+            </View>
+            <View style={styles.blessuresTextContainer}>
+              <Text style={[styles.blessuresTitle, { color: colors.textPrimary }]}>Blessures</Text>
+              <Text style={[styles.blessuresSubtitle, { color: colors.textMuted }]}>Suivez vos blessures</Text>
+            </View>
+            <ChevronRight size={24} color={colors.textMuted} />
+          </TouchableOpacity>
+        );
+
+      // Ligne 2: Energie, Savoir, Calculateurs
       case 'tools_row_2':
         return (
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
-            <TouchableOpacity
-              style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/infirmary');
-              }}
-              activeOpacity={0.85}
-            >
-              <View style={styles.redCrossIconSmall}>
-                <View style={[styles.crossVerticalIconSmall, { backgroundColor: '#EF4444' }]} />
-                <View style={[styles.crossHorizontalIconSmall, { backgroundColor: '#EF4444' }]} />
-              </View>
-              <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Blessures</Text>
-              <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Journal</Text>
-            </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
@@ -2484,6 +2498,54 @@ const styles = StyleSheet.create({
     width: 22,
     height: 8,
     borderRadius: 2,
+  },
+
+  // Bannière Blessures (full width)
+  blessuresBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  blessuresCrossContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#EF444420',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  redCrossIconLarge: {
+    width: 30,
+    height: 30,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVerticalIconLarge: {
+    position: 'absolute',
+    width: 10,
+    height: 30,
+    borderRadius: 3,
+  },
+  crossHorizontalIconLarge: {
+    position: 'absolute',
+    width: 30,
+    height: 10,
+    borderRadius: 3,
+  },
+  blessuresTextContainer: {
+    flex: 1,
+  },
+  blessuresTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  blessuresSubtitle: {
+    fontSize: 13,
   },
 
   // Actions Row 4 - CIRCULAR BUTTONS

@@ -3,7 +3,7 @@ import { Tabs, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { RADIUS, SHADOWS } from '@/constants/appTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef } from 'react';
@@ -158,7 +158,7 @@ function CentralBuzzerButton() {
 
 export default function TabLayout() {
   const { colors } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
 
   // Tab bar TOUJOURS noire (mode clair et sombre)
   const tabBarBg = '#0D0D0F';

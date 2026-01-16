@@ -1,13 +1,13 @@
 //
-//  YoroiWatch_Watch_AppUITestsLaunchTests.swift
-//  YoroiWatch Watch AppUITests
+//  YoroiWatch_Watch_App_Watch_AppUITestsLaunchTests.swift
+//  YoroiWatch Watch App Watch AppUITests
 //
 //  Created by Houari BOUKEROUCHA on 16/01/2026.
 //
 
 import XCTest
 
-final class YoroiWatch_Watch_AppUITestsLaunchTests: XCTestCase {
+final class YoroiWatch_Watch_App_Watch_AppUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

@@ -5,7 +5,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
@@ -124,7 +124,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -348,13 +348,16 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
                 ]}>
                   <IconComponent
                     size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    color={isActive ? '#000000' : colors.textMuted}
                     strokeWidth={2.5}
                   />
                 </View>
                 <Text style={[
                   styles.tabTitle,
-                  { color: isActive ? colors.textPrimary : colors.textMuted }
+                  {
+                    color: isActive ? '#000000' : colors.textMuted,
+                    fontWeight: isActive ? '800' : '600',
+                  }
                 ]}>
                   {page.title}
                 </Text>
@@ -362,13 +365,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
             );
           })}
         </ScrollView>
-
-        {/* Description de la page active */}
-        <View style={styles.descriptionContainer}>
-          <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
-            {pageOrder[currentPage]?.description || ''}
-          </Text>
-        </View>
       </View>
 
       {/* Indicateurs de pagination (dots) - zIndex bas */}

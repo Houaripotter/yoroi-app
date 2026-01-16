@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useTranslation } from 'react-i18next';
+import { useI18n } from '@/lib/I18nContext';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { CheckCircle2, Circle, Activity, Footprints, Flame, FileText, Share2, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
@@ -52,7 +52,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
   onShareReport,
 }) => {
   const { colors, isDark } = useTheme();
-  const { t } = useTranslation();
+  const { t } = useI18n();
 
   const getTrendIcon = (value: number) => {
     if (value > 0) return TrendingUp;

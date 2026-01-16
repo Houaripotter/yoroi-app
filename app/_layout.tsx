@@ -7,8 +7,6 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
-// Initialize i18n before anything else
-import '@/lib/i18n';
 import { DevModeProvider } from '@/lib/DevModeContext';
 import DevCodeModal from '@/components/DevCodeModal';
 import { NotificationApologyModal } from '@/components/NotificationApologyModal';
