@@ -21,14 +21,9 @@
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>YOROI utilise vos donnees de sante pour afficher vos pas, frequence cardiaque et sommeil.</string>
+	<string>YOROI utilise vos donnees de sante pour afficher vos pas et calories.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>YOROI enregistre vos pesees et votre hydratation dans Apple Sante.</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-	</array>
+	<string>YOROI enregistre vos pesees et hydratation dans Apple Sante.</string>
 	<key>WKApplication</key>
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>

@@ -2,8 +2,6 @@
 //  WatchConnectivityManager.swift
 //  YoroiWatch Watch App
 //
-//  Manages communication between Watch and iPhone
-//
 
 import Foundation
 import WatchConnectivity
@@ -21,110 +19,58 @@ class WatchConnectivityManager: NSObject, ObservableObject {
         super.init()
     }
 
-    // MARK: - Session Activation
-
     func activateSession() {
         if WCSession.isSupported() {
             session = WCSession.default
             session?.delegate = self
             session?.activate()
-            print("[Watch] WCSession activee")
         }
     }
 
-    // MARK: - Send Messages to iPhone
-
-    /// Demander une synchronisation a l'iPhone
     func requestSync() {
         sendMessage(["action": "syncRequest"])
     }
 
-    /// Envoyer l'ajout d'hydratation a l'iPhone
     func sendHydrationAdded(amount: Int) {
-        sendMessage([
-            "action": "hydrationAdded",
-            "amount": amount
-        ])
-        // Mise a jour locale optimiste
+        sendMessage(["action": "hydrationAdded", "amount": amount])
         watchData.hydrationCurrent += amount
     }
 
-    /// Envoyer l'ajout de poids a l'iPhone
     func sendWeightAdded(weight: Double) {
-        sendMessage([
-            "action": "weightAdded",
-            "weight": weight
-        ])
-        // Mise a jour locale optimiste
+        sendMessage(["action": "weightAdded", "weight": weight])
         watchData.currentWeight = weight
     }
 
-    // MARK: - Private Helpers
-
     private func sendMessage(_ message: [String: Any]) {
         guard let session = session, session.isReachable else {
-            print("[Watch] iPhone non atteignable, utilisation du transfert en arriere-plan")
-            // Utiliser transferUserInfo pour les messages en arriere-plan
             session?.transferUserInfo(message)
             return
         }
-
-        session.sendMessage(message, replyHandler: { reply in
-            print("[Watch] Reponse de l'iPhone: \(reply)")
-        }, errorHandler: { error in
-            print("[Watch] Erreur envoi message: \(error.localizedDescription)")
-        })
+        session.sendMessage(message, replyHandler: nil, errorHandler: nil)
     }
 
     private func updateWatchData(from dictionary: [String: Any]) {
         DispatchQueue.main.async {
-            if let hydrationCurrent = dictionary["hydrationCurrent"] as? Int {
-                self.watchData.hydrationCurrent = hydrationCurrent
-            }
-            if let hydrationGoal = dictionary["hydrationGoal"] as? Int {
-                self.watchData.hydrationGoal = hydrationGoal
-            }
-            if let currentWeight = dictionary["currentWeight"] as? Double {
-                self.watchData.currentWeight = currentWeight
-            }
-            if let targetWeight = dictionary["targetWeight"] as? Double {
-                self.watchData.targetWeight = targetWeight
-            }
-            if let sleepDuration = dictionary["sleepDuration"] as? Int {
-                self.watchData.sleepDuration = sleepDuration
-            }
-            if let sleepQuality = dictionary["sleepQuality"] as? Int {
-                self.watchData.sleepQuality = sleepQuality
-            }
-            if let sleepBedTime = dictionary["sleepBedTime"] as? String {
-                self.watchData.sleepBedTime = sleepBedTime
-            }
-            if let sleepWakeTime = dictionary["sleepWakeTime"] as? String {
-                self.watchData.sleepWakeTime = sleepWakeTime
-            }
-            if let stepsGoal = dictionary["stepsGoal"] as? Int {
-                self.watchData.stepsGoal = stepsGoal
-            }
-
+            if let v = dictionary["hydrationCurrent"] as? Int { self.watchData.hydrationCurrent = v }
+            if let v = dictionary["hydrationGoal"] as? Int { self.watchData.hydrationGoal = v }
+            if let v = dictionary["currentWeight"] as? Double { self.watchData.currentWeight = v }
+            if let v = dictionary["targetWeight"] as? Double { self.watchData.targetWeight = v }
+            if let v = dictionary["sleepDuration"] as? Int { self.watchData.sleepDuration = v }
+            if let v = dictionary["sleepQuality"] as? Int { self.watchData.sleepQuality = v }
+            if let v = dictionary["sleepBedTime"] as? String { self.watchData.sleepBedTime = v }
+            if let v = dictionary["sleepWakeTime"] as? String { self.watchData.sleepWakeTime = v }
+            if let v = dictionary["stepsGoal"] as? Int { self.watchData.stepsGoal = v }
             self.lastSyncTime = Date()
-            print("[Watch] Donnees mises a jour depuis l'iPhone")
         }
     }
 }
 
-// MARK: - WCSessionDelegate
-
 extension WatchConnectivityManager: WCSessionDelegate {
-
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         DispatchQueue.main.async {
             if activationState == .activated {
-                print("[Watch] Session activee avec succes")
                 self.isReachable = session.isReachable
-                // Demander les donnees initiales
                 self.requestSync()
-            } else if let error = error {
-                print("[Watch] Erreur activation: \(error.localizedDescription)")
             }
         }
     }
@@ -132,33 +78,24 @@ extension WatchConnectivityManager: WCSessionDelegate {
     func sessionReachabilityDidChange(_ session: WCSession) {
         DispatchQueue.main.async {
             self.isReachable = session.isReachable
-            print("[Watch] Reachability changee: \(session.isReachable)")
-            if session.isReachable {
-                self.requestSync()
-            }
+            if session.isReachable { self.requestSync() }
         }
     }
 
-    // Recevoir des messages de l'iPhone
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        print("[Watch] Message recu: \(message)")
         updateWatchData(from: message)
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
-        print("[Watch] Message recu (avec reply): \(message)")
         updateWatchData(from: message)
         replyHandler(["status": "received"])
     }
 
-    // Recevoir des donnees en arriere-plan
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
-        print("[Watch] Application context recu: \(applicationContext)")
         updateWatchData(from: applicationContext)
     }
 
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
-        print("[Watch] UserInfo recu: \(userInfo)")
         updateWatchData(from: userInfo)
     }
 }

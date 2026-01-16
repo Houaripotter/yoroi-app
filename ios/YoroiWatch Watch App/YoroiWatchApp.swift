@@ -6,12 +6,22 @@
 //
 
 import SwiftUI
+import WatchConnectivity
 
 @main
-struct YoroiWatch_Watch_AppApp: App {
+struct YoroiWatchApp: App {
+    @StateObject private var connectivityManager = WatchConnectivityManager.shared
+    @StateObject private var healthKitManager = HealthKitManager.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(connectivityManager)
+                .environmentObject(healthKitManager)
+                .onAppear {
+                    connectivityManager.activateSession()
+                    healthKitManager.requestAuthorization()
+                }
         }
     }
 }
