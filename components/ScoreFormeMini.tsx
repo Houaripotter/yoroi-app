@@ -33,7 +33,7 @@ interface ScoreFormeMiniProps {
  * Obtient l'emoji selon le score
  */
 const getScoreEmoji = (score: number): string => {
-  if (score >= 90) return '🔥';
+  if (score >= 90) return '';
   if (score >= 80) return '😄';
   if (score >= 60) return '😊';
   if (score >= 40) return '😐';

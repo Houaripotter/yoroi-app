@@ -51,6 +51,9 @@ import { backupReminderService } from '@/lib/backupReminderService';
 import { exportDataToJSON, exportDataToCSV } from '@/lib/exportService';
 import { draftService, WeightDraft } from '@/lib/draftService';
 import logger from '@/lib/security/logger';
+import HealthConnect from '@/lib/healthConnect.ios';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -112,6 +115,25 @@ export default function AddScreen() {
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showAutoSaveIndicator, setShowAutoSaveIndicator] = useState(false);
 
+  // Tutoriel de découverte
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Vérifier si c'est la première visite
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      const visited = await hasVisitedPage('add');
+      if (!visited) {
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
+    };
+    checkFirstVisit();
+  }, []);
+
+  const handleCloseTutorial = async () => {
+    await markPageAsVisited('add');
+    setShowTutorial(false);
+  };
+
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -139,7 +161,7 @@ export default function AddScreen() {
 
           if (isExpiringSoon) {
             const daysLeft = 7 - draftAge;
-            message += `\n\n⚠️ ATTENTION : Ce brouillon sera supprimé dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''} ! N'oublie pas de l'enregistrer.`;
+            message += `\n\nATTENTION : Ce brouillon sera supprimé dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''} ! N'oublie pas de l'enregistrer.`;
           }
         }
 
@@ -287,7 +309,7 @@ export default function AddScreen() {
     if (!weight && !hasMeasurements && !hasComposition) {
       showPopup(
         'Aucune donnée',
-        'Veuillez entrer au moins :\n\nVotre poids\nDes mensurations (tour de taille, etc.)\nVotre composition corporelle (% de graisse, etc.)',
+        'Entre au moins :\n\nVotre poids\nDes mensurations (tour de taille, etc.)\nVotre composition corporelle (% de graisse, etc.)',
         [{ text: 'OK', style: 'primary' }]
       );
       return;
@@ -317,6 +339,20 @@ export default function AddScreen() {
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      // 🔄 SYNC VERS APPLE HEALTH
+      try {
+        if (weight) {
+          const exported = await HealthConnect.writeWeight(weight);
+          if (exported) {
+            logger.info('Poids synchronisé vers Apple Health:', weight);
+          }
+        }
+        // TODO: Export body fat % si disponible (nécessite fonction writeBodyFat)
+      } catch (healthError) {
+        // Ne pas bloquer la sauvegarde si l'export échoue
+        logger.warn('Export Apple Health échoué (non bloquant):', healthError);
+      }
 
       // Effacer le brouillon car sauvegarde réussie
       await draftService.clearWeightDraft();
@@ -952,7 +988,7 @@ export default function AddScreen() {
             <View style={[styles.warningBox, { backgroundColor: colors.gold + '15', borderColor: colors.gold }]}>
               <Cloud size={20} color={colors.gold} />
               <Text style={[styles.warningText, { color: colors.textPrimary }]}>
-                <Text style={{ fontWeight: '700' }}>Important :</Text> Sauvegardez vos données sur iCloud pour ne jamais les perdre !
+                <Text style={{ fontWeight: '700' }}>Important :</Text> Sauvegarde tes données sur iCloud pour ne jamais les perdre !
               </Text>
             </View>
 
@@ -982,6 +1018,16 @@ export default function AddScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Tutoriel de découverte */}
+      {showTutorial && (
+        <FeatureDiscoveryModal
+          visible={true}
+          tutorial={PAGE_TUTORIALS.add}
+          onClose={handleCloseTutorial}
+        />
+      )}
+
       <PopupComponent />
     </KeyboardAvoidingView>
   );

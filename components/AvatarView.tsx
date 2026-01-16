@@ -16,7 +16,7 @@ const samuraiWoman2 = require('@/assets/images/samurai_woman_2.png');
 const samuraiWoman3 = require('@/assets/images/samurai_woman_3.png');
 
 interface AvatarViewProps {
-  gradeId: string; // 'ashigaru' | 'bushi' | 'samurai' | 'daimyo' | 'shogun'
+  gradeId: string; // 'ashigaru' | 'bushi' | 'samurai' | 'ronin' | 'shogun'
   gender: 'male' | 'female';
   size?: number;
 }
@@ -35,7 +35,7 @@ function getImageTierFromGrade(gradeId: string): 1 | 2 | 3 {
     case 'bushi':
       return 2; // Light Armor
     case 'samurai':
-    case 'daimyo':
+    case 'ronin':
     case 'shogun':
       return 3; // Full Armor
     default:

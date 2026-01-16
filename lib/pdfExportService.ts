@@ -642,7 +642,7 @@ export const exportToPDF = async (): Promise<boolean> => {
     if (data.weights.length === 0) {
       Alert.alert(
         'Aucune donnée',
-        'Vous devez avoir au moins une pesée pour générer un rapport.',
+        'Tu dois avoir au moins une pesée pour générer un rapport.',
       );
       return false;
     }
@@ -695,7 +695,7 @@ export const previewPDFReport = async (): Promise<void> => {
     if (data.weights.length === 0) {
       Alert.alert(
         'Aucune donnée',
-        'Vous devez avoir au moins une pesée pour générer un rapport.',
+        'Tu dois avoir au moins une pesée pour générer un rapport.',
       );
       return;
     }

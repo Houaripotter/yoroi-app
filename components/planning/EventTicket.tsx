@@ -49,19 +49,19 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
   // Icône selon le sport
   const getSportIcon = () => {
     switch (event.sport) {
-      case 'JJB': return '🥋';
-      case 'MMA': return '🥊';
-      case 'Boxe': return '🥊';
+      case 'JJB': return '';
+      case 'MMA': return '';
+      case 'Boxe': return '';
       case 'MuayThai': return '🦵';
-      case 'Foot': return '⚽';
-      case 'Basket': return '🏀';
-      case 'Hand': return '🤾';
-      case 'Running': return '🏃';
-      case 'Padel': return '🎾';
-      case 'Kickboxing': return '🥋';
-      case 'Judo': return '🥋';
-      case 'Lutte': return '🤼';
-      default: return '🏆';
+      case 'Foot': return '';
+      case 'Basket': return '';
+      case 'Hand': return '';
+      case 'Running': return '';
+      case 'Padel': return '';
+      case 'Kickboxing': return '';
+      case 'Judo': return '';
+      case 'Lutte': return '';
+      default: return '';
     }
   };
 

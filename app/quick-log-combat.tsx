@@ -280,8 +280,8 @@ export default function QuickLogCombatScreen() {
               style={[styles.emptyButton, { backgroundColor: colors.accent }]}
               onPress={() => setAddModalVisible(true)}
             >
-              <Plus size={16} color="#FFFFFF" strokeWidth={3} />
-              <Text style={styles.emptyButtonText}>Ajouter une technique</Text>
+              <Plus size={16} color={colors.textOnAccent} strokeWidth={3} />
+              <Text style={[styles.emptyButtonText, { color: colors.textOnAccent }]}>Ajouter une technique</Text>
             </TouchableOpacity>
           </View>
         ) : (

@@ -621,6 +621,14 @@ export const getLatestWeight = async (): Promise<Weight | null> => {
   return result || null;
 };
 
+// Récupérer tous les poids
+export const getAllWeights = async (): Promise<Weight[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<Weight>(
+    'SELECT * FROM weights ORDER BY date DESC'
+  );
+};
+
 // Récupérer l'historique de composition corporelle
 export const getCompositionHistory = async (limit: number = 10): Promise<Weight[]> => {
   const database = await openDatabase();

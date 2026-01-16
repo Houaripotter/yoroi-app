@@ -243,7 +243,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'warning',
           category: 'sleep',
           title: 'Sommeil et Performance',
-          message: `Vos données montrent que lorsque vous dormez moins, vous vous entraînez moins (-${Math.abs(Math.round(sleepTraining.correlation * 100))}% de corrélation). Priorisez le sommeil pour maintenir votre rythme.`,
+          message: `Vos données montrent que lorsque vous dormez moins, vous vous entraînez moins (-${Math.abs(Math.round(sleepTraining.correlation * 100))}% de corrélation). Priorisez le sommeil pour maintenir ton rythme.`,
           confidence: Math.min(100, sleepTraining.dataPoints * 3),
           dataPoints: sleepTraining.dataPoints,
         });
@@ -254,7 +254,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'positive',
           category: 'sleep',
           title: 'Sommeil Optimal',
-          message: `Excellent ! Vos nuits de qualité soutiennent bien votre entraînement (+${Math.round(sleepTraining.correlation * 100)}% de corrélation). Continuez sur cette lancée.`,
+          message: `Excellent ! Vos nuits de qualité soutiennent bien ton entraînement (+${Math.round(sleepTraining.correlation * 100)}% de corrélation). Continuez sur cette lancée.`,
           confidence: Math.min(100, sleepTraining.dataPoints * 3),
           dataPoints: sleepTraining.dataPoints,
         });
@@ -270,7 +270,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'tip',
           category: 'hydration',
           title: 'Hydratation Variable',
-          message: `Pensez à augmenter votre hydratation les jours d'entraînement intense. Cible : +0.5L par heure d'effort.`,
+          message: `Pensez à augmenter ton hydratation les jours d'entraînement intense. Cible : +0.5L par heure d'effort.`,
           confidence: Math.min(100, hydrationLoad.dataPoints * 5),
           dataPoints: hydrationLoad.dataPoints,
         });
@@ -280,7 +280,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'positive',
           category: 'hydration',
           title: 'Hydratation Adaptée',
-          message: `Vous adaptez bien votre hydratation à votre charge d'entraînement. C'est une excellente habitude !`,
+          message: `Vous adaptez bien ton hydratation à ton charge d'entraînement. C'est une excellente habitude !`,
           confidence: Math.min(100, hydrationLoad.dataPoints * 5),
           dataPoints: hydrationLoad.dataPoints,
         });
@@ -330,7 +330,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'positive',
           category: 'training',
           title: 'Discipline Exemplaire',
-          message: `Score de régularité : ${consistency.score}/100. Votre constance est la clé de votre progression !`,
+          message: `Score de régularité : ${consistency.score}/100. Votre constance est la clé de ton progression !`,
           confidence: Math.min(100, consistency.dataPoints * 3),
           dataPoints: consistency.dataPoints,
         });
@@ -340,7 +340,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'tip',
           category: 'training',
           title: 'Régularité à Améliorer',
-          message: `Score de régularité : ${consistency.score}/100. Essayez de planifier vos séances à des jours fixes pour créer une routine.`,
+          message: `Score de régularité : ${consistency.score}/100. Essayez de planifier tes séances à des jours fixes pour créer une routine.`,
           confidence: Math.min(100, consistency.dataPoints * 3),
           dataPoints: consistency.dataPoints,
         });
@@ -376,7 +376,7 @@ export async function generateInsights(): Promise<Insight[]> {
           type: 'positive',
           category: 'hydration',
           title: 'Hydratation Optimale',
-          message: `Moyenne : ${avgHydration.toFixed(1)}L/jour. Vous êtes dans la zone optimale pour un athlète !`,
+          message: `Moyenne : ${avgHydration.toFixed(1)}L/jour. Tu es dans la zone optimale pour un athlète !`,
           confidence: 90,
           dataPoints: 7,
         });

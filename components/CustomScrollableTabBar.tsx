@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 
 // ============================================
-// ⚔️ TAB BAR GUERRIER - FLOTTANTE
+// TAB BAR GUERRIER - FLOTTANTE
 // ============================================
 // Fond: rgba(30, 30, 36, 0.95) avec blur
 // Bouton central: Gradient or avec glow

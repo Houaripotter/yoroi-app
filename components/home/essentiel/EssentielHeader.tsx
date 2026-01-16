@@ -32,6 +32,7 @@ interface EssentielHeaderProps {
   viewMode?: ViewMode;
   onToggleMode?: () => void;
   profile?: Profile | null;
+  refreshTrigger?: number;
 }
 
 export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
@@ -39,6 +40,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
   viewMode = 'essentiel',
   onToggleMode,
   profile,
+  refreshTrigger = 0,
 }) => {
   const { colors } = useTheme();
   const [quote, setQuote] = useState(quotes[0]);
@@ -53,7 +55,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
       {/* Avatar + Salutation + Photo profil */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
-          <AvatarDisplay size="small" />
+          <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
         </TouchableOpacity>
 
         <View style={styles.greetingContainer}>

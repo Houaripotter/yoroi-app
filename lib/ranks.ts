@@ -1,5 +1,5 @@
 // ============================================
-// ⚔️ YOROI - SYSTÈME DE RANGS SAMOURAÏ
+// YOROI - SYSTÈME DE RANGS SAMOURAÏ
 // ============================================
 
 export interface Rank {
@@ -17,28 +17,16 @@ export interface Rank {
 
 export const RANKS: Rank[] = [
   {
-    id: 'recrue',
-    name: 'Recrue',
-    nameFemale: 'Recrue',
-    nameJp: '新兵 (Shinpei)',
-    icon: 'target',
-    minDays: 0,
-    color: '#6B7280',
-    description: 'Le voyage commence. Tu fais tes premiers pas.',
-    descriptionFemale: 'Le voyage commence. Tu fais tes premiers pas.',
-    reward: 'Démarrage du parcours',
-  },
-  {
     id: 'ashigaru',
     name: 'Ashigaru',
     nameFemale: 'Ashigaru',
     nameJp: '足軽 (Ashigaru)',
-    icon: 'swords',
-    minDays: 7,
+    icon: 'target',
+    minDays: 0,
     color: '#60A5FA',
-    description: "Fantassin loyal. Tu as prouvé ta détermination.",
-    descriptionFemale: "Fantassine loyale. Tu as prouvé ta détermination.",
-    reward: 'Badge 7 jours',
+    description: "Fantassin loyal. Le voyage commence.",
+    descriptionFemale: "Fantassine loyale. Le voyage commence.",
+    reward: 'Démarrage du parcours',
   },
   {
     id: 'bushi',
@@ -46,23 +34,11 @@ export const RANKS: Rank[] = [
     nameFemale: 'Onna-Bugeisha',
     nameJp: '武士 (Bushi)',
     icon: 'shield',
-    minDays: 21,
+    minDays: 15,
     color: '#34D399',
     description: "Athlète discipliné. L'honneur guide tes pas.",
     descriptionFemale: "Guerrière disciplinée. L'honneur guide tes pas.",
-    reward: 'Avatar Bushi',
-  },
-  {
-    id: 'knight',
-    name: 'Chevalier',
-    nameFemale: 'Chevalière',
-    nameJp: '騎士 (Kishi)',
-    icon: 'shield',
-    minDays: 30,
-    color: '#C0C0C0',
-    description: "Noble champion. L'honneur et le courage te guident.",
-    descriptionFemale: "Noble guerrière. L'honneur et le courage te guident.",
-    reward: 'Thème Argent',
+    reward: 'Nouveaux avatars débloqués',
   },
   {
     id: 'samurai',
@@ -70,11 +46,11 @@ export const RANKS: Rank[] = [
     nameFemale: 'Onna-Musha',
     nameJp: '侍 (Samurai)',
     icon: 'sword',
-    minDays: 45,
+    minDays: 30,
     color: '#D4AF37',
     description: "Athlète d'élite. La voie du bushido est la tienne.",
     descriptionFemale: "Guerrière d'élite. La voie du bushido est la tienne.",
-    reward: 'Avatar Samouraï + Thème Or',
+    reward: 'Packs d\'avatars élites',
   },
   {
     id: 'ronin',
@@ -86,19 +62,7 @@ export const RANKS: Rank[] = [
     color: '#A855F7',
     description: 'Maître vagabond. Tu forges ta propre voie.',
     descriptionFemale: 'Maître vagabonde. Tu forges ta propre voie.',
-    reward: 'Mode Rōnin exclusif',
-  },
-  {
-    id: 'sensei',
-    name: 'Sensei',
-    nameFemale: 'Sensei',
-    nameJp: '先生 (Sensei)',
-    icon: 'graduation-cap',
-    minDays: 150,
-    color: '#EC4899',
-    description: 'Maître et guide. Tu inspires les autres.',
-    descriptionFemale: 'Maître et guide. Tu inspires les autres.',
-    reward: 'Badge Mentor',
+    reward: 'Packs de collection exclusifs',
   },
   {
     id: 'shogun',
@@ -110,19 +74,7 @@ export const RANKS: Rank[] = [
     color: '#FFD700',
     description: 'Commandant suprême. Légende vivante.',
     descriptionFemale: 'Commandante suprême. Légende vivante.',
-    reward: 'Couronne dorée + Statistiques VIP',
-  },
-  {
-    id: 'daimyo',
-    name: 'Daimyō',
-    nameFemale: 'Onna-Daimyō',
-    nameJp: '大名 (Daimyō)',
-    icon: 'castle',
-    minDays: 365,
-    color: '#DC2626',
-    description: 'Seigneur légendaire. Immortel.',
-    descriptionFemale: 'Dame légendaire. Immortelle.',
-    reward: 'Château Daimyō + Accès Légende',
+    reward: 'Avatars légendaires',
   },
 ];
 

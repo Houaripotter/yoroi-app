@@ -91,76 +91,76 @@ export interface NotificationSettings {
 const STORAGE_KEY = '@yoroi_notification_settings';
 
 const DEFAULT_SETTINGS: NotificationSettings = {
-  enabled: false, // Désactivé par défaut - l'utilisateur choisit
+  enabled: false, // TOUT DÉSACTIVÉ PAR DÉFAUT - L'utilisateur active ce qu'il veut
   training: {
-    enabled: false,
+    enabled: false, // Désactivé - l'utilisateur choisit
     time: '18:00',
     days: [1, 2, 3, 4, 5], // Lundi à vendredi
   },
   hydration: {
-    enabled: false,
-    useSlots: true, // Par défaut, utiliser les tranches personnalisées
+    enabled: false, // DÉSACTIVÉ - trop de notifs
+    useSlots: true,
     interval: 2,
     startTime: '08:00',
     endTime: '22:00',
     slots: {
       morning: {
-        enabled: false,
+        enabled: false, // DÉSACTIVÉ
         time: '09:00',
         amount: 750, // ml
       },
       afternoon: {
-        enabled: false,
+        enabled: false, // DÉSACTIVÉ
         time: '14:00',
         amount: 750, // ml
       },
       evening: {
-        enabled: false,
+        enabled: false, // DÉSACTIVÉ
         time: '19:00',
         amount: 750, // ml
       },
     },
   },
   weighing: {
-    enabled: false,
+    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
     time: '07:00',
     days: [1, 3, 5], // Lundi, mercredi, vendredi
   },
   streak: {
-    enabled: false,
+    enabled: false, // DÉSACTIVÉ - peut être stressant
     time: '20:00',
   },
   sleep: {
-    enabled: false, // Désactivé par défaut, l'utilisateur doit l'activer
-    bedtimeReminder: '22:30', // Rappel à 22h30 par défaut
-    days: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
+    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
+    bedtimeReminder: '22:30',
+    days: [0, 1, 2, 3, 4, 5, 6],
   },
   socialCards: {
-    enabled: false, // Désactivé par défaut - l'utilisateur choisit
-    weeklyTime: '10:00', // Dimanche matin
-    monthlyTime: '10:00', // 1er du mois
+    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
+    weeklyTime: '10:00',
+    monthlyTime: '10:00',
   },
   briefing: {
-    enabled: false, // Désactivé par défaut - l'utilisateur choisit
-    time: '07:30', // 7h30 du matin
-    days: [0, 1, 2, 3, 4, 5, 6], // Tous les jours
+    enabled: false, // DÉSACTIVÉ - trop intrusif le matin
+    time: '07:30',
+    days: [0, 1, 2, 3, 4, 5, 6],
   },
   smartReminders: {
-    enabled: false, // Désactivé par défaut - l'utilisateur choisit
-    missedTrainingAlert: false, // Alerte si jour habituel manqué
-    restDaySuggestion: false, // Suggérer repos
-    frequencyAlert: false, // Alerte fréquence en baisse
-    checkTime: '19:00', // Vérification à 19h
+    enabled: false, // DÉSACTIVÉ - peut être trop intrusif
+    missedTrainingAlert: false,
+    restDaySuggestion: false,
+    frequencyAlert: false,
+    checkTime: '19:00',
   },
 };
 
-// Messages motivants
+// Messages motivants (UNIVERSELS - pas spécifiques aux sports de combat)
 const TRAINING_MESSAGES = [
-  { title: '🥋 C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
-  { title: '⚔️ Champion !', body: 'Le tatami t\'appelle. Es-tu prêt ?' },
-  { title: '💪 Go training !', body: 'Chaque séance compte. Fais-la maintenant !' },
-  { title: '🔥 On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
-  { title: '🎯 Objectif du jour', body: 'Une séance de plus vers ton but !' },
+  { title: 'C\'est l\'heure !', body: 'Ton entraînement t\'attend. Donne tout !' },
+  { title: 'C\'est parti !', body: 'Bouge ton corps. Let\'s go !' },
+  { title: 'Go training !', body: 'Chaque séance compte. Fais-la maintenant !' },
+  { title: 'On y va ?', body: 'Ton corps est prêt. Ne le fais pas attendre !' },
+  { title: 'Objectif du jour', body: 'Une séance de plus vers ton but !' },
 ];
 
 const HYDRATION_MESSAGES = [
@@ -171,73 +171,73 @@ const HYDRATION_MESSAGES = [
 
 const WEIGHING_MESSAGES = [
   { title: '⚖️ Pesée du jour', body: 'Monte sur la balance pour suivre ta progression !' },
-  { title: '📊 Suivi poids', body: 'Une pesée régulière = meilleur suivi !' },
+  { title: 'Suivi poids', body: 'Une pesée régulière = meilleur suivi !' },
 ];
 
 const STREAK_MESSAGES = [
-  { title: '🔥 Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
-  { title: '⚠️ Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
+  { title: 'Attention !', body: 'Tu n\'as pas encore entraîné aujourd\'hui. Ton streak est en danger !' },
+  { title: 'Streak en péril', body: 'N\'oublie pas de t\'entraîner pour garder ton streak !' },
   { title: '💔 Ne casse pas ta série !', body: 'Même une séance légère compte. Go !' },
 ];
 
 const SLEEP_MESSAGES = [
-  { title: '🌙 Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
+  { title: 'Il est temps de dormir', body: 'Ton corps a besoin de repos. Direction le lit !' },
   { title: '😴 Bonne nuit !', body: 'Un bon sommeil = meilleures performances demain !' },
   { title: '💤 Heure du coucher', body: 'Éteins les écrans, ton objectif sommeil t\'attend !' },
   { title: '🛌 Repos bien mérité', body: 'La récupération est essentielle. Dors bien !' },
 ];
 
 const WEEKLY_CARD_MESSAGES = [
-  { title: '📊 Ta semaine en image !', body: 'Ta carte hebdo est prête. Partage tes progrès sur les réseaux !' },
-  { title: '🏆 Bilan de la semaine', body: 'Montre ta progression ! Ta carte sociale t\'attend.' },
-  { title: '💪 Semaine terminée !', body: 'Partage ta carte de la semaine et inspire les autres !' },
-  { title: '🔥 Stats de la semaine', body: 'Ta carte est prête à être partagée. Fais voir tes résultats !' },
+  { title: 'Ta semaine en image !', body: 'Ta carte hebdo est prête. Partage tes progrès sur les réseaux !' },
+  { title: 'Bilan de la semaine', body: 'Montre ta progression ! Ta carte sociale t\'attend.' },
+  { title: 'Semaine terminée !', body: 'Partage ta carte de la semaine et inspire les autres !' },
+  { title: 'Stats de la semaine', body: 'Ta carte est prête à être partagée. Fais voir tes résultats !' },
 ];
 
 const MONTHLY_CARD_MESSAGES = [
-  { title: '📅 Nouveau mois, nouvelle carte !', body: 'Ta carte du mois est disponible. Partage ta progression !' },
-  { title: '🎯 Bilan mensuel', body: 'Un mois de plus dans ta transformation ! Partage ta carte.' },
-  { title: '⭐ Carte du mois prête !', body: 'Montre à tous tes progrès du mois dernier !' },
-  { title: '🥋 Résumé mensuel', body: 'Ta carte mensuelle t\'attend. Partage-la sur tes réseaux !' },
+  { title: 'Nouveau mois, nouvelle carte !', body: 'Ta carte du mois est disponible. Partage ta progression !' },
+  { title: 'Bilan mensuel', body: 'Un mois de plus dans ta transformation ! Partage ta carte.' },
+  { title: 'Carte du mois prête !', body: 'Montre à tous tes progrès du mois dernier !' },
+  { title: 'Résumé mensuel', body: 'Ta carte mensuelle t\'attend. Partage-la sur tes réseaux !' },
 ];
 
 // Salutations selon l'heure
 const BRIEFING_GREETINGS = [
-  'Ohayo Sensei !',
-  'Bonjour Guerrier !',
-  'Salut Champion !',
-  'Réveil du Samouraï !',
+  'Ohayo !',
+  'Bonjour Athlète !',
+  'Salut !',
+  'Réveil de warrior !',
   'Hajime !',
 ];
 
-// Messages motivants du matin
+// Messages motivants du matin (UNIVERSELS)
 const BRIEFING_MOTIVATIONS = [
   'Chaque jour est une nouvelle victoire.',
   'La discipline fait la différence.',
   'Un pas de plus vers ton objectif.',
-  'Le tatami t\'attend.',
-  'Aujourd\'hui tu deviens plus fort.',
-  'Le chemin du guerrier continue.',
+  'Ton entraînement t\'attend.',
+  'Aujourd\'hui tu deviens plus fort·e.',
+  'Le chemin continue.',
   'Ta transformation se construit jour après jour.',
 ];
 
-// Messages pour rappels intelligents
+// Messages pour rappels intelligents (UNIVERSELS)
 const SMART_MISSED_TRAINING_MESSAGES = [
   { title: '🤔 Jour d\'entraînement habituel', body: 'Tu t\'entraînes souvent le {day}. Pas de session aujourd\'hui ?' },
-  { title: '📅 C\'est {day} !', body: 'D\'habitude tu es sur le tatami ce jour-là. On y va ?' },
-  { title: '💪 {day} = Entraînement ?', body: 'Ton corps s\'attend à bouger. Ne le déçois pas !' },
+  { title: 'C\'est {day} !', body: 'D\'habitude tu t\'entraînes ce jour-là. On y va ?' },
+  { title: '{day} = Entraînement ?', body: 'Ton corps s\'attend à bouger. Ne le déçois pas !' },
 ];
 
 const SMART_REST_SUGGESTION_MESSAGES = [
   { title: '😴 Repos mérité ?', body: 'Tu t\'es entraîné {days} jours d\'affilée. Le repos fait partie du progrès !' },
   { title: '🛌 Récupération', body: '{days} jours consécutifs d\'entraînement ! Pense à récupérer.' },
-  { title: '⚡ Recharge tes batteries', body: 'Après {days} jours, une pause peut booster tes performances.' },
+  { title: 'Recharge tes batteries', body: 'Après {days} jours, une pause peut booster tes performances.' },
 ];
 
 const SMART_FREQUENCY_ALERT_MESSAGES = [
-  { title: '📉 Rythme en baisse', body: 'Tu faisais {usual} séances/semaine, seulement {current} cette semaine. Besoin de motivation ?' },
-  { title: '🔔 Rappel amical', body: 'Ta fréquence d\'entraînement a diminué. Tout va bien ?' },
-  { title: '💭 On en parle ?', body: 'Moins actif que d\'habitude. N\'oublie pas tes objectifs !' },
+  { title: 'Rythme en baisse', body: 'Tu faisais {usual} séances/semaine, seulement {current} cette semaine. Besoin de motivation ?' },
+  { title: 'Rappel amical', body: 'Ta fréquence d\'entraînement a diminué. Tout va bien ?' },
+  { title: 'On en parle ?', body: 'Moins actif que d\'habitude. N\'oublie pas tes objectifs !' },
 ];
 
 const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -624,12 +624,12 @@ class NotificationService {
 
       // Streak
       if (streak > 0) {
-        parts.push(`🔥 ${streak}j streak`);
+        parts.push(`${streak}j streak`);
       }
 
       // Rang
       if (rank) {
-        parts.push(`⚔️ ${rank.name}`);
+        parts.push(`${rank.name}`);
       }
 
       // Poids et objectif
@@ -651,7 +651,7 @@ class NotificationService {
       // Entraînements prévus aujourd'hui
       if (todayPlan.length > 0) {
         const sports = todayPlan.map(p => p.sport).join(', ');
-        parts.push(`📅 ${sports}`);
+        parts.push(`${sports}`);
       }
 
       // Message motivant
@@ -664,7 +664,7 @@ class NotificationService {
       }
 
       return {
-        title: `☀️ ${greeting}`,
+        title: `${greeting}`,
         body,
       };
     } catch (error) {
@@ -673,7 +673,7 @@ class NotificationService {
       const greeting = BRIEFING_GREETINGS[Math.floor(Math.random() * BRIEFING_GREETINGS.length)];
       const motivation = BRIEFING_MOTIVATIONS[Math.floor(Math.random() * BRIEFING_MOTIVATIONS.length)];
       return {
-        title: `☀️ ${greeting}`,
+        title: `${greeting}`,
         body: motivation,
       };
     }
@@ -690,7 +690,7 @@ class NotificationService {
     for (let day = 0; day < 7; day++) {
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: '🧠 Vérification intelligente',
+          title: 'Vérification intelligente',
           body: 'Analyse de tes habitudes...',
           data: { type: 'smart_check', silent: true },
           sound: false, // Silencieux - déclenchera une analyse
@@ -895,14 +895,14 @@ class NotificationService {
 
   async sendStreakWarning(currentStreak: number): Promise<void> {
     await this.sendInstantNotification(
-      '🔥 Protège ton streak !',
+      'Protège ton streak !',
       `Tu as ${currentStreak} jours consécutifs. Ne les perds pas aujourd'hui !`,
       { type: 'streak' }
     );
   }
 
   async sendCongratulation(message: string): Promise<void> {
-    await this.sendInstantNotification('🎉 Félicitations !', message, { type: 'achievement' });
+    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement' });
   }
 
   async sendWeeklyCardReminder(): Promise<void> {
@@ -950,7 +950,7 @@ class NotificationService {
     }
 
     await this.sendInstantNotification(
-      '🧠 Analyse de tes habitudes',
+      'Analyse de tes habitudes',
       testMessage,
       { type: 'smart_test' }
     );
@@ -1047,17 +1047,17 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
     scheduledDate.setDate(now.getDate() + daysUntil);
 
     // Message selon le type
-    let title = '🥋 YOROI';
+    let title = 'YOROI';
     let body = 'C\'est l\'heure !';
 
     if (settings.type === 'weight') {
       title = '⚖️ Pesée YOROI';
       body = 'Monte sur la balance pour suivre ta progression !';
     } else if (settings.type === 'workout') {
-      title = '💪 Entraînement YOROI';
-      body = 'C\'est l\'heure de t\'entraîner ! Le tatami t\'attend.';
+      title = 'Entraînement YOROI';
+      body = 'C\'est l\'heure de t\'entraîner ! Bouge ton corps.';
     } else {
-      title = '🛡️ YOROI';
+      title = 'YOROI';
       body = 'N\'oublie pas ta pesée et ton entraînement !';
     }
 
@@ -1080,15 +1080,15 @@ export async function scheduleNotifications(settings: ReminderSettings): Promise
 }
 
 export async function testNotification(type: ReminderType): Promise<void> {
-  let title = '🥋 YOROI Test';
+  let title = 'YOROI Test';
   let body = 'Notification de test !';
 
   if (type === 'weight') {
     title = '⚖️ Pesée YOROI';
     body = 'Monte sur la balance pour suivre ta progression !';
   } else if (type === 'workout') {
-    title = '💪 Entraînement YOROI';
-    body = 'C\'est l\'heure de t\'entraîner ! Le tatami t\'attend.';
+    title = 'Entraînement YOROI';
+    body = 'C\'est l\'heure de t\'entraîner ! Bouge ton corps.';
   }
 
   await Notifications.scheduleNotificationAsync({

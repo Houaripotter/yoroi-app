@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - ZONES CORPORELLES
+// YOROI MEDIC - ZONES CORPORELLES
 // ============================================
 // Coordonnées EXACTES calibrées sur l'image anatomique
 // Le corps occupe 25-75% de la largeur de l'image
@@ -171,7 +171,7 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     status: 'operational',
     color: '#4CAF50',
     backgroundColor: '#E8F5E9',
-    icon: '🛡️',
+    icon: '',
     title: 'OPÉRATIONNEL',
     subtitle: 'Aucune douleur significative',
     advice: 'Aucune douleur active enregistrée',
@@ -180,7 +180,7 @@ export const FIT_FOR_DUTY_STATUS: Record<FitForDutyStatus, FitForDutyInfo> = {
     status: 'restricted',
     color: '#FF9800',
     backgroundColor: '#FFF3E0',
-    icon: '⚠️',
+    icon: '',
     title: 'RESTREINT',
     subtitle: 'Douleur modérée présente',
     advice: 'Une ou plusieurs zones douloureuses enregistrées',

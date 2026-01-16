@@ -18,6 +18,7 @@ import {
   Platform,
   SafeAreaView,
   Animated,
+  Alert,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
@@ -62,6 +63,7 @@ import {
   Play,
   Camera,
   Image as ImageIcon,
+  RotateCcw,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import * as Haptics from 'expo-haptics';
@@ -103,10 +105,19 @@ import {
   getCarnetStats,
   getRPELabel,
   getRPEColor,
+  cleanDemoData,
+  getTrashBenchmarks,
+  getTrashSkills,
+  restoreBenchmark,
+  restoreSkill,
+  emptyTrash,
+  getTrashCount,
+  TrashItem,
 } from '@/lib/carnetService';
 import VictoryShareModal, { VictorySessionData, createVictoryData, createVictoryFromEntry } from '@/components/VictoryShareModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
+import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -184,10 +195,16 @@ export default function TrainingJournalScreen() {
   const [showBenchmarkDetail, setShowBenchmarkDetail] = useState(false);
   const [showSkillDetail, setShowSkillDetail] = useState(false);
   const [showAddEntryModal, setShowAddEntryModal] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
 
   // Selected items
   const [selectedBenchmark, setSelectedBenchmark] = useState<Benchmark | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+
+  // Trash state
+  const [trashBenchmarks, setTrashBenchmarks] = useState<TrashItem<Benchmark>[]>([]);
+  const [trashSkills, setTrashSkills] = useState<TrashItem<Skill>[]>([]);
+  const [trashCount, setTrashCount] = useState(0);
 
   // Form state
   const [newBenchmarkName, setNewBenchmarkName] = useState('');
@@ -210,6 +227,9 @@ export default function TrainingJournalScreen() {
   const [selectedBenchmarkCategory, setSelectedBenchmarkCategory] = useState<BenchmarkCategory | 'all'>('all');
   const [selectedSkillFilter, setSelectedSkillFilter] = useState<SkillStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Tab state for Records/Techniques
+  const [activeTab, setActiveTab] = useState<'records' | 'techniques'>('records');
 
   // Date picker state for new entry
   const [entryDate, setEntryDate] = useState<'today' | 'yesterday' | 'custom'>('today');
@@ -244,6 +264,9 @@ export default function TrainingJournalScreen() {
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
 
+  // Onboarding
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   // Load user preferences
   useEffect(() => {
     const loadUserPrefs = async () => {
@@ -271,6 +294,31 @@ export default function TrainingJournalScreen() {
     checkPendingVictory();
   }, []);
 
+  // Check if first time visiting training journal
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem('yoroi_training_journal_onboarding_seen');
+        if (!hasSeenOnboarding) {
+          setShowOnboarding(true);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      }
+    };
+    checkFirstVisit();
+  }, []);
+
+  const handleCloseOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem('yoroi_training_journal_onboarding_seen', 'true');
+      setShowOnboarding(false);
+    } catch (error) {
+      console.error('Error saving onboarding status:', error);
+      setShowOnboarding(false);
+    }
+  };
+
   // TASK 3: Toast notification
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -294,6 +342,44 @@ export default function TrainingJournalScreen() {
     ]).start(() => setToastVisible(false));
   };
 
+  // Nettoyer les données de démo (11 records vides)
+  const handleCleanDemoData = async () => {
+    try {
+      const result = await cleanDemoData();
+      await loadData(); // Reload
+      showPopup({
+        title: result.removed > 0 ? 'Nettoyage réussi' : 'Déjà propre',
+        message: result.message,
+        type: result.removed > 0 ? 'success' : 'info',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+    } catch (error) {
+      console.error('Erreur nettoyage:', error);
+      showPopup({
+        title: 'Erreur',
+        message: 'Impossible de nettoyer',
+        type: 'error',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+    }
+  };
+
+  // Load trash data
+  const loadTrashData = useCallback(async () => {
+    try {
+      const [trashB, trashS, count] = await Promise.all([
+        getTrashBenchmarks(),
+        getTrashSkills(),
+        getTrashCount(),
+      ]);
+      setTrashBenchmarks(trashB);
+      setTrashSkills(trashS);
+      setTrashCount(count);
+    } catch (error) {
+      console.error('Error loading trash:', error);
+    }
+  }, []);
+
   // Load data
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -306,12 +392,13 @@ export default function TrainingJournalScreen() {
       setBenchmarks(benchmarksData);
       setSkills(skillsData);
       setStats(statsData);
+      await loadTrashData(); // Charger aussi la corbeille
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadTrashData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -729,6 +816,105 @@ export default function TrainingJournalScreen() {
             setShowSkillDetail(false);
             setSelectedSkill(null);
             loadData();
+          },
+        },
+      ]
+    );
+  };
+
+  // ============================================
+  // TRASH FUNCTIONS
+  // ============================================
+
+  const handleRestoreBenchmark = async (benchmarkId: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const success = await restoreBenchmark(benchmarkId);
+      if (success) {
+        await loadData();
+        showPopup({
+          title: 'Restauré',
+          message: 'Record restauré avec succès',
+          type: 'success',
+          buttons: [{ text: 'OK', style: 'default' }]
+        });
+      }
+    } catch (error) {
+      console.error('Error restoring benchmark:', error);
+      showPopup({
+        title: 'Erreur',
+        message: 'Impossible de restaurer',
+        type: 'error',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+    }
+  };
+
+  const handleRestoreSkill = async (skillId: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const success = await restoreSkill(skillId);
+      if (success) {
+        await loadData();
+        showPopup({
+          title: 'Restauré',
+          message: 'Technique restaurée avec succès',
+          type: 'success',
+          buttons: [{ text: 'OK', style: 'default' }]
+        });
+      }
+    } catch (error) {
+      console.error('Error restoring skill:', error);
+      showPopup({
+        title: 'Erreur',
+        message: 'Impossible de restaurer',
+        type: 'error',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+    }
+  };
+
+  const handleEmptyTrash = () => {
+    if (trashCount === 0) {
+      showPopup({
+        title: 'Corbeille vide',
+        message: 'Rien à supprimer',
+        type: 'info',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+      return;
+    }
+
+    // Confirmation avant suppression définitive
+    Alert.alert(
+      'Vider la corbeille ?',
+      `${trashCount} élément(s) seront définitivement supprimés. Cette action est irréversible.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Vider',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              await emptyTrash();
+              await loadData();
+              setShowTrashModal(false);
+              showPopup({
+                title: 'Corbeille vidée',
+                message: 'Suppression définitive réussie',
+                type: 'success',
+                buttons: [{ text: 'OK', style: 'default' }]
+              });
+            } catch (error) {
+              console.error('Error emptying trash:', error);
+              showPopup({
+                title: 'Erreur',
+                message: 'Impossible de vider la corbeille',
+                type: 'error',
+                buttons: [{ text: 'OK', style: 'default' }]
+              });
+            }
           },
         },
       ]
@@ -2255,6 +2441,182 @@ export default function TrainingJournalScreen() {
   );
 
   // ============================================
+  // TRASH MODAL
+  // ============================================
+
+  const renderTrashModal = () => (
+    <Modal visible={showTrashModal} animationType="slide" presentationStyle="fullScreen">
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <TouchableOpacity onPress={() => setShowTrashModal(false)} style={styles.backButton}>
+            <X size={28} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Corbeille</Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Empty State */}
+          {trashCount === 0 && (
+            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
+              <View style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: colors.backgroundCard,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}>
+                <Trash2 size={36} color={colors.textMuted} />
+              </View>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 }}>
+                Corbeille vide
+              </Text>
+              <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 40 }}>
+                Les éléments supprimés apparaîtront ici
+              </Text>
+            </View>
+          )}
+
+          {/* Trashed Benchmarks */}
+          {trashBenchmarks.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <View style={styles.sectionHeader}>
+                <Dumbbell size={18} color="#EF4444" />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Records supprimés ({trashBenchmarks.length})
+                </Text>
+              </View>
+
+              {trashBenchmarks.map((trashItem, index) => {
+                const benchmark = trashItem.item;
+                const deletedDate = new Date(trashItem.deletedAt);
+                const now = new Date();
+                const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
+                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
+
+                return (
+                  <View
+                    key={benchmark.id}
+                    style={[
+                      styles.trashItem,
+                      {
+                        backgroundColor: colors.backgroundCard,
+                        borderColor: colors.border,
+                        marginTop: index === 0 ? 12 : 8,
+                      }
+                    ]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>
+                        {benchmark.name}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                        Supprimé {deletedText}
+                      </Text>
+                      {benchmark.entries.length > 0 && (
+                        <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                          {benchmark.entries.length} entrée(s)
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleRestoreBenchmark(benchmark.id)}
+                      style={[styles.restoreButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+                    >
+                      <RotateCcw size={18} color={colors.success} />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Trashed Skills */}
+          {trashSkills.length > 0 && (
+            <View style={{ marginTop: 24, marginBottom: 100 }}>
+              <View style={styles.sectionHeader}>
+                <BookOpen size={18} color="#8B5CF6" />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Techniques supprimées ({trashSkills.length})
+                </Text>
+              </View>
+
+              {trashSkills.map((trashItem, index) => {
+                const skill = trashItem.item;
+                const deletedDate = new Date(trashItem.deletedAt);
+                const now = new Date();
+                const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
+                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
+
+                return (
+                  <View
+                    key={skill.id}
+                    style={[
+                      styles.trashItem,
+                      {
+                        backgroundColor: colors.backgroundCard,
+                        borderColor: colors.border,
+                        marginTop: index === 0 ? 12 : 8,
+                      }
+                    ]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>
+                        {skill.name}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                        Supprimé {deletedText}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                        <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                          {skill.drillCount} reps
+                        </Text>
+                        {skill.notes.length > 0 && (
+                          <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                            • {skill.notes.length} note(s)
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleRestoreSkill(skill.id)}
+                      style={[styles.restoreButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+                    >
+                      <RotateCcw size={18} color={colors.success} />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Empty Trash Button - Fixed at bottom */}
+        {trashCount > 0 && (
+          <View style={[styles.trashFooter, {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingBottom: insets.bottom || 20,
+          }]}>
+            <TouchableOpacity
+              onPress={handleEmptyTrash}
+              style={[styles.emptyTrashButton, { backgroundColor: colors.error }]}
+            >
+              <Trash2 size={20} color="#FFFFFF" />
+              <Text style={styles.emptyTrashText}>
+                Vider la corbeille ({trashCount})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </SafeAreaView>
+    </Modal>
+  );
+
+  // ============================================
   // MAIN RENDER
   // ============================================
 
@@ -2266,8 +2628,122 @@ export default function TrainingJournalScreen() {
           <ChevronLeft size={28} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Carnet d'Entrainement</Text>
-        <View style={{ width: 28 }} />
+        <TouchableOpacity
+          onPress={() => setShowTrashModal(true)}
+          style={styles.trashButton}
+        >
+          <Trash2 size={22} color={colors.textPrimary} />
+          {trashCount > 0 && (
+            <View style={{
+              position: 'absolute',
+              top: -4,
+              right: -4,
+              backgroundColor: colors.error,
+              borderRadius: 10,
+              width: 20,
+              height: 20,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '700' }}>
+                {trashCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
+
+      {/* Tab Selector - Records / Techniques */}
+      <View style={[styles.tabContainer, { borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === 'records' && { borderBottomColor: '#EF4444', borderBottomWidth: 3 }
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('records');
+          }}
+          activeOpacity={0.7}
+        >
+          <Dumbbell size={18} color={activeTab === 'records' ? '#EF4444' : colors.textMuted} strokeWidth={2.5} />
+          <Text style={[
+            styles.tabText,
+            { color: activeTab === 'records' ? '#EF4444' : colors.textMuted }
+          ]}>
+            Records
+          </Text>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'records' ? '#EF4444' : colors.textMuted + '30' }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'records' ? '#FFFFFF' : colors.textMuted }]}>
+              {benchmarks.length}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            activeTab === 'techniques' && { borderBottomColor: '#8B5CF6', borderBottomWidth: 3 }
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveTab('techniques');
+          }}
+          activeOpacity={0.7}
+        >
+          <BookOpen size={18} color={activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted} strokeWidth={2.5} />
+          <Text style={[
+            styles.tabText,
+            { color: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted }
+          ]}>
+            Techniques
+          </Text>
+          <View style={[styles.tabBadge, { backgroundColor: activeTab === 'techniques' ? '#8B5CF6' : colors.textMuted + '30' }]}>
+            <Text style={[styles.tabBadgeText, { color: activeTab === 'techniques' ? '#FFFFFF' : colors.textMuted }]}>
+              {skills.length}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Info Banner - Stockage local + Nettoyage démo */}
+      {stats.totalBenchmarks > 0 && (
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: colors.backgroundCard,
+            borderRadius: 12,
+            padding: 12,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
+                Stockage local • Aucun serveur
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleCleanDemoData}
+              style={{
+                backgroundColor: colors.accent + '15',
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Trash2 size={14} color={colors.accent} />
+              <Text style={{ fontSize: 11, color: colors.accent, fontWeight: '700' }}>
+                Nettoyer démo
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -2354,140 +2830,148 @@ export default function TrainingJournalScreen() {
         </View>
 
         {/* SECTION: MES RECORDS */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <Dumbbell size={20} color="#EF4444" />
-            <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
-            onPress={() => setShowAddBenchmarkModal(true)}
-          >
-            <Plus size={16} color="#EF4444" strokeWidth={3} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Benchmarks - COMPACT VERTICAL LIST (filtered by global filter) */}
-        <View style={styles.compactCardsList}>
-          {filteredBenchmarks.map(renderCompactBenchmarkCard)}
-          {filteredBenchmarks.length === 0 && searchQuery.trim() === '' && (
-            <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <TrendingUp size={24} color={colors.textMuted} />
-              <Text style={[styles.emptyCompactText, { color: colors.textMuted }]}>
-                Ajoute ton premier suivi
-              </Text>
+        {activeTab === 'records' && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Dumbbell size={20} color="#EF4444" />
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Records</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
+                onPress={() => setShowAddBenchmarkModal(true)}
+              >
+                <Plus size={16} color="#EF4444" strokeWidth={3} />
+              </TouchableOpacity>
             </View>
-          )}
-          {/* Create custom item when search has no results */}
-          {filteredBenchmarks.length === 0 && searchQuery.trim() !== '' && (
-            <TouchableOpacity
-              style={[styles.createCompactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: '#EF4444' }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setNewBenchmarkName(searchQuery.trim());
-                setSearchQuery('');
-                setShowAddBenchmarkModal(true);
-              }}
-            >
-              <View style={[styles.compactCardIcon, { backgroundColor: '#EF444415' }]}>
-                <Plus size={18} color="#EF4444" strokeWidth={2.5} />
-              </View>
-              <View style={styles.compactCardContent}>
-                <Text style={[styles.compactCardName, { color: colors.textPrimary }]}>
-                  Créer "{searchQuery.trim()}"
-                </Text>
-                <Text style={[styles.compactCardValue, { color: colors.textMuted }]}>
-                  Nouveau suivi
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+
+            {/* Benchmarks - COMPACT VERTICAL LIST (filtered by global filter) */}
+            <View style={styles.compactCardsList}>
+              {filteredBenchmarks.map(renderCompactBenchmarkCard)}
+              {filteredBenchmarks.length === 0 && searchQuery.trim() === '' && (
+                <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <TrendingUp size={24} color={colors.textMuted} />
+                  <Text style={[styles.emptyCompactText, { color: colors.textMuted }]}>
+                    Ajoute ton premier suivi
+                  </Text>
+                </View>
+              )}
+              {/* Create custom item when search has no results */}
+              {filteredBenchmarks.length === 0 && searchQuery.trim() !== '' && (
+                <TouchableOpacity
+                  style={[styles.createCompactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: '#EF4444' }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setNewBenchmarkName(searchQuery.trim());
+                    setSearchQuery('');
+                    setShowAddBenchmarkModal(true);
+                  }}
+                >
+                  <View style={[styles.compactCardIcon, { backgroundColor: '#EF444415' }]}>
+                    <Plus size={18} color="#EF4444" strokeWidth={2.5} />
+                  </View>
+                  <View style={styles.compactCardContent}>
+                    <Text style={[styles.compactCardName, { color: colors.textPrimary }]}>
+                      Créer "{searchQuery.trim()}"
+                    </Text>
+                    <Text style={[styles.compactCardValue, { color: colors.textMuted }]}>
+                      Nouveau suivi
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+          </>
+        )}
 
         {/* SECTION: MES TECHNIQUES */}
-        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-          <View style={styles.sectionTitleRow}>
-            <BookOpen size={20} color="#8B5CF6" />
-            <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
-            onPress={() => setShowAddSkillModal(true)}
-          >
-            <Plus size={16} color="#8B5CF6" strokeWidth={3} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Skills Filter */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              { backgroundColor: selectedSkillFilter === 'all' ? '#8B5CF6' : colors.backgroundCard, borderColor: colors.border }
-            ]}
-            onPress={() => setSelectedSkillFilter('all')}
-          >
-            <Text style={[styles.filterChipText, { color: selectedSkillFilter === 'all' ? '#FFFFFF' : colors.textPrimary }]}>
-              Toutes ({skills.length})
-            </Text>
-          </TouchableOpacity>
-          {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
-            const config = SKILL_STATUS_CONFIG[status];
-            const count = skills.filter(s => s.status === status).length;
-            return (
+        {activeTab === 'techniques' && (
+          <>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <BookOpen size={20} color="#8B5CF6" />
+                <Text style={[styles.sectionHeaderTitle, { color: colors.textPrimary }]}>Mes Techniques</Text>
+              </View>
               <TouchableOpacity
-                key={status}
+                style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
+                onPress={() => setShowAddSkillModal(true)}
+              >
+                <Plus size={16} color="#8B5CF6" strokeWidth={3} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Skills Filter */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+              <TouchableOpacity
                 style={[
                   styles.filterChip,
-                  { backgroundColor: selectedSkillFilter === status ? config.color : colors.backgroundCard, borderColor: colors.border }
+                  { backgroundColor: selectedSkillFilter === 'all' ? '#8B5CF6' : colors.backgroundCard, borderColor: colors.border }
                 ]}
-                onPress={() => setSelectedSkillFilter(status)}
+                onPress={() => setSelectedSkillFilter('all')}
               >
-                <Text style={[styles.filterChipText, { color: selectedSkillFilter === status ? '#FFFFFF' : colors.textPrimary }]}>
-                  {config.label} ({count})
+                <Text style={[styles.filterChipText, { color: selectedSkillFilter === 'all' ? '#FFFFFF' : colors.textPrimary }]}>
+                  Toutes ({skills.length})
                 </Text>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
+                const config = SKILL_STATUS_CONFIG[status];
+                const count = skills.filter(s => s.status === status).length;
+                return (
+                  <TouchableOpacity
+                    key={status}
+                    style={[
+                      styles.filterChip,
+                      { backgroundColor: selectedSkillFilter === status ? config.color : colors.backgroundCard, borderColor: colors.border }
+                    ]}
+                    onPress={() => setSelectedSkillFilter(status)}
+                  >
+                    <Text style={[styles.filterChipText, { color: selectedSkillFilter === status ? '#FFFFFF' : colors.textPrimary }]}>
+                      {config.label} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
-        {/* Skills List */}
-        <View style={styles.skillsList}>
-          {filteredSkills.map(renderSkillCard)}
-          {filteredSkills.length === 0 && searchQuery.trim() === '' && (
-            <View style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <Target size={40} color={colors.textMuted} />
-              <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary }]}>Aucune technique</Text>
-              <Text style={[styles.emptySkillsText, { color: colors.textMuted }]}>
-                Ajoute les techniques que tu veux maîtriser
-              </Text>
+            {/* Skills List */}
+            <View style={styles.skillsList}>
+              {filteredSkills.map(renderSkillCard)}
+              {filteredSkills.length === 0 && searchQuery.trim() === '' && (
+                <View style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <Target size={40} color={colors.textMuted} />
+                  <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary }]}>Aucune technique</Text>
+                  <Text style={[styles.emptySkillsText, { color: colors.textMuted }]}>
+                    Ajoute les techniques que tu veux maîtriser
+                  </Text>
+                </View>
+              )}
+              {/* TASK 2: Create custom skill when search has no results */}
+              {filteredSkills.length === 0 && searchQuery.trim() !== '' && (
+                <TouchableOpacity
+                  style={[styles.createCustomSkillCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setNewSkillName(searchQuery.trim());
+                    setSearchQuery('');
+                    setShowAddSkillModal(true);
+                  }}
+                >
+                  <View style={[styles.createCustomIcon, { backgroundColor: '#8B5CF620' }]}>
+                    <Plus size={28} color="#8B5CF6" strokeWidth={2} />
+                  </View>
+                  <View style={styles.createCustomSkillInfo}>
+                    <Text style={[styles.createCustomText, { color: colors.textPrimary }]}>
+                      Créer "{searchQuery.trim()}"
+                    </Text>
+                    <Text style={[styles.createCustomSubtext, { color: colors.textMuted }]}>
+                      Nouvelle technique
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
             </View>
-          )}
-          {/* TASK 2: Create custom skill when search has no results */}
-          {filteredSkills.length === 0 && searchQuery.trim() !== '' && (
-            <TouchableOpacity
-              style={[styles.createCustomSkillCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setNewSkillName(searchQuery.trim());
-                setSearchQuery('');
-                setShowAddSkillModal(true);
-              }}
-            >
-              <View style={[styles.createCustomIcon, { backgroundColor: '#8B5CF620' }]}>
-                <Plus size={28} color="#8B5CF6" strokeWidth={2} />
-              </View>
-              <View style={styles.createCustomSkillInfo}>
-                <Text style={[styles.createCustomText, { color: colors.textPrimary }]}>
-                  Créer "{searchQuery.trim()}"
-                </Text>
-                <Text style={[styles.createCustomSubtext, { color: colors.textMuted }]}>
-                  Nouvelle technique
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
+          </>
+        )}
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -2511,6 +2995,7 @@ export default function TrainingJournalScreen() {
       {renderAddEntryModal()}
       {renderBenchmarkDetailModal()}
       {renderSkillDetailModal()}
+      {renderTrashModal()}
 
       {/* PILLAR 3: Victory Share Modal (Strava-Style) */}
       {victorySessionData && (
@@ -2524,6 +3009,12 @@ export default function TrainingJournalScreen() {
           clubName={clubName}
         />
       )}
+
+      {/* Onboarding Modal */}
+      <TrainingJournalOnboarding
+        visible={showOnboarding}
+        onClose={handleCloseOnboarding}
+      />
 
       {/* Toast Notification - NO EMOJI, use Lucide Check icon */}
       {toastVisible && (
@@ -2568,6 +3059,36 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
+    fontWeight: '700',
+  },
+  // Tab styles
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  tabBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  tabBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
   },
   searchContainer: {
@@ -3047,6 +3568,48 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
+  },
+
+  // Trash Button (Header)
+  trashButton: {
+    padding: 4,
+    position: 'relative',
+  },
+
+  // Trash Modal
+  trashItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  restoreButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  trashFooter: {
+    borderTopWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  emptyTrashButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 10,
+  },
+  emptyTrashText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 
   // Modals

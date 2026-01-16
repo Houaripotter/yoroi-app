@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -56,8 +57,11 @@ import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
 import { TimetableView, EnhancedCalendarView, EnhancedAddSessionModal, AddClubModal } from '@/components/planning';
+import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -106,6 +110,7 @@ const SAVED_EVENTS_KEY = 'my_saved_events';
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);
@@ -115,6 +120,7 @@ export default function PlanningScreen() {
 
   // Refs pour le scroll
   const horizontalScrollRef = useRef<ScrollView>(null);
+  const tabScrollRef = useRef<ScrollView>(null);
   const isScrollingRef = useRef(false);
 
   // Modals state
@@ -128,6 +134,25 @@ export default function PlanningScreen() {
   const [selectedSportInCategory, setSelectedSportInCategory] = useState<string>('all');
   const [expandedOrganizers, setExpandedOrganizers] = useState<{ [key: string]: boolean }>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Tutoriel de découverte
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Vérifier si c'est la première visite
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      const visited = await hasVisitedPage('planning');
+      if (!visited) {
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
+    };
+    checkFirstVisit();
+  }, []);
+
+  const handleCloseTutorial = async () => {
+    await markPageAsVisited('planning');
+    setShowTutorial(false);
+  };
 
   // ============================================
   // CATALOG STATE (for "Trouver" feature)
@@ -640,12 +665,12 @@ export default function PlanningScreen() {
   };
 
   // Gérer le clic sur un onglet
-  const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string }[] = [
-    { key: 'calendar', label: 'Calendrier', icon: Calendar, color: colors.accent },
-    { key: 'programme', label: 'Emploi du Temps', sublabel: 'Sportif', icon: List, color: '#8B5CF6' },
-    { key: 'journal', label: 'Carnet', sublabel: 'Entraînement', icon: BookOpen, color: '#EF4444' },
-    { key: 'clubs', label: 'Clubs', icon: Dumbbell, color: '#10B981' },
-    { key: 'competitions', label: 'Prochains RDV', icon: Trophy, color: '#F59E0B' },
+  const tabs: { key: ViewMode; label: string; sublabel?: string; icon: any; color: string; description: string }[] = [
+    { key: 'calendar', label: t('planning.calendar'), icon: Calendar, color: colors.accent, description: t('planning.calendarDescription') },
+    { key: 'programme', label: t('planning.timetable'), icon: List, color: '#8B5CF6', description: t('planning.timetableDescription') },
+    { key: 'journal', label: t('planning.journal'), icon: BookOpen, color: '#EF4444', description: t('planning.journalDescription') },
+    { key: 'clubs', label: t('planning.clubs'), icon: Dumbbell, color: '#10B981', description: t('planning.clubsDescription') },
+    { key: 'competitions', label: t('planning.events'), icon: Trophy, color: '#F59E0B', description: t('planning.eventsDescription') },
   ];
 
   const handleTabPress = (tab: ViewMode, index: number) => {
@@ -679,67 +704,116 @@ export default function PlanningScreen() {
         setTimeout(() => {
           isScrollingRef.current = false;
         }, 100);
+
+        // Calculer la largeur totale des onglets
+        const tabWidth = 44;
+        const tabGap = 12;
+        const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+
+        // Si tous les onglets rentrent dans l'écran, ne pas scroller
+        if (totalTabsWidth <= SCREEN_WIDTH) {
+          return;
+        }
+
+        // Sinon, auto-scroll pour centrer l'onglet actif
+        const scrollOffset = currentIndex * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + 16;
+        tabScrollRef.current?.scrollTo({
+          x: Math.max(0, scrollOffset),
+          animated: true,
+        });
       }
     }
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Planning</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Swipe pour naviguer</Text>
-      </View>
-
-      {/* VIEW MODE TOGGLE - Design moderne comme Stats */}
-      <View style={styles.toggleScroll}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.toggleScrollContent}
-      >
-        {tabs.map((tab, index) => {
-          const Icon = tab.icon;
-          const isActive = viewMode === tab.key;
-          return (
-            <TouchableOpacity
-              key={tab.key}
-              style={styles.tabItemWrapper}
-              onPress={() => handleTabPress(tab.key, index)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                styles.tabIconCircle,
-                {
-                  backgroundColor: isActive ? tab.color : colors.backgroundCard,
-                  borderColor: isActive ? tab.color : colors.border,
-                }
-              ]}>
-                <Icon size={20} color={isActive ? '#FFF' : colors.textMuted} />
-              </View>
-              <View style={styles.tabLabelContainer}>
+      {/* Header avec tabs circulaires - zIndex élevé pour rester visible */}
+      <View style={[styles.tabsHeader, { backgroundColor: colors.background, zIndex: 100, elevation: 10 }]}>
+        <ScrollView
+          ref={tabScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={(() => {
+            const tabWidth = 44;
+            const tabGap = 12;
+            const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+            return totalTabsWidth > SCREEN_WIDTH;
+          })()}
+          contentContainerStyle={[
+            styles.tabsContent,
+            (() => {
+              const tabWidth = 44;
+              const tabGap = 12;
+              const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+              return totalTabsWidth <= SCREEN_WIDTH && styles.tabsContentCentered;
+            })()
+          ]}
+          style={styles.tabsScroll}
+        >
+          {tabs.map((tab, index) => {
+            const Icon = tab.icon;
+            const isActive = viewMode === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.tabWrapper}
+                onPress={() => handleTabPress(tab.key, index)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.circleTab,
+                  {
+                    backgroundColor: isActive
+                      ? colors.accent
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                  },
+                ]}>
+                  <Icon
+                    size={18}
+                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    strokeWidth={2.5}
+                  />
+                </View>
                 <Text style={[
-                  styles.tabLabel,
-                  { color: isActive ? tab.color : colors.textMuted },
-                  isActive && styles.tabLabelActive
+                  styles.tabTitle,
+                  { color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted }
                 ]}>
                   {tab.label}
                 </Text>
-                {tab.sublabel && (
-                  <Text style={[
-                    styles.tabLabelSub,
-                    { color: isActive ? tab.color : colors.textMuted }
-                  ]}>
-                    {tab.sublabel}
-                  </Text>
-                )}
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Description de la page active */}
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
+            {tabs.find(t => t.key === viewMode)?.description || ''}
+          </Text>
+        </View>
+      </View>
+
+      {/* Indicateurs de pagination (dots) */}
+      <View style={styles.dotsContainer}>
+        {tabs.map((tab, index) => {
+          const currentIndex = tabs.findIndex(t => t.key === viewMode);
+          return (
+            <View
+              key={`dot-${tab.key}`}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: currentIndex === index
+                    ? colors.accent
+                    : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
+                  width: currentIndex === index ? 20 : 5,
+                },
+              ]}
+            />
           );
         })}
-      </ScrollView>
       </View>
 
       {/* ScrollView horizontal avec pagination */}
@@ -829,42 +903,52 @@ export default function PlanningScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Carnet d'Entraînement</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('planning.journal')}</Text>
 
-            {/* Stats du carnet - Records + Techniques */}
-            <View style={[styles.journalStatsContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <View style={styles.journalStatsRow}>
-                <View style={styles.journalStatItem}>
-                  <Text style={[styles.journalStatValue, { color: '#EF4444' }]}>{journalStats.totalRecords}</Text>
-                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Records</Text>
-                </View>
-                <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.journalStatItem}>
-                  <Text style={[styles.journalStatValue, { color: colors.accent }]}>{journalStats.total}</Text>
-                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Techniques</Text>
-                </View>
-                <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.journalStatItem}>
-                  <Text style={[styles.journalStatValue, { color: '#10B981' }]}>{journalStats.mastered}</Text>
-                  <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Maîtrisées</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Mes Records - GRID 3 colonnes groupés par catégorie */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-              <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
-              <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
-                <ChevronRight size={14} color={colors.accent} />
-              </TouchableOpacity>
-            </View>
-            {recentBenchmarks.length === 0 ? (
-              <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
-                <Trophy size={32} color={colors.textMuted} />
-                <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucun record</Text>
-              </View>
+            {journalStats.total === 0 && journalStats.totalRecords === 0 ? (
+              <EmptyState
+                type="journal"
+                onAction={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  router.push('/training-journal');
+                }}
+              />
             ) : (
+              <>
+                {/* Stats du carnet - Records + Techniques */}
+                <View style={[styles.journalStatsContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <View style={styles.journalStatsRow}>
+                    <View style={styles.journalStatItem}>
+                      <Text style={[styles.journalStatValue, { color: '#EF4444' }]}>{journalStats.totalRecords}</Text>
+                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Records</Text>
+                    </View>
+                    <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.journalStatItem}>
+                      <Text style={[styles.journalStatValue, { color: isDark ? colors.accent : colors.textPrimary }]}>{journalStats.total}</Text>
+                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Techniques</Text>
+                    </View>
+                    <View style={[styles.journalStatDivider, { backgroundColor: colors.border }]} />
+                    <View style={styles.journalStatItem}>
+                      <Text style={[styles.journalStatValue, { color: '#10B981' }]}>{journalStats.mastered}</Text>
+                      <Text style={[styles.journalStatLabel, { color: colors.textMuted }]}>Maîtrisées</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Mes Records - GRID 3 colonnes groupés par catégorie */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+                  <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
+                  <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
+                    <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />
+                  </TouchableOpacity>
+                </View>
+                {recentBenchmarks.length === 0 ? (
+                  <View style={[styles.emptyJournalCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border, paddingVertical: 20 }]}>
+                    <Trophy size={32} color={colors.textMuted} />
+                    <Text style={[styles.emptyJournalTitle, { color: colors.textPrimary, fontSize: 14 }]}>Aucun record</Text>
+                  </View>
+                ) : (
               <>
                 {/* Grouper les benchmarks par catégorie */}
                 {(() => {
@@ -1054,8 +1138,8 @@ export default function PlanningScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
               <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Techniques</Text>
               <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
-                <ChevronRight size={14} color={colors.accent} />
+                <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
+                <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />
               </TouchableOpacity>
             </View>
             {recentSkills.length === 0 ? (
@@ -1205,6 +1289,8 @@ export default function PlanningScreen() {
                 })()}
               </>
             )}
+                </>
+              )}
 
             {/* Bouton pour accéder au carnet complet */}
             <TouchableOpacity
@@ -1219,12 +1305,12 @@ export default function PlanningScreen() {
 
             {/* Bouton pour logger rapidement */}
             <TouchableOpacity
-              style={[styles.quickLogButton, { backgroundColor: colors.backgroundCard, borderColor: colors.accent }]}
+              style={[styles.quickLogButton, { backgroundColor: colors.backgroundCard, borderColor: isDark ? colors.accent : colors.textPrimary }]}
               onPress={() => router.push('/quick-log')}
               activeOpacity={0.8}
             >
-              <Plus size={20} color={colors.accent} />
-              <Text style={[styles.quickLogButtonText, { color: colors.accent }]}>Logger une séance</Text>
+              <Plus size={20} color={isDark ? colors.accent : colors.textPrimary} />
+              <Text style={[styles.quickLogButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>Logger une séance</Text>
             </TouchableOpacity>
 
             <View style={{ height: 120 }} />
@@ -1238,25 +1324,17 @@ export default function PlanningScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Mes Clubs</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('planning.clubs')}</Text>
 
             {clubs.length === 0 ? (
-              <View style={[styles.emptyClubsCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                <Dumbbell size={48} color={colors.textMuted} />
-                <Text style={[styles.emptyClubsTitle, { color: colors.textPrimary }]}>Aucun club</Text>
-                <Text style={[styles.emptyClubsText, { color: colors.textMuted }]}>Ajoute tes clubs pour planifier tes entrainements</Text>
-                <TouchableOpacity
-                  style={[styles.addClubButton, { backgroundColor: colors.accent }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setEditingClub(null);
-                    setShowAddClubModal(true);
-                  }}
-                >
-                  <Plus size={18} color={colors.textOnGold} />
-                  <Text style={[styles.addClubButtonText, { color: colors.textOnGold }]}>Ajouter un club</Text>
-                </TouchableOpacity>
-              </View>
+              <EmptyState
+                type="clubs"
+                onAction={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setEditingClub(null);
+                  setShowAddClubModal(true);
+                }}
+              />
             ) : (
               <View style={styles.clubsGrid}>
                 {clubs.map((club) => {
@@ -1495,37 +1573,13 @@ export default function PlanningScreen() {
                   </>
                 ) : (
                   /* État vide */
-                  <View style={[styles.emptyRdvCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                    <View style={[styles.emptyRdvIcon, { backgroundColor: '#F59E0B20' }]}>
-                      <Trophy size={40} color="#F59E0B" />
-                    </View>
-                    <Text style={[styles.emptyRdvTitle, { color: colors.textPrimary }]}>
-                      Aucun RDV prevu
-                    </Text>
-                    <Text style={[styles.emptyRdvText, { color: colors.textMuted }]}>
-                      Ajoute ta prochaine course, combat, match ou competition depuis l'onglet "Trouver"
-                    </Text>
-                    <TouchableOpacity
-                      style={[styles.emptyRdvButton, { backgroundColor: '#8B5CF6' }]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        setEventsTabMode('catalog');
-                      }}
-                    >
-                      <Globe size={18} color="#FFFFFF" />
-                      <Text style={styles.emptyRdvButtonText}>Trouver un evenement</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.emptyRdvButtonSecondary, { borderColor: colors.border }]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        router.push('/add-competition');
-                      }}
-                    >
-                      <Plus size={18} color={colors.textPrimary} />
-                      <Text style={[styles.emptyRdvButtonSecondaryText, { color: colors.textPrimary }]}>Ajouter manuellement</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <EmptyState
+                    type="competitions"
+                    onAction={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setEventsTabMode('catalog');
+                    }}
+                  />
                 )}
 
                 {/* Espace en bas pour le bouton flottant */}
@@ -1622,7 +1676,7 @@ export default function PlanningScreen() {
                       Aucun evenement trouve
                     </Text>
                     <Text style={[styles.catalogEmptyText, { color: colors.textMuted }]}>
-                      Modifiez vos filtres ou votre recherche
+                      Modifie tes filtres ou ton recherche
                     </Text>
                   </View>
                 ) : (
@@ -1720,6 +1774,32 @@ export default function PlanningScreen() {
         </View>
       </ScrollView>
 
+      {/* Pagination Dots - STYLE iOS */}
+      <View style={styles.paginationWrapper}>
+        <View style={[styles.paginationContainer, {
+          backgroundColor: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        }]}>
+          {tabs.map((tab, index) => (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => handleTabPress(tab.key, index)}
+              activeOpacity={0.7}
+              style={[
+                styles.dot,
+                {
+                  backgroundColor: viewMode === tab.key
+                    ? (isDark ? '#FFFFFF' : '#000000')
+                    : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
+                  width: 8,
+                  height: 8,
+                  opacity: viewMode === tab.key ? 1 : 0.5,
+                }
+              ]}
+            />
+          ))}
+        </View>
+      </View>
+
       {/* MODALS */}
       <DayDetailModal
         visible={showDayModal}
@@ -1764,6 +1844,15 @@ export default function PlanningScreen() {
         }}
       />
 
+      {/* Tutoriel de découverte */}
+      {showTutorial && (
+        <FeatureDiscoveryModal
+          visible={true}
+          tutorial={PAGE_TUTORIALS.planning}
+          onClose={handleCloseTutorial}
+        />
+      )}
+
       <PopupComponent />
     </View>
   );
@@ -1778,6 +1867,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.sm,
+    paddingBottom: 120,
   },
 
   // HEADER
@@ -1854,7 +1944,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
 
-  // Toggle scroll pour 4 onglets - Style moderne
+  // Toggle scroll pour 4 onglets - Style moderne (OLD - kept for compatibility)
   toggleScroll: {
     marginBottom: 8,
     marginTop: 0,
@@ -1864,6 +1954,66 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     gap: 8,
     alignItems: 'center',
+  },
+
+  // Header avec tabs circulaires
+  tabsHeader: {
+    paddingTop: 60,
+    paddingBottom: 8,
+  },
+  tabsScroll: {
+    flexGrow: 0,
+  },
+  tabsContent: {
+    paddingLeft: 16,
+    paddingRight: 80,
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  tabsContentCentered: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  tabWrapper: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  circleTab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabTitle: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  descriptionContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  pageDescription: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 8,
+  },
+  dot: {
+    height: 5,
+    borderRadius: 2.5,
   },
 
   // CALENDAR HEADER
@@ -3026,5 +3176,27 @@ const styles = StyleSheet.create({
   quickLogButtonText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  // Pagination Dots
+  paginationWrapper: {
+    position: 'absolute',
+    bottom: 80,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });

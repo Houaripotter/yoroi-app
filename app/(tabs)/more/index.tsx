@@ -63,11 +63,15 @@ import {
   Globe,
   RefreshCw,
   Moon,
+  Sun,
+  Smartphone,
+  MessageSquareQuote,
+  Image as ImageIcon,
   Trash2,
   Search,
 } from 'lucide-react-native';
-import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { MoreTabView } from '@/components/more/MoreTabView';
 import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV } from '@/lib/exportService';
 import { scale, scaleModerate } from '@/constants/responsive';
 import { importAllData } from '@/lib/exportService';
@@ -78,6 +82,11 @@ import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeServi
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
 import logger from '@/lib/security/logger';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
+import { SUPPORTED_LANGUAGES, changeLanguage, getCurrentLanguage } from '@/lib/i18n';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // ECRAN PLUS - DESIGN MODERNE
@@ -108,73 +117,73 @@ interface MenuItem {
 // ============================================
 // ACTIONS RAPIDES (Grille en haut - Défilable)
 // ============================================
-const QUICK_ACTIONS: QuickAction[] = [
+const getQuickActions = (t: TFunction): QuickAction[] => [
   {
     id: 'timer',
-    label: 'Timer',
+    label: t('tools.timer'),
     Icon: Timer,
     route: '/timer',
     gradient: ['#4ECDC4', '#3DBDB5'],
   },
   {
     id: 'calculator',
-    label: 'Calculateurs',
+    label: t('tools.calculators'),
     Icon: Calculator,
     route: '/calculators',
     gradient: ['#F59E0B', '#D97706'],
   },
   {
     id: 'fasting',
-    label: 'Jeûne',
+    label: t('tools.fasting'),
     Icon: Utensils,
     route: '/fasting',
     gradient: ['#A855F7', '#9333EA'],
   },
   {
     id: 'training-journal',
-    label: 'Carnet',
+    label: t('tools.journal'),
     Icon: BookOpen,
     route: '/training-journal',
     gradient: ['#F97316', '#EA580C'],
   },
   {
     id: 'lab',
-    label: 'Savoir',
+    label: t('tools.knowledge'),
     Icon: FlaskConical,
     route: '/savoir',
     gradient: ['#8B5CF6', '#7C3AED'],
   },
   {
     id: 'nutrition',
-    label: 'Nutrition',
+    label: t('tools.nutrition'),
     Icon: Apple,
     route: '/nutrition-plan',
     gradient: ['#10B981', '#059669'],
   },
   {
     id: 'share-hub',
-    label: 'Partager',
+    label: t('tools.share'),
     Icon: Share2,
     route: '/share-hub',
     gradient: ['#EC4899', '#BE185D'],
   },
   {
     id: 'profile',
-    label: 'Profil',
+    label: t('menu.profile'),
     Icon: User,
     route: '/profile',
     gradient: ['#60A5FA', '#3B82F6'],
   },
   {
     id: 'photos',
-    label: 'Photos',
+    label: t('menu.transformation'),
     Icon: Camera,
     route: '/photos',
     gradient: ['#F472B6', '#EC4899'],
   },
   {
     id: 'appearance',
-    label: 'Thèmes',
+    label: t('menu.themes'),
     Icon: Palette,
     route: '/appearance',
     gradient: ['#A78BFA', '#8B5CF6'],
@@ -184,11 +193,11 @@ const QUICK_ACTIONS: QuickAction[] = [
 // ============================================
 // SECTION PROFIL & APPARENCE
 // ============================================
-const PROFILE_ITEMS: MenuItem[] = [
+const getProfileItems = (t: TFunction): MenuItem[] => [
   {
     id: 'profile',
-    label: 'Mon Profil',
-    sublabel: 'Informations personnelles',
+    label: t('menu.profile'),
+    sublabel: t('menu.profileDescription'),
     Icon: User,
     route: '/profile',
     iconColor: '#60A5FA',
@@ -196,41 +205,68 @@ const PROFILE_ITEMS: MenuItem[] = [
   },
   {
     id: 'photos',
-    label: 'Transformation',
-    sublabel: 'Photos avant/après',
+    label: t('menu.transformation'),
+    sublabel: t('menu.transformationDescription'),
     Icon: Camera,
     route: '/photos',
     iconColor: '#F472B6',
     iconBg: '#F472B620',
   },
   {
-    id: 'dojo',
-    label: 'Mon Dojo',
-    sublabel: 'XP, badges, avatars et défis',
-    Icon: Sparkles,
-    route: '/gamification',
+    id: 'badges',
+    label: t('menu.badges'),
+    sublabel: t('menu.badgesDescription'),
+    Icon: Award,
+    route: '/badges',
     iconColor: '#FBBF24',
     iconBg: '#FBBF2420',
   },
   {
-    id: 'competitor',
-    label: 'Espace Compétiteur',
-    sublabel: 'Compétitions, palmarès, cut',
-    Icon: Swords,
-    route: '/competitor-space',
+    id: 'avatars',
+    label: t('menu.avatars'),
+    sublabel: t('menu.avatarsDescription'),
+    Icon: Sparkles,
+    route: '/avatar-selection',
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
+  },
+  {
+    id: 'rangs',
+    label: t('menu.ranks'),
+    sublabel: t('menu.ranksDescription'),
+    Icon: Trophy,
+    route: '/gamification',
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
+  {
+    id: 'niveaux',
+    label: t('menu.levels'),
+    sublabel: t('menu.levelsDescription'),
+    Icon: Zap,
+    route: '/gamification',
+    iconColor: '#F59E0B',
+    iconBg: '#F59E0B20',
+  },
+  {
+    id: 'competitor',
+    label: t('menu.competitorSpace'),
+    sublabel: t('menu.competitorSpaceDescription'),
+    Icon: Swords,
+    route: '/competitor-space',
+    iconColor: '#EF4444',
+    iconBg: '#EF444420',
   },
 ];
 
 // ============================================
 // SECTION OUTILS
 // ============================================
-const TOOLS_ITEMS: MenuItem[] = [
+const getToolsItems = (t: TFunction): MenuItem[] => [
   {
     id: 'timer',
-    label: 'Timer',
-    sublabel: 'Chrono musculation, combat, HIIT',
+    label: t('tools.timer'),
+    sublabel: t('menu.timerDescription'),
     Icon: Timer,
     route: '/timer',
     iconColor: '#4ECDC4',
@@ -238,8 +274,8 @@ const TOOLS_ITEMS: MenuItem[] = [
   },
   {
     id: 'calculator',
-    label: 'Calculateurs',
-    sublabel: 'Macros, IMC, calories',
+    label: t('tools.calculators'),
+    sublabel: t('menu.calculatorsDescription'),
     Icon: Calculator,
     route: '/calculators',
     iconColor: '#F59E0B',
@@ -247,8 +283,8 @@ const TOOLS_ITEMS: MenuItem[] = [
   },
   {
     id: 'fasting',
-    label: 'Jeûne',
-    sublabel: 'Intermittent, OMAD, Ramadan, Kippur',
+    label: t('tools.fasting'),
+    sublabel: t('menu.fastingDescription'),
     Icon: Utensils,
     route: '/fasting',
     iconColor: '#A855F7',
@@ -256,8 +292,8 @@ const TOOLS_ITEMS: MenuItem[] = [
   },
   {
     id: 'lab',
-    label: 'Savoir',
-    sublabel: 'Dormir moins bête · Peer-reviewed',
+    label: t('tools.knowledge'),
+    sublabel: t('menu.knowledgeDescription'),
     Icon: FlaskConical,
     route: '/savoir',
     iconColor: '#8B5CF6',
@@ -265,8 +301,8 @@ const TOOLS_ITEMS: MenuItem[] = [
   },
   {
     id: 'nutrition',
-    label: 'Nutrition',
-    sublabel: 'Plan personnalisé',
+    label: t('tools.nutrition'),
+    sublabel: t('menu.nutritionDescription'),
     Icon: Apple,
     route: '/nutrition-plan',
     iconColor: '#10B981',
@@ -274,8 +310,8 @@ const TOOLS_ITEMS: MenuItem[] = [
   },
   {
     id: 'share-hub',
-    label: 'Partager ma progression',
-    sublabel: '6 cartes pour réseaux sociaux',
+    label: t('tools.share'),
+    sublabel: t('menu.shareProgressDescription'),
     Icon: Share2,
     route: '/share-hub',
     iconColor: '#EC4899',
@@ -286,11 +322,11 @@ const TOOLS_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION COMMUNAUTÉ
 // ============================================
-const COMMUNITY_ITEMS: MenuItem[] = [
+const getCommunityItems = (t: TFunction): MenuItem[] => [
   {
     id: 'clubs',
-    label: 'Clubs & Coach',
-    sublabel: 'Partenaires et salles',
+    label: t('menu.clubsCoach'),
+    sublabel: t('menu.clubsCoachDescription'),
     Icon: Building2,
     route: '/partners',
     iconColor: '#818CF8',
@@ -298,8 +334,8 @@ const COMMUNITY_ITEMS: MenuItem[] = [
   },
   {
     id: 'health-pros',
-    label: 'Pros de Santé',
-    sublabel: 'Kinés, nutritionnistes',
+    label: t('menu.healthPros'),
+    sublabel: t('menu.healthProsDescription'),
     Icon: Heart,
     route: '/partners',
     iconColor: '#F87171',
@@ -310,11 +346,11 @@ const COMMUNITY_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION AFFICHAGE
 // ============================================
-const DISPLAY_ITEMS: MenuItem[] = [
+const getDisplayItems = (t: TFunction): MenuItem[] => [
   {
     id: 'appearance',
-    label: 'Apparence',
-    sublabel: 'Thèmes et personnalisation',
+    label: t('menu.appearance'),
+    sublabel: t('menu.appearanceDescription'),
     Icon: Palette,
     route: '/appearance',
     iconColor: '#A78BFA',
@@ -322,8 +358,8 @@ const DISPLAY_ITEMS: MenuItem[] = [
   },
   {
     id: 'preferences',
-    label: 'Unités',
-    sublabel: 'Kg/Lbs, Cm/Inches',
+    label: t('menu.units'),
+    sublabel: t('menu.unitsDescription'),
     Icon: Sliders,
     onPress: () => {},
     iconColor: '#F59E0B',
@@ -335,11 +371,11 @@ const DISPLAY_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION RAPPELS & NOTIFICATIONS
 // ============================================
-const REMINDERS_ITEMS: MenuItem[] = [
+const getRemindersItems = (t: TFunction): MenuItem[] => [
   {
     id: 'notifications',
-    label: 'Notifications',
-    sublabel: 'Rappels, briefing, alertes intelligentes',
+    label: t('menu.notifications'),
+    sublabel: t('menu.notificationsDescription'),
     Icon: Bell,
     route: '/notifications',
     iconColor: '#F59E0B',
@@ -350,11 +386,11 @@ const REMINDERS_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION APPLE HEALTH
 // ============================================
-const HEALTH_ITEMS: MenuItem[] = [
+const getHealthItems = (t: TFunction): MenuItem[] => [
   {
     id: 'health-sync',
-    label: 'Apple Health',
-    sublabel: 'Synchronise tes données santé',
+    label: t('tools.appleHealth'),
+    sublabel: t('menu.appleHealthDescription'),
     Icon: Watch,
     route: '/health-connect',
     iconColor: '#EC4899',
@@ -366,11 +402,11 @@ const HEALTH_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION SAUVEGARDE & RESTAURATION
 // ============================================
-const BACKUP_ITEMS: MenuItem[] = [
+const getBackupItems = (t: TFunction): MenuItem[] => [
   {
     id: 'icloud-sync',
-    label: 'Sync iCloud',
-    sublabel: 'Sauvegarde automatique',
+    label: t('menu.icloudSync'),
+    sublabel: t('menu.icloudSyncDescription'),
     Icon: RefreshCw,
     onPress: () => {},
     iconColor: '#3B82F6',
@@ -378,8 +414,8 @@ const BACKUP_ITEMS: MenuItem[] = [
   },
   {
     id: 'exportPdf',
-    label: 'Rapport PDF',
-    sublabel: 'Pour médecin ou coach',
+    label: t('menu.pdfReport'),
+    sublabel: t('menu.pdfReportDescription'),
     Icon: FileText,
     onPress: () => {},
     iconColor: '#F97316',
@@ -387,8 +423,8 @@ const BACKUP_ITEMS: MenuItem[] = [
   },
   {
     id: 'export',
-    label: 'Exporter',
-    sublabel: 'Sauvegarder tes données',
+    label: t('menu.export'),
+    sublabel: t('menu.exportDescription'),
     Icon: Download,
     onPress: () => {},
     iconColor: '#10B981',
@@ -396,8 +432,8 @@ const BACKUP_ITEMS: MenuItem[] = [
   },
   {
     id: 'import',
-    label: 'Importer',
-    sublabel: 'Restaurer un backup',
+    label: t('menu.import'),
+    sublabel: t('menu.importDescription'),
     Icon: Upload,
     onPress: () => {},
     iconColor: '#6366F1',
@@ -409,11 +445,11 @@ const BACKUP_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION SÉCURITÉ
 // ============================================
-const SECURITY_ITEMS: MenuItem[] = [
+const getSecurityItems = (t: TFunction): MenuItem[] => [
   {
     id: 'tutorial',
-    label: 'Revoir le Tutoriel',
-    sublabel: 'Découvre toutes les fonctionnalités',
+    label: t('menu.tutorial'),
+    sublabel: t('menu.tutorialDescription'),
     Icon: Info,
     onPress: () => {},
     iconColor: '#8B5CF6',
@@ -421,8 +457,8 @@ const SECURITY_ITEMS: MenuItem[] = [
   },
   {
     id: 'reset-all',
-    label: 'Réinitialiser Tout',
-    sublabel: 'Effacer toutes les données',
+    label: t('menu.resetAll'),
+    sublabel: t('menu.resetAllDescription'),
     Icon: Trash2,
     onPress: () => {},
     iconColor: '#EF4444',
@@ -433,11 +469,20 @@ const SECURITY_ITEMS: MenuItem[] = [
 // ============================================
 // SECTION SUPPORT
 // ============================================
-const SUPPORT_ITEMS: MenuItem[] = [
+const getSupportItems = (t: TFunction): MenuItem[] => [
+  {
+    id: 'help-tutorials',
+    label: t('menu.helpAndTutorials'),
+    sublabel: t('menu.helpAndTutorialsDescription'),
+    Icon: Info,
+    route: '/help-tutorials',
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+  },
   {
     id: 'ideas',
-    label: 'Boîte à idées',
-    sublabel: 'Proposer des idées et signaler des bugs',
+    label: t('menu.ideas'),
+    sublabel: t('menu.ideasDescription'),
     Icon: Lightbulb,
     onPress: () => {},
     iconColor: '#FCD34D',
@@ -445,8 +490,8 @@ const SUPPORT_ITEMS: MenuItem[] = [
   },
   {
     id: 'rate',
-    label: "Noter l'App",
-    sublabel: 'Laisse un avis sur l\'App Store',
+    label: t('menu.rateApp'),
+    sublabel: t('menu.rateAppDescription'),
     Icon: Star,
     onPress: () => {},
     iconColor: '#FBBF24',
@@ -454,26 +499,13 @@ const SUPPORT_ITEMS: MenuItem[] = [
   },
   {
     id: 'contact',
-    label: 'Contact',
-    sublabel: 'Questions ou suggestions',
+    label: t('menu.contact'),
+    sublabel: t('menu.contactDescription'),
     Icon: MessageCircle,
     onPress: () => {},
     iconColor: '#14B8A6',
     iconBg: '#14B8A620',
   },
-];
-
-// Liste complète des fonctionnalités pour la recherche
-const ALL_FEATURES: MenuItem[] = [
-  ...PROFILE_ITEMS,
-  ...TOOLS_ITEMS,
-  ...COMMUNITY_ITEMS,
-  ...DISPLAY_ITEMS,
-  ...REMINDERS_ITEMS,
-  ...HEALTH_ITEMS,
-  ...BACKUP_ITEMS,
-  ...SUPPORT_ITEMS,
-  ...SECURITY_ITEMS,
 ];
 
 // Mots-clés supplémentaires pour améliorer la recherche
@@ -483,7 +515,10 @@ const SEARCH_KEYWORDS: Record<string, string[]> = {
   'fasting': ['jeune', 'intermittent', 'ramadan', 'kippur', 'omad'],
   'profile': ['profil', 'info', 'personnel', 'moi'],
   'photos': ['photo', 'transformation', 'avant', 'apres', 'image'],
-  'dojo': ['badge', 'xp', 'niveau', 'avatar', 'defi', 'gamification'],
+  'badges': ['badge', 'collection', 'trophee', 'recompense', 'debloquer'],
+  'avatars': ['avatar', 'personnaliser', 'guerrier', 'samurai', 'style'],
+  'rangs': ['rang', 'grade', 'guerrier', 'ashigaru', 'bushi', 'samurai', 'ronin', 'shogun'],
+  'niveaux': ['xp', 'niveau', 'progression', 'gamification', 'experience', 'points'],
   'competitor': ['competition', 'palmares', 'cut', 'tournoi'],
   'lab': ['savoir', 'science', 'article', 'apprendre'],
   'nutrition': ['regime', 'alimentation', 'manger', 'repas'],
@@ -500,8 +535,21 @@ const SEARCH_KEYWORDS: Record<string, string[]> = {
 };
 
 export default function MoreScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeMode, setThemeMode } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { t, i18n } = useTranslation();
+
+  // Generate menu items with translations
+  const QUICK_ACTIONS = getQuickActions(t);
+  const PROFILE_ITEMS = getProfileItems(t);
+  const TOOLS_ITEMS = getToolsItems(t);
+  const COMMUNITY_ITEMS = getCommunityItems(t);
+  const DISPLAY_ITEMS = getDisplayItems(t);
+  const REMINDERS_ITEMS = getRemindersItems(t);
+  const HEALTH_ITEMS = getHealthItems(t);
+  const BACKUP_ITEMS = getBackupItems(t);
+  const SECURITY_ITEMS = getSecurityItems(t);
+  const SUPPORT_ITEMS = getSupportItems(t);
 
   // Recherche
   const [searchQuery, setSearchQuery] = useState('');
@@ -518,6 +566,29 @@ export default function MoreScreen() {
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [unitsModalVisible, setUnitsModalVisible] = useState(false);
   const [useMetric, setUseMetric] = useState(true);
+
+  // Language state
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [currentLang, setCurrentLang] = useState(getCurrentLanguage());
+
+  // Tutoriel de découverte
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Vérifier si c'est la première visite
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      const visited = await hasVisitedPage('menu');
+      if (!visited) {
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
+    };
+    checkFirstVisit();
+  }, []);
+
+  const handleCloseTutorial = async () => {
+    await markPageAsVisited('menu');
+    setShowTutorial(false);
+  };
 
   // Mode Créateur secret
   const [versionTapCount, setVersionTapCount] = useState(0);
@@ -569,13 +640,13 @@ export default function MoreScreen() {
       setCreatorCode('');
       setSecretGestureDone(0);
       await AsyncStorage.setItem('@yoroi_creator_mode', 'true');
-      showPopup('Mode Createur', 'Active avec succes. Acces aux fonctionnalites avancees debloque.', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+      showPopup(t('menu.creatorMode'), t('menu.creatorModeActivated'), [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
       router.push('/screenshot-mode');
     } else if (creatorCode === getSecretKey() && secretGestureDone < 3) {
       // Code correct mais geste secret pas fait - message générique pour ne pas révéler le secret
-      showPopup('Erreur', 'Activation incomplete.', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      showPopup(t('common.error'), t('menu.incompleteActivation'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
     } else {
-      showPopup('Code incorrect', 'Essayez encore.', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      showPopup(t('menu.incorrectCode'), t('menu.tryAgain'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
       setCreatorCode('');
     }
   };
@@ -640,22 +711,22 @@ export default function MoreScreen() {
     // Si on desactive le mode competiteur, demander confirmation
     if (newMode === 'loisir' && userModeSetting === 'competiteur') {
       showPopup(
-        'Desactiver le Mode Competiteur ?',
-        'Etes-vous sur de vouloir revenir au Mode Loisir ? Vos sports et categorie de poids seront conserves.',
+        t('menu.deactivateCompetitorMode'),
+        t('menu.confirmDeactivateCompetitor'),
         [
-          { text: 'Annuler', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Confirmer',
+            text: t('common.confirm'),
             style: 'destructive',
             onPress: async () => {
               try {
                 await saveUserMode(newMode);
                 await saveUserSettings({ userMode: newMode });
                 setUserModeSetting(newMode);
-                showPopup('Mode change', 'Vous etes maintenant en Mode Loisir', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                showPopup(t('menu.modeChanged'), t('menu.nowInLeisureMode'), [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
               } catch (error) {
                 logger.error('[MoreScreen] Error changing mode:', error);
-                showPopup('Erreur', 'Impossible de changer le mode', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+                showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
               }
             },
           },
@@ -670,33 +741,33 @@ export default function MoreScreen() {
         setUserModeSetting(newMode);
         if (newMode === 'competiteur') {
           showPopup(
-            'Mode Competiteur active',
-            'Configurez vos sports et votre categorie de poids ci-dessous',
+            t('menu.competitorModeActivated'),
+            t('menu.configureYourSports'),
             [{ text: 'OK', style: 'primary' }],
             <CheckCircle size={32} color="#10B981" />
           );
         }
       } catch (error) {
         logger.error('[MoreScreen] Error changing mode:', error);
-        showPopup('Erreur', 'Impossible de changer le mode', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+        showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
       }
     }
   };
 
   const handleShowTutorial = async () => {
     showPopup(
-      'Tutoriel',
-      'La fonctionnalite de tutoriel sera bientot disponible.',
+      t('menu.tutorial'),
+      t('menu.tutorialComingSoon'),
       [{ text: 'OK', style: 'primary' }]
     );
   };
 
   const handleExport = async () => {
     showPopup(
-      'Exporter mes donnees',
-      'Choisis le format d\'export',
+      t('menu.exportMyData'),
+      t('menu.chooseExportFormat'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         { text: 'JSON', style: 'default', onPress: () => exportDataToJSON() },
         { text: 'CSV', style: 'primary', onPress: () => exportDataToCSV() },
       ]
@@ -705,12 +776,12 @@ export default function MoreScreen() {
 
   const handleImport = async () => {
     showPopup(
-      'Importer des donnees',
-      'Cette action remplacera tes donnees actuelles.',
+      t('menu.importData'),
+      t('menu.importWarning'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Choisir un fichier',
+          text: t('menu.chooseFile'),
           style: 'primary',
           onPress: async () => {
             try {
@@ -734,7 +805,7 @@ export default function MoreScreen() {
       await Linking.openURL(appStoreURL);
     } catch (e) {
       logger.error('Rate error:', e);
-      showPopup('Erreur', 'Impossible d\'ouvrir l\'App Store', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -744,29 +815,29 @@ export default function MoreScreen() {
 
   const handleExportPDF = async () => {
     showPopup(
-      'Rapport PDF',
-      'Choisis la periode du rapport',
+      t('menu.pdfReportTitle'),
+      t('menu.choosePeriod'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '30 jours',
+          text: t('menu.days30'),
           style: 'default',
           onPress: async () => {
             try {
               await generateProgressPDF('30j');
             } catch (e) {
-              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+              showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
             }
           }
         },
         {
-          text: '90 jours',
+          text: t('menu.days90'),
           style: 'primary',
           onPress: async () => {
             try {
               await generateProgressPDF('90j');
             } catch (e) {
-              showPopup('Erreur', 'Impossible de generer le PDF', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+              showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
             }
           }
         },
@@ -791,8 +862,8 @@ export default function MoreScreen() {
         setResetModalVisible(false);
         setResetConfirmText('');
         showPopup(
-          'Donnees supprimees',
-          'Toutes vos donnees ont ete effacees. L\'application va redemarrer.',
+          t('menu.dataDeleted'),
+          t('menu.allDataDeleted'),
           [
             {
               text: 'OK',
@@ -804,19 +875,37 @@ export default function MoreScreen() {
         );
       } catch (error) {
         logger.error('[MoreScreen] Error resetting data:', error);
-        showPopup('Erreur', 'Impossible de reinitialiser les donnees', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+        showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
       }
     } else {
-      showPopup('Erreur', 'Tapez "SUPPRIMER", "EFFACER" ou "OUI" pour confirmer', [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      showPopup(t('common.error'), t('menu.typeYes'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
     }
   };
 
   const handleLanguage = () => {
-    showPopup(
-      'Langue',
-      'La selection de langue sera bientot disponible.\n\nPour l\'instant, YOROI est disponible en francais.',
-      [{ text: 'OK', style: 'primary' }]
-    );
+    setLanguageModalVisible(true);
+  };
+
+  const handleChangeLanguage = async (langCode: string) => {
+    try {
+      await changeLanguage(langCode);
+      setCurrentLang(langCode);
+      setLanguageModalVisible(false);
+      showPopup(
+        t('common.success'),
+        t('menu.languageChanged') || 'Langue changee avec succes',
+        [{ text: 'OK', style: 'primary' }],
+        <CheckCircle size={32} color="#10B981" />
+      );
+    } catch (error) {
+      logger.error('[MoreScreen] Error changing language:', error);
+      showPopup(
+        t('common.error'),
+        'Erreur lors du changement de langue',
+        [{ text: 'OK', style: 'primary' }],
+        <AlertCircle size={32} color="#EF4444" />
+      );
+    }
   };
 
   const handleReminders = () => {
@@ -833,8 +922,8 @@ export default function MoreScreen() {
 
   const handleICloudSync = () => {
     showPopup(
-      'Synchronisation iCloud',
-      'La synchronisation iCloud sera bientot disponible.\n\nTes donnees seront automatiquement sauvegardees et synchronisees entre tous tes appareils Apple.',
+      t('menu.icloudSyncTitle'),
+      t('menu.icloudSyncComingSoon'),
       [{ text: 'OK', style: 'primary' }]
     );
   };
@@ -845,6 +934,14 @@ export default function MoreScreen() {
 
   const handleIdeas = () => {
     Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Idée%20pour%20YOROI&body=Bonjour,%0A%0AVoici%20mon%20idée%20:%0A%0A');
+  };
+
+  const handleModeChange = async (mode: 'light' | 'dark' | 'auto') => {
+    try {
+      await setThemeMode(mode);
+    } catch (error) {
+      logger.error('[MoreScreen] Error changing theme mode:', error);
+    }
   };
 
   const handleQuickAction = (action: QuickAction) => {
@@ -1051,99 +1148,18 @@ export default function MoreScreen() {
   );
 
   return (
-    <ScreenWrapper noPadding>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* HEADER */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>Menu</Text>
-            <View style={[styles.versionBadge, { backgroundColor: colors.cardHover }]}>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>v1.0.0</Text>
-            </View>
-          </View>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Profil, outils et paramètres
-          </Text>
-        </View>
-
-        {/* BARRE DE RECHERCHE */}
-        <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Search size={20} color={colors.textMuted} />
-          <TextInput
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Rechercher une fonctionnalité..."
-            placeholderTextColor={colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* RÉSULTATS DE RECHERCHE */}
-        {searchQuery.length > 0 ? (
-          <View style={styles.searchResults}>
-            {(() => {
-              const query = searchQuery.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-              const filtered = ALL_FEATURES.filter(item => {
-                const label = item.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const sublabel = (item.sublabel || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                const keywords = SEARCH_KEYWORDS[item.id] || [];
-
-                return label.includes(query) ||
-                       sublabel.includes(query) ||
-                       keywords.some(kw => kw.includes(query));
-              });
-
-              if (filtered.length === 0) {
-                return (
-                  <View style={[styles.noResultsContainer, { backgroundColor: colors.card }]}>
-                    <Search size={40} color={colors.textMuted} />
-                    <Text style={[styles.noResultsText, { color: colors.textMuted }]}>
-                      Aucun résultat pour "{searchQuery}"
-                    </Text>
-                  </View>
-                );
-              }
-
-              return (
-                <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  {filtered.map((item, index) => (
-                    <View key={item.id}>
-                      {renderMenuItem(item)}
-                      {index < filtered.length - 1 && (
-                        <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
-                      )}
-                    </View>
-                  ))}
-                </View>
-              );
-            })()}
-          </View>
-        ) : (
-          <>
-            {/* QUICK ACTIONS GRID */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.quickActionsContainer}
-              style={styles.quickActionsScroll}
-            >
-              {QUICK_ACTIONS.map(renderQuickAction)}
-            </ScrollView>
-
-            {/* MODE UTILISATEUR - En haut */}
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <MoreTabView>
+        {/* PAGE 1 - PROFIL */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          {/* MODE UTILISATEUR */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MODE</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.mode')}</Text>
           <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <TouchableOpacity
               style={[styles.menuItem, { backgroundColor: colors.card }]}
@@ -1162,12 +1178,12 @@ export default function MoreScreen() {
               </View>
               <View style={styles.menuItemContent}>
                 <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                  {userModeSetting === 'competiteur' ? 'Mode Compétiteur' : 'Mode Loisir'}
+                  {userModeSetting === 'competiteur' ? t('menu.modeCompetitor') : t('menu.modeLeisure')}
                 </Text>
                 <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
                   {userModeSetting === 'competiteur'
-                    ? 'Compétitions, palmarès, catégories'
-                    : 'Bien-être et progression personnelle'}
+                    ? t('menu.modeCompetitorDescription')
+                    : t('menu.modeLeisureDescription')}
                 </Text>
               </View>
               <Switch
@@ -1184,7 +1200,7 @@ export default function MoreScreen() {
         {/* MODE COMPÉTITEUR - Config sports/catégorie */}
         {userModeSetting === 'competiteur' && (
           <View style={styles.sectionContainer}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CONFIG COMPÉTITEUR</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.competitorConfig')}</Text>
             <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
               {/* Catégorie de poids */}
@@ -1198,12 +1214,12 @@ export default function MoreScreen() {
                 </View>
                 <View style={styles.menuItemContent}>
                   <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                    Catégorie de poids
+                    {t('menu.weightCategory')}
                   </Text>
                   <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
                     {selectedWeightCategory
                       ? `${selectedWeightCategory.name} (${selectedWeightCategory.maxWeight}kg)`
-                      : 'Non défini'}
+                      : t('menu.weightCategoryNotDefined')}
                   </Text>
                 </View>
                 <ChevronRight size={18} color={colors.textMuted} />
@@ -1222,12 +1238,12 @@ export default function MoreScreen() {
                 </View>
                 <View style={styles.menuItemContent}>
                   <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                    Mes sports
+                    {t('menu.mySports')}
                   </Text>
                   <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
                     {userSports.length > 0
                       ? userSports.map(s => SPORT_LABELS[s]).join(', ')
-                      : 'Aucun sport défini'}
+                      : t('menu.noSportDefined')}
                   </Text>
                 </View>
                 <ChevronRight size={18} color={colors.textMuted} />
@@ -1237,22 +1253,181 @@ export default function MoreScreen() {
           </View>
         )}
 
-        {/* SECTIONS */}
-        {renderSection('PROFIL', PROFILE_ITEMS)}
-        {renderSection('OUTILS', TOOLS_ITEMS)}
-        {renderSection('COMMUNAUTÉ', COMMUNITY_ITEMS)}
-        {renderSection('AFFICHAGE', DISPLAY_ITEMS)}
-        {renderSection('RAPPELS & NOTIFICATIONS', REMINDERS_ITEMS)}
-        {renderSection('APPLE HEALTH', HEALTH_ITEMS)}
-        {renderSection('SAUVEGARDE & RESTAURATION', BACKUP_ITEMS)}
-        {renderSection('SUPPORT', SUPPORT_ITEMS)}
-        {renderSection('SÉCURITÉ', SECURITY_ITEMS)}
-          </>
-        )}
+          {/* PROFIL */}
+          {renderSection(t('menu.profileAndGamification'), PROFILE_ITEMS)}
+        </ScrollView>
 
-        {/* BIENTÔT DISPONIBLE */}
+        {/* PAGE 2 - APPARENCE */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          {/* MODE D'AFFICHAGE */}
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.displayMode')}</Text>
+            <View style={[styles.modeSection, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 16, padding: 16 }]}>
+              <View style={styles.modesContainer}>
+                {[
+                  { mode: 'dark' as const, label: t('menu.dark'), icon: Moon },
+                  { mode: 'light' as const, label: t('menu.light'), icon: Sun },
+                  { mode: 'auto' as const, label: t('menu.auto'), icon: Smartphone },
+                ].map(({ mode, label, icon: Icon }) => {
+                  const isActive = themeMode === mode;
+                  return (
+                    <TouchableOpacity
+                      key={mode}
+                      style={[
+                        styles.modeButton,
+                        { backgroundColor: colors.backgroundElevated },
+                        isActive && { backgroundColor: colors.accent },
+                      ]}
+                      onPress={() => handleModeChange(mode)}
+                      activeOpacity={0.7}
+                    >
+                      <Icon
+                        size={20}
+                        color={isActive ? colors.textOnAccent : colors.textPrimary}
+                      />
+                      <Text
+                        style={[
+                          styles.modeLabel,
+                          { color: isActive ? colors.textOnAccent : colors.textPrimary },
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          {/* PERSONNALISATION */}
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.customization')}</Text>
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {/* Thèmes */}
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.card }]}
+                onPress={() => router.push('/themes' as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '15' }]}>
+                  <Palette size={20} color={colors.accent} strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {t('menu.themes')}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.themesDescription')}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+              {/* Logo de l'app */}
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.card }]}
+                onPress={() => router.push('/logo-selection' as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: '#8B5CF615' }]}>
+                  <ImageIcon size={20} color="#8B5CF6" strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {t('menu.appLogo')}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.appLogoDescription')}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+              {/* Citations */}
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.card }]}
+                onPress={() => router.push('/citations' as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: '#10B98115' }]}>
+                  <MessageSquareQuote size={20} color="#10B981" strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {t('menu.citations')}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.citationsDescription')}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+              {/* Avatar */}
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.card }]}
+                onPress={() => router.push('/avatar-selection' as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: '#F59E0B15' }]}>
+                  <User size={20} color="#F59E0B" strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {t('menu.avatar')}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.avatarDescription')}
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* RAPPELS & NOTIFICATIONS */}
+          {renderSection(t('menu.reminders'), REMINDERS_ITEMS)}
+        </ScrollView>
+
+        {/* PAGE 3 - DONNÉES */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          {/* SANTÉ & DONNÉES */}
+          {renderSection(t('menu.connectedHealth'), HEALTH_ITEMS)}
+          {renderSection(t('menu.backupAndRestore'), BACKUP_ITEMS)}
+        </ScrollView>
+
+        {/* PAGE 4 - SUPPORT */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          {/* COMMUNAUTÉ & SUPPORT */}
+          {renderSection(t('menu.community'), COMMUNITY_ITEMS)}
+          {renderSection(t('menu.support'), SUPPORT_ITEMS)}
+          {renderSection(t('menu.security'), SECURITY_ITEMS)}
+
+          {/* BIENTÔT DISPONIBLE */}
         <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>BIENTOT DISPONIBLE</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.comingSoon')}</Text>
           <TouchableOpacity
             style={[styles.comingSoonCard, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => setUpcomingModalVisible(true)}
@@ -1262,10 +1437,10 @@ export default function MoreScreen() {
               <Zap size={24} color={colors.accent} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.comingSoonTitle, { color: colors.textPrimary }]}>
-                  Nouvelles fonctionnalites a venir
+                  {t('menu.newFeaturesComingSoon')}
                 </Text>
                 <Text style={[styles.comingSoonDesc, { color: colors.textSecondary }]}>
-                  Clique pour voir la roadmap
+                  {t('menu.clickToSeeRoadmap')}
                 </Text>
               </View>
               <ChevronRight size={20} color={colors.textMuted} />
@@ -1281,18 +1456,18 @@ export default function MoreScreen() {
             </View>
             <View style={styles.privacyContent}>
               <Text style={[styles.privacyTitle, { color: isDark ? '#4ADE80' : '#16A34A' }]}>
-                100% Privé
+                {t('menu.private100')}
               </Text>
               <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
-                Tes données restent uniquement sur ton téléphone
+                {t('menu.privateDescription')}
               </Text>
             </View>
           </View>
 
           <View style={[styles.madeWith, { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }]}>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>Made with</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
             <Heart size={14} color="#EF4444" fill="#EF4444" />
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>in France</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
           </View>
 
           {/* Version - Secret tap zone */}
@@ -1319,14 +1494,15 @@ export default function MoreScreen() {
               style={{ marginTop: 8 }}
             >
               <Text style={{ color: colors.accent, fontSize: 11, textAlign: 'center' }}>
-                ⚙️ Mode Créateur actif
+                {t('menu.creatorModeActive')}
               </Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 200 }} />
       </ScrollView>
+      </MoreTabView>
 
       {/* Modal - Sports Selection */}
       <Modal
@@ -1339,7 +1515,7 @@ export default function MoreScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Mes sports de compétition
+                {t('menu.myCompetitionSports')}
               </Text>
               <TouchableOpacity onPress={() => setSportsModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -1384,10 +1560,10 @@ export default function MoreScreen() {
               onPress={async () => {
                 await saveUserSettings({ userSports });
                 setSportsModalVisible(false);
-                showPopup('Enregistre', `${userSports.length} sport(s) selectionne(s)`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                showPopup(t('menu.saved'), `${userSports.length} ${t('menu.sportsSelected')}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
               }}
             >
-              <Text style={styles.modalButtonText}>Enregistrer</Text>
+              <Text style={styles.modalButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1404,7 +1580,7 @@ export default function MoreScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Ma catégorie de poids
+                {t('menu.myWeightCategory')}
               </Text>
               <TouchableOpacity onPress={() => setCategoryModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -1416,7 +1592,7 @@ export default function MoreScreen() {
               {userSports.length === 0 ? (
                 <View style={[styles.emptyState, { backgroundColor: colors.backgroundElevated }]}>
                   <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
-                    Sélectionne d'abord un sport de compétition
+                    {t('menu.selectSportFirst')}
                   </Text>
                 </View>
               ) : (
@@ -1425,7 +1601,7 @@ export default function MoreScreen() {
                   {userSports.length > 1 && (
                     <View style={{ marginBottom: 16 }}>
                       <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                        SPORT
+                        {t('menu.sport')}
                       </Text>
                       <View style={styles.sportSelector}>
                         {userSports.map(sport => (
@@ -1451,7 +1627,7 @@ export default function MoreScreen() {
                   {/* Gender Selector */}
                   <View style={{ marginBottom: 16 }}>
                     <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                      GENRE
+                      {t('menu.gender')}
                     </Text>
                     <View style={styles.genderSelector}>
                       <TouchableOpacity
@@ -1470,7 +1646,7 @@ export default function MoreScreen() {
                             { color: userGender === 'male' ? '#fff' : colors.textPrimary },
                           ]}
                         >
-                          Homme
+                          {t('menu.male')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -1489,7 +1665,7 @@ export default function MoreScreen() {
                             { color: userGender === 'female' ? '#fff' : colors.textPrimary },
                           ]}
                         >
-                          Femme
+                          {t('menu.female')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1497,7 +1673,7 @@ export default function MoreScreen() {
 
                   {/* Weight Categories */}
                   <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                    CATÉGORIES
+                    {t('menu.categories')}
                   </Text>
                   {userSports.map(sport => {
                     if (!sportHasWeightCategories(sport)) return null;
@@ -1560,12 +1736,12 @@ export default function MoreScreen() {
                 if (selectedWeightCategory) {
                   await saveUserSettings({ selectedWeightCategory, userGender });
                   setCategoryModalVisible(false);
-                  showPopup('Enregistre', `Categorie: ${selectedWeightCategory.name}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                  showPopup(t('menu.saved'), `${t('menu.category')}: ${selectedWeightCategory.name}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
                 }
               }}
               disabled={!selectedWeightCategory}
             >
-              <Text style={styles.modalButtonText}>Enregistrer</Text>
+              <Text style={styles.modalButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1582,7 +1758,7 @@ export default function MoreScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Roadmap YOROI
+                {t('menu.roadmapYoroi')}
               </Text>
               <TouchableOpacity onPress={() => setUpcomingModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -1591,41 +1767,41 @@ export default function MoreScreen() {
 
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <Text style={[styles.upcomingSubtitle, { color: colors.textPrimary }]}>
-                Fonctionnalites en cours de developpement
+                {t('menu.featuresInDevelopment')}
               </Text>
 
               <View style={styles.upcomingList}>
                 <View style={styles.upcomingItem}>
                   <Watch size={18} color="#EC4899" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Apple Watch - Suivi en temps reel</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.appleWatchRealtime')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <MessageCircle size={18} color="#8B5CF6" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Mode Siri - Commandes vocales</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.siriMode')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Share2 size={18} color="#3B82F6" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Partage avec coach/nutritionniste</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.shareWithCoach')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Trophy size={18} color="#F59E0B" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Classement entre amis</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.friendsLeaderboard')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Bell size={18} color="#10B981" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Rappels intelligents personnalises</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.smartReminders')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Globe size={18} color="#06B6D4" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Multilingue (EN, ES, AR...)</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.multilingual')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Activity size={18} color="#EF4444" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Analyse video de techniques</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.videoAnalysis')}</Text>
                 </View>
                 <View style={styles.upcomingItem}>
                   <Calendar size={18} color="#A855F7" />
-                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>Sync avec calendrier externe</Text>
+                  <Text style={[styles.upcomingText, { color: colors.textSecondary }]}>{t('menu.calendarSync')}</Text>
                 </View>
               </View>
 
@@ -1633,10 +1809,10 @@ export default function MoreScreen() {
                 <Lightbulb size={20} color="#F59E0B" />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.feedbackTitle, { color: colors.textPrimary }]}>
-                    Tu as une idee ?
+                    {t('menu.haveIdea')}
                   </Text>
                   <Text style={[styles.feedbackDesc, { color: colors.textSecondary }]}>
-                    Dis-nous ce que tu veux voir dans YOROI !
+                    {t('menu.tellUsWhatYouWant')}
                   </Text>
                 </View>
               </View>
@@ -1649,11 +1825,11 @@ export default function MoreScreen() {
                 }}
               >
                 <MessageCircle size={18} color="#FFF" />
-                <Text style={styles.feedbackButtonText}>Envoyer une idée</Text>
+                <Text style={styles.feedbackButtonText}>{t('menu.sendIdea')}</Text>
               </TouchableOpacity>
 
               <Text style={[styles.upcomingNote, { color: colors.textMuted }]}>
-                N'hésite pas à nous contacter pour suggérer des améliorations !
+                {t('menu.dontHesitateToContact')}
               </Text>
             </ScrollView>
           </View>
@@ -1671,7 +1847,7 @@ export default function MoreScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Réinitialiser les données
+                {t('menu.resetData')}
               </Text>
               <TouchableOpacity onPress={() => setResetModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -1682,22 +1858,22 @@ export default function MoreScreen() {
               <View style={[styles.warningCard, { backgroundColor: '#EF444420', borderColor: '#EF4444' }]}>
                 <Trash2 size={32} color="#EF4444" />
                 <Text style={[styles.warningTitle, { color: '#EF4444' }]}>
-                  Action irréversible
+                  {t('menu.irreversibleAction')}
                 </Text>
                 <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                  Cette action supprimera définitivement toutes vos données :
+                  {t('menu.deleteAllDataWarning')}
                 </Text>
                 <View style={styles.warningList}>
-                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Poids et mesures</Text>
-                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Photos de transformation</Text>
-                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Entraînements et planning</Text>
-                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Badges et progression</Text>
-                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• Tous les paramètres</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• {t('menu.weightAndMeasures')}</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• {t('menu.transformationPhotos')}</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• {t('menu.trainingsAndPlanning')}</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• {t('menu.badgesAndProgress')}</Text>
+                  <Text style={[styles.warningListItem, { color: colors.textSecondary }]}>• {t('menu.allSettings')}</Text>
                 </View>
               </View>
 
               <Text style={[styles.confirmLabel, { color: colors.textPrimary }]}>
-                Pour confirmer, tapez <Text style={{ fontWeight: '800', color: '#EF4444' }}>OUI</Text> ci-dessous :
+                {t('menu.toConfirmType')} <Text style={{ fontWeight: '800', color: '#EF4444' }}>OUI</Text> {t('menu.below')}
               </Text>
 
               <TextInput
@@ -1711,7 +1887,7 @@ export default function MoreScreen() {
                 ]}
                 value={resetConfirmText}
                 onChangeText={setResetConfirmText}
-                placeholder="Tapez OUI"
+                placeholder={t('menu.typeYes')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="characters"
                 autoCorrect={false}
@@ -1726,7 +1902,7 @@ export default function MoreScreen() {
                   setResetConfirmText('');
                 }}
               >
-                <Text style={[styles.resetCancelButtonText, { color: colors.textPrimary }]}>Annuler</Text>
+                <Text style={[styles.resetCancelButtonText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1747,7 +1923,7 @@ export default function MoreScreen() {
                     { color: isResetConfirmed ? '#FFF' : colors.textMuted },
                   ]}
                 >
-                  Supprimer tout
+                  {t('common.deleteAll')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1766,7 +1942,7 @@ export default function MoreScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                Unités de mesure
+                {t('menu.unitsOfMeasure')}
               </Text>
               <TouchableOpacity onPress={() => setUnitsModalVisible(false)}>
                 <X size={24} color={colors.textMuted} />
@@ -1789,10 +1965,10 @@ export default function MoreScreen() {
                     <Ruler size={24} color={useMetric ? colors.accent : colors.textMuted} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.unitsOptionTitle, { color: colors.textPrimary }]}>
-                        Métrique
+                        {t('menu.metric')}
                       </Text>
                       <Text style={[styles.unitsOptionDesc, { color: colors.textMuted }]}>
-                        Kilogrammes (kg) et Centimètres (cm)
+                        {t('menu.metricDescription')}
                       </Text>
                     </View>
                     {useMetric && (
@@ -1817,10 +1993,10 @@ export default function MoreScreen() {
                     <Ruler size={24} color={!useMetric ? colors.accent : colors.textMuted} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.unitsOptionTitle, { color: colors.textPrimary }]}>
-                        Impérial
+                        {t('menu.imperial')}
                       </Text>
                       <Text style={[styles.unitsOptionDesc, { color: colors.textMuted }]}>
-                        Livres (lbs) et Pouces (inches)
+                        {t('menu.imperialDescription')}
                       </Text>
                     </View>
                     {!useMetric && (
@@ -1838,10 +2014,10 @@ export default function MoreScreen() {
               onPress={async () => {
                 await saveUserSettings({ useMetric });
                 setUnitsModalVisible(false);
-                showPopup('Enregistre', `Unites : ${useMetric ? 'Metrique (kg/cm)' : 'Imperial (lbs/in)'}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                showPopup(t('menu.saved'), `${t('menu.units')}: ${useMetric ? t('menu.unitsMetric') : t('menu.unitsImperial')}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
               }}
             >
-              <Text style={styles.modalButtonText}>Enregistrer</Text>
+              <Text style={styles.modalButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1860,7 +2036,7 @@ export default function MoreScreen() {
               {/* Titre tappable - geste secret */}
               <TouchableOpacity onPress={handleSecretGesture} activeOpacity={1}>
                 <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  Activation
+                  {t('menu.activation')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleCloseCreatorModal}>
@@ -1870,7 +2046,7 @@ export default function MoreScreen() {
 
             <View style={styles.modalBody}>
               <Text style={[styles.creatorDescription, { color: colors.textSecondary }]}>
-                Entrez le code d'activation
+                {t('menu.enterActivationCode')}
               </Text>
 
               <TextInput
@@ -1898,7 +2074,7 @@ export default function MoreScreen() {
                 style={[styles.creatorCancelButton, { backgroundColor: colors.backgroundElevated }]}
                 onPress={handleCloseCreatorModal}
               >
-                <Text style={[styles.creatorCancelButtonText, { color: colors.textPrimary }]}>Annuler</Text>
+                <Text style={[styles.creatorCancelButtonText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1918,7 +2094,7 @@ export default function MoreScreen() {
                     { color: creatorCode.length === 4 ? '#FFF' : colors.textMuted },
                   ]}
                 >
-                  Valider
+                  {t('menu.validate')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1926,20 +2102,90 @@ export default function MoreScreen() {
         </View>
       </Modal>
 
+      {/* Modal - Language Selection */}
+      <Modal
+        visible={languageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                {t('menu.language')}
+              </Text>
+              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {SUPPORTED_LANGUAGES.map((lang) => {
+                const isSelected = currentLang === lang.code;
+                return (
+                  <TouchableOpacity
+                    key={lang.code}
+                    style={[
+                      styles.sportOption,
+                      {
+                        backgroundColor: isSelected ? colors.accent + '20' : colors.backgroundElevated,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                      },
+                    ]}
+                    onPress={() => handleChangeLanguage(lang.code)}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <Text style={{ fontSize: 24 }}>{lang.flag}</Text>
+                      <View>
+                        <Text style={[styles.sportOptionText, { color: colors.textPrimary }]}>
+                          {lang.nativeName}
+                        </Text>
+                        <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                          {lang.name}
+                        </Text>
+                      </View>
+                    </View>
+                    {isSelected && (
+                      <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
+                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Tutoriel de découverte */}
+      {showTutorial && (
+        <FeatureDiscoveryModal
+          visible={true}
+          tutorial={PAGE_TUTORIALS.menu}
+          onClose={handleCloseTutorial}
+        />
+      )}
+
       <PopupComponent />
-    </ScreenWrapper>
+    </View>
   );
 }
 
 const QUICK_ACTION_SIZE = (SCREEN_WIDTH - 60) / 4;
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
   content: {
     paddingHorizontal: 20,
     paddingTop: 16,
+    paddingBottom: 250,
   },
 
   // HEADER
@@ -2160,7 +2406,7 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 100,
   },
   privacyCard: {
     flexDirection: 'row',
@@ -2463,5 +2709,26 @@ const styles = StyleSheet.create({
   creatorConfirmButtonText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  // Mode Display Section
+  modeSection: {
+    // Styles applied inline in component
+  },
+  modesContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  modeLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

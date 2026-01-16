@@ -13,12 +13,13 @@ import { X } from 'lucide-react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect, Text as SvgText } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CHART_HEIGHT = 300;
-const PADDING_LEFT = 50;
-const PADDING_RIGHT = 20;
-const PADDING_TOP = 40;
-const PADDING_BOTTOM = 50;
-const MIN_POINT_SPACING = 50; // Espace minimum entre chaque point
+const IS_SMALL_SCREEN = SCREEN_WIDTH < 375 || SCREEN_HEIGHT < 700;
+const CHART_HEIGHT = IS_SMALL_SCREEN ? 250 : 300; // Plus petit sur petits écrans
+const PADDING_LEFT = IS_SMALL_SCREEN ? 50 : 60;
+const PADDING_RIGHT = IS_SMALL_SCREEN ? 20 : 30;
+const PADDING_TOP = IS_SMALL_SCREEN ? 40 : 50;
+const PADDING_BOTTOM = IS_SMALL_SCREEN ? 50 : 60;
+const MIN_POINT_SPACING = IS_SMALL_SCREEN ? 60 : 80; // Espace minimum entre chaque point
 
 interface DataPoint {
   value: number;
@@ -367,11 +368,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    height: SCREEN_HEIGHT * 0.9,
+    height: IS_SMALL_SCREEN ? SCREEN_HEIGHT * 0.92 : SCREEN_HEIGHT * 0.9, // Plus grande sur petits écrans
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingTop: IS_SMALL_SCREEN ? 16 : 20, // Moins de padding en haut
+    paddingBottom: IS_SMALL_SCREEN ? 30 : 40, // Moins en bas aussi
   },
   modalHeader: {
     flexDirection: 'row',
@@ -443,13 +444,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   statCard: {
-    width: (SCREEN_WIDTH - 52) / 2,
+    width: IS_SMALL_SCREEN
+      ? Math.max((SCREEN_WIDTH - 44) / 2, 140) // Min 140px sur petits écrans
+      : (SCREEN_WIDTH - 52) / 2,
     borderRadius: 12,
-    padding: 14,
+    padding: IS_SMALL_SCREEN ? 12 : 14, // Moins de padding sur petits écrans
     alignItems: 'center',
   },
   statCardLabel: {
-    fontSize: 12,
+    fontSize: IS_SMALL_SCREEN ? 11 : 12, // Plus petit sur petits écrans
     fontWeight: '600',
     marginBottom: 6,
   },

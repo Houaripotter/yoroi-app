@@ -16,71 +16,98 @@ import type { BenchmarkCategory, BenchmarkUnit, SkillCategory, SkillStatus } fro
 const DEMO_PROFILE = {
   name: 'Thomas Silva',
   height_cm: 175,
-  start_weight: 85.0,
-  target_weight: 77.0,
+  start_weight: 88.0, // Poids de départ pour 6 mois
+  target_weight: 76.0, // Objectif final
   sport: 'jjb', // Jiu-Jitsu Brésilien
   mode: 'competitor',
-  startDate: subDays(new Date(), 90), // Il y a 3 mois
+  startDate: subDays(new Date(), 180), // Il y a 6 mois - TRANSFORMATION!
 };
 
 // ============================================
-// GÉNÉRATION DES PESÉES (3 mois)
+// GÉNÉRATION DES PESÉES (6 mois)
 // ============================================
 const generateWeights = () => {
   const weights = [];
-  const days = 90;
-  const startWeight = 85.0;
-  const endWeight = 78.2;
-  const totalLoss = startWeight - endWeight; // 6.8kg perdu sur 3 mois
+  const days = 180; // 6 MOIS DE DONNÉES!
+  const startWeight = 88.0; // Poids de départ plus élevé
+  const endWeight = 76.8; // Objectif atteint
+  const totalLoss = startWeight - endWeight; // 11.2kg perdu sur 6 mois - TRANSFORMATION!
 
   for (let i = 0; i <= days; i++) {
     const date = subDays(new Date(), days - i);
 
-    // Progression réaliste : belle courbe descendante
+    // Progression réaliste sur 6 mois : belle courbe descendante
     let progress;
     if (i < 30) {
       // Mois 1 : perte initiale rapide (eau + graisse)
-      progress = (i / 30) * 0.45; // 45% de la perte totale
+      progress = (i / 30) * 0.25; // 25% de la perte totale
     } else if (i < 60) {
       // Mois 2 : progression steady
-      progress = 0.45 + ((i - 30) / 30) * 0.35; // +35%
+      progress = 0.25 + ((i - 30) / 30) * 0.20; // +20%
+    } else if (i < 90) {
+      // Mois 3 : continuation
+      progress = 0.45 + ((i - 60) / 30) * 0.15; // +15%
+    } else if (i < 120) {
+      // Mois 4 : plateau puis reprise
+      progress = 0.60 + ((i - 90) / 30) * 0.15; // +15%
+    } else if (i < 150) {
+      // Mois 5 : accélération finale
+      progress = 0.75 + ((i - 120) / 30) * 0.15; // +15%
     } else {
-      // Mois 3 : derniers kilos (plus difficiles mais constants)
-      progress = 0.80 + ((i - 60) / 30) * 0.20; // +20%
+      // Mois 6 : derniers kilos avec variations DRAMATIQUES pour screenshots!
+      progress = 0.90 + ((i - 150) / 30) * 0.10; // +10%
     }
 
     const baseWeight = startWeight - (totalLoss * progress);
 
-    // Petites variations naturelles (±0.3kg max)
-    const dailyVariation = (Math.sin(i * 0.3) * 0.15) + (Math.cos(i * 0.2) * 0.1);
+    // VARIATIONS DRAMATIQUES pour screenshots (jusqu'à ±1.5kg!)
+    // Les 7 derniers jours ont des variations impressionnantes
+    let dailyVariation;
+    const daysFromEnd = days - i;
+    if (daysFromEnd <= 7) {
+      // Semaine récente : variations visibles pour montrer la fluctuation
+      const dramaticPattern = [
+        1.8,   // J-7: +1.8kg (après gros repas)
+        0.2,   // J-6: léger
+        -0.8,  // J-5: descente
+        -1.5,  // J-4: grosse perte (après compétition/jeûne)
+        -0.3,  // J-3: stabilisation
+        0.5,   // J-2: légère remontée
+        0.0,   // J-1: stable
+        -0.4,  // Aujourd'hui: léger déficit
+      ];
+      dailyVariation = dramaticPattern[7 - daysFromEnd] || 0;
+    } else {
+      // Avant: variations normales
+      dailyVariation = (Math.sin(i * 0.3) * 0.4) + (Math.cos(i * 0.2) * 0.3);
+    }
+
     const weight = baseWeight + dailyVariation;
 
-    // Enregistrer 4-5 fois par semaine pour de beaux graphiques
-    if (i % 2 === 0 || i % 3 === 1) {
-      weights.push({
-        date: format(date, 'yyyy-MM-dd'),
-        weight: Math.round(weight * 10) / 10,
-        bodyFat: Math.round((20 - (progress * 4)) * 10) / 10, // 20% → 16% (belle composition)
-        muscleMass: Math.round((40 + (progress * 3)) * 10) / 10, // 40% → 43% (gain muscle)
-        water: Math.round((54 + (progress * 2)) * 10) / 10, // 54% → 56%
-        // Données de composition avancées pour screenshots
-        boneMass: Math.round((3.1 + (progress * 0.2)) * 10) / 10, // 3.1kg → 3.3kg
-        visceralFat: Math.round((10 - (progress * 3))), // 10 → 7 (amélioration)
-        bmr: Math.round(1750 + (progress * 100)), // 1750 → 1850 kcal (métabolisme augmente)
-        metabolicAge: Math.round(32 - (progress * 4)), // 32 → 28 ans (rajeunissement!)
-      });
-    }
+    // Enregistrer TOUS les jours pour des graphiques impressionnants
+    weights.push({
+      date: format(date, 'yyyy-MM-dd'),
+      weight: Math.round(weight * 10) / 10,
+      bodyFat: Math.round((22 - (progress * 6)) * 10) / 10, // 22% → 16% (transformation!)
+      muscleMass: Math.round((38 + (progress * 5)) * 10) / 10, // 38% → 43% (gain muscle!)
+      water: Math.round((52 + (progress * 4)) * 10) / 10, // 52% → 56%
+      // Données de composition avancées pour screenshots
+      boneMass: Math.round((3.0 + (progress * 0.3)) * 10) / 10, // 3.0kg → 3.3kg
+      visceralFat: Math.round((12 - (progress * 5))), // 12 → 7 (grosse amélioration!)
+      bmr: Math.round(1700 + (progress * 150)), // 1700 → 1850 kcal (métabolisme boosted)
+      metabolicAge: Math.round(35 - (progress * 7)), // 35 → 28 ans (rajeunissement de 7 ans!)
+    });
   }
 
   return weights;
 };
 
 // ============================================
-// GÉNÉRATION DES MENSURATIONS (3 mois - 7 zones)
+// GÉNÉRATION DES MENSURATIONS (6 mois - 7 zones)
 // ============================================
 const generateMeasurements = () => {
   const measurements = [];
-  const months = 3;
+  const months = 6; // 6 MOIS!
 
   for (let i = 0; i <= months; i++) {
     const date = subDays(new Date(), (months - i) * 30);
@@ -88,16 +115,16 @@ const generateMeasurements = () => {
 
     measurements.push({
       date: format(date, 'yyyy-MM-dd'),
-      waist: Math.round((94 - progress * 10) * 10) / 10, // 94cm → 84cm (-10cm taille!)
-      chest: Math.round((102 + progress * 3) * 10) / 10, // 102cm → 105cm (+3cm pecs!)
-      hips: Math.round((100 - progress * 4) * 10) / 10, // 100cm → 96cm (-4cm)
-      left_thigh: Math.round((58 - progress * 2) * 10) / 10, // 58cm → 56cm (-2cm)
-      right_thigh: Math.round((58 - progress * 2) * 10) / 10, // 58cm → 56cm (-2cm)
-      left_arm: Math.round((35 + progress * 2.5) * 10) / 10, // 35cm → 37.5cm (+2.5cm biceps!)
-      right_arm: Math.round((35 + progress * 2.5) * 10) / 10, // 35cm → 37.5cm (+2.5cm biceps!)
-      left_calf: Math.round((38.5 + progress * 0.5) * 10) / 10, // 38.5cm → 39cm
-      right_calf: Math.round((38.5 + progress * 0.5) * 10) / 10, // 38.5cm → 39cm
-      neck: Math.round((39.5 - progress * 1.5) * 10) / 10, // 39.5cm → 38cm (-1.5cm)
+      waist: Math.round((98 - progress * 14) * 10) / 10, // 98cm → 84cm (-14cm taille! INCROYABLE)
+      chest: Math.round((100 + progress * 5) * 10) / 10, // 100cm → 105cm (+5cm pecs!)
+      hips: Math.round((102 - progress * 6) * 10) / 10, // 102cm → 96cm (-6cm)
+      left_thigh: Math.round((60 - progress * 4) * 10) / 10, // 60cm → 56cm (-4cm)
+      right_thigh: Math.round((60 - progress * 4) * 10) / 10, // 60cm → 56cm (-4cm)
+      left_arm: Math.round((34 + progress * 4) * 10) / 10, // 34cm → 38cm (+4cm biceps! GAINS!)
+      right_arm: Math.round((34 + progress * 4) * 10) / 10, // 34cm → 38cm (+4cm biceps! GAINS!)
+      left_calf: Math.round((37 + progress * 2) * 10) / 10, // 37cm → 39cm (+2cm)
+      right_calf: Math.round((37 + progress * 2) * 10) / 10, // 37cm → 39cm (+2cm)
+      neck: Math.round((41 - progress * 3) * 10) / 10, // 41cm → 38cm (-3cm)
     });
   }
 
@@ -145,7 +172,7 @@ const generateTrainings = async (clubIds: ClubIds) => {
   const daysInDec = Math.floor((decEnd.getTime() - decStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const daysInJan = Math.floor((janEnd.getTime() - janStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  logger.info(`📅 Génération décembre (${daysInDec} jours) + janvier (${daysInJan} jours) avec 4 clubs`);
+  logger.info(`Génération décembre (${daysInDec} jours) + janvier (${daysInJan} jours) avec 4 clubs`);
   logger.info(`🏢 Clubs: Gracie Barra, Basic-Fit, Marseille Fight Club, Team Sorel`);
 
   // Types de séances variées pour chaque club
@@ -298,7 +325,7 @@ const generateTrainings = async (clubIds: ClubIds) => {
     sessionIndex++;
   }
 
-  logger.info(`✅ Décembre : Généré ${count} entraînements`);
+  logger.info(`Décembre : Généré ${count} entraînements`);
 
   // ============================================
   // JANVIER COMPLET (1-31)
@@ -398,8 +425,8 @@ const generateTrainings = async (clubIds: ClubIds) => {
     sessionIndex++;
   }
 
-  logger.info(`✅ TOTAL Décembre + Janvier : Généré ${count} entraînements`);
-  logger.info(`📊 Planning : Lun/Mar/Jeu/Ven = 2 séances, Sam = 1 matin, Mer/Dim = REPOS`);
+  logger.info(`TOTAL Décembre + Janvier : Généré ${count} entraînements`);
+  logger.info(`Planning : Lun/Mar/Jeu/Ven = 2 séances, Sam = 1 matin, Mer/Dim = REPOS`);
   return count;
 };
 
@@ -408,7 +435,7 @@ const generateTrainings = async (clubIds: ClubIds) => {
 // ============================================
 const generateSleepData = () => {
   const sleepEntries = [];
-  const days = 90; // 3 mois de données
+  const days = 180; // 6 MOIS DE DONNÉES!
 
   for (let i = 0; i < days; i++) {
     const date = subDays(new Date(), days - i);
@@ -454,7 +481,7 @@ const generateSleepData = () => {
       wakeTime,
       duration,
       quality,
-      notes: quality === 5 ? 'Sommeil récupérateur ⭐' : quality === 4 ? 'Bonne nuit' : '',
+      notes: quality === 5 ? 'Sommeil récupérateur' : quality === 4 ? 'Bonne nuit' : '',
     });
   }
 
@@ -528,7 +555,7 @@ const createClubs = async (): Promise<ClubIds> => {
     ['Team Sorel', 'grappling', 'teamsorel', '#10B981']
   );
 
-  logger.info(`✅ 4 clubs créés avec logos: Gracie Barra Les Olives (JJB), Basic-Fit (Muscu), Marseille Fight Club (MMA), Team Sorel (Grappling)`);
+  logger.info(`4 clubs créés avec logos: Gracie Barra Les Olives (JJB), Basic-Fit (Muscu), Marseille Fight Club (MMA), Team Sorel (Grappling)`);
 
   return {
     gracieBarra: gbResult.lastInsertRowId,
@@ -593,7 +620,7 @@ const generateWeeklyPlan = async (clubIds: ClubIds): Promise<void> => {
     );
   }
 
-  logger.info(`✅ Planning hebdomadaire créé: 9 séances/semaine avec 4 clubs, AVEC LOGOS`);
+  logger.info(`Planning hebdomadaire créé: 9 séances/semaine avec 4 clubs, AVEC LOGOS`);
 };
 
 // ============================================
@@ -752,7 +779,7 @@ const generateTrainingLoad = () => {
 // GÉNÉRATION DES DONNÉES DE CHARGE (BATTERIE)
 // ============================================
 const generateBatteryData = () => {
-  const days = 90; // 3 mois de données
+  const days = 180; // 6 MOIS DE DONNÉES!
   const batteryData = [];
 
   for (let i = 0; i < days; i++) {
@@ -815,8 +842,8 @@ const generateBatteryData = () => {
 const generatePhotos = async (): Promise<void> => {
   const database = await openDatabase();
 
-  // Photo de début (il y a 90 jours)
-  const startDate = format(subDays(new Date(), 90), 'yyyy-MM-dd');
+  // Photo de début (il y a 180 jours - 6 mois)
+  const startDate = format(subDays(new Date(), 180), 'yyyy-MM-dd');
   await database.runAsync(
     `INSERT INTO photos (uri, weight, fat_percent, muscle_percent, date, is_blurred) VALUES (?, ?, ?, ?, ?, ?)`,
     ['demo_photo_start', 85.0, 20.0, 40.0, startDate, 1] // Floutée par défaut
@@ -836,7 +863,7 @@ const generatePhotos = async (): Promise<void> => {
     ['demo_photo_current', 78.2, 16.0, 43.0, currentDate, 1]
   );
 
-  logger.info('✅ 3 photos de transformation ajoutées');
+  logger.info('3 photos de transformation ajoutées');
 };
 
 // ============================================
@@ -864,7 +891,7 @@ const generateCompetitions = async (): Promise<void> => {
     ['HYROX Paris', comp2Date, 'Paris', 'autre', 'Open', 'a_venir', 'https://hyroxfrance.com']
   );
 
-  logger.info('✅ 2 compétitions à venir ajoutées');
+  logger.info('2 compétitions à venir ajoutées');
 };
 
 // ============================================
@@ -879,61 +906,71 @@ const generateTodayData = async (): Promise<void> => {
   // Poids départ: 85kg → Objectif: 77kg → Actuel: 78.2kg
   // Perdu: 6.8kg | Reste: 1.2kg
   await AsyncStorage.setItem('@yoroi_start_weight', '85.0');
-  await AsyncStorage.setItem('@yoroi_target_weight', '77.0');
-  await AsyncStorage.setItem('@yoroi_current_weight', '78.2');
-  // Poids perdu calculé: 85 - 78.2 = 6.8kg
-  await AsyncStorage.setItem('@yoroi_weight_lost', '6.8');
-  // Reste à perdre: 78.2 - 77 = 1.2kg
-  await AsyncStorage.setItem('@yoroi_weight_remaining', '1.2');
-  // Progression: (6.8 / 8) * 100 = 85%
-  await AsyncStorage.setItem('@yoroi_weight_progress', '85');
+  await AsyncStorage.setItem('@yoroi_target_weight', '76.0');
+  await AsyncStorage.setItem('@yoroi_current_weight', '76.8');
+  // Poids perdu calculé: 85 - 76.8 = 8.2kg - TRANSFORMATION!
+  await AsyncStorage.setItem('@yoroi_weight_lost', '8.2');
+  // Reste à perdre: 76.8 - 76 = 0.8kg (presque au but!)
+  await AsyncStorage.setItem('@yoroi_weight_remaining', '0.8');
+  // Progression: (8.2 / 9) * 100 = 91% - PRESQUE LÀ!
+  await AsyncStorage.setItem('@yoroi_weight_progress', '91');
 
   // ============================================
-  // PAS QUOTIDIENS - 7329 pas
+  // PAS QUOTIDIENS - 13567 pas - IMPRESSIONNANT!
   // ============================================
-  await AsyncStorage.setItem('@yoroi_steps_today', '7329');
-  await AsyncStorage.setItem('@yoroi_steps_goal', '8000');
-  // Historique des pas sur 7 jours
-  const stepsHistory = [
-    { date: format(subDays(new Date(), 6), 'yyyy-MM-dd'), steps: 6842 },
-    { date: format(subDays(new Date(), 5), 'yyyy-MM-dd'), steps: 8156 },
-    { date: format(subDays(new Date(), 4), 'yyyy-MM-dd'), steps: 7523 },
-    { date: format(subDays(new Date(), 3), 'yyyy-MM-dd'), steps: 9012 },
-    { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), steps: 5634 },
-    { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), steps: 8245 },
-    { date: today, steps: 7329 },
+  await AsyncStorage.setItem('@yoroi_steps_today', '13567');
+  await AsyncStorage.setItem('@yoroi_steps_goal', '10000');
+  // Historique des pas sur 7 jours - VARIÉS ET IMPRESSIONNANTS
+  const stepsHistoryShort = [
+    { date: format(subDays(new Date(), 6), 'yyyy-MM-dd'), steps: 15234 },
+    { date: format(subDays(new Date(), 5), 'yyyy-MM-dd'), steps: 11456 },
+    { date: format(subDays(new Date(), 4), 'yyyy-MM-dd'), steps: 18923 },
+    { date: format(subDays(new Date(), 3), 'yyyy-MM-dd'), steps: 8234 },
+    { date: format(subDays(new Date(), 2), 'yyyy-MM-dd'), steps: 14567 },
+    { date: format(subDays(new Date(), 1), 'yyyy-MM-dd'), steps: 12890 },
+    { date: today, steps: 13567 },
   ];
-  await AsyncStorage.setItem('@yoroi_steps_history', JSON.stringify(stepsHistory));
+  await AsyncStorage.setItem('@yoroi_steps_history', JSON.stringify(stepsHistoryShort));
 
-  // Hydratation d'aujourd'hui : 2.8L / 3L
-  await AsyncStorage.setItem(`hydration_${today}`, '2800');
-  await AsyncStorage.setItem('@yoroi_hydration_goal', '3000');
+  // Hydratation d'aujourd'hui : 3.2L / 3.5L - CHAMPION!
+  await AsyncStorage.setItem(`hydration_${today}`, '3200');
+  await AsyncStorage.setItem('@yoroi_hydration_goal', '3500');
+  await AsyncStorage.setItem('@yoroi_hydration_current', '3200');
 
-  // Sommeil d'hier : 7.5h, qualité 5/5
+  // Sommeil d'hier : 7h48, qualité 5/5 - RÉCUPÉRATION PARFAITE!
   const sleepEntries = [
     {
       id: `sleep_${Date.now()}`,
       date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
       bedTime: '23:15',
-      wakeTime: '06:45',
-      duration: 450, // 7.5h en minutes
+      wakeTime: '07:03',
+      duration: 468, // 7h48 en minutes
       quality: 5,
-      notes: 'Excellente nuit 🌙',
+      deepSleepPercent: 26,
+      remSleepPercent: 23,
+      notes: 'Récupération optimale',
     }
   ];
   await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(sleepEntries));
   await AsyncStorage.setItem('@yoroi_sleep_goal', '480'); // 8h
+  await AsyncStorage.setItem('@yoroi_sleep_last_duration', '468');
+  await AsyncStorage.setItem('@yoroi_sleep_quality', '89');
 
-  // Charge actuelle : Optimal, 5 séances
+  // Charge actuelle : Optimal, niveau athlète!
   const batteryData = {
     date: today,
-    level: 85,
-    sleep: 7.5,
-    nutrition: 90,
-    recovery: 85,
-    stress: 20,
+    level: 92, // Niveau élevé!
+    sleep: 7.8,
+    nutrition: 95,
+    recovery: 88,
+    stress: 15, // Stress bas = bonne gestion mentale
   };
   await AsyncStorage.setItem('@yoroi_battery_today', JSON.stringify(batteryData));
+
+  // SpO2 et données vitales
+  await AsyncStorage.setItem('@yoroi_spo2_current', '99');
+  await AsyncStorage.setItem('@yoroi_resting_heart_rate', '54');
+  await AsyncStorage.setItem('@yoroi_hrv_current', '62');
 
   // Événements sportifs sauvegardés dans le planning
   const savedEvents = [
@@ -970,11 +1007,688 @@ const generateTodayData = async (): Promise<void> => {
   ];
   await AsyncStorage.setItem('my_planning', JSON.stringify(savedEvents));
 
-  logger.info('✅ Données temps réel pour accueil ajoutées');
+  logger.info('Données temps réel pour accueil ajoutées');
   logger.info('   • Hydratation: 2.8L / 3L');
   logger.info('   • Sommeil: 7.5h (qualité 5/5)');
   logger.info('   • Charge: Optimal (85%)');
   logger.info('   • Événements sauvegardés: 2');
+};
+
+// ============================================
+// GÉNÉRATION DES AVATARS DÉBLOQUÉS
+// ============================================
+const generateAvatars = async () => {
+  // Avatar sélectionné: Samurai (masculin)
+  const selectedAvatar = {
+    pack: 'samurai',
+    gender: 'male',
+  };
+  await AsyncStorage.setItem('@yoroi_avatar_config', JSON.stringify(selectedAvatar));
+
+  // Avatars débloqués (15 avatars variés)
+  const unlockedAvatars = [
+    'ninja', 'samurai', 'boxer', 'champion', 'emperor',
+    'judoka', 'karateka', 'mma', 'oni', 'ronin',
+    'shogun', 'wrestler', 'bjj', 'pack_combat', 'pack_femmes'
+  ];
+  await AsyncStorage.setItem('@yoroi_unlocked_avatars', JSON.stringify(unlockedAvatars));
+
+  logger.info(`Avatar sélectionné: Samurai (masculin)`);
+  logger.info(`${unlockedAvatars.length} avatars débloqués`);
+};
+
+// ============================================
+// GÉNÉRATION DES DONNÉES APPLE HEALTH COMPLÈTES
+// ============================================
+const generateAppleHealthData = async () => {
+  const days = 180; // 6 MOIS DE DONNÉES!
+
+  // ============================================
+  // PAS QUOTIDIENS (180 jours / 6 MOIS) - VERSION IMPRESSIONNANTE
+  // ============================================
+  const stepsHistory = [];
+  for (let i = 0; i < days; i++) {
+    const date = subDays(new Date(), days - i - 1);
+    const dayOfWeek = date.getDay();
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const daysFromEnd = days - i - 1;
+
+    // Variation basée sur le type de jour - AUGMENTÉE pour screenshots!
+    let baseSteps;
+    if ([1, 2, 4, 5].includes(dayOfWeek)) {
+      // Jours d'entraînement: 9000-14000 pas (impressionnant!)
+      baseSteps = 9000 + Math.random() * 5000;
+    } else if (dayOfWeek === 6) {
+      // Samedi: 12000-18000 pas (super actif!)
+      baseSteps = 12000 + Math.random() * 6000;
+    } else {
+      // Dimanche/Mercredi repos: 6000-9000 pas (même au repos c'est bien!)
+      baseSteps = 6000 + Math.random() * 3000;
+    }
+
+    // Dernière semaine: variations VISIBLES pour les screenshots
+    if (daysFromEnd <= 7) {
+      const weekPattern = [15234, 11456, 18923, 8234, 14567, 12890, 16432, 13567];
+      baseSteps = weekPattern[7 - daysFromEnd] || baseSteps;
+    }
+
+    const variation = Math.sin(i * 0.3) * 800;
+    const steps = Math.round(baseSteps + variation);
+
+    stepsHistory.push({
+      date: dateStr,
+      steps,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_steps_history', JSON.stringify(stepsHistory));
+  // Set today's steps to a nice round impressive number
+  await AsyncStorage.setItem('@yoroi_steps_today', '13567');
+  await AsyncStorage.setItem('@yoroi_steps_goal', '10000');
+  logger.info(`${days} jours de pas générés (6000-18000 pas/jour - IMPRESSIVE!)`);
+
+  // ============================================
+  // CALORIES BRÛLÉES (180 jours / 6 MOIS) - MONSTER BURNS!
+  // ============================================
+  const caloriesHistory = [];
+  for (let i = 0; i < days; i++) {
+    const date = subDays(new Date(), days - i - 1);
+    const dayOfWeek = date.getDay();
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const daysFromEnd = days - i - 1;
+
+    // Calories basées sur l'activité du jour - AUGMENTÉES!
+    let baseCalories;
+    if ([1, 2, 4, 5].includes(dayOfWeek)) {
+      // Jours d'entraînement intensif: 650-950 kcal (double séances!)
+      baseCalories = 650 + Math.random() * 300;
+    } else if (dayOfWeek === 6) {
+      // Samedi (Open Mat intense): 750-1100 kcal
+      baseCalories = 750 + Math.random() * 350;
+    } else {
+      // Repos actif: 350-500 kcal
+      baseCalories = 350 + Math.random() * 150;
+    }
+
+    // Dernière semaine: patterns impressionnants
+    if (daysFromEnd <= 7) {
+      const weekPattern = [923, 654, 1087, 412, 876, 745, 968, 832];
+      baseCalories = weekPattern[7 - daysFromEnd] || baseCalories;
+    }
+
+    const variation = Math.sin(i * 0.4) * 80;
+    const calories = Math.round(baseCalories + variation);
+
+    caloriesHistory.push({
+      date: dateStr,
+      calories,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_calories_history', JSON.stringify(caloriesHistory));
+  await AsyncStorage.setItem('@yoroi_calories_today', '832');
+  await AsyncStorage.setItem('@yoroi_calories_goal', '600');
+  logger.info(`${days} jours de calories générés (350-1100 kcal/jour - BEAST MODE!)`);
+
+  // ============================================
+  // DISTANCE PARCOURUE (180 jours / 6 MOIS en km) - COUREUR!
+  // ============================================
+  const distanceHistory = [];
+  for (let i = 0; i < days; i++) {
+    const date = subDays(new Date(), days - i - 1);
+    const dayOfWeek = date.getDay();
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const daysFromEnd = days - i - 1;
+
+    // Distance basée sur les pas - AUGMENTÉE!
+    let baseDistance;
+    if ([1, 2, 4, 5].includes(dayOfWeek)) {
+      // Jours d'entraînement: 7.5-12 km (running + training)
+      baseDistance = 7.5 + Math.random() * 4.5;
+    } else if (dayOfWeek === 6) {
+      // Samedi: 10-15 km (longue sortie)
+      baseDistance = 10.0 + Math.random() * 5.0;
+    } else {
+      // Repos actif: 5.0-8.0 km
+      baseDistance = 5.0 + Math.random() * 3.0;
+    }
+
+    // Dernière semaine: patterns visibles
+    if (daysFromEnd <= 7) {
+      const weekPattern = [11.2, 8.4, 14.1, 6.2, 10.8, 9.5, 12.3, 10.1];
+      baseDistance = weekPattern[7 - daysFromEnd] || baseDistance;
+    }
+
+    const variation = Math.sin(i * 0.3) * 0.8;
+    const distance = Math.round((baseDistance + variation) * 10) / 10;
+
+    distanceHistory.push({
+      date: dateStr,
+      distance,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_distance_history', JSON.stringify(distanceHistory));
+  await AsyncStorage.setItem('@yoroi_distance_today', '10.1');
+  await AsyncStorage.setItem('@yoroi_distance_goal', '8.0');
+  logger.info(`${days} jours de distance générés (5-15 km/jour - RUNNER!)`);
+
+  // ============================================
+  // FRÉQUENCE CARDIAQUE MOYENNE (30 jours récents) - ATHLÈTE PRO
+  // ============================================
+  const heartRateHistory = [];
+  for (let i = 0; i < 30; i++) {
+    const date = subDays(new Date(), 30 - i - 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+
+    // FC au repos: 52-58 bpm (niveau athlète élite!)
+    const restingHR = 52 + Math.round(Math.random() * 6);
+    // FC moyenne: 68-78 bpm (très efficient)
+    const avgHR = 68 + Math.round(Math.random() * 10);
+    // FC max du jour: 175-195 bpm (haute intensité!)
+    const maxHR = 175 + Math.round(Math.random() * 20);
+
+    heartRateHistory.push({
+      date: dateStr,
+      resting: restingHR,
+      average: avgHR,
+      max: maxHR,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_heart_rate_history', JSON.stringify(heartRateHistory));
+  await AsyncStorage.setItem('@yoroi_resting_heart_rate', '54'); // Niveau athlète!
+  await AsyncStorage.setItem('@yoroi_current_heart_rate', '72');
+  logger.info(`30 jours de fréquence cardiaque générés (repos: 52-58 bpm - ATHLÈTE!)`);
+
+  // ============================================
+  // SPO2 / SATURATION EN OXYGÈNE (30 jours) - NOUVEAU!
+  // ============================================
+  const spo2History = [];
+  for (let i = 0; i < 30; i++) {
+    const date = subDays(new Date(), 30 - i - 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+
+    // SpO2: 97-100% (excellente santé!)
+    const spo2 = 97 + Math.round(Math.random() * 3);
+    // SpO2 minimum nocturne: 94-97%
+    const minSpo2 = 94 + Math.round(Math.random() * 3);
+
+    spo2History.push({
+      date: dateStr,
+      average: spo2,
+      min: minSpo2,
+      max: 100,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_spo2_history', JSON.stringify(spo2History));
+  await AsyncStorage.setItem('@yoroi_spo2_current', '99'); // Parfait!
+  logger.info(`30 jours de SpO2 générés (97-100% - SANTÉ PARFAITE!)`);
+
+  // ============================================
+  // VARIABILITÉ CARDIAQUE HRV (30 jours) - NOUVEAU!
+  // ============================================
+  const hrvHistory = [];
+  for (let i = 0; i < 30; i++) {
+    const date = subDays(new Date(), 30 - i - 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+
+    // HRV: 45-75 ms (bon niveau pour athlète)
+    const hrv = 45 + Math.round(Math.random() * 30);
+
+    hrvHistory.push({
+      date: dateStr,
+      hrv,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_hrv_history', JSON.stringify(hrvHistory));
+  await AsyncStorage.setItem('@yoroi_hrv_current', '62'); // Bon récupération!
+  logger.info(`30 jours de HRV générés (45-75 ms - BONNE RÉCUPÉRATION!)`);
+
+  // ============================================
+  // DONNÉES SOMMEIL IMPRESSIONNANTES (30 jours)
+  // ============================================
+  const sleepHistory = [];
+  for (let i = 0; i < 30; i++) {
+    const date = subDays(new Date(), 30 - i - 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay();
+
+    // Durée sommeil: 7-9h selon le jour
+    let sleepHours;
+    if ([0, 6].includes(dayOfWeek)) {
+      // Weekend: 8-9h de sommeil
+      sleepHours = 8 + Math.random();
+    } else {
+      // Semaine: 7-8h de sommeil
+      sleepHours = 7 + Math.random();
+    }
+
+    const sleepMinutes = Math.round(sleepHours * 60);
+    // Qualité: 75-95%
+    const quality = 75 + Math.round(Math.random() * 20);
+    // Sommeil profond: 20-30%
+    const deepSleep = 20 + Math.round(Math.random() * 10);
+    // Sommeil REM: 20-25%
+    const remSleep = 20 + Math.round(Math.random() * 5);
+
+    sleepHistory.push({
+      date: dateStr,
+      duration: sleepMinutes,
+      quality,
+      deepSleepPercent: deepSleep,
+      remSleepPercent: remSleep,
+      lightSleepPercent: 100 - deepSleep - remSleep,
+    });
+  }
+  await AsyncStorage.setItem('@yoroi_sleep_history', JSON.stringify(sleepHistory));
+  await AsyncStorage.setItem('@yoroi_sleep_last_night', JSON.stringify({
+    duration: 468, // 7h48
+    quality: 89,
+    deepSleepPercent: 26,
+    remSleepPercent: 23,
+    bedTime: '23:15',
+    wakeTime: '07:03',
+  }));
+  logger.info(`30 jours de sommeil générés (7-9h, 75-95% qualité)`);
+};
+
+// ============================================
+// GÉNÉRATION DU PALMARES (Compétitions passées)
+// ============================================
+const generatePalmares = async () => {
+  const database = await openDatabase();
+
+  // Ajouter les colonnes manquantes pour le palmares (si elles n'existent pas)
+  const columnsToAdd = [
+    'resultat TEXT',
+    'placement TEXT',
+    'adversaires INTEGER',
+    'victoires INTEGER',
+    'defaites INTEGER',
+    'notes TEXT',
+    'temps_total TEXT',
+  ];
+
+  for (const column of columnsToAdd) {
+    try {
+      await database.execAsync(`ALTER TABLE competitions ADD COLUMN ${column};`);
+    } catch (e) {
+      // Colonne existe déjà, on ignore
+    }
+  }
+
+  const palmares = [
+    {
+      date: format(subDays(new Date(), 180), 'yyyy-MM-dd'),
+      nom: 'Open de Nice JJB',
+      lieu: 'Nice',
+      sport: 'jjb',
+      categorie_poids: '-82kg',
+      resultat: 'Médaille de Bronze',
+      placement: '3ème place',
+      adversaires: 8,
+      victoires: 3,
+      defaites: 1,
+      notes: 'Excellente performance. Soumission par triangle en quart de finale.',
+      type_evenement: 'competition',
+    },
+    {
+      date: format(subDays(new Date(), 120), 'yyyy-MM-dd'),
+      nom: 'HYROX Lyon',
+      lieu: 'Lyon',
+      sport: 'autre',
+      categorie_poids: 'Open Men',
+      resultat: 'Terminé',
+      placement: '45ème/250',
+      temps_total: '1h18min',
+      notes: 'Premier HYROX, temps honorable. Beaucoup progressé sur les Burpees Broad Jumps.',
+      type_evenement: 'competition',
+    },
+    {
+      date: format(subDays(new Date(), 60), 'yyyy-MM-dd'),
+      nom: 'Open de Marseille JJB',
+      lieu: 'Marseille',
+      sport: 'jjb',
+      categorie_poids: '-77kg',
+      resultat: 'Médaille d\'Argent',
+      placement: '2ème place',
+      adversaires: 12,
+      victoires: 5,
+      defaites: 1,
+      notes: 'Perdu en finale par avantages. Très belle compétition, technique solide.',
+      type_evenement: 'competition',
+    },
+  ];
+
+  for (const comp of palmares) {
+    await database.runAsync(
+      `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, statut, resultat, placement, adversaires, victoires, defaites, notes, type_evenement, temps_total)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        comp.nom,
+        comp.date,
+        comp.lieu,
+        comp.sport,
+        comp.categorie_poids,
+        'terminee',
+        comp.resultat,
+        comp.placement,
+        comp.adversaires || null,
+        comp.victoires || null,
+        comp.defaites || null,
+        comp.notes,
+        comp.type_evenement,
+        comp.temps_total || null,
+      ]
+    );
+  }
+
+  logger.info(`3 compétitions passées ajoutées au palmares`);
+  logger.info(`   • Open Nice: 🥉 Bronze (-82kg)`);
+  logger.info(`   • HYROX Lyon: 45ème/250 (1h18)`);
+  logger.info(`   • Open Marseille: 🥈 Argent (-77kg)`);
+};
+
+// ============================================
+// GÉNÉRATION DES DÉFIS ET QUÊTES GAMIFICATION
+// ============================================
+const generateChallengesAndQuests = async () => {
+  // ============================================
+  // DÉFIS QUOTIDIENS
+  // ============================================
+  const dailyChallenges = [
+    {
+      id: 'daily_steps',
+      title: '8000 pas',
+      description: 'Atteindre 8000 pas aujourd\'hui',
+      type: 'daily',
+      progress: 7329,
+      goal: 8000,
+      completed: false,
+      xpReward: 25,
+      icon: 'footprints',
+      color: '#3B82F6',
+    },
+    {
+      id: 'daily_water',
+      title: 'Hydratation',
+      description: 'Boire 3L d\'eau',
+      type: 'daily',
+      progress: 2800,
+      goal: 3000,
+      completed: false,
+      xpReward: 20,
+      icon: 'droplet',
+      color: '#06B6D4',
+    },
+    {
+      id: 'daily_training',
+      title: 'Entraînement',
+      description: 'Compléter 1 séance',
+      type: 'daily',
+      progress: 1,
+      goal: 1,
+      completed: true,
+      xpReward: 50,
+      icon: 'dumbbell',
+      color: '#10B981',
+    },
+  ];
+
+  await AsyncStorage.setItem('@yoroi_daily_challenges', JSON.stringify(dailyChallenges));
+  logger.info(`3 défis quotidiens générés (1/3 complété)`);
+
+  // ============================================
+  // DÉFIS HEBDOMADAIRES
+  // ============================================
+  const weeklyChallenges = [
+    {
+      id: 'weekly_trainings',
+      title: 'Semaine intense',
+      description: 'Compléter 5 entraînements cette semaine',
+      type: 'weekly',
+      progress: 4,
+      goal: 5,
+      completed: false,
+      xpReward: 150,
+      icon: 'flame',
+      color: '#EF4444',
+      daysRemaining: 2,
+    },
+    {
+      id: 'weekly_weight',
+      title: 'Régularité',
+      description: 'Se peser 5 fois cette semaine',
+      type: 'weekly',
+      progress: 5,
+      goal: 5,
+      completed: true,
+      xpReward: 100,
+      icon: 'scale',
+      color: '#8B5CF6',
+      daysRemaining: 2,
+    },
+  ];
+
+  await AsyncStorage.setItem('@yoroi_weekly_challenges', JSON.stringify(weeklyChallenges));
+  logger.info(`2 défis hebdomadaires générés (1/2 complété)`);
+
+  // ============================================
+  // QUÊTES À LONG TERME
+  // ============================================
+  const quests = [
+    {
+      id: 'quest_weight_goal',
+      title: 'Objectif de poids',
+      description: 'Atteindre 77kg',
+      type: 'quest',
+      progress: 78.2,
+      goal: 77.0,
+      completed: false,
+      xpReward: 500,
+      icon: 'target',
+      color: '#F59E0B',
+      category: 'weight',
+    },
+    {
+      id: 'quest_100_trainings',
+      title: 'Centurion',
+      description: 'Compléter 100 entraînements',
+      type: 'quest',
+      progress: 87,
+      goal: 100,
+      completed: false,
+      xpReward: 750,
+      icon: 'trophy',
+      color: '#D4AF37',
+      category: 'training',
+    },
+    {
+      id: 'quest_streak_90',
+      title: 'Semestre parfait',
+      description: 'Maintenir un streak de 180 jours',
+      type: 'quest',
+      progress: 63,
+      goal: 90,
+      completed: false,
+      xpReward: 1000,
+      icon: 'flame',
+      color: '#EF4444',
+      category: 'streak',
+    },
+  ];
+
+  await AsyncStorage.setItem('@yoroi_quests', JSON.stringify(quests));
+  logger.info(`3 quêtes à long terme générées`);
+};
+
+// ============================================
+// GÉNÉRATION DES DONNÉES DE JEÛNE INTERMITTENT
+// ============================================
+const generateFastingData = async () => {
+  const fastingEntries = [];
+  const days = 14; // 2 semaines de jeûne
+
+  for (let i = 0; i < days; i++) {
+    const date = subDays(new Date(), days - i - 1);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay();
+
+    // Type de jeûne: 16/8 en semaine, 18/6 le weekend
+    let fastingType;
+    let fastingHours;
+    let eatingWindowStart;
+    let eatingWindowEnd;
+    let completed;
+
+    if ([0, 6].includes(dayOfWeek)) {
+      // Weekend: 18/6
+      fastingType = '18:6';
+      fastingHours = 18;
+      eatingWindowStart = '12:00';
+      eatingWindowEnd = '18:00';
+      completed = true;
+    } else {
+      // Semaine: 16/8
+      fastingType = '16:8';
+      fastingHours = 16;
+      eatingWindowStart = '12:00';
+      eatingWindowEnd = '20:00';
+      completed = Math.random() > 0.1; // 90% de réussite
+    }
+
+    // Dernière prise alimentaire la veille
+    const lastMealTime = dayOfWeek === 1 ? '18:00' : '20:00'; // Dimanche soir à 18h, autres jours à 20h
+    const firstMealTime = eatingWindowStart;
+
+    fastingEntries.push({
+      id: `fasting_${dateStr}`,
+      date: dateStr,
+      type: fastingType,
+      fastingHours,
+      startTime: lastMealTime,
+      endTime: firstMealTime,
+      eatingWindowStart,
+      eatingWindowEnd,
+      completed,
+      note: completed ? 'Jeûne respecté' : 'Cassé plus tôt',
+    });
+  }
+
+  await AsyncStorage.setItem('@yoroi_fasting_entries', JSON.stringify(fastingEntries));
+  logger.info(`${days} jours de jeûne intermittent générés (16/8 et 18/6)`);
+};
+
+// ============================================
+// GÉNÉRATION DE L'HISTORIQUE DU TIMER
+// ============================================
+const generateTimerHistory = async () => {
+  const timerSessions = [
+    {
+      id: 'timer_1',
+      date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
+      time: '19:45',
+      type: 'Combat',
+      rounds: 5,
+      workDuration: 300, // 5min
+      restDuration: 60, // 1min
+      totalDuration: 1800, // 30min total
+      completed: true,
+      sport: 'jjb',
+      notes: 'Sparring technique - 5 rounds de 5min',
+    },
+    {
+      id: 'timer_2',
+      date: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
+      time: '07:15',
+      type: 'Musculation',
+      rounds: 4,
+      workDuration: 45,
+      restDuration: 90,
+      totalDuration: 540, // 9min
+      completed: true,
+      sport: 'musculation',
+      notes: 'Développé couché - 4 séries',
+    },
+    {
+      id: 'timer_3',
+      date: format(subDays(new Date(), 3), 'yyyy-MM-dd'),
+      time: '18:30',
+      type: 'HIIT',
+      rounds: 8,
+      workDuration: 20,
+      restDuration: 10,
+      totalDuration: 240, // 4min (Tabata)
+      completed: true,
+      sport: 'autre',
+      notes: 'Tabata Burpees',
+    },
+    {
+      id: 'timer_4',
+      date: format(subDays(new Date(), 5), 'yyyy-MM-dd'),
+      time: '10:00',
+      type: 'EMOM',
+      rounds: 10,
+      workDuration: 60,
+      restDuration: 0,
+      totalDuration: 600, // 10min
+      completed: true,
+      sport: 'autre',
+      notes: 'EMOM 10min - 10 Box Jumps',
+    },
+    {
+      id: 'timer_5',
+      date: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
+      time: '19:00',
+      type: 'Combat',
+      rounds: 3,
+      workDuration: 300,
+      restDuration: 60,
+      totalDuration: 1080, // 18min
+      completed: true,
+      sport: 'mma',
+      notes: 'MMA - 3 rounds de 5min',
+    },
+    {
+      id: 'timer_6',
+      date: format(subDays(new Date(), 8), 'yyyy-MM-dd'),
+      time: '07:30',
+      type: 'Musculation',
+      rounds: 5,
+      workDuration: 60,
+      restDuration: 120,
+      totalDuration: 900, // 15min
+      completed: true,
+      sport: 'musculation',
+      notes: 'Squat - 5 séries de 5 reps',
+    },
+    {
+      id: 'timer_7',
+      date: format(subDays(new Date(), 10), 'yyyy-MM-dd'),
+      time: '18:00',
+      type: 'AMRAP',
+      rounds: 1,
+      workDuration: 1200, // 20min
+      restDuration: 0,
+      totalDuration: 1200,
+      completed: true,
+      sport: 'autre',
+      notes: 'AMRAP 20min - Cindy',
+    },
+    {
+      id: 'timer_8',
+      date: format(subDays(new Date(), 12), 'yyyy-MM-dd'),
+      time: '10:30',
+      type: 'Tabata',
+      rounds: 8,
+      workDuration: 20,
+      restDuration: 10,
+      totalDuration: 240,
+      completed: true,
+      sport: 'autre',
+      notes: 'Tabata Kettlebell Swings',
+    },
+  ];
+
+  await AsyncStorage.setItem('@yoroi_timer_history', JSON.stringify(timerSessions));
+  logger.info(`${timerSessions.length} sessions de timer générées (Combat, HIIT, EMOM, AMRAP, Tabata)`);
 };
 
 // ============================================
@@ -998,9 +1712,9 @@ const generateCarnetData = async (): Promise<number> => {
     // Progression sur 3 entrées
     await addBenchmarkEntry(benchCouche.id, 70, 7, 'Première séance', subDays(today, 14), 8, 45, 280);
     await addBenchmarkEntry(benchCouche.id, 75, 8, 'Bonne progression', subDays(today, 7), 6, 50, 310);
-    await addBenchmarkEntry(benchCouche.id, 80, 8, 'Nouveau PR! 💪', today, 6, 55, 340);
+    await addBenchmarkEntry(benchCouche.id, 80, 8, 'Nouveau PR!', today, 6, 55, 340);
     count += 3;
-    logger.info('   ✅ Développé Couché: 80kg × 6 reps (PR)');
+    logger.info('   Développé Couché: 80kg × 6 reps (PR)');
   }
 
   // 2. SQUAT - 100kg x 5 reps
@@ -1016,7 +1730,7 @@ const generateCarnetData = async (): Promise<number> => {
     await addBenchmarkEntry(squat.id, 95, 8, '', subDays(today, 5), 5, 45, 350);
     await addBenchmarkEntry(squat.id, 100, 9, 'Lourd mais propre', yesterday, 5, 50, 380);
     count += 3;
-    logger.info('   ✅ Squat: 100kg × 5 reps');
+    logger.info('   Squat: 100kg × 5 reps');
   }
 
   // 3. RUNNING 10KM - 36 minutes (pace: 3:36/km)
@@ -1032,9 +1746,9 @@ const generateCarnetData = async (): Promise<number> => {
     // Pace = 2160/10 = 216 sec/km = 3:36/km
     await addBenchmarkEntry(running10k.id, 10, 7, 'Première sortie', subDays(today, 21), undefined, 42, 620); // 42min
     await addBenchmarkEntry(running10k.id, 10, 8, 'Bonne allure', subDays(today, 10), undefined, 38, 580); // 38min
-    await addBenchmarkEntry(running10k.id, 10, 8, 'PR! 3:36/km 🔥', today, undefined, 36, 550); // 36min = PR
+    await addBenchmarkEntry(running10k.id, 10, 8, 'PR! 3:36/km', today, undefined, 36, 550); // 36min = PR
     count += 3;
-    logger.info('   ✅ 10km: 36min (allure 3:36/km) - PR!');
+    logger.info('   10km: 36min (allure 3:36/km) - PR!');
   }
 
   // 4. SEMI-MARATHON - 1h45
@@ -1048,7 +1762,7 @@ const generateCarnetData = async (): Promise<number> => {
   if (semiMarathon) {
     await addBenchmarkEntry(semiMarathon.id, 21.1, 9, 'Semi de Marseille', subDays(today, 30), undefined, 105, 1450);
     count += 1;
-    logger.info('   ✅ Semi-Marathon: 1h45');
+    logger.info('   Semi-Marathon: 1h45');
   }
 
   // ============================================
@@ -1066,9 +1780,9 @@ const generateCarnetData = async (): Promise<number> => {
   if (deadlift) {
     await addBenchmarkEntry(deadlift.id, 120, 7, 'Reprise après pause', subDays(today, 21), 5, 45, 350);
     await addBenchmarkEntry(deadlift.id, 130, 8, 'Bonne forme', subDays(today, 14), 4, 50, 380);
-    await addBenchmarkEntry(deadlift.id, 140, 9, 'PR! 💪 Forme parfaite', subDays(today, 3), 3, 55, 420);
+    await addBenchmarkEntry(deadlift.id, 140, 9, 'PR! Forme parfaite', subDays(today, 3), 3, 55, 420);
     count += 3;
-    logger.info('   ✅ Soulevé de Terre: 140kg × 3 reps (PR)');
+    logger.info('   Soulevé de Terre: 140kg × 3 reps (PR)');
   }
 
   // 6. TRACTIONS - 15 reps (bodyweight)
@@ -1082,9 +1796,9 @@ const generateCarnetData = async (): Promise<number> => {
   if (pullups) {
     await addBenchmarkEntry(pullups.id, 10, 7, 'Série propre', subDays(today, 20), undefined, undefined, 80);
     await addBenchmarkEntry(pullups.id, 12, 8, 'Progression!', subDays(today, 10), undefined, undefined, 95);
-    await addBenchmarkEntry(pullups.id, 15, 9, 'Nouveau record! 🔥', subDays(today, 2), undefined, undefined, 120);
+    await addBenchmarkEntry(pullups.id, 15, 9, 'Nouveau record!', subDays(today, 2), undefined, undefined, 120);
     count += 3;
-    logger.info('   ✅ Tractions: 15 reps (PR)');
+    logger.info('   Tractions: 15 reps (PR)');
   }
 
   // 7. MILITARY PRESS - 60kg x 6 reps
@@ -1100,7 +1814,7 @@ const generateCarnetData = async (): Promise<number> => {
     await addBenchmarkEntry(militaryPress.id, 55, 8, 'Bon contrôle', subDays(today, 8), 6, 40, 230);
     await addBenchmarkEntry(militaryPress.id, 60, 8, 'PR épaules!', yesterday, 6, 42, 260);
     count += 3;
-    logger.info('   ✅ Military Press: 60kg × 6 reps (PR)');
+    logger.info('   Military Press: 60kg × 6 reps (PR)');
   }
 
   // 8. ROWING BARRE - 70kg x 8 reps
@@ -1116,7 +1830,7 @@ const generateCarnetData = async (): Promise<number> => {
     await addBenchmarkEntry(rowingBarre.id, 65, 8, '', subDays(today, 7), 8, 35, 210);
     await addBenchmarkEntry(rowingBarre.id, 70, 8, 'Dos bien contracté', twoDaysAgo, 8, 38, 240);
     count += 3;
-    logger.info('   ✅ Rowing Barre: 70kg × 8 reps');
+    logger.info('   Rowing Barre: 70kg × 8 reps');
   }
 
   // ============================================
@@ -1134,9 +1848,9 @@ const generateCarnetData = async (): Promise<number> => {
   if (running5k) {
     await addBenchmarkEntry(running5k.id, 5, 7, 'Sortie facile', subDays(today, 25), undefined, 22, 280); // 22min
     await addBenchmarkEntry(running5k.id, 5, 8, 'Tempo run', subDays(today, 12), undefined, 20, 260); // 20min
-    await addBenchmarkEntry(running5k.id, 5, 9, 'PR! Sub 20 🚀', subDays(today, 4), undefined, 19.5, 245); // 19:30
+    await addBenchmarkEntry(running5k.id, 5, 9, 'PR! Sub 20', subDays(today, 4), undefined, 19.5, 245); // 19:30
     count += 3;
-    logger.info('   ✅ 5km: 19:30 (allure 3:54/km) - PR!');
+    logger.info('   5km: 19:30 (allure 3:54/km) - PR!');
   }
 
   // 10. TRAIL 15KM - 1h35
@@ -1150,7 +1864,7 @@ const generateCarnetData = async (): Promise<number> => {
   if (trail15k) {
     await addBenchmarkEntry(trail15k.id, 15, 8, 'Calanques de Marseille 🏔️', subDays(today, 20), undefined, 95, 980);
     count += 1;
-    logger.info('   ✅ Trail 15km: 1h35 (Calanques)');
+    logger.info('   Trail 15km: 1h35 (Calanques)');
   }
 
   // ============================================
@@ -1168,7 +1882,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (berimbolo) {
     count++;
-    logger.info('   ✅ Berimbolo: En cours');
+    logger.info('   Berimbolo: En cours');
   }
 
   // Triangle - Maîtrisé
@@ -1180,7 +1894,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (triangle) {
     count++;
-    logger.info('   ✅ Triangle: Maîtrisé');
+    logger.info('   Triangle: Maîtrisé');
   }
 
   // Armbar - Maîtrisé
@@ -1192,7 +1906,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (armbar) {
     count++;
-    logger.info('   ✅ Armbar: Maîtrisé');
+    logger.info('   Armbar: Maîtrisé');
   }
 
   // Passage de garde - En cours
@@ -1204,7 +1918,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (passageGarde) {
     count++;
-    logger.info('   ✅ Passage Toreando: En cours');
+    logger.info('   Passage Toreando: En cours');
   }
 
   // Kimura - Maîtrisé
@@ -1216,7 +1930,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (kimura) {
     count++;
-    logger.info('   ✅ Kimura: Maîtrisé');
+    logger.info('   Kimura: Maîtrisé');
   }
 
   // Back Take - En cours
@@ -1228,7 +1942,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (backTake) {
     count++;
-    logger.info('   ✅ Back Take: En cours');
+    logger.info('   Back Take: En cours');
   }
 
   // Scissor Sweep - Maîtrisé
@@ -1240,7 +1954,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (scissorSweep) {
     count++;
-    logger.info('   ✅ Scissor Sweep: Maîtrisé');
+    logger.info('   Scissor Sweep: Maîtrisé');
   }
 
   // Guillotine - En cours
@@ -1252,7 +1966,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (guillotine) {
     count++;
-    logger.info('   ✅ Guillotine: En cours');
+    logger.info('   Guillotine: En cours');
   }
 
   // Omoplata - À apprendre
@@ -1264,7 +1978,7 @@ const generateCarnetData = async (): Promise<number> => {
   );
   if (omoplata) {
     count++;
-    logger.info('   ✅ Omoplata: À apprendre');
+    logger.info('   Omoplata: À apprendre');
   }
 
   return count;
@@ -1275,7 +1989,7 @@ const generateCarnetData = async (): Promise<number> => {
 // ============================================
 export const loadScreenshotDemoData = async (): Promise<{ success: boolean; error?: string }> => {
   try {
-    logger.info('🎬 Chargement des données de démonstration pour screenshots...');
+    logger.info('Chargement des données de démonstration pour screenshots...');
 
     // 1. Initialiser la base de données
     await initDatabase();
@@ -1297,14 +2011,14 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
       `INSERT INTO profile (name, height_cm, start_weight, target_weight, start_date, avatar_gender) VALUES (?, ?, ?, ?, ?, ?)`,
       [DEMO_PROFILE.name, DEMO_PROFILE.height_cm, DEMO_PROFILE.start_weight, DEMO_PROFILE.target_weight, startDate, 'homme']
     );
-    logger.info('✅ Profil créé dans la base de données:');
+    logger.info('Profil créé dans la base de données:');
     logger.info(`   • Nom: ${DEMO_PROFILE.name}`);
     logger.info(`   • Poids départ: ${DEMO_PROFILE.start_weight}kg`);
     logger.info(`   • Objectif: ${DEMO_PROFILE.target_weight}kg`);
     logger.info(`   • Sport: ${DEMO_PROFILE.sport}`);
 
     // 3. Générer et insérer les pesées avec composition corporelle complète
-    logger.info('📊 Génération des pesées...');
+    logger.info('Génération des pesées...');
     const weights = generateWeights();
     for (const w of weights) {
       await addWeight({
@@ -1320,7 +2034,7 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
         source: 'manual',
       });
     }
-    logger.info(`✅ ${weights.length} pesées ajoutées avec composition corporelle complète`);
+    logger.info(`${weights.length} pesées ajoutées avec composition corporelle complète`);
 
     // 4. Générer et insérer les mensurations
     logger.info('📏 Génération des mensurations...');
@@ -1340,19 +2054,19 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
         neck: m.neck,
       });
     }
-    logger.info(`✅ ${measurements.length} mensurations ajoutées`);
+    logger.info(`${measurements.length} mensurations ajoutées`);
 
     // 5. Créer les clubs avec logos
     logger.info('🏢 Création des clubs avec logos...');
     const clubIds = await createClubs();
 
     // 6. Générer et insérer les entraînements
-    logger.info('🥋 Génération des entraînements...');
+    logger.info('Génération des entraînements...');
     const trainingsCount = await generateTrainings(clubIds);
-    logger.info(`✅ ${trainingsCount} entraînements ajoutés`);
+    logger.info(`${trainingsCount} entraînements ajoutés`);
 
     // 7. Générer le planning hebdomadaire
-    logger.info('📅 Génération du planning hebdomadaire...');
+    logger.info('Génération du planning hebdomadaire...');
     await generateWeeklyPlan(clubIds);
 
     // 8. Générer les photos de transformation
@@ -1364,87 +2078,170 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     const sleepEntries = generateSleepData();
     await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(sleepEntries));
     await AsyncStorage.setItem('@yoroi_sleep_goal', '480'); // 8h
-    logger.info(`✅ ${sleepEntries.length} nuits de sommeil ajoutées`);
+    logger.info(`${sleepEntries.length} nuits de sommeil ajoutées`);
 
     // 10. Générer l'hydratation
     logger.info('💧 Génération de l\'hydratation...');
     await generateHydrationData();
     await AsyncStorage.setItem('@yoroi_hydration_goal', '2500'); // 2.5L
-    logger.info('✅ Données d\'hydratation ajoutées');
+    logger.info('Données d\'hydratation ajoutées');
 
     // 11. Débloquer les badges
-    logger.info('🏆 Déblocage des badges...');
+    logger.info('Déblocage des badges...');
     const badges = generateUnlockedBadges();
     await AsyncStorage.setItem('@yoroi_unlocked_badges', JSON.stringify(badges));
-    logger.info(`✅ ${badges.length} badges débloqués`);
+    logger.info(`${badges.length} badges débloqués`);
 
     // 12. Sauvegarder les blessures
     logger.info('🏥 Génération des blessures...');
     const injuries = generateInjuries();
     await AsyncStorage.setItem('@yoroi_injuries', JSON.stringify(injuries));
-    logger.info(`✅ ${injuries.length} blessures ajoutées`);
+    logger.info(`${injuries.length} blessures ajoutées`);
 
     // 13. Sauvegarder la charge d'entraînement (format quotidien pour le graphique)
-    logger.info('📊 Génération de la charge d\'entraînement...');
+    logger.info('Génération de la charge d\'entraînement...');
     const trainingLoads = generateTrainingLoads();
     await AsyncStorage.setItem('@yoroi_training_loads', JSON.stringify(trainingLoads)); // Clé avec 's' pour le service
     const trainingLoad = generateTrainingLoad(); // Legacy
     await AsyncStorage.setItem('@yoroi_training_load', JSON.stringify(trainingLoad));
-    logger.info(`✅ ${trainingLoads.length} charges quotidiennes + ${trainingLoad.length} semaines ajoutées`);
+    logger.info(`${trainingLoads.length} charges quotidiennes + ${trainingLoad.length} semaines ajoutées`);
 
     // 14. Sauvegarder les données de batterie
     logger.info('🔋 Génération des données de batterie...');
     const batteryData = generateBatteryData();
     await AsyncStorage.setItem('@yoroi_battery_history', JSON.stringify(batteryData));
-    logger.info(`✅ ${batteryData.length} jours de batterie ajoutés`);
+    logger.info(`${batteryData.length} jours de batterie ajoutés`);
 
     // 15. Générer les compétitions à venir
-    logger.info('🏆 Génération des compétitions...');
+    logger.info('Génération des compétitions...');
     await generateCompetitions();
 
     // 16. Générer les données temps réel pour l'accueil
-    logger.info('📱 Génération des données temps réel...');
+    logger.info('Génération des données temps réel...');
     await generateTodayData();
 
     // 17. Générer les données du Carnet d'Entraînement
     logger.info('📓 Génération du Carnet d\'Entraînement...');
     const carnetCount = await generateCarnetData();
-    logger.info(`✅ ${carnetCount} éléments ajoutés au carnet`);
+    logger.info(`${carnetCount} éléments ajoutés au carnet`);
 
-    // 18. Définir des objectifs et paramètres
-    await AsyncStorage.setItem('@yoroi_steps_goal', '8000');
-    await AsyncStorage.setItem('@yoroi_calories_goal', '400');
-    await AsyncStorage.setItem('@yoroi_current_level', '12');
-    await AsyncStorage.setItem('@yoroi_total_xp', '2850');
-    await AsyncStorage.setItem('@yoroi_current_streak', '63');
-    await AsyncStorage.setItem('@yoroi_best_streak', '63');
+    // 18. Générer les avatars débloqués
+    logger.info('🎭 Génération des avatars...');
+    await generateAvatars();
 
-    // 19. Activer le mode screenshot
+    // 19. Générer les données Apple Health complètes
+    logger.info('❤️ Génération des données Apple Health...');
+    await generateAppleHealthData();
+
+    // 20. Générer le palmares
+    logger.info('🏆 Génération du palmares...');
+    await generatePalmares();
+
+    // 21. Générer les défis et quêtes
+    logger.info('⚔️ Génération des défis et quêtes...');
+    await generateChallengesAndQuests();
+
+    // 22. Générer les données de jeûne
+    logger.info('🍽️ Génération du jeûne intermittent...');
+    await generateFastingData();
+
+    // 23. Générer l'historique du timer
+    logger.info('⏱️ Génération de l\'historique timer...');
+    await generateTimerHistory();
+
+    // 24. Définir des objectifs et paramètres - 6 MOIS DE DONNÉES!
+    await AsyncStorage.setItem('@yoroi_steps_goal', '10000');
+    await AsyncStorage.setItem('@yoroi_calories_goal', '600');
+    await AsyncStorage.setItem('@yoroi_distance_goal', '8.0');
+    await AsyncStorage.setItem('@yoroi_current_level', '24'); // Niveau très élevé après 6 mois!
+    await AsyncStorage.setItem('@yoroi_total_xp', '9850'); // Beaucoup de XP!
+    await AsyncStorage.setItem('@yoroi_current_streak', '178'); // Presque 6 mois de streak!
+    await AsyncStorage.setItem('@yoroi_best_streak', '178');
+
+    // Grade/Rang: Empereur (niveau 7, 178 jours) - RANG LÉGENDAIRE!
+    await AsyncStorage.setItem('@yoroi_current_rank', JSON.stringify({
+      id: 'emperor',
+      name: 'Empereur',
+      nameFemale: 'Impératrice',
+      nameJp: '天皇 (Tennō)',
+      level: 7,
+      color: '#FFD700',
+      streak: 178,
+    }));
+
+    // 25. Activer le mode screenshot
     await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
 
-    logger.info('🎉 Mode Screenshot activé avec succès !');
+    logger.info('Mode Screenshot activé avec succès !');
     logger.info('📸 Prêt pour les captures d\'écran App Store');
     logger.info('');
-    logger.info('📊 Résumé des données générées:');
-    logger.info(`   • Profil: Thomas Silva (175cm, 85kg → 78.2kg, objectif: 77kg)`);
-    logger.info(`   • Pesées: ${weights.length} entrées (poids actuel: 78.2kg)`);
-    logger.info(`   • Composition corporelle: 16% graisse, 43% muscle, 55% eau`);
-    logger.info(`   • Mensurations: ${measurements.length} entrées`);
-    logger.info(`   • Entraînements: ${trainingsCount} sessions (Décembre + Janvier complets, max 2/jour)`);
-    logger.info(`   • Clubs AVEC LOGOS: Gracie Barra 🥋 + Basic-Fit 💪 + Marseille Fight Club 🥊 + Team Sorel 🤼`);
-    logger.info(`   • Photos: 3 photos de transformation`);
-    logger.info(`   • Sommeil: ${sleepEntries.length} nuits (hier: 7.5h, qualité 5/5)`);
-    logger.info(`   • Hydratation: 2.8L / 3L aujourd'hui`);
-    logger.info(`   • Charge: Optimal (85%), 9 séances/semaine`);
-    logger.info(`   • Vitalité: 90 jours de batterie/récupération`);
-    logger.info(`   • Compétitions: 2 à venir (Open de Marseille JJB J-15, HYROX Paris J-45)`);
-    logger.info(`   • Événements sauvegardés: 2 (IBJJF Paris, HYROX Marseille)`);
-    logger.info(`   • Carnet: ${carnetCount} éléments (Dév Couché 80kg×6, 10km 36min, Berimbolo, Triangle...)`);
-    logger.info(`   • Badges: ${badges.length} débloqués`);
-    logger.info(`   • Streak: 63 jours 🔥`);
-    logger.info(`   • Niveau: 12`);
+    logger.info('==========================================');
+    logger.info('RÉSUMÉ COMPLET DES DONNÉES GÉNÉRÉES');
+    logger.info('==========================================');
     logger.info('');
-    logger.info('📅 Planning type (9 séances/semaine - max 2/jour):');
+    logger.info('👤 PROFIL & GAMIFICATION - 6 MOIS DE TRANSFORMATION!');
+    logger.info(`   • Profil: Thomas Silva (175cm, 88kg → 76.8kg, objectif: 76kg)`);
+    logger.info(`   • Perte de poids: -11.2kg en 6 mois! 🔥🔥🔥`);
+    logger.info(`   • Grade: Empereur (天皇) - Niveau 7 - LÉGENDAIRE!`);
+    logger.info(`   • Streak: 178 jours consécutifs! 💪💪`);
+    logger.info(`   • XP: 9850 points - Niveau 24`);
+    logger.info(`   • Avatar: Samurai (masculin) + 14 autres débloqués`);
+    logger.info(`   • Badges: ${badges.length} débloqués`);
+    logger.info('');
+    logger.info('📊 STATS (6 onglets) - 6 MOIS DE DONNÉES!');
+    logger.info(`   • Poids: ${weights.length} pesées sur 180 jours (88kg → 76.8kg = -11.2kg!)`);
+    logger.info(`   • Composition: 16% graisse (-6%), 43% muscle (+5%), 56% eau, âge méta 28 ans (-7 ans!)`);
+    logger.info(`   • Mensurations: ${measurements.length} entrées - Taille -10cm, Biceps +2.5cm!`);
+    logger.info(`   • Discipline: ${trainingsCount} entraînements (4 clubs avec logos)`);
+    logger.info(`   • Performance: ${carnetCount} éléments (Dév Couché 80kg×6, 10km 36min)`);
+    logger.info(`   • Vitalité: SpO2 99%, HRV 62ms, FC repos 54 bpm - ATHLÈTE!`);
+    logger.info('');
+    logger.info('🏋️ ENTRAÎNEMENT & PLANNING');
+    logger.info(`   • Clubs: Gracie Barra (JJB), Basic-Fit (Muscu), MFC (MMA), Team Sorel (Grappling)`);
+    logger.info(`   • Planning: 9 séances/semaine (max 2/jour, Mer/Dim repos)`);
+    logger.info(`   • Carnet: Benchmarks muscu (Dév Couché, Squat, Soulevé, Tractions...)`);
+    logger.info(`   • Carnet: Benchmarks running (5km, 10km, Semi, Trail)`);
+    logger.info(`   • Carnet: 9 techniques JJB (Berimbolo, Triangle, Armbar, Kimura...)`);
+    logger.info('');
+    logger.info('🏆 COMPÉTITION');
+    logger.info(`   • À venir: Open Marseille JJB (J-15), HYROX Paris (J-45)`);
+    logger.info(`   • Palmares: 3 compétitions passées`);
+    logger.info(`     - Open Nice JJB: 🥉 Bronze (-82kg)`);
+    logger.info(`     - HYROX Lyon: 45ème/250 (1h18)`);
+    logger.info(`     - Open Marseille JJB: 🥈 Argent (-77kg)`);
+    logger.info('');
+    logger.info('🎮 GAMIFICATION');
+    logger.info(`   • Défis quotidiens: 3 (8000 pas, Hydratation, Entraînement)`);
+    logger.info(`   • Défis hebdomadaires: 2 (5 entraînements, 5 pesées)`);
+    logger.info(`   • Quêtes: 3 (Objectif poids, 100 entraînements, Streak 90j)`);
+    logger.info('');
+    logger.info('🍽️ NUTRITION & JEÛNE');
+    logger.info(`   • Jeûne intermittent: 14 jours (16/8 en semaine, 18/6 weekend)`);
+    logger.info('');
+    logger.info('⏱️ OUTILS');
+    logger.info(`   • Timer: 8 sessions (Combat, HIIT, EMOM, AMRAP, Tabata)`);
+    logger.info(`   • Calculateurs: IMC, IMG, TDEE disponibles`);
+    logger.info('');
+    logger.info('❤️ APPLE HEALTH - 6 MOIS - NIVEAU ATHLÈTE ÉLITE!');
+    logger.info(`   • Pas: 180 jours (6000-18000 pas/jour, aujourd'hui: 13567!) 🚀`);
+    logger.info(`   • Calories: 180 jours (350-1100 kcal/jour - BEAST MODE!)`);
+    logger.info(`   • Distance: 180 jours (5-15 km/jour, aujourd'hui: 10.1km)`);
+    logger.info(`   • FC repos: 52-58 bpm (NIVEAU ATHLÈTE!), max 175-195 bpm`);
+    logger.info(`   • SpO2: 97-100% (santé parfaite!), HRV: 45-75ms`);
+    logger.info('');
+    logger.info('📸 TRANSFORMATION VISUELLE');
+    logger.info(`   • Photos: 3 photos (début, milieu, actuelle)`);
+    logger.info(`   • Poids: Variations dramatiques visibles sur graphiques!`);
+    logger.info(`   • Cartes de partage: Disponibles pour réseaux sociaux`);
+    logger.info('');
+    logger.info('💤 VITALITÉ - RÉCUPÉRATION OPTIMALE');
+    logger.info(`   • Sommeil: 30 nuits (7-9h, 26% profond, 23% REM, qualité 89%)`);
+    logger.info(`   • Hydratation: 30 jours (aujourd'hui: 3.2L/3.5L - CHAMPION!)`);
+    logger.info(`   • Charge: Niveau 92%, Stress 15% - GESTION PARFAITE!`);
+    logger.info(`   • Charge: 14 jours + 12 semaines (optimal 85%)`);
+    logger.info(`   • Batterie: 180 jours (récupération, nutrition, stress)`);
+    logger.info('');
+    logger.info('🗓️ PLANNING HEBDOMADAIRE TYPE');
     logger.info('   Lun: Basic-Fit (Muscu) 07h30 + Gracie Barra (JJB) 19h30');
     logger.info('   Mar: Marseille Fight Club (MMA) 10h + Team Sorel (Grappling) 20h');
     logger.info('   Mer: REPOS');
@@ -1452,6 +2249,10 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     logger.info('   Ven: Team Sorel (Grappling) 10h30 + Marseille Fight Club (MMA) 18h30');
     logger.info('   Sam: Gracie Barra (Open Mat) 10h - Après-midi REPOS');
     logger.info('   Dim: REPOS');
+    logger.info('');
+    logger.info('==========================================');
+    logger.info('✅ MODE SCREENSHOT 100% COMPLET');
+    logger.info('==========================================');
 
     return {
       success: true,
@@ -1475,9 +2276,9 @@ export const clearScreenshotDemoData = async (): Promise<{ success: boolean; mes
     // 1. Réinitialiser complètement la base de données SQLite
     try {
       await resetDatabase();
-      logger.info('✅ Base SQLite vidée');
+      logger.info('Base SQLite vidée');
     } catch (dbError) {
-      logger.warn('⚠️ Erreur reset SQLite:', dbError);
+      logger.warn('Erreur reset SQLite:', dbError);
     }
 
     // 2. Effacer TOUTES les clés AsyncStorage liées à Yoroi
@@ -1511,8 +2312,8 @@ export const clearScreenshotDemoData = async (): Promise<{ success: boolean; mes
     // 3. Désactiver le mode screenshot
     await AsyncStorage.setItem('@yoroi_screenshot_mode', 'false');
 
-    logger.info('✅ Données de démonstration TOTALEMENT effacées');
-    logger.info('✅ Mode Screenshot désactivé');
+    logger.info('Données de démonstration TOTALEMENT effacées');
+    logger.info('Mode Screenshot désactivé');
 
     return {
       success: true,
@@ -1545,7 +2346,7 @@ export const isScreenshotModeEnabled = async (): Promise<boolean> => {
 // ============================================
 export const resetCompleteDatabase = async (): Promise<{ success: boolean; message: string }> => {
   try {
-    logger.info('🔥 RESET COMPLET DE LA BASE DE DONNÉES...');
+    logger.info('RESET COMPLET DE LA BASE DE DONNÉES...');
 
     // 1. D'abord, effacer AsyncStorage (ne dépend pas de SQLite)
     const keys = await AsyncStorage.getAllKeys();
@@ -1558,7 +2359,7 @@ export const resetCompleteDatabase = async (): Promise<{ success: boolean; messa
     );
     if (yoroiKeys.length > 0) {
       await AsyncStorage.multiRemove(yoroiKeys);
-      logger.info(`✅ ${yoroiKeys.length} clés AsyncStorage supprimées`);
+      logger.info(`${yoroiKeys.length} clés AsyncStorage supprimées`);
     }
 
     // 2. Tenter d'ouvrir et vider la base SQLite
@@ -1578,7 +2379,7 @@ export const resetCompleteDatabase = async (): Promise<{ success: boolean; messa
         weights: weightsCount?.count || 0,
       };
 
-      logger.info(`📊 AVANT RESET: ${deletedCount.trainings} entraînements, ${deletedCount.clubs} clubs, ${deletedCount.weights} pesées`);
+      logger.info(`AVANT RESET: ${deletedCount.trainings} entraînements, ${deletedCount.clubs} clubs, ${deletedCount.weights} pesées`);
 
       // Supprimer TOUTES les tables
       await database.runAsync(`DELETE FROM trainings`);
@@ -1591,13 +2392,13 @@ export const resetCompleteDatabase = async (): Promise<{ success: boolean; messa
       await database.runAsync(`DELETE FROM achievements`);
       await database.runAsync(`DELETE FROM weekly_plan`);
 
-      logger.info('✅ Toutes les tables SQLite vidées');
+      logger.info('Toutes les tables SQLite vidées');
     } catch (dbError) {
-      logger.warn('⚠️ Impossible de vider SQLite (sera recréée au prochain lancement):', dbError);
+      logger.warn('Impossible de vider SQLite (sera recréée au prochain lancement):', dbError);
       // On continue quand même - AsyncStorage a été vidé
     }
 
-    logger.info('✅ Reset complet terminé');
+    logger.info('Reset complet terminé');
 
     return {
       success: true,
@@ -1625,7 +2426,7 @@ export const cleanDuplicateTrainings = async (): Promise<{ success: boolean; rem
     const beforeResult = await database.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM trainings`);
     const beforeCount = beforeResult?.count || 0;
 
-    logger.info(`📊 Entraînements avant nettoyage: ${beforeCount}`);
+    logger.info(`Entraînements avant nettoyage: ${beforeCount}`);
 
     // Supprimer TOUS les entraînements
     await database.runAsync(`DELETE FROM trainings`);
@@ -1660,10 +2461,10 @@ export const cleanDuplicateTrainings = async (): Promise<{ success: boolean; rem
     }
 
     // Regénérer les entraînements propres
-    logger.info('🏋️ Régénération des entraînements propres...');
+    logger.info('Régénération des entraînements propres...');
     const newCount = await generateTrainings(clubIds);
 
-    logger.info(`✅ Nettoyage terminé: ${beforeCount} → ${newCount} entraînements`);
+    logger.info(`Nettoyage terminé: ${beforeCount} → ${newCount} entraînements`);
     logger.info(`🗑️ ${beforeCount - newCount} entraînements supprimés`);
 
     return {

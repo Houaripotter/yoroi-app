@@ -117,7 +117,7 @@ export default function ClubsScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -151,7 +151,7 @@ export default function ClubsScreen() {
   const showImageOptions = () => {
     showPopup(
       'Logo du club',
-      'Comment voulez-vous ajouter le logo ?',
+      'Comment veux-tu ajouter le logo ?',
       [
         { text: 'Galerie', onPress: pickImageFromGallery, style: 'primary' },
         { text: 'Camera', onPress: takePhoto, style: 'primary' },
@@ -198,7 +198,7 @@ export default function ClubsScreen() {
   const handleDelete = (club: Club) => {
     showPopup(
       'Supprimer le club ?',
-      `Voulez-vous vraiment supprimer "${club.name}" ?`,
+      `Veux-tu vraiment supprimer "${club.name}" ?`,
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -434,13 +434,13 @@ export default function ClubsScreen() {
 
               {(() => {
                 const categoryLabels: Record<string, string> = {
-                  combat_striking: '🥊 Sports de Frappe',
-                  combat_grappling: '🤼 Sports de Préhension',
-                  fitness: '🏋️ Musculation',
-                  cardio: '🏃 Cardio',
-                  collectif: '⚽ Collectifs',
-                  raquettes: '🎾 Raquettes',
-                  autre: '🎯 Autres',
+                  combat_striking: 'Sports de Frappe',
+                  combat_grappling: 'Sports de Préhension',
+                  fitness: 'Musculation',
+                  cardio: 'Cardio',
+                  collectif: 'Collectifs',
+                  raquettes: 'Raquettes',
+                  autre: 'Autres',
                 };
 
                 const categories = ['combat_striking', 'combat_grappling', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];

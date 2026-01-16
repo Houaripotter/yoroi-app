@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - SERVICE SUIVI BLESSURES
+// YOROI MEDIC - SERVICE SUIVI BLESSURES
 // ============================================
 // Business logic pour la gestion des blessures
 
@@ -468,26 +468,26 @@ export const getInjuryRecommendation = (
   // Douleur sévère
   if (evaScore >= 7) {
     if (daysSinceInjury >= 2) {
-      return `⚠️ Douleur intense (${daysSinceInjury} jours) - Consultez un professionnel de santé`;
+      return `Douleur intense (${daysSinceInjury} jours) - Consultez un professionnel de santé`;
     }
-    return '⚠️ Douleur intense enregistrée';
+    return 'Douleur intense enregistrée';
   }
 
   // Douleur modérée
   if (evaScore >= 4) {
     if (daysSinceInjury >= 7) {
-      return `⚠️ Douleur persistante (${daysSinceInjury} jours)`;
+      return `Douleur persistante (${daysSinceInjury} jours)`;
     }
-    return '⚠️ Douleur modérée en cours';
+    return 'Douleur modérée en cours';
   }
 
   // Douleur légère
   if (evaScore > 0) {
-    return '✅ Douleur légère en amélioration';
+    return 'Douleur légère en amélioration';
   }
 
   // Pas de douleur
-  return '🎉 Aucune douleur - Blessure guérie';
+  return 'Aucune douleur - Blessure guérie';
 };
 
 export default {

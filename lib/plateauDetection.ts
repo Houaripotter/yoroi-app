@@ -75,7 +75,7 @@ export const PLATEAU_SUGGESTIONS: PlateauSuggestion[] = [
     id: 'training',
     title: 'Varie tes entrainements',
     text: 'Ton corps s\'est peut-etre habitue. Essaie un nouveau sport ou augmente l\'intensite.',
-    icon: '💪',
+    icon: '',
     action: {
       label: 'Voir mes entrainements',
       route: '/add-training',
@@ -123,7 +123,7 @@ export const PLATEAU_SUGGESTIONS: PlateauSuggestion[] = [
     id: 'stress',
     title: 'Gere ton stress',
     text: 'Le stress chronique augmente le cortisol et peut bloquer la perte de poids. Prends soin de ton mental !',
-    icon: '🧘',
+    icon: '',
     action: {
       label: 'Mon journal',
       route: '/journal',

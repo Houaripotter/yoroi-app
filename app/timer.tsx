@@ -75,7 +75,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
 }> = {
   jjb: {
     name: 'JJB',
-    icon: '🥋',
+    icon: '',
     roundTime: 5 * 60,
     restTime: 60,
     rounds: 5,
@@ -83,7 +83,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   mma: {
     name: 'MMA',
-    icon: '🏆',
+    icon: '',
     roundTime: 5 * 60,
     restTime: 60,
     rounds: 3,
@@ -91,7 +91,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   boxe: {
     name: 'Boxe',
-    icon: '🥊',
+    icon: '',
     roundTime: 3 * 60,
     restTime: 60,
     rounds: 10,
@@ -115,7 +115,7 @@ const COMBAT_PRESETS: Record<CombatPreset, {
   },
   lutte: {
     name: 'Lutte',
-    icon: '🤼',
+    icon: '',
     roundTime: 3 * 60,
     restTime: 30,
     rounds: 3,

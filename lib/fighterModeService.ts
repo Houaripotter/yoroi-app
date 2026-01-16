@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - SERVICE MODE FIGHTER
+// YOROI - SERVICE MODE FIGHTER
 // ============================================
 
 import { Platform } from 'react-native';

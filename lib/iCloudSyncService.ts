@@ -504,7 +504,7 @@ export const getiCloudUnavailableMessage = (): string => {
   if (Platform.OS !== 'ios') {
     return 'La synchronisation iCloud est uniquement disponible sur iOS.';
   }
-  return 'Connectez-vous a iCloud dans les reglages de votre appareil.';
+  return 'Connectez-vous a iCloud dans les reglages de ton appareil.';
 };
 
 export default {

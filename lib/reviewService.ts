@@ -44,12 +44,12 @@ export const askForReview = async (): Promise<void> => {
     if (!isAvailable) return;
 
     Alert.alert(
-      "🏆 Tu progresses bien Champion !",
-      "Si Yoroi t'aide dans ta conquête, donne-nous de la force avec une note ⭐⭐⭐⭐⭐\n\nÇa nous aide énormément à grandir !",
+      "Tu progresses bien Champion !",
+      "Si Yoroi t'aide dans ta conquête, donne-nous de la force avec une note\n\nÇa nous aide énormément à grandir !",
       [
         { text: "Plus tard", style: "cancel" },
         {
-          text: "💪 Donner de la force",
+          text: "Donner de la force",
           onPress: async () => {
             try {
               await StoreReview.requestReview();

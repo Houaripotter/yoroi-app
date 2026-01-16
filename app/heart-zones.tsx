@@ -44,7 +44,7 @@ const ZONES: HeartRateZone[] = [
     minPercent: 60,
     maxPercent: 70,
     color: '#22C55E',
-    emoji: '💚',
+    emoji: '',
   },
   {
     name: 'Zone 3 - Aerobie',
@@ -68,7 +68,7 @@ const ZONES: HeartRateZone[] = [
     minPercent: 90,
     maxPercent: 100,
     color: '#EF4444',
-    emoji: '❤️',
+    emoji: '',
   },
 ];
 

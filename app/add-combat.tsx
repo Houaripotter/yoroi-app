@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - AJOUTER UN COMBAT
+// YOROI - AJOUTER UN COMBAT
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -93,7 +93,7 @@ export default function AddCombatScreen() {
 
   const handleSave = async () => {
     if (!adversaireNom.trim()) {
-      showPopup('Erreur', 'Veuillez saisir le nom de l\'adversaire', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Saisis le nom de l\'adversaire', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 

@@ -336,7 +336,7 @@ export const formatSleepDuration = (minutes: number): string => {
 export const getSleepAdvice = (debtHours: number): { message: string; severity: 'good' | 'warning' | 'danger' } => {
   if (debtHours <= 2) {
     return {
-      message: 'Sommeil optimal ! Tu es en pleine forme 💪',
+      message: 'Sommeil optimal ! Tu es en pleine forme',
       severity: 'good',
     };
   } else if (debtHours <= 5) {
@@ -392,29 +392,29 @@ export const generateSleepShareText = async (): Promise<string> => {
     const stats = await getSleepStats();
     const goal = await getSleepGoal();
 
-    let text = '📊 Mes Stats Sommeil - YOROI\n\n';
+    let text = 'Mes Stats Sommeil - YOROI\n\n';
 
     if (stats.currentStreak > 0) {
-      text += `🔥 Streak actuel : ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}\n`;
+      text += `Streak actuel : ${stats.currentStreak} jour${stats.currentStreak > 1 ? 's' : ''}\n`;
     }
     if (stats.longestStreak > 0) {
-      text += `🏆 Record : ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}\n`;
+      text += `Record : ${stats.longestStreak} jour${stats.longestStreak > 1 ? 's' : ''}\n`;
     }
 
     text += `\n⏱️ Moyenne : ${formatSleepDuration(stats.averageDuration)}\n`;
-    text += `⭐ Qualité : ${stats.averageQuality}/5\n`;
+    text += `Qualité : ${stats.averageQuality}/5\n`;
 
     if (goal > 0) {
-      text += `🎯 Objectif : ${formatSleepDuration(goal)}\n`;
+      text += `Objectif : ${formatSleepDuration(goal)}\n`;
       const successRate = stats.totalDays > 0 ? Math.round((stats.goalReachedDays / stats.totalDays) * 100) : 0;
-      text += `✅ Réussite : ${successRate}% (${stats.goalReachedDays}/${stats.totalDays} jours)\n`;
+      text += `Réussite : ${successRate}% (${stats.goalReachedDays}/${stats.totalDays} jours)\n`;
     }
 
     if (stats.sleepDebtHours > 0) {
-      text += `\n⚠️ Dette : ${stats.sleepDebtHours}h\n`;
+      text += `\nDette : ${stats.sleepDebtHours}h\n`;
     }
 
-    text += '\n💪 Généré avec YOROI';
+    text += '\nGénéré avec YOROI';
 
     return text;
   } catch (error) {

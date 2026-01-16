@@ -37,7 +37,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'motivation',
     label: 'Motivation',
     labelJp: '動機',
-    icon: '🔥',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Flame,
     description: 'Depassement de soi',
   },
@@ -45,7 +45,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'discipline',
     label: 'Discipline',
     labelJp: '規律',
-    icon: '💪',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Dumbbell,
     description: 'Travail et rigueur',
   },
@@ -53,7 +53,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'mental',
     label: 'Force mentale',
     labelJp: '精神力',
-    icon: '🧠',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Shield,
     description: 'Mindset de champion',
   },
@@ -61,7 +61,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'warrior',
     label: 'Athlète',
     labelJp: '戦士',
-    icon: '⚔️',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Swords,
     description: 'Esprit combattant',
   },
@@ -69,7 +69,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'perseverance',
     label: 'Perseverance',
     labelJp: '忍耐',
-    icon: '🎯',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Target,
     description: 'Ne jamais abandonner',
   },
@@ -77,7 +77,7 @@ export const CITATION_STYLE_OPTIONS: CitationStyleOption[] = [
     id: 'all',
     label: 'Toutes',
     labelJp: '全部',
-    icon: '🎲',  // Gardé pour compatibilité
+    icon: '',
     iconComponent: Sparkles,
     description: 'Melange aleatoire',
   },
@@ -100,6 +100,14 @@ const MOTIVATION_QUOTES: Citation[] = [
   { text: "Chaque champion a un jour ete un debutant qui n'a pas abandonne.", category: 'motivation' },
   { text: "Le meilleur moment pour commencer etait hier. Le deuxieme meilleur moment, c'est maintenant.", category: 'motivation' },
   { text: "Ta seule competition, c'est la personne que tu etais hier.", category: 'motivation' },
+  { text: "Si ca ne te defie pas, ca ne te change pas.", category: 'motivation' },
+  { text: "Reve grand. Travaille dur. Reste humble.", category: 'motivation' },
+  { text: "Les grands reves commencent par de petites actions.", category: 'motivation' },
+  { text: "Tu es capable de bien plus que ce que tu penses.", category: 'motivation' },
+  { text: "Chaque jour est une nouvelle chance de devenir meilleur.", category: 'motivation' },
+  { text: "Ne laisse pas hier prendre trop de place dans ton aujourd'hui.", category: 'motivation' },
+  { text: "La seule limite est celle que tu te fixes.", category: 'motivation' },
+  { text: "Fais-le avec passion ou pas du tout.", category: 'motivation' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -119,6 +127,14 @@ const DISCIPLINE_QUOTES: Citation[] = [
   { text: "Fais-le maintenant. Ton futur toi te remerciera.", category: 'discipline' },
   { text: "Le succes n'est pas donne. Il se merite.", category: 'discipline' },
   { text: "Chaque repetition compte. Chaque effort compte.", category: 'discipline' },
+  { text: "La constance bat le talent.", category: 'discipline' },
+  { text: "Fais aujourd'hui ce que les autres ne veulent pas faire pour avoir demain ce qu'ils n'auront jamais.", category: 'discipline' },
+  { text: "Les champions sont faits quand personne ne regarde.", category: 'discipline' },
+  { text: "La routine bat l'exception tous les jours.", category: 'discipline' },
+  { text: "Celui qui maitrise la discipline maitrise sa vie.", category: 'discipline' },
+  { text: "Le secret du succes: fais-le meme quand tu n'en as pas envie.", category: 'discipline' },
+  { text: "La discipline est le pont entre tes objectifs et tes accomplissements.", category: 'discipline' },
+  { text: "Pas de progres sans discipline. Pas de discipline sans sacrifice.", category: 'discipline' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -138,6 +154,14 @@ const MENTAL_QUOTES: Citation[] = [
   { text: "Transforme ta douleur en puissance.", category: 'mental' },
   { text: "L'esprit dirige, le corps suit.", category: 'mental' },
   { text: "Crois en toi plus fort que tes doutes.", category: 'mental' },
+  { text: "Ton mental est ton arme la plus puissante.", category: 'mental' },
+  { text: "La force ne vient pas du corps. Elle vient de la volonte.", category: 'mental' },
+  { text: "Si tu penses que tu peux ou que tu ne peux pas, tu as raison.", category: 'mental' },
+  { text: "Le succes commence dans ta tete avant de se voir dans ton corps.", category: 'mental' },
+  { text: "Tes pensees deviennent ta realite. Choisis-les bien.", category: 'mental' },
+  { text: "Un esprit faible trouvera mille excuses. Un esprit fort trouvera mille solutions.", category: 'mental' },
+  { text: "La zone de confort est un bel endroit, mais rien n'y pousse.", category: 'mental' },
+  { text: "L'echec n'existe que si tu abandonnes.", category: 'mental' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -157,6 +181,14 @@ const WARRIOR_QUOTES: Citation[] = [
   { text: "Sois le champion, pas le spectateur.", category: 'warrior' },
   { text: "Un champion tombe, mais il ne reste jamais a terre.", category: 'warrior' },
   { text: "Dans l'arene, il n'y a que toi et ton courage.", category: 'warrior' },
+  { text: "Les guerriers ne sont pas nes, ils sont forges.", category: 'warrior' },
+  { text: "Un athlete ne compte pas ses repetitions. Il commence a compter quand ca devient dur.", category: 'warrior' },
+  { text: "La sueur est la preuve que tu n'as pas abandonne.", category: 'warrior' },
+  { text: "Le terrain de jeu ne pardonne pas la faiblesse.", category: 'warrior' },
+  { text: "Tu joues comme tu t'entraines. Entraine-toi comme un champion.", category: 'warrior' },
+  { text: "Les legendes ne naissent pas. Elles se construisent repetition apres repetition.", category: 'warrior' },
+  { text: "Le veritable combat commence quand ton corps dit stop mais ton esprit dit continue.", category: 'warrior' },
+  { text: "Chaque goutte de sueur te rapproche de la victoire.", category: 'warrior' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -176,6 +208,14 @@ const PERSEVERANCE_QUOTES: Citation[] = [
   { text: "Continue meme quand tu as envie d'arreter. C'est la que tout change.", category: 'perseverance' },
   { text: "Chaque pas te rapproche de ton objectif.", category: 'perseverance' },
   { text: "Le succes est la somme de petits efforts repetes jour apres jour.", category: 'perseverance' },
+  { text: "La persistance bat la resistance.", category: 'perseverance' },
+  { text: "Ce qui compte, ce n'est pas combien de fois tu tombes, mais combien de fois tu te releves.", category: 'perseverance' },
+  { text: "Rome ne s'est pas construite en un jour, mais chaque jour ils posaient une brique.", category: 'perseverance' },
+  { text: "Le marathon se court pas a pas. Concentre-toi sur le prochain pas.", category: 'perseverance' },
+  { text: "Les rivières creusent les rochers non par leur force, mais par leur perseverance.", category: 'perseverance' },
+  { text: "Chaque expert a un jour ete un debutant perseverant.", category: 'perseverance' },
+  { text: "La reussite appartient a ceux qui continuent quand tout le monde a abandonne.", category: 'perseverance' },
+  { text: "Petit a petit, l'oiseau fait son nid. Continue d'avancer.", category: 'perseverance' },
 ];
 
 // ═══════════════════════════════════════════════
@@ -394,13 +434,13 @@ export const getCitationNotifSettings = async (): Promise<CitationNotifSettings>
     const time = await AsyncStorage.getItem(CITATION_NOTIF_TIME_KEY);
 
     return {
-      enabled: enabled === 'true',
-      frequency: frequency ? parseInt(frequency, 10) : 1,
+      enabled: enabled !== null ? enabled === 'true' : true, // ACTIVÉ par défaut - 2 citations/jour
+      frequency: frequency ? parseInt(frequency, 10) : 2, // 2×/jour par défaut (matin et soir)
       time: time || '08:00',
     };
   } catch (error) {
     logger.error('Erreur lecture paramètres notif citations:', error);
-    return { enabled: false, frequency: 1, time: '08:00' };
+    return { enabled: true, frequency: 2, time: '08:00' }; // ACTIVÉ par défaut - 2×/jour
   }
 };
 

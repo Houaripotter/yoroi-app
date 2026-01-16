@@ -101,7 +101,7 @@ export function CompetitionCountdownWidget() {
             ]}
           >
             <Text style={styles.sportIcon}>
-              {SPORT_ICONS[nextCompetition.sport as keyof typeof SPORT_ICONS] || '⚔️'}
+              {SPORT_ICONS[nextCompetition.sport as keyof typeof SPORT_ICONS] || ''}
             </Text>
           </View>
           <View style={styles.headerInfo}>

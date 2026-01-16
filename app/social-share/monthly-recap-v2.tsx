@@ -312,33 +312,6 @@ export default function MonthlyRecapV2Screen() {
             )}
           </View>
 
-          {/* Format selector */}
-          <View style={[styles.formatSelector, { backgroundColor: colors.backgroundElevated || colors.background }]}>
-            <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'stories' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => setFormat('stories')}
-            >
-              <Smartphone size={14} color={format === 'stories' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'stories' ? colors.textOnGold : colors.textSecondary }]}>
-                Story
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'square' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => setFormat('square')}
-            >
-              <Square size={14} color={format === 'square' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'square' ? colors.textOnGold : colors.textSecondary }]}>
-                Carré
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Carte Monthly Recap */}

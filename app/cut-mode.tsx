@@ -193,7 +193,7 @@ export default function CutModeScreen() {
       'Arrêter le Cut ?',
       'Es-tu sûr de vouloir arrêter ton cut ? Les données seront effacées.',
       [
-        { text: 'Annuler', style: 'secondary' },
+        { text: 'Annuler', style: 'cancel' },
         {
           text: 'Arrêter',
           style: 'destructive',
@@ -408,7 +408,7 @@ export default function CutModeScreen() {
           <>
             <View style={[styles.formCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.formTitle, { color: colors.textPrimary }]}>
-                ⚔️ Nouveau Cut
+                Nouveau Cut
               </Text>
               <Text style={[styles.formSubtitle, { color: colors.textMuted }]}>
                 Prépare-toi pour ta compétition

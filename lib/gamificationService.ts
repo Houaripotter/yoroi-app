@@ -21,7 +21,7 @@ export const GRADES: Grade[] = [
     name: 'Fantassin',
     japaneseName: 'Ashigaru',
     icon: '', // Utiliser badge coloré à la place
-    color: '#95A5A6',
+    color: '#60A5FA',
     description: 'Tu débutes ton voyage vers la transformation.',
     requirement: 'Niveau de départ',
   },
@@ -30,7 +30,7 @@ export const GRADES: Grade[] = [
     name: 'Athlète',
     japaneseName: 'Bushi',
     icon: '', // Utiliser badge coloré à la place
-    color: '#3498DB',
+    color: '#34D399',
     description: 'Tu as prouvé ton engagement au combat.',
     requirement: '10 séances OU 2 kg perdus',
   },
@@ -39,32 +39,32 @@ export const GRADES: Grade[] = [
     name: 'Élite',
     japaneseName: 'Samouraï',
     icon: '', // Utiliser badge coloré à la place
-    color: '#9B59B6',
+    color: '#D4AF37',
     description: 'Tu fais partie de l\'élite.',
     requirement: '30 séances OU 5 kg perdus',
   },
   {
-    id: 'daimyo',
-    name: 'Seigneur',
-    japaneseName: 'Daimyo',
+    id: 'ronin',
+    name: 'Maître',
+    japaneseName: 'Rōnin',
     icon: '', // Utiliser badge coloré à la place
-    color: '#E74C3C',
+    color: '#A855F7',
     description: 'Tu domines ton corps et ton esprit.',
     requirement: '60 séances OU 10 kg perdus',
   },
   {
     id: 'shogun',
     name: 'Légende',
-    japaneseName: 'Shogun',
+    japaneseName: 'Shōgun',
     icon: '', // Utiliser badge coloré à la place
-    color: '#F1C40F',
+    color: '#FFD700',
     description: 'Tu as atteint l\'excellence absolue.',
     requirement: 'Objectif de poids atteint',
   },
 ];
 
 // ============================================
-// 🏆 RÉCOMPENSES VISUELLES (Objets réels)
+// RÉCOMPENSES VISUELLES (Objets réels)
 // ============================================
 
 export interface WeightReward {
@@ -90,7 +90,7 @@ export const WEIGHT_REWARDS: WeightReward[] = [
 ];
 
 // ============================================
-// 📊 FONCTIONS DE CALCUL
+// FONCTIONS DE CALCUL
 // ============================================
 
 export interface UserProgress {
@@ -130,11 +130,11 @@ export const calculateUserProgress = async (): Promise<UserProgress> => {
     
     // Déterminer le grade actuel
     let currentGradeIndex = 0;
-    
+
     if (goalReached) {
-      currentGradeIndex = 4; // Shogun
+      currentGradeIndex = 4; // Shōgun
     } else if (totalWorkouts >= 60 || weightLost >= 10) {
-      currentGradeIndex = 3; // Daimyo
+      currentGradeIndex = 3; // Rōnin
     } else if (totalWorkouts >= 30 || weightLost >= 5) {
       currentGradeIndex = 2; // Samouraï
     } else if (totalWorkouts >= 10 || weightLost >= 2) {
@@ -203,7 +203,7 @@ export const calculateUserProgress = async (): Promise<UserProgress> => {
 };
 
 // ============================================
-// 🎨 COULEURS SELON OBJECTIF
+// COULEURS SELON OBJECTIF
 // ============================================
 
 export const getProgressColor = (progress: number): string => {

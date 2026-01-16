@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - ÉVALUATION BLESSURE
+// YOROI MEDIC - ÉVALUATION BLESSURE
 // ============================================
 
 import React, { useState } from 'react';
@@ -95,7 +95,7 @@ export default function InjuryEvaluationScreen() {
 
   const handleSubmit = async () => {
     if (!isEditMode && (!painType || !cause)) {
-      showPopup('Champs requis', 'Veuillez sélectionner le type de douleur et la cause', [
+      showPopup('Champs requis', 'Sélectionne le type de douleur et la cause', [
         { text: 'OK', style: 'primary' },
       ]);
       return;

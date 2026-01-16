@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - SÉLECTION DU SPORT (Compétiteur)
+// YOROI - SÉLECTION DU SPORT (Compétiteur)
 // ============================================
 
 import React, { useState } from 'react';

@@ -202,7 +202,7 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
                 </View>
 
                 <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>💪 En pratique</Text>
+                  <Text style={styles.detailSectionTitle}>En pratique</Text>
                   <Text style={styles.detailText}>{selectedTip.content.practice}</Text>
                 </View>
 
@@ -282,6 +282,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingBottom: 120,
     gap: 16,
   },
   introCard: {
@@ -387,6 +388,7 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     padding: 20,
+    paddingBottom: 120,
     gap: 20,
   },
   detailSection: {

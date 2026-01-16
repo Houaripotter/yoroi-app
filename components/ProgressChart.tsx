@@ -1,5 +1,5 @@
 // ============================================
-// 📊 COMPOSANT GRAPHIQUE DE PROGRESSION
+// COMPOSANT GRAPHIQUE DE PROGRESSION
 // ============================================
 
 import React from 'react';

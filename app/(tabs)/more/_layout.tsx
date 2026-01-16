@@ -25,7 +25,6 @@ export default function MoreLayout() {
       <Stack.Screen name="timer" />
       <Stack.Screen name="calculators" />
       <Stack.Screen name="fasting" />
-      <Stack.Screen name="training-journal" />
       <Stack.Screen name="nutrition-plan" />
       <Stack.Screen name="share-hub" />
       <Stack.Screen name="partners" />

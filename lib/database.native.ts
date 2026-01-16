@@ -575,6 +575,11 @@ export const getWeights = async (days?: number): Promise<Weight[]> => {
   return await database.getAllAsync<Weight>(query);
 };
 
+// Alias pour getAllWeights (utilisé par certains composants)
+export const getAllWeights = async (): Promise<Weight[]> => {
+  return getWeights(); // Retourne tous les poids sans limite de jours
+};
+
 export const getLatestWeight = async (): Promise<Weight | null> => {
   const database = await openDatabase();
   const result = await database.getFirstAsync<Weight>(
@@ -1424,7 +1429,7 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
 
-    logger.info('✅ Base de données SQLite réinitialisée (toutes les tables)');
+    logger.info('Base de données SQLite réinitialisée (toutes les tables)');
   } catch (error) {
     logger.error('❌ Erreur reset database:', error);
     throw error;

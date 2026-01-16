@@ -40,7 +40,7 @@ export function IMGCalculator({ visible, onClose }: Props) {
   };
 
   const getIMGCategory = (img: number): { label: string; color: string } => {
-    if (img === 0) return { label: 'Entrez vos donnees', color: colors.textMuted };
+    if (img === 0) return { label: 'Entre tes donnees', color: colors.textMuted };
     if (gender === 'male') {
       if (img < 10) return { label: 'Tres maigre', color: colors.info };
       if (img < 20) return { label: 'Athlete', color: colors.success };

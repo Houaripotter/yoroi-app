@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - MES COMPÉTITIONS
+// YOROI - MES COMPÉTITIONS
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -69,7 +69,7 @@ export default function CompetitionsScreen() {
 
       showPopup(
         'Importer les competitions',
-        `Voulez-vous importer ${available.total} competitions IBJJF et CFJJB ?\n\n` +
+        `Veux-tu importer ${available.total} compétitions IBJJF et CFJJB ?\n\n` +
         `- ${available.ibjjf} competitions IBJJF (2025-2026)\n` +
         `- ${available.cfjjb} competitions CFJJB (2026)`,
         [
@@ -146,7 +146,7 @@ export default function CompetitionsScreen() {
               ]}
             >
               <Text style={styles.sportEmoji}>
-                {SPORT_ICONS[competition.sport as keyof typeof SPORT_ICONS] || '⚔️'}
+                {SPORT_ICONS[competition.sport as keyof typeof SPORT_ICONS] || ''}
               </Text>
             </View>
             <View style={styles.cardHeaderInfo}>

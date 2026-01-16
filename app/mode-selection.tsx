@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - SÉLECTION DU MODE
+// YOROI - SÉLECTION DU MODE
 // ============================================
 
 import React, { useState } from 'react';

@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - DÉTAIL COMBAT
+// YOROI - DÉTAIL COMBAT
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -74,7 +74,7 @@ export default function CombatDetailScreen() {
   const handleDelete = () => {
     showPopup(
       'Supprimer le combat',
-      'Etes-vous sur de vouloir supprimer ce combat ? Cette action est irreversible.',
+      'Es-tu sur de vouloir supprimer ce combat ? Cette action est irreversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {

@@ -1,0 +1,431 @@
+// ============================================
+// PLANNING PAGE 5 - CLUB / SOCIAL
+// ============================================
+
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useTheme } from '@/lib/ThemeContext';
+import { Trophy, Users, Target, Crown, Medal, Award } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const CARD_PADDING = 16;
+
+interface PlanningPage5ClubProps {
+  leaderboard?: any[];
+  challenges?: any[];
+}
+
+export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
+  leaderboard = [],
+  challenges = [],
+}) => {
+  const { colors } = useTheme();
+
+  // Données d'exemple leaderboard
+  const topUsers = [
+    {
+      id: '1',
+      rank: 1,
+      name: 'Thomas Silva',
+      points: 2845,
+      isCurrentUser: true,
+    },
+    {
+      id: '2',
+      rank: 2,
+      name: 'Marie Dubois',
+      points: 2720,
+      isCurrentUser: false,
+    },
+    {
+      id: '3',
+      rank: 3,
+      name: 'Alex Martin',
+      points: 2650,
+      isCurrentUser: false,
+    },
+    {
+      id: '4',
+      rank: 4,
+      name: 'Sophie Laurent',
+      points: 2480,
+      isCurrentUser: false,
+    },
+    {
+      id: '5',
+      rank: 5,
+      name: 'Lucas Bernard',
+      points: 2350,
+      isCurrentUser: false,
+    },
+  ];
+
+  // Défis actifs
+  const activeChallenges = [
+    {
+      id: '1',
+      title: '100K Steps Challenge',
+      description: 'Faites 100,000 pas cette semaine',
+      progress: 65,
+      reward: 'Badge Marcheur',
+      daysLeft: 3,
+    },
+    {
+      id: '2',
+      title: 'Série de 7 Jours',
+      description: 'Entraînez-vous 7 jours consécutifs',
+      progress: 42,
+      reward: 'Badge Flamme',
+      daysLeft: 5,
+    },
+  ];
+
+  const getRankColor = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return ['#F59E0B', '#D97706'] as const;
+      case 2:
+        return ['#94A3B8', '#64748B'] as const;
+      case 3:
+        return ['#CD7F32', '#B87333'] as const;
+      default:
+        return ['#6366F1', '#4F46E5'] as const;
+    }
+  };
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return Crown;
+      case 2:
+        return Medal;
+      case 3:
+        return Award;
+      default:
+        return Trophy;
+    }
+  };
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled={true}
+    >
+      <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>
+        Club
+      </Text>
+
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        Classements et défis communautaires
+      </Text>
+
+      {/* Classement */}
+      <View style={styles.leaderboardSection}>
+        <View style={styles.sectionHeader}>
+          <Trophy size={20} color={colors.accent} strokeWidth={2} />
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Classement du Mois
+          </Text>
+        </View>
+
+        <View style={styles.leaderboardList}>
+          {topUsers.map((user) => {
+            const RankIcon = getRankIcon(user.rank);
+            const rankGradient = getRankColor(user.rank);
+
+            return (
+              <View
+                key={user.id}
+                style={[
+                  styles.leaderboardCard,
+                  {
+                    backgroundColor: user.isCurrentUser
+                      ? `${colors.accent}10`
+                      : colors.backgroundCard,
+                    borderWidth: user.isCurrentUser ? 2 : 0,
+                    borderColor: user.isCurrentUser ? colors.accent : 'transparent',
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={rankGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.rankBadge}
+                >
+                  <RankIcon size={18} color="#FFFFFF" strokeWidth={2.5} />
+                </LinearGradient>
+
+                <View style={styles.userInfo}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                    {user.name}
+                    {user.isCurrentUser && ' (Vous)'}
+                  </Text>
+                  <Text style={[styles.userPoints, { color: colors.textMuted }]}>
+                    {user.points.toLocaleString()} points
+                  </Text>
+                </View>
+
+                <Text style={[styles.rankNumber, { color: colors.textSecondary }]}>
+                  #{user.rank}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Défis actifs */}
+      <View style={styles.challengesSection}>
+        <View style={styles.sectionHeader}>
+          <Target size={20} color={colors.accent} strokeWidth={2} />
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Défis Actifs
+          </Text>
+        </View>
+
+        <View style={styles.challengesList}>
+          {activeChallenges.map((challenge) => (
+            <TouchableOpacity
+              key={challenge.id}
+              style={[styles.challengeCard, { backgroundColor: colors.backgroundCard }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>
+                {challenge.title}
+              </Text>
+              <Text style={[styles.challengeDesc, { color: colors.textSecondary }]}>
+                {challenge.description}
+              </Text>
+
+              {/* Progress bar */}
+              <View style={styles.challengeProgress}>
+                <View
+                  style={[
+                    styles.progressBarBg,
+                    { backgroundColor: `${colors.accent}20` },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={[colors.accent, `${colors.accent}CC`]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[
+                      styles.progressBarFill,
+                      { width: `${challenge.progress}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.progressText, { color: colors.textMuted }]}>
+                  {challenge.progress}%
+                </Text>
+              </View>
+
+              <View style={styles.challengeFooter}>
+                <Text style={[styles.challengeReward, { color: colors.accent }]}>
+                  {challenge.reward}
+                </Text>
+                <Text style={[styles.challengeDays, { color: colors.textMuted }]}>
+                  {challenge.daysLeft} jours restants
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Join Community CTA */}
+      <TouchableOpacity
+        style={[styles.communityCard, { backgroundColor: colors.backgroundCard }]}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#8B5CF6', '#7C3AED']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.communityIcon}
+        >
+          <Users size={24} color="#FFFFFF" strokeWidth={2.5} />
+        </LinearGradient>
+        <View style={styles.communityContent}>
+          <Text style={[styles.communityTitle, { color: colors.textPrimary }]}>
+            Rejoignez la communauté
+          </Text>
+          <Text style={[styles.communityDesc, { color: colors.textMuted }]}>
+            Participez aux défis et progressez ensemble
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 60,
+    paddingHorizontal: CARD_PADDING,
+    paddingBottom: 250,
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    letterSpacing: -1,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 24,
+  },
+  leaderboardSection: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  leaderboardList: {
+    gap: 12,
+  },
+  leaderboardCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  rankBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  userPoints: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  rankNumber: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  challengesSection: {
+    marginBottom: 24,
+  },
+  challengesList: {
+    gap: 16,
+  },
+  challengeCard: {
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  challengeTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  challengeDesc: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 16,
+  },
+  challengeProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'right',
+  },
+  challengeFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  challengeReward: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  challengeDays: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  communityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  communityIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  communityContent: {
+    flex: 1,
+  },
+  communityTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  communityDesc: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});

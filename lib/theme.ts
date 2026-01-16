@@ -482,7 +482,7 @@ export const COLOR_THEMES: Record<ColorThemeKey, ColorPalette> = {
   gold: {
     id: 'gold',
     name: 'Or Samouraï',
-    emoji: '⚔️',
+    emoji: '',
     primary: '#D4AF37',
     primaryLight: '#FFD700',
     primaryDark: '#B8860B',
@@ -494,7 +494,7 @@ export const COLOR_THEMES: Record<ColorThemeKey, ColorPalette> = {
   blue: {
     id: 'blue',
     name: 'Bleu Océan',
-    emoji: '🌊',
+    emoji: '',
     primary: '#3B82F6',
     primaryLight: '#60A5FA',
     primaryDark: '#2563EB',
@@ -506,7 +506,7 @@ export const COLOR_THEMES: Record<ColorThemeKey, ColorPalette> = {
   sakura: {
     id: 'sakura',
     name: 'Sakura',
-    emoji: '🌸',
+    emoji: '',
     primary: '#EC4899',
     primaryLight: '#F472B6',
     primaryDark: '#DB2777',
@@ -605,7 +605,7 @@ export const FULL_THEMES: Record<FullThemeKey, FullTheme> = {
   default: {
     id: 'default',
     name: 'Or Samourai',
-    emoji: '⚔️',
+    emoji: '',
     unlockCondition: null,
     background: '#0D0D0F',
     card: '#1E1E24',
@@ -623,7 +623,7 @@ export const FULL_THEMES: Record<FullThemeKey, FullTheme> = {
   midnight: {
     id: 'midnight',
     name: 'Minuit',
-    emoji: '🌙',
+    emoji: '',
     unlockCondition: {
       type: 'streak',
       value: 30,
@@ -689,7 +689,7 @@ export const FULL_THEMES: Record<FullThemeKey, FullTheme> = {
   ocean: {
     id: 'ocean',
     name: 'Ocean Profond',
-    emoji: '🌊',
+    emoji: '',
     unlockCondition: {
       type: 'measurements',
       value: 100,
@@ -711,7 +711,7 @@ export const FULL_THEMES: Record<FullThemeKey, FullTheme> = {
   neon: {
     id: 'neon',
     name: 'Neon',
-    emoji: '💜',
+    emoji: '',
     unlockCondition: {
       type: 'rank',
       value: 'sensei',

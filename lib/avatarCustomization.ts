@@ -94,7 +94,7 @@ export const AVATAR_FRAMES: Record<FrameType, AvatarElement> = {
   diamond: {
     id: 'diamond',
     name: 'Diamant',
-    emoji: '💎',
+    emoji: '',
     unlockCondition: {
       type: 'goal_reached',
       value: 1,
@@ -119,7 +119,7 @@ export const AVATAR_BACKGROUNDS: Record<BackgroundType, AvatarElement> = {
   flames: {
     id: 'flames',
     name: 'Flammes',
-    emoji: '🔥',
+    emoji: '',
     unlockCondition: {
       type: 'rank',
       value: 'ashigaru',
@@ -130,7 +130,7 @@ export const AVATAR_BACKGROUNDS: Record<BackgroundType, AvatarElement> = {
   lightning: {
     id: 'lightning',
     name: 'Eclairs',
-    emoji: '⚡',
+    emoji: '',
     unlockCondition: {
       type: 'rank',
       value: 'samurai',
@@ -144,8 +144,8 @@ export const AVATAR_BACKGROUNDS: Record<BackgroundType, AvatarElement> = {
     emoji: '🌌',
     unlockCondition: {
       type: 'rank',
-      value: 'sensei',
-      description: 'Rang Sensei',
+      value: 'shogun',
+      description: 'Rang Shōgun',
     },
     colors: ['#4C1D95', '#7C3AED', '#C084FC'],
   },
@@ -155,8 +155,8 @@ export const AVATAR_BACKGROUNDS: Record<BackgroundType, AvatarElement> = {
     emoji: '🐉',
     unlockCondition: {
       type: 'rank',
-      value: 'daimyo',
-      description: 'Rang Daimyo',
+      value: 'ronin',
+      description: 'Rang Rōnin',
     },
     colors: ['#DC2626', '#7F1D1D', '#FCA5A5'],
   },
@@ -170,13 +170,13 @@ export const AVATAR_EFFECTS: Record<EffectType, AvatarElement> = {
   none: {
     id: 'none',
     name: 'Aucun',
-    emoji: '✨',
+    emoji: '',
     unlockCondition: null,
   },
   gold_particles: {
     id: 'gold_particles',
     name: 'Particules dorees',
-    emoji: '🌟',
+    emoji: '',
     unlockCondition: {
       type: 'trainings',
       value: 100,
@@ -209,11 +209,11 @@ export const AVATAR_EFFECTS: Record<EffectType, AvatarElement> = {
   fire_aura: {
     id: 'fire_aura',
     name: 'Aura de feu',
-    emoji: '🔥',
+    emoji: '',
     unlockCondition: {
       type: 'rank',
-      value: 'daimyo',
-      description: 'Rang Daimyo',
+      value: 'ronin',
+      description: 'Rang Rōnin',
     },
     colors: ['#FF6B35', '#FF0000', '#FF4500'],
   },

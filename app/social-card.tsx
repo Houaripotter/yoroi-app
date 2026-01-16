@@ -24,7 +24,7 @@ import logger from '@/lib/security/logger';
 export default function SocialCardScreen() {
   const { colors } = useTheme();
   const [userName, setUserName] = useState('Guerrier');
-  const [rank, setRank] = useState({ name: 'Aspirant', icon: '🥋' });
+  const [rank, setRank] = useState({ name: 'Aspirant', icon: '' });
   const [stats, setStats] = useState({
     workouts: 0,
     streak: 0,

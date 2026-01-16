@@ -1,5 +1,5 @@
 // ============================================
-// ⚔️ YOROI - SERVICE APPARENCE & THÈMES
+// YOROI - SERVICE APPARENCE & THÈMES
 // ============================================
 // Gestion des préférences d'apparence utilisateur
 
@@ -40,7 +40,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'classic',
     description: 'Le style intemporel',
     unlockXP: 0, // GRATUIT
-    icon: '⬜',
+    icon: '',
   },
   {
     id: 'tiffany',
@@ -48,7 +48,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'tiffany',
     description: 'Élégance turquoise',
     unlockXP: 0, // GRATUIT
-    icon: '💎',
+    icon: '',
   },
 
   // === THÈMES PREMIUM (8 thèmes) ===
@@ -58,7 +58,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'volt',
     description: 'Énergie électrique',
     unlockXP: 1000,
-    icon: '⚡',
+    icon: '',
   },
   {
     id: 'magma',
@@ -66,7 +66,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'magma',
     description: 'Feu du combat',
     unlockXP: 2000,
-    icon: '🔥',
+    icon: '',
   },
   {
     id: 'sakura',
@@ -74,7 +74,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'sakura',
     description: 'Beauté du cerisier',
     unlockXP: 3000,
-    icon: '🌸',
+    icon: '',
   },
   {
     id: 'matrix',
@@ -82,7 +82,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'matrix',
     description: 'Vert cybernétique',
     unlockXP: 4000,
-    icon: '💚',
+    icon: '',
   },
   {
     id: 'blaze',
@@ -90,7 +90,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'blaze',
     description: 'Flammes orangées',
     unlockXP: 5000,
-    icon: '🟠',
+    icon: '',
   },
   {
     id: 'phantom',
@@ -98,7 +98,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'phantom',
     description: "L'ombre mystérieuse",
     unlockXP: 6000,
-    icon: '💜',
+    icon: '',
   },
   {
     id: 'ghost',
@@ -106,7 +106,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'ghost',
     description: "L'esprit minimaliste",
     unlockXP: 7000,
-    icon: '🤍',
+    icon: '',
   },
   {
     id: 'ocean',
@@ -114,7 +114,7 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     themeColor: 'ocean',
     description: 'Profondeur marine',
     unlockXP: 8000,
-    icon: '🌊',
+    icon: '',
   },
 ];
 
@@ -180,17 +180,17 @@ class AppearanceService {
   }
 
   // Vérifier si un thème guerrier est débloqué
-  // 🎁 TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
+  // TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
   isWarriorThemeUnlocked(themeId: string, userXP: number): boolean {
-    // 🎁 Pendant le développement, tous les thèmes sont débloqués
+    // Pendant le développement, tous les thèmes sont débloqués
     // Plus tard, remplacer par: return userXP >= theme.unlockXP;
     return true;
   }
 
   // Obtenir tous les thèmes guerriers débloqués
-  // 🎁 TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
+  // TOUS LES THÈMES DÉBLOQUÉS POUR LE DÉVELOPPEMENT
   getUnlockedWarriorThemes(userXP: number): WarriorTheme[] {
-    // 🎁 Pendant le développement, tous les thèmes sont débloqués
+    // Pendant le développement, tous les thèmes sont débloqués
     // Plus tard, remplacer par: return WARRIOR_THEMES.filter((theme) => userXP >= theme.unlockXP);
     return WARRIOR_THEMES;
   }

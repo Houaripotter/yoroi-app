@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: CONTAINER_PADDING,
-    paddingBottom: 40,
+    paddingBottom: 150,
   },
 
   // Period

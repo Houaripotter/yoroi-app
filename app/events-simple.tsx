@@ -1,5 +1,5 @@
 // ============================================
-// 🏆 OPTIMIZED EVENTS SCREEN - PRODUCTION READY
+// OPTIMIZED EVENTS SCREEN - PRODUCTION READY
 // ============================================
 // Performance: Handles 1,873 events smoothly
 // Features: Location filters, Add to Planning, Search
@@ -160,14 +160,14 @@ export default function EventsSimpleScreen() {
           newSet.delete(event.id);
           return newSet;
         });
-        showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de votre planning`, [
+        showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de ton planning`, [
           { text: 'OK', style: 'primary' }
         ]);
       } else {
         // Add to planning
         savedEvents.push(event);
         setSavedEventIds(prev => new Set(prev).add(event.id));
-        showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à votre planning`, [
+        showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à ton planning`, [
           { text: 'OK', style: 'primary' }
         ]);
       }
@@ -219,7 +219,7 @@ export default function EventsSimpleScreen() {
           {/* Header: Date + Sport Tag */}
           <View style={styles.eventHeader}>
             <Text style={[styles.eventDate, { color: colors.textSecondary }]}>
-              📅 {formattedDate}
+              {formattedDate}
             </Text>
             <View style={[styles.categoryBadge, { backgroundColor: colors.primary + '20' }]}>
               <Text style={[styles.categoryText, { color: colors.primary }]}>
@@ -292,7 +292,7 @@ export default function EventsSimpleScreen() {
         Aucun événement trouvé
       </Text>
       <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-        Essayez de modifier vos filtres ou votre recherche
+        Essaie de modifier tes filtres ou ton recherche
       </Text>
     </View>
   ), [colors]);
@@ -455,7 +455,7 @@ export default function EventsSimpleScreen() {
               { color: selectedCategory === 'combat' ? '#000000' : colors.text },
             ]}
           >
-            🥋 Combat ({eventCounts.combat})
+            Combat ({eventCounts.combat})
           </Text>
         </TouchableOpacity>
 
@@ -478,7 +478,7 @@ export default function EventsSimpleScreen() {
               { color: selectedCategory === 'endurance' ? '#000000' : colors.text },
             ]}
           >
-            🏃 Endurance ({eventCounts.endurance})
+            Endurance ({eventCounts.endurance})
           </Text>
         </TouchableOpacity>
       </View>

@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import logger from '@/lib/security/logger';
 
 /**
- * ✅ Génère un ID unique cryptographiquement sûr
+ * Génère un ID unique cryptographiquement sûr
  *
  * Format: timestamp-random (exemple: 1735567890123-a7b3c9d2e1f4)
  *
@@ -36,7 +36,7 @@ export async function generateSecureId(): Promise<string> {
 }
 
 /**
- * ⚠️ Fallback pour les environnements sans crypto
+ * Fallback pour les environnements sans crypto
  * (moins sûr, mais mieux que Math.random())
  */
 function generateFallbackId(): string {
@@ -49,7 +49,7 @@ function generateFallbackId(): string {
 }
 
 /**
- * ✅ Version synchrone (utilise le cache)
+ * Version synchrone (utilise le cache)
  *
  * Note: Préfère generateSecureId() pour la sécurité maximale
  */
@@ -64,7 +64,7 @@ export function generateSecureIdSync(): string {
 }
 
 /**
- * ✅ Génère un UUID v4 conforme au standard
+ * Génère un UUID v4 conforme au standard
  *
  * @returns UUID v4 (exemple: 550e8400-e29b-41d4-a716-446655440000)
  */
@@ -99,7 +99,7 @@ function generateFallbackUUID(): string {
 }
 
 /**
- * ✅ Génère un code court (pour partage, invitations, etc.)
+ * Génère un code court (pour partage, invitations, etc.)
  *
  * @param length Longueur du code (par défaut 8)
  * @returns Code alphanumérique (exemple: A7B3C9D2)
@@ -114,7 +114,7 @@ export async function generateShortCode(length: number = 8): Promise<string> {
 }
 
 /**
- * ✅ Génère un token de session sécurisé
+ * Génère un token de session sécurisé
  *
  * @param length Longueur en bytes (par défaut 32)
  * @returns Token hex de 64 caractères
@@ -128,7 +128,7 @@ export async function generateSecureToken(length: number = 32): Promise<string> 
 }
 
 /**
- * ✅ Valide un ID généré par generateSecureId()
+ * Valide un ID généré par generateSecureId()
  */
 export function isValidSecureId(id: string): boolean {
   // Format: timestamp-hexstring
@@ -152,7 +152,7 @@ export function isValidSecureId(id: string): boolean {
 }
 
 /**
- * ✅ Extrait le timestamp d'un ID sécurisé
+ * Extrait le timestamp d'un ID sécurisé
  */
 export function getTimestampFromId(id: string): number | null {
   if (!isValidSecureId(id)) return null;
@@ -162,7 +162,7 @@ export function getTimestampFromId(id: string): number | null {
 }
 
 /**
- * ✅ Génère un nonce pour les opérations cryptographiques
+ * Génère un nonce pour les opérations cryptographiques
  */
 export async function generateNonce(length: number = 16): Promise<string> {
   const randomBytes = await Crypto.getRandomBytesAsync(length);
@@ -178,7 +178,7 @@ const idCache = new Set<string>();
 const MAX_CACHE_SIZE = 10000;
 
 /**
- * ✅ Génère un ID avec garantie anti-collision
+ * Génère un ID avec garantie anti-collision
  */
 export async function generateUniqueId(): Promise<string> {
   let attempts = 0;
@@ -210,7 +210,7 @@ export async function generateUniqueId(): Promise<string> {
 }
 
 /**
- * ✅ EXEMPLE D'UTILISATION:
+ * EXEMPLE D'UTILISATION:
  *
  * // Générer un ID pour une mesure
  * const measurementId = await generateSecureId();

@@ -240,7 +240,7 @@ export const generateWeeklyPlan = (clubIds: number[]) => {
 // FONCTION POUR INSERER LES DONNEES DEMO
 // ═══════════════════════════════════════
 export const insertDemoData = async (): Promise<void> => {
-  logger.info('⚔️ Fonction insertDemoData désactivée - Aucune donnée de test insérée');
+  logger.info('Fonction insertDemoData désactivée - Aucune donnée de test insérée');
   logger.info('💡 Utilisez screenshotDemoData.ts pour charger les données de démo pour screenshots');
   // FONCTION DÉSACTIVÉE - Plus de données pré-enregistrées
   // Pour charger des données de démo, utilisez screenshotDemoData.ts
@@ -264,7 +264,7 @@ export const clearAllData = async (): Promise<void> => {
     await database.execAsync('DELETE FROM achievements');
     await database.execAsync('DELETE FROM profile');
 
-    logger.info('✅ Toutes les donnees ont ete supprimees');
+    logger.info('Toutes les donnees ont ete supprimees');
   } catch (error) {
     logger.error('❌ Erreur suppression:', error);
     throw error;

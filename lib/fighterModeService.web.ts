@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - SERVICE MODE FIGHTER (WEB STUB)
+// YOROI - SERVICE MODE FIGHTER (WEB STUB)
 // ============================================
 // Web version - SQLite not supported
 // All functions return empty data or throw not supported errors

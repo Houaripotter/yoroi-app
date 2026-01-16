@@ -181,7 +181,7 @@ export const StoryCard = forwardRef<View, StoryCardProps>(({ type, data }, ref) 
 
       {/* Badge Achievement */}
       <View style={styles.achievementContainer}>
-        <Text style={styles.achievementIcon}>{data.achievementIcon || '🏆'}</Text>
+        <Text style={styles.achievementIcon}>{data.achievementIcon || ''}</Text>
         <Text style={[styles.achievementTitle, { color: colors.background }]}>
           {data.achievementTitle || 'Nouveau Badge'}
         </Text>

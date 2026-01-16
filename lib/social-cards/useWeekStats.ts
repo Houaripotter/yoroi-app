@@ -273,43 +273,43 @@ function getEmojiForSport(sport: string): string {
   // Mappage des sports vers emojis
   const emojiMap: Record<string, string> = {
     // Arts martiaux
-    'jjb': '🥋',
-    'bjj': '🥋',
-    'jiu-jitsu': '🥋',
-    'judo': '🥋',
-    'karate': '🥋',
-    'taekwondo': '🥋',
-    'boxe': '🥊',
-    'muay thai': '🥊',
-    'mma': '🥊',
-    'kick boxing': '🥊',
+    'jjb': '',
+    'bjj': '',
+    'jiu-jitsu': '',
+    'judo': '',
+    'karate': '',
+    'taekwondo': '',
+    'boxe': '',
+    'muay thai': '',
+    'mma': '',
+    'kick boxing': '',
 
     // Musculation
-    'musculation': '💪',
-    'muscu': '💪',
-    'fitness': '💪',
-    'crossfit': '💪',
-    'haltérophilie': '🏋️',
+    'musculation': '',
+    'muscu': '',
+    'fitness': '',
+    'crossfit': '',
+    'haltérophilie': '',
 
     // Cardio
-    'course': '🏃',
-    'running': '🏃',
-    'trail': '🏃',
-    'vélo': '🚴',
-    'cyclisme': '🚴',
-    'natation': '🏊',
+    'course': '',
+    'running': '',
+    'trail': '',
+    'vélo': '',
+    'cyclisme': '',
+    'natation': '',
     'rameur': '🚣',
 
     // Sports collectifs
-    'football': '⚽',
-    'basket': '🏀',
-    'rugby': '🏉',
-    'tennis': '🎾',
-    'volleyball': '🏐',
+    'football': '',
+    'basket': '',
+    'rugby': '',
+    'tennis': '',
+    'volleyball': '',
 
     // Autres
-    'yoga': '🧘',
-    'escalade': '🧗',
+    'yoga': '',
+    'escalade': '',
     'danse': '💃',
     'marche': '🚶',
   };
@@ -322,5 +322,5 @@ function getEmojiForSport(sport: string): string {
   }
 
   // Par défaut
-  return '🏃';
+  return '';
 }

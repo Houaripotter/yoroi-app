@@ -124,7 +124,14 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
     };
   }, [currentCustomization]);
 
-  const avatarImage = avatarConfig ? getAvatarImage(avatarConfig.pack, avatarConfig.gender, avatarConfig.level) : null;
+  const avatarImage = avatarConfig
+    ? getAvatarImage(
+        avatarConfig.pack,
+        avatarConfig.packType === 'character' ? avatarConfig.state : undefined,
+        avatarConfig.collectionCharacter,
+        avatarConfig.gender
+      )
+    : null;
   const frame = AVATAR_FRAMES[currentCustomization.frame];
   const background = AVATAR_BACKGROUNDS[currentCustomization.background];
   const effect = AVATAR_EFFECTS[currentCustomization.effect];

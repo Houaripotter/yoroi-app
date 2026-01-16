@@ -1,5 +1,5 @@
 // ============================================
-// 🥋 YOROI - SERVICE IMPORT COMPÉTITIONS
+// YOROI - SERVICE IMPORT COMPÉTITIONS
 // ============================================
 // Import automatique des compétitions IBJJF et CFJJB
 
@@ -190,7 +190,7 @@ export const autoImportCompetitionsOnFirstLaunch = async (): Promise<boolean> =>
     // Marquer comme importé
     await AsyncStorage.setItem(COMPETITIONS_IMPORTED_KEY, 'true');
 
-    logger.info(`✅ Auto-import terminé: ${result.total} compétitions importées`);
+    logger.info(`Auto-import terminé: ${result.total} compétitions importées`);
     logger.info(`   IBJJF: ${result.ibjjf.imported} importées, ${result.ibjjf.skipped} déjà présentes`);
     logger.info(`   CFJJB: ${result.cfjjb.imported} importées, ${result.cfjjb.skipped} déjà présentes`);
 

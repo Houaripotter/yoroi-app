@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: isIPad() ? 0 : 16,
-    paddingBottom: 40,
+    paddingBottom: 150,
   },
 
   // Grille des métriques - IDENTIQUE à CompositionStats

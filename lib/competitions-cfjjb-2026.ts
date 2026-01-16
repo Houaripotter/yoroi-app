@@ -1,5 +1,5 @@
 // ============================================
-// 🥋 YOROI - COMPÉTITIONS CFJJB 2026
+// YOROI - COMPÉTITIONS CFJJB 2026
 // ============================================
 // Source : Confédération Française de Jiu-Jitsu Brésilien
 

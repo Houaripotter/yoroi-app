@@ -130,7 +130,7 @@ export default function MeasurementsDetailScreen() {
       {screenshotDetected && (
         <View style={styles.screenshotWarning}>
           <Text style={styles.screenshotWarningText}>
-            ⚠️ Screenshot détecté - Tes données sont sensibles
+            Screenshot détecté - Tes données sont sensibles
           </Text>
         </View>
       )}

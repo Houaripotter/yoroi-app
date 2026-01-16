@@ -1,13 +1,11 @@
 // ============================================
 // YOROI - GENERATEUR DE DONNEES DEMO V6
 // ============================================
-// Génère 6 mois de données ULTRA-REALISTES
-// Scénario : Perte de 18 kg (95 kg → 77 kg)
-// Clubs: Gracie Barra + Basic Fit + Marseille Fight Club
-// Avec logos, mensurations, planning, blessures...
+// DÉSACTIVÉ POUR PRODUCTION - Mode démo désactivé
+// Ce fichier est conservé pour référence uniquement
 
-import { openDatabase } from './database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { openDatabase } from '@/lib/database';
 import logger from '@/lib/security/logger';
 
 // ═══════════════════════════════════════════════
@@ -167,7 +165,7 @@ export const clearAllData = async (): Promise<void> => {
     await AsyncStorage.multiRemove(yoroiKeys);
   }
 
-  logger.info('✅ Toutes les données supprimées !');
+  logger.info('Toutes les données supprimées !');
 };
 
 // ═══════════════════════════════════════════════
@@ -191,7 +189,7 @@ const createProfile = async (): Promise<void> => {
     ]
   );
 
-  logger.info(`✅ Profil créé: ${DEMO_CONFIG.name}, ${DEMO_CONFIG.height}cm, objectif ${DEMO_CONFIG.targetWeight}kg`);
+  logger.info(`Profil créé: ${DEMO_CONFIG.name}, ${DEMO_CONFIG.height}cm, objectif ${DEMO_CONFIG.targetWeight}kg`);
 };
 
 // ═══════════════════════════════════════════════
@@ -225,7 +223,7 @@ const createClubs = async (): Promise<ClubIds> => {
     ['Marseille Fight Club', 'mma', 'marseille-fight-club', '#EF4444']
   );
 
-  logger.info(`✅ 3 clubs créés avec logos: Gracie Barra, Basic Fit, Marseille Fight Club`);
+  logger.info(`3 clubs créés avec logos: Gracie Barra, Basic Fit, Marseille Fight Club`);
 
   return {
     gracieBarra: gbResult.lastInsertRowId,
@@ -296,7 +294,7 @@ const generateWeights = async (): Promise<number> => {
     count++;
   }
 
-  logger.info(`✅ ${count} pesées générées (${DEMO_CONFIG.startWeight}kg → ${DEMO_CONFIG.endWeight}kg)`);
+  logger.info(`${count} pesées générées (${DEMO_CONFIG.startWeight}kg → ${DEMO_CONFIG.endWeight}kg)`);
   return count;
 };
 
@@ -342,7 +340,7 @@ const generateMeasurements = async (): Promise<number> => {
     count++;
   }
 
-  logger.info(`✅ ${count} mensurations générées (tour de taille: ${MEASUREMENTS_START.waist}cm → ${MEASUREMENTS_END.waist}cm)`);
+  logger.info(`${count} mensurations générées (tour de taille: ${MEASUREMENTS_START.waist}cm → ${MEASUREMENTS_END.waist}cm)`);
   return count;
 };
 
@@ -435,7 +433,7 @@ const generateTrainings = async (clubIds: ClubIds): Promise<number> => {
     }
   }
 
-  logger.info(`✅ ${count} entraînements générés (JJB + Musculation + MMA)`);
+  logger.info(`${count} entraînements générés (JJB + Musculation + MMA)`);
   return count;
 };
 
@@ -463,7 +461,7 @@ const generateWeeklyPlan = async (clubIds: ClubIds): Promise<number> => {
     );
   }
 
-  logger.info(`✅ Planning hebdomadaire créé (6 jours d'entraînement + 1 repos)`);
+  logger.info(`Planning hebdomadaire créé (6 jours d'entraînement + 1 repos)`);
   return plan.length;
 };
 
@@ -499,7 +497,7 @@ const generateAchievements = async (): Promise<number> => {
     );
   }
 
-  logger.info(`✅ ${achievements.length} badges débloqués`);
+  logger.info(`${achievements.length} badges débloqués`);
   return achievements.length;
 };
 
@@ -542,7 +540,7 @@ const saveToAsyncStorage = async (): Promise<void> => {
 
   await AsyncStorage.setItem('userSettings', JSON.stringify(settings));
 
-  logger.info('✅ Données synchronisées avec AsyncStorage');
+  logger.info('Données synchronisées avec AsyncStorage');
 };
 
 // ═══════════════════════════════════════════════
@@ -559,74 +557,18 @@ export interface DemoDataResult {
 }
 
 export const generateAllDemoData = async (): Promise<DemoDataResult> => {
-  try {
-    logger.info('\n========================================');
-    logger.info('🎌 GENERATION DES DONNEES DEMO V6');
-    logger.info(`📊 ${DEMO_CONFIG.startWeight}kg → ${DEMO_CONFIG.endWeight}kg en 6 mois`);
-    logger.info('🥋 Clubs: Gracie Barra + Basic Fit + MFC');
-    logger.info('========================================\n');
+  // DÉSACTIVÉ POUR PRODUCTION - Mode démo désactivé
+  logger.warn('Génération de données démo DÉSACTIVÉE pour la production');
+  logger.warn('Ce fichier est conservé pour référence uniquement');
 
-    // 1. Effacer toutes les données
-    logger.info('1/7 - Suppression des anciennes données...');
-    await clearAllData();
-
-    // 2. Créer le profil
-    logger.info('2/7 - Création du profil...');
-    await createProfile();
-
-    // 3. Créer les clubs avec logos
-    logger.info('3/7 - Création des clubs avec logos...');
-    const clubIds = await createClubs();
-
-    // 4. Générer les pesées
-    logger.info('4/7 - Génération des pesées (6 mois)...');
-    const weightsCount = await generateWeights();
-
-    // 5. Générer les mensurations
-    logger.info('5/7 - Génération des mensurations...');
-    const measurementsCount = await generateMeasurements();
-
-    // 6. Générer les entraînements
-    logger.info('6/7 - Génération des entraînements...');
-    const trainingsCount = await generateTrainings(clubIds);
-
-    // 7. Générer le planning hebdomadaire
-    logger.info('7/7 - Création du planning hebdomadaire...');
-    await generateWeeklyPlan(clubIds);
-
-    // 8. Générer les badges
-    const achievementsCount = await generateAchievements();
-
-    // 9. Synchroniser avec AsyncStorage
-    logger.info('Synchronisation AsyncStorage...');
-    await saveToAsyncStorage();
-
-    logger.info('\n========================================');
-    logger.info('✅ DONNEES DEMO GENEREES AVEC SUCCES !');
-    logger.info(`📊 Pesées: ${weightsCount}`);
-    logger.info(`📏 Mensurations: ${measurementsCount}`);
-    logger.info(`🏋️ Entraînements: ${trainingsCount}`);
-    logger.info(`🏆 Badges: ${achievementsCount}`);
-    logger.info('========================================\n');
-
-    return {
-      success: true,
-      weightsCount,
-      trainingsCount,
-      measurementsCount,
-      achievementsCount,
-    };
-  } catch (error) {
-    logger.error('❌ Erreur génération données démo:', error);
-    return {
-      success: false,
-      weightsCount: 0,
-      trainingsCount: 0,
-      measurementsCount: 0,
-      achievementsCount: 0,
-      error: error instanceof Error ? error.message : 'Erreur inconnue',
-    };
-  }
+  return {
+    success: false,
+    weightsCount: 0,
+    trainingsCount: 0,
+    measurementsCount: 0,
+    achievementsCount: 0,
+    error: 'Mode démo désactivé pour la production',
+  };
 };
 
 export const resetAndGenerateDemoData = async (): Promise<DemoDataResult> => {

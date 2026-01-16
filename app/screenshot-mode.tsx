@@ -57,7 +57,7 @@ export default function ScreenshotModeScreen() {
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 showPopup(
                   'Mode Screenshot activé !',
-                  'Toutes les données de démonstration ont été chargées.\n\nPoids actuel avec composition\nHydratation du jour\nSommeil d\'hier\nCharge actuelle\n90 jours d\'historique\nCompétitions à venir\nÉvénements sauvegardés\n\nTu peux maintenant prendre de beaux screenshots !',
+                  'TOUTES les données de démonstration ont été chargées :\n\n✅ 6 onglets Stats complets\n✅ Gamification (XP, badges, avatars, défis)\n✅ Compétitions & Palmares\n✅ Planning & Carnet\n✅ Apple Health (pas, calories, distance, FC)\n✅ Jeûne intermittent\n✅ Historique Timer\n✅ Photos transformation\n\nTu peux maintenant prendre de PARFAITS screenshots pour l\'App Store !',
                   [
                     {
                       text: 'OK',
@@ -383,18 +383,21 @@ export default function ScreenshotModeScreen() {
 
           <View style={styles.featuresList}>
             {[
-              { icon: '⚖️', text: 'Poids actuel avec composition (graisse, muscle, eau)' },
-              { icon: '💧', text: 'Hydratation du jour (2.8L / 3L)' },
-              { icon: '🌙', text: 'Sommeil d\'hier (7.5h, qualité 5/5)' },
-              { icon: '⚡', text: 'Charge actuelle (Optimal, 85%)' },
-              { icon: '📊', text: '90 jours d\'historique complet' },
-              { icon: '🏆', text: 'Compétitions à venir (Open JJB, HYROX)' },
-              { icon: '📅', text: 'Événements sportifs sauvegardés' },
-              { icon: '💪', text: 'Entraînements JJB, Muscu, MMA, Kung Fu' },
-              { icon: '🎯', text: 'Objectif de poids (77kg)' },
-              { icon: '🔥', text: 'Streak de 63 jours' },
-              { icon: '🏅', text: '24+ badges débloqués' },
-              { icon: '📸', text: '3 photos de transformation' },
+              { icon: '📊', text: '6 onglets Stats (Poids, Composition, Mensurations, Discipline, Performance, Vitalité)' },
+              { icon: '⚖️', text: '180 jours (6 mois) de pesées avec composition complète - Transformation visible!' },
+              { icon: '🏋️', text: 'Entraînements 4 clubs (JJB, Muscu, MMA, Grappling) avec logos' },
+              { icon: '📓', text: 'Carnet: 10 benchmarks + 9 techniques JJB' },
+              { icon: '🎮', text: 'Gamification: Grade Empereur, XP 9850, Niveau 24, Streak 178j' },
+              { icon: '🎭', text: '15 avatars débloqués (Ninja, Samurai, Boxer, etc.)' },
+              { icon: '🎖️', text: '24 badges + 3 défis quotidiens + 2 défis hebdo + 3 quêtes' },
+              { icon: '🏆', text: 'Compétitions: 2 à venir + 3 palmares (Bronze, Argent, HYROX)' },
+              { icon: '❤️', text: 'Apple Health: 180j pas (6000-18000), calories (350-1100), distance (5-15km), FC, SpO2, HRV' },
+              { icon: '💧', text: 'Hydratation: 30 jours (2.2-3.5L/jour, aujourd\'hui 3.2L/3.5L)' },
+              { icon: '😴', text: 'Sommeil: 180 nuits (7-9h, 26% profond, qualité 89%)' },
+              { icon: '🔋', text: 'Charge: 14 jours + Batterie 180j (optimal 92%)' },
+              { icon: '🍽️', text: 'Jeûne intermittent: 14 jours (16/8 et 18/6)' },
+              { icon: '⏱️', text: 'Timer: 8 sessions (Combat, HIIT, EMOM, AMRAP, Tabata)' },
+              { icon: '📸', text: '3 photos transformation + cartes de partage' },
             ].map((feature, index) => (
               <View key={index} style={styles.featureItem}>
                 <Text style={styles.featureIcon}>{feature.icon}</Text>

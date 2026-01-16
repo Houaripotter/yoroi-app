@@ -19,25 +19,32 @@ import {
   Droplets,
   Scale,
   Flame,
-  Clock,
-  Check,
   Share2,
-  Calendar,
   Sun,
   Brain,
   TrendingDown,
   BedDouble,
   AlertCircle,
+  Quote,
+  Sparkles,
+  ChevronRight,
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { notificationService, NotificationSettings } from '@/lib/notificationService';
+import {
+  getCitationNotifSettings,
+  setCitationNotifSettings,
+  CitationNotifSettings
+} from '@/lib/citations';
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
+  const [citationSettings, setCitationSettings] = useState<CitationNotifSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,25 +54,39 @@ export default function NotificationsScreen() {
   const loadSettings = async () => {
     await notificationService.initialize();
     setSettings(notificationService.getSettings());
+
+    const citationSett = await getCitationNotifSettings();
+    setCitationSettings(citationSett);
+
     setIsLoading(false);
   };
 
   const updateSetting = async (key: string, value: any) => {
     if (!settings) return;
-    
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     const newSettings = { ...settings };
-    
+
     if (key === 'enabled') {
       newSettings.enabled = value;
     } else if (key.includes('.')) {
       const [parent, child] = key.split('.');
       (newSettings as any)[parent][child] = value;
     }
-    
+
     setSettings(newSettings);
     await notificationService.updateSettings(newSettings);
+  };
+
+  const updateCitationSetting = async (key: keyof CitationNotifSettings, value: any) => {
+    if (!citationSettings) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const newSettings = { ...citationSettings, [key]: value };
+    setCitationSettings(newSettings);
+    await setCitationNotifSettings(newSettings);
   };
 
   const testNotification = async (type: string) => {
@@ -95,10 +116,10 @@ export default function NotificationsScreen() {
         break;
     }
 
-    showPopup('Notification envoyee', 'Tu devrais la recevoir dans quelques secondes.');
+    showPopup('Notification envoyée', 'Tu devrais la recevoir dans quelques secondes.', [{ text: 'OK', style: 'primary' }]);
   };
 
-  if (isLoading || !settings) {
+  if (isLoading || !settings || !citationSettings) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: 50 }}>
@@ -107,6 +128,15 @@ export default function NotificationsScreen() {
       </View>
     );
   }
+
+  const getFrequencyText = (freq: number) => {
+    switch (freq) {
+      case 1: return '1× par jour (matin)';
+      case 2: return '2× par jour (matin, soir)';
+      case 3: return '3× par jour (matin, midi, soir)';
+      default: return '1× par jour';
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -122,21 +152,108 @@ export default function NotificationsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        
-        {/* Master toggle */}
-        <View style={[styles.masterCard, { backgroundColor: settings.enabled ? `${colors.accent}15` : colors.backgroundCard }]}>
+
+        {/* CITATIONS - ACTIVÉ PAR DÉFAUT */}
+        <View style={styles.recommendedBadge}>
+          <Sparkles size={14} color={colors.accent} />
+          <Text style={[styles.recommendedText, { color: colors.accent }]}>
+            RECOMMANDÉ
+          </Text>
+        </View>
+
+        <LinearGradient
+          colors={citationSettings.enabled
+            ? [isDark ? '#D4AF3720' : '#D4AF3710', isDark ? '#D4AF3710' : '#D4AF3705']
+            : [colors.backgroundCard, colors.backgroundCard]
+          }
+          style={[styles.featuredCard, { borderColor: citationSettings.enabled ? colors.accent : colors.border }]}
+        >
+          <View style={styles.featuredHeader}>
+            <View style={styles.featuredLeft}>
+              <View style={[styles.featuredIconBg, { backgroundColor: `${colors.accent}20` }]}>
+                <Quote size={24} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={[styles.featuredTitle, { color: colors.textPrimary }]}>
+                    Citations motivantes
+                  </Text>
+                  <View style={[styles.activeBadge, { backgroundColor: citationSettings.enabled ? '#10B98120' : colors.border }]}>
+                    <Text style={[styles.activeBadgeText, { color: citationSettings.enabled ? '#10B981' : colors.textMuted }]}>
+                      {citationSettings.enabled ? 'Activé' : 'Désactivé'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.featuredSubtitle, { color: colors.textSecondary }]}>
+                  {getFrequencyText(citationSettings.frequency)}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={citationSettings.enabled}
+              onValueChange={(v) => updateCitationSetting('enabled', v)}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {citationSettings.enabled && (
+            <View style={[styles.featuredOptions, { borderTopColor: colors.border }]}>
+              <Text style={[styles.optionLabel, { color: colors.textMuted }]}>Fréquence</Text>
+              <View style={styles.frequencyButtons}>
+                {[1, 2, 3].map((freq) => (
+                  <TouchableOpacity
+                    key={freq}
+                    style={[
+                      styles.frequencyBtn,
+                      {
+                        backgroundColor: citationSettings.frequency === freq ? colors.accent : colors.backgroundCard,
+                        borderColor: citationSettings.frequency === freq ? colors.accent : colors.border,
+                      }
+                    ]}
+                    onPress={() => updateCitationSetting('frequency', freq)}
+                  >
+                    <Text style={[
+                      styles.frequencyBtnText,
+                      { color: citationSettings.frequency === freq ? colors.textOnGold : colors.textSecondary }
+                    ]}>
+                      {freq}×
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
+            <Sparkles size={14} color={colors.textMuted} />
+            <Text style={[styles.infoText, { color: colors.textMuted }]}>
+              Reçois des citations inspirantes pour rester motivé tout au long de la journée
+            </Text>
+          </View>
+        </LinearGradient>
+
+        {/* AUTRES NOTIFICATIONS */}
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.textMuted }]}>Autres notifications</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        </View>
+
+        {/* Master toggle pour autres notifications */}
+        <View style={[styles.masterCard, { backgroundColor: settings.enabled ? `${colors.accent}08` : colors.backgroundCard, borderColor: colors.border }]}>
           <View style={styles.masterLeft}>
             {settings.enabled ? (
-              <Bell size={28} color={colors.accent} />
+              <Bell size={24} color={colors.accent} />
             ) : (
-              <BellOff size={28} color={colors.textMuted} />
+              <BellOff size={24} color={colors.textMuted} />
             )}
             <View>
               <Text style={[styles.masterTitle, { color: colors.textPrimary }]}>
-                Notifications
+                Rappels optionnels
               </Text>
-              <Text style={[styles.masterStatus, { color: settings.enabled ? colors.accent : colors.textMuted }]}>
-                {settings.enabled ? 'Activées' : 'Désactivées'}
+              <Text style={[styles.masterStatus, { color: settings.enabled ? colors.textSecondary : colors.textMuted }]}>
+                {settings.enabled ? 'Activés - Choisis ce que tu veux' : 'Tout est désactivé'}
               </Text>
             </View>
           </View>
@@ -150,18 +267,18 @@ export default function NotificationsScreen() {
 
         {settings.enabled && (
           <>
-            {/* Rappels entraînement */}
+            {/* Entraînement */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              RAPPELS ENTRAÎNEMENT
+              ENTRAÎNEMENT
             </Text>
-            
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#8B5CF615' }]}>
                     <Dumbbell size={18} color="#8B5CF6" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
                       Rappel quotidien
                     </Text>
@@ -177,31 +294,33 @@ export default function NotificationsScreen() {
                   thumbColor="#FFFFFF"
                 />
               </View>
-              
-              <TouchableOpacity 
-                style={[styles.testBtn, { borderColor: colors.border }]}
-                onPress={() => testNotification('training')}
-              >
-                <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                  Tester cette notification
-                </Text>
-              </TouchableOpacity>
+
+              {settings.training.enabled && (
+                <TouchableOpacity
+                  style={[styles.testBtn, { borderColor: colors.border }]}
+                  onPress={() => testNotification('training')}
+                >
+                  <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                    Tester cette notification
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            {/* Rappels hydratation */}
+            {/* Hydratation */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              RAPPELS HYDRATATION
+              SANTÉ
             </Text>
-            
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#06B6D415' }]}>
                     <Droplets size={18} color="#06B6D4" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Rappels eau
+                      Rappels hydratation
                     </Text>
                     <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
                       Toutes les {settings.hydration.interval}h • {settings.hydration.startTime}-{settings.hydration.endTime}
@@ -215,29 +334,26 @@ export default function NotificationsScreen() {
                   thumbColor="#FFFFFF"
                 />
               </View>
-              
-              <TouchableOpacity 
-                style={[styles.testBtn, { borderColor: colors.border }]}
-                onPress={() => testNotification('hydration')}
-              >
-                <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                  Tester cette notification
-                </Text>
-              </TouchableOpacity>
+
+              {settings.hydration.enabled && (
+                <TouchableOpacity
+                  style={[styles.testBtn, { borderColor: colors.border }]}
+                  onPress={() => testNotification('hydration')}
+                >
+                  <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                    Tester cette notification
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            {/* Rappels pesée */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              RAPPELS PESÉE
-            </Text>
-            
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#10B98115' }]}>
                     <Scale size={18} color="#10B981" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
                       Rappel pesée
                     </Text>
@@ -255,20 +371,20 @@ export default function NotificationsScreen() {
               </View>
             </View>
 
-            {/* Protection streak */}
+            {/* Motivation */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              PROTECTION STREAK
+              MOTIVATION
             </Text>
 
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#F9731615' }]}>
                     <Flame size={18} color="#F97316" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Alerte streak
+                      Protection série
                     </Text>
                     <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
                       {settings.streak.time} • Si pas entraîné
@@ -283,131 +399,135 @@ export default function NotificationsScreen() {
                 />
               </View>
 
-              <TouchableOpacity
-                style={[styles.testBtn, { borderColor: colors.border }]}
-                onPress={() => testNotification('streak')}
-              >
-                <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                  Tester cette notification
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Cartes sociales */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              CARTES RÉSEAUX SOCIAUX
-            </Text>
-
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
-              <View style={styles.row}>
-                <View style={styles.rowLeft}>
-                  <View style={[styles.iconBg, { backgroundColor: '#EC489915' }]}>
-                    <Share2 size={18} color="#EC4899" />
-                  </View>
-                  <View>
-                    <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Rappels partage
-                    </Text>
-                    <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
-                      Dimanche + 1er du mois • {settings.socialCards?.weeklyTime || '10:00'}
-                    </Text>
-                  </View>
-                </View>
-                <Switch
-                  value={settings.socialCards?.enabled ?? true}
-                  onValueChange={(v) => updateSetting('socialCards.enabled', v)}
-                  trackColor={{ false: colors.border, true: '#EC4899' }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-
-              <View style={[styles.infoBox, { backgroundColor: colors.background }]}>
-                <Calendar size={14} color={colors.textMuted} />
-                <Text style={[styles.infoText, { color: colors.textMuted }]}>
-                  Chaque dimanche : carte hebdo{'\n'}
-                  Chaque 1er du mois : carte mensuelle
-                </Text>
-              </View>
-
-              <View style={styles.testBtnRow}>
+              {settings.streak.enabled && (
                 <TouchableOpacity
-                  style={[styles.testBtnSmall, { borderColor: colors.border }]}
-                  onPress={() => testNotification('social_weekly')}
+                  style={[styles.testBtn, { borderColor: colors.border }]}
+                  onPress={() => testNotification('streak')}
                 >
                   <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                    Test hebdo
+                    Tester cette notification
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.testBtnSmall, { borderColor: colors.border }]}
-                  onPress={() => testNotification('social_monthly')}
-                >
-                  <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                    Test mensuel
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              )}
             </View>
 
-            {/* Briefing du matin */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              BRIEFING DU MATIN
-            </Text>
-
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#F5920015' }]}>
                     <Sun size={18} color="#F59200" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Résumé quotidien
+                      Briefing matinal
                     </Text>
                     <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
-                      {settings.briefing?.time || '07:30'} • Tous les jours
+                      {settings.briefing?.time || '07:30'} • Résumé quotidien
                     </Text>
                   </View>
                 </View>
                 <Switch
-                  value={settings.briefing?.enabled ?? true}
+                  value={settings.briefing?.enabled ?? false}
                   onValueChange={(v) => updateSetting('briefing.enabled', v)}
                   trackColor={{ false: colors.border, true: '#F59200' }}
                   thumbColor="#FFFFFF"
                 />
               </View>
 
-              <View style={[styles.infoBox, { backgroundColor: colors.background }]}>
-                <Sun size={14} color={colors.textMuted} />
-                <Text style={[styles.infoText, { color: colors.textMuted }]}>
-                  Chaque matin : streak, rang, poids, entraînements prévus + message motivant
-                </Text>
-              </View>
+              {settings.briefing?.enabled && (
+                <>
+                  <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
+                    <Sun size={14} color={colors.textMuted} />
+                    <Text style={[styles.infoText, { color: colors.textMuted }]}>
+                      Chaque matin : série, poids, entraînements prévus + message motivant
+                    </Text>
+                  </View>
 
-              <TouchableOpacity
-                style={[styles.testBtn, { borderColor: colors.border }]}
-                onPress={() => testNotification('briefing')}
-              >
-                <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                  Tester le briefing
-                </Text>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.testBtn, { borderColor: colors.border }]}
+                    onPress={() => testNotification('briefing')}
+                  >
+                    <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                      Tester le briefing
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
 
-            {/* Rappels intelligents */}
+            {/* Partage */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              RAPPELS INTELLIGENTS
+              PARTAGE
             </Text>
 
-            <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <View style={[styles.iconBg, { backgroundColor: '#EC489915' }]}>
+                    <Share2 size={18} color="#EC4899" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                      Rappels cartes sociales
+                    </Text>
+                    <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
+                      Dimanche + 1er du mois
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={settings.socialCards?.enabled ?? false}
+                  onValueChange={(v) => updateSetting('socialCards.enabled', v)}
+                  trackColor={{ false: colors.border, true: '#EC4899' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {settings.socialCards?.enabled && (
+                <>
+                  <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
+                    <Share2 size={14} color={colors.textMuted} />
+                    <Text style={[styles.infoText, { color: colors.textMuted }]}>
+                      Te rappelle de partager tes progrès hebdo et mensuels
+                    </Text>
+                  </View>
+
+                  <View style={styles.testBtnRow}>
+                    <TouchableOpacity
+                      style={[styles.testBtnSmall, { borderColor: colors.border }]}
+                      onPress={() => testNotification('social_weekly')}
+                    >
+                      <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                        Test hebdo
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.testBtnSmall, { borderColor: colors.border }]}
+                      onPress={() => testNotification('social_monthly')}
+                    >
+                      <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                        Test mensuel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
+
+            {/* Avancé */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              AVANCÉ
+            </Text>
+
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
               <View style={styles.row}>
                 <View style={styles.rowLeft}>
                   <View style={[styles.iconBg, { backgroundColor: '#8B5CF615' }]}>
                     <Brain size={18} color="#8B5CF6" />
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
-                      Rappels adaptatifs
+                      Rappels intelligents
                     </Text>
                     <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
                       S'adaptent à tes habitudes
@@ -415,7 +535,7 @@ export default function NotificationsScreen() {
                   </View>
                 </View>
                 <Switch
-                  value={settings.smartReminders?.enabled ?? true}
+                  value={settings.smartReminders?.enabled ?? false}
                   onValueChange={(v) => updateSetting('smartReminders.enabled', v)}
                   trackColor={{ false: colors.border, true: '#8B5CF6' }}
                   thumbColor="#FFFFFF"
@@ -424,9 +544,7 @@ export default function NotificationsScreen() {
 
               {settings.smartReminders?.enabled && (
                 <>
-                  {/* Options détaillées */}
                   <View style={[styles.subOptions, { borderTopColor: colors.border }]}>
-                    {/* Alerte jour habituel */}
                     <View style={styles.subOption}>
                       <View style={styles.subOptionLeft}>
                         <AlertCircle size={16} color={colors.textMuted} />
@@ -435,7 +553,7 @@ export default function NotificationsScreen() {
                         </Text>
                       </View>
                       <Switch
-                        value={settings.smartReminders?.missedTrainingAlert ?? true}
+                        value={settings.smartReminders?.missedTrainingAlert ?? false}
                         onValueChange={(v) => updateSetting('smartReminders.missedTrainingAlert', v)}
                         trackColor={{ false: colors.border, true: '#8B5CF6' }}
                         thumbColor="#FFFFFF"
@@ -443,7 +561,6 @@ export default function NotificationsScreen() {
                       />
                     </View>
 
-                    {/* Suggestion repos */}
                     <View style={styles.subOption}>
                       <View style={styles.subOptionLeft}>
                         <BedDouble size={16} color={colors.textMuted} />
@@ -452,7 +569,7 @@ export default function NotificationsScreen() {
                         </Text>
                       </View>
                       <Switch
-                        value={settings.smartReminders?.restDaySuggestion ?? true}
+                        value={settings.smartReminders?.restDaySuggestion ?? false}
                         onValueChange={(v) => updateSetting('smartReminders.restDaySuggestion', v)}
                         trackColor={{ false: colors.border, true: '#8B5CF6' }}
                         thumbColor="#FFFFFF"
@@ -460,7 +577,6 @@ export default function NotificationsScreen() {
                       />
                     </View>
 
-                    {/* Alerte fréquence */}
                     <View style={styles.subOption}>
                       <View style={styles.subOptionLeft}>
                         <TrendingDown size={16} color={colors.textMuted} />
@@ -469,7 +585,7 @@ export default function NotificationsScreen() {
                         </Text>
                       </View>
                       <Switch
-                        value={settings.smartReminders?.frequencyAlert ?? true}
+                        value={settings.smartReminders?.frequencyAlert ?? false}
                         onValueChange={(v) => updateSetting('smartReminders.frequencyAlert', v)}
                         trackColor={{ false: colors.border, true: '#8B5CF6' }}
                         thumbColor="#FFFFFF"
@@ -477,32 +593,34 @@ export default function NotificationsScreen() {
                       />
                     </View>
                   </View>
+
+                  <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
+                    <Brain size={14} color={colors.textMuted} />
+                    <Text style={[styles.infoText, { color: colors.textMuted }]}>
+                      Analyse tes 60 derniers jours pour t'envoyer des rappels personnalisés
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.testBtn, { borderColor: colors.border }]}
+                    onPress={() => testNotification('smart')}
+                  >
+                    <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
+                      Voir mon analyse
+                    </Text>
+                  </TouchableOpacity>
                 </>
               )}
-
-              <View style={[styles.infoBox, { backgroundColor: colors.background }]}>
-                <Brain size={14} color={colors.textMuted} />
-                <Text style={[styles.infoText, { color: colors.textMuted }]}>
-                  Analyse tes 60 derniers jours pour détecter tes habitudes et t'envoyer des rappels personnalisés
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.testBtn, { borderColor: colors.border }]}
-                onPress={() => testNotification('smart')}
-              >
-                <Text style={[styles.testBtnText, { color: colors.textMuted }]}>
-                  Voir mon analyse
-                </Text>
-              </TouchableOpacity>
             </View>
           </>
         )}
 
-        {/* Note */}
-        <Text style={[styles.note, { color: colors.textMuted }]}>
-          💡 Les notifications t'aident à rester régulier et à ne pas oublier de t'hydrater ou de t'entraîner.
-        </Text>
+        {/* Note finale */}
+        <View style={[styles.finalNote, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
+          <Text style={[styles.finalNoteText, { color: colors.textMuted }]}>
+            💡 Active uniquement les notifications qui t'aident vraiment. Moins c'est souvent mieux !
+          </Text>
+        </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -529,32 +647,156 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: '800' },
   content: { paddingHorizontal: 16, paddingTop: 8 },
-  
+
+  recommendedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  recommendedText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+
+  featuredCard: {
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 16,
+    marginBottom: 24,
+  },
+  featuredHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  featuredLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    flex: 1,
+  },
+  featuredIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featuredTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  featuredSubtitle: {
+    fontSize: 13,
+    marginTop: 3,
+  },
+  activeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  activeBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
+  featuredOptions: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  optionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  frequencyBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  frequencyBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
   masterCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 24,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 20,
   },
-  masterLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  masterTitle: { fontSize: 18, fontWeight: '700' },
-  masterStatus: { fontSize: 13, marginTop: 2 },
-  
-  sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 10 },
-  
-  card: { borderRadius: 14, padding: 16, marginBottom: 16 },
+  masterLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  masterTitle: { fontSize: 16, fontWeight: '700' },
+  masterStatus: { fontSize: 12, marginTop: 2 },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+
+  card: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  iconBg: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  iconBg: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowTitle: { fontSize: 15, fontWeight: '600' },
   rowSubtitle: { fontSize: 12, marginTop: 2 },
-  
+
   testBtn: {
     marginTop: 12,
     paddingVertical: 10,
@@ -581,17 +823,18 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
   },
   infoText: {
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
     flex: 1,
   },
   subOptions: {
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
+    gap: 2,
   },
   subOption: {
     flexDirection: 'row',
@@ -609,12 +852,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  note: {
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-    fontStyle: 'italic',
+  finalNote: {
+    padding: 16,
+    borderRadius: 12,
     marginTop: 8,
   },
+  finalNoteText: {
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
 });
-

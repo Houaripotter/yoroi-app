@@ -114,19 +114,20 @@ export const COACHES: Coach[] = [
     imageUrl: require('@/assets/partenaires/kines/younes.jpg'),
     featured: true,
   },
-  {
-    id: 'ludovic-fontaine',
-    name: 'Ludovic Fontaine',
-    title: 'Head Trainer',
-    type: 'coach',
-    specialties: ['Remise en forme', 'Perte de poids', 'Renforcement musculaire'],
-    location: 'Marseille',
-    bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !\n\nDiplômes et certifications :\n- BPJEPS AF\n- Assurance RC Pro: 2872626904\n- Carte Pro: 09209ED0095',
-    instagram: '@ludocoach_marseille',
-    phone: '06.42.19.74.80',
-    imageUrl: require('@/assets/partenaires/coachs/ludovicfontaine.png'),
-    featured: false,
-  },
+  // TEMPORAIREMENT MASQUÉ
+  // {
+  //   id: 'ludovic-fontaine',
+  //   name: 'Ludovic Fontaine',
+  //   title: 'Head Trainer',
+  //   type: 'coach',
+  //   specialties: ['Remise en forme', 'Perte de poids', 'Renforcement musculaire'],
+  //   location: 'Marseille',
+  //   bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !\n\nDiplômes et certifications :\n- BPJEPS AF\n- Assurance RC Pro: 2872626904\n- Carte Pro: 09209ED0095',
+  //   instagram: '@ludocoach_marseille',
+  //   phone: '06.42.19.74.80',
+  //   imageUrl: require('@/assets/partenaires/coachs/ludovicfontaine.png'),
+  //   featured: false,
+  // },
 ];
 
 // ═══════════════════════════════════════════════

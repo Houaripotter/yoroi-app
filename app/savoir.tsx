@@ -344,7 +344,7 @@ const protocolData: ProtocolCard[] = [
         "Retour au calme : 2-3 min de marche"
       ],
       frequency: "2-3x par semaine (pas de jours consécutifs)",
-      notes: "⚠️ Nécessite une bonne condition physique. Échauffement obligatoire 5-10 min."
+      notes: "Nécessite une bonne condition physique. Échauffement obligatoire 5-10 min."
     }
   },
   {
@@ -504,7 +504,7 @@ const protocolData: ProtocolCard[] = [
         "Casse le jeûne avec des protéines + légumes"
       ],
       frequency: "5-7 jours par semaine",
-      notes: "⚠️ Consulte un médecin si tu as des problèmes de santé. Hydrate-toi bien."
+      notes: "Consulte un médecin si tu as des problèmes de santé. Hydrate-toi bien."
     }
   },
   {
@@ -587,7 +587,7 @@ const protocolData: ProtocolCard[] = [
         "5-10 min de respiration diaphragmatique ou méditation"
       ],
       frequency: "Tous les soirs",
-      notes: "⚠️ Dormir < 8h = risque de blessure x1.7 (Milewski et al., 2014)"
+      notes: "Dormir < 8h = risque de blessure x1.7 (Milewski et al., 2014)"
     }
   },
   {

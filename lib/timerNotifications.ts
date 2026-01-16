@@ -109,7 +109,7 @@ class TimerNotificationsService {
    */
   async notifyRestFinished(): Promise<void> {
     await this.scheduleTimerFinishedNotification(
-      '💪 Repos terminé !',
+      'Repos terminé !',
       'Go go go ! Prochaine série !',
       0 // Immédiat
     );
@@ -124,7 +124,7 @@ class TimerNotificationsService {
       : 'Dernier round terminé ! Bravo !';
 
     await this.scheduleTimerFinishedNotification(
-      '🥋 Round terminé',
+      'Round terminé',
       message,
       0
     );
@@ -135,17 +135,17 @@ class TimerNotificationsService {
    */
   async notifyWorkoutFinished(mode: string): Promise<void> {
     const titles: Record<string, string> = {
-      musculation: '💪 Entraînement terminé !',
-      combat: '🥋 Combat terminé !',
-      tabata: '⚡ Tabata terminé !',
+      musculation: 'Entraînement terminé !',
+      combat: 'Combat terminé !',
+      tabata: 'Tabata terminé !',
       emom: '🔄 EMOM terminé !',
-      amrap: '🔥 AMRAP terminé !',
+      amrap: 'AMRAP terminé !',
       fortime: '⏱️ For Time terminé !',
     };
 
     await this.scheduleTimerFinishedNotification(
-      titles[mode] || '🏆 Entraînement terminé !',
-      'Excellent travail ! 💪',
+      titles[mode] || 'Entraînement terminé !',
+      'Excellent travail !',
       0
     );
   }

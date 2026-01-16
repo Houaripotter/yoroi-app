@@ -55,7 +55,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
     description: '5 pesées cette semaine',
     target: 5,
     xpReward: 100,
-    icon: '📊',
+    icon: '',
     color: '#3B82F6',
   },
   warrior: {
@@ -65,7 +65,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
     description: '4 entraînements cette semaine',
     target: 4,
     xpReward: 150,
-    icon: '⚔️',
+    icon: '',
     color: '#EF4444',
   },
   complete: {
@@ -75,7 +75,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
     description: 'Pesée + mensurations + entraînement',
     target: 3, // 3 types d'actions
     xpReward: 200,
-    icon: '🏆',
+    icon: '',
     color: '#F59E0B',
   },
   streak: {
@@ -85,7 +85,7 @@ export const CHALLENGES: Record<ChallengeType, Challenge> = {
     description: 'Maintenir 7 jours de streak',
     target: 7,
     xpReward: 250,
-    icon: '🔥',
+    icon: '',
     color: '#F97316',
   },
   photo: {

@@ -91,7 +91,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
         <View style={styles.statItem}>
           <View style={styles.statHeader}>
-            <Text style={styles.statIcon}>🔥</Text>
+            <Text style={styles.statIcon}></Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
               Kcal
             </Text>

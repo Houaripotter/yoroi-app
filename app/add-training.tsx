@@ -8,7 +8,9 @@ import {
   TextInput,
   Platform,
   Image,
+  Animated,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,11 +20,13 @@ import {
   Calendar as CalendarIcon,
   Clock,
   ChevronDown,
+  ChevronRight,
   Dumbbell,
   Check,
   Home,
   Plus,
   Star,
+  Zap,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -32,10 +36,13 @@ import { useBadges } from '@/lib/BadgeContext';
 import { addTraining, getClubs, Club, Exercise } from '@/lib/database';
 import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Dimensions } from 'react-native';
 
 // Constants for non-theme values
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
 const RADIUS = { sm: 8, md: 12 };
-const SPACING = { sm: 8, md: 12, lg: 16, xl: 20 };
+const SPACING = { sm: 8, md: 12, lg: IS_SMALL_SCREEN ? 12 : 16, xl: IS_SMALL_SCREEN ? 16 : 20 }; // Adaptive spacing
 const FONT_SIZE = { xs: 12, sm: 13, md: 14, lg: 16, xl: 18, xxl: 20, display: 28 };
 import { successHaptic, errorHaptic } from '@/lib/haptics';
 import { backupReminderService } from '@/lib/backupReminderService';
@@ -45,10 +52,346 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
+import HealthConnect from '@/lib/healthConnect.ios';
+import { SharePromptModal } from '@/components/SharePromptModal';
 
 // ============================================
-// NOUVEL ENTRAINEMENT
+// NOUVEL ENTRAINEMENT - VERSION SIMPLIFIEE
 // ============================================
+
+const LAST_SPORT_KEY = 'yoroi_last_sport';
+const LAST_DURATION_KEY = 'yoroi_last_duration';
+
+// ============================================
+// SOUS-OPTIONS PAR SPORT
+// ============================================
+type SportOption = {
+  id: string;
+  label: string;
+  icon?: string;
+  color?: string;
+};
+
+const SPORT_OPTIONS: Record<string, SportOption[]> = {
+  // ═══════════════════════════════════════════
+  // COMBAT - GRAPPLING (10+ options chacun)
+  // ═══════════════════════════════════════════
+  jjb: [
+    { id: 'drill', label: 'Drill', icon: 'refresh', color: '#3B82F6' },
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#8B5CF6' },
+    { id: 'positional', label: 'Positionnement', icon: 'target', color: '#F59E0B' },
+    { id: 'guard', label: 'Travail de garde', icon: 'shield', color: '#06B6D4' },
+    { id: 'sweeps', label: 'Sweeps', icon: 'rotate-left', color: '#10B981' },
+    { id: 'submissions', label: 'Soumissions', icon: 'hand-back-left', color: '#EC4899' },
+    { id: 'passes', label: 'Passages de garde', icon: 'arrow-right-bold', color: '#84CC16' },
+    { id: 'takedowns', label: 'Takedowns', icon: 'arrow-down-bold', color: '#F97316' },
+    { id: 'escapes', label: 'Escapes', icon: 'exit-run', color: '#14B8A6' },
+    { id: 'competition', label: 'Competition', icon: 'trophy', color: '#EAB308' },
+    { id: 'nogi', label: 'No-Gi', icon: 'tshirt-crew', color: '#6366F1' },
+  ],
+  judo: [
+    { id: 'randori', label: 'Randori', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'uchikomi', label: 'Uchi-komi', icon: 'refresh', color: '#3B82F6' },
+    { id: 'nagekomi', label: 'Nage-komi', icon: 'arrow-down-bold', color: '#8B5CF6' },
+    { id: 'newaza', label: 'Ne-waza', icon: 'floor-plan', color: '#F59E0B' },
+    { id: 'kata', label: 'Kata', icon: 'account-group', color: '#10B981' },
+    { id: 'osaekomiwaza', label: 'Immobilisations', icon: 'lock', color: '#06B6D4' },
+    { id: 'shimewaza', label: 'Etranglements', icon: 'hand-back-left', color: '#EC4899' },
+    { id: 'kansetsuwaza', label: 'Cles de bras', icon: 'arm-flex', color: '#84CC16' },
+    { id: 'ashiwaza', label: 'Techniques jambes', icon: 'shoe-sneaker', color: '#F97316' },
+    { id: 'tewaza', label: 'Techniques bras', icon: 'hand-front-right', color: '#14B8A6' },
+    { id: 'koshiwaza', label: 'Techniques hanches', icon: 'human', color: '#EAB308' },
+  ],
+  lutte: [
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#8B5CF6' },
+    { id: 'sparring', label: 'Combat', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'takedowns', label: 'Takedowns', icon: 'arrow-down-bold', color: '#3B82F6' },
+    { id: 'groundwork', label: 'Travail au sol', icon: 'floor-plan', color: '#F59E0B' },
+    { id: 'clinch', label: 'Clinch', icon: 'account-multiple', color: '#10B981' },
+    { id: 'conditioning', label: 'Conditioning', icon: 'lightning-bolt', color: '#06B6D4' },
+    { id: 'sprawl', label: 'Sprawl', icon: 'arrow-expand-down', color: '#EC4899' },
+    { id: 'singleleg', label: 'Single Leg', icon: 'human-male', color: '#84CC16' },
+    { id: 'doubleleg', label: 'Double Leg', icon: 'run', color: '#F97316' },
+    { id: 'greco', label: 'Greco-romaine', icon: 'arm-flex', color: '#14B8A6' },
+  ],
+  grappling: [
+    { id: 'drill', label: 'Drill', icon: 'refresh', color: '#3B82F6' },
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'submissions', label: 'Soumissions', icon: 'hand-back-left', color: '#8B5CF6' },
+    { id: 'leglocks', label: 'Leg Locks', icon: 'shoe-sneaker', color: '#F59E0B' },
+    { id: 'heelhook', label: 'Heel Hook', icon: 'hook', color: '#10B981' },
+    { id: 'guillotine', label: 'Guillotine', icon: 'knife', color: '#06B6D4' },
+    { id: 'darce', label: 'Darce/Anaconda', icon: 'snake', color: '#EC4899' },
+    { id: 'backtakes', label: 'Back Takes', icon: 'arrow-right-bold', color: '#84CC16' },
+    { id: 'wrestling', label: 'Wrestling', icon: 'kabaddi', color: '#F97316' },
+    { id: 'transitions', label: 'Transitions', icon: 'swap-horizontal', color: '#14B8A6' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // COMBAT - STRIKING (10+ options chacun)
+  // ═══════════════════════════════════════════
+  mma: [
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'striking', label: 'Striking', icon: 'boxing-glove', color: '#F59E0B' },
+    { id: 'grappling', label: 'Grappling', icon: 'floor-plan', color: '#3B82F6' },
+    { id: 'cage', label: 'Cage Work', icon: 'grid', color: '#8B5CF6' },
+    { id: 'clinch', label: 'Clinch', icon: 'account-multiple', color: '#10B981' },
+    { id: 'groundpound', label: 'Ground & Pound', icon: 'hand-back-left', color: '#06B6D4' },
+    { id: 'takedowns', label: 'Takedowns', icon: 'arrow-down-bold', color: '#EC4899' },
+    { id: 'submissions', label: 'Soumissions', icon: 'lock', color: '#84CC16' },
+    { id: 'conditioning', label: 'Conditioning', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'pads', label: 'Paos/Pattes', icon: 'hand-front-right', color: '#14B8A6' },
+    { id: 'bag', label: 'Sac de frappe', icon: 'bag-personal', color: '#EAB308' },
+  ],
+  boxe: [
+    { id: 'shadow', label: 'Shadow Boxing', icon: 'human-handsup', color: '#3B82F6' },
+    { id: 'pads', label: 'Pattes d\'ours', icon: 'hand-back-left', color: '#F59E0B' },
+    { id: 'bag', label: 'Sac de frappe', icon: 'bag-personal', color: '#8B5CF6' },
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#10B981' },
+    { id: 'footwork', label: 'Footwork', icon: 'shoe-sneaker', color: '#06B6D4' },
+    { id: 'defense', label: 'Defense', icon: 'shield', color: '#EC4899' },
+    { id: 'combos', label: 'Enchainements', icon: 'link', color: '#84CC16' },
+    { id: 'conditioning', label: 'Conditioning', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'corderope', label: 'Corde a sauter', icon: 'jump-rope', color: '#14B8A6' },
+  ],
+  kickboxing: [
+    { id: 'shadow', label: 'Shadow', icon: 'human-handsup', color: '#3B82F6' },
+    { id: 'pads', label: 'Paos', icon: 'hand-back-left', color: '#F59E0B' },
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'lowkick', label: 'Low Kicks', icon: 'shoe-sneaker', color: '#8B5CF6' },
+    { id: 'highkick', label: 'High Kicks', icon: 'karate', color: '#10B981' },
+    { id: 'bag', label: 'Sac de frappe', icon: 'bag-personal', color: '#06B6D4' },
+    { id: 'combos', label: 'Enchainements', icon: 'link', color: '#EC4899' },
+    { id: 'footwork', label: 'Footwork', icon: 'run', color: '#84CC16' },
+    { id: 'conditioning', label: 'Conditioning', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#14B8A6' },
+  ],
+  muay_thai: [
+    { id: 'clinch', label: 'Clinch', icon: 'account-multiple', color: '#3B82F6' },
+    { id: 'pads', label: 'Paos Thai', icon: 'hand-back-left', color: '#F59E0B' },
+    { id: 'sparring', label: 'Sparring', icon: 'sword-cross', color: '#EF4444' },
+    { id: 'bag', label: 'Sac', icon: 'bag-personal', color: '#8B5CF6' },
+    { id: 'teep', label: 'Teep', icon: 'shoe-sneaker', color: '#10B981' },
+    { id: 'elbows', label: 'Coudes', icon: 'arm-flex', color: '#06B6D4' },
+    { id: 'knees', label: 'Genoux', icon: 'human-male', color: '#EC4899' },
+    { id: 'lowkick', label: 'Low Kicks', icon: 'karate', color: '#84CC16' },
+    { id: 'shadow', label: 'Shadow', icon: 'human-handsup', color: '#F97316' },
+    { id: 'conditioning', label: 'Conditioning', icon: 'lightning-bolt', color: '#14B8A6' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // MUSCULATION & FITNESS (10+ options chacun)
+  // ═══════════════════════════════════════════
+  musculation: [
+    { id: 'chest', label: 'Pectoraux', icon: 'arm-flex', color: '#EF4444' },
+    { id: 'back', label: 'Dos', icon: 'human', color: '#3B82F6' },
+    { id: 'shoulders', label: 'Epaules', icon: 'triangle', color: '#F59E0B' },
+    { id: 'biceps', label: 'Biceps', icon: 'arm-flex', color: '#8B5CF6' },
+    { id: 'triceps', label: 'Triceps', icon: 'arm-flex-outline', color: '#10B981' },
+    { id: 'legs', label: 'Jambes', icon: 'human-male', color: '#06B6D4' },
+    { id: 'glutes', label: 'Fessiers', icon: 'seat', color: '#EC4899' },
+    { id: 'abs', label: 'Abdominaux', icon: 'view-grid', color: '#84CC16' },
+    { id: 'calves', label: 'Mollets', icon: 'shoe-sneaker', color: '#F97316' },
+    { id: 'forearms', label: 'Avant-bras', icon: 'hand-front-right', color: '#14B8A6' },
+    { id: 'fullbody', label: 'Full Body', icon: 'human', color: '#EAB308' },
+    { id: 'push', label: 'Push Day', icon: 'arrow-right-bold', color: '#6366F1' },
+    { id: 'pull', label: 'Pull Day', icon: 'arrow-left-bold', color: '#A855F7' },
+  ],
+  street_workout: [
+    { id: 'pullups', label: 'Tractions', icon: 'arm-flex', color: '#3B82F6' },
+    { id: 'dips', label: 'Dips', icon: 'arrow-down-bold', color: '#EF4444' },
+    { id: 'pushups', label: 'Pompes', icon: 'arrow-up-bold', color: '#F59E0B' },
+    { id: 'muscleup', label: 'Muscle Up', icon: 'arrow-up-bold-box', color: '#8B5CF6' },
+    { id: 'fronlever', label: 'Front Lever', icon: 'human-handsdown', color: '#10B981' },
+    { id: 'backlever', label: 'Back Lever', icon: 'human-handsup', color: '#06B6D4' },
+    { id: 'planche', label: 'Planche', icon: 'human', color: '#EC4899' },
+    { id: 'handstand', label: 'Handstand', icon: 'human-handsdown', color: '#84CC16' },
+    { id: 'lunges', label: 'Fentes', icon: 'run', color: '#F97316' },
+    { id: 'squats', label: 'Squats', icon: 'human-male', color: '#14B8A6' },
+    { id: 'abs', label: 'Abdos', icon: 'view-grid', color: '#EAB308' },
+    { id: 'freestyle', label: 'Freestyle', icon: 'creation', color: '#6366F1' },
+  ],
+  crossfit: [
+    { id: 'wod', label: 'WOD', icon: 'fire', color: '#EF4444' },
+    { id: 'amrap', label: 'AMRAP', icon: 'timer', color: '#F59E0B' },
+    { id: 'emom', label: 'EMOM', icon: 'clock-outline', color: '#3B82F6' },
+    { id: 'fortime', label: 'For Time', icon: 'timer-outline', color: '#8B5CF6' },
+    { id: 'strength', label: 'Force', icon: 'weight-lifter', color: '#10B981' },
+    { id: 'oly', label: 'Halterophilie', icon: 'dumbbell', color: '#06B6D4' },
+    { id: 'gymnastics', label: 'Gymnastique', icon: 'human-handsup', color: '#EC4899' },
+    { id: 'rowing', label: 'Rameur', icon: 'rowing', color: '#84CC16' },
+    { id: 'burpees', label: 'Burpees', icon: 'run-fast', color: '#F97316' },
+    { id: 'boxjumps', label: 'Box Jumps', icon: 'cube-outline', color: '#14B8A6' },
+    { id: 'skill', label: 'Skill Work', icon: 'school', color: '#EAB308' },
+  ],
+  hiit: [
+    { id: 'tabata', label: 'Tabata', icon: 'timer', color: '#EF4444' },
+    { id: 'circuit', label: 'Circuit', icon: 'refresh-circle', color: '#F59E0B' },
+    { id: 'intervals', label: 'Intervalles', icon: 'chart-line', color: '#3B82F6' },
+    { id: 'amrap', label: 'AMRAP', icon: 'clock-fast', color: '#8B5CF6' },
+    { id: 'emom', label: 'EMOM', icon: 'clock-outline', color: '#10B981' },
+    { id: 'burpees', label: 'Burpees', icon: 'run-fast', color: '#06B6D4' },
+    { id: 'squats', label: 'Squats', icon: 'human-male', color: '#EC4899' },
+    { id: 'lunges', label: 'Fentes', icon: 'run', color: '#84CC16' },
+    { id: 'plank', label: 'Planche', icon: 'human', color: '#F97316' },
+    { id: 'jumps', label: 'Sauts', icon: 'arrow-up-bold', color: '#14B8A6' },
+  ],
+  yoga: [
+    { id: 'vinyasa', label: 'Vinyasa', icon: 'yoga', color: '#8B5CF6' },
+    { id: 'hatha', label: 'Hatha', icon: 'meditation', color: '#10B981' },
+    { id: 'ashtanga', label: 'Ashtanga', icon: 'human-handsup', color: '#3B82F6' },
+    { id: 'yin', label: 'Yin', icon: 'sleep', color: '#06B6D4' },
+    { id: 'power', label: 'Power Yoga', icon: 'lightning-bolt', color: '#EF4444' },
+    { id: 'stretch', label: 'Stretching', icon: 'human', color: '#F59E0B' },
+    { id: 'meditation', label: 'Meditation', icon: 'meditation', color: '#EC4899' },
+    { id: 'breathing', label: 'Respiration', icon: 'weather-windy', color: '#84CC16' },
+    { id: 'balance', label: 'Equilibre', icon: 'scale-balance', color: '#F97316' },
+    { id: 'recovery', label: 'Recovery', icon: 'bed', color: '#14B8A6' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // CARDIO (10+ options chacun)
+  // ═══════════════════════════════════════════
+  running: [
+    { id: '5k', label: '5K', icon: 'run', color: '#3B82F6' },
+    { id: '10k', label: '10K', icon: 'run-fast', color: '#F59E0B' },
+    { id: 'semi', label: 'Semi', icon: 'trophy', color: '#8B5CF6' },
+    { id: 'marathon', label: 'Marathon', icon: 'medal', color: '#10B981' },
+    { id: 'interval', label: 'Fractionne', icon: 'chart-line', color: '#EF4444' },
+    { id: 'tempo', label: 'Tempo Run', icon: 'speedometer', color: '#06B6D4' },
+    { id: 'endurance', label: 'Endurance', icon: 'clock-outline', color: '#EC4899' },
+    { id: 'recovery', label: 'Recuperation', icon: 'walk', color: '#84CC16' },
+    { id: 'trail', label: 'Trail', icon: 'terrain', color: '#F97316' },
+    { id: 'sprint', label: 'Sprints', icon: 'flash', color: '#14B8A6' },
+    { id: 'hills', label: 'Cotes', icon: 'slope-uphill', color: '#EAB308' },
+  ],
+  natation: [
+    { id: '500m', label: '500m', icon: 'swim', color: '#3B82F6' },
+    { id: '1k', label: '1K', icon: 'swim', color: '#F59E0B' },
+    { id: '2k', label: '2K', icon: 'swim', color: '#8B5CF6' },
+    { id: 'interval', label: 'Intervalles', icon: 'chart-line', color: '#EF4444' },
+    { id: 'crawl', label: 'Crawl', icon: 'swim', color: '#10B981' },
+    { id: 'brasse', label: 'Brasse', icon: 'swim', color: '#06B6D4' },
+    { id: 'dos', label: 'Dos', icon: 'swim', color: '#EC4899' },
+    { id: 'papillon', label: 'Papillon', icon: 'swim', color: '#84CC16' },
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#F97316' },
+    { id: 'endurance', label: 'Endurance', icon: 'clock-outline', color: '#14B8A6' },
+  ],
+  velo: [
+    { id: 'short', label: 'Sortie courte', icon: 'bike', color: '#3B82F6' },
+    { id: 'long', label: 'Sortie longue', icon: 'bike-fast', color: '#F59E0B' },
+    { id: 'interval', label: 'Intervalles', icon: 'chart-line', color: '#EF4444' },
+    { id: 'climb', label: 'Grimpee', icon: 'terrain', color: '#8B5CF6' },
+    { id: 'indoor', label: 'Home Trainer', icon: 'home', color: '#10B981' },
+    { id: 'sprint', label: 'Sprints', icon: 'flash', color: '#06B6D4' },
+    { id: 'endurance', label: 'Endurance', icon: 'clock-outline', color: '#EC4899' },
+    { id: 'recovery', label: 'Recuperation', icon: 'bike', color: '#84CC16' },
+    { id: 'ftp', label: 'Test FTP', icon: 'speedometer', color: '#F97316' },
+    { id: 'race', label: 'Course', icon: 'trophy', color: '#14B8A6' },
+  ],
+  marche: [
+    { id: 'walk', label: 'Marche', icon: 'walk', color: '#3B82F6' },
+    { id: 'hike', label: 'Randonnee', icon: 'terrain', color: '#10B981' },
+    { id: 'nordic', label: 'Nordique', icon: 'hiking', color: '#8B5CF6' },
+    { id: 'urban', label: 'Urbaine', icon: 'city', color: '#F59E0B' },
+    { id: 'nature', label: 'Nature', icon: 'tree', color: '#06B6D4' },
+    { id: 'treadmill', label: 'Tapis', icon: 'run', color: '#EC4899' },
+    { id: 'incline', label: 'Montee', icon: 'slope-uphill', color: '#84CC16' },
+    { id: 'recovery', label: 'Recuperation', icon: 'bed', color: '#F97316' },
+    { id: 'long', label: 'Longue distance', icon: 'clock-outline', color: '#14B8A6' },
+    { id: 'fast', label: 'Marche rapide', icon: 'walk', color: '#EAB308' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // SPORTS COLLECTIFS (10+ options chacun)
+  // ═══════════════════════════════════════════
+  football: [
+    { id: 'match', label: 'Match', icon: 'soccer', color: '#10B981' },
+    { id: 'training', label: 'Entrainement', icon: 'whistle', color: '#3B82F6' },
+    { id: 'small', label: 'Petit jeu', icon: 'soccer-field', color: '#F59E0B' },
+    { id: 'technique', label: 'Technique', icon: 'school', color: '#8B5CF6' },
+    { id: 'shooting', label: 'Tirs', icon: 'target', color: '#EF4444' },
+    { id: 'passing', label: 'Passes', icon: 'arrow-right-bold', color: '#06B6D4' },
+    { id: 'dribbling', label: 'Dribbles', icon: 'soccer', color: '#EC4899' },
+    { id: 'defense', label: 'Defense', icon: 'shield', color: '#84CC16' },
+    { id: 'conditioning', label: 'Physique', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'goalkeeper', label: 'Gardien', icon: 'hand-back-left', color: '#14B8A6' },
+  ],
+  basketball: [
+    { id: 'match', label: 'Match', icon: 'basketball', color: '#F59E0B' },
+    { id: 'training', label: 'Entrainement', icon: 'whistle', color: '#3B82F6' },
+    { id: 'shooting', label: 'Tirs', icon: 'target', color: '#EF4444' },
+    { id: '3points', label: '3 Points', icon: 'numeric-3-circle', color: '#8B5CF6' },
+    { id: 'layup', label: 'Layups', icon: 'basketball-hoop', color: '#10B981' },
+    { id: 'dribbling', label: 'Dribbles', icon: 'basketball', color: '#06B6D4' },
+    { id: 'defense', label: 'Defense', icon: 'shield', color: '#EC4899' },
+    { id: 'freethrow', label: 'Lancers francs', icon: 'target', color: '#84CC16' },
+    { id: 'conditioning', label: 'Physique', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'scrimmage', label: 'Scrimmage', icon: 'sword-cross', color: '#14B8A6' },
+  ],
+  rugby: [
+    { id: 'match', label: 'Match', icon: 'rugby', color: '#10B981' },
+    { id: 'training', label: 'Entrainement', icon: 'whistle', color: '#3B82F6' },
+    { id: 'tackle', label: 'Plaquages', icon: 'account-multiple', color: '#EF4444' },
+    { id: 'passing', label: 'Passes', icon: 'arrow-right-bold', color: '#F59E0B' },
+    { id: 'scrum', label: 'Melee', icon: 'account-group', color: '#8B5CF6' },
+    { id: 'lineout', label: 'Touche', icon: 'arrow-up-bold', color: '#06B6D4' },
+    { id: 'kicking', label: 'Jeu au pied', icon: 'shoe-sneaker', color: '#EC4899' },
+    { id: 'defense', label: 'Defense', icon: 'shield', color: '#84CC16' },
+    { id: 'conditioning', label: 'Physique', icon: 'lightning-bolt', color: '#F97316' },
+    { id: 'touch', label: 'Touch Rugby', icon: 'rugby', color: '#14B8A6' },
+  ],
+
+  // ═══════════════════════════════════════════
+  // RAQUETTES (10+ options chacun)
+  // ═══════════════════════════════════════════
+  padel: [
+    { id: 'match', label: 'Match', icon: 'tennis', color: '#10B981' },
+    { id: 'training', label: 'Entrainement', icon: 'school', color: '#3B82F6' },
+    { id: 'drill', label: 'Drill', icon: 'refresh', color: '#F59E0B' },
+    { id: 'serve', label: 'Service', icon: 'tennis-ball', color: '#8B5CF6' },
+    { id: 'volley', label: 'Volees', icon: 'hand-front-right', color: '#EF4444' },
+    { id: 'smash', label: 'Smash', icon: 'arrow-down-bold', color: '#06B6D4' },
+    { id: 'bandeja', label: 'Bandeja', icon: 'tennis', color: '#EC4899' },
+    { id: 'vibora', label: 'Vibora', icon: 'tennis', color: '#84CC16' },
+    { id: 'lob', label: 'Lob', icon: 'arrow-up-bold', color: '#F97316' },
+    { id: 'wall', label: 'Jeu de mur', icon: 'wall', color: '#14B8A6' },
+  ],
+  tennis: [
+    { id: 'match', label: 'Match', icon: 'tennis', color: '#10B981' },
+    { id: 'training', label: 'Entrainement', icon: 'school', color: '#3B82F6' },
+    { id: 'serve', label: 'Service', icon: 'tennis-ball', color: '#F59E0B' },
+    { id: 'forehand', label: 'Coup droit', icon: 'arrow-right-bold', color: '#8B5CF6' },
+    { id: 'backhand', label: 'Revers', icon: 'arrow-left-bold', color: '#EF4444' },
+    { id: 'volley', label: 'Volees', icon: 'hand-front-right', color: '#06B6D4' },
+    { id: 'smash', label: 'Smash', icon: 'arrow-down-bold', color: '#EC4899' },
+    { id: 'footwork', label: 'Jeu de jambes', icon: 'run', color: '#84CC16' },
+    { id: 'rally', label: 'Echanges', icon: 'swap-horizontal', color: '#F97316' },
+    { id: 'conditioning', label: 'Physique', icon: 'lightning-bolt', color: '#14B8A6' },
+  ],
+  badminton: [
+    { id: 'match', label: 'Match', icon: 'badminton', color: '#10B981' },
+    { id: 'training', label: 'Entrainement', icon: 'school', color: '#3B82F6' },
+    { id: 'serve', label: 'Service', icon: 'badminton', color: '#F59E0B' },
+    { id: 'smash', label: 'Smash', icon: 'arrow-down-bold', color: '#EF4444' },
+    { id: 'drop', label: 'Drop', icon: 'arrow-down', color: '#8B5CF6' },
+    { id: 'clear', label: 'Clear', icon: 'arrow-up-bold', color: '#06B6D4' },
+    { id: 'drive', label: 'Drive', icon: 'arrow-right-bold', color: '#EC4899' },
+    { id: 'footwork', label: 'Deplacement', icon: 'run', color: '#84CC16' },
+    { id: 'net', label: 'Jeu au filet', icon: 'grid', color: '#F97316' },
+    { id: 'doubles', label: 'Double', icon: 'account-multiple', color: '#14B8A6' },
+  ],
+};
+
+// Options par défaut pour les sports sans options spécifiques
+const DEFAULT_OPTIONS: SportOption[] = [
+  { id: 'training', label: 'Entrainement', icon: 'dumbbell', color: '#3B82F6' },
+  { id: 'technique', label: 'Technique', icon: 'school', color: '#8B5CF6' },
+  { id: 'sparring', label: 'Sparring/Match', icon: 'sword-cross', color: '#EF4444' },
+  { id: 'competition', label: 'Competition', icon: 'trophy', color: '#10B981' },
+];
 
 export default function AddTrainingScreen() {
   const { colors, gradients, isDark } = useTheme();
@@ -59,9 +402,25 @@ export default function AddTrainingScreen() {
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form state
-  const [selectedSport, setSelectedSport] = useState('jjb');
+  // Catégories dépliées (par défaut aucune)
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  // Afficher/cacher la section catégories quand sport déjà sélectionné
+  const [showAddSportSection, setShowAddSportSection] = useState(false);
+
+  // Dernier sport utilisé (pour Quick Add)
+  const [lastSport, setLastSport] = useState<string | null>(null);
+  const [lastDuration, setLastDuration] = useState<number>(60);
+
+  // Form state - SELECTION MULTIPLE DE SPORTS (vide par défaut)
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({}); // { jjb: ['drill', 'sparring'], running: ['5k'] }
+  const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
+  const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
+  const [customDescription, setCustomDescription] = useState(''); // Description personnalisée
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+
+  // Compatibilité avec l'ancien code
+  const selectedSport = selectedSports[0] || 'jjb';
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [startTime, setStartTime] = useState(() => {
@@ -76,6 +435,7 @@ export default function AddTrainingScreen() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -92,6 +452,98 @@ export default function AddTrainingScreen() {
       }
     }
   }, [params.date]);
+
+  // Charger le dernier sport utilisé (pour Quick Add seulement, PAS de pré-sélection)
+  useEffect(() => {
+    const loadLastSport = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(LAST_SPORT_KEY);
+        const savedDuration = await AsyncStorage.getItem(LAST_DURATION_KEY);
+        if (saved) {
+          setLastSport(saved);
+          // NE PAS pré-sélectionner - l'utilisateur choisit lui-même
+        }
+        if (savedDuration) {
+          setLastDuration(parseInt(savedDuration));
+          // NE PAS pré-remplir la durée non plus
+        }
+      } catch (error) {
+        logger.error('Erreur chargement dernier sport:', error);
+      }
+    };
+    loadLastSport();
+  }, []);
+
+  // Sauvegarder le sport et durée quand on enregistre
+  const saveLastSportAndDuration = async (sport: string, dur: number) => {
+    try {
+      await AsyncStorage.setItem(LAST_SPORT_KEY, sport);
+      await AsyncStorage.setItem(LAST_DURATION_KEY, dur.toString());
+    } catch (error) {
+      logger.error('Erreur sauvegarde dernier sport:', error);
+    }
+  };
+
+  // Toggle une catégorie
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  // Toggle un sport (sélection multiple)
+  const toggleSport = (sportId: string) => {
+    setSelectedSports(prev => {
+      if (prev.includes(sportId)) {
+        // Retirer le sport (peut retirer tous les sports)
+        const newSports = prev.filter(s => s !== sportId);
+        // Nettoyer les options et entrées de ce sport
+        setSelectedOptions(opts => {
+          const newOpts = { ...opts };
+          delete newOpts[sportId];
+          return newOpts;
+        });
+        setSportEntries(entries => {
+          const newEntries = { ...entries };
+          delete newEntries[sportId];
+          return newEntries;
+        });
+        return newSports;
+      } else {
+        // Ajouter le sport (max 3)
+        if (prev.length >= 3) return prev;
+        // FERMER TOUTES LES CATÉGORIES et cacher la section quand on sélectionne un sport
+        setExpandedCategories([]);
+        setShowAddSportSection(false);
+        return [...prev, sportId];
+      }
+    });
+  };
+
+  // Toggle une option pour un sport
+  const toggleOption = (sportId: string, optionId: string) => {
+    setSelectedOptions(prev => {
+      const currentOptions = prev[sportId] || [];
+      if (currentOptions.includes(optionId)) {
+        return {
+          ...prev,
+          [sportId]: currentOptions.filter(o => o !== optionId),
+        };
+      } else {
+        return {
+          ...prev,
+          [sportId]: [...currentOptions, optionId],
+        };
+      }
+    });
+  };
+
+  // Obtenir les options pour un sport
+  const getOptionsForSport = (sportId: string): SportOption[] => {
+    return SPORT_OPTIONS[sportId] || DEFAULT_OPTIONS;
+  };
 
   useEffect(() => {
     loadClubs();
@@ -121,24 +573,178 @@ export default function AddTrainingScreen() {
     );
   };
 
-  const handleSave = async () => {
+  // Ajouter une entrée pour un sport
+  const addSportEntry = (sportId: string) => {
+    const text = newEntryText[sportId]?.trim();
+    if (!text) return;
+
+    setSportEntries(prev => {
+      const currentEntries = prev[sportId] || [];
+      if (currentEntries.length >= 10) return prev; // Max 10 entrées
+      return {
+        ...prev,
+        [sportId]: [...currentEntries, text],
+      };
+    });
+
+    // Effacer le champ de saisie
+    setNewEntryText(prev => ({
+      ...prev,
+      [sportId]: '',
+    }));
+  };
+
+  // Supprimer une entrée pour un sport
+  const removeSportEntry = (sportId: string, index: number) => {
+    setSportEntries(prev => {
+      const currentEntries = prev[sportId] || [];
+      return {
+        ...prev,
+        [sportId]: currentEntries.filter((_, i) => i !== index),
+      };
+    });
+  };
+
+  const handleShareModalShare = () => {
+    setShowShareModal(false);
+    // Navigate to last-session sharing screen
+    router.push('/social-share/last-session');
+  };
+
+  const handleShareModalSkip = () => {
+    setShowShareModal(false);
+    // Show success message and go back
+    const sportNames = selectedSports.map(s => getSportName(s)).join(' + ');
+    showPopup(
+      'Entrainement ajoute',
+      `${sportNames} enregistre !`,
+      [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
+    );
+  };
+
+  // Quick Save pour l'enregistrement rapide (prend sport et durée directement)
+  const handleQuickSave = async (quickSport: string, quickDuration: number) => {
     setIsSubmitting(true);
 
     try {
       await addTraining({
+        club_id: null,
+        sport: quickSport,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        duration_minutes: quickDuration,
+        start_time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        notes: undefined,
+        muscles: undefined,
+        exercises: undefined,
+        technique_rating: null,
+      });
+
+      await saveLastSportAndDuration(quickSport, quickDuration);
+      successHaptic();
+      playSuccessSound();
+      await incrementReviewTrigger();
+      await askForReview();
+      await checkBadges();
+
+      showPopup(
+        'Entrainement ajoute',
+        `${getSportName(quickSport)} • ${quickDuration} min`,
+        [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
+      );
+    } catch (error) {
+      logger.error('Erreur quick save:', error);
+      errorHaptic();
+      showPopup('Erreur', "Impossible d'enregistrer l'entrainement");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Construire les notes avec les options sélectionnées et description custom
+      let fullNotes = '';
+
+      // Ajouter les options sélectionnées et entrées pour chaque sport
+      selectedSports.forEach(sportId => {
+        const sportName = getSportName(sportId);
+        const sportOptions = selectedOptions[sportId] || [];
+        const entries = sportEntries[sportId] || [];
+
+        // Options sélectionnées
+        if (sportOptions.length > 0) {
+          const optionLabels = sportOptions.map(optId => {
+            const opt = getOptionsForSport(sportId).find(o => o.id === optId);
+            return opt?.label || optId;
+          });
+          fullNotes += `${sportName}: ${optionLabels.join(', ')}\n`;
+        }
+
+        // Entrées personnalisées
+        if (entries.length > 0) {
+          if (sportOptions.length === 0) {
+            fullNotes += `${sportName}:\n`;
+          }
+          entries.forEach(entry => {
+            fullNotes += `  • ${entry}\n`;
+          });
+        }
+      });
+
+      // Ajouter la description personnalisée
+      if (customDescription.trim()) {
+        fullNotes += `\n${customDescription.trim()}`;
+      }
+
+      // Ajouter les notes existantes
+      if (notes.trim()) {
+        fullNotes += `\n${notes.trim()}`;
+      }
+
+      // Pour chaque sport sélectionné, créer une entrée (ou une seule avec sports combinés)
+      const sportsString = selectedSports.join(',');
+
+      await addTraining({
         club_id: selectedClub?.id,
-        sport: selectedSport,
+        sport: sportsString, // Sports combinés
         date: format(date, 'yyyy-MM-dd'),
         duration_minutes: duration || undefined,
         start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        notes: notes || undefined,
+        notes: fullNotes.trim() || undefined,
         muscles: selectedMuscles.length > 0 ? selectedMuscles.join(',') : undefined,
         exercises: exercises.length > 0 ? exercises : undefined,
         technique_rating: techniqueRating,
       });
 
+      // Sauvegarder le premier sport et durée pour le Quick Add
+      await saveLastSportAndDuration(selectedSports[0], duration);
+
       successHaptic();
       playSuccessSound();
+
+      // 🔄 SYNC VERS APPLE HEALTH
+      try {
+        const startDateTime = new Date(date);
+        const [hours, minutes] = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).split(':');
+        startDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+        const endDateTime = new Date(startDateTime.getTime() + (duration || 60) * 60 * 1000);
+
+        const exported = await HealthConnect.writeWorkout({
+          activityType: getSportName(selectedSport),
+          startDate: startDateTime,
+          endDate: endDateTime,
+        });
+
+        if (exported) {
+          logger.info('Entraînement synchronisé vers Apple Health:', selectedSport);
+        }
+      } catch (healthError) {
+        // Ne pas bloquer la sauvegarde si l'export échoue
+        logger.warn('Export Apple Health échoué (non bloquant):', healthError);
+      }
 
       // Trigger review après une action positive
       await incrementReviewTrigger();
@@ -158,11 +764,8 @@ export default function AddTrainingScreen() {
         });
         router.back();
       } else {
-        showPopup(
-          'Entrainement ajoute',
-          `${getSportName(selectedSport)} enregistre !`,
-          [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
-        );
+        // Afficher le modal de partage au lieu du popup de succès
+        setShowShareModal(true);
       }
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -176,8 +779,8 @@ export default function AddTrainingScreen() {
   // Clubs filtrés par sport sélectionné
   const filteredClubs = clubs.filter(c => c.sport === selectedSport);
 
-  // Afficher les muscles si musculation
-  const showMuscles = selectedSport === 'musculation';
+  // Afficher les muscles et exercices si musculation ou street workout est sélectionné
+  const showMuscles = selectedSports.includes('musculation') || selectedSports.includes('street_workout');
 
   return (
     <ScreenWrapper noPadding>
@@ -189,169 +792,448 @@ export default function AddTrainingScreen() {
         keyboardShouldPersistTaps="handled"
       >
 
-        {/* MES CLUBS - EN PREMIER */}
-        {clubs.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Clubs & Coach</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.clubsScroll}
-              contentContainerStyle={styles.clubsScrollContent}
-            >
-              <TouchableOpacity
-                style={[
-                  styles.clubCard,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                  !selectedClub && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
-                ]}
-                onPress={() => setSelectedClub(null)}
-              >
-                <View style={[styles.clubCardIcon, { backgroundColor: colors.cardHover }]}>
-                  <Home size={24} color={!selectedClub ? colors.gold : colors.textSecondary} strokeWidth={2} />
-                </View>
-                <Text style={[styles.clubCardName, { color: !selectedClub ? colors.gold : colors.textSecondary }]}>
-                  Libre
-                </Text>
-              </TouchableOpacity>
-              {clubs.map((club) => (
-                <TouchableOpacity
-                  key={club.id}
-                  style={[
-                    styles.clubCard,
-                    {
-                      backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : colors.card,
-                      borderColor: selectedClub?.id === club.id ? colors.gold : 'transparent',
-                      borderWidth: selectedClub?.id === club.id ? 2 : 0,
-                    },
-                  ]}
-                  onPress={() => {
-                    setSelectedClub(club);
-                    // Auto-sélectionner le sport du club si différent
-                    if (club.sport && club.sport !== selectedSport) {
-                      setSelectedSport(club.sport);
-                    }
-                  }}
-                >
-                  {(() => {
-                    const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
-                    if (logoSource) {
-                      return (
-                        <Image
-                          source={logoSource}
-                          style={styles.clubCardLogo}
-                          resizeMode="cover"
-                        />
-                      );
-                    }
-                    return (
-                      <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.cardHover }]}>
-                        <MaterialCommunityIcons
-                          name={getSportIcon(club.sport || 'autre') as any}
-                          size={24}
-                          color="#FFFFFF"
-                        />
-                      </View>
-                    );
-                  })()}
-                  <Text
-                    style={[
-                      styles.clubCardName,
-                      { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {club.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </>
+        {/* ═══════════════════════════════════════════ */}
+        {/* QUICK ADD - Répéter la dernière séance (si disponible) */}
+        {/* ═══════════════════════════════════════════ */}
+        {lastSport && selectedSports.length === 0 && (
+          <TouchableOpacity
+            style={[styles.quickAddButton, { backgroundColor: colors.gold + '15', borderColor: colors.gold }]}
+            onPress={() => handleQuickSave(lastSport, lastDuration)}
+            disabled={isSubmitting}
+          >
+            <View style={[styles.quickAddIcon, { backgroundColor: colors.gold }]}>
+              <Zap size={24} color="#FFFFFF" fill="#FFFFFF" />
+            </View>
+            <View style={styles.quickAddContent}>
+              <Text style={[styles.quickAddTitle, { color: colors.textPrimary }]}>
+                Enregistrement rapide
+              </Text>
+              <Text style={[styles.quickAddSubtitle, { color: colors.textMuted }]}>
+                {getSportName(lastSport)} • {lastDuration} min • Aujourd'hui
+              </Text>
+            </View>
+            <ChevronRight size={24} color={colors.gold} />
+          </TouchableOpacity>
         )}
 
-        {/* SPORT */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Sport</Text>
+        {/* ═══════════════════════════════════════════ */}
+        {/* ÉTAPE 1: CHOISIS TON SPORT */}
+        {/* ═══════════════════════════════════════════ */}
 
-        {/* Group sports by category */}
-        {(() => {
+        {/* Titre quand aucun sport sélectionné */}
+        {selectedSports.length === 0 && (
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            1. Choisis ton sport
+          </Text>
+        )}
+
+        {/* Bouton pour ajouter un autre sport (quand sport déjà sélectionné) */}
+        {selectedSports.length > 0 && selectedSports.length < 3 && !showAddSportSection && (
+          <TouchableOpacity
+            style={[styles.addAnotherSportButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+            onPress={() => setShowAddSportSection(true)}
+          >
+            <Plus size={18} color={colors.textMuted} />
+            <Text style={[styles.addAnotherSportText, { color: colors.textMuted }]}>
+              Ajouter un autre sport
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Titre section ajouter sport */}
+        {selectedSports.length > 0 && showAddSportSection && (
+          <View style={styles.addSportSectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>
+              Ajouter un sport
+            </Text>
+            <TouchableOpacity onPress={() => setShowAddSportSection(false)}>
+              <X size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Catégories - visibles si: aucun sport OU showAddSportSection */}
+        {(selectedSports.length === 0 || showAddSportSection) && (() => {
           const categoryLabels: Record<string, string> = {
-            combat_striking: 'Combat (Pieds-Poings)',
-            combat_grappling: 'Combat (Grappling)',
-            fitness: 'Musculation',
             cardio: 'Cardio',
+            fitness: 'Musculation & Fitness',
+            combat_grappling: 'Combat (Grappling)',
+            combat_striking: 'Combat (Pieds-Poings)',
             collectif: 'Sports Collectifs',
             raquettes: 'Raquettes',
             autre: 'Autres',
           };
 
-          const categories = ['combat_grappling', 'combat_striking', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];
+          const categoryIcons: Record<string, string> = {
+            cardio: 'run-fast',
+            fitness: 'dumbbell',
+            combat_grappling: 'kabaddi',
+            combat_striking: 'boxing-glove',
+            collectif: 'soccer',
+            raquettes: 'tennis',
+            autre: 'dots-horizontal',
+          };
+
+          const categoryColors: Record<string, string> = {
+            cardio: '#10B981',
+            fitness: '#8B5CF6',
+            combat_grappling: '#3B82F6',
+            combat_striking: '#EF4444',
+            collectif: '#F59E0B',
+            raquettes: '#06B6D4',
+            autre: '#6B7280',
+          };
+
+          // NOUVEL ORDRE : Cardio > Musculation > Combat > reste
+          const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'collectif', 'raquettes', 'autre'];
 
           return categories.map((category) => {
             const sportsInCategory = SPORTS.filter(s => s.category === category);
             if (sportsInCategory.length === 0) return null;
 
+            const isExpanded = expandedCategories.includes(category);
+            // Vérifier si un sport sélectionné est dans cette catégorie
+            const hasSelectedSport = sportsInCategory.some(s => selectedSports.includes(s.id));
+            const catColor = categoryColors[category] || '#6B7280';
+
             return (
               <View key={category} style={styles.categorySection}>
-                <Text style={[styles.categoryLabel, { color: colors.textMuted }]}>
-                  {categoryLabels[category]}
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.sportsContainer}
+                {/* Header de catégorie cliquable */}
+                <TouchableOpacity
+                  style={[
+                    styles.categoryHeader,
+                    { backgroundColor: colors.card, borderColor: hasSelectedSport ? catColor : colors.border },
+                    hasSelectedSport && { backgroundColor: catColor + '15' }
+                  ]}
+                  onPress={() => toggleCategory(category)}
                 >
-                  {sportsInCategory.map((sport) => {
-                    const isSelected = selectedSport === sport.id;
+                  <View style={styles.categoryHeaderLeft}>
+                    <View style={[styles.categoryIconBadge, { backgroundColor: catColor + '20' }]}>
+                      <MaterialCommunityIcons
+                        name={categoryIcons[category] as any}
+                        size={20}
+                        color={catColor}
+                      />
+                    </View>
+                    <Text style={[
+                      styles.categoryLabel,
+                      { color: hasSelectedSport ? catColor : colors.textPrimary }
+                    ]}>
+                      {categoryLabels[category]}
+                    </Text>
+                  </View>
+                  <View style={styles.categoryHeaderRight}>
+                    <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>
+                      {sportsInCategory.length}
+                    </Text>
+                    {isExpanded ? (
+                      <ChevronDown size={20} color={colors.textMuted} />
+                    ) : (
+                      <ChevronRight size={20} color={colors.textMuted} />
+                    )}
+                  </View>
+                </TouchableOpacity>
 
-                    return (
-                      <TouchableOpacity
-                        key={sport.id}
-                        style={[
-                          styles.sportItem,
-                          { backgroundColor: colors.card, borderColor: 'transparent', borderWidth: 0 },
-                          isSelected && {
-                            borderColor: colors.gold,
-                            backgroundColor: colors.goldMuted,
-                            borderWidth: 2,
-                          },
-                        ]}
-                        onPress={() => {
-                          setSelectedSport(sport.id);
-                          if (selectedClub && selectedClub.sport !== sport.id) {
-                            setSelectedClub(null);
-                          }
-                        }}
-                      >
-                        <View style={styles.sportIconContainer}>
-                          <MaterialCommunityIcons
-                            name={sport.icon as any}
-                            size={24}
-                            color={isSelected ? colors.gold : sport.color}
-                          />
+                {/* Sports de la catégorie - GRILLE VERTICALE */}
+                {isExpanded && (
+                  <View style={styles.sportsGrid}>
+                    {sportsInCategory.map((sport) => {
+                      const isSelected = selectedSports.includes(sport.id);
+
+                      return (
+                        <TouchableOpacity
+                          key={sport.id}
+                          style={[
+                            styles.sportGridItem,
+                            { backgroundColor: colors.card, borderColor: colors.border },
+                            isSelected && {
+                              borderColor: colors.gold,
+                              backgroundColor: colors.goldMuted,
+                            },
+                          ]}
+                          onPress={() => toggleSport(sport.id)}
+                        >
+                          <View style={[styles.sportGridIcon, { backgroundColor: sport.color + '20' }]}>
+                            <MaterialCommunityIcons
+                              name={sport.icon as any}
+                              size={28}
+                              color={isSelected ? colors.gold : sport.color}
+                            />
+                          </View>
+                          <Text
+                            style={[
+                              styles.sportGridName,
+                              { color: colors.textPrimary },
+                              isSelected && { color: colors.gold, fontWeight: '700' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {sport.name}
+                          </Text>
                           {isSelected && (
-                            <View style={[styles.checkmarkBadge, { backgroundColor: colors.gold }]}>
+                            <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
                               <Check size={12} color="#FFFFFF" strokeWidth={3} />
                             </View>
                           )}
-                        </View>
-                        <Text
-                          style={[
-                            styles.sportName,
-                            { color: colors.textSecondary },
-                            isSelected && { color: colors.gold, fontWeight: '700' },
-                          ]}
-                        >
-                          {sport.name}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
             );
           });
         })()}
 
+        {/* ═══════════════════════════════════════════ */}
+        {/* SPORTS SÉLECTIONNÉS - Badge(s) avec X pour retirer */}
+        {/* ═══════════════════════════════════════════ */}
+        {selectedSports.length > 0 && (
+          <View style={styles.selectedSportsSection}>
+            <View style={styles.selectedSportsHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>
+                {selectedSports.length === 1 ? 'Sport selectionne' : `${selectedSports.length} sports selectionnes`}
+              </Text>
+              <Text style={[styles.selectedSportsHint, { color: colors.textMuted }]}>
+                (max 3)
+              </Text>
+            </View>
+            <View style={styles.selectedSportsList}>
+              {selectedSports.map((sportId) => {
+                const sport = SPORTS.find(s => s.id === sportId);
+                if (!sport) return null;
+                return (
+                  <TouchableOpacity
+                    key={sportId}
+                    style={[styles.selectedSportChip, { backgroundColor: colors.gold, borderColor: colors.gold }]}
+                    onPress={() => toggleSport(sportId)}
+                  >
+                    <MaterialCommunityIcons name={sport.icon as any} size={20} color="#FFFFFF" />
+                    <Text style={styles.selectedSportChipText}>{sport.name}</Text>
+                    <X size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* RESTE DU FORMULAIRE - Seulement si sport sélectionné */}
+        {/* ═══════════════════════════════════════════ */}
+        {selectedSports.length > 0 && (
+          <>
+            {/* MES CLUBS */}
+            {clubs.length > 0 && (
+              <>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Club / Coach</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.clubsScroll}
+                  contentContainerStyle={styles.clubsScrollContent}
+                >
+                  <TouchableOpacity
+                    style={[
+                      styles.clubCard,
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                      !selectedClub && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
+                    ]}
+                    onPress={() => setSelectedClub(null)}
+                  >
+                    <View style={[styles.clubCardIcon, { backgroundColor: colors.cardHover }]}>
+                      <Home size={24} color={!selectedClub ? colors.gold : colors.textSecondary} strokeWidth={2} />
+                    </View>
+                    <Text style={[styles.clubCardName, { color: !selectedClub ? colors.gold : colors.textSecondary }]}>
+                      Libre
+                    </Text>
+                  </TouchableOpacity>
+                  {clubs.map((club) => (
+                    <TouchableOpacity
+                      key={club.id}
+                      style={[
+                        styles.clubCard,
+                        {
+                          backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : colors.card,
+                          borderColor: selectedClub?.id === club.id ? colors.gold : 'transparent',
+                          borderWidth: selectedClub?.id === club.id ? 2 : 0,
+                        },
+                      ]}
+                      onPress={() => setSelectedClub(club)}
+                    >
+                      {(() => {
+                        const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
+                        if (logoSource) {
+                          return (
+                            <Image
+                              source={logoSource}
+                              style={styles.clubCardLogo}
+                              resizeMode="cover"
+                            />
+                          );
+                        }
+                        return (
+                          <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.cardHover }]}>
+                            <MaterialCommunityIcons
+                              name={getSportIcon(club.sport || 'autre') as any}
+                              size={24}
+                              color="#FFFFFF"
+                            />
+                          </View>
+                        );
+                      })()}
+                      <Text
+                        style={[
+                          styles.clubCardName,
+                          { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {club.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+          </>
+        )}
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* ÉTAPE 2: DÉTAILS DE LA SÉANCE - Seulement si sport sélectionné */}
+        {/* ═══════════════════════════════════════════ */}
+        {selectedSports.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.accent, marginTop: SPACING.lg }]}>
+              2. Configure ta seance
+            </Text>
+          </>
+        )}
+
+        {/* Options pour chaque sport sélectionné */}
+        {selectedSports.map((sportId) => {
+          const sport = SPORTS.find(s => s.id === sportId);
+          const options = getOptionsForSport(sportId);
+          const sportSelectedOptions = selectedOptions[sportId] || [];
+
+          if (!sport || options.length === 0) return null;
+
+          return (
+            <View key={`options-${sportId}`} style={[styles.sportOptionsSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.sportOptionsHeader}>
+                <MaterialCommunityIcons name={sport.icon as any} size={24} color={sport.color} />
+                <Text style={[styles.sportOptionsTitle, { color: colors.textPrimary }]}>
+                  {sport.name} - Qu'as-tu fait ?
+                </Text>
+              </View>
+              <View style={styles.sportOptionsGrid}>
+                {options.map((option) => {
+                  const isSelected = sportSelectedOptions.includes(option.id);
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[
+                        styles.sportOptionChip,
+                        { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border },
+                        isSelected && { backgroundColor: option.color + '20', borderColor: option.color }
+                      ]}
+                      onPress={() => toggleOption(sportId, option.id)}
+                    >
+                      {option.icon && (
+                        <MaterialCommunityIcons
+                          name={option.icon as any}
+                          size={18}
+                          color={isSelected ? option.color : colors.textMuted}
+                        />
+                      )}
+                      <Text style={[
+                        styles.sportOptionLabel,
+                        { color: colors.textSecondary },
+                        isSelected && { color: option.color, fontWeight: '700' }
+                      ]}>
+                        {option.label}
+                      </Text>
+                      {isSelected && <Check size={14} color={option.color} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* ═══ ENTRÉES PERSONNALISÉES ═══ */}
+              <View style={styles.sportEntriesSection}>
+                <Text style={[styles.sportEntriesTitle, { color: colors.textMuted }]}>
+                  Tes notes ({(sportEntries[sportId] || []).length}/10)
+                </Text>
+
+                {/* Liste des entrées existantes */}
+                {(sportEntries[sportId] || []).map((entry, index) => (
+                  <View key={index} style={[styles.sportEntryItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                    <Text style={[styles.sportEntryText, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {entry}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => removeSportEntry(sportId, index)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <X size={16} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+
+                {/* Champ d'ajout d'entrée */}
+                {(sportEntries[sportId] || []).length < 10 && (
+                  <View style={styles.sportEntryInputRow}>
+                    <TextInput
+                      style={[
+                        styles.sportEntryInput,
+                        { color: colors.textPrimary, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }
+                      ]}
+                      value={newEntryText[sportId] || ''}
+                      onChangeText={(text) => setNewEntryText(prev => ({ ...prev, [sportId]: text }))}
+                      placeholder="Ex: 5 rounds, garde fermee..."
+                      placeholderTextColor={colors.textMuted}
+                      returnKeyType="done"
+                      onSubmitEditing={() => addSportEntry(sportId)}
+                    />
+                    <TouchableOpacity
+                      style={[styles.sportEntryAddButton, { backgroundColor: sport.color }]}
+                      onPress={() => addSportEntry(sportId)}
+                    >
+                      <Plus size={18} color="#FFFFFF" strokeWidth={3} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        })}
+
+        {/* ═══════════════════════════════════════════ */}
+        {/* DESCRIPTION PERSONNALISÉE - Seulement si sport sélectionné */}
+        {/* ═══════════════════════════════════════════ */}
+        {selectedSports.length > 0 && (
+          <View style={[styles.customDescriptionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.customDescriptionHeader}>
+              <Plus size={20} color={colors.gold} />
+              <Text style={[styles.customDescriptionTitle, { color: colors.textPrimary }]}>
+                Ajoute ta description
+              </Text>
+            </View>
+            <TextInput
+              style={[styles.customDescriptionInput, { color: colors.textPrimary, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}
+              value={customDescription}
+              onChangeText={setCustomDescription}
+              placeholder="Ex: Travail garde fermée, révision des sweeps..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              numberOfLines={2}
+            />
+          </View>
+        )}
+
+        {/* DATE - Seulement si sport sélectionné */}
+        {selectedSports.length > 0 && (
+          <>
         {/* DATE */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date</Text>
         <TouchableOpacity
@@ -410,7 +1292,7 @@ export default function AddTrainingScreen() {
         )}
 
         {/* DURÉE ESTIMÉE */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Duree estimee</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Duree (minutes)</Text>
         <View style={styles.durationContainer}>
           {[30, 45, 60, 90, 120].map((d) => (
             <TouchableOpacity
@@ -418,7 +1300,7 @@ export default function AddTrainingScreen() {
               style={[
                 styles.durationItem,
                 { backgroundColor: colors.card, borderColor: colors.border },
-                duration === d && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
+                duration === d && { borderColor: colors.accent, backgroundColor: colors.accent + '20' },
               ]}
               onPress={() => setDuration(d)}
             >
@@ -426,7 +1308,7 @@ export default function AddTrainingScreen() {
                 style={[
                   styles.durationText,
                   { color: colors.textSecondary },
-                  duration === d && { color: colors.gold },
+                  duration === d && { color: colors.accent, fontWeight: '700' },
                 ]}
               >
                 {d}
@@ -434,9 +1316,37 @@ export default function AddTrainingScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* DURÉE PERSONNALISÉE */}
+        <View style={styles.customDurationContainer}>
+          <Text style={[styles.customDurationLabel, { color: colors.textMuted }]}>ou ta duree :</Text>
+          <TextInput
+            style={[
+              styles.customDurationInput,
+              { color: colors.textPrimary, backgroundColor: colors.card, borderColor: colors.border }
+            ]}
+            value={duration && ![30, 45, 60, 90, 120].includes(duration) ? duration.toString() : ''}
+            onChangeText={(text) => {
+              const num = parseInt(text);
+              if (!isNaN(num) && num > 0 && num <= 480) {
+                setDuration(num);
+              } else if (text === '') {
+                setDuration(60);
+              }
+            }}
+            placeholder="Ex: 75"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="number-pad"
+            maxLength={3}
+          />
+          <Text style={[styles.customDurationUnit, { color: colors.textMuted }]}>min</Text>
+        </View>
+
         <Text style={[styles.endTimeText, { color: colors.textMuted }]}>
           Fin estimee : {calculateEndTime()}
         </Text>
+          </>
+        )}
 
         {/* MUSCLES (si musculation) */}
         {showMuscles && (
@@ -513,89 +1423,94 @@ export default function AddTrainingScreen() {
           </>
         )}
 
-        {/* NOTES */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
-        <TextInput
-          style={[styles.notesInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="Comment s'est passe l'entrainement ?"
-          placeholderTextColor={colors.textMuted}
-          multiline
-          numberOfLines={3}
-        />
+        {/* NOTES - Seulement si sport sélectionné */}
+        {selectedSports.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
+            <TextInput
+              style={[styles.notesInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Comment s'est passe l'entrainement ?"
+              placeholderTextColor={colors.textMuted}
+              multiline
+              numberOfLines={3}
+            />
 
-        {/* NOTE TECHNIQUE */}
-        <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
-          <View style={styles.techniqueSectionHeader}>
-            <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>🎯 Note ta technique</Text>
-            <Text style={[styles.techniqueSectionSubtitle, { color: colors.textMuted }]}>
-              Comment était ta technique aujourd'hui ?
-            </Text>
-          </View>
+            {/* NOTE TECHNIQUE */}
+            <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
+              <View style={styles.techniqueSectionHeader}>
+                <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>Note ta technique</Text>
+                <Text style={[styles.techniqueSectionSubtitle, { color: colors.textMuted }]}>
+                  Comment etait ta technique aujourd'hui ?
+                </Text>
+              </View>
 
-          {/* Étoiles */}
-          <View style={styles.starsContainer}>
-            {[1, 2, 3, 4, 5].map((rating) => (
-              <TouchableOpacity
-                key={rating}
-                onPress={() => setTechniqueRating(rating)}
-                style={styles.starButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Star
-                  size={36}
-                  color={techniqueRating && rating <= techniqueRating ? colors.accent : colors.textMuted}
-                  fill={techniqueRating && rating <= techniqueRating ? colors.accent : 'transparent'}
-                  strokeWidth={2}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
+              {/* Étoiles */}
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <TouchableOpacity
+                    key={rating}
+                    onPress={() => setTechniqueRating(rating)}
+                    style={styles.starButton}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Star
+                      size={36}
+                      color={techniqueRating && rating <= techniqueRating ? colors.accent : colors.textMuted}
+                      fill={techniqueRating && rating <= techniqueRating ? colors.accent : 'transparent'}
+                      strokeWidth={2}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-          {/* Labels sous les étoiles */}
-          <View style={styles.starsLabels}>
-            <Text style={[styles.starLabel, { color: colors.textMuted }]}>1</Text>
-            <Text style={[styles.starLabel, { color: colors.textMuted }]}>2</Text>
-            <Text style={[styles.starLabel, { color: colors.textMuted }]}>3</Text>
-            <Text style={[styles.starLabel, { color: colors.textMuted }]}>4</Text>
-            <Text style={[styles.starLabel, { color: colors.textMuted }]}>5</Text>
-          </View>
+              {/* Labels sous les étoiles */}
+              <View style={styles.starsLabels}>
+                <Text style={[styles.starLabel, { color: colors.textMuted }]}>1</Text>
+                <Text style={[styles.starLabel, { color: colors.textMuted }]}>2</Text>
+                <Text style={[styles.starLabel, { color: colors.textMuted }]}>3</Text>
+                <Text style={[styles.starLabel, { color: colors.textMuted }]}>4</Text>
+                <Text style={[styles.starLabel, { color: colors.textMuted }]}>5</Text>
+              </View>
 
-          {/* Info scientifique */}
-          <View style={styles.techniqueInfo}>
-            <Text style={[styles.techniqueInfoText, { color: colors.textMuted }]}>
-              💡 "Noter ta technique améliore ta conscience corporelle et réduit ton risque de blessure de 35%"
-            </Text>
-          </View>
+              {/* Info scientifique */}
+              <View style={styles.techniqueInfo}>
+                <Text style={[styles.techniqueInfoText, { color: colors.textMuted }]}>
+                  Noter ta technique ameliore ta conscience corporelle et reduit ton risque de blessure de 35%
+                </Text>
+              </View>
 
-          {/* Bouton Passer */}
-          {techniqueRating !== null && (
+              {/* Bouton Passer */}
+              {techniqueRating !== null && (
+                <TouchableOpacity
+                  onPress={() => setTechniqueRating(null)}
+                  style={styles.skipButton}
+                >
+                  <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>x Reinitialiser</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* BOUTON SAVE */}
             <TouchableOpacity
-              onPress={() => setTechniqueRating(null)}
-              style={styles.skipButton}
+              style={[
+                styles.saveButton,
+                { backgroundColor: colors.accent },
+                isSubmitting && styles.saveButtonDisabled
+              ]}
+              onPress={handleSave}
+              disabled={isSubmitting || selectedSports.length === 0}
             >
-              <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>✕ Réinitialiser</Text>
+              <View style={styles.saveButtonContent}>
+                <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
+                <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
+                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+                </Text>
+              </View>
             </TouchableOpacity>
-          )}
-        </View>
-
-        {/* BOUTON SAVE */}
-        <TouchableOpacity
-          style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={isSubmitting}
-        >
-          <LinearGradient
-            colors={gradients.gold}
-            style={styles.saveButtonGradient}
-          >
-            <Dumbbell size={22} color={colors.background} />
-            <Text style={[styles.saveButtonText, { color: colors.background }]}>
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          </>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -605,6 +1520,14 @@ export default function AddTrainingScreen() {
         visible={showExerciseModal}
         onClose={() => setShowExerciseModal(false)}
         onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
+      />
+
+      {/* Share Prompt Modal */}
+      <SharePromptModal
+        visible={showShareModal}
+        onClose={handleShareModalSkip}
+        onShare={handleShareModalShare}
+        sportName={selectedSports.map(s => getSportName(s)).join(' + ')}
       />
 
       <PopupComponent />
@@ -649,20 +1572,265 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
 
+  // QUICK ADD
+  quickAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    marginBottom: SPACING.xl,
+    gap: SPACING.md,
+  },
+  quickAddIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickAddContent: {
+    flex: 1,
+  },
+  quickAddTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+  },
+  // ADD ANOTHER SPORT BUTTON
+  addAnotherSportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginBottom: SPACING.lg,
+  },
+  addAnotherSportText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+  addSportSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+
+  quickAddSubtitle: {
+    fontSize: FONT_SIZE.sm,
+    marginTop: 2,
+  },
+
+  // SELECTED SPORTS SECTION
+  selectedSportsSection: {
+    marginBottom: SPACING.lg,
+  },
+  selectedSportsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  selectedSportsHint: {
+    fontSize: FONT_SIZE.xs,
+  },
+  selectedSportsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  selectedSportChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  selectedSportChipText: {
+    color: '#FFFFFF',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+  },
+
+  // SPORT OPTIONS SECTION (Qu'as-tu fait?)
+  sportOptionsSection: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    marginBottom: SPACING.md,
+  },
+  sportOptionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  sportOptionsTitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
+  sportOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  sportOptionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1.5,
+  },
+  sportOptionLabel: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+  },
+
+  // CUSTOM DESCRIPTION
+  customDescriptionSection: {
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    marginBottom: SPACING.md,
+  },
+  customDescriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  customDescriptionTitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
+  customDescriptionInput: {
+    borderRadius: RADIUS.sm,
+    padding: SPACING.md,
+    fontSize: FONT_SIZE.md,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+
+  // CATEGORY HEADER - Nouveau design avec icône
+  categoryHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  categoryIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // SPORTS GRID (Vertical)
+  sportsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    paddingHorizontal: 4,
+  },
+  sportGridItem: {
+    width: (SCREEN_WIDTH - SPACING.xl * 2 - SPACING.sm * 3) / 4,
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: 4,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    position: 'relative',
+  },
+  sportGridIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  sportGridName: {
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  sportGridCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // SELECTED SPORT BANNER
+  selectedSportBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    marginBottom: SPACING.md,
+    gap: SPACING.md,
+  },
+  selectedSportIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedSportInfo: {
+    flex: 1,
+  },
+  selectedSportName: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: '800',
+  },
+  selectedSportCategory: {
+    fontSize: FONT_SIZE.xs,
+    marginTop: 2,
+  },
+
   // SPORTS
   sportsScroll: {
-    marginHorizontal: -20,
-    marginBottom: SPACING.lg,
+    marginTop: SPACING.sm,
   },
   categorySection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+  },
+  categoryHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  categorySportCount: {
+    fontSize: FONT_SIZE.xs,
   },
   categoryLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 8,
-    paddingHorizontal: 20,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   sportsContainer: {
@@ -673,7 +1841,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUS.md,
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: IS_SMALL_SCREEN ? SPACING.md : SPACING.lg, // Moins de padding sur petits écrans
     borderWidth: 1,
     minWidth: 80,
   },
@@ -718,9 +1886,9 @@ const styles = StyleSheet.create({
   clubCard: {
     alignItems: 'center',
     borderRadius: RADIUS.md,
-    padding: SPACING.md,
+    padding: IS_SMALL_SCREEN ? SPACING.sm : SPACING.md, // Padding adaptatif
     borderWidth: 2,
-    minWidth: 90,
+    minWidth: IS_SMALL_SCREEN ? 80 : 90, // Plus compact sur petits écrans
     maxWidth: 100,
   },
   clubCardIcon: {
@@ -811,9 +1979,10 @@ const styles = StyleSheet.create({
   },
   endTimeText: {
     fontSize: FONT_SIZE.sm,
-    textAlign: 'center',
-    marginTop: -SPACING.sm,
+    textAlign: 'left',
+    marginTop: SPACING.md,
     marginBottom: SPACING.lg,
+    marginLeft: 4,
   },
 
   // DURATION
@@ -844,6 +2013,82 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     alignItems: 'center',
     borderWidth: 1,
+  },
+  customDurationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
+    flexWrap: 'nowrap',
+  },
+  customDurationLabel: {
+    fontSize: FONT_SIZE.sm,
+    flexShrink: 0,
+  },
+  customDurationInput: {
+    borderRadius: RADIUS.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    fontSize: FONT_SIZE.lg,
+    fontWeight: '700',
+    width: 70,
+    textAlign: 'center',
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  customDurationUnit: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '600',
+    flexShrink: 0,
+  },
+
+  // SPORT ENTRIES (notes personnalisées par sport)
+  sportEntriesSection: {
+    marginTop: SPACING.lg,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128,128,128,0.2)',
+  },
+  sportEntriesTitle: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: SPACING.sm,
+  },
+  sportEntryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.sm,
+  },
+  sportEntryText: {
+    flex: 1,
+    fontSize: FONT_SIZE.sm,
+    marginRight: SPACING.sm,
+  },
+  sportEntryInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  sportEntryInput: {
+    flex: 1,
+    borderRadius: RADIUS.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    fontSize: FONT_SIZE.sm,
+    borderWidth: 1,
+  },
+  sportEntryAddButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // MUSCLES
@@ -924,8 +2169,8 @@ const styles = StyleSheet.create({
   // NOTES
   notesInput: {
     borderRadius: RADIUS.md,
-    padding: SPACING.lg,
-    fontSize: 15,
+    padding: IS_SMALL_SCREEN ? SPACING.md : SPACING.lg, // Padding adaptatif
+    fontSize: IS_SMALL_SCREEN ? 14 : 15, // Plus petit sur petits écrans
     borderWidth: 1,
     marginBottom: 24,
     minHeight: 80,
@@ -955,7 +2200,7 @@ const styles = StyleSheet.create({
   starsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: IS_SMALL_SCREEN ? 6 : 8, // Moins d'espace entre étoiles sur petits écrans
     marginBottom: 4,
   },
   starButton: {
@@ -1001,6 +2246,13 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    gap: 10,
+  },
+  saveButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

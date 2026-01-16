@@ -41,9 +41,9 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
   };
 
   const getStatusEmoji = (p: GoalProgress) => {
-    if (p.weekPercent >= 100) return '✅';
-    if (p.isOnTrack) return '🔥';
-    return '⚠️';
+    if (p.weekPercent >= 100) return '';
+    if (p.isOnTrack) return '';
+    return '';
   };
 
   // Variante Mini (pour les petites cartes)
@@ -264,14 +264,14 @@ export const formatGoalsForText = (
 ): string => {
   if (progress.length === 0) return '';
 
-  let text = `📊 Mes objectifs cette semaine: ${globalStats.totalWeeklyCompleted}/${globalStats.totalWeeklyTarget}\n\n`;
+  let text = `Mes objectifs cette semaine: ${globalStats.totalWeeklyCompleted}/${globalStats.totalWeeklyTarget}\n\n`;
 
   progress.forEach((p) => {
-    const emoji = p.weekPercent >= 100 ? '✅' : p.isOnTrack ? '🔥' : '⚠️';
+    const emoji = p.weekPercent >= 100 ? '' : p.isOnTrack ? '' : '';
     text += `${emoji} ${p.sport.name}: ${p.weekCount}/${p.weekTarget} (${Math.round(p.weekPercent)}%)\n`;
   });
 
-  text += `\n🎯 ${globalStats.goalsOnTrack}/${globalStats.activeGoals} objectifs on track`;
+  text += `\n${globalStats.goalsOnTrack}/${globalStats.activeGoals} objectifs on track`;
 
   return text;
 };

@@ -40,10 +40,10 @@ export const FightCard: React.FC<FightCardProps> = ({
 
   // Fonction pour obtenir l'emoji par défaut basé sur le type
   const getEmojiForType = (type: string) => {
-    if (type === 'gracie_barra') return '🥋';
-    if (type === 'basic_fit') return '🏋️';
-    if (type === 'running') return '🏃';
-    return '⚡';
+    if (type === 'gracie_barra') return '';
+    if (type === 'basic_fit') return '';
+    if (type === 'running') return '';
+    return '';
   };
 
   // Filtrer les clubs qui ont un logo (soit logoUri, soit un type avec logo par défaut)
@@ -82,7 +82,7 @@ export const FightCard: React.FC<FightCardProps> = ({
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarPlaceholderText}>⚔️</Text>
+              <Text style={styles.avatarPlaceholderText}></Text>
             </View>
           )}
         </View>

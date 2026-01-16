@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - BODY MAP (VERSION COMPLÈTE)
+// YOROI MEDIC - BODY MAP (VERSION COMPLÈTE)
 // ============================================
 // 70 zones anatomiques pour sportifs
 
@@ -283,7 +283,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         <View style={[styles.header, { backgroundColor: colors.backgroundCard }]}>
           <View>
             <Text style={[styles.title, { color: colors.accent }]}>
-              {debug ? '🩺 Mode Chirurgien' : '🎯 Sélecteur'}
+              {debug ? 'Mode Chirurgien' : 'Sélecteur'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {view === 'front' ? activeZones.length : activeZones.length} zones

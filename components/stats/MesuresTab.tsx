@@ -101,88 +101,102 @@ export default function MesuresTab() {
     return data[data.length - 1].value;
   };
 
+  // Filtrer les mesures qui ont des données et grouper en rangées
+  const measurementsWithData = measurements.filter(measurement => {
+    const sparklineData = getSparklineData(measurement.id);
+    return sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
+  });
+
+  // Grouper les mesures en rangées de 2 (ou 4 sur iPad)
+  const rows: typeof measurements[] = [];
+  for (let i = 0; i < measurementsWithData.length; i += STATS_COLUMNS) {
+    rows.push(measurementsWithData.slice(i, i + STATS_COLUMNS));
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Grille des mensurations - EXACTEMENT comme CompositionStats */}
+      {/* Grille des mensurations */}
       <View style={styles.metricsGrid}>
-        {measurements.map((measurement) => {
-          const sparklineData = getSparklineData(measurement.id);
-          const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
-          const currentValue = getCurrentValue(measurement.id);
-          const trend = getTrend(measurement.id);
-          const change = getChange(measurement.id);
+        {rows.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            {row.map((measurement) => {
+              const sparklineData = getSparklineData(measurement.id);
+              const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
+              const currentValue = getCurrentValue(measurement.id);
+              const trend = getTrend(measurement.id);
+              const change = getChange(measurement.id);
 
-          if (!hasData) return null;
-
-          return (
-            <TouchableOpacity
-              key={measurement.id}
-              style={[styles.metricCard, { backgroundColor: colors.backgroundCard }]}
-              activeOpacity={0.7}
-              onPress={() => setSelectedMeasurement({
-                id: measurement.id,
-                label: measurement.label,
-                color: measurement.color,
-              })}
-            >
-              {/* Expand icon - à côté de l'icône comme dans Compo */}
-              <View style={styles.expandIcon}>
-                <Maximize2 size={16} color="#1F2937" opacity={0.9} />
-              </View>
-
-              {/* Header avec icône */}
-              <View style={styles.metricHeader}>
-                <View style={[styles.metricIconContainer, { backgroundColor: measurement.color + '20' }]}>
-                  <Ruler size={16} color={measurement.color} />
-                </View>
-                {trend !== 'stable' && change && (
-                  <View style={styles.trendBadge}>
-                    {trend === 'up' ? (
-                      <TrendingUp size={12} color="#EF4444" />
-                    ) : (
-                      <TrendingDown size={12} color="#10B981" />
-                    )}
-                    <Text
-                      style={[
-                        styles.changeText,
-                        { color: trend === 'up' ? '#EF4444' : '#10B981' },
-                      ]}
-                    >
-                      {change}
-                    </Text>
+              return (
+                <TouchableOpacity
+                  key={measurement.id}
+                  style={[styles.metricCard, { backgroundColor: colors.backgroundCard }]}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedMeasurement({
+                    id: measurement.id,
+                    label: measurement.label,
+                    color: measurement.color,
+                  })}
+                >
+                  {/* Expand icon */}
+                  <View style={styles.expandIcon}>
+                    <Maximize2 size={16} color="#1F2937" opacity={0.9} />
                   </View>
-                )}
-              </View>
 
-              {/* Label */}
-              <Text style={[styles.metricLabel, { color: colors.textMuted }]} numberOfLines={1}>
-                {measurement.label}
-              </Text>
+                  {/* Header avec icône */}
+                  <View style={styles.metricHeader}>
+                    <View style={[styles.metricIconContainer, { backgroundColor: measurement.color + '20' }]}>
+                      <Ruler size={16} color={measurement.color} />
+                    </View>
+                    {trend !== 'stable' && change && (
+                      <View style={styles.trendBadge}>
+                        {trend === 'up' ? (
+                          <TrendingUp size={12} color="#EF4444" />
+                        ) : (
+                          <TrendingDown size={12} color="#10B981" />
+                        )}
+                        <Text
+                          style={[
+                            styles.changeText,
+                            { color: trend === 'up' ? '#EF4444' : '#10B981' },
+                          ]}
+                        >
+                          {change}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
 
-              {/* Value */}
-              <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
-                {currentValue ? currentValue.toFixed(1) : '--'}
-                <Text style={[styles.metricUnit, { color: colors.textMuted }]}> cm</Text>
-              </Text>
+                  {/* Label */}
+                  <Text style={[styles.metricLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                    {measurement.label}
+                  </Text>
 
-              {/* Sparkline - EXACTEMENT comme dans Compo */}
-              {hasData && (
-                <View style={styles.sparklineContainer}>
-                  <SparklineChart
-                    data={sparklineData}
-                    width={SPARKLINE_WIDTH}
-                    height={40}
-                    color={measurement.color}
-                    showGradient={true}
-                    thickness={2.5}
-                    showLastValues={sparklineData.length}
-                    valueUnit="cm"
-                  />
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+                  {/* Value */}
+                  <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                    {currentValue ? currentValue.toFixed(1) : '--'}
+                    <Text style={[styles.metricUnit, { color: colors.textMuted }]}> cm</Text>
+                  </Text>
+
+                  {/* Sparkline */}
+                  {hasData && (
+                    <View style={styles.sparklineContainer}>
+                      <SparklineChart
+                        data={sparklineData}
+                        width={SPARKLINE_WIDTH}
+                        height={40}
+                        color={measurement.color}
+                        showGradient={true}
+                        thickness={2.5}
+                        showLastValues={sparklineData.length}
+                        valueUnit="cm"
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ))}
       </View>
 
       {/* État vide */}
@@ -222,15 +236,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: isIPad() ? 0 : 16,
-    paddingBottom: 40,
+    paddingBottom: 150,
   },
 
-  // Grille des métriques - IDENTIQUE à CompositionStats
+  // Grille des métriques
   metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: STATS_GAP,
   },
   metricCard: {
     width: STATS_CARD_WIDTH,
@@ -243,7 +259,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    marginBottom: STATS_GAP,
   },
   expandIcon: {
     position: 'absolute',

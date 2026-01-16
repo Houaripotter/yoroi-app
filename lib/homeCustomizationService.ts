@@ -91,6 +91,7 @@ export const DEFAULT_HOME_SECTIONS: HomeSection[] = [
     icon: 'target',
     visible: true,
     order: 8,
+    mandatory: true, // Toujours visible - fonctionnalité importante
   },
   {
     id: 'performance_radar',

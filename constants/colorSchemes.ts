@@ -24,7 +24,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
     id: 'coral',
     name: 'Coral Energy',
     nameJp: '珊瑚',
-    icon: '🔥',
+    icon: '',
     isDark: false,
     background: '#FFF5F0',      // Pêche clair chaleureux
     chartBackground: '#FFE8E0', // Pêche plus soutenu
@@ -44,7 +44,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
     id: 'sakura',
     name: 'Sakura Dream',
     nameJp: '桜',
-    icon: '🌸',
+    icon: '',
     isDark: false,
     background: '#FFF5F8',      // Rose pâle
     chartBackground: '#FFE8EF', // Rose plus soutenu
@@ -54,7 +54,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
     id: 'sunrise',
     name: 'Sunrise Vibes',
     nameJp: '日出',
-    icon: '☀️',
+    icon: '',
     isDark: false,
     background: '#FFF8F0',      // Crème doré
     chartBackground: '#FFEED8', // Crème plus soutenu
@@ -64,7 +64,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
     id: 'ocean',
     name: 'Ocean Calm',
     nameJp: '海',
-    icon: '🌊',
+    icon: '',
     isDark: false,
     background: '#F0F8FF',      // Bleu ciel clair
     chartBackground: '#E0F0FF', // Bleu ciel plus soutenu
@@ -75,7 +75,7 @@ export const COLOR_SCHEMES: ColorScheme[] = [
     id: 'dark',
     name: 'Dark Ronin',
     nameJp: '闇',
-    icon: '🌙',
+    icon: '',
     isDark: true,
     background: '#1A1A2E',
     chartBackground: '#2D2D4A',

@@ -206,14 +206,14 @@ export default function FastingScreen() {
   const handleStartFasting = async (mode: FastingMode) => {
     // Avertissement médical pour tous les jeûnes
     const warningMessage = mode.warning
-      ? 'Le jeûne prolongé peut être dangereux. Consultez un médecin avant de commencer et assurez-vous de bien vous hydrater.\n\n⚠️ IMPORTANT : Ne mettez pas votre santé en danger. Si vous ne savez pas si le jeûne est adapté pour vous, consultez un professionnel de santé.'
-      : '⚠️ IMPORTANT : Consultez un médecin avant de commencer le jeûne si vous avez des problèmes de santé, prenez des médicaments, êtes enceinte ou allaitez.\n\nNe mettez pas votre santé en danger.';
+      ? 'Le jeûne prolongé peut être dangereux. Consulte un médecin avant de commencer et assure-toi de bien vous hydrater.\n\nIMPORTANT : Ne mettez pas ton santé en danger. Si tu ne sais pas si le jeûne est adapté pour vous, consultez un professionnel de santé.'
+      : 'IMPORTANT : Consulte un médecin avant de commencer le jeûne si tu as des problèmes de santé, prends des médicaments, es enceinte ou allaites.\n\nNe mettez pas ton santé en danger.';
 
     showPopup(
       'Avertissement médical',
       warningMessage,
       [
-        { text: 'Annuler', style: 'secondary' },
+        { text: 'Annuler', style: 'cancel' },
         {
           text: 'Je comprends',
           style: 'primary',
@@ -251,7 +251,7 @@ export default function FastingScreen() {
       'Arrêter le jeûne ?',
       'Es-tu sûr de vouloir arrêter ton jeûne maintenant ?',
       [
-        { text: 'Continuer', style: 'secondary' },
+        { text: 'Continuer', style: 'cancel' },
         {
           text: 'Arrêter',
           style: 'destructive',
@@ -563,7 +563,7 @@ export default function FastingScreen() {
         {stats && stats.totalCompleted > 0 && (
           <Card style={styles.statsCard}>
             <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-              📊 Tes statistiques
+              Tes statistiques
             </Text>
 
             <View style={styles.statsGrid}>
@@ -702,7 +702,7 @@ export default function FastingScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                🌙 Ramadan
+                Ramadan
               </Text>
               <TouchableOpacity onPress={() => setShowRamadanModal(false)}>
                 <X size={24} color={colors.textMuted} />

@@ -54,13 +54,13 @@ async function generateEncryptionKey(): Promise<string> {
       .map(byte => byte.toString(16).padStart(2, '0'))
       .join('');
 
-    // Sauvegarder la clé (⚠️ en production, utiliser secure-store)
+    // Sauvegarder la clé (en production, utiliser secure-store)
     await AsyncStorage.setItem('@yoroi_encryption_key', key);
 
     return key;
   } catch (error) {
     logger.error('Failed to generate encryption key', error);
-    // Fallback: clé par défaut (⚠️ NON SÉCURISÉ, uniquement pour dev)
+    // Fallback: clé par défaut (NON SÉCURISÉ, uniquement pour dev)
     return 'yoroi_default_key_32_chars_long!';
   }
 }
@@ -74,7 +74,7 @@ async function encrypt(plaintext: string, key: string): Promise<string> {
   try {
     // En React Native, expo-crypto ne supporte pas AES directement
     // On utilise une approche simple avec XOR et base64 pour la démo
-    // ⚠️ En production, utiliser react-native-aes-crypto ou similar
+    // En production, utiliser react-native-aes-crypto ou similar
 
     const encrypted = xorEncrypt(plaintext, key);
     const base64 = Buffer.from(encrypted, 'utf-8').toString('base64');
@@ -111,7 +111,7 @@ async function decrypt(ciphertext: string, key: string): Promise<string> {
 
 /**
  * Chiffrement XOR simple (pour démo)
- * ⚠️ En production, utiliser AES-256-GCM
+ * En production, utiliser AES-256-GCM
  */
 function xorEncrypt(text: string, key: string): string {
   let result = '';
@@ -136,7 +136,7 @@ function shouldEncrypt(key: string): boolean {
 
 export const secureStorage = {
   /**
-   * ✅ Stocke une donnée (chiffrée si nécessaire)
+   * Stocke une donnée (chiffrée si nécessaire)
    */
   async setItem(key: string, value: string): Promise<void> {
     try {
@@ -156,7 +156,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Récupère une donnée (déchiffrée automatiquement)
+   * Récupère une donnée (déchiffrée automatiquement)
    */
   async getItem(key: string): Promise<string | null> {
     try {
@@ -180,7 +180,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Supprime une donnée
+   * Supprime une donnée
    */
   async removeItem(key: string): Promise<void> {
     try {
@@ -193,7 +193,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Supprime plusieurs données
+   * Supprime plusieurs données
    */
   async multiRemove(keys: string[]): Promise<void> {
     try {
@@ -206,7 +206,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Récupère toutes les clés
+   * Récupère toutes les clés
    */
   async getAllKeys(): Promise<string[]> {
     try {
@@ -219,7 +219,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Vide tout le storage
+   * Vide tout le storage
    */
   async clear(): Promise<void> {
     try {
@@ -232,7 +232,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Stocke un objet JSON (chiffré si nécessaire)
+   * Stocke un objet JSON (chiffré si nécessaire)
    */
   async setObject<T>(key: string, object: T): Promise<void> {
     try {
@@ -245,7 +245,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Récupère un objet JSON
+   * Récupère un objet JSON
    */
   async getObject<T>(key: string): Promise<T | null> {
     try {
@@ -260,7 +260,7 @@ export const secureStorage = {
   },
 
   /**
-   * ✅ Migre les données existantes vers le storage chiffré
+   * Migre les données existantes vers le storage chiffré
    */
   async migrateToEncrypted(): Promise<{ success: number; failed: number }> {
     let success = 0;
@@ -280,7 +280,7 @@ export const secureStorage = {
               const encrypted = await encrypt(value, encryptionKey);
               await AsyncStorage.setItem(key, encrypted);
               success++;
-              logger.info(`✅ Migrated: ${key}`);
+              logger.info(`Migrated: ${key}`);
             }
           } catch (error) {
             logger.error(`Failed to migrate ${key}`, error);
@@ -299,7 +299,7 @@ export const secureStorage = {
 };
 
 /**
- * ✅ EXEMPLE D'UTILISATION:
+ * EXEMPLE D'UTILISATION:
  *
  * // Remplacer AsyncStorage par secureStorage
  *

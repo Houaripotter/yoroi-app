@@ -136,9 +136,9 @@ export function BriefingSettings() {
             </Text>
             <View style={styles.featuresList}>
               <FeatureItem icon="⚖️" text="Ton poids actuel" colors={colors} />
-              <FeatureItem icon="🔥" text="Ta série de jours consécutifs" colors={colors} />
-              <FeatureItem icon="📅" text="Entraînement prévu du jour" colors={colors} />
-              <FeatureItem icon="⚠️" text="Rappel des blessures actives" colors={colors} />
+              <FeatureItem icon="" text="Ta série de jours consécutifs" colors={colors} />
+              <FeatureItem icon="" text="Entraînement prévu du jour" colors={colors} />
+              <FeatureItem icon="" text="Rappel des blessures actives" colors={colors} />
             </View>
           </View>
         </>

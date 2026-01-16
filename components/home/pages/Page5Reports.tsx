@@ -48,6 +48,7 @@ export const Page5Reports: React.FC<Page5ReportsProps> = ({
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      nestedScrollEnabled={true}
     >
       <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>
         Rapports

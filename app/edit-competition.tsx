@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - MODIFIER UNE COMPÉTITION
+// YOROI - MODIFIER UNE COMPÉTITION
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -112,7 +112,7 @@ export default function EditCompetitionScreen() {
 
   const handleSave = async () => {
     if (!nom.trim()) {
-      showPopup('Erreur', 'Veuillez saisir un nom de compétition', [
+      showPopup('Erreur', 'Saisis un nom de compétition', [
         { text: 'OK', style: 'primary' }
       ]);
       return;

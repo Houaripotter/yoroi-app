@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { TrendingDown, TrendingUp, Target } from 'lucide-react-native';
+import { TrendingDown, TrendingUp, Target, Dumbbell, Apple, Droplet } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { scale, scaleModerate, getHistoryDays, getGridColumns } from '@/constants/responsive';
 
@@ -94,7 +94,7 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* Poids - GROS et centré */}
           <View style={styles.weightSection}>
             <Text style={[styles.weightValue, { color: colors.textPrimary }]}>
-              {currentWeight > 0 ? currentWeight.toFixed(1) : '--.-'}
+              {currentWeight > 0 && !isNaN(currentWeight) ? currentWeight.toFixed(1) : '--.-'}
             </Text>
             <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
           </View>
@@ -102,37 +102,37 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* LIGNE 1 : Graisse - Eau - Muscle (Barres horizontales) */}
           {hasComposition && (
             <View style={styles.compBarsContainer}>
-              {fatPercent !== undefined && fatKg !== undefined && (
+              {fatPercent !== undefined && !isNaN(fatPercent) && fatKg !== undefined && !isNaN(fatKg) && (
                 <View style={styles.compBarRow}>
-                  <View style={[styles.compBarDot, { backgroundColor: '#EF4444' }]} />
+                  <Apple size={scale(7)} color="#F59E0B" strokeWidth={2.5} />
                   <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Graisse</Text>
                   <View style={styles.compBarTrack}>
-                    <View style={[styles.compBarFill, { width: `${Math.min(fatPercent, 100)}%`, backgroundColor: '#EF4444' }]} />
+                    <View style={[styles.compBarFill, { width: `${Math.min(fatPercent, 100)}%`, backgroundColor: '#F59E0B' }]} />
                   </View>
-                  <Text style={[styles.compBarValue, { color: '#EF4444' }]}>{fatPercent.toFixed(0)}%</Text>
-                  <Text style={[styles.compBarKg, { color: '#EF4444' }]}>{fatKg.toFixed(1)}kg</Text>
+                  <Text style={[styles.compBarValue, { color: '#F59E0B' }]}>{`${fatPercent.toFixed(0)}%`}</Text>
+                  <Text style={[styles.compBarKg, { color: '#F59E0B' }]}>{`${fatKg.toFixed(1)}kg`}</Text>
                 </View>
               )}
-              {waterPercent !== undefined && waterKg !== undefined && (
+              {waterPercent !== undefined && !isNaN(waterPercent) && waterKg !== undefined && !isNaN(waterKg) && (
                 <View style={styles.compBarRow}>
-                  <View style={[styles.compBarDot, { backgroundColor: '#3B82F6' }]} />
+                  <Droplet size={scale(7)} color="#3B82F6" strokeWidth={2.5} />
                   <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Eau</Text>
                   <View style={styles.compBarTrack}>
                     <View style={[styles.compBarFill, { width: `${Math.min(waterPercent, 100)}%`, backgroundColor: '#3B82F6' }]} />
                   </View>
-                  <Text style={[styles.compBarValue, { color: '#3B82F6' }]}>{waterPercent.toFixed(0)}%</Text>
-                  <Text style={[styles.compBarKg, { color: '#3B82F6' }]}>{waterKg.toFixed(1)}kg</Text>
+                  <Text style={[styles.compBarValue, { color: '#3B82F6' }]}>{`${waterPercent.toFixed(0)}%`}</Text>
+                  <Text style={[styles.compBarKg, { color: '#3B82F6' }]}>{`${waterKg.toFixed(1)}kg`}</Text>
                 </View>
               )}
-              {musclePercent !== undefined && muscleKg !== undefined && (
+              {musclePercent !== undefined && !isNaN(musclePercent) && muscleKg !== undefined && !isNaN(muscleKg) && (
                 <View style={styles.compBarRow}>
-                  <View style={[styles.compBarDot, { backgroundColor: '#10B981' }]} />
+                  <Dumbbell size={scale(7)} color="#EF4444" strokeWidth={2.5} />
                   <Text style={[styles.compBarLabel, { color: colors.textMuted }]}>Muscle</Text>
                   <View style={styles.compBarTrack}>
-                    <View style={[styles.compBarFill, { width: `${Math.min(musclePercent, 100)}%`, backgroundColor: '#10B981' }]} />
+                    <View style={[styles.compBarFill, { width: `${Math.min(musclePercent, 100)}%`, backgroundColor: '#EF4444' }]} />
                   </View>
-                  <Text style={[styles.compBarValue, { color: '#10B981' }]}>{musclePercent.toFixed(0)}%</Text>
-                  <Text style={[styles.compBarKg, { color: '#10B981' }]}>{muscleKg.toFixed(1)}kg</Text>
+                  <Text style={[styles.compBarValue, { color: '#EF4444' }]}>{`${musclePercent.toFixed(0)}%`}</Text>
+                  <Text style={[styles.compBarKg, { color: '#EF4444' }]}>{`${muscleKg.toFixed(1)}kg`}</Text>
                 </View>
               )}
             </View>
@@ -141,48 +141,49 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* LIGNE 2 : Perdu - Objectif - Reste */}
           <View style={styles.row2}>
             {/* Perdu à gauche - VERT */}
-            {history && history.length > 0 && currentWeight > 0 && (
+            {history && history.length > 0 && currentWeight > 0 && history[0] && typeof history[0] === 'number' && !isNaN(history[0]) && !isNaN(currentWeight) ? (
               <View style={styles.goalItem}>
-                <Text style={[styles.goalValue, { color: '#10B981' }]}>-{(history[0] - currentWeight).toFixed(1)}</Text>
+                <Text style={[styles.goalValue, { color: '#10B981' }]}>{`-${(history[0] - currentWeight).toFixed(1)}`}</Text>
                 <Text style={[styles.goalLabel, { color: '#10B981' }]}>Perdu</Text>
               </View>
+            ) : (
+              <View style={styles.goalItem} />
             )}
-            {(!history || history.length === 0 || currentWeight === 0) && <View style={styles.goalItem} />}
 
             {/* Objectif au centre - BLEU */}
-            {target && (
+            {target && typeof target === 'number' && !isNaN(target) ? (
               <View style={styles.goalItemCenter}>
                 <View style={styles.targetRow}>
                   <Target size={scale(12)} color="#3B82F6" strokeWidth={2.5} />
-                  <Text style={[styles.goalValue, { color: '#3B82F6' }]}>{target}</Text>
+                  <Text style={[styles.goalValue, { color: '#3B82F6' }]}>{target.toFixed(1)}</Text>
                 </View>
                 <Text style={[styles.goalLabel, { color: '#3B82F6' }]}>Objectif</Text>
               </View>
-            )}
-            {!target && (
+            ) : (
               <View style={styles.goalItemCenter}>
                 <Text style={[styles.goalValue, { color: colors.textMuted }]}>--</Text>
                 <Text style={[styles.goalLabel, { color: colors.textMuted }]}>Objectif</Text>
               </View>
             )}
 
-            {/* Reste à droite - ROUGE */}
-            {target && currentWeight > 0 && (
+            {/* Reste à droite - ORANGE */}
+            {target && typeof target === 'number' && !isNaN(target) && currentWeight > 0 && !isNaN(currentWeight) ? (
               <View style={styles.goalItem}>
                 {currentWeight > target ? (
                   <>
-                    <Text style={[styles.goalValue, { color: '#EF4444' }]}>-{(currentWeight - target).toFixed(1)}</Text>
-                    <Text style={[styles.goalLabel, { color: '#EF4444' }]}>À perdre</Text>
+                    <Text style={[styles.goalValue, { color: '#F59E0B' }]}>{`-${(currentWeight - target).toFixed(1)}`}</Text>
+                    <Text style={[styles.goalLabel, { color: '#F59E0B' }]}>À perdre</Text>
                   </>
                 ) : (
                   <>
-                    <Text style={[styles.goalValue, { color: '#EF4444' }]}>+{(target - currentWeight).toFixed(1)}</Text>
-                    <Text style={[styles.goalLabel, { color: '#EF4444' }]}>À prendre</Text>
+                    <Text style={[styles.goalValue, { color: '#F59E0B' }]}>{`+${(target - currentWeight).toFixed(1)}`}</Text>
+                    <Text style={[styles.goalLabel, { color: '#F59E0B' }]}>À prendre</Text>
                   </>
                 )}
               </View>
+            ) : (
+              <View style={styles.goalItem} />
             )}
-            {(!target || currentWeight === 0) && <View style={styles.goalItem} />}
           </View>
         </View>
       </Animated.View>

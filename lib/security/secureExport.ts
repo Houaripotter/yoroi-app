@@ -95,7 +95,7 @@ function checkRateLimit(type: 'export' | 'import'): ValidationResult {
     const remainingSeconds = Math.ceil((rateLimiter.MIN_INTERVAL - timeSinceLastOperation) / 1000);
     return {
       valid: false,
-      error: `Veuillez attendre ${remainingSeconds} secondes avant de réessayer`,
+      error: `Attends ${remainingSeconds} secondes avant de réessayer`,
     };
   }
 
@@ -114,7 +114,7 @@ function checkRateLimit(type: 'export' | 'import'): ValidationResult {
 // ============================================
 
 /**
- * ✅ Calcule un checksum SHA-256 des données
+ * Calcule un checksum SHA-256 des données
  */
 async function calculateChecksum(data: string): Promise<string> {
   try {
@@ -130,7 +130,7 @@ async function calculateChecksum(data: string): Promise<string> {
 }
 
 /**
- * ✅ Vérifie l'intégrité des données importées
+ * Vérifie l'intégrité des données importées
  */
 async function verifyChecksum(data: string, expectedChecksum: string): Promise<boolean> {
   const actualChecksum = await calculateChecksum(data);
@@ -138,7 +138,7 @@ async function verifyChecksum(data: string, expectedChecksum: string): Promise<b
 }
 
 /**
- * ✅ Valide la structure d'un backup
+ * Valide la structure d'un backup
  */
 function validateBackupStructure(backup: any): ValidationResult {
   if (!backup || typeof backup !== 'object') {
@@ -172,7 +172,7 @@ function validateBackupStructure(backup: any): ValidationResult {
 }
 
 /**
- * ✅ Valide les données métier avant import
+ * Valide les données métier avant import
  */
 function validateBusinessData(backup: SecureBackupData): ValidationResult {
   const errors: string[] = [];
@@ -231,7 +231,7 @@ function validateBusinessData(backup: SecureBackupData): ValidationResult {
 // ============================================
 
 /**
- * ✅ Chiffre les données d'export
+ * Chiffre les données d'export
  * Note: Utilise une clé dérivée du timestamp pour la démo
  * En production, utiliser un mot de passe utilisateur
  */
@@ -242,7 +242,7 @@ async function encryptExport(data: string): Promise<string> {
     // Générer une clé de chiffrement
     const key = await generateExportKey();
 
-    // Simple XOR pour la démo (⚠️ en production, utiliser AES-256-GCM)
+    // Simple XOR pour la démo (en production, utiliser AES-256-GCM)
     let encrypted = '';
     for (let i = 0; i < data.length; i++) {
       encrypted += String.fromCharCode(
@@ -259,7 +259,7 @@ async function encryptExport(data: string): Promise<string> {
 }
 
 /**
- * ✅ Déchiffre les données d'import
+ * Déchiffre les données d'import
  */
 async function decryptImport(encrypted: string): Promise<string> {
   if (!encrypted.startsWith('YOROI_ENCRYPTED_V2:')) {
@@ -291,7 +291,7 @@ async function decryptImport(encrypted: string): Promise<string> {
 
 /**
  * Génère une clé de chiffrement pour l'export
- * ⚠️ En production, demander un mot de passe à l'utilisateur
+ * En production, demander un mot de passe à l'utilisateur
  */
 async function generateExportKey(): Promise<string> {
   // Pour la démo, utiliser une clé dérivée du device
@@ -312,7 +312,7 @@ async function generateExportKey(): Promise<string> {
 // ============================================
 
 /**
- * ✅ Crée un backup automatique avant l'import
+ * Crée un backup automatique avant l'import
  */
 async function createAutoBackup(): Promise<{ success: boolean; path?: string; error?: string }> {
   try {
@@ -341,7 +341,7 @@ async function createAutoBackup(): Promise<{ success: boolean; path?: string; er
 // ============================================
 
 /**
- * ✅ Collecte toutes les données pour l'export
+ * Collecte toutes les données pour l'export
  */
 async function exportAllData(): Promise<string> {
   const data: SecureBackupData = {
@@ -403,7 +403,7 @@ async function exportAllData(): Promise<string> {
 }
 
 /**
- * ✅ Exporte les données de manière sécurisée
+ * Exporte les données de manière sécurisée
  */
 export async function secureExportData(): Promise<{ success: boolean; error?: string }> {
   try {
@@ -460,7 +460,7 @@ export async function secureExportData(): Promise<{ success: boolean; error?: st
 // ============================================
 
 /**
- * ✅ Importe les données de manière sécurisée
+ * Importe les données de manière sécurisée
  */
 export async function secureImportData(): Promise<ImportResult> {
   try {
@@ -607,7 +607,7 @@ export async function secureImportData(): Promise<ImportResult> {
 }
 
 /**
- * ✅ EXEMPLE D'UTILISATION:
+ * EXEMPLE D'UTILISATION:
  *
  * // Export sécurisé
  * const exportResult = await secureExportData();

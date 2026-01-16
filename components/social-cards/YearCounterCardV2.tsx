@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions, ImageBackground, Image } from 'reac
 import { LinearGradient } from 'expo-linear-gradient';
 import { Trophy, Flame, Calendar, BarChart2 } from 'lucide-react-native';
 import { YearStats } from '@/lib/social-cards/useYearStats';
-import { SocialCardTopBanner, SocialCardFooter, SocialCardWatermark } from './SocialCardBranding';
+import { SocialCardFooter, SocialCardWatermark } from './SocialCardBranding';
 
 // ============================================
 // YEAR COUNTER CARD V2 - Compteur Annuel
@@ -17,14 +17,13 @@ export interface YearCounterCardV2Props {
   stats: YearStats;
   format: 'stories' | 'square';
   backgroundImage?: string;
-  backgroundType?: 'photo' | 'black' | 'white'; // Type de fond
+  backgroundType?: 'photo' | 'black' | 'white';
   username?: string;
-  weeklyGoal?: number; // Objectif hebdo (ex: 4 séances/semaine)
+  weeklyGoal?: number;
 }
 
 // Noms des sports
 const getSportName = (clubName: string): string => {
-  // Essayer de deviner le sport par le nom du club
   const lowerName = clubName.toLowerCase();
   if (lowerName.includes('gracie') || lowerName.includes('jjb') || lowerName.includes('jiu')) return 'Jiu-Jitsu Brésilien';
   if (lowerName.includes('box')) return 'Boxe';
@@ -35,12 +34,12 @@ const getSportName = (clubName: string): string => {
   if (lowerName.includes('karate')) return 'Karaté';
   if (lowerName.includes('grappling')) return 'Grappling';
   if (lowerName.includes('crossfit')) return 'CrossFit';
-  if (lowerName.includes('muscu') || lowerName.includes('fitness')) return 'Musculation';
+  if (lowerName.includes('muscu') || lowerName.includes('fitness') || lowerName.includes('basic')) return 'Musculation';
   return 'Entraînement';
 };
 
 export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
-  ({ stats, format, backgroundImage, backgroundType = 'photo', weeklyGoal = 4 }, ref) => {
+  ({ stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4 }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
@@ -50,15 +49,11 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
 
     // Déterminer les couleurs selon le type de fond
     const isLightBackground = backgroundType === 'white';
-    const isDarkBackground = backgroundType === 'black';
-    const hasSolidBackground = backgroundType === 'black' || backgroundType === 'white';
-
-    // Variant pour les composants de branding
     const brandingVariant = isLightBackground ? 'light' : 'dark';
 
-    // Couleurs dynamiques selon le fond
+    // Couleurs dynamiques
     const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
-    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
     const textMuted = isLightBackground ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
     const goldColor = '#D4AF37';
     const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
@@ -67,38 +62,36 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
     const progressBarBgColor = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
 
     const content = (
-      <>
-        <LinearGradient
-          colors={isLightBackground
-            ? ['rgba(255,255,255,0.85)', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.9)']
-            : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
-          style={styles.overlay}
-        >
-          {/* TOP BANNER - YOROI */}
-          <SocialCardTopBanner variant={brandingVariant} />
-
-          {/* TITRE ANNÉE */}
+      <View style={styles.contentContainer}>
+        {/* HAUT: Année + Compteur */}
+        <View style={styles.topContent}>
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <Trophy size={20} color={goldColor} />
+              <Trophy size={18} color={goldColor} />
               <Text style={[styles.titleText, { color: goldColor }]}>ANNÉE {stats.year}</Text>
             </View>
           </View>
 
-          {/* COMPTEUR PRINCIPAL - Format X/OBJECTIF en grand */}
+          {/* COMPTEUR PRINCIPAL - Format X/365 */}
           <View style={styles.counterSection}>
             <View style={styles.counterRow}>
               <Text style={[styles.counterNumber, { color: textPrimary }]}>{stats.totalDays}</Text>
               <Text style={[styles.counterSlash, { color: textSecondary }]}>/</Text>
-              <Text style={[styles.counterGoal, { color: goldColor }]}>{yearlyGoal}</Text>
+              <Text style={[styles.counterGoal, { color: goldColor }]}>365</Text>
             </View>
             <Text style={[styles.counterLabel, { color: goldColor }]}>JOURS D'ENTRAÎNEMENT</Text>
           </View>
+        </View>
 
+        {/* CENTRE: Espace pour l'avatar/photo */}
+        <View style={styles.centerSpace} />
+
+        {/* BAS: Tout le contenu */}
+        <View style={styles.bottomContent}>
           {/* BARRE DE PROGRESSION */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Text style={[styles.progressLabel, { color: textSecondary }]}>Objectif {yearlyGoal} jours</Text>
+              <Text style={[styles.progressLabelBold, { color: goldColor }]}>OBJECTIF {yearlyGoal} JOURS</Text>
               <Text style={[styles.progressPercent, { color: goldColor }]}>{Math.round(progressPercent)}%</Text>
             </View>
             <View style={[styles.progressBarBg, { backgroundColor: progressBarBgColor }]}>
@@ -109,8 +102,8 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                 style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
               />
             </View>
-            <Text style={[styles.progressText, { color: isLightBackground ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)' }]}>
-              {stats.totalDays}/{yearlyGoal} jours
+            <Text style={[styles.progressText, { color: textSecondary }]}>
+              {stats.totalDays}/{yearlyGoal} jours accomplis
             </Text>
           </View>
 
@@ -119,12 +112,9 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             <View style={styles.clubsBubblesContainer}>
               {stats.activityBreakdown.slice(0, 4).map((club, index) => (
                 <View key={index} style={styles.clubBubble}>
-                  {/* Badge compteur */}
                   <View style={styles.clubBubbleCount}>
                     <Text style={styles.clubBubbleCountText}>x{club.count}</Text>
                   </View>
-
-                  {/* Logo circulaire */}
                   {club.clubLogo ? (
                     <Image source={club.clubLogo} style={styles.clubBubbleLogo} resizeMode="cover" />
                   ) : (
@@ -132,10 +122,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                       <Text style={styles.clubBubbleInitial}>{club.clubName.charAt(0)}</Text>
                     </View>
                   )}
-
-                  {/* Nom du club */}
                   <Text style={[styles.clubBubbleName, { color: textPrimary }]} numberOfLines={2}>{club.clubName}</Text>
-                  {/* Sport */}
                   <Text style={[styles.clubBubbleSport, { color: goldColor }]} numberOfLines={1}>{getSportName(club.clubName)}</Text>
                 </View>
               ))}
@@ -147,7 +134,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             <View style={styles.statItem}>
               <Flame size={16} color="#FF6B00" />
               <Text style={[styles.statValue, { color: textPrimary }]}>{stats.currentStreak || stats.bestStreak}</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>{stats.currentStreak > 0 ? 'STREAK' : 'BEST'}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>{stats.currentStreak > 0 ? 'SÉRIE' : 'RECORD'}</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
@@ -163,13 +150,13 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             </View>
           </View>
 
-          {/* FOOTER - YOROI */}
+          {/* FOOTER */}
           <SocialCardFooter variant={brandingVariant} />
-        </LinearGradient>
-      </>
+        </View>
+      </View>
     );
 
-    // Fond avec photo
+    // Fond avec photo - Gradient SEULEMENT en bas pour les infos
     if (backgroundImage) {
       return (
         <View
@@ -182,13 +169,24 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             style={styles.backgroundImage}
             resizeMode="cover"
           >
+            {/* Gradient transparent en haut, sombre SEULEMENT en bas */}
+            <LinearGradient
+              colors={[
+                'rgba(0,0,0,0)',      // 0% - Transparent (haut)
+                'rgba(0,0,0,0)',      // 40% - Transparent (centre)
+                'rgba(0,0,0,0.5)',    // 60% - Commence à assombrir
+                'rgba(0,0,0,0.85)',   // 100% - Sombre (bas avec infos)
+              ]}
+              locations={[0, 0.4, 0.6, 1]}
+              style={StyleSheet.absoluteFill}
+            />
             {content}
           </ImageBackground>
         </View>
       );
     }
 
-    // Fond blanc avec logo samurai
+    // Fond blanc
     if (isLightBackground) {
       return (
         <View
@@ -202,7 +200,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
       );
     }
 
-    // Fond noir avec logo samurai (défaut)
+    // Fond noir (défaut)
     return (
       <View
         ref={ref}
@@ -237,9 +235,20 @@ const styles = StyleSheet.create({
   defaultBackground: {
     flex: 1,
   },
-  overlay: {
+  contentContainer: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  topContent: {
+    paddingTop: 16,
+  },
+  centerSpace: {
+    flex: 1,
+    minHeight: 80,
+  },
+  bottomContent: {
+    gap: 12,
+    paddingBottom: 0,
   },
 
   // Title
@@ -252,53 +261,40 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   titleText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '900',
     letterSpacing: 3,
-    color: '#D4AF37',
   },
 
   // Counter
   counterSection: {
     alignItems: 'center',
+    marginTop: 4,
   },
   counterRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   counterNumber: {
-    fontSize: 72,
+    fontSize: 64,
     fontWeight: '900',
-    color: '#FFFFFF',
     letterSpacing: -2,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 10,
   },
   counterSlash: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '300',
-    color: 'rgba(255, 255, 255, 0.6)',
     marginHorizontal: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
   counterGoal: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '900',
-    color: '#D4AF37',
     letterSpacing: -1,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
   counterLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 2,
-    color: '#D4AF37',
-    marginTop: 4,
+    letterSpacing: 3,
+    marginTop: -4,
   },
 
   // Progress
@@ -311,20 +307,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  progressLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
+  progressLabelBold: {
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1.5,
   },
   progressPercent: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#D4AF37',
   },
   progressBarBg: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     overflow: 'hidden',
   },
   progressBarFill: {
@@ -334,7 +328,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
   },
 
@@ -343,12 +336,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
     paddingHorizontal: 16,
   },
   clubBubble: {
     alignItems: 'center',
-    width: 70,
+    width: 72,
     position: 'relative',
   },
   clubBubbleCount: {
@@ -369,17 +362,16 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   clubBubbleLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: '#D4AF37',
   },
   clubBubbleLogoPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -391,16 +383,14 @@ const styles = StyleSheet.create({
     color: '#D4AF37',
   },
   clubBubbleName: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#FFFFFF',
     marginTop: 4,
     textAlign: 'center',
   },
   clubBubbleSport: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: '600',
-    color: '#D4AF37',
     textAlign: 'center',
   },
 
@@ -410,33 +400,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingVertical: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
   statDivider: {
     width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    height: 32,
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '900',
-    color: '#FFFFFF',
   },
   statLabel: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.5)',
     letterSpacing: 0.5,
   },
-  });
+});
 
 export default YearCounterCardV2;

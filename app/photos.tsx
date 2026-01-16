@@ -130,7 +130,7 @@ export default function PhotosScreen() {
     if (cameraStatus.status !== 'granted' || mediaStatus.status !== 'granted') {
       showPopup(
         'Permissions requises',
-        'Nous avons besoin d\'acceder a ta camera et ta galerie pour cette fonctionnalite.'
+        'J\'ai besoin d\'accéder à ta caméra et ta galerie pour cette fonctionnalité.'
       );
       return false;
     }
@@ -158,7 +158,7 @@ export default function PhotosScreen() {
           date: today,
           source: 'manual',
         });
-        logger.info('✅ Poids enregistré dans la base:', weight, 'kg');
+        logger.info('Poids enregistré dans la base:', weight, 'kg');
       } catch (error) {
         logger.error('❌ Erreur lors de l\'enregistrement du poids:', error);
       }
@@ -187,7 +187,7 @@ export default function PhotosScreen() {
         setPendingPhotoUri(result.assets[0].uri);
         const latestWeight = await getLatestWeight();
 
-        logger.info('📊 Dernier poids trouvé:', latestWeight?.weight);
+        logger.info('Dernier poids trouvé:', latestWeight?.weight);
 
         setWeightInput(latestWeight?.weight?.toString() || '');
         setWeightModalVisible(true);
@@ -219,7 +219,7 @@ export default function PhotosScreen() {
         setPendingPhotoUri(result.assets[0].uri);
         const latestWeight = await getLatestWeight();
 
-        logger.info('📊 Dernier poids trouvé:', latestWeight?.weight);
+        logger.info('Dernier poids trouvé:', latestWeight?.weight);
 
         setWeightInput(latestWeight?.weight?.toString() || '');
         setWeightModalVisible(true);
@@ -284,7 +284,7 @@ export default function PhotosScreen() {
       {screenshotDetected && (
         <View style={styles.screenshotWarning}>
           <Text style={styles.screenshotWarningText}>
-            ⚠️ Screenshot détecté - Tes photos sont sensibles
+            Screenshot détecté - Tes photos sont sensibles
           </Text>
         </View>
       )}
@@ -624,7 +624,7 @@ export default function PhotosScreen() {
               <Text style={[styles.modalTitle, { color: themeColors.textPrimary }]}>Test de Confiance</Text>
             </View>
             <Text style={[styles.modalText, { color: themeColors.textSecondary }]}>
-              Passez en mode avion et essayez d'ajouter une photo. Vous verrez que ça marche, car tout reste sur votre téléphone. Aucune donnée ne part dans le cloud.
+              Passe en mode avion et essaie d'ajouter une photo. Tu verras que ça marche, car tout reste sur ton téléphone. Aucune donnée ne part dans le cloud.
             </Text>
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: themeColors.primary }]}

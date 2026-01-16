@@ -101,7 +101,7 @@ export const unlockBadge = async (badgeId: BadgeId): Promise<boolean> => {
     const success = await unlockBadgeLocal(badgeId);
 
     if (success) {
-      logger.info('✅ Badge débloqué:', badgeId);
+      logger.info('Badge débloqué:', badgeId);
       return true;
     }
 
@@ -238,10 +238,10 @@ const showBadgeNotification = (badgeIds: BadgeId[]) => {
   });
 
   const message = badgeIds.length === 1
-    ? `Nouveau badge débloqué : ${badgeNames[0]} 🎉`
-    : `${badgeIds.length} nouveaux badges débloqués ! 🎉`;
+    ? `Nouveau badge débloqué : ${badgeNames[0]}`
+    : `${badgeIds.length} nouveaux badges débloqués !`;
 
-  Alert.alert('🏆 Félicitations !', message, [{ text: 'Super !' }]);
+  Alert.alert('Félicitations !', message, [{ text: 'Super !' }]);
 };
 
 // Vérifier tous les badges

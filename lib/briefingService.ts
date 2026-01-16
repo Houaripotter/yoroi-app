@@ -81,13 +81,13 @@ class BriefingService {
 
       // Streak (simulation - à remplacer par vraie logique)
       const streak = 3; // TODO: Calculer le vrai streak
-      message += `🔥 Série : ${streak} jours consécutifs\n`;
+      message += `Série : ${streak} jours consécutifs\n`;
 
       // Entraînement prévu (simulation)
       // TODO: Intégrer avec le planning
       const todayWorkout = null;
       if (todayWorkout) {
-        message += `📅 Prévu : ${todayWorkout}\n`;
+        message += `Prévu : ${todayWorkout}\n`;
       } else {
         message += `😴 Jour de repos\n`;
       }
@@ -96,7 +96,7 @@ class BriefingService {
       const activeInjuries = await infirmaryService.getActiveInjuries();
       if (activeInjuries.length > 0) {
         const firstInjury = activeInjuries[0];
-        message += `\n⚠️ N'oublie pas tes soins pour ${firstInjury.zoneName}`;
+        message += `\nN'oublie pas tes soins pour ${firstInjury.zoneName}`;
       }
 
       message += `\n\nBonne journée, champion !`;

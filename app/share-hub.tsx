@@ -1,7 +1,7 @@
 // ============================================
-// YOROI - HUB DE PARTAGE
+// YOROI - HUB DE PARTAGE (Style Strava)
+// Templates avec photo utilisateur mise en avant
 // ============================================
-// Écran central pour partager sa progression sur les réseaux sociaux
 
 import React from 'react';
 import {
@@ -19,23 +19,20 @@ import {
   Trophy,
   Calendar,
   TrendingUp,
-  Flame,
-  Camera,
-  Swords,
-  ChevronRight,
+  Dumbbell,
   Share2,
-  Scale,
+  Camera,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 
-// ============================================
-// TYPES
-// ============================================
-
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-interface ShareCard {
+// ============================================
+// TEMPLATES DISPONIBLES
+// ============================================
+
+interface ShareTemplate {
   id: string;
   title: string;
   subtitle: string;
@@ -46,79 +43,45 @@ interface ShareCard {
   badge?: string;
 }
 
-// ============================================
-// CARTES DISPONIBLES
-// ============================================
-
-const SHARE_CARDS: ShareCard[] = [
+const SHARE_TEMPLATES: ShareTemplate[] = [
   {
     id: 'year-counter',
     title: 'Compteur Annuel',
     subtitle: 'Le fameux X/365',
-    description: 'Prends-toi en photo et ajoute tes stats en overlay ! Comme un filtre Instagram Stories. La carte la plus virale !',
+    description: 'Affiche ton compteur annuel avec ta photo. Le plus viral ! 11/208 jours + tes clubs.',
     icon: Trophy,
     route: '/social-share/year-counter-v2',
-    gradient: ['#F59E0B', '#D97706'],
-    badge: 'NOUVEAU',
-  },
-  {
-    id: 'monthly-recap',
-    title: 'Récap Mensuel',
-    subtitle: 'Ton mois en un coup d\'œil',
-    description: 'Prends-toi en photo et ajoute ton calendrier du mois en overlay ! Évolution de poids et meilleure semaine.',
-    icon: Calendar,
-    route: '/social-share/monthly-recap-v2',
-    gradient: ['#8B5CF6', '#7C3AED'],
-    badge: 'NOUVEAU',
-  },
-  {
-    id: 'transformation',
-    title: 'Transformation',
-    subtitle: 'Avant / Après',
-    description: 'Choisis 2 photos de ta galerie et affiche ton avant/après côte à côte ! Parfait pour montrer ta progression.',
-    icon: Camera,
-    route: '/social-share/transformation-v2',
-    gradient: ['#EC4899', '#DB2777'],
-    badge: 'NOUVEAU',
-  },
-  {
-    id: 'fighter-card',
-    title: 'Fiche Combattant',
-    subtitle: 'Fiche de combattant',
-    description: 'Prends-toi en photo et affiche tes stats de champion ! Rang, streak, discipline, et badges comme une fiche UFC.',
-    icon: Swords,
-    route: '/social-share/fighter-card-v2',
-    gradient: ['#EF4444', '#DC2626'],
-    badge: 'NOUVEAU',
+    gradient: ['#F59E0B', '#FBBF24'],
+    badge: 'VIRAL',
   },
   {
     id: 'weekly-recap',
     title: 'Récap Hebdo',
     subtitle: 'Ta semaine d\'entraînement',
-    description: 'Prends-toi en photo et ajoute tes stats de la semaine en overlay ! Calendrier, sports et évolution.',
-    icon: TrendingUp,
+    description: 'Calendrier visuel de ta semaine avec ta photo. Parfait pour Stories Instagram.',
+    icon: Calendar,
     route: '/social-share/weekly-recap-v2',
-    gradient: ['#10B981', '#059669'],
-    badge: 'NOUVEAU',
+    gradient: ['#10B981', '#34D399'],
+    badge: 'POPULAIRE',
   },
   {
-    id: 'weight-progress',
-    title: 'Progression Poids',
-    subtitle: 'Ta courbe de poids',
-    description: 'Affiche ta progression poids avec graphique, achievements et stats ! Parfait pour montrer tes resultats.',
-    icon: Scale,
-    route: '/social-share/weight-progress',
-    gradient: ['#06B6D4', '#0891B2'],
-    badge: 'NOUVEAU',
+    id: 'monthly-recap',
+    title: 'Récap Mensuel',
+    subtitle: 'Ton mois de warrior',
+    description: 'Vue d\'ensemble de ton mois avec toutes tes stats et ta photo.',
+    icon: TrendingUp,
+    route: '/social-share/monthly-recap-v2',
+    gradient: ['#3B82F6', '#60A5FA'],
   },
   {
-    id: 'streak-fire',
-    title: 'Série de Feu',
-    subtitle: 'Ta série de feu',
-    description: 'Affiche ton streak actuel et impressionne avec ta régularité.',
-    icon: Flame,
-    route: '/social-share/year-counter', // Même route, focus sur le streak
-    gradient: ['#F97316', '#EA580C'],
+    id: 'last-session',
+    title: 'Dernière Séance',
+    subtitle: 'J\'ai réalisé...',
+    description: 'Partage ta dernière session avec ta photo. Style Strava - fais-toi remarquer ! 💪',
+    icon: Dumbbell,
+    route: '/social-share/last-session',
+    gradient: ['#8B5CF6', '#A78BFA'],
+    badge: 'NOUVEAU',
   },
 ];
 
@@ -129,40 +92,50 @@ const SHARE_CARDS: ShareCard[] = [
 export default function ShareHubScreen() {
   const { colors, isDark } = useTheme();
 
-  const renderShareCard = (card: ShareCard, index: number) => {
+  const renderTemplate = (template: ShareTemplate) => {
     return (
       <TouchableOpacity
-        key={card.id}
-        style={[styles.gridCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={() => router.push(card.route as any)}
-        activeOpacity={0.7}
+        key={template.id}
+        style={[styles.templateCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+        onPress={() => router.push(template.route as any)}
+        activeOpacity={0.85}
       >
-        {/* Badge NOUVEAU en haut à droite */}
-        {card.badge && (
-          <View style={[styles.gridBadge, { backgroundColor: card.gradient[0] }]}>
-            <Text style={styles.gridBadgeText}>{card.badge}</Text>
+        {/* Badge */}
+        {template.badge && (
+          <View style={[styles.badge, { backgroundColor: template.gradient[0] }]}>
+            <Text style={styles.badgeText}>{template.badge}</Text>
           </View>
         )}
 
-        {/* Icône centrale */}
-        <LinearGradient
-          colors={[...card.gradient]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gridIconGradient}
-        >
-          <card.icon size={32} color="#FFFFFF" />
-        </LinearGradient>
+        <View style={styles.templateContent}>
+          {/* Icône */}
+          <LinearGradient
+            colors={[...template.gradient]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.iconGradient}
+          >
+            <template.icon size={32} color="#FFFFFF" strokeWidth={2.5} />
+          </LinearGradient>
 
-        {/* Titre */}
-        <Text style={[styles.gridCardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          {card.title}
-        </Text>
+          {/* Textes */}
+          <View style={styles.textContainer}>
+            <Text style={[styles.templateTitle, { color: colors.textPrimary }]}>
+              {template.title}
+            </Text>
+            <Text style={[styles.templateSubtitle, { color: colors.textSecondary }]}>
+              {template.subtitle}
+            </Text>
+            <Text style={[styles.templateDescription, { color: colors.textMuted }]} numberOfLines={2}>
+              {template.description}
+            </Text>
+          </View>
 
-        {/* Sous-titre */}
-        <Text style={[styles.gridCardSubtitle, { color: colors.textSecondary }]} numberOfLines={1}>
-          {card.subtitle}
-        </Text>
+          {/* Icône Camera */}
+          <View style={[styles.cameraIcon, { backgroundColor: `${template.gradient[0]}15` }]}>
+            <Camera size={18} color={template.gradient[0]} strokeWidth={2.5} />
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -180,10 +153,10 @@ export default function ShareHubScreen() {
 
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Partager ma progression
+            Partage ta progression
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            Choisis ta carte et inspire la communauté
+            Mets ta photo en avant, fais la star !
           </Text>
         </View>
 
@@ -200,42 +173,43 @@ export default function ShareHubScreen() {
           colors={isDark ? ['#1A1A1A', '#2D2D2D'] : ['#F3F4F6', '#E5E7EB']}
           style={[styles.heroBanner, { borderColor: colors.border }]}
         >
-          <Share2 size={32} color={colors.accent} />
+          <Share2 size={40} color={colors.accent} strokeWidth={2.5} />
           <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>
-            Partage tes victoires
+            Fais-toi remarquer
           </Text>
           <Text style={[styles.heroText, { color: colors.textSecondary }]}>
-            Inspire les autres avec ton parcours de champion et fais connaître Yoroi !
+            Choisis un template, ajoute ta photo, et deviens la star de ta communauté !
+            Style Strava addictif 🔥
           </Text>
         </LinearGradient>
 
         {/* Section Title */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            CARTES DISPONIBLES
+            TEMPLATES AVEC TA PHOTO
           </Text>
           <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-            {SHARE_CARDS.length}
+            {SHARE_TEMPLATES.length}
           </Text>
         </View>
 
-        {/* Cards Grid - 2 colonnes */}
-        <View style={styles.cardsGrid}>
-          {SHARE_CARDS.map((card, index) => renderShareCard(card, index))}
+        {/* Templates List */}
+        <View style={styles.templatesList}>
+          {SHARE_TEMPLATES.map(template => renderTemplate(template))}
         </View>
 
         {/* Tips */}
         <View style={[styles.tipCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.tipTitle, { color: colors.gold || colors.accent }]}>
-            💡 Conseil
+          <Text style={[styles.tipTitle, { color: colors.accent }]}>
+            💡 Astuce Pro
           </Text>
           <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Publie régulièrement tes cartes sur Instagram Stories ! Ça inspire tes amis et ça fait
-            connaître Yoroi. N'oublie pas d'utiliser #YoroiWarrior !
+            Ajoute ta photo pour que tes followers voient ton visage ! Tu peux prendre un selfie ou
+            choisir depuis ta galerie. Plus tu es visible, plus tu vas faire fureur ! 🌟
           </Text>
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </ScreenWrapper>
   );
@@ -285,22 +259,24 @@ const styles = StyleSheet.create({
 
   // Hero Banner
   heroBanner: {
-    padding: 24,
-    borderRadius: 20,
+    padding: 28,
+    borderRadius: 24,
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 24,
+    gap: 12,
+    marginBottom: 32,
     borderWidth: 1,
   },
   heroTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
     marginTop: 4,
   },
   heroText: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    maxWidth: 320,
   },
 
   // Section Header
@@ -311,8 +287,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 1.5,
   },
   sectionCount: {
@@ -320,67 +296,95 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Cards Grid - 2 colonnes
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'space-between',
+  // Templates List
+  templatesList: {
+    gap: 16,
   },
-  gridCard: {
-    width: (SCREEN_WIDTH - 52) / 2, // 2 colonnes avec gap
-    aspectRatio: 1, // Carré
-    borderRadius: 16,
+  templateCard: {
+    borderRadius: 20,
     borderWidth: 1,
-    padding: 16,
+    padding: 18,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  badge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  templateContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  iconGradient: {
+    width: 72,
+    height: 72,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  gridBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+  textContainer: {
+    flex: 1,
+    gap: 4,
   },
-  gridBadgeText: {
-    fontSize: 7,
+  templateTitle: {
+    fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
     letterSpacing: 0.3,
   },
-  gridIconGradient: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
+  templateSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  templateDescription: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  cameraIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  gridCardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  gridCardSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 
   // Tips
   tipCard: {
     marginTop: 24,
-    padding: 16,
+    padding: 18,
     borderRadius: 16,
     borderWidth: 1,
   },
   tipTitle: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   tipText: {
     fontSize: 13,

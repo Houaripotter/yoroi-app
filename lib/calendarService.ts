@@ -8,7 +8,7 @@ export async function requestCalendarPermissions() {
   if (status !== 'granted') {
     Alert.alert(
       'Permission refusée',
-      'Yoroi a besoin de la permission pour accéder à votre calendrier.'
+      'Yoroi a besoin de la permission pour accéder à ton calendrier.'
     );
     return false;
   }
@@ -22,12 +22,12 @@ export async function getOrCreateYoroiCalendar() {
   try {
     // Chercher si le calendrier Yoroi existe déjà
     const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-    logger.info('📅 Calendriers trouvés:', calendars.length);
+    logger.info('Calendriers trouvés:', calendars.length);
 
     const yoroiCalendar = calendars.find(cal => cal.title === 'Yoroi Training');
 
     if (yoroiCalendar) {
-      logger.info('✅ Calendrier Yoroi trouvé:', yoroiCalendar.id);
+      logger.info('Calendrier Yoroi trouvé:', yoroiCalendar.id);
       return yoroiCalendar.id;
     }
 
@@ -56,7 +56,7 @@ export async function getOrCreateYoroiCalendar() {
         accessLevel: Calendar.CalendarAccessLevel.OWNER,
       });
 
-      logger.info('✅ Nouveau calendrier Yoroi créé:', newCalendarId);
+      logger.info('Nouveau calendrier Yoroi créé:', newCalendarId);
       return newCalendarId;
     }
 
@@ -71,7 +71,7 @@ export async function getOrCreateYoroiCalendar() {
       accessLevel: Calendar.CalendarAccessLevel.OWNER,
     });
 
-    logger.info('✅ Nouveau calendrier Yoroi créé:', newCalendarId);
+    logger.info('Nouveau calendrier Yoroi créé:', newCalendarId);
     return newCalendarId;
   } catch (error) {
     logger.error('❌ Erreur création calendrier:', error);
@@ -103,7 +103,7 @@ export async function exportTrainingToCalendar(
     endDate.setMinutes(endDate.getMinutes() + durationMinutes);
 
     // Construire la description
-    let description = `🏋️ Séance de ${training.sport}\n`;
+    let description = `Séance de ${training.sport}\n`;
     description += `🏢 Club: ${clubName}\n`;
     description += `⏱️ Durée: ${durationMinutes} minutes\n`;
 
@@ -112,11 +112,11 @@ export async function exportTrainingToCalendar(
     }
 
     if (muscles && muscles.length > 0) {
-      description += `💪 Muscles: ${muscles.join(', ')}\n`;
+      description += `Muscles: ${muscles.join(', ')}\n`;
     }
 
     if (technicalTheme) {
-      description += `🥋 Thème: ${technicalTheme}\n`;
+      description += `Thème: ${technicalTheme}\n`;
     }
 
     if (training.notes) {
@@ -124,7 +124,7 @@ export async function exportTrainingToCalendar(
     }
 
     const eventId = await Calendar.createEventAsync(calendarId, {
-      title: `🔥 ${clubName} - ${training.sport}`,
+      title: `${clubName} - ${training.sport}`,
       startDate,
       endDate,
       location: clubName,
@@ -132,7 +132,7 @@ export async function exportTrainingToCalendar(
       alarms: [{ relativeOffset: -30 }], // Rappel 30 min avant
     });
 
-    logger.info('✅ Événement créé:', eventId);
+    logger.info('Événement créé:', eventId);
     return eventId;
   } catch (error) {
     logger.error('❌ Erreur export calendrier:', error);
@@ -180,12 +180,12 @@ export async function exportMultipleTrainingsToCalendar(sessions: any[]) {
 
   if (errorCount === 0) {
     Alert.alert(
-      '✅ Export terminé',
+      'Export terminé',
       `${successCount} séance(s) exportée(s) vers iCloud Calendar.`
     );
   } else {
     Alert.alert(
-      '⚠️ Export terminé avec erreurs',
+      'Export terminé avec erreurs',
       `${successCount} séance(s) exportée(s).\n${errorCount} erreur(s).`
     );
   }

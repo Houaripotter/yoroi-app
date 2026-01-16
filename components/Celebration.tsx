@@ -50,31 +50,31 @@ const CELEBRATION_CONFIG: Record<CelebrationType, {
   sound: 'victory' | 'level_up';
 }> = {
   goal_reached: {
-    icon: '🎯',
+    icon: '',
     colors: ['#FFD700', '#FFA500'] as const,
     confettiColors: ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4'],
     sound: 'victory',
   },
   rank_up: {
-    icon: '⚔️',
+    icon: '',
     colors: ['#D4AF37', '#B8860B'] as const,
     confettiColors: ['#D4AF37', '#FFD700', '#FFFFFF', '#C0C0C0'],
     sound: 'level_up',
   },
   challenge_complete: {
-    icon: '🏆',
+    icon: '',
     colors: ['#4ECDC4', '#44A08D'] as const,
     confettiColors: ['#4ECDC4', '#44A08D', '#FFD700', '#FFFFFF'],
     sound: 'victory',
   },
   streak_record: {
-    icon: '🔥',
+    icon: '',
     colors: ['#FF6B6B', '#FF8E53'] as const,
     confettiColors: ['#FF6B6B', '#FF8E53', '#FFD700', '#FFA500'],
     sound: 'victory',
   },
   milestone: {
-    icon: '⭐',
+    icon: '',
     colors: ['#9B59B6', '#8E44AD'] as const,
     confettiColors: ['#9B59B6', '#E74C3C', '#FFD700', '#3498DB'],
     sound: 'level_up',

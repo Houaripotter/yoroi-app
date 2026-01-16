@@ -1,5 +1,5 @@
 // ============================================
-// ⚔️ YOROI - CITATIONS MOTIVANTES DU GUERRIER
+// YOROI - CITATIONS MOTIVANTES DU GUERRIER
 // ============================================
 
 export interface Quote {

@@ -79,7 +79,7 @@ export default function SportScreen() {
         name: 'Gracie Barra',
         type: 'gracie_barra' as WorkoutType,
         logo: null,
-        emoji: '🥋',
+        emoji: '',
         color: '#DC2626',
       },
       {
@@ -87,7 +87,7 @@ export default function SportScreen() {
         name: 'Basic Fit',
         type: 'basic_fit' as WorkoutType,
         logo: null,
-        emoji: '🏋️',
+        emoji: '',
         color: '#F59E0B',
       },
       {
@@ -95,17 +95,17 @@ export default function SportScreen() {
         name: 'Running',
         type: 'running' as WorkoutType,
         logo: null,
-        emoji: '🏃',
+        emoji: '',
         color: '#10B981',
       },
     ];
   };
 
   const getEmojiForType = (type: string) => {
-    if (type === 'gracie_barra') return '🥋';
-    if (type === 'basic_fit') return '🏋️';
-    if (type === 'running') return '🏃';
-    return '⚡';
+    if (type === 'gracie_barra') return '';
+    if (type === 'basic_fit') return '';
+    if (type === 'running') return '';
+    return '';
   };
 
   const getDefaultLogoForType = (type: string) => {
@@ -202,13 +202,13 @@ export default function SportScreen() {
     
     // Fallback pour compatibilité avec anciennes données
     if (firstActivity.toLowerCase().includes('jujitsu') || firstActivity.toLowerCase().includes('jjb') || firstActivity.toLowerCase().includes('gracie')) {
-      return { type: 'gracie_barra', label: '🥋 JJB', clubId: 'gracie_barra' };
+      return { type: 'gracie_barra', label: 'JJB', clubId: 'gracie_barra' };
     }
     if (firstActivity.toLowerCase().includes('muscu') || firstActivity.toLowerCase().includes('musculation') || firstActivity.toLowerCase().includes('basic')) {
-      return { type: 'basic_fit', label: '🏋️ Muscu', clubId: 'basic_fit' };
+      return { type: 'basic_fit', label: 'Muscu', clubId: 'basic_fit' };
     }
     if (firstActivity.toLowerCase().includes('course') || firstActivity.toLowerCase().includes('running') || firstActivity.toLowerCase().includes('run')) {
-      return { type: 'running', label: '🏃 Course', clubId: 'running' };
+      return { type: 'running', label: 'Course', clubId: 'running' };
     }
     
     return { type: null, label: firstActivity || '—' };
@@ -242,7 +242,7 @@ export default function SportScreen() {
       const todayWorkouts = allWorkouts.filter(w => w.date === todayString);
       
       if (todayWorkouts.length > 0) {
-        showPopup('Déjà validé', 'Vous avez déjà validé une séance aujourd\'hui.', [
+        showPopup('Déjà validé', 'Tu as déjà validé une séance aujourd\'hui.', [
           { text: 'OK', style: 'primary' },
         ]);
         return;
@@ -282,7 +282,7 @@ export default function SportScreen() {
     if (selectedClubGlobal) {
       return getEmojiForType(selectedClubGlobal);
     }
-    return '⚡';
+    return '';
   };
 
   const saveRoutine = async (newRoutine: typeof routine) => {
@@ -330,7 +330,7 @@ export default function SportScreen() {
 
   const addRoutineBlock = (dayKey: string) => {
     if (!selectedClubModal) {
-      showPopup('Club requis', 'Veuillez sélectionner un club.', [
+      showPopup('Club requis', 'Sélectionne un club.', [
         { text: 'OK', style: 'primary' },
       ]);
       return;
@@ -399,7 +399,7 @@ export default function SportScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Subtitle */}
-        <Text style={styles.headerSubtitle}>Planifiez vos entrainements</Text>
+        <Text style={styles.headerSubtitle}>Planifie tes entrainements</Text>
 
         {/* Horizontal Week ScrollView */}
         <View style={styles.weekContainer}>

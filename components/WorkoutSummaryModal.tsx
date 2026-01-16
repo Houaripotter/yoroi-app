@@ -47,19 +47,19 @@ export function WorkoutSummaryModal({
   const getModeTitle = () => {
     switch (mode) {
       case 'musculation':
-        return '💪 Musculation terminée !';
+        return 'Musculation terminée !';
       case 'combat':
-        return '🥋 Combat terminé !';
+        return 'Combat terminé !';
       case 'tabata':
-        return '⚡ Tabata terminé !';
+        return 'Tabata terminé !';
       case 'emom':
         return '🔄 EMOM terminé !';
       case 'amrap':
-        return '🔥 AMRAP terminé !';
+        return 'AMRAP terminé !';
       case 'fortime':
         return '⏱️ For Time terminé !';
       default:
-        return '🏆 Entraînement terminé !';
+        return 'Entraînement terminé !';
     }
   };
 
@@ -157,7 +157,7 @@ export function WorkoutSummaryModal({
 
             {/* Message */}
             <Text style={[styles.message, { color: colors.textSecondary }]}>
-              Excellent travail ! Continue comme ça 💪
+              Excellent travail ! Continue comme ça
             </Text>
 
             {/* Actions */}

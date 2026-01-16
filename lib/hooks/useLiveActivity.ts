@@ -37,7 +37,7 @@ export function useLiveActivity(): UseLiveActivityReturn {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Référence pour l'interval du timer
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Vérifier la disponibilité au montage
   useEffect(() => {

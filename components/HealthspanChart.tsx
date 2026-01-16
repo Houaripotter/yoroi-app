@@ -76,7 +76,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
     return (
       <TouchableOpacity
         style={[styles.container, { backgroundColor: colors.backgroundCard }]}
-        onPress={() => router.push('/stats')}
+        onPress={() => router.push('/health-metrics')}
         activeOpacity={0.8}
       >
         <View style={styles.header}>
@@ -92,7 +92,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
         <View style={styles.emptyState}>
           <Moon size={24} color={colors.textMuted} style={{ opacity: 0.5 }} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Connectez Apple Health pour suivre votre sommeil et stress
+            Connectez Apple Health pour suivre ton sommeil et stress
           </Text>
         </View>
 
@@ -190,9 +190,9 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
   const trendColor = trend === 'up' ? '#10B981' : trend === 'down' ? '#EF4444' : colors.textMuted;
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.container, { backgroundColor: colors.backgroundCard }]}
-      onPress={() => router.push('/stats')}
+      onPress={() => router.push('/health-metrics')}
       activeOpacity={0.8}
     >
       <View style={styles.header}>

@@ -1,5 +1,5 @@
 // ============================================
-// 🥋 YOROI - COMPÉTITIONS IBJJF 2025-2026
+// YOROI - COMPÉTITIONS IBJJF 2025-2026
 // ============================================
 // Source : IBJJF Europe Calendar
 

@@ -63,8 +63,8 @@ export const RPE_SCALE = [
   { value: 2, label: 'Facile', emoji: '🙂', description: 'Récupération active' },
   { value: 3, label: 'Modéré', emoji: '😊', description: 'Conversation possible' },
   { value: 4, label: 'Assez dur', emoji: '😤', description: 'Respiration accélérée' },
-  { value: 5, label: 'Dur', emoji: '💪', description: 'Effort soutenu' },
-  { value: 6, label: 'Très dur', emoji: '🔥', description: 'Limite aérobie' },
+  { value: 5, label: 'Dur', emoji: '', description: 'Effort soutenu' },
+  { value: 6, label: 'Très dur', emoji: '', description: 'Limite aérobie' },
   { value: 7, label: 'Intense', emoji: '😰', description: 'Parler difficile' },
   { value: 8, label: 'Très intense', emoji: '🥵', description: 'Effort maximal soutenu' },
   { value: 9, label: 'Extrême', emoji: '💀', description: 'À la limite' },
@@ -195,14 +195,14 @@ export const getWeeklyLoadStats = async (): Promise<WeeklyLoadStats> => {
     
     // Niveau de risque
     let riskLevel: 'safe' | 'moderate' | 'high' | 'danger' = 'safe';
-    let advice = 'Charge optimale. Continue comme ça ! 💪';
+    let advice = 'Charge optimale. Continue comme ça !';
     
     if (totalLoad > LOAD_THRESHOLDS.DANGER) {
       riskLevel = 'danger';
       advice = '🚨 ATTENTION ! Charge critique, risque de blessure élevé. Repos obligatoire !';
     } else if (totalLoad > LOAD_THRESHOLDS.HIGH) {
       riskLevel = 'high';
-      advice = '⚠️ Charge élevée. Prévois une séance légère ou un jour de repos.';
+      advice = 'Charge élevée. Prévois une séance légère ou un jour de repos.';
     } else if (totalLoad > LOAD_THRESHOLDS.MODERATE) {
       riskLevel = 'moderate';
       advice = '👍 Bonne charge. Attention à ne pas trop en rajouter.';

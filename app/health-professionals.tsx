@@ -199,7 +199,7 @@ export default function HealthProfessionalsScreen() {
 
         {/* Devenir Partenaire */}
         <View style={[styles.becomePartner, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={styles.becomePartnerIcon}>🩺</Text>
+          <Text style={styles.becomePartnerIcon}></Text>
           <Text style={[styles.becomePartnerTitle, { color: colors.textPrimary }]}>
             Tu es professionnel de santé ?
           </Text>
@@ -386,7 +386,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, color
       {professional.imageUrl ? (
         <Image source={professional.imageUrl} style={styles.professionalImage} />
       ) : (
-        <Text style={styles.professionalPhotoPlaceholder}>🩺</Text>
+        <Text style={styles.professionalPhotoPlaceholder}></Text>
       )}
     </View>
 

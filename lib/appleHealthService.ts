@@ -63,20 +63,68 @@ const getPermissions = () => {
     if (!isHealthKitAvailable() || !AppleHealthKit?.Constants?.Permissions) {
       return { permissions: { read: [], write: [] } };
     }
-    
+
     const Perms = AppleHealthKit.Constants.Permissions;
     return {
       permissions: {
         read: [
-          Perms.Weight,
-          Perms.BodyMassIndex,
-          Perms.BodyFatPercentage,
-          Perms.LeanBodyMass,
+          // PHYSIQUE & COMPOSITION
+          Perms.BodyMass,              // Poids (ancien: Weight)
+          Perms.BodyMassIndex,         // IMC
+          Perms.BodyFatPercentage,     // % Graisse corporelle
+          Perms.LeanBodyMass,          // Masse maigre / Muscle
+
+          // ACTIVITÉ & ÉNERGIE
+          Perms.StepCount,             // Nombre de pas
+          Perms.ActiveEnergyBurned,    // Calories actives brûlées
+          Perms.BasalEnergyBurned,     // Métabolisme de base (BMR)
+
+          // 💤 SANTÉ & VITALITÉ
+          Perms.SleepAnalysis,         // Analyse du sommeil
+          Perms.Water,                 // Hydratation / Eau bue
+
+          // 📏 MENSURATIONS
+          Perms.WaistCircumference,    // Tour de taille
+
+          // CARDIO & VITALITÉ (Monitoring Infirmier)
+          Perms.HeartRate,             // Fréquence cardiaque
+          Perms.RestingHeartRate,      // FC au repos
+          Perms.HeartRateVariability,  // Variabilité FC (HRV) - Stress
+          Perms.OxygenSaturation,      // SpO2 - Saturation oxygène
+          Perms.Vo2Max,                // VO2 Max - Capacité aérobie
+          Perms.RespiratoryRate,       // Fréquence respiratoire
+
+          // PERFORMANCE & DISTANCES
+          Perms.DistanceWalkingRunning, // Distance marche/course
+          Perms.DistanceCycling,        // Distance vélo
+          // Note: WalkingSpeed et WalkingStepLength ne sont pas disponibles directement
+          // Utiliser RunningSpeed et RunningStrideLength si besoin
         ].filter(Boolean),
         write: [
-          Perms.Weight,
-          Perms.BodyMassIndex,
-          Perms.BodyFatPercentage,
+          // PHYSIQUE & COMPOSITION (écriture)
+          Perms.BodyMass,              // Poids
+          Perms.BodyMassIndex,         // IMC
+          Perms.BodyFatPercentage,     // % Graisse
+          Perms.LeanBodyMass,          // Masse maigre
+
+          // ACTIVITÉ & ÉNERGIE (écriture)
+          Perms.StepCount,             // Pas (si tu veux enregistrer des pas manuels)
+          Perms.ActiveEnergyBurned,    // Calories actives
+
+          // 💤 SANTÉ & VITALITÉ (écriture)
+          Perms.Water,                 // Hydratation
+
+          // 📏 MENSURATIONS (écriture)
+          Perms.WaistCircumference,    // Tour de taille
+
+          // CARDIO & VITALITÉ (écriture - si besoin de saisie manuelle)
+          Perms.HeartRate,             // Fréquence cardiaque
+          Perms.OxygenSaturation,      // SpO2
+          Perms.RespiratoryRate,       // Fréquence respiratoire
+
+          // PERFORMANCE & DISTANCES (écriture)
+          Perms.DistanceWalkingRunning, // Distance marche/course
+          Perms.DistanceCycling,        // Distance vélo
         ].filter(Boolean),
       },
     };
@@ -96,12 +144,12 @@ export const isAppleHealthAvailable = (): boolean => {
 export const initializeAppleHealth = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if (!hasHealthKit()) {
-      logger.info('⚠️ Apple Health non disponible (initializeAppleHealth)');
+      logger.info('Apple Health non disponible (initializeAppleHealth)');
       resolve(false);
       return;
     }
     if (!isHealthKitAvailable()) {
-      logger.info('⚠️ Apple Health non disponible ou mal configuré (initializeAppleHealth)');
+      logger.info('Apple Health non disponible ou mal configuré (initializeAppleHealth)');
       resolve(false);
       return;
     }
@@ -114,7 +162,7 @@ export const initializeAppleHealth = (): Promise<boolean> => {
           resolve(false);
           return;
         }
-        logger.info('✅ Apple Health initialisé avec succès');
+        logger.info('Apple Health initialisé avec succès');
         resolve(true);
       });
     } catch (e) {
@@ -128,7 +176,7 @@ export const initializeAppleHealth = (): Promise<boolean> => {
 export const checkHealthPermissions = async (): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (checkHealthPermissions)');
+    logger.info('Apple Health non disponible ou mal configuré (checkHealthPermissions)');
     return false;
   }
 
@@ -136,7 +184,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
     try {
       AppleHealthKit.isAvailable((error: any, available: boolean) => {
         if (error || !available) {
-          logger.info('⚠️ Apple Health non disponible:', error);
+          logger.info('Apple Health non disponible:', error);
           return resolve(false);
         }
 
@@ -144,7 +192,7 @@ export const checkHealthPermissions = async (): Promise<boolean> => {
         const permissions = getPermissions();
         AppleHealthKit.getAuthStatus(permissions, (authError: any, results: any) => {
           if (authError) {
-            logger.info('⚠️ Erreur auth HealthKit:', authError);
+            logger.info('Erreur auth HealthKit:', authError);
             return resolve(false);
           }
 
@@ -198,7 +246,7 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
             return;
           }
 
-          logger.info(`📊 ${results.length} mesures de poids trouvées dans Apple Health`);
+          logger.info(`${results.length} mesures de poids trouvées dans Apple Health`);
 
           const existingMeasurements = await getAllMeasurements();
           const existingDates = new Set(
@@ -223,7 +271,7 @@ export const importWeightFromAppleHealth = async (): Promise<number> => {
           }
           
           if (importedCount > 0) {
-            logger.info(`✅ ${importedCount} nouvelles mesures importées`);
+            logger.info(`${importedCount} nouvelles mesures importées`);
             Alert.alert('Succès', `${importedCount} mesure(s) importée(s) depuis Apple Health`);
           } else {
               Alert.alert('Information', 'Toutes les données sont déjà importées ou aucune nouvelle donnée disponible.');
@@ -250,7 +298,7 @@ export const exportWeightToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportWeightToAppleHealth)');
+    logger.info('Apple Health non disponible ou mal configuré (exportWeightToAppleHealth)');
     return false;
   }
 
@@ -275,7 +323,7 @@ export const exportWeightToAppleHealth = async (
             resolve(false);
             return;
           }
-          logger.info(`✅ Poids exporté vers Apple Health: ${weight} kg`);
+          logger.info(`Poids exporté vers Apple Health: ${weight} kg`);
           resolve(true);
         });
       } catch (e) {
@@ -296,7 +344,7 @@ export const exportBMIToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportBMIToAppleHealth)');
+    logger.info('Apple Health non disponible ou mal configuré (exportBMIToAppleHealth)');
     return false;
   }
 
@@ -318,7 +366,7 @@ export const exportBMIToAppleHealth = async (
             resolve(false);
             return;
           }
-          logger.info(`✅ IMC exporté vers Apple Health: ${bmi}`);
+          logger.info(`IMC exporté vers Apple Health: ${bmi}`);
           resolve(true);
         });
       } catch (e) {
@@ -339,7 +387,7 @@ export const exportBodyFatToAppleHealth = async (
 ): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (exportBodyFatToAppleHealth)');
+    logger.info('Apple Health non disponible ou mal configuré (exportBodyFatToAppleHealth)');
     return false;
   }
 
@@ -361,7 +409,7 @@ export const exportBodyFatToAppleHealth = async (
             resolve(false);
             return;
           }
-          logger.info(`✅ Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
+          logger.info(`Masse grasse exportée vers Apple Health: ${bodyFatPercentage}%`);
           resolve(true);
         });
       } catch (e) {
@@ -379,12 +427,12 @@ export const exportBodyFatToAppleHealth = async (
 export const setAppleHealthAutoExport = async (enabled: boolean): Promise<void> => {
   if (!hasHealthKit()) return;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (setAppleHealthAutoExport)');
+    logger.info('Apple Health non disponible ou mal configuré (setAppleHealthAutoExport)');
     return;
   }
   try {
     await AsyncStorage.setItem(APPLE_HEALTH_ENABLED_KEY, enabled ? 'true' : 'false');
-    logger.info(`✅ Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
+    logger.info(`Export automatique Apple Health ${enabled ? 'activé' : 'désactivé'}`);
   } catch (error) {
     logger.error('❌ Erreur lors de la sauvegarde des préférences:', error);
   }
@@ -394,7 +442,7 @@ export const setAppleHealthAutoExport = async (enabled: boolean): Promise<void> 
 export const isAppleHealthAutoExportEnabled = async (): Promise<boolean> => {
   if (!hasHealthKit()) return false;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (isAppleHealthAutoExportEnabled)');
+    logger.info('Apple Health non disponible ou mal configuré (isAppleHealthAutoExportEnabled)');
     return false;
   }
   try {
@@ -410,7 +458,7 @@ export const isAppleHealthAutoExportEnabled = async (): Promise<boolean> => {
 export const syncFromAppleHealth = async (): Promise<number> => {
   if (!hasHealthKit()) return 0;
   if (!isHealthKitAvailable()) {
-    logger.info('⚠️ Apple Health non disponible ou mal configuré (syncFromAppleHealth)');
+    logger.info('Apple Health non disponible ou mal configuré (syncFromAppleHealth)');
     return 0;
   }
 
@@ -430,7 +478,7 @@ export const syncFromAppleHealth = async (): Promise<number> => {
       try {
         AppleHealthKit.getWeightSamples(options, async (error: any, results: any) => {
           if (error || !results || results.length === 0) {
-            logger.info('⚠️ Aucune donnée ou erreur lors de la récupération HealthKit:', error);
+            logger.info('Aucune donnée ou erreur lors de la récupération HealthKit:', error);
             resolve(0);
             return;
           }
@@ -458,7 +506,7 @@ export const syncFromAppleHealth = async (): Promise<number> => {
           }
 
           if (syncedCount > 0) {
-            logger.info(`✅ ${syncedCount} nouvelles mesures synchronisées`);
+            logger.info(`${syncedCount} nouvelles mesures synchronisées`);
           }
           
           await AsyncStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());

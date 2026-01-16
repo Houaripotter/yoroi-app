@@ -75,7 +75,7 @@ export interface ValidationResult {
 // ============================================
 
 /**
- * ✅ Valide un nombre dans une plage
+ * Valide un nombre dans une plage
  */
 export function validateNumber(
   value: any,
@@ -108,7 +108,7 @@ export function validateNumber(
 }
 
 /**
- * ✅ Valide une chaîne de caractères
+ * Valide une chaîne de caractères
  */
 export function validateString(
   value: any,
@@ -154,7 +154,7 @@ export function validateString(
 }
 
 /**
- * ✅ Détecte les caractères potentiellement dangereux
+ * Détecte les caractères potentiellement dangereux
  */
 function containsDangerousCharacters(value: string): boolean {
   // Patterns XSS communs
@@ -171,7 +171,7 @@ function containsDangerousCharacters(value: string): boolean {
 }
 
 /**
- * ✅ Sanitize une chaîne de caractères
+ * Sanitize une chaîne de caractères
  */
 export function sanitizeString(value: string): string {
   return value
@@ -183,7 +183,7 @@ export function sanitizeString(value: string): string {
 }
 
 /**
- * ✅ Valide une date
+ * Valide une date
  */
 export function validateDate(date: string | Date): ValidationResult {
   const dateObj = date instanceof Date ? date : new Date(date);
@@ -225,7 +225,7 @@ export function validateDate(date: string | Date): ValidationResult {
 // ============================================
 
 /**
- * ✅ Valide un poids corporel
+ * Valide un poids corporel
  */
 export function validateWeight(weight: any): ValidationResult {
   return validateNumber(
@@ -237,7 +237,7 @@ export function validateWeight(weight: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une taille
+ * Valide une taille
  */
 export function validateHeight(height: any): ValidationResult {
   return validateNumber(
@@ -249,7 +249,7 @@ export function validateHeight(height: any): ValidationResult {
 }
 
 /**
- * ✅ Valide un pourcentage de graisse corporelle
+ * Valide un pourcentage de graisse corporelle
  */
 export function validateBodyFat(bodyFat: any): ValidationResult {
   return validateNumber(
@@ -261,7 +261,7 @@ export function validateBodyFat(bodyFat: any): ValidationResult {
 }
 
 /**
- * ✅ Valide un pourcentage de masse musculaire
+ * Valide un pourcentage de masse musculaire
  */
 export function validateMuscleMass(muscleMass: any): ValidationResult {
   return validateNumber(
@@ -273,7 +273,7 @@ export function validateMuscleMass(muscleMass: any): ValidationResult {
 }
 
 /**
- * ✅ Valide un pourcentage d'eau
+ * Valide un pourcentage d'eau
  */
 export function validateWater(water: any): ValidationResult {
   return validateNumber(
@@ -285,7 +285,7 @@ export function validateWater(water: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une graisse viscérale
+ * Valide une graisse viscérale
  */
 export function validateVisceralFat(visceralFat: any): ValidationResult {
   return validateNumber(
@@ -297,7 +297,7 @@ export function validateVisceralFat(visceralFat: any): ValidationResult {
 }
 
 /**
- * ✅ Valide un âge métabolique
+ * Valide un âge métabolique
  */
 export function validateMetabolicAge(metabolicAge: any): ValidationResult {
   return validateNumber(
@@ -309,7 +309,7 @@ export function validateMetabolicAge(metabolicAge: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une entrée d'hydratation
+ * Valide une entrée d'hydratation
  */
 export function validateHydrationEntry(amount: any): ValidationResult {
   return validateNumber(
@@ -321,7 +321,7 @@ export function validateHydrationEntry(amount: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une durée d'entraînement
+ * Valide une durée d'entraînement
  */
 export function validateTrainingDuration(duration: any): ValidationResult {
   return validateNumber(
@@ -333,7 +333,7 @@ export function validateTrainingDuration(duration: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une mesure corporelle
+ * Valide une mesure corporelle
  */
 export function validateBodyMeasurement(measurement: any, fieldName: string): ValidationResult {
   return validateNumber(
@@ -345,7 +345,7 @@ export function validateBodyMeasurement(measurement: any, fieldName: string): Va
 }
 
 /**
- * ✅ Valide un objet de mesure complet
+ * Valide un objet de mesure complet
  */
 export interface MeasurementData {
   weight: number;
@@ -419,7 +419,7 @@ export function validateMeasurement(data: Partial<MeasurementData>): ValidationR
 }
 
 /**
- * ✅ Valide un nom d'utilisateur
+ * Valide un nom d'utilisateur
  */
 export function validateUsername(username: any): ValidationResult {
   const result = validateString(username, VALIDATION_LIMITS.NAME_MAX_LENGTH, 'Nom');
@@ -449,7 +449,7 @@ export function validateUsername(username: any): ValidationResult {
 }
 
 /**
- * ✅ Valide une URL
+ * Valide une URL
  */
 export function validateURL(url: any): ValidationResult {
   if (typeof url !== 'string') {
@@ -471,7 +471,7 @@ export function validateURL(url: any): ValidationResult {
 }
 
 /**
- * ✅ Schémas d'URL autorisés pour Linking.openURL
+ * Schémas d'URL autorisés pour Linking.openURL
  */
 const ALLOWED_URL_SCHEMES = [
   'http:',
@@ -491,7 +491,7 @@ const ALLOWED_URL_SCHEMES = [
 ];
 
 /**
- * ✅ Valide une URL pour Linking.openURL avec des schémas autorisés
+ * Valide une URL pour Linking.openURL avec des schémas autorisés
  */
 export function validateLinkingURL(url: any): ValidationResult {
   if (typeof url !== 'string' || url.trim().length === 0) {
@@ -524,7 +524,7 @@ export function validateLinkingURL(url: any): ValidationResult {
 }
 
 /**
- * ✅ Ouvre une URL de manière sécurisée via Linking
+ * Ouvre une URL de manière sécurisée via Linking
  */
 import { Linking, Alert } from 'react-native';
 
@@ -558,7 +558,7 @@ export async function safeOpenURL(url: string): Promise<boolean> {
 }
 
 /**
- * ✅ Ensemble de validateurs
+ * Ensemble de validateurs
  */
 export const validators = {
   number: validateNumber,

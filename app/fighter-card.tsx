@@ -308,10 +308,10 @@ export default function FighterCardScreen() {
                 >
                   <View style={styles.avatarInner}>
                     <Text style={styles.avatarEmoji}>
-                      {stats.rank.includes('Shogun') ? '🏯' :
-                       stats.rank.includes('Daimyo') ? '⚔️' :
-                       stats.rank.includes('Samurai') ? '🥷' :
-                       stats.rank.includes('Ronin') ? '🗡️' : '🥋'}
+                      {stats.rank.includes('Shogun') || stats.rank.includes('Shōgun') ? '🏯' :
+                       stats.rank.includes('Ronin') || stats.rank.includes('Rōnin') ? '' :
+                       stats.rank.includes('Samurai') || stats.rank.includes('Samouraï') ? '' :
+                       stats.rank.includes('Bushi') ? '🥷' : ''}
                     </Text>
                   </View>
                 </LinearGradient>

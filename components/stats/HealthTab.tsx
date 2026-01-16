@@ -423,6 +423,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: SPACING.md,
+    paddingBottom: 120,
   },
   // Source Header
   sourceHeader: {

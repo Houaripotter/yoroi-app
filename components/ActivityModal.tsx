@@ -91,7 +91,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               activeOpacity={0.8}
             >
               <View style={styles.iconContainer}>
-                <Text style={styles.activityEmoji}>🏋️</Text>
+                <Text style={styles.activityEmoji}></Text>
               </View>
               <Text style={[
                 styles.activityLabel,
@@ -110,7 +110,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
               activeOpacity={0.8}
             >
               <View style={styles.iconContainer}>
-                <Text style={styles.activityEmoji}>🥋</Text>
+                <Text style={styles.activityEmoji}></Text>
               </View>
               <Text style={[
                 styles.activityLabel,

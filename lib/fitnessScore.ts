@@ -55,8 +55,8 @@ export const SCORE_LEVELS: Record<ScoreLevel, { min: number; max: number; icon: 
   poor: { min: 0, max: 30, icon: '😰', label: 'A ameliorer', color: '#EF4444' },
   average: { min: 31, max: 50, icon: '😐', label: 'Moyen', color: '#F97316' },
   good: { min: 51, max: 70, icon: '😊', label: 'Bien', color: '#EAB308' },
-  great: { min: 71, max: 85, icon: '💪', label: 'Tres bien', color: '#22C55E' },
-  excellent: { min: 86, max: 100, icon: '🔥', label: 'Excellent', color: '#D4AF37' },
+  great: { min: 71, max: 85, icon: '', label: 'Tres bien', color: '#22C55E' },
+  excellent: { min: 86, max: 100, icon: '', label: 'Excellent', color: '#D4AF37' },
 };
 
 // Conseils par niveau

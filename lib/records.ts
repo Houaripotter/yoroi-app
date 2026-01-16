@@ -188,7 +188,7 @@ export const calculateAllRecords = async (): Promise<{
       newValue: lowestWeight.weight,
       date: lowestWeight.date,
       message: `Nouveau poids record ! ${lowestWeight.weight.toFixed(1)} kg`,
-      emoji: '📉',
+      emoji: '',
     });
   }
 
@@ -335,7 +335,7 @@ export const calculateAllRecords = async (): Promise<{
         newValue: longestStreak,
         date: longestStreakEndDate,
         message: `Nouveau record de streak ! ${longestStreak} jours`,
-        emoji: '🔥',
+        emoji: '',
       });
     }
   }
@@ -405,7 +405,7 @@ export const calculateAllRecords = async (): Promise<{
           newValue: maxWeeklyWorkouts,
           date: maxWeeklyWorkoutsDate,
           message: `Record ! ${maxWeeklyWorkouts} entrainements cette semaine`,
-          emoji: '💪',
+          emoji: '',
         });
       }
     }
@@ -594,14 +594,14 @@ export const getSportName = (type: string): string => {
  */
 export const generateRecordShareText = (type: RecordType, value: number): string => {
   const texts: Record<RecordType, string> = {
-    lowestWeight: `J'ai atteint mon poids record de ${value.toFixed(1)} kg ! 📉`,
-    maxWeeklyLoss: `J'ai battu mon record ! -${value.toFixed(1)} kg cette semaine 🏆`,
-    maxMonthlyLoss: `Record du mois ! -${value.toFixed(1)} kg de perdus 📉`,
-    longestStreak: `Nouveau record de streak ! ${value} jours consecutifs 🔥`,
+    lowestWeight: `J'ai atteint mon poids record de ${value.toFixed(1)} kg !`,
+    maxWeeklyLoss: `J'ai battu mon record ! -${value.toFixed(1)} kg cette semaine`,
+    maxMonthlyLoss: `Record du mois ! -${value.toFixed(1)} kg de perdus`,
+    longestStreak: `Nouveau record de streak ! ${value} jours consecutifs`,
     lowestWaist: `Record tour de taille ! ${value} cm atteints 📏`,
-    maxWeeklyWorkouts: `${value} entrainements cette semaine ! Nouveau record 💪`,
-    bestMonthRegularity: `${value}% de regularite ce mois-ci ! 📅`,
-    bestEnergyStreak: `${value} jours d'energie au top ! 🔥`,
+    maxWeeklyWorkouts: `${value} entrainements cette semaine ! Nouveau record`,
+    bestMonthRegularity: `${value}% de regularite ce mois-ci !`,
+    bestEnergyStreak: `${value} jours d'energie au top !`,
   };
   return texts[type] + '\n\n#Yoroi #Transformation #Record';
 };

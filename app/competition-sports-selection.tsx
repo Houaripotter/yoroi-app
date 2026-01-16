@@ -22,33 +22,33 @@ import logger from '@/lib/security/logger';
 // Types de sports disponibles
 const SPORTS_LIST = [
   // Combat
-  { id: 'jjb', label: 'JJB / Grappling', category: 'combat', icon: '🥋', color: '#1E88E5' },
-  { id: 'mma', label: 'MMA', category: 'combat', icon: '🥊', color: '#E53935' },
-  { id: 'boxe', label: 'Boxe', category: 'combat', icon: '🥊', color: '#EF4444' },
-  { id: 'muay_thai', label: 'Muay Thai', category: 'combat', icon: '🥊', color: '#FF6F00' },
-  { id: 'judo', label: 'Judo', category: 'combat', icon: '🥋', color: '#FF5722' },
-  { id: 'karate', label: 'Karaté', category: 'combat', icon: '🥋', color: '#9C27B0' },
+  { id: 'jjb', label: 'JJB / Grappling', category: 'combat', icon: '', color: '#1E88E5' },
+  { id: 'mma', label: 'MMA', category: 'combat', icon: '', color: '#E53935' },
+  { id: 'boxe', label: 'Boxe', category: 'combat', icon: '', color: '#EF4444' },
+  { id: 'muay_thai', label: 'Muay Thai', category: 'combat', icon: '', color: '#FF6F00' },
+  { id: 'judo', label: 'Judo', category: 'combat', icon: '', color: '#FF5722' },
+  { id: 'karate', label: 'Karaté', category: 'combat', icon: '', color: '#9C27B0' },
 
   // Sports collectifs
-  { id: 'football', label: 'Football', category: 'match', icon: '⚽', color: '#4CAF50' },
-  { id: 'futsal', label: 'Futsal / Foot en salle', category: 'match', icon: '⚽', color: '#66BB6A' },
-  { id: 'basket', label: 'Basketball', category: 'match', icon: '🏀', color: '#FF5722' },
-  { id: 'rugby', label: 'Rugby', category: 'match', icon: '🏉', color: '#795548' },
-  { id: 'handball', label: 'Handball', category: 'match', icon: '🤾', color: '#2196F3' },
-  { id: 'volley', label: 'Volleyball', category: 'match', icon: '🏐', color: '#FFEB3B' },
+  { id: 'football', label: 'Football', category: 'match', icon: '', color: '#4CAF50' },
+  { id: 'futsal', label: 'Futsal / Foot en salle', category: 'match', icon: '', color: '#66BB6A' },
+  { id: 'basket', label: 'Basketball', category: 'match', icon: '', color: '#FF5722' },
+  { id: 'rugby', label: 'Rugby', category: 'match', icon: '', color: '#795548' },
+  { id: 'handball', label: 'Handball', category: 'match', icon: '', color: '#2196F3' },
+  { id: 'volley', label: 'Volleyball', category: 'match', icon: '', color: '#FFEB3B' },
 
   // Course
-  { id: 'running', label: 'Running', category: 'course', icon: '🏃', color: '#00BCD4' },
-  { id: 'trail', label: 'Trail', category: 'course', icon: '🏃', color: '#4CAF50' },
-  { id: 'marathon', label: 'Marathon', category: 'course', icon: '🏃', color: '#FF9800' },
-  { id: 'cyclisme', label: 'Cyclisme', category: 'course', icon: '🚴', color: '#00BCD4' },
-  { id: 'natation', label: 'Natation', category: 'course', icon: '🏊', color: '#0288D1' },
+  { id: 'running', label: 'Running', category: 'course', icon: '', color: '#00BCD4' },
+  { id: 'trail', label: 'Trail', category: 'course', icon: '', color: '#4CAF50' },
+  { id: 'marathon', label: 'Marathon', category: 'course', icon: '', color: '#FF9800' },
+  { id: 'cyclisme', label: 'Cyclisme', category: 'course', icon: '', color: '#00BCD4' },
+  { id: 'natation', label: 'Natation', category: 'course', icon: '', color: '#0288D1' },
 
   // Autres compétitions
-  { id: 'tennis', label: 'Tennis', category: 'competition', icon: '🎾', color: '#8BC34A' },
-  { id: 'padel', label: 'Padel', category: 'competition', icon: '🏓', color: '#00BCD4' },
-  { id: 'escalade', label: 'Escalade', category: 'competition', icon: '🧗', color: '#795548' },
-  { id: 'crossfit', label: 'CrossFit', category: 'competition', icon: '🏋️', color: '#43A047' },
+  { id: 'tennis', label: 'Tennis', category: 'competition', icon: '', color: '#8BC34A' },
+  { id: 'padel', label: 'Padel', category: 'competition', icon: '', color: '#00BCD4' },
+  { id: 'escalade', label: 'Escalade', category: 'competition', icon: '', color: '#795548' },
+  { id: 'crossfit', label: 'CrossFit', category: 'competition', icon: '', color: '#43A047' },
 ];
 
 export default function CompetitionSportsSelectionScreen() {

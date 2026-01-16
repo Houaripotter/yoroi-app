@@ -230,7 +230,7 @@ export default function DojoScreen() {
   const [hydrationDays, setHydrationDays] = useState(0);
   const [goalReached, setGoalReached] = useState(false);
 
-  const [selectedTab, setSelectedTab] = useState<'rangs' | 'niveaux' | 'badges' | 'historique'>('rangs');
+  const [selectedTab, setSelectedTab] = useState<'rangs' | 'niveaux' | 'historique'>('rangs');
 
   // Célébration
   const [celebrationVisible, setCelebrationVisible] = useState(false);
@@ -357,19 +357,6 @@ export default function DojoScreen() {
           <Zap size={18} color={selectedTab === 'niveaux' ? colors.accent : colors.textMuted} />
           <Text style={[styles.tabText, { color: selectedTab === 'niveaux' ? colors.accent : colors.textMuted }]}>
             Niveaux
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            selectedTab === 'badges' && { borderBottomColor: colors.accent, borderBottomWidth: 3 },
-          ]}
-          onPress={() => setSelectedTab('badges')}
-        >
-          <Award size={18} color={selectedTab === 'badges' ? colors.accent : colors.textMuted} />
-          <Text style={[styles.tabText, { color: selectedTab === 'badges' ? colors.accent : colors.textMuted }]}>
-            Badges
           </Text>
         </TouchableOpacity>
 
@@ -635,144 +622,6 @@ export default function DojoScreen() {
                 </AnimatedCard>
               );
             })}
-          </View>
-        )}
-
-        {/* BADGES */}
-        {selectedTab === 'badges' && (
-          <View>
-            {/* Statistiques */}
-            <AnimatedCard index={0}>
-              <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
-                <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-                  Progression des badges
-                </Text>
-                <View style={styles.badgesProgress}>
-                  <View style={styles.badgesStat}>
-                    <Text style={[styles.badgesStatValue, { color: colors.success }]}>
-                      {unlockedBadges.length}
-                    </Text>
-                    <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Débloqués</Text>
-                  </View>
-                  <View style={styles.badgesDivider} />
-                  <View style={styles.badgesStat}>
-                    <Text style={[styles.badgesStatValue, { color: colors.textMuted }]}>
-                      {lockedBadges.length}
-                    </Text>
-                    <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Verrouillés</Text>
-                  </View>
-                  <View style={styles.badgesDivider} />
-                  <View style={styles.badgesStat}>
-                    <Text style={[styles.badgesStatValue, { color: colors.accent }]}>
-                      {Math.round((unlockedBadges.length / BADGES.length) * 100)}%
-                    </Text>
-                    <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Complété</Text>
-                  </View>
-                </View>
-              </View>
-            </AnimatedCard>
-
-            {/* Proches du déblocage */}
-            {closeToBadges.length > 0 && (
-              <>
-                <View style={[styles.closeToUnlockBanner, { backgroundColor: colors.accentMuted }]}>
-                  <AlertCircle size={16} color={colors.accent} />
-                  <Text style={[styles.closeToUnlockText, { color: colors.accent }]}>
-                    {closeToBadges.length} badge{closeToBadges.length > 1 ? 's' : ''} proche{closeToBadges.length > 1 ? 's' : ''} du déblocage !
-                  </Text>
-                </View>
-              </>
-            )}
-
-            {/* Badges débloqués */}
-            {unlockedBadges.length > 0 && (
-              <>
-                <Text style={[styles.sectionTitle, { color: colors.success }]}>BADGES DÉBLOQUÉS</Text>
-                {unlockedBadges.map((badge, index) => (
-                  <AnimatedCard key={badge.id} index={index + 1}>
-                    <View style={[styles.badgeCard, { backgroundColor: colors.backgroundCard, borderColor: badge.color, borderWidth: 1 }]}>
-                      <View style={[styles.badgeIconContainer, { backgroundColor: `${badge.color}20` }]}>
-                        {React.createElement(badge.icon, { size: 28, color: badge.color })}
-                      </View>
-
-                      <View style={styles.badgeInfo}>
-                        <Text style={[styles.badgeName, { color: badge.color }]}>{badge.name}</Text>
-                        <Text style={[styles.badgeNameJp, { color: colors.textMuted }]}>{badge.nameJp}</Text>
-                        <Text style={[styles.badgeDesc, { color: colors.textSecondary }]}>{badge.description}</Text>
-
-                        <View style={styles.rewardRow}>
-                          <Gift size={14} color={badge.color} />
-                          <Text style={[styles.rewardText, { color: badge.color }]}>
-                            Récompense : {badge.reward}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <View style={[styles.unlockedBadge, { backgroundColor: badge.color }]}>
-                        <Check size={18} color="#FFFFFF" />
-                      </View>
-                    </View>
-                  </AnimatedCard>
-                ))}
-              </>
-            )}
-
-            {/* Badges verrouillés */}
-            {lockedBadges.length > 0 && (
-              <>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>BADGES VERROUILLÉS</Text>
-                {lockedBadges.map((badge, index) => {
-                  const progress = badge.getProgress(stats);
-                  const progressPercent = (progress.current / progress.target) * 100;
-                  const isClose = progressPercent >= 70;
-
-                  return (
-                    <AnimatedCard key={badge.id} index={unlockedBadges.length + index + 1}>
-                      <View style={[styles.badgeCard, { backgroundColor: colors.backgroundCard, opacity: isClose ? 0.9 : 0.6 }]}>
-                        <View style={[styles.badgeIconContainer, { backgroundColor: colors.border }]}>
-                          <Lock size={24} color={colors.textMuted} />
-                        </View>
-
-                        <View style={styles.badgeInfo}>
-                          <Text style={[styles.badgeName, { color: colors.textMuted }]}>{badge.name}</Text>
-                          <Text style={[styles.badgeNameJp, { color: colors.textMuted }]}>{badge.nameJp}</Text>
-                          <Text style={[styles.badgeDesc, { color: colors.textSecondary }]}>{badge.description}</Text>
-
-                          {/* Barre de progression */}
-                          <View style={styles.badgeProgressContainer}>
-                            <View style={[styles.badgeProgressBar, { backgroundColor: colors.border }]}>
-                              <View
-                                style={[
-                                  styles.badgeProgressFill,
-                                  {
-                                    width: `${Math.min(100, progressPercent)}%`,
-                                    backgroundColor: isClose ? badge.color : colors.textMuted,
-                                  },
-                                ]}
-                              />
-                            </View>
-                            <Text style={[styles.badgeProgressText, { color: isClose ? badge.color : colors.textMuted }]}>
-                              {progress.current} / {progress.target}
-                            </Text>
-                          </View>
-
-                          <View style={styles.conditionRow}>
-                            <Target size={14} color={isClose ? badge.color : colors.textMuted} />
-                            <Text style={[styles.conditionText, { color: isClose ? badge.color : colors.textMuted }]}>
-                              {badge.condition}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={[styles.lockedBadge, { backgroundColor: colors.border }]}>
-                          <Lock size={18} color={colors.textMuted} />
-                        </View>
-                      </View>
-                    </AnimatedCard>
-                  );
-                })}
-              </>
-            )}
           </View>
         )}
 

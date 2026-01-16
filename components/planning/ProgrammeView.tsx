@@ -373,6 +373,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: SPACING.md,
+    paddingBottom: 120,
   },
   loadingText: {
     textAlign: 'center',

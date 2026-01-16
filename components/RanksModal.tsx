@@ -261,7 +261,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
             
             {/* Message motivation */}
             <View style={styles.motivationSection}>
-              <Text style={styles.cherryBlossom}>🌸</Text>
+              <Text style={styles.cherryBlossom}></Text>
               <Text style={[styles.motivationText, { color: colors.textMuted }]}>
                 "La discipline est le pont entre les objectifs et l'accomplissement."
               </Text>

@@ -59,7 +59,37 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   const [showSessionDetail, setShowSessionDetail] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState<{ dayId: string; dayLabel: string; slotId: string } | null>(null);
   const [showAllSessions, setShowAllSessions] = useState<{ day: string; dayLabel: string; slotLabel: string; sessions: any[] } | null>(null);
-  const [manualRestDays, setManualRestDays] = useState<string[]>([]); // Jours marqués manuellement en repos
+  const [manualRestDays, setManualRestDays] = useState<string[]>([]); // Jours marqués manuellement en repos (journée complète)
+  const [manualRestSlots, setManualRestSlots] = useState<string[]>([]); // Créneaux individuels en repos (format: "dayId-slotId")
+
+  // Vérifier si un jour COMPLET est en repos
+  const isDayRest = (dayId: string) => {
+    return manualRestDays.includes(dayId);
+  };
+
+  // Vérifier si un créneau SPÉCIFIQUE est en repos
+  const isSlotRest = (dayId: string, slotId: string) => {
+    return manualRestSlots.includes(`${dayId}-${slotId}`) || manualRestDays.includes(dayId);
+  };
+
+  // Toggle repos pour un créneau individuel
+  const toggleSlotRest = (dayId: string, slotId: string, dayLabel: string, slotLabel: string) => {
+    const slotKey = `${dayId}-${slotId}`;
+    if (manualRestSlots.includes(slotKey)) {
+      // Retirer du repos
+      setManualRestSlots(prev => prev.filter(s => s !== slotKey));
+      logger.info('🔆 Retirer repos pour', dayLabel, slotLabel);
+    } else {
+      // Ajouter au repos
+      setManualRestSlots(prev => [...prev, slotKey]);
+      logger.info('🌙 Marquer repos pour', dayLabel, slotLabel);
+      showPopup(
+        'Repos',
+        `${dayLabel} ${slotLabel.toLowerCase()} marqué en repos`,
+        [{ text: 'OK', style: 'primary' }]
+      );
+    }
+  };
 
   // NE PAS détecter automatiquement les jours de repos
   // Seulement utiliser les jours marqués manuellement par l'utilisateur
@@ -179,7 +209,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                         } else if (!isRest) {
                           // Marquer manuellement en repos (seulement si pas déjà en repos auto)
                           setManualRestDays(prev => [...prev, day.id]);
-                          logger.info('🌙 Marquer TOUTE LA JOURNÉE en repos pour', day.label);
+                          logger.info('Marquer TOUTE LA JOURNÉE en repos pour', day.label);
                           showPopup(
                             'Jour de repos',
                             `Toute la journée ${day.label} marquée en repos`,
@@ -218,7 +248,8 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   {weekSchedule.map((day, dayIdx) => {
                     const sessions = getSessionsForSlot(day.id, slot.id);
                     const hasSession = sessions.length > 0;
-                    const isRest = restDays.includes(day.id);
+                    const isSlotRestNow = isSlotRest(day.id, slot.id);
+                    const isDayRestNow = isDayRest(day.id);
 
                     return (
                       <TouchableOpacity
@@ -226,23 +257,29 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                         style={[
                           styles.sessionCell,
                           {
-                            backgroundColor: isRest ? colors.border + '40' : colors.background,
-                            borderColor: isRest ? colors.accent : colors.border,
+                            backgroundColor: isSlotRestNow ? colors.border + '40' : colors.background,
+                            borderColor: isSlotRestNow ? '#FFD700' : colors.border,
                           },
                         ]}
                         onPress={() => {
-                          if (isRest) {
-                            // Si jour en repos, afficher un message
-                            showPopup(
-                              'Jour de repos',
-                              `${day.label} est marqué comme jour de repos. Cliquez sur la lune en haut pour retirer le repos.`,
-                              [{ text: 'OK', style: 'primary' }]
-                            );
+                          if (isSlotRestNow) {
+                            // Si créneau en repos, permettre de le retirer
+                            if (isDayRestNow) {
+                              // Si c'est un repos de journée complète, informer l'utilisateur
+                              showPopup(
+                                'Jour de repos complet',
+                                `${day.label} est marqué en repos pour toute la journée. Cliquez sur la lune en haut pour retirer le repos.`,
+                                [{ text: 'OK', style: 'primary' }]
+                              );
+                            } else {
+                              // C'est un repos de créneau individuel, on peut le retirer
+                              toggleSlotRest(day.id, slot.id, day.label, slot.label);
+                            }
                             return;
                           }
                           logger.info('🖱️ Clic sur', day.label, slot.label, '- Séances:', sessions.length);
                           if (sessions.length > 0) {
-                            logger.info('✅ Ouverture liste de', sessions.length, 'séances');
+                            logger.info('Ouverture liste de', sessions.length, 'séances');
                             setShowAllSessions({
                               day: day.id,
                               dayLabel: day.label,
@@ -258,7 +295,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       >
 
                         {/* Contenu de la cellule - JUSTE LES LOGOS */}
-                        {isRest ? (
+                        {isSlotRestNow ? (
                           <View style={styles.sessionCellEmpty}>
                             <Moon size={24} color="#FFD700" fill="#FFD700" />
                             <Text style={[styles.restCellText, { color: colors.textMuted }]}>Repos</Text>
@@ -410,16 +447,28 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     </View>
                     {weekSchedule.map((day) => {
                       const sessions = getSessionsForSlot(day.id, slot.id);
+                      const isSlotRestNow = isSlotRest(day.id, slot.id);
+                      const isDayRestNow = isDayRest(day.id);
                       return (
                         <TouchableOpacity
                           key={day.id}
                           style={[
                             styles.modalDayCol,
                             styles.modalCell,
-                            { backgroundColor: colors.backgroundCard, borderColor: colors.border },
+                            {
+                              backgroundColor: isSlotRestNow ? colors.border + '40' : colors.backgroundCard,
+                              borderColor: isSlotRestNow ? '#FFD700' : colors.border
+                            },
                           ]}
                           onPress={() => {
-                            // Toujours permettre d'ajouter une séance
+                            if (isSlotRestNow) {
+                              // Si en repos, permettre de retirer
+                              if (!isDayRestNow) {
+                                toggleSlotRest(day.id, slot.id, day.label, slot.label);
+                              }
+                              return;
+                            }
+                            // Sinon permettre d'ajouter une séance
                             setIsExpanded(false);
                             onAddSession(day.id, slot.id);
                           }}
@@ -432,7 +481,17 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                           }}
                           activeOpacity={0.7}
                         >
-                          {sessions.length > 0 ? (
+                          {isSlotRestNow ? (
+                            <View style={styles.modalEmptyCell}>
+                              <Moon size={28} color="#FFD700" fill="#FFD700" />
+                              <Text style={[styles.restCellText, { color: '#FFD700', marginTop: 4 }]}>Repos</Text>
+                              {!isDayRestNow && (
+                                <Text style={[styles.tapToRemoveText, { color: colors.textMuted }]}>
+                                  Tap pour retirer
+                                </Text>
+                              )}
+                            </View>
+                          ) : sessions.length > 0 ? (
                             <View style={styles.modalSessionsContainer}>
                               {sessions.slice(0, 3).map((session, idx) => {
                                 const logoSource = session.clubLogo ? getClubLogoSource(session.clubLogo) : null;
@@ -479,16 +538,27 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                           ) : (
                             <View style={styles.modalEmptyCell}>
                               <TouchableOpacity
-                                style={[styles.restButton, { backgroundColor: colors.accent + '15' }]}
+                                style={[styles.restButton, { backgroundColor: '#FFD700' + '30' }]}
                                 onPress={() => {
-                                  // TODO: Marquer comme jour de repos
+                                  // Marquer ce créneau comme repos
+                                  toggleSlotRest(day.id, slot.id, day.label, slot.label);
+                                }}
+                              >
+                                <Moon size={16} color="#FFD700" />
+                                <Text style={[styles.restButtonText, { color: '#FFD700' }]}>
+                                  Repos
+                                </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[styles.addButtonSmall, { backgroundColor: colors.accent + '15', marginTop: 8 }]}
+                                onPress={() => {
                                   setIsExpanded(false);
                                   onAddSession(day.id, slot.id);
                                 }}
                               >
-                                <Moon size={16} color={colors.accent} />
-                                <Text style={[styles.restButtonText, { color: colors.accent }]}>
-                                  Repos
+                                <Plus size={14} color={colors.accent} />
+                                <Text style={[styles.addButtonSmallText, { color: colors.accent }]}>
+                                  Ajouter
                                 </Text>
                               </TouchableOpacity>
                             </View>
@@ -582,7 +652,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   {selectedSession.session.details && (
                     <View style={[styles.detailCard, { backgroundColor: colors.background }]}>
                       <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                        💪 Muscles travaillés
+                        Muscles travaillés
                       </Text>
                       <View style={styles.musclesContainer}>
                         {selectedSession.session.details.split(' • ').map((muscle: string, idx: number) => (
@@ -610,7 +680,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   {selectedSession.session.note && (
                     <View style={[styles.detailCard, { backgroundColor: colors.background }]}>
                       <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-                        🏋️ Programme
+                        Programme
                       </Text>
                       <Text style={[styles.detailProgramText, { color: colors.textPrimary }]}>
                         {selectedSession.session.note}
@@ -665,14 +735,11 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
               <TouchableOpacity
                 style={[styles.addMenuButton, { backgroundColor: '#FFD700' }]}
                 onPress={() => {
-                  logger.info('🌙 Marquer repos pour', showAddMenu?.dayLabel, showAddMenu?.slotId);
-                  // TODO: Implémenter la fonctionnalité repos dans la base de données
-                  showPopup(
-                    'Repos',
-                    `Jour de repos marqué pour ${showAddMenu?.dayLabel} ${showAddMenu?.slotId}`,
-                    [{ text: 'OK', style: 'primary' }]
-                  );
-                  setShowAddMenu(null);
+                  if (showAddMenu) {
+                    const slotLabel = timeSlots.find(s => s.id === showAddMenu.slotId)?.label || '';
+                    toggleSlotRest(showAddMenu.dayId, showAddMenu.slotId, showAddMenu.dayLabel, slotLabel);
+                    setShowAddMenu(null);
+                  }
                 }}
               >
                 <Moon size={24} color="#000000" fill="#000000" />
@@ -1694,5 +1761,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
     lineHeight: 22,
+  },
+  // Bouton ajouter petit (vue agrandie)
+  addButtonSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+  },
+  addButtonSmallText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  tapToRemoveText: {
+    fontSize: 9,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });

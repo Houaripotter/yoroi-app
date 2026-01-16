@@ -88,7 +88,7 @@ export function useHealthKit(): UseHealthKitReturn {
       return new Promise((resolve) => {
         Alert.alert(
           'Connexion à Apple Santé',
-          'YOROI va demander l\'accès à vos données de santé pour un suivi complet de votre forme physique.\n\nDonnées demandées :\n• Poids et composition corporelle\n• Activité (pas, distance)\n• Sommeil\n• Fréquence cardiaque et HRV\n• VO2 Max\n• Entraînements',
+          'YOROI va demander l\'accès à tes données de santé pour un suivi complet de ta forme physique.\n\nDonnées demandées :\n• Poids et composition corporelle\n• Activité (pas, distance)\n• Sommeil\n• Fréquence cardiaque et HRV\n• VO2 Max\n• Entraînements',
           [
             {
               text: 'Annuler',
@@ -114,7 +114,7 @@ export function useHealthKit(): UseHealthKitReturn {
                   } else {
                     Alert.alert(
                       'Permissions requises',
-                      'Pour utiliser cette fonctionnalité, autorisez l\'accès dans Réglages > Santé > Partage de données > YOROI',
+                      'Pour utiliser cette fonctionnalité, autorise l\'accès dans Réglages > Santé > Partage de données > YOROI',
                       [
                         { text: 'Annuler', style: 'cancel' },
                         {

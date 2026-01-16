@@ -256,10 +256,10 @@ export const getReportShareData = (report: WeeklyReport) => {
     score: report.overallScore,
     grade: report.verdict.grade,
     stats: [
-      { label: 'Entraînements', value: report.totalTrainings.toString(), icon: '💪' },
+      { label: 'Entraînements', value: report.totalTrainings.toString(), icon: '' },
       { label: 'Temps', value: `${Math.round(report.totalTrainingTime / 60)}h`, icon: '⏱️' },
       { label: 'Sommeil', value: `${report.avgSleepHours}h`, icon: '😴' },
-      { label: 'Streak', value: `${report.currentStreak}j`, icon: '🔥' },
+      { label: 'Streak', value: `${report.currentStreak}j`, icon: '' },
     ],
     verdict: report.verdict,
   };

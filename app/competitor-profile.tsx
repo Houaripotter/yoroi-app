@@ -115,7 +115,7 @@ export default function CompetitorProfileScreen() {
   const handleWeightSave = () => {
     const weight = parseFloat(weightInput);
     if (isNaN(weight) || weight <= 0) {
-      showPopup('Erreur', 'Veuillez entrer un poids valide', [
+      showPopup('Erreur', 'Entre un poids valide', [
         { text: 'OK', style: 'primary' }
       ]);
       return;

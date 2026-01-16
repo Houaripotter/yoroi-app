@@ -1,5 +1,5 @@
 // ============================================
-// 📊 YOROI - SERVICE STATISTIQUES D'ENTRAÎNEMENT
+// YOROI - SERVICE STATISTIQUES D'ENTRAÎNEMENT
 // ============================================
 
 import { Platform } from 'react-native';

@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 70, height: 70 },
+  sm: { width: 120, height: 120 },
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
@@ -68,11 +68,16 @@ export default function AvatarDisplay({
     try {
       setIsLoading(true);
 
-      // Récupérer la config et les métadonnées
+      // Récupérer la config avec état dynamique
       const config = await getAvatarConfig();
 
-      // Obtenir l'image
-      const image = getAvatarImage(config.pack, config.gender, config.level);
+      // Obtenir l'image (avec état pour character packs, personnage pour collection packs)
+      const image = getAvatarImage(
+        config.pack,
+        config.packType === 'character' ? config.state : undefined,
+        config.collectionCharacter,
+        config.gender
+      );
 
       setImagePath(image);
       setIsLoading(false);

@@ -254,7 +254,7 @@ export const SmartRemindersSettings: React.FC = () => {
               Streak actuel :
             </Text>
             <Text style={[styles.detectedValue, { color: colors.gold }]}>
-              {habits.currentStreak} jour{habits.currentStreak > 1 ? 's' : ''} 🔥
+              {habits.currentStreak} jour{habits.currentStreak > 1 ? 's' : ''}
             </Text>
           </View>
         </View>

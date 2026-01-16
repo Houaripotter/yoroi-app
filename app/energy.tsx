@@ -267,7 +267,7 @@ export default function EnergyScreen() {
           <View style={styles.tipContent}>
             <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Hydratation</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
-              {hydration >= HYDRATION_GOAL ? '✅ Objectif atteint !' : `${((hydration / HYDRATION_GOAL) * 100).toFixed(0)}% - Continue !`}
+              {hydration >= HYDRATION_GOAL ? 'Objectif atteint !' : `${((hydration / HYDRATION_GOAL) * 100).toFixed(0)}% - Continue !`}
             </Text>
           </View>
           <ChevronRight size={18} color={colors.textMuted} />
@@ -289,7 +289,7 @@ export default function EnergyScreen() {
           <View style={styles.tipContent}>
             <Text style={[styles.tipTitle, { color: colors.textPrimary }]}>Entraînement</Text>
             <Text style={[styles.tipDesc, { color: colors.textMuted }]}>
-              {lastTrainingDays === 0 ? '✅ Entraîné aujourd\'hui !'
+              {lastTrainingDays === 0 ? 'Entraîné aujourd\'hui !'
                 : lastTrainingDays === 1 ? 'Dernier entraînement hier'
                 : lastTrainingDays !== null ? `Il y a ${lastTrainingDays} jours` : 'Aucun entraînement récent'}
             </Text>

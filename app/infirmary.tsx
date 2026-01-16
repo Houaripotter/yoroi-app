@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - SUIVI BLESSURES
+// YOROI MEDIC - SUIVI BLESSURES
 // ============================================
 
 import React, { useState, useCallback } from 'react';
@@ -124,7 +124,7 @@ export default function InfirmaryScreen() {
     // Détecter toutes les zones qui se chevauchent avec la zone cliquée
     const overlapping = getOverlappingZones(zone, view);
 
-    logger.info('🎯 Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
+    logger.info('Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
     logger.info('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
 
     if (overlapping.length > 1) {
@@ -134,14 +134,14 @@ export default function InfirmaryScreen() {
         name: z.label,
       }));
 
-      logger.info('✅ AFFICHAGE MODAL avec zones:', formattedZones);
+      logger.info('AFFICHAGE MODAL avec zones:', formattedZones);
       setOverlappingZones(formattedZones);
       setCurrentView(view);
       setShowZoneModal(true);
     } else {
       // Une seule zone: navigation directe
       const targetZone = overlapping.length > 0 ? overlapping[0] : zone;
-      logger.info('⚠️ Une seule zone, navigation directe vers:', targetZone.label);
+      logger.info('Une seule zone, navigation directe vers:', targetZone.label);
       navigateToEvaluation(targetZone.id, view, targetZone.label);
     }
   };

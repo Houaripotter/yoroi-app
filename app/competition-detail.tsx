@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - DÉTAIL COMPÉTITION
+// YOROI - DÉTAIL COMPÉTITION
 // ============================================
 
 import React, { useState, useEffect } from 'react';
@@ -165,7 +165,7 @@ export default function CompetitionDetailScreen() {
             ]}
           >
             <Text style={styles.sportEmojiLarge}>
-              {SPORT_ICONS[competition.sport as keyof typeof SPORT_ICONS] || '⚔️'}
+              {SPORT_ICONS[competition.sport as keyof typeof SPORT_ICONS] || ''}
             </Text>
           </View>
 

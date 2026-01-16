@@ -117,101 +117,113 @@ export default function OnboardingScreen() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [userName, setUserName] = useState('');
 
-  const slides: Slide[] = [
+      const slides: Slide[] = [
     {
       id: 'welcome',
       icon: <Sparkles size={64} color={colors.accent} />,
       title: 'Ton Armure Digitale',
-      description: 'YOROI t\'accompagne dans ta transformation. 100% gratuit, 100% prive, 100% made in France. Ici, on tombe 7 fois, on se releve 8 fois.',
+      description: 'YOROI fonctionne 100% HORS LIGNE. Desert, foret, mer, montagne sans reseau ? Pas de probleme. Tes donnees restent sur TON telephone. Pas de compte, pas de cloud, pas de tracking.',
       color: colors.accent,
       highlights: [
-        { icon: <Target size={14} color={colors.accent} />, text: 'Suivi poids, sommeil, energie' },
-        { icon: <Timer size={14} color={colors.accent} />, text: 'Timer pro multi-sports' },
-        { icon: <Medal size={14} color={colors.accent} />, text: 'Gamification addictive' },
+        { icon: <Target size={14} color={colors.accent} />, text: '100% hors ligne - Meme sans reseau' },
+        { icon: <Timer size={14} color={colors.accent} />, text: '100% confidentiel - Donnees privees' },
+        { icon: <Medal size={14} color={colors.accent} />, text: 'Pas de compte - Pas de cloud' },
       ],
     },
     {
-      id: 'tracking',
-      icon: <Scale size={64} color="#4ECDC4" />,
-      title: 'Tout au Meme Endroit',
-      description: 'Poids, composition corporelle, mensurations, hydratation, sommeil, energie... Synchronise avec Apple Health pour un suivi complet !',
+      id: 'stats',
+      icon: <BarChart3 size={64} color="#4ECDC4" />,
+      title: '6 Onglets de Stats',
+      description: 'Poids, composition, mensurations, discipline, performance, vitalite. Graphiques detailles, predictions IA, synchronisation Apple Health. Tout au meme endroit !',
       color: '#4ECDC4',
       highlights: [
         { icon: <Scale size={14} color="#4ECDC4" />, text: 'Poids + Graisse + Muscle + Eau' },
-        { icon: <MaterialCommunityIcons name="hospital-box" size={14} color="#EF4444" />, text: 'Mensurations & suivi blessures' },
-        { icon: <Zap size={14} color="#4ECDC4" />, text: 'Hydratation, sommeil, energie' },
+        { icon: <Ruler size={14} color="#4ECDC4" />, text: 'Mensurations & tour de taille' },
+        { icon: <Zap size={14} color="#4ECDC4" />, text: 'Sommeil, hydratation, energie' },
+      ],
+    },
+    {
+      id: 'gamification',
+      icon: <Medal size={64} color="#FFD700" />,
+      title: 'Systeme de Grades',
+      description: 'Evolue de Ashigaru a Shogun a travers 5 grades de guerrier, collectionne 61 badges, personnalise ton avatar. Gagne de l\'XP et suis ta progression !',
+      color: '#FFD700',
+      highlights: [
+        { icon: <Award size={14} color="#FFD700" />, text: '5 grades de guerrier samourai' },
+        { icon: <Star size={14} color="#FFD700" />, text: '61 badges a collectionner' },
+        { icon: <Target size={14} color="#FFD700" />, text: 'Avatars personnalisables' },
       ],
     },
     {
       id: 'competition',
       icon: <Swords size={64} color="#FF6B35" />,
       title: 'Mode Competiteur',
-      description: 'Combat, HYROX, Trail, Marathon... Categories de poids officielles, mode Cut, palmares, compte a rebours competition. Prepare-toi comme un pro !',
+      description: 'Competitions JJB, Judo, Boxe, MMA, Lutte, HYROX, Trail, Marathon... Categories officielles, mode Cut, palmares, compte a rebours. Prepare-toi comme un pro !',
       color: '#FF6B35',
       highlights: [
-        { icon: <Trophy size={14} color="#FF6B35" />, text: 'JJB, Judo, Boxe, MMA, Lutte...' },
-        { icon: <Dumbbell size={14} color="#FF6B35" />, text: 'HYROX, Trail, Marathon, Triathlon' },
-        { icon: <Target size={14} color="#FF6B35" />, text: 'Categories officielles & Cut mode' },
-      ],
-    },
-    {
-      id: 'tools',
-      icon: <Timer size={64} color="#8B5CF6" />,
-      title: 'Outils Pro',
-      description: 'Timer multi-modes (Muscu, Combat, HIIT, Tabata), calculateurs (macros, IMC, TDEE), jeune intermittent (16/8, OMAD, Ramadan, Kippur).',
-      color: '#8B5CF6',
-      highlights: [
-        { icon: <Timer size={14} color="#8B5CF6" />, text: 'Timer avec sons & vibrations' },
-        { icon: <Target size={14} color="#8B5CF6" />, text: 'Calculateurs macros & IMC' },
-        { icon: <Clock size={14} color="#8B5CF6" />, text: 'Jeune 16/8, OMAD, Ramadan...' },
+        { icon: <Trophy size={14} color="#FF6B35" />, text: 'JJB, Boxe, Judo, MMA, Lutte' },
+        { icon: <Dumbbell size={14} color="#FF6B35" />, text: 'HYROX, Trail, Marathon' },
+        { icon: <Target size={14} color="#FF6B35" />, text: 'Categories & Mode Cut' },
       ],
     },
     {
       id: 'planning',
       icon: <CalendarDays size={64} color="#F97316" />,
       title: 'Planning & Carnet',
-      description: 'Calendrier interactif, emploi du temps sportif personnalise, carnet d\'entrainement avec techniques et objectifs. Multi-sports !',
+      description: 'Calendrier interactif, emploi du temps multi-sports, carnet d\'entrainement avec tes records persos et techniques. Planifie tes seances, suis ta progression !',
       color: '#F97316',
       highlights: [
-        { icon: <CalendarDays size={14} color="#F97316" />, text: 'Calendrier & emploi du temps' },
-        { icon: <Dumbbell size={14} color="#F97316" />, text: 'Carnet techniques & seances' },
-        { icon: <TrendingUp size={14} color="#F97316" />, text: 'Objectifs & progression' },
+        { icon: <CalendarDays size={14} color="#F97316" />, text: 'Calendrier & seances' },
+        { icon: <TrendingUp size={14} color="#F97316" />, text: 'Records & techniques' },
+        { icon: <Target size={14} color="#F97316" />, text: 'Objectifs & progression' },
+      ],
+    },
+    {
+      id: 'tools',
+      icon: <Timer size={64} color="#8B5CF6" />,
+      title: 'Outils Pro',
+      description: 'Timer multi-modes (Muscu, Combat, HIIT, Tabata, AMRAP, EMOM), calculateurs avances (IMC, IMG, TDEE, macros), jeune intermittent (16/8, 20/4, OMAD, personnalise).',
+      color: '#8B5CF6',
+      highlights: [
+        { icon: <Timer size={14} color="#8B5CF6" />, text: 'Timer pro avec sons & vibes' },
+        { icon: <Target size={14} color="#8B5CF6" />, text: 'Calculateurs IMC, IMG, TDEE' },
+        { icon: <Clock size={14} color="#8B5CF6" />, text: 'Jeune 16/8, 20/4, OMAD' },
       ],
     },
     {
       id: 'transformation',
       icon: <Camera size={64} color="#EC4899" />,
-      title: 'Ta Transformation',
-      description: 'Photos avant/apres avec slider interactif, graphiques detailles, cartes stylees a partager sur Instagram et reseaux sociaux !',
+      title: 'Partage Tes Victoires',
+      description: 'Photos avant/apres avec slider, 6 cartes stylees pour Instagram/reseaux sociaux, graphiques, predictions, comparaisons. Immortalise ta transformation !',
       color: '#EC4899',
       highlights: [
-        { icon: <Camera size={14} color="#EC4899" />, text: 'Photos avant/apres & slider' },
-        { icon: <LineChart size={14} color="#EC4899" />, text: 'Graphiques & predictions' },
-        { icon: <Star size={14} color="#EC4899" />, text: '6 cartes pour tes reseaux' },
+        { icon: <Camera size={14} color="#EC4899" />, text: 'Photos avant/apres' },
+        { icon: <LineChart size={14} color="#EC4899" />, text: 'Graphiques & predictions IA' },
+        { icon: <Star size={14} color="#EC4899" />, text: '6 cartes pour les reseaux' },
       ],
     },
     {
-      id: 'gamification',
-      icon: <Medal size={64} color="#FFD700" />,
-      title: 'Deviens un Guerrier',
-      description: 'XP, niveaux et grades (Ronin, Samurai, Shogun...), 60+ badges, defis quotidiens, avatars exclusifs. Level up chaque jour !',
-      color: '#FFD700',
+      id: 'health',
+      icon: <HeartHandshake size={64} color="#10B981" />,
+      title: 'Synchronisation Sante',
+      description: 'Synchronise avec Apple Health : pas, sommeil, frequence cardiaque, calories, distance. Suivi automatique, donnees en temps reel. Tout se connecte !',
+      color: '#10B981',
       highlights: [
-        { icon: <Award size={14} color="#FFD700" />, text: '9 grades de guerrier' },
-        { icon: <Star size={14} color="#FFD700" />, text: '60+ badges a debloquer' },
-        { icon: <Target size={14} color="#FFD700" />, text: 'Defis & quetes quotidiennes' },
+        { icon: <Target size={14} color="#10B981" />, text: 'Apple Health / HealthKit' },
+        { icon: <Zap size={14} color="#10B981" />, text: 'Synchronisation automatique' },
+        { icon: <LineChart size={14} color="#10B981" />, text: 'Donnees en temps reel' },
       ],
     },
     {
       id: 'family',
-      icon: <HeartHandshake size={64} color="#10B981" />,
-      title: 'Bienvenue dans la Famille',
-      description: 'Tes donnees restent sur TON telephone. Pas de compte, pas de pub, pas de tracking. Si tu aimes YOROI, un petit 5 etoiles nous aide enormement !',
-      color: '#10B981',
+      icon: <HeartHandshake size={64} color="#D4AF37" />,
+      title: 'Vie Privee Garantie',
+      description: 'Pas de compte. Pas de cloud. Pas de serveur. Pas de tracking. Tes donnees ne quittent JAMAIS ton telephone. YOROI est 100% gratuit, 100% confidentiel. Made in France.',
+      color: '#D4AF37',
       highlights: [
-        { icon: <Target size={14} color="#10B981" />, text: '100% prive - Donnees locales' },
-        { icon: <Star size={14} color="#10B981" />, text: 'Note-nous sur l\'App Store' },
-        { icon: <HeartHandshake size={14} color="#10B981" />, text: 'Made with love in France' },
+        { icon: <Target size={14} color="#D4AF37" />, text: 'Zero tracking - Zero cloud' },
+        { icon: <Star size={14} color="#D4AF37" />, text: 'Donnees 100% locales & privees' },
+        { icon: <HeartHandshake size={14} color="#D4AF37" />, text: 'Gratuit - Made in France' },
       ],
     },
   ];
@@ -238,7 +250,7 @@ export default function OnboardingScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -609,7 +621,7 @@ export default function OnboardingScreen() {
           {setupStep === 3 && (
             <View style={styles.setupStep}>
               <View style={[styles.setupIconContainer, { backgroundColor: '#F59E0B20' }]}>
-                <Cake size={48} color="#F59E0B" />
+                <Cake size={height < 700 ? 40 : 48} color="#F59E0B" />
               </View>
               <Text style={[styles.setupTitle, { color: colors.textPrimary }]}>
                 Ta date de naissance
@@ -634,7 +646,7 @@ export default function OnboardingScreen() {
                 </View>
               )}
               {showDatePicker && (
-                <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard, borderRadius: 16, marginTop: 16 }]}>
+                <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard, borderRadius: 16, marginTop: height < 700 ? 8 : 16 }]}>
                   <DateTimePicker
                     value={birthDate || new Date(2000, 0, 1)}
                     mode="date"
@@ -978,19 +990,19 @@ const styles = StyleSheet.create({
   },
   setupContentContainer: {
     paddingHorizontal: 32,
-    paddingBottom: 20,
+    paddingBottom: height < 700 ? 120 : 80, // Plus d'espace pour petits écrans (iPhone 13 mini, SE)
   },
   setupStep: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   setupIconContainer: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: height < 700 ? 90 : 110, // Plus petit sur petits écrans
+    height: height < 700 ? 90 : 110,
+    borderRadius: height < 700 ? 45 : 55,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
+    marginBottom: height < 700 ? 20 : 28, // Moins de marge sur petits écrans
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -998,16 +1010,16 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   setupTitle: {
-    fontSize: 26,
+    fontSize: height < 700 ? 22 : 26, // Plus petit sur petits écrans
     fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: height < 700 ? 8 : 10,
     letterSpacing: -0.5,
   },
   setupSubtitle: {
-    fontSize: 15,
+    fontSize: height < 700 ? 14 : 15,
     textAlign: 'center',
-    marginBottom: 36,
+    marginBottom: height < 700 ? 24 : 36, // Moins d'espace sur petits écrans
     opacity: 0.8,
     lineHeight: 22,
   },
@@ -1088,7 +1100,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   ageBadge: {
-    marginTop: 20,
+    marginTop: height < 700 ? 12 : 20, // Moins d'espace sur petits écrans
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,

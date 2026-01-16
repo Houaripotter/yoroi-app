@@ -130,8 +130,8 @@ export default function LogoSelectionScreen() {
           </View>
           {selectedLogo !== 'default' && (
             <View style={[styles.premiumBadge, { backgroundColor: colors.accent }]}>
-              <Crown size={12} color="#FFFFFF" />
-              <Text style={styles.premiumBadgeText}>Premium</Text>
+              <Crown size={12} color={colors.textOnAccent} />
+              <Text style={[styles.premiumBadgeText, { color: colors.textOnAccent }]}>Premium</Text>
             </View>
           )}
         </View>
@@ -177,7 +177,7 @@ export default function LogoSelectionScreen() {
                 <View style={[styles.logoPreview, { backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5' }]}>
                   {option.id === 'default' ? (
                     <View style={[styles.kanjiPreview, { backgroundColor: colors.accent }]}>
-                      <Text style={styles.kanjiText}>鎧</Text>
+                      <Text style={[styles.kanjiText, { color: colors.textOnAccent }]}>鎧</Text>
                     </View>
                   ) : option.image ? (
                     <Image
@@ -207,7 +207,7 @@ export default function LogoSelectionScreen() {
                 {/* Selection indicator */}
                 {isSelected && (
                   <View style={[styles.selectedIndicator, { backgroundColor: colors.accent }]}>
-                    <Check size={14} color="#FFFFFF" />
+                    <Check size={14} color={colors.textOnAccent} />
                   </View>
                 )}
 
@@ -244,8 +244,8 @@ export default function LogoSelectionScreen() {
             onPress={handleSave}
             disabled={isSaving}
           >
-            <Check size={20} color="#FFFFFF" />
-            <Text style={styles.saveButtonText}>
+            <Check size={20} color={colors.textOnAccent} />
+            <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
               {isSaving ? 'Sauvegarde...' : 'Appliquer ce logo'}
             </Text>
           </TouchableOpacity>

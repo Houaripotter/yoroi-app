@@ -46,7 +46,7 @@ export const YOROI_VOCAB = {
 // ═══════════════════════════════════════════════
 
 export const ONBOARDING_MESSAGES = {
-  welcome: "Bienvenue dans la Team Yoroi, champion. ⚔️",
+  welcome: "Bienvenue dans la Team Yoroi, champion.",
   start: "Ton parcours de combattant commence maintenant.",
   ready: "Es-tu prêt à forger ton armure ?",
   letsGo: "En avant, champion !",
@@ -57,11 +57,11 @@ export const ONBOARDING_MESSAGES = {
 // ═══════════════════════════════════════════════
 
 export const WEIGH_IN_NOTIFICATIONS = [
-  "Hey combattant, la pesée t'attend. On lâche rien. 🔥",
+  "Hey combattant, la pesée t'attend. On lâche rien.",
   "Athlète, c'est l'heure de monter sur la balance. ⚖️",
-  "La discipline forge les champions. Pesée du jour ! 💪",
-  "Un vrai champion connaît son poids. À la balance ! 🥋",
-  "Mission du matin : la pesée. Go champion ! ⚔️",
+  "La discipline forge les champions. Pesée du jour !",
+  "Un vrai champion connaît son poids. À la balance !",
+  "Mission du matin : la pesée. Go champion !",
 ];
 
 // ═══════════════════════════════════════════════
@@ -70,10 +70,10 @@ export const WEIGH_IN_NOTIFICATIONS = [
 
 export const SUCCESS_MESSAGES = [
   "MISSION ACCOMPLIE. La Team est fière de toi ! 🎖️",
-  "Tu as forgé ton armure, champion. ⚔️",
-  "Objectif atteint ! Un vrai champion. 🏆",
-  "Victoire ! Le Bushido coule dans tes veines. 🔥",
-  "Honneur à toi, combattant. Mission réussie ! 💪",
+  "Tu as forgé ton armure, champion.",
+  "Objectif atteint ! Un vrai champion.",
+  "Victoire ! Le Bushido coule dans tes veines.",
+  "Honneur à toi, combattant. Mission réussie !",
 ];
 
 // ═══════════════════════════════════════════════
@@ -81,12 +81,12 @@ export const SUCCESS_MESSAGES = [
 // ═══════════════════════════════════════════════
 
 export const ENCOURAGEMENT_MESSAGES = [
-  "Un vrai champion se relève. Demain on repart. 💪",
-  "La défaite n'existe pas, seulement l'apprentissage. 🥋",
-  "On est ensemble. La Team compte sur toi. ⚔️",
-  "Chaque chute te forge plus fort. 🔥",
-  "Le chemin de l'athlète est semé d'obstacles. Continue ! 🎯",
-  "Tu ne restes jamais à terre. Relève-toi ! ⚡",
+  "Un vrai champion se relève. Demain on repart.",
+  "La défaite n'existe pas, seulement l'apprentissage.",
+  "On est ensemble. La Team compte sur toi.",
+  "Chaque chute te forge plus fort.",
+  "Le chemin de l'athlète est semé d'obstacles. Continue !",
+  "Tu ne restes jamais à terre. Relève-toi !",
 ];
 
 // ═══════════════════════════════════════════════
@@ -95,16 +95,16 @@ export const ENCOURAGEMENT_MESSAGES = [
 
 export const STREAK_MESSAGES = {
   // Milestones
-  day3: "🔥 3 jours de discipline. Le champion s'éveille !",
-  day7: "🔥 7 jours de discipline. Le Bushido coule dans tes veines.",
-  day14: "🔥 14 jours ! Tu deviens une légende, combattant.",
-  day30: "🔥 30 JOURS ! Un mois de discipline pure. RESPECT. 🏆",
-  day60: "🔥 60 jours ! Tu es un exemple pour la Team Yoroi.",
-  day100: "🔥 100 JOURS ! Tu as atteint le niveau SENSEI. 🥋",
+  day3: "3 jours de discipline. Le champion s'éveille !",
+  day7: "7 jours de discipline. Le Bushido coule dans tes veines.",
+  day14: "14 jours ! Tu deviens une légende, combattant.",
+  day30: "30 JOURS ! Un mois de discipline pure. RESPECT.",
+  day60: "60 jours ! Tu es un exemple pour la Team Yoroi.",
+  day100: "100 JOURS ! Tu as atteint le niveau SENSEI.",
 
   // Streak perdu
-  broken: "Tu as brisé ton streak. Mais tu ne restes jamais à terre. ⚔️",
-  restart: "Nouveau départ. La Team croit en toi, champion. 💪",
+  broken: "Tu as brisé ton streak. Mais tu ne restes jamais à terre.",
+  restart: "Nouveau départ. La Team croit en toi, champion.",
 };
 
 // ═══════════════════════════════════════════════
@@ -112,10 +112,10 @@ export const STREAK_MESSAGES = {
 // ═══════════════════════════════════════════════
 
 export const QUEST_MESSAGES = {
-  available: "Tes missions du jour t'attendent, combattant. ⚔️",
+  available: "Tes missions du jour t'attendent, combattant.",
   completed1: "1 quête accomplie. Continue, champion !",
   completed2: "2 quêtes accomplies. Tu avances bien !",
-  completedAll: "Toutes les quêtes accomplies ! Honneur à toi, champion. 🏆",
+  completedAll: "Toutes les quêtes accomplies ! Honneur à toi, champion.",
   xpGained: (xp: number) => `+${xp} XP ! Tu te rapproches du prochain rang.`,
 };
 
@@ -149,8 +149,8 @@ export const getGreetingLong = (name: string, hour: number): string => {
 
   if (hour >= 5 && hour < 12) {
     const morningGreetings = [
-      `Bonjour ${firstName}, prêt pour la forge ? ⚔️`,
-      `Salut combattant ! Une nouvelle journée de discipline. 💪`,
+      `Bonjour ${firstName}, prêt pour la forge ?`,
+      `Salut combattant ! Une nouvelle journée de discipline.`,
       `${firstName}, le champion se lève tôt. Respect ! 🌅`,
     ];
     return morningGreetings[Math.floor(Math.random() * morningGreetings.length)];
@@ -158,18 +158,18 @@ export const getGreetingLong = (name: string, hour: number): string => {
 
   if (hour >= 12 && hour < 18) {
     const afternoonGreetings = [
-      `${firstName}, la Team Yoroi te salue ! ⚔️`,
-      `Combattant, continue ta mission ! 🎯`,
-      `${firstName}, forge ton armure ! 💪`,
+      `${firstName}, la Team Yoroi te salue !`,
+      `Combattant, continue ta mission !`,
+      `${firstName}, forge ton armure !`,
     ];
     return afternoonGreetings[Math.floor(Math.random() * afternoonGreetings.length)];
   }
 
   // Soir
   const eveningGreetings = [
-    `Bonsoir ${firstName}, journée de champion accomplie ? 🌙`,
-    `${firstName}, repos du combattant mérité. ⚔️`,
-    `La nuit t'appartient, ${firstName}. 🥋`,
+    `Bonsoir ${firstName}, journée de champion accomplie ?`,
+    `${firstName}, repos du combattant mérité.`,
+    `La nuit t'appartient, ${firstName}.`,
   ];
   return eveningGreetings[Math.floor(Math.random() * eveningGreetings.length)];
 };
@@ -204,7 +204,7 @@ export const TEAM_YOROI_BADGE = {
   id: 'team_yoroi_member',
   name: 'Membre Team Yoroi',
   description: 'Tu fais partie de la famille. Bienvenue, champion.',
-  icon: '⚔️',
+  icon: '',
   rarity: 'legendary',
   unlockedAt: 'inscription',
 };

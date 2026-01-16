@@ -409,7 +409,7 @@ export const formatGoalsForShare = async (): Promise<string> => {
   }
 
   const lines = progressList.map(p => {
-    const emoji = p.weekPercent >= 100 ? '✅' : p.isOnTrack ? '🔥' : '⚠️';
+    const emoji = p.weekPercent >= 100 ? '' : p.isOnTrack ? '' : '';
     return `${emoji} ${p.sport.name}: ${p.yearCount}/${p.yearTarget} (${Math.round(p.yearPercent)}%)`;
   });
 

@@ -314,7 +314,7 @@ export default function CalculatorScreen() {
                       <Flame size={28} color="#FFFFFF" strokeWidth={2.5} />
                     </View>
                     <View style={styles.goalCardTitleContainer}>
-                      <Text style={styles.goalCardTitle}>🔥 SÉCHER</Text>
+                      <Text style={styles.goalCardTitle}>SÉCHER</Text>
                       <Text style={styles.goalCardSubtitle}>Perte de gras</Text>
                     </View>
                   </View>
@@ -349,7 +349,7 @@ export default function CalculatorScreen() {
                       <Shield size={28} color="#FFFFFF" strokeWidth={2.5} />
                     </View>
                     <View style={styles.goalCardTitleContainer}>
-                      <Text style={styles.goalCardTitle}>🛡️ MAINTENIR</Text>
+                      <Text style={styles.goalCardTitle}>MAINTENIR</Text>
                       <Text style={styles.goalCardSubtitle}>Performance</Text>
                     </View>
                   </View>

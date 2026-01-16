@@ -75,7 +75,7 @@ export default function WeightCategorySelectionScreen() {
 
   const handleContinue = async () => {
     if (!selectedCategory) {
-      showPopup('Sélection requise', 'Veuillez choisir une catégorie de poids.', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Sélection requise', 'Choisis une catégorie de poids.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
@@ -171,13 +171,13 @@ export default function WeightCategorySelectionScreen() {
 
                 {isSelected && (
                   <View style={[styles.checkIcon, { backgroundColor: colors.accent }]}>
-                    <Check size={18} color="#FFFFFF" />
+                    <Check size={18} color={colors.textOnAccent} />
                   </View>
                 )}
 
                 {!isSelected && isSuggested && (
                   <View style={[styles.suggestedBadge, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.suggestedText}>Suggéré</Text>
+                    <Text style={[styles.suggestedText, { color: colors.textOnAccent }]}>Suggéré</Text>
                   </View>
                 )}
               </View>
@@ -211,10 +211,10 @@ export default function WeightCategorySelectionScreen() {
           disabled={!selectedCategory}
           activeOpacity={0.8}
         >
-          <Text style={[styles.continueBtnText, { color: '#FFFFFF' }]}>
+          <Text style={[styles.continueBtnText, { color: selectedCategory ? colors.textOnAccent : colors.textMuted }]}>
             Continuer
           </Text>
-          <ChevronRight size={20} color="#FFFFFF" />
+          <ChevronRight size={20} color={selectedCategory ? colors.textOnAccent : colors.textMuted} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipBtn} onPress={handleSkip} activeOpacity={0.7}>

@@ -27,7 +27,7 @@ export const initSoundManager = async () => {
       staysActiveInBackground: false,
       shouldDuckAndroid: true,
     });
-    logger.info('✅ SoundManager initialisé');
+    logger.info('SoundManager initialisé');
   } catch (error) {
     logger.error('❌ Erreur initialisation SoundManager:', error);
   }
@@ -70,7 +70,7 @@ export const playSound = async (soundName: 'taiko_drum' | 'gong' | 'success' | '
   try {
     const sound = await loadSound(soundName);
     if (!sound) {
-      logger.warn(`⚠️ Son ${soundName} non disponible`);
+      logger.warn(`Son ${soundName} non disponible`);
       return;
     }
 
@@ -122,7 +122,7 @@ export const cleanupSounds = async () => {
       await sound.unloadAsync();
       delete soundCache[name];
     }
-    logger.info('✅ Sons libérés');
+    logger.info('Sons libérés');
   } catch (error) {
     logger.error('❌ Erreur libération sons:', error);
   }

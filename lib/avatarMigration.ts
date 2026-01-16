@@ -86,7 +86,7 @@ export async function migrateAvatarSystem(): Promise<void> {
     // Étape 7 : Marquer la migration comme terminée
     await AsyncStorage.setItem(MIGRATION_FLAG_KEY, 'true');
 
-    logger.info('[AvatarMigration] ✅ Migration terminée avec succès');
+    logger.info('[AvatarMigration] Migration terminée avec succès');
   } catch (error) {
     logger.error('[AvatarMigration] ❌ Erreur pendant la migration:', error);
 
@@ -146,7 +146,7 @@ async function cleanupOldKeys(): Promise<void> {
 
 /**
  * Réinitialise le flag de migration (pour tests uniquement)
- * ⚠️ NE PAS UTILISER EN PRODUCTION
+ * NE PAS UTILISER EN PRODUCTION
  */
 export async function resetMigrationFlag(): Promise<void> {
   await AsyncStorage.removeItem(MIGRATION_FLAG_KEY);
@@ -174,7 +174,7 @@ export async function logMigrationStatus(): Promise<void> {
   for (const key of OLD_KEYS_TO_REMOVE) {
     const value = await AsyncStorage.getItem(key);
     if (value) {
-      logger.info(`⚠️  Ancienne clé trouvée: ${key} = ${value}`);
+      logger.info(`Ancienne clé trouvée: ${key} = ${value}`);
     }
   }
 

@@ -293,7 +293,7 @@ export function AddSessionModal({
                     <Text
                       style={[
                         styles.typeButtonText,
-                        { color: sessionType === type ? '#FFFFFF' : colors.textPrimary },
+                        { color: sessionType === type ? colors.textOnAccent : colors.textPrimary },
                       ]}
                     >
                       {type}
@@ -330,7 +330,7 @@ export function AddSessionModal({
                   style={[styles.doneTimeButton, { backgroundColor: colors.accent }]}
                   onPress={() => setShowTimePicker(false)}
                 >
-                  <Text style={styles.doneTimeButtonText}>OK</Text>
+                  <Text style={[styles.doneTimeButtonText, { color: colors.textOnAccent }]}>OK</Text>
                 </TouchableOpacity>
               )}
 
@@ -355,7 +355,7 @@ export function AddSessionModal({
                     <Text
                       style={[
                         styles.durationButtonText,
-                        { color: duration === preset.value ? '#FFFFFF' : colors.textPrimary },
+                        { color: duration === preset.value ? colors.textOnAccent : colors.textPrimary },
                       ]}
                     >
                       {preset.label}
@@ -398,8 +398,8 @@ export function AddSessionModal({
                   onPress={handleSave}
                   disabled={isSaving}
                 >
-                  <Check size={20} color="#FFFFFF" />
-                  <Text style={styles.saveBtnText}>Enregistrer</Text>
+                  <Check size={20} color={colors.textOnAccent} />
+                  <Text style={[styles.saveBtnText, { color: colors.textOnAccent }]}>Enregistrer</Text>
                 </TouchableOpacity>
               </View>
 

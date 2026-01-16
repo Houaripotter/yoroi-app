@@ -110,7 +110,7 @@ const DevCodeModal: React.FC = () => {
           {/* Success message */}
           {success && (
             <Text style={styles.successText}>
-              ✅ Mode Créateur activé !
+              Mode Créateur activé !
             </Text>
           )}
 

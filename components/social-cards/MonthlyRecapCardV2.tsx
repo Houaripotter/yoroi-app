@@ -76,12 +76,12 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
     const content = (
       <>
         <LinearGradient
-          colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.9)']}
+          locations={[0, 0.5, 1]}
           style={styles.overlay}
         >
-          {/* TOP BANNER - YOROI */}
-          <SocialCardTopBanner variant="dark" />
-
+          {/* HAUT: Titre mois (minimaliste) */}
+          <View style={styles.topContent}>
           {/* TITRE MOIS */}
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
@@ -95,7 +95,13 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
             <Text style={styles.counterNumber}>{stats.totalTrainings}</Text>
             <Text style={styles.counterLabel}>ENTRAÎNEMENTS</Text>
           </View>
+          </View>
 
+          {/* CENTRE: VIDE pour voir la photo! */}
+          <View style={styles.centerSpace} />
+
+          {/* BAS: Barre + Clubs + Stats + Logo */}
+          <View style={styles.bottomContent}>
           {/* BARRE DE PROGRESSION */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
@@ -166,8 +172,9 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
             </View>
           </View>
 
-          {/* FOOTER - YOROI */}
+          {/* FOOTER - YOROI (uniquement en bas maintenant) */}
           <SocialCardFooter variant="dark" />
+          </View>
         </LinearGradient>
       </>
     );
@@ -200,6 +207,8 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
   }
 );
 
+MonthlyRecapCardV2.displayName = 'MonthlyRecapCardV2';
+
 // ============================================
 // STYLES
 // ============================================
@@ -219,6 +228,15 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  topContent: {
+    paddingTop: 12,
+  },
+  centerSpace: {
+    flex: 1,
+  },
+  bottomContent: {
+    paddingBottom: 0,
   },
 
   // Title
@@ -242,7 +260,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   counterNumber: {
-    fontSize: 72,
+    fontSize: 56,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -2,

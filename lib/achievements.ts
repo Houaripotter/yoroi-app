@@ -1,5 +1,5 @@
 // ============================================
-// ⚔️ YOROI - SYSTÈME DE BADGES/ACHIEVEMENTS
+// YOROI - SYSTÈME DE BADGES/ACHIEVEMENTS
 // ============================================
 
 import type { LucideIcon } from 'lucide-react-native';

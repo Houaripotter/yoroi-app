@@ -309,20 +309,20 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
  */
 export function getSportTagEmoji(sportTag: string): string {
   const emojis: Record<string, string> = {
-    jjb: '🥋',
-    grappling: '🤼',
-    hyrox: '🏃',
-    marathon: '🏃',
-    running: '🏃',
+    jjb: '',
+    grappling: '',
+    hyrox: '',
+    marathon: '',
+    running: '',
     trail: '⛰️',
   };
 
-  return emojis[sportTag] || '🏆';
+  return emojis[sportTag] || '';
 }
 
 // Log des statistiques au chargement du service
-logger.info('📊 Events Service initialized');
+logger.info('Events Service initialized');
 const stats = getEventsStats();
-logger.info(`📊 Total events: ${stats.total}`);
-logger.info(`📊 Upcoming events: ${stats.upcoming}`);
-logger.info(`📊 Countries covered: ${stats.countriesCount}`);
+logger.info(`Total events: ${stats.total}`);
+logger.info(`Upcoming events: ${stats.upcoming}`);
+logger.info(`Countries covered: ${stats.countriesCount}`);

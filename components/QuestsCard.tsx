@@ -138,7 +138,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       {/* En-tete */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.headerIcon}>🎯</Text>
+          <Text style={styles.headerIcon}></Text>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             Quetes
           </Text>

@@ -5,16 +5,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
-import { GripVertical } from 'lucide-react-native';
+import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
 import { Page2ActionGrid } from './pages/Page2ActionGrid';
 import { Page3Performance } from './pages/Page3Performance';
-import { Page4Stats } from './pages/Page4Stats';
-import { Page5Reports } from './pages/Page5Reports';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -24,6 +23,7 @@ interface PageItem {
   id: string;
   title: string;
   icon: string;
+  description?: string;
 }
 
 interface WeeklyReport {
@@ -54,7 +54,13 @@ interface HomeTabViewProps {
   sleepHours?: number;
   sleepDebt?: number;
   sleepGoal?: number;
-  workloadStatus?: 'light' | 'moderate' | 'intense';
+  workloadStatus?: 'none' | 'light' | 'moderate' | 'intense';
+
+  // Navigation
+  currentPage?: number;
+  pageOrder?: PageItem[];
+  onPageChange?: (index: number) => void;
+  onLongPressTab?: () => void;
 
   // Page 3 - Performance
   dailyChallenges?: Array<{
@@ -77,15 +83,13 @@ interface HomeTabViewProps {
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
   onShareReport?: () => void;
+
+  // Avatar refresh
+  refreshTrigger?: number;
 }
 
-const DEFAULT_PAGES: PageItem[] = [
-  { id: 'home', title: 'Accueil', icon: '' },
-  { id: 'tools', title: 'Outils', icon: '' },
-  { id: 'performance', title: 'Performance', icon: '' },
-  { id: 'stats', title: 'Stats', icon: '' },
-  { id: 'reports', title: 'Rapports', icon: '' },
-];
+// Default page IDs - titles are loaded dynamically via i18n
+const DEFAULT_PAGE_IDS = ['home', 'tools', 'performance'] as const;
 
 export const HomeTabView: React.FC<HomeTabViewProps> = ({
   userName,
@@ -106,7 +110,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
   sleepHours = 0,
   sleepDebt = 0,
   sleepGoal = 8,
-  workloadStatus = 'moderate',
+  workloadStatus = 'none',
   dailyChallenges = [],
   stepsGoal = 10000,
   calories = 0,
@@ -117,13 +121,35 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
   onAddWeight,
   onAddWater,
   onShareReport,
+  refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
   const scrollViewRef = useRef<ScrollView>(null);
+  const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const [pageOrder, setPageOrder] = useState<PageItem[]>(DEFAULT_PAGES);
+
+  // Create default pages with translations
+  const getDefaultPages = (): PageItem[] => [
+    { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
+    { id: 'tools', title: t('tools.title'), icon: '', description: t('tools.subtitle') },
+    { id: 'performance', title: t('analysis.title'), icon: '', description: t('analysis.subtitle') },
+  ];
+
+  const [pageOrder, setPageOrder] = useState<PageItem[]>(getDefaultPages());
   const [editMode, setEditMode] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Update page titles when language changes
+  useEffect(() => {
+    setPageOrder(prevOrder => {
+      const defaultPages = getDefaultPages();
+      return prevOrder.map(page => {
+        const defaultPage = defaultPages.find(p => p.id === page.id);
+        return defaultPage ? { ...page, title: defaultPage.title, description: defaultPage.description } : page;
+      });
+    });
+  }, [t]);
 
   // Charger l'ordre des pages au montage
   useEffect(() => {
@@ -147,9 +173,30 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
 
   const loadPageOrder = async () => {
     try {
+      const defaultPages = getDefaultPages();
       const saved = await AsyncStorage.getItem(PAGE_ORDER_KEY);
       if (saved) {
-        setPageOrder(JSON.parse(saved));
+        const savedOrder: PageItem[] = JSON.parse(saved);
+        // Filtrer les anciennes pages (stats, reports) pour migrer vers la nouvelle structure
+        const validPages = savedOrder.filter(page =>
+          page.id === 'home' || page.id === 'tools' || page.id === 'performance'
+        );
+        // Si des pages ont été filtrées, utiliser les nouvelles pages par défaut
+        if (validPages.length < savedOrder.length) {
+          setPageOrder(defaultPages);
+          await AsyncStorage.setItem(PAGE_ORDER_KEY, JSON.stringify(defaultPages));
+        } else {
+          // Ajouter les descriptions si elles manquent (migration) + update titles from translations
+          const pagesWithDescriptions = validPages.map(page => {
+            const defaultPage = defaultPages.find(p => p.id === page.id);
+            return {
+              ...page,
+              title: defaultPage?.title || page.title,
+              description: defaultPage?.description || page.description || '',
+            };
+          });
+          setPageOrder(pagesWithDescriptions);
+        }
       }
     } catch (error) {
       console.error('Error loading page order:', error);
@@ -168,7 +215,26 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const page = Math.round(offsetX / SCREEN_WIDTH);
-    setCurrentPage(page);
+    if (page !== currentPage) {
+      setCurrentPage(page);
+
+      // Calculer la largeur totale des onglets
+      const tabWidth = 44;
+      const tabGap = 12;
+      const totalTabsWidth = (pageOrder.length * (tabWidth + tabGap)) + 32;
+
+      // Si tous les onglets rentrent dans l'écran, ne pas scroller
+      if (totalTabsWidth <= SCREEN_WIDTH) {
+        return;
+      }
+
+      // Sinon, auto-scroll pour centrer l'onglet actif
+      const scrollOffset = page * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + 16;
+      tabScrollRef.current?.scrollTo({
+        x: Math.max(0, scrollOffset),
+        animated: true,
+      });
+    }
   };
 
   const scrollToPage = (pageIndex: number) => {
@@ -214,31 +280,19 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
             sleepGoal={sleepGoal}
             workloadStatus={workloadStatus}
             onAddWeight={onAddWeight}
+            refreshTrigger={refreshTrigger}
             onAddWater={onAddWater}
           />
         );
       case 'tools':
         return <Page2ActionGrid />;
       case 'performance':
-        return <Page3Performance dailyChallenges={dailyChallenges} />;
-      case 'stats':
         return (
-          <Page4Stats
-            currentWeight={currentWeight}
-            targetWeight={targetWeight}
-            startWeight={startWeight}
-            weightHistory={weightHistory}
+          <Page3Performance
+            dailyChallenges={dailyChallenges}
             steps={steps}
             stepsGoal={stepsGoal}
             calories={calories}
-            bodyFat={bodyFat}
-            muscleMass={muscleMass}
-            waterPercentage={waterPercentage}
-          />
-        );
-      case 'reports':
-        return (
-          <Page5Reports
             weeklyReport={weeklyReport}
             onShareReport={onShareReport}
           />
@@ -248,9 +302,94 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
     }
   };
 
+  // Calculer si tous les onglets rentrent dans l'écran
+  const tabWidth = 44;
+  const tabGap = 12;
+  const totalTabsWidth = (pageOrder.length * (tabWidth + tabGap)) + 32;
+  const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Horizontal Pager */}
+      {/* Header avec tabs circulaires - zIndex bas pour passer derrière le contenu */}
+      <View style={[styles.header, {
+        backgroundColor: 'transparent',
+        zIndex: 1,
+      }]}>
+        <ScrollView
+          ref={tabScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          scrollEnabled={!allTabsFit}
+          contentContainerStyle={[
+            styles.tabsContent,
+            allTabsFit && styles.tabsContentCentered
+          ]}
+          style={styles.tabsScroll}
+        >
+          {pageOrder.map((page, index) => {
+            const isActive = currentPage === index;
+            const IconComponent = page.id === 'home' ? Home : page.id === 'tools' ? Grid : LineChart;
+
+            return (
+              <TouchableOpacity
+                key={page.id}
+                style={styles.tabWrapper}
+                onPress={() => scrollToPage(index)}
+                onLongPress={handleLongPressDot}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.circleTab,
+                  {
+                    backgroundColor: isActive
+                      ? colors.accent
+                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                  },
+                ]}>
+                  <IconComponent
+                    size={18}
+                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    strokeWidth={2.5}
+                  />
+                </View>
+                <Text style={[
+                  styles.tabTitle,
+                  { color: isActive ? colors.textPrimary : colors.textMuted }
+                ]}>
+                  {page.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* Description de la page active */}
+        <View style={styles.descriptionContainer}>
+          <Text style={[styles.pageDescription, { color: colors.textSecondary }]}>
+            {pageOrder[currentPage]?.description || ''}
+          </Text>
+        </View>
+      </View>
+
+      {/* Indicateurs de pagination (dots) - zIndex bas */}
+      <View style={[styles.dotsContainer, { zIndex: 1 }]}>
+        {pageOrder.map((page, index) => (
+          <View
+            key={`dot-${page.id}`}
+            style={[
+              styles.dot,
+              {
+                backgroundColor: currentPage === index
+                  ? colors.accent
+                  : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
+                width: currentPage === index ? 20 : 5,
+              },
+            ]}
+          />
+        ))}
+      </View>
+
+      {/* Horizontal Pager - zIndex élevé pour passer devant les onglets */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -263,6 +402,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         snapToAlignment="center"
         contentContainerStyle={styles.scrollContent}
         scrollEnabled={!editMode}
+        style={{ flex: 1, overflow: 'visible', zIndex: 10 }}
       >
         {/* Render pages in custom order */}
         {pageOrder.map((page) => (
@@ -272,32 +412,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         ))}
       </ScrollView>
 
-      {/* Pagination Dots - STYLE iOS */}
-      <View style={styles.paginationWrapper}>
-        <View style={[styles.paginationContainer, {
-          backgroundColor: isDark ? 'rgba(30, 30, 30, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-        }]}>
-          {pageOrder.map((page, index) => (
-            <TouchableOpacity
-              key={page.id}
-              onPress={() => scrollToPage(index)}
-              onLongPress={handleLongPressDot}
-              activeOpacity={0.7}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: currentPage === index
-                    ? (isDark ? '#FFFFFF' : '#000000')
-                    : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'),
-                  width: 8,
-                  height: 8,
-                  opacity: currentPage === index ? 1 : 0.5,
-                }
-              ]}
-            />
-          ))}
-        </View>
-      </View>
 
       {/* Modal de réorganisation */}
       <Modal
@@ -323,7 +437,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
                   onPress={handleDoneEditing}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.doneButtonText}>Terminé</Text>
+                  <Text style={[styles.doneButtonText, { color: colors.textOnAccent }]}>Terminé</Text>
                 </TouchableOpacity>
               </View>
 
@@ -370,37 +484,76 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'visible',
   },
   scrollContent: {
     flexDirection: 'row',
   },
   page: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    minHeight: SCREEN_HEIGHT,
+    overflow: 'visible',
+    zIndex: 10,
   },
-  paginationWrapper: {
-    position: 'absolute',
-    bottom: 80,
-    left: 0,
-    right: 0,
+
+  // Header avec tabs circulaires
+  header: {
+    paddingTop: 60,
+    paddingBottom: 0,
+  },
+  tabsScroll: {
+    flexGrow: 0,
+  },
+  tabsContent: {
+    paddingLeft: 16,
+    paddingRight: 80,
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  tabsContentCentered: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  tabWrapper: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  circleTab: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  paginationContainer: {
+  tabTitle: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  descriptionContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  pageDescription: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    gap: 5,
+    paddingVertical: 0,
   },
   dot: {
-    borderRadius: 4,
+    height: 5,
+    borderRadius: 2.5,
   },
 
   // Modal Styles

@@ -1,29 +1,25 @@
 // ============================================
-// YOROI - WEEKLY RECAP V2 (AVEC PHOTO)
+// YOROI - WEEKLY RECAP V2 (Design VictoryShareModal)
 // ============================================
-// Carte Weekly Recap avec photo en fond comme Instagram Stories
+// Design identique au VictoryShareModal avec Photo/Sombre/Clair
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Platform,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ChevronLeft,
+  X,
   Share2,
   Download,
   Camera,
   Image as ImageIcon,
-  X,
-  Smartphone,
-  Square,
+  Calendar,
 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
@@ -38,20 +34,23 @@ import { useWeekStats } from '@/lib/social-cards/useWeekStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 // ============================================
 // COMPOSANT PRINCIPAL
 // ============================================
 
 export default function WeeklyRecapV2Screen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [format, setFormat] = useState<'stories' | 'square'>('stories');
+  const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { stats, isLoading } = useWeekStats();
+  const { stats, isLoading: statsLoading } = useWeekStats();
 
   // ============================================
   // PHOTO PICKER
@@ -61,19 +60,20 @@ export default function WeeklyRecapV2Screen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ton appareil photo.', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setSelectedTemplate('photo');
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -85,19 +85,20 @@ export default function WeeklyRecapV2Screen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setSelectedTemplate('photo');
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -105,25 +106,17 @@ export default function WeeklyRecapV2Screen() {
     }
   };
 
-  const removePhoto = () => {
-    setBackgroundImage(undefined);
+  // ============================================
+  // SHARE & SAVE
+  // ============================================
+
+  const shareCard = async () => {
+    if (!cardRef.current) return;
+
+    setIsLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  };
 
-  // ============================================
-  // CAPTURE & PARTAGE
-  // ============================================
-
-  const handleShare = async () => {
     try {
-      setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
       const uri = await captureRef(cardRef.current, {
         format: 'png',
         quality: 1,
@@ -132,33 +125,28 @@ export default function WeeklyRecapV2Screen() {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager ma semaine Yoroi',
+          dialogTitle: 'Partager ma semaine',
         });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      } else {
-        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
     } catch (error) {
-      logger.error('Erreur partage:', error);
+      logger.error('Error sharing:', error);
       showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
-      setIsCapturing(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const saveToGallery = async () => {
+    if (!cardRef.current) return;
 
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
+        setIsLoading(false);
         return;
       }
 
@@ -168,22 +156,28 @@ export default function WeeklyRecapV2Screen() {
       });
 
       await MediaLibrary.saveToLibraryAsync(uri);
-
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
-      logger.error('Erreur sauvegarde:', error);
+      logger.error('Error saving:', error);
       showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
     } finally {
-      setIsCapturing(false);
+      setIsLoading(false);
     }
+  };
+
+  // Get background type for card component
+  const getBackgroundType = (): 'photo' | 'black' | 'white' => {
+    if (selectedTemplate === 'photo' && backgroundImage) return 'photo';
+    if (selectedTemplate === 'light') return 'white';
+    return 'black';
   };
 
   // ============================================
   // RENDER
   // ============================================
 
-  if (isLoading) {
+  if (statsLoading) {
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
@@ -219,154 +213,138 @@ export default function WeeklyRecapV2Screen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            RÉCAP HEBDO
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {stats.weekLabel}
-          </Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <X size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Calendar size={20} color={colors.accent} />
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+              Récap Hebdo
+            </Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
 
-        <View style={{ width: 44 }} />
-      </View>
+        {/* Card Preview */}
+        <View style={styles.cardContainer}>
+          <WeeklyRecapCardV2
+            ref={cardRef}
+            stats={stats}
+            format={format}
+            backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
+            backgroundType={getBackgroundType()}
+            username="yoroiapp"
+          />
+        </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Toolbar compact */}
-        <View style={[styles.toolbar, { backgroundColor: colors.card }]}>
-          {/* Photo buttons */}
-          <View style={styles.toolbarSection}>
+        {/* Template Selector */}
+        <View style={styles.templateRow}>
+          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+          {([
+            { key: 'photo', label: 'Photo' },
+            { key: 'dark', label: 'Sombre' },
+            { key: 'light', label: 'Clair' },
+          ] as const).map(({ key, label }) => (
             <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.accent }]}
-              onPress={takePhoto}
+              key={key}
+              style={[
+                styles.templateBtn,
+                {
+                  backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
+                  borderColor: selectedTemplate === key ? colors.accent : colors.border,
+                }
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedTemplate(key);
+              }}
             >
-              <Camera size={16} color={colors.textOnGold} />
+              <Text style={[
+                styles.templateBtnText,
+                { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+              ]}>
+                {label}
+              </Text>
             </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
+        {selectedTemplate === 'photo' && !backgroundImage && (
+          <View style={styles.photoPickerContainer}>
+            <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
+              Ajoute ta photo
+            </Text>
+            <View style={styles.photoPickerButtons}>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
+                onPress={takePhoto}
+              >
+                <Camera size={22} color="#FFFFFF" />
+                <Text style={styles.photoPickerBtnText}>Prendre une photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, styles.photoPickerBtnSecondary, { borderColor: colors.accent }]}
+                onPress={pickImage}
+              >
+                <ImageIcon size={22} color={colors.accent} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.accent }]}>Galerie</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {selectedTemplate === 'photo' && backgroundImage && (
+          <View style={styles.photoActions}>
             <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
               onPress={pickImage}
             >
-              <ImageIcon size={16} color={colors.textPrimary} />
-            </TouchableOpacity>
-            {backgroundImage && (
-              <TouchableOpacity
-                style={[styles.toolbarButtonText, { backgroundColor: '#EF444420' }]}
-                onPress={removePhoto}
-              >
-                <Text style={[styles.removeText, { color: '#EF4444' }]}>Retirer</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Format selector */}
-          <View style={[styles.formatSelector, { backgroundColor: colors.backgroundElevated || colors.background }]}>
-            <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'stories' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => {
-                setFormat('stories');
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-            >
-              <Smartphone size={14} color={format === 'stories' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'stories' ? colors.textOnGold : colors.textSecondary }]}>
-                Story
-              </Text>
+              <ImageIcon size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'square' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => {
-                setFormat('square');
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={takePhoto}
             >
-              <Square size={14} color={format === 'square' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'square' ? colors.textOnGold : colors.textSecondary }]}>
-                Carré
-              </Text>
+              <Camera size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        )}
 
-        {/* Preview Card */}
-        <View style={styles.previewSection}>
-          <View style={styles.cardWrapper}>
-            <WeeklyRecapCardV2
-              ref={cardRef}
-              stats={stats}
-              format={format}
-              backgroundImage={backgroundImage}
-              username="yoroiapp"
-            />
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsSection}>
+        {/* Share Actions */}
+        <View style={styles.shareActions}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.shareButton, { backgroundColor: colors.accent }]}
-            onPress={handleShare}
-            disabled={isCapturing}
+            style={[styles.shareBtn, { backgroundColor: colors.accent }]}
+            onPress={shareCard}
+            disabled={isLoading}
           >
-            {isCapturing ? (
-              <ActivityIndicator size="small" color={colors.textOnGold} />
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
-                <Share2 size={20} color={colors.textOnGold} />
-                <Text style={[styles.actionButtonText, { color: colors.textOnGold }]}>Partager</Text>
+                <Share2 size={20} color="#FFFFFF" />
+                <Text style={styles.shareBtnText}>Partager</Text>
               </>
             )}
           </TouchableOpacity>
-
           <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton, { borderColor: colors.accent }]}
-            onPress={handleSave}
-            disabled={isCapturing}
+            style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+            onPress={saveToGallery}
+            disabled={isLoading}
           >
-            {isCapturing ? (
-              <ActivityIndicator size="small" color={colors.accent} />
-            ) : (
-              <>
-                <Download size={20} color={colors.accent} />
-                <Text style={[styles.saveButtonText, { color: colors.accent }]}>
-                  Sauvegarder
-                </Text>
-              </>
-            )}
+            <Download size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
-        {/* Tips */}
-        <View style={[styles.tipsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.tipsTitle, { color: colors.gold || colors.accent }]}>
-            Astuce
-          </Text>
-          <Text style={[styles.tipsText, { color: colors.textSecondary }]}>
-            Prends-toi en photo dans une position de champion et affiche tes stats de la semaine comme
-            un filtre Instagram Stories ! N'oublie pas #YoroiWarrior
-          </Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {/* Close Button */}
+        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+        </TouchableOpacity>
+      </View>
       <PopupComponent />
     </ScreenWrapper>
   );
@@ -377,6 +355,9 @@ export default function WeeklyRecapV2Screen() {
 // ============================================
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -413,149 +394,152 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    // color dynamically set inline
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  closeBtn: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-
-  // Toolbar compact
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  toolbarSection: {
+  headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  toolbarButton: {
-    width: 42,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolbarButtonText: {
-    paddingHorizontal: 12,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeText: {
-    fontSize: 13,
-    fontWeight: '600',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
 
-  // Format Selector
-  formatSelector: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 10,
+  // Card
+  cardContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  formatButton: {
+
+  // Template Selector
+  templateRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
+    gap: 8,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  templateLabel: {
+    fontSize: 13,
+    marginRight: 8,
+  },
+  templateBtn: {
     paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  formatButtonText: {
-    fontSize: 13,
+  templateBtnText: {
+    fontSize: 12,
     fontWeight: '600',
   },
 
-  // Preview
-  previewSection: {
+  // Photo Picker (when no photo selected)
+  photoPickerContainer: {
+    paddingHorizontal: 24,
     marginBottom: 16,
-  },
-  cardWrapper: {
     alignItems: 'center',
   },
-
-  // Actions
-  actionsSection: {
-    gap: 10,
-    marginBottom: 20,
+  photoPickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
   },
-  actionButton: {
+  photoPickerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  photoPickerBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
+    gap: 8,
   },
-  shareButton: {
-    // backgroundColor set dynamically
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    // color dynamically set inline
-  },
-  saveButton: {
+  photoPickerBtnSecondary: {
     backgroundColor: 'transparent',
     borderWidth: 2,
   },
-  saveButtonText: {
+  photoPickerBtnText: {
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 
-  // Tips
-  tipsCard: {
-    padding: 16,
-    borderRadius: 16,
+  // Photo Actions (when photo exists)
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  photoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     borderWidth: 1,
+    gap: 8,
   },
-  tipsTitle: {
+  photoBtnText: {
     fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
+    fontWeight: '600',
   },
-  tipsText: {
-    fontSize: 13,
-    lineHeight: 19,
+
+  // Share Actions
+  shareActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  shareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 8,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  saveBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 14,
   },
 });

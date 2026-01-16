@@ -1,99 +1,137 @@
 // ============================================
 // PAGE 2 - ACTION GRID (Outils)
+// Version simplifiée sans drag & drop
 // ============================================
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import {
   BookOpen,
   Timer,
-  Calendar,
-  LayoutGrid,
-  Plus,
-  Zap,
-  BookMarked,
   Calculator,
-  Target,
   Clock,
   Camera,
-  Share2
+  Share2,
+  User,
+  Palette,
+  Sparkles,
+  Trophy,
+  Utensils,
+  Bell,
+  Heart,
+  Users,
+  BookMarked,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { getActionGridOrder, ActionGridItem } from '@/lib/actionGridCustomizationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 24;
-const GRID_GAP = 16;
-const COLUMNS = 4;
-const ICON_SIZE = 32;
+const GRID_GAP = 12;
+const COLUMNS = 3;
+const ICON_SIZE = 24;
 
-interface GridItem {
-  id: string;
-  label: string;
-  icon: any;
-  color: string;
-  route: string;
-}
+const ICON_MAP: { [key: string]: React.ComponentType<any> } = {
+  'BookOpen': BookOpen,
+  'Timer': Timer,
+  'BookMarked': BookMarked,
+  'Calculator': Calculator,
+  'Clock': Clock,
+  'Camera': Camera,
+  'Share2': Share2,
+  'User': User,
+  'Palette': Palette,
+  'Sparkles': Sparkles,
+  'Trophy': Trophy,
+  'Utensils': Utensils,
+  'Bell': Bell,
+  'Heart': Heart,
+  'Users': Users,
+};
 
-const GRID_ITEMS: GridItem[] = [
-  { id: 'carnet', label: 'Carnet', icon: BookOpen, color: '#F97316', route: '/training-journal' },
-  { id: 'timer', label: 'Timer', icon: Timer, color: '#3B82F6', route: '/timer' },
-  { id: 'calendrier', label: 'Calendrier', icon: Calendar, color: '#8B5CF6', route: '/calendar' },
-  { id: 'planning', label: 'Planning', icon: LayoutGrid, color: '#10B981', route: '/planning' },
-  { id: 'blessures', label: 'Blessures', icon: Plus, color: '#EF4444', route: '/infirmary' },
-  { id: 'energie', label: 'Énergie', icon: Zap, color: '#F59E0B', route: '/energy' },
-  { id: 'savoir', label: 'Savoir', icon: BookMarked, color: '#06B6D4', route: '/knowledge' },
-  { id: 'calculs', label: 'Calculs', icon: Calculator, color: '#6366F1', route: '/calculators' },
-  { id: 'objectif', label: 'Objectif', icon: Target, color: '#EC4899', route: '/challenges' },
-  { id: 'jeune', label: 'Jeûne', icon: Clock, color: '#14B8A6', route: '/fasting' },
-  { id: 'photo', label: 'Photo', icon: Camera, color: '#A855F7', route: '/progress-photos' },
-  { id: 'partager', label: 'Partager', icon: Share2, color: '#84CC16', route: '/share' },
-];
+const getIconComponent = (iconName: string) => {
+  return ICON_MAP[iconName] || BookOpen;
+};
+
+const cardWidth = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
 
 export const Page2ActionGrid: React.FC = () => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const [gridItems, setGridItems] = useState<ActionGridItem[]>([]);
 
-  const handlePress = (route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push(route as any);
+  useEffect(() => {
+    loadGridOrder();
+  }, []);
+
+  const loadGridOrder = async () => {
+    const items = await getActionGridOrder();
+    setGridItems(items);
   };
 
-  const cardWidth = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
+  const handleItemPress = (item: ActionGridItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(item.route as any);
+  };
+
+  const rows: ActionGridItem[][] = [];
+  for (let i = 0; i < gridItems.length; i += COLUMNS) {
+    rows.push(gridItems.slice(i, i + COLUMNS));
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.title, { color: colors.textPrimary }]}>Outils</Text>
-
-      <View style={styles.grid}>
-        {GRID_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <TouchableOpacity
-              key={item.id}
-              style={[
-                styles.gridItem,
-                {
-                  width: cardWidth,
-                  backgroundColor: colors.backgroundCard,
-                }
-              ]}
-              onPress={() => handlePress(item.route)}
-              activeOpacity={0.7}
-            >
-              {/* Icône avec background coloré */}
-              <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-                <Icon size={ICON_SIZE} color={item.color} strokeWidth={2} />
-              </View>
-
-              {/* Label */}
-              <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={1}>
-                {item.label}
+      <FlatList
+        data={rows}
+        keyExtractor={(_, index) => `row-${index}`}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        ListHeaderComponent={
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t('tools.title')}</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                {t('tools.subtitle')}
               </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+            </View>
+          </View>
+        }
+        renderItem={({ item: row }) => (
+          <View style={styles.row}>
+            {row.map((item) => {
+              const Icon = getIconComponent(item.icon);
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => handleItemPress(item)}
+                  style={styles.gridItemWrapper}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.gridItem, { backgroundColor: colors.backgroundCard }]}>
+                    <View style={[styles.iconCircle, { backgroundColor: `${item.color}15` }]}>
+                      <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
+                    </View>
+                    <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {item.label}
+                    </Text>
+                    <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+            {row.length < COLUMNS &&
+              Array.from({ length: COLUMNS - row.length }).map((_, i) => (
+                <View key={`empty-${i}`} style={{ width: cardWidth }} />
+              ))}
+          </View>
+        )}
+      />
     </View>
   );
 };
@@ -101,45 +139,77 @@ export const Page2ActionGrid: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60,
+  },
+  scrollContent: {
+    paddingTop: 0,
+    paddingBottom: 250,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: GRID_PADDING,
-    paddingBottom: 80,
+    marginBottom: 24,
   },
   title: {
     fontSize: 32,
     fontWeight: '900',
-    marginBottom: 24,
     letterSpacing: -1,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: GRID_GAP,
+  subtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
   },
-  gridItem: {
-    aspectRatio: 1,
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: GRID_PADDING,
+    marginBottom: GRID_GAP,
+  },
+  gridItemWrapper: {
+    width: cardWidth,
     borderRadius: 20,
-    padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 3,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+  gridItem: {
+    aspectRatio: 0.85,
+    padding: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     textAlign: 'center',
     letterSpacing: 0.2,
+    marginTop: 4,
+    lineHeight: 18,
+    minHeight: 36,
+  },
+  description: {
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: 4,
+    opacity: 0.9,
   },
 });

@@ -100,7 +100,7 @@ export function SocialStatsCard({
             {/* Entraînements */}
             <View style={styles.statBox}>
               <View style={[styles.statIcon, { backgroundColor: '#FF6B6B' }]}>
-                <Text style={styles.statIconEmoji}>🏋️</Text>
+                <Text style={styles.statIconEmoji}></Text>
               </View>
               <Text style={styles.statValue}>{stats.workouts}</Text>
               <Text style={styles.statLabel}>entraînements</Text>

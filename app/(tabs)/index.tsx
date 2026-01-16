@@ -47,6 +47,7 @@ import {
   Waves,
   Bed,
   Bell,
+  Brain,
   Stethoscope,
   Scissors,
   Settings,
@@ -93,6 +94,8 @@ import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircl
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect from '@/lib/healthConnect.ios';
+import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -136,7 +139,7 @@ const DEFAULT_HYDRATION_GOAL = 2500;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
@@ -176,6 +179,36 @@ export default function HomeScreen() {
   // Mode Screenshot pour les données de démo
   const [isScreenshotMode, setIsScreenshotMode] = useState<boolean>(false);
   const batteryIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Trigger pour rafraîchir l'avatar après changement
+  const [avatarRefreshTrigger, setAvatarRefreshTrigger] = useState(0);
+
+  // Tutoriel de découverte
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  // Vérifier si c'est la première visite
+  useEffect(() => {
+    const checkFirstVisit = async () => {
+      const visited = await hasVisitedPage('home');
+      if (!visited) {
+        // Attendre 1 seconde après le chargement des données
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
+    };
+    checkFirstVisit();
+  }, []);
+
+  const handleCloseTutorial = async () => {
+    await markPageAsVisited('home');
+    setShowTutorial(false);
+  };
+
+  // Rafraîchir l'avatar quand la page devient active
+  useFocusEffect(
+    useCallback(() => {
+      setAvatarRefreshTrigger((prev) => prev + 1);
+    }, [])
+  );
 
   // Animation de remplissage de la batterie au focus
   useFocusEffect(
@@ -255,6 +288,50 @@ export default function HomeScreen() {
       toggleGlowAnim.setValue(0);
     }
   }, [isCompetitorMode]);
+
+  // Animations citation cerveau + bulle
+  const quoteFadeAnim = useRef(new Animated.Value(0)).current;
+  const quoteScaleAnim = useRef(new Animated.Value(0.95)).current;
+  const quotePulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Animation apparition de la citation
+    if (dailyQuote) {
+      Animated.parallel([
+        Animated.timing(quoteFadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(quoteScaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [dailyQuote]);
+
+  useEffect(() => {
+    // Animation pulse cerveau (infinie)
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(quotePulseAnim, {
+          toValue: 1.15,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(quotePulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
 
   const [userMode, setUserMode] = useState<UserMode>('loisir');
 
@@ -630,7 +707,7 @@ export default function HomeScreen() {
           <View key={sectionId}>
             <View style={styles.header}>
               <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
-                <AvatarDisplay size="small" />
+                <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
               </TouchableOpacity>
               <View style={styles.headerText}>
                 <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
@@ -638,12 +715,6 @@ export default function HomeScreen() {
                   <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
                   <ViewModeSwitch mode={mode} onToggle={toggleMode} />
                 </View>
-                {dailyQuote && mode === 'complet' && (
-                  <View style={[styles.quoteCardInline, { backgroundColor: colors.backgroundCard }]}>
-                    <Sparkles size={12} color={colors.accent} />
-                    <Text style={[styles.quoteTextInline, { color: colors.textSecondary }]} numberOfLines={2}>"{dailyQuote.text}"</Text>
-                  </View>
-                )}
               </View>
               <TouchableOpacity
                 style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
@@ -661,6 +732,56 @@ export default function HomeScreen() {
                 )}
               </TouchableOpacity>
             </View>
+
+            {/* Citation motivante - BULLE DE PENSÉE ANIMÉE */}
+            {dailyQuote && (
+              <Animated.View
+                style={[
+                  { paddingHorizontal: 16, marginTop: 20 },
+                  { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
+                ]}
+              >
+                <View style={styles.speechBubbleContainer}>
+                  {/* Cerveau animé */}
+                  <Animated.View style={[styles.brainContainer, { transform: [{ scale: quotePulseAnim }] }]}>
+                    <View style={[styles.brainCircle, { backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}40` }]}>
+                      <Brain size={28} color={colors.accent} strokeWidth={2.5} />
+                    </View>
+                    {/* Mini éclairs d'idée */}
+                    <View style={styles.ideaSparks}>
+                      <Zap size={12} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -8, right: -4 }} />
+                      <Zap size={10} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -4, right: 8 }} />
+                    </View>
+                  </Animated.View>
+
+                  {/* Bulle de pensée (fond BLANC) */}
+                  <View style={[styles.speechBubble, {
+                    backgroundColor: '#FFFFFF',
+                    shadowColor: isDark ? colors.accent : '#000',
+                    borderColor: `${colors.accent}30`,
+                  }]}>
+                    {/* Petite queue de bulle */}
+                    <View style={[styles.bubbleTail, {
+                      backgroundColor: '#FFFFFF',
+                      borderColor: `${colors.accent}30`,
+                    }]} />
+
+                    <Text style={styles.quoteTextBubble}>
+                      "{dailyQuote.text}"
+                    </Text>
+
+                    {/* Badge "Citation du jour" */}
+                    <View style={[styles.quoteBadge, {
+                      backgroundColor: `${colors.accent}15`,
+                      borderColor: `${colors.accent}40`,
+                    }]}>
+                      <Text style={[styles.quoteBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>Citation du jour</Text>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            )}
+
             {/* Hint pour informer du switch de mode */}
             <ViewModeHint />
           </View>
@@ -834,7 +955,7 @@ export default function HomeScreen() {
                       style={[styles.rewardBadge, { backgroundColor: challenge.progress.completed ? colors.successLight : colors.accentMuted }]}
                     >
                       <Gift size={10} color={challenge.progress.completed ? colors.success : colors.accent} />
-                      <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : colors.accent }]}>
+                      <Text style={[styles.rewardText, { color: challenge.progress.completed ? colors.success : (isDark ? colors.accent : colors.textPrimary) }]}>
                         +{challenge.reward.xp}
                       </Text>
                     </PulsingBadge>
@@ -881,7 +1002,7 @@ export default function HomeScreen() {
                   shadowRadius: 8,
                   elevation: 6,
                 }]}>
-                  <Text style={styles.gradeText}>{weeklyReport?.verdict?.grade ?? '-'}</Text>
+                  <Text style={[styles.gradeText, { color: colors.textOnAccent }]}>{weeklyReport?.verdict?.grade ?? '-'}</Text>
                 </View>
                 <View style={styles.reportInfo}>
                   <Text style={[styles.reportTitle, { color: colors.textPrimary }]}>{weeklyReport?.verdict?.title ?? 'Rapport'}</Text>
@@ -1103,13 +1224,13 @@ export default function HomeScreen() {
                 {isCompetitorMode && nextEvent ? (
                   // Afficher J-XX quand activé et qu'il y a un événement
                   <View style={[styles.countdownBadge, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.countdownText}>J-{nextEvent.daysLeft}</Text>
+                    <Text style={[styles.countdownText, { color: colors.textOnAccent }]}>J-{nextEvent.daysLeft}</Text>
                   </View>
                 ) : (
                   // Afficher l'icône Trophy quand désactivé
                   <Trophy size={24} color={isCompetitorMode ? colors.accent : colors.textMuted} />
                 )}
-                <Text style={[styles.toolCardTitleSmall, { color: isCompetitorMode ? colors.accent : colors.textPrimary }]}>
+                <Text style={[styles.toolCardTitleSmall, { color: isCompetitorMode ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary }]}>
                   Objectif
                 </Text>
                 {/* Mini Switch */}
@@ -1238,8 +1359,8 @@ export default function HomeScreen() {
   }, [dailyChallenges]);
 
   // Workload status
-  const workloadStatus = useMemo<'light' | 'moderate' | 'intense'>(() => {
-    if (!loadStats) return 'moderate';
+  const workloadStatus = useMemo<'none' | 'light' | 'moderate' | 'intense'>(() => {
+    if (!loadStats || loadStats.sessionsCount === 0) return 'none';
     const totalLoad = loadStats.totalLoad;
     if (totalLoad < 1500) return 'light';
     if (totalLoad > 2500) return 'intense';
@@ -1269,7 +1390,7 @@ export default function HomeScreen() {
         sleepHours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
         sleepDebt={sleepStats?.sleepDebtHours || 0}
         sleepGoal={sleepGoal / 60}
-        workloadStatus={workloadStatus}
+        workloadStatus={workloadStatus === 'none' ? undefined : workloadStatus}
         dailyChallenges={formattedChallenges}
         stepsGoal={stepsGoal}
         calories={0}
@@ -1278,20 +1399,30 @@ export default function HomeScreen() {
         waterPercentage={bodyComposition?.waterPercentage}
         weeklyReport={weeklyReport ? {
           weightChange: weeklyReport.weightChange,
-          trainingsCount: weeklyReport.trainingsCount,
+          trainingsCount: weeklyReport.totalTrainings,
           avgSleepHours: weeklyReport.avgSleepHours,
-          hydrationRate: weeklyReport.hydrationRate,
-          totalSteps: weeklyReport.totalSteps,
+          hydrationRate: 0, // Not available in WeeklyReport
+          totalSteps: 0, // Not available in WeeklyReport
         } : undefined}
         onAddWeight={() => router.push('/(tabs)/add')}
         onAddWater={(ml) => addWater(ml)}
         onShareReport={shareReport}
+        refreshTrigger={avatarRefreshTrigger}
       />
 
       <RanksModal visible={ranksModalVisible} onClose={() => setRanksModalVisible(false)} currentStreak={streak} />
       <LogoViewer visible={logoViewerVisible} onClose={() => setLogoViewerVisible(false)} />
       <BatteryReadyPopup batteryPercent={batteryPercent} />
       <AvatarViewerModal visible={avatarViewerVisible} onClose={() => setAvatarViewerVisible(false)} />
+
+      {/* Tutoriel de découverte */}
+      {showTutorial && (
+        <FeatureDiscoveryModal
+          visible={true}
+          tutorial={PAGE_TUTORIALS.home}
+          onClose={handleCloseTutorial}
+        />
+      )}
     </View>
   );
 }
@@ -1448,8 +1579,6 @@ const styles = StyleSheet.create({
   // Quote
   quoteCard: { flexDirection: 'row', alignItems: 'flex-start', padding: 10, borderRadius: 10, marginBottom: 12, gap: 6 },
   quoteText: { flex: 1, fontSize: 11, fontStyle: 'italic', lineHeight: 16 },
-  quoteCardInline: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, marginTop: 4, gap: 6 },
-  quoteTextInline: { fontSize: 12.5, fontStyle: 'italic', lineHeight: 17, flex: 1 },
 
   // Stats
   // Carte poids principale
@@ -2381,5 +2510,86 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     marginTop: -2,
+  },
+
+  // ═══════════════════════════════════════════════
+  // CITATION - BULLE DE PENSÉE ANIMÉE
+  // ═══════════════════════════════════════════════
+
+  speechBubbleContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+
+  // Cerveau animé
+  brainContainer: {
+    position: 'relative',
+  },
+  brainCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  ideaSparks: {
+    position: 'relative',
+    width: 60,
+    height: 20,
+  },
+
+  // Bulle de pensée (FOND BLANC)
+  speechBubble: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+    position: 'relative',
+  },
+
+  // Queue de la bulle
+  bubbleTail: {
+    position: 'absolute',
+    left: -10,
+    top: 24,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    transform: [{ rotate: '-45deg' }],
+  },
+
+  // Texte de la citation
+  quoteTextBubble: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 22,
+    color: '#1A1A1A',
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
+    marginBottom: 12,
+  },
+
+  // Badge "Citation du jour"
+  quoteBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  quoteBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

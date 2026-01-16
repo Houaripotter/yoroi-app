@@ -1,5 +1,5 @@
 // ============================================
-// 🩺 YOROI MEDIC - DÉTAIL BLESSURE
+// YOROI MEDIC - DÉTAIL BLESSURE
 // ============================================
 
 import React, { useState, useCallback } from 'react';
@@ -453,7 +453,7 @@ export default function InjuryDetailScreen() {
             {showSurgeonMode && (
               <View style={styles.surgeonContent}>
                 <Text style={[styles.surgeonWarning, { color: colors.textMuted }]}>
-                  ⚠️ Fonctionnalités avancées - À utiliser avec précaution
+                  Fonctionnalités avancées - À utiliser avec précaution
                 </Text>
 
                 {/* Tous les types de traitement */}

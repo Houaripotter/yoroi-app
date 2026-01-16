@@ -1,5 +1,5 @@
 // ============================================
-// ⚔️ YOROI UI COMPONENTS
+// YOROI UI COMPONENTS
 // ============================================
 
 export { GoldButton } from './GoldButton';

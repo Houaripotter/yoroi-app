@@ -103,6 +103,34 @@ export const EXERCISES: ExerciseTemplate[] = [
   { id: 'curl_poignet', name: 'Curl poignet', muscle_group: 'avant_bras', category: 'isolation' },
   { id: 'curl_inverse', name: 'Curl inversé', muscle_group: 'avant_bras', category: 'isolation' },
   { id: 'farmers_walk', name: 'Farmers walk', muscle_group: 'avant_bras', category: 'functional' },
+
+  // Street Workout - Dos
+  { id: 'tractions_pronation', name: 'Tractions pronation (Pull-ups)', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'tractions_supination', name: 'Tractions supination (Chin-ups)', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'tractions_australiennes', name: 'Tractions australiennes', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'muscle_ups', name: 'Muscle-ups', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'front_lever', name: 'Front lever', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'back_lever', name: 'Back lever', muscle_group: 'dos', category: 'bodyweight' },
+  { id: 'tirage_trx', name: 'Tirage TRX', muscle_group: 'dos', category: 'equipment' },
+
+  // Street Workout - Pectoraux
+  { id: 'pompes_diamant', name: 'Pompes diamant', muscle_group: 'triceps', category: 'bodyweight' },
+  { id: 'pompes_declinées', name: 'Pompes déclinées', muscle_group: 'pectoraux', category: 'bodyweight' },
+  { id: 'pompes_trx', name: 'Pompes TRX', muscle_group: 'pectoraux', category: 'equipment' },
+
+  // Street Workout - Épaules
+  { id: 'handstand_pushups', name: 'Handstand push-ups (Pompes poirier)', muscle_group: 'epaules', category: 'bodyweight' },
+  { id: 'pike_trx', name: 'Pike TRX', muscle_group: 'epaules', category: 'equipment' },
+
+  // Street Workout - Jambes
+  { id: 'pistol_squats', name: 'Pistol squats (Squat une jambe)', muscle_group: 'jambes', category: 'bodyweight' },
+  { id: 'fentes_arriere', name: 'Fentes arrière', muscle_group: 'jambes', category: 'compound' },
+  { id: 'jump_squats', name: 'Jump squats', muscle_group: 'jambes', category: 'bodyweight' },
+
+  // Street Workout - Abdominaux
+  { id: 'hanging_leg_raises', name: 'Relevés de jambes suspendus', muscle_group: 'abdos', category: 'bodyweight' },
+  { id: 'l_sit', name: 'L-sit', muscle_group: 'abdos', category: 'bodyweight' },
+  { id: 'human_flag', name: 'Human flag', muscle_group: 'abdos', category: 'bodyweight' },
 ];
 
 export const getExercisesByMuscleGroup = (muscleGroup: string): ExerciseTemplate[] => {

@@ -296,7 +296,7 @@ export default function TrainingJournalScreen() {
       // Partager
       await Share.share({
         url: uri,
-        message: `Ma progression : ${item.name} - ${SPORT_LABELS[item.sport]} 💪`,
+        message: `Ma progression : ${item.name} - ${SPORT_LABELS[item.sport]}`,
       });
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

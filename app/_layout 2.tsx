@@ -115,15 +115,15 @@ export default function RootLayout() {
   useEffect(() => {
     const init = async () => {
       try {
-        logger.info('⚔️ Yoroi - Initialisation...');
+        logger.info('Yoroi - Initialisation...');
 
         // Initialiser la base de donnees SQLite
         await initDatabase();
-        logger.info('✅ Base de donnees initialisee');
+        logger.info('Base de donnees initialisee');
 
         // Migrer le système d'avatars V2
         await migrateAvatarSystem();
-        logger.info('✅ Migration avatars effectuee');
+        logger.info('Migration avatars effectuee');
 
         // Auto-import des compétitions IBJJF et CFJJB au premier lancement
         await autoImportCompetitionsOnFirstLaunch();
@@ -131,9 +131,9 @@ export default function RootLayout() {
         // Initialiser le service de notifications
         const notifInitialized = await notificationService.initialize();
         if (notifInitialized) {
-          logger.info('✅ Service de notifications initialisé');
+          logger.info('Service de notifications initialisé');
         } else {
-          logger.warn('⚠️ Service de notifications non disponible (simulateur ou permissions refusées)');
+          logger.warn('Service de notifications non disponible (simulateur ou permissions refusées)');
         }
 
       } catch (error) {

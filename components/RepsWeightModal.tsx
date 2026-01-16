@@ -66,7 +66,7 @@ export function RepsWeightModal({
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              💪 Série {seriesNumber} terminée !
+              Série {seriesNumber} terminée !
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={colors.textMuted} />

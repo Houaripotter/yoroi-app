@@ -1,9 +1,9 @@
 /**
  * avatar-selection.tsx
- * Nouvelle galerie d'avatars YOROI V2
+ * Galerie d'avatars YOROI V3
  *
- * Interface pour sélectionner son avatar parmi les 2 packs (Samurai, Ninja)
- * avec 9 niveaux de progression basés sur les rangs du Dojo
+ * Interface pour sélectionner son avatar parmi les 16 packs d'avatars
+ * Chaque pack de personnage a 5 états, chaque pack de collection a 5 personnages
  */
 
 import React, { useState, useEffect } from 'react';
@@ -20,28 +20,57 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
 import {
   getAvatarConfig,
   setFullAvatarConfig,
-  getAllAvatarUnlockInfo,
   getUnlockedLevel,
   getLevelProgress,
   getAvatarImage,
+  getAllPacksWithUnlockStatus,
+  getPackName,
+  getPackType,
+  getCollectionCharacters,
   type AvatarPack,
   type AvatarGender,
   type AvatarLevel,
-  type AvatarUnlockInfo,
+  type AvatarState,
   type LevelProgress,
+  type CollectionCharacter,
 } from '@/lib/avatarSystem';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
 const { width } = Dimensions.get('window');
-const AVATAR_SIZE = (width - 80) / 5; // 5 avatars par ligne sur mobile
+const AVATAR_SIZE = (width - 80) / 5; // 5 avatars par ligne
+
+// Les 5 états pour les packs de personnages
+const AVATAR_STATES: AvatarState[] = ['down', 'tired', 'neutral', 'strong', 'legendary'];
+
+// Labels français pour les états (correspondant aux niveaux de rang)
+const STATE_LABELS: Record<AvatarState, string> = {
+  down: 'Niveau 1',      // Ashigaru
+  tired: 'Niveau 2',     // Bushi
+  neutral: 'Niveau 3',   // Samurai
+  strong: 'Niveau 4',    // Ronin
+  legendary: 'Niveau 5', // Shogun
+};
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface PackWithStatus {
+  id: AvatarPack;
+  name: string;
+  type: 'character' | 'collection';
+  requiredRankLevel: number;
+  category: 'male' | 'female' | 'collection';
+  isUnlocked: boolean;
+  collectionCharacters?: CollectionCharacter[];
+}
 
 // ============================================================================
 // COMPOSANT PRINCIPAL
@@ -53,9 +82,9 @@ export default function AvatarSelectionScreen() {
   const [selectedGender, setSelectedGender] = useState<AvatarGender>('male');
   const [currentPack, setCurrentPack] = useState<AvatarPack>('samurai');
   const [currentGender, setCurrentGender] = useState<AvatarGender>('male');
-  const [currentLevel, setCurrentLevel] = useState<AvatarLevel>(1); // Niveau actuellement équipé
-  const [unlockedLevel, setUnlockedLevel] = useState<AvatarLevel>(1); // Niveau max débloqué
-  const [unlockInfo, setUnlockInfo] = useState<AvatarUnlockInfo[]>([]);
+  const [currentCollectionCharacter, setCurrentCollectionCharacter] = useState<CollectionCharacter | undefined>();
+  const [unlockedLevel, setUnlockedLevel] = useState<AvatarLevel>(1);
+  const [packs, setPacks] = useState<PackWithStatus[]>([]);
   const [progress, setProgress] = useState<LevelProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [creatorModeActive, setCreatorModeActive] = useState(false);
@@ -74,24 +103,24 @@ export default function AvatarSelectionScreen() {
       const isCreator = creatorMode === 'true';
       setCreatorModeActive(isCreator);
 
-      // Config actuelle (inclut le niveau choisi par l'utilisateur)
+      // Config actuelle
       const config = await getAvatarConfig();
       setCurrentPack(config.pack);
       setCurrentGender(config.gender);
-      setCurrentLevel(config.level); // Niveau actuellement équipé
       setSelectedGender(config.gender);
+      setCurrentCollectionCharacter(config.collectionCharacter);
 
-      // Niveau débloqué - Mode Créateur = tous débloqués (niveau 9)
+      // Niveau débloqué - Mode Créateur = tous débloqués (niveau 5)
       if (isCreator) {
-        setUnlockedLevel(9 as AvatarLevel);
+        setUnlockedLevel(5 as AvatarLevel);
       } else {
         const level = await getUnlockedLevel();
         setUnlockedLevel(level);
       }
 
-      // Infos de déblocage
-      const info = await getAllAvatarUnlockInfo();
-      setUnlockInfo(info);
+      // Liste des packs avec statuts de déblocage
+      const allPacks = await getAllPacksWithUnlockStatus();
+      setPacks(allPacks);
 
       // Progression
       const prog = await getLevelProgress();
@@ -110,13 +139,18 @@ export default function AvatarSelectionScreen() {
     setSelectedGender(gender);
   };
 
-  // Sélection d'avatar
-  const handleSelectAvatar = async (pack: AvatarPack, gender: AvatarGender, level: AvatarLevel) => {
-    // Vérifier si débloqué
-    if (level > unlockedLevel) {
+  // Helper: nom du rang pour un niveau
+  const levelToRankName = (level: AvatarLevel): string => {
+    const names = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
+    return `${names[level - 1] || 'Ashigaru'}`;
+  };
+
+  // Sélection d'un état d'avatar (pack de personnage)
+  const handleSelectCharacterState = async (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
+    if (!packInfo.isUnlocked) {
       showPopup(
-        'Avatar verrouille',
-        `Cet avatar sera debloque au rang ${levelToRankName(level)}. Continue ton entrainement pour le debloquer !`
+        'Pack verrouillé',
+        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
       );
       return;
     }
@@ -124,8 +158,7 @@ export default function AvatarSelectionScreen() {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      // Sauvegarder le pack, genre ET le niveau choisi
-      const success = await setFullAvatarConfig(pack, gender, level);
+      const success = await setFullAvatarConfig(pack, selectedGender);
 
       if (!success) {
         showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
@@ -134,52 +167,68 @@ export default function AvatarSelectionScreen() {
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showPopup(
-        'Avatar equipe !',
-        `Tu es maintenant un ${pack === 'samurai' ? 'Samourai' : 'Ninja'} ${gender === 'male' ? '' : 'femme '}${levelToRankName(level)}.`
+        'Avatar équipé !',
+        `Tu es maintenant ${packInfo.name} ${STATE_LABELS[state]} !`
       );
-      setTimeout(() => {
-        router.back();
-      }, 1500);
+
+      // Recharger les données
+      await loadData();
     } catch (error) {
       logger.error('[AvatarSelection] Erreur sélection:', error);
       showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
     }
   };
 
-  // Helper: nom du rang pour un niveau
-  const levelToRankName = (level: AvatarLevel): string => {
-    const names = [
-      'Recrue',
-      'Ashigaru',
-      'Bushi',
-      'Chevalier',
-      'Samouraï',
-      'Rōnin',
-      'Sensei',
-      'Shōgun',
-      'Daimyō',
-    ];
-    return names[level - 1] || 'Recrue';
+  // Sélection d'un personnage de collection
+  const handleSelectCollectionCharacter = async (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
+    if (!packInfo.isUnlocked) {
+      showPopup(
+        'Pack verrouillé',
+        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+      );
+      return;
+    }
+
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      const success = await setFullAvatarConfig(pack, selectedGender, character);
+
+      if (!success) {
+        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        return;
+      }
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showPopup(
+        'Avatar équipé !',
+        `Tu as équipé ${character} !`
+      );
+
+      await loadData();
+    } catch (error) {
+      logger.error('[AvatarSelection] Erreur sélection:', error);
+      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+    }
   };
 
-  // Rendu d'un avatar
-  const renderAvatar = (pack: AvatarPack, level: AvatarLevel) => {
-    const isUnlocked = level <= unlockedLevel;
-    // Un avatar est "current" s'il correspond au pack, genre ET niveau actuellement équipés
-    const isCurrent = pack === currentPack && selectedGender === currentGender && level === currentLevel;
+  // Rendu d'un état d'avatar (pour pack de personnage)
+  const renderAvatarState = (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
+    const isUnlocked = packInfo.isUnlocked;
+    const isCurrent = pack === currentPack && selectedGender === currentGender;
 
-    const image = getAvatarImage(pack, selectedGender, level);
+    const image = getAvatarImage(pack, state, undefined, selectedGender);
 
     return (
       <TouchableOpacity
-        key={`${pack}-${selectedGender}-${level}`}
-        onPress={() => handleSelectAvatar(pack, selectedGender, level)}
+        key={`${pack}-${state}`}
+        onPress={() => handleSelectCharacterState(pack, packInfo, state)}
         disabled={!isUnlocked}
         style={[
           styles.avatarContainer,
           {
             width: AVATAR_SIZE,
-            height: (AVATAR_SIZE * 1.5) + 30, // Ajusté pour le format rectangulaire
+            height: (AVATAR_SIZE * 1.5) + 30,
           },
         ]}
       >
@@ -188,7 +237,7 @@ export default function AvatarSelectionScreen() {
             styles.avatarImageContainer,
             {
               width: AVATAR_SIZE,
-              height: AVATAR_SIZE * 1.5, // Format rectangulaire pour voir l'avatar en entier
+              height: AVATAR_SIZE * 1.5,
               opacity: isUnlocked ? 1 : 0.3,
               borderColor: isCurrent ? '#FFD700' : isDark ? '#374151' : '#D1D5DB',
               borderWidth: isCurrent ? 3 : 2,
@@ -221,37 +270,121 @@ export default function AvatarSelectionScreen() {
           )}
         </View>
 
-        {/* Nom du niveau */}
+        {/* Nom de l'état */}
         <Text
           style={[
-            styles.levelText,
+            styles.stateText,
             {
               color: isUnlocked ? colors.text : colors.textSecondary,
             },
           ]}
           numberOfLines={1}
         >
-          {levelToRankName(level)}
+          {STATE_LABELS[state]}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  // Rendu d'un personnage de collection
+  const renderCollectionCharacter = (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
+    const isUnlocked = packInfo.isUnlocked;
+    const isCurrent = pack === currentPack && character === currentCollectionCharacter && selectedGender === currentGender;
+
+    const image = getAvatarImage(pack, undefined, character, selectedGender);
+
+    return (
+      <TouchableOpacity
+        key={`${pack}-${character}`}
+        onPress={() => handleSelectCollectionCharacter(pack, packInfo, character)}
+        disabled={!isUnlocked}
+        style={[
+          styles.avatarContainer,
+          {
+            width: AVATAR_SIZE,
+            height: (AVATAR_SIZE * 1.5) + 30,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.avatarImageContainer,
+            {
+              width: AVATAR_SIZE,
+              height: AVATAR_SIZE * 1.5,
+              opacity: isUnlocked ? 1 : 0.3,
+              borderColor: isCurrent ? '#FFD700' : isDark ? '#374151' : '#D1D5DB',
+              borderWidth: isCurrent ? 3 : 2,
+            },
+          ]}
+        >
+          {image && (
+            <Image
+              source={image}
+              style={{
+                width: AVATAR_SIZE - 8,
+                height: (AVATAR_SIZE * 1.5) - 8,
+              }}
+              resizeMode="contain"
+            />
+          )}
+
+          {/* Cadenas si verrouillé */}
+          {!isUnlocked && (
+            <View style={styles.lockOverlay}>
+              <Ionicons name="lock-closed" size={24} color="#9CA3AF" />
+            </View>
+          )}
+
+          {/* Badge actuel */}
+          {isCurrent && (
+            <View style={styles.currentBadge}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+            </View>
+          )}
+        </View>
+
+        {/* Nom du personnage */}
+        <Text
+          style={[
+            styles.stateText,
+            {
+              color: isUnlocked ? colors.text : colors.textSecondary,
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {character}
         </Text>
       </TouchableOpacity>
     );
   };
 
   // Rendu d'une section de pack
-  const renderPackSection = (pack: AvatarPack) => {
-    const packName = pack === 'samurai' ? 'Samouraï' : 'Ninja';
+  const renderPackSection = (packInfo: PackWithStatus) => {
+    const packType = getPackType(packInfo.id);
 
     return (
-      <View key={pack} style={styles.packSection}>
+      <View key={packInfo.id} style={styles.packSection}>
         {/* Header du pack */}
         <View style={styles.packHeader}>
-          <Text style={[styles.packTitle, { color: colors.text }]}>{packName}</Text>
+          <Text style={[styles.packTitle, { color: colors.text }]}>{packInfo.name}</Text>
+
+          {!packInfo.isUnlocked && (
+            <Ionicons name="lock-closed" size={20} color={colors.textSecondary} />
+          )}
         </View>
 
         {/* Grille d'avatars */}
         <View style={styles.avatarGrid}>
-          {([1, 2, 3, 4, 5, 6, 7, 8, 9] as AvatarLevel[]).map((level) =>
-            renderAvatar(pack, level)
+          {packType === 'character' ? (
+            // Afficher les 5 états
+            AVATAR_STATES.map((state) => renderAvatarState(packInfo.id, packInfo, state))
+          ) : (
+            // Afficher les 5 personnages de collection
+            getCollectionCharacters(packInfo.id).map((character) =>
+              renderCollectionCharacter(packInfo.id, packInfo, character)
+            )
           )}
         </View>
       </View>
@@ -347,7 +480,7 @@ export default function AvatarSelectionScreen() {
                 Niveau actuel
               </Text>
               <Text style={[styles.progressLevel, { color: '#FFD700' }]}>
-                {levelToRankName(progress.currentLevel)} ({progress.currentLevel}/9)
+                {levelToRankName(progress.currentLevel)} ({progress.currentLevel}/5)
               </Text>
             </View>
 
@@ -380,9 +513,17 @@ export default function AvatarSelectionScreen() {
           </View>
         )}
 
-        {/* Sections des packs */}
-        {renderPackSection('samurai')}
-        {renderPackSection('ninja')}
+        {/* Tous les packs - filtrés par genre */}
+        {packs
+          .filter((packInfo) => {
+            // Si Femme est sélectionné, montrer UNIQUEMENT les packs féminins
+            if (selectedGender === 'female') {
+              return packInfo.category === 'female';
+            }
+            // Si Homme est sélectionné, montrer les packs masculins et de collection mixte
+            return packInfo.category === 'male' || packInfo.category === 'collection';
+          })
+          .map((packInfo) => renderPackSection(packInfo))}
 
         {/* Info déblocage */}
         <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
@@ -390,10 +531,11 @@ export default function AvatarSelectionScreen() {
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             {creatorModeActive
               ? '⚙️ Mode Créateur actif - Tous les avatars sont débloqués !'
-              : 'Les avatars se débloquent automatiquement en montant de rang dans le Dojo. Continue ton entraînement quotidien pour débloquer de nouveaux avatars !'}
+              : 'Les avatars se débloquent en montant de rang dans le Dojo. Utilise le toggle Homme/Femme en haut pour voir les avatars correspondants. Chaque pack contient 5 variations de niveau !'}
           </Text>
         </View>
       </ScrollView>
+
       <PopupComponent />
     </SafeAreaView>
   );
@@ -491,12 +633,19 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 16,
   },
-  packIcon: {
-    fontSize: 32,
-  },
   packTitle: {
     fontSize: 24,
     fontWeight: '700',
+    flex: 1,
+  },
+  levelBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  levelBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   avatarGrid: {
     flexDirection: 'row',
@@ -530,8 +679,8 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     padding: 2,
   },
-  levelText: {
-    fontSize: 12,
+  stateText: {
+    fontSize: 11,
     fontWeight: '600',
     marginTop: 6,
     textAlign: 'center',

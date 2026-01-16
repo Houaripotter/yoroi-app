@@ -239,38 +239,38 @@ export default function BadgesScreen() {
         {/* HEADER STATS */}
         <Card variant="gold" style={styles.statsCard}>
           <LinearGradient
-            colors={gradients.gold}
+            colors={['#F5F0E6', '#EDE5D8']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.statsGradient}
           >
             <View style={styles.statsMainContent}>
-              <View style={styles.statsIconContainer}>
-                <Award size={56} color="rgba(255,255,255,0.95)" strokeWidth={2.5} />
+              <View style={[styles.statsIconContainer, { backgroundColor: '#D4AF3720' }]}>
+                <Award size={48} color="#D4AF37" strokeWidth={2.5} />
               </View>
               <View style={styles.statsTextContent}>
-                <Text style={[styles.statsCount, { color: colors.background }]}>
+                <Text style={[styles.statsCount, { color: '#1A1A1A' }]}>
                   {unlockedCount}/{totalBadges}
                 </Text>
-                <Text style={[styles.statsLabel, { color: colors.background }]}>
+                <Text style={[styles.statsLabel, { color: '#666666' }]}>
                   BADGES DÉBLOQUÉS
                 </Text>
               </View>
             </View>
 
             <View style={styles.statsProgressSection}>
-              <View style={[styles.statsProgressBg, { backgroundColor: 'rgba(0,0,0,0.2)' }]}>
+              <View style={[styles.statsProgressBg, { backgroundColor: '#D4AF3730' }]}>
                 <View
                   style={[
                     styles.statsProgressFill,
                     {
-                      backgroundColor: colors.background,
+                      backgroundColor: '#D4AF37',
                       width: `${(unlockedCount / totalBadges) * 100}%`,
                     },
                   ]}
                 />
               </View>
-              <Text style={[styles.statsProgressText, { color: colors.background }]}>
+              <Text style={[styles.statsProgressText, { color: '#D4AF37' }]}>
                 {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
               </Text>
             </View>

@@ -307,21 +307,21 @@ export default function AvatarCustomizationScreen() {
           </View>
 
           <View style={styles.legendItem}>
-            <Text style={styles.legendEmoji}>💎</Text>
+            <Text style={styles.legendEmoji}></Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
               Diamant : Atteins ton objectif de poids
             </Text>
           </View>
 
           <View style={styles.legendItem}>
-            <Text style={styles.legendEmoji}>🔥⚡🌌🐉</Text>
+            <Text style={styles.legendEmoji}>🌌🐉</Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              Fonds : Monte en rang (Ashigaru → Daimyo)
+              Fonds : Monte en rang (Ashigaru → Shōgun)
             </Text>
           </View>
 
           <View style={styles.legendItem}>
-            <Text style={styles.legendEmoji}>🌟💙💛🔥</Text>
+            <Text style={styles.legendEmoji}>💙💛</Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
               Effets : Entrainements (100) et perte de poids (-15kg, -25kg)
             </Text>

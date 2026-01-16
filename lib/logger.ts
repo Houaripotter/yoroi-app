@@ -65,7 +65,7 @@ class Logger {
     this.addLog(entry);
 
     if (this.isDev) {
-      console.warn(`⚠️ [WARN] ${message}`, data ?? '');
+      console.warn(`[WARN] ${message}`, data ?? '');
     }
   }
 

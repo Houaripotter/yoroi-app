@@ -85,7 +85,7 @@ export const PARTNER_COACHES: Coach[] = [
     imageUrl: require('../assets/partenaires/coachs/ludovicfontaine.png'),
     featured: false,
     rating: 5,
-    bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever vos doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !',
+    bio: 'Coach sportif à Marseille. Les seules limites de nos réalisations de demain sont nos doutes d\'aujourd\'hui!!! Moi je suis là pour enlever tes doutes. Entraînements sur mesure pour débutants et sportifs confirmés. Séance d\'essai offerte !',
     phone: '06.42.19.74.80',
     education: ['BPJEPS AF', 'Assurance RC Pro: 2872626904', 'Carte Pro: 09209ED0095'],
   },
@@ -140,19 +140,19 @@ export const PARTNER_CLUBS: Club[] = [
 export const getClubIcon = (type: string): string => {
   switch (type) {
     case 'JJB':
-      return '🥋';
+      return '';
     case 'Musculation':
-      return '🏋️';
+      return '';
     case 'CrossFit':
-      return '💪';
+      return '';
     case 'MMA':
-      return '🥊';
+      return '';
     case 'Boxe':
-      return '🥊';
+      return '';
     case 'Yoga':
-      return '🧘';
+      return '';
     default:
-      return '🏆';
+      return '';
   }
 };
 

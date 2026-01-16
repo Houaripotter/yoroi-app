@@ -23,6 +23,8 @@
         "NSHealthUpdateUsageDescription": "YOROI enregistre vos données d'entraînement et vos pesées dans Apple Santé.",
         "NSCalendarsUsageDescription": "YOROI utilise votre calendrier pour planifier vos entraînements.",
         "NSRemindersUsageDescription": "YOROI utilise les rappels pour vos notifications d'entraînement.",
+        "NSPhotoLibraryUsageDescription": "YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.",
+        "NSCameraUsageDescription": "YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.",
         "NSSupportsLiveActivities": true,
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -45,6 +47,13 @@
       "expo-web-browser",
       "@react-native-community/datetimepicker",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.",
+          "cameraPermission": "YOROI a besoin d'accéder à la caméra pour prendre une photo de profil."
+        }
+      ],
+      [
         "@kingstinct/react-native-healthkit",
         {
           "NSHealthShareUsageDescription": "YOROI synchronise vos données de santé pour un suivi complet.",
@@ -66,7 +75,10 @@
         "android.permission.health.READ_DISTANCE",
         "android.permission.health.READ_TOTAL_CALORIES_BURNED",
         "android.permission.health.WRITE_WEIGHT",
-        "android.permission.health.WRITE_STEPS"
+        "android.permission.health.WRITE_STEPS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA"
       ]
     },
     "extra": {

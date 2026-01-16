@@ -93,6 +93,8 @@ export interface Skill {
 const BENCHMARKS_KEY = 'yoroi_benchmarks_v2';
 const SKILLS_KEY = 'yoroi_skills_v2';
 const INITIALIZED_KEY = 'yoroi_carnet_initialized_v2';
+const TRASH_BENCHMARKS_KEY = 'yoroi_trash_benchmarks_v2';
+const TRASH_SKILLS_KEY = 'yoroi_trash_skills_v2';
 
 // ============================================
 // JARGON VALIDE - STARTER PACK
@@ -346,22 +348,11 @@ export const initializeStarterPack = async (): Promise<void> => {
     const initialized = await AsyncStorage.getItem(INITIALIZED_KEY);
     if (initialized === 'true') return;
 
-    // Create default benchmarks
-    const defaultBenchmarks: Benchmark[] = [
-      ...BODYWEIGHT_BENCHMARKS, // Poids de Corps (essentiel pour combattants)
-      ...FORCE_BENCHMARKS.slice(0, 4), // Squat, Dev Couché, Soulevé, Dev Militaire
-      ...RUNNING_BENCHMARKS.slice(0, 3), // 5km, 10km, Semi
-      ...HYROX_BENCHMARKS.slice(0, 3), // Roxzone, Sled Push, Sled Pull
-    ].map(b => ({
-      ...b,
-      id: generateId(),
-      entries: [],
-      createdAt: new Date().toISOString(),
-    }));
+    // DÉSACTIVÉ POUR PRODUCTION - Démarrage propre sans données pré-remplies
+    // L'utilisateur crée ses propres benchmarks et skills
 
-    await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(defaultBenchmarks));
-
-    // Skills are empty by default - user adds what they want
+    // Initialize with empty arrays
+    await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify([]));
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify([]));
 
     await AsyncStorage.setItem(INITIALIZED_KEY, 'true');
@@ -450,6 +441,18 @@ export const addBenchmarkEntry = async (
 export const deleteBenchmark = async (benchmarkId: string): Promise<boolean> => {
   try {
     const benchmarks = await getBenchmarks();
+    const benchmark = benchmarks.find(b => b.id === benchmarkId);
+    if (!benchmark) return false;
+
+    // Déplacer vers la corbeille
+    const trashItems = await getTrashBenchmarks();
+    trashItems.push({
+      item: benchmark,
+      deletedAt: new Date().toISOString(),
+    });
+    await AsyncStorage.setItem(TRASH_BENCHMARKS_KEY, JSON.stringify(trashItems));
+
+    // Retirer de la liste active
     const filtered = benchmarks.filter(b => b.id !== benchmarkId);
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(filtered));
     return true;
@@ -615,6 +618,18 @@ export const incrementDrillCount = async (
 export const deleteSkill = async (skillId: string): Promise<boolean> => {
   try {
     const skills = await getSkills();
+    const skill = skills.find(s => s.id === skillId);
+    if (!skill) return false;
+
+    // Déplacer vers la corbeille
+    const trashItems = await getTrashSkills();
+    trashItems.push({
+      item: skill,
+      deletedAt: new Date().toISOString(),
+    });
+    await AsyncStorage.setItem(TRASH_SKILLS_KEY, JSON.stringify(trashItems));
+
+    // Retirer de la liste active
     const filtered = skills.filter(s => s.id !== skillId);
     await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(filtered));
     return true;
@@ -742,4 +757,166 @@ export const resetCarnet = async (): Promise<void> => {
   await AsyncStorage.removeItem(BENCHMARKS_KEY);
   await AsyncStorage.removeItem(SKILLS_KEY);
   await AsyncStorage.removeItem(INITIALIZED_KEY);
+};
+
+// ============================================
+// CORBEILLE - TRASH SYSTEM
+// ============================================
+
+export interface TrashItem<T> {
+  item: T;
+  deletedAt: string;
+}
+
+/**
+ * Récupère les benchmarks dans la corbeille
+ */
+export const getTrashBenchmarks = async (): Promise<TrashItem<Benchmark>[]> => {
+  try {
+    const data = await AsyncStorage.getItem(TRASH_BENCHMARKS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Error getting trash benchmarks:', error);
+    return [];
+  }
+};
+
+/**
+ * Récupère les skills dans la corbeille
+ */
+export const getTrashSkills = async (): Promise<TrashItem<Skill>[]> => {
+  try {
+    const data = await AsyncStorage.getItem(TRASH_SKILLS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('Error getting trash skills:', error);
+    return [];
+  }
+};
+
+/**
+ * Restaure un benchmark depuis la corbeille
+ */
+export const restoreBenchmark = async (benchmarkId: string): Promise<boolean> => {
+  try {
+    const trashItems = await getTrashBenchmarks();
+    const item = trashItems.find(t => t.item.id === benchmarkId);
+    if (!item) return false;
+
+    // Ajouter le benchmark restauré
+    const benchmarks = await getBenchmarks();
+    benchmarks.push(item.item);
+    await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
+
+    // Retirer de la corbeille
+    const filtered = trashItems.filter(t => t.item.id !== benchmarkId);
+    await AsyncStorage.setItem(TRASH_BENCHMARKS_KEY, JSON.stringify(filtered));
+
+    return true;
+  } catch (error) {
+    console.error('Error restoring benchmark:', error);
+    return false;
+  }
+};
+
+/**
+ * Restaure une skill depuis la corbeille
+ */
+export const restoreSkill = async (skillId: string): Promise<boolean> => {
+  try {
+    const trashItems = await getTrashSkills();
+    const item = trashItems.find(t => t.item.id === skillId);
+    if (!item) return false;
+
+    // Ajouter la skill restaurée
+    const skills = await getSkills();
+    skills.push(item.item);
+    await AsyncStorage.setItem(SKILLS_KEY, JSON.stringify(skills));
+
+    // Retirer de la corbeille
+    const filtered = trashItems.filter(t => t.item.id !== skillId);
+    await AsyncStorage.setItem(TRASH_SKILLS_KEY, JSON.stringify(filtered));
+
+    return true;
+  } catch (error) {
+    console.error('Error restoring skill:', error);
+    return false;
+  }
+};
+
+/**
+ * Vide complètement la corbeille (suppression définitive)
+ */
+export const emptyTrash = async (): Promise<boolean> => {
+  try {
+    await AsyncStorage.multiRemove([TRASH_BENCHMARKS_KEY, TRASH_SKILLS_KEY]);
+    return true;
+  } catch (error) {
+    console.error('Error emptying trash:', error);
+    return false;
+  }
+};
+
+/**
+ * Obtient le nombre total d'éléments dans la corbeille
+ */
+export const getTrashCount = async (): Promise<number> => {
+  try {
+    const [benchmarks, skills] = await Promise.all([
+      getTrashBenchmarks(),
+      getTrashSkills(),
+    ]);
+    return benchmarks.length + skills.length;
+  } catch (error) {
+    console.error('Error getting trash count:', error);
+    return 0;
+  }
+};
+
+/**
+ * NETTOYAGE INITIAL - Supprime les 11 benchmarks de démo
+ * À utiliser UNE SEULE FOIS pour nettoyer l'app
+ */
+export const cleanDemoData = async (): Promise<{ removed: number; message: string }> => {
+  try {
+    const benchmarks = await getBenchmarks();
+
+    // Identifier les benchmarks de démo (ceux sans entries ou créés automatiquement)
+    const demoBenchmarks = benchmarks.filter(b =>
+      b.entries.length === 0 &&
+      (b.name === 'Poids de Corps' ||
+       b.name === 'Squat' ||
+       b.name === 'Développé Couché' ||
+       b.name === 'Soulevé de Terre' ||
+       b.name === 'Développé Militaire' ||
+       b.name === '5km' ||
+       b.name === '10km' ||
+       b.name === 'Semi-Marathon' ||
+       b.name === 'Roxzone' ||
+       b.name === 'Sled Push' ||
+       b.name === 'Sled Pull')
+    );
+
+    if (demoBenchmarks.length === 0) {
+      return {
+        removed: 0,
+        message: 'Aucune donnée de démo à nettoyer',
+      };
+    }
+
+    // Garder seulement les benchmarks qui ne sont pas de démo
+    const filtered = benchmarks.filter(b => !demoBenchmarks.find(d => d.id === b.id));
+    await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(filtered));
+
+    return {
+      removed: demoBenchmarks.length,
+      message: `${demoBenchmarks.length} record(s) de démo supprimé(s)`,
+    };
+  } catch (error) {
+    console.error('Error cleaning demo data:', error);
+    return {
+      removed: 0,
+      message: 'Erreur lors du nettoyage',
+    };
+  }
 };

@@ -257,7 +257,7 @@ export default function RecordsScreen() {
         >
           {records?.lowestWeight && (
             <RecordRow
-              emoji="📉"
+              emoji=""
               label="Plus bas atteint"
               value={`${records.lowestWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.lowestWeight.date)}
@@ -268,7 +268,7 @@ export default function RecordsScreen() {
           )}
           {records?.startingWeight && (
             <RecordRow
-              emoji="📈"
+              emoji=""
               label="Poids de depart"
               value={`${records.startingWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.startingWeight.date)}
@@ -287,7 +287,7 @@ export default function RecordsScreen() {
           )}
           {records?.maxMonthlyLoss && records.maxMonthlyLoss.value > 0 && (
             <RecordRow
-              emoji="📅"
+              emoji=""
               label="Perte max en 1 mois"
               value={`-${records.maxMonthlyLoss.value.toFixed(1)} kg`}
               date={records.maxMonthlyLoss.label}
@@ -298,7 +298,7 @@ export default function RecordsScreen() {
           )}
           {records && records.totalWeightLoss > 0 && (
             <RecordRow
-              emoji="🎯"
+              emoji=""
               label="Perte totale"
               value={`-${records.totalWeightLoss.toFixed(1)} kg`}
             />
@@ -314,7 +314,7 @@ export default function RecordsScreen() {
         >
           {records?.longestStreak && (
             <RecordRow
-              emoji="🔥"
+              emoji=""
               label="Record de streak"
               value={`${records.longestStreak.value} jours`}
               date={formatRecordDate(records.longestStreak.date)}
@@ -369,7 +369,7 @@ export default function RecordsScreen() {
           >
             {records?.maxWeeklyWorkouts && (
               <RecordRow
-                emoji="💪"
+                emoji=""
                 label="Max en 1 semaine"
                 value={`${records.maxWeeklyWorkouts.value} sessions`}
                 date={formatRecordDate(records.maxWeeklyWorkouts.date)}
@@ -379,13 +379,13 @@ export default function RecordsScreen() {
               />
             )}
             <RecordRow
-              emoji="🏋️"
+              emoji=""
               label="Total sessions"
               value={`${records.totalWorkouts}`}
             />
             {records?.favoriteSport && (
               <RecordRow
-                emoji="⭐"
+                emoji=""
                 label="Sport prefere"
                 value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
               />
@@ -402,7 +402,7 @@ export default function RecordsScreen() {
         >
           {records?.bestMonthRegularity && (
             <RecordRow
-              emoji="📅"
+              emoji=""
               label="Meilleur mois"
               value={`${records.bestMonthRegularity.value}%`}
               date={records.bestMonthRegularity.label}
@@ -427,7 +427,7 @@ export default function RecordsScreen() {
             title="ENERGIE"
           >
             <RecordRow
-              emoji="🔥"
+              emoji=""
               label="Plus longue serie haute energie"
               value={`${records.bestEnergyStreak.value} jours`}
               date={formatRecordDate(records.bestEnergyStreak.date)}

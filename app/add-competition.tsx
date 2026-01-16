@@ -77,7 +77,7 @@ export default function AddCompetitionScreen() {
 
   const handleSave = async () => {
     if (!nom.trim()) {
-      showPopup('Erreur', 'Veuillez saisir un nom de competition', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Saisis un nom de competition', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 

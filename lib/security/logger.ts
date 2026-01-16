@@ -106,7 +106,7 @@ export const logger = {
     if (!isDevelopment) return;
 
     const sanitized = args.map(sanitizeData);
-    console.log(`[${getTimestamp()}] ✅`, message, ...sanitized);
+    console.log(`[${getTimestamp()}]`, message, ...sanitized);
   },
 
   /**
@@ -116,7 +116,7 @@ export const logger = {
     const sanitized = args.map(sanitizeData);
 
     if (isDevelopment) {
-      console.warn(`[${getTimestamp()}] ⚠️`, message, ...sanitized);
+      console.warn(`[${getTimestamp()}]`, message, ...sanitized);
     } else {
       // En production, logger uniquement le message (pas les détails)
       console.warn(`[${getTimestamp()}] Warning:`, message);
@@ -169,7 +169,7 @@ export const logger = {
 };
 
 /**
- * ✅ EXEMPLE D'UTILISATION:
+ * EXEMPLE D'UTILISATION:
  *
  * // Au lieu de:
  * console.log('User data:', user);

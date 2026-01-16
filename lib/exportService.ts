@@ -146,7 +146,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     const confirmed = await new Promise<boolean>((resolve) => {
       Alert.alert(
         'Importer les données ?',
-        `Tu vas importer :\n• ${importedData.weights?.length || 0} mesures de poids\n• ${importedData.trainings?.length || 0} entraînements\n• ${importedData.bodyCompositions?.length || 0} compositions corporelles\n\n⚠️ Cela va AJOUTER ces données aux données existantes (pas de remplacement).`,
+        `Tu vas importer :\n• ${importedData.weights?.length || 0} mesures de poids\n• ${importedData.trainings?.length || 0} entraînements\n• ${importedData.bodyCompositions?.length || 0} compositions corporelles\n\nCela va AJOUTER ces données aux données existantes (pas de remplacement).`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Importer', onPress: () => resolve(true) },
@@ -215,7 +215,7 @@ export const importDataFromJSON = async (): Promise<boolean> => {
     }
 
     Alert.alert(
-      '✅ Import réussi !',
+      'Import réussi !',
       `${importedCount} éléments ont été importés avec succès.`
     );
 
@@ -267,29 +267,29 @@ export const generateShareText = async (): Promise<string> => {
     const userSettings = await getUserSettings();
 
     if (measurements.length === 0) {
-      return '🥋 Je commence mon parcours de champion avec Yoroi ! #Yoroi #Fitness';
+      return 'Je commence mon parcours de champion avec Yoroi ! #Yoroi #Fitness';
     }
 
     const latest = measurements[0];
     const oldest = measurements[measurements.length - 1];
     const weightDiff = oldest.weight - latest.weight;
 
-    let text = `🥋 Mon parcours Yoroi\n\n`;
+    let text = `Mon parcours Yoroi\n\n`;
 
     if (weightDiff > 0) {
-      text += `✨ ${weightDiff.toFixed(1)}kg perdus !\n`;
+      text += `${weightDiff.toFixed(1)}kg perdus !\n`;
     } else if (weightDiff < 0) {
-      text += `💪 ${Math.abs(weightDiff).toFixed(1)}kg gagnés !\n`;
+      text += `${Math.abs(weightDiff).toFixed(1)}kg gagnés !\n`;
     }
 
-    text += `📊 ${measurements.length} mesures enregistrées\n`;
-    text += `🎯 Poids actuel: ${latest.weight}kg\n\n`;
+    text += `${measurements.length} mesures enregistrées\n`;
+    text += `Poids actuel: ${latest.weight}kg\n\n`;
     text += `#Yoroi #Fitness #Transformation`;
 
     return text;
   } catch (error) {
     logger.error('❌ Erreur génération texte partage:', error);
-    return '🥋 Mon parcours Yoroi #Yoroi #Fitness';
+    return 'Mon parcours Yoroi #Yoroi #Fitness';
   }
 };
 
@@ -366,7 +366,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
     // Demander la permission
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission requise', 'Veuillez autoriser l\'accès à la galerie pour sauvegarder l\'image');
+      Alert.alert('Permission requise', 'Autorise l\'accès à la galerie pour sauvegarder l\'image');
       return false;
     }
 
@@ -379,7 +379,7 @@ export const saveStoryToGallery = async (viewRef: any): Promise<boolean> => {
 
     // Sauvegarder dans la galerie
     await MediaLibrary.saveToLibraryAsync(uri);
-    Alert.alert('Succès', 'Image sauvegardée dans votre galerie');
+    Alert.alert('Succès', 'Image sauvegardée dans ton galerie');
     return true;
   } catch (error) {
     logger.error('❌ Erreur sauvegarde galerie:', error);
@@ -416,7 +416,7 @@ export const importAllData = async (
     }
 
     await importData(data);
-    Alert.alert('✅ Importé', 'Tes données ont été restaurées avec succès !');
+    Alert.alert('Importé', 'Tes données ont été restaurées avec succès !');
     return true;
   } catch (error) {
     logger.error('❌ Erreur import:', error);
@@ -448,7 +448,7 @@ function escapeCSV(value: string | null | undefined): string {
  */
 export const exportTrainingsToCSV = async (): Promise<boolean> => {
   try {
-    logger.info('📊 Début export séances CSV...');
+    logger.info('Début export séances CSV...');
 
     // Importer les fonctions de base de données
     const { getAllTrainings, getAllClubs } = require('./database');
@@ -458,7 +458,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     const clubs = await getAllClubs();
 
     if (trainings.length === 0) {
-      Alert.alert('Aucune donnée', 'Vous n\'avez pas encore de séances à exporter');
+      Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');
       return false;
     }
 
@@ -534,7 +534,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    logger.info('✅ Fichier CSV créé:', fileUri);
+    logger.info('Fichier CSV créé:', fileUri);
 
     // Vérifier si le partage est disponible
     const isSharingAvailable = await Sharing.isAvailableAsync();
@@ -547,14 +547,14 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
         UTI: 'public.comma-separated-values-text',
       });
 
-      logger.info('✅ Export séances CSV terminé avec succès');
+      logger.info('Export séances CSV terminé avec succès');
       Alert.alert(
-        '✅ Export réussi',
+        'Export réussi',
         `${trainings.length} séance(s) exportée(s) en CSV`
       );
     } else {
       Alert.alert(
-        '✅ Export terminé',
+        'Export terminé',
         `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
       );
     }
@@ -564,7 +564,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     logger.error('❌ Erreur export séances CSV:', error);
     Alert.alert(
       'Erreur',
-      "Impossible d'exporter les séances en CSV. Veuillez réessayer."
+      "Impossible d'exporter les séances en CSV. Essaie à nouveau."
     );
     return false;
   }
@@ -576,7 +576,7 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
  */
 export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
   try {
-    logger.info('📊 Début export Excel CSV...');
+    logger.info('Début export Excel CSV...');
 
     // Importer les fonctions de base de données
     const { getAllTrainings, getAllClubs } = require('./database');
@@ -586,7 +586,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     const clubs = await getAllClubs();
 
     if (trainings.length === 0) {
-      Alert.alert('Aucune donnée', 'Vous n\'avez pas encore de séances à exporter');
+      Alert.alert('Aucune donnée', 'Tu n\'as pas encore de séances à exporter');
       return false;
     }
 
@@ -651,7 +651,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
       encoding: FileSystem.EncodingType.UTF8,
     });
 
-    logger.info('✅ Fichier Excel CSV créé:', fileUri);
+    logger.info('Fichier Excel CSV créé:', fileUri);
 
     const isSharingAvailable = await Sharing.isAvailableAsync();
 
@@ -662,14 +662,14 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
         UTI: 'public.comma-separated-values-text',
       });
 
-      logger.info('✅ Export Excel CSV terminé avec succès');
+      logger.info('Export Excel CSV terminé avec succès');
       Alert.alert(
-        '✅ Export réussi',
+        'Export réussi',
         `${trainings.length} séance(s) exportée(s) en format Excel`
       );
     } else {
       Alert.alert(
-        '✅ Export terminé',
+        'Export terminé',
         `Le fichier a été créé : ${fileName}\nEmplacement: ${fileUri}`
       );
     }
@@ -679,7 +679,7 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
     logger.error('❌ Erreur export Excel CSV:', error);
     Alert.alert(
       'Erreur',
-      "Impossible d'exporter les séances en Excel CSV. Veuillez réessayer."
+      "Impossible d'exporter les séances en Excel CSV. Essaie à nouveau."
     );
     return false;
   }

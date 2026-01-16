@@ -36,8 +36,8 @@ const DAYS_OF_WEEK = [
 
 const REMINDER_TYPES: { label: string; value: ReminderType; icon: string }[] = [
   { label: 'Pesée', value: 'weight', icon: '⚖️' },
-  { label: 'Entraînement', value: 'workout', icon: '💪' },
-  { label: 'Les deux', value: 'both', icon: '🛡️' },
+  { label: 'Entraînement', value: 'workout', icon: '' },
+  { label: 'Les deux', value: 'both', icon: '' },
 ];
 
 const STORAGE_KEY = '@yoroi_reminder_settings';
@@ -105,7 +105,7 @@ export function ReminderSettingsComponent() {
       if (!granted) {
         showPopup(
           'Permission requise',
-          'Les notifications sont nécessaires pour les rappels. Veuillez autoriser les notifications dans les paramètres de votre appareil.',
+          'Les notifications sont nécessaires pour les rappels. Autorise les notifications dans les paramètres de ton appareil.',
           [{ text: 'OK', style: 'primary' }]
         );
         return;

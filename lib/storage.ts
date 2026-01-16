@@ -30,7 +30,7 @@ const getDocumentDirectory = (): string | null => {
   // Attendre que FileSystem soit prêt
   const docDir = FileSystem.documentDirectory;
   if (!docDir) {
-    console.warn('⚠️ documentDirectory non disponible');
+    console.warn('documentDirectory non disponible');
     return null;
   }
   return docDir;
@@ -46,7 +46,7 @@ const getCacheDirectory = (): string | null => {
   
   const cacheDir = FileSystem.cacheDirectory;
   if (!cacheDir) {
-    console.warn('⚠️ cacheDirectory non disponible');
+    console.warn('cacheDirectory non disponible');
     return null;
   }
   return cacheDir;
@@ -512,7 +512,7 @@ export const savePhotoToStorage = async (
         await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
         finalUri = destinationUri;
       } catch (copyError) {
-        console.warn('⚠️ Impossible de copier, utilisation de l\'URI original:', copyError);
+        console.warn('Impossible de copier, utilisation de l\'URI original:', copyError);
         // Fallback : utiliser l'URI d'origine
       }
     } else {
@@ -544,7 +544,7 @@ export const savePhotoToStorage = async (
     return newPhoto;
   } catch (error: any) {
     console.error('❌ Erreur sauvegarde photo:', error?.message || error);
-    Alert.alert('Erreur', 'Impossible de sauvegarder la photo. Veuillez réessayer.');
+    Alert.alert('Erreur', 'Impossible de sauvegarder la photo. Réessaie.');
     return null;
   }
 };
@@ -570,7 +570,7 @@ export const deletePhotoFromStorage = async (id: string): Promise<boolean> => {
         await FileSystem.deleteAsync(photoToDelete.file_uri);
       }
     } catch (error) {
-      console.warn('⚠️ Erreur suppression fichier photo:', error);
+      console.warn('Erreur suppression fichier photo:', error);
     }
   }
 
@@ -593,7 +593,7 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
           }
         }
       } catch (error) {
-        console.warn('⚠️ Erreur suppression fichier:', error);
+        console.warn('Erreur suppression fichier:', error);
       }
     }
   }
@@ -934,7 +934,7 @@ export const exportData = async (): Promise<boolean> => {
     if (canShare) {
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Sauvegarder vos données Yoroi',
+        dialogTitle: 'Sauvegarder tes données Yoroi',
       });
     } else {
       Alert.alert('Succès', `Fichier créé : ${filename}`);
@@ -986,7 +986,7 @@ export const importData = async (): Promise<boolean> => {
     const confirm = await new Promise<boolean>((resolve) => {
       Alert.alert(
         'Attention',
-        `Ceci va écraser TOUTES vos données actuelles.\n\nLe fichier contient :\n- ${backup.stats.measurements} mesures\n- ${backup.stats.workouts} entraînements\n- ${backup.stats.photos} photos\n\nContinuer ?`,
+        `Ceci va écraser TOUTES tes données actuelles.\n\nLe fichier contient :\n- ${backup.stats.measurements} mesures\n- ${backup.stats.workouts} entraînements\n- ${backup.stats.photos} photos\n\nContinuer ?`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Confirmer', style: 'destructive', onPress: () => resolve(true) },
@@ -1024,7 +1024,7 @@ export const resetAllData = async (): Promise<boolean> => {
       const { resetDatabase } = await import('./database');
       await resetDatabase();
     } catch (dbError) {
-      console.warn('⚠️ Erreur reset SQLite (peut être normal si non initialisé):', dbError);
+      console.warn('Erreur reset SQLite (peut être normal si non initialisé):', dbError);
     }
 
     // Récupérer TOUTES les clés AsyncStorage

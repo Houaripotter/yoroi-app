@@ -1,5 +1,5 @@
 // ============================================
-// 🥊 YOROI - PALMARÈS / HISTORIQUE COMBATS
+// YOROI - PALMARÈS / HISTORIQUE COMBATS
 // ============================================
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -377,7 +377,7 @@ export default function PalmaresScreen() {
         onPress={handleAddCombat}
         activeOpacity={0.8}
       >
-        <Plus size={24} color="#FFFFFF" />
+        <Plus size={24} color={colors.textOnAccent} />
       </TouchableOpacity>
     </ScreenWrapper>
   );

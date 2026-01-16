@@ -120,7 +120,7 @@ export const checkGoalReached = async (
       title: 'OBJECTIF ATTEINT !',
       subtitle: `Tu as ${isLossGoal ? 'perdu' : 'pris'} ${weightLost.toFixed(1)} kg. Félicitations, champion !`,
       xpGained: 1000,
-      icon: '🎯',
+      icon: '',
     };
   }
 
@@ -225,7 +225,7 @@ export const checkStreakRecord = async (
         title: 'NOUVEAU RECORD !',
         subtitle,
         xpGained: xp,
-        icon: '🔥',
+        icon: '',
       };
     }
   }
@@ -297,7 +297,7 @@ export const checkMeasurementMilestone = async (
           title: `${milestone}ème PESÉE !`,
           subtitle,
           xpGained: xp,
-          icon: '⭐',
+          icon: '',
         };
       }
     }
@@ -325,7 +325,7 @@ export const createChallengeCompleteCelebration = (
     title: 'DÉFI COMPLÉTÉ !',
     subtitle: `${challengeName} ${challengeNameJp}`,
     xpGained,
-    icon: '🏆',
+    icon: '',
   };
 };
 

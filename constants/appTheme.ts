@@ -449,7 +449,7 @@ export const THEMES = {
     ...TIFFANY,
     kanji: '翠',
     name: 'Tiffany',
-    icon: '💎',
+    icon: '',
   },
 };
 

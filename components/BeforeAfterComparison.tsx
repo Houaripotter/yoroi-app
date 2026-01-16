@@ -397,7 +397,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                         ]}>
                           {weightDifference <= 0 ? '' : '+'}{weightDifference.toFixed(1)} kg
                         </Text>
-                        {weightDifference < 0 && <Text style={styles.sliderStatEmoji}>🎉</Text>}
+                        {weightDifference < 0 && <Text style={styles.sliderStatEmoji}></Text>}
                       </View>
                     )}
 
@@ -526,7 +526,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
                 {weightDifference !== null && weightDifference < 0 && (
                   <View style={[styles.motivationCard, { backgroundColor: '#10B98115' }]}>
-                    <Text style={[styles.motivationEmoji]}>🏆</Text>
+                    <Text style={[styles.motivationEmoji]}></Text>
                     <Text style={[styles.motivationText, { color: '#10B981' }]}>
                       Bravo Champion ! {Math.abs(weightDifference).toFixed(1)} kg en moins !
                     </Text>
@@ -540,7 +540,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
 
                 {weightDifference !== null && weightDifference > 0 && (
                   <View style={[styles.motivationCard, { backgroundColor: colors.accent + '15' }]}>
-                    <Text style={[styles.motivationEmoji]}>💪</Text>
+                    <Text style={[styles.motivationEmoji]}></Text>
                     <Text style={[styles.motivationText, { color: colors.accent }]}>
                       En prise de masse ! +{weightDifference.toFixed(1)} kg de muscle !
                     </Text>
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   comparisonContainer: {
     gap: 20,

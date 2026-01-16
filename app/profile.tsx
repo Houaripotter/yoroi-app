@@ -10,6 +10,10 @@ import {
   Dimensions,
   Animated,
   Image,
+  ActionSheetIOS,
+  Platform,
+  Alert,
+  Pressable,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -55,6 +59,9 @@ import {
   Profile,
 } from '@/lib/database';
 import { getCurrentRank, getNextRank, getDaysToNextRank, getRankProgress } from '@/lib/ranks';
+import { getLevel } from '@/lib/gamification';
+import { getUnlockedBadges } from '@/lib/badges';
+import { getWeights, getTrainings } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
@@ -243,6 +250,8 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [streak, setStreak] = useState(0);
   const [weightProgress, setWeightProgress] = useState<any>(null);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [unlockedBadgesCount, setUnlockedBadgesCount] = useState(0);
 
   // Form state
   const [name, setName] = useState('');
@@ -299,6 +308,18 @@ export default function ProfileScreen() {
 
       const progress = await getWeightProgress();
       setWeightProgress(progress);
+
+      // Charger les données de gamification
+      const [weightsHistory, allTrainings, badges] = await Promise.all([
+        getWeights(),
+        getTrainings(),
+        getUnlockedBadges(),
+      ]);
+
+      // Calculer les points totaux (même formule que dans index.tsx)
+      const points = (weightsHistory?.length || 0) * 10 + (allTrainings?.length || 0) * 25 + (streakDays >= 7 ? 50 : 0);
+      setTotalPoints(points);
+      setUnlockedBadgesCount(badges?.length || 0);
     } catch (error) {
       logger.error('Error loading profile:', error);
     }
@@ -314,6 +335,7 @@ export default function ProfileScreen() {
   const nextRank = getNextRank(streak);
   const daysToNext = getDaysToNextRank(streak);
   const rankProgress = getRankProgress(streak);
+  const level = getLevel(totalPoints);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -345,59 +367,81 @@ export default function ProfileScreen() {
   };
 
   const takeProfilePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      showPopup('Permission refusee', 'Acces a la camera requis');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const photoUri = result.assets[0].uri;
-      setProfilePhoto(photoUri);
-      const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-      await saveProfile({
-        name: safeName,
-        height_cm: profile?.height_cm,
-        target_weight: profile?.target_weight,
-        start_weight: profile?.start_weight,
-        start_date: profile?.start_date,
-        avatar_gender: profile?.avatar_gender || 'homme',
-        profile_photo: photoUri,
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        showPopup('Permission refusée', 'Accès à la caméra requis pour prendre une photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
       });
-      await loadData();
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const photoUri = result.assets[0].uri;
+        setProfilePhoto(photoUri);
+        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+
+        await saveProfile({
+          name: safeName,
+          height_cm: profile?.height_cm,
+          target_weight: profile?.target_weight,
+          start_weight: profile?.start_weight,
+          start_date: profile?.start_date,
+          avatar_gender: profile?.avatar_gender || 'homme',
+          profile_photo: photoUri,
+        });
+
+        await loadData();
+        showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
+      }
+    } catch (error) {
+      logger.error('[Profile] Erreur prise de photo:', error);
+      showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
     }
   };
 
   const pickProfilePhoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      showPopup('Permission refusee', 'Acces a la galerie requis');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const photoUri = result.assets[0].uri;
-      setProfilePhoto(photoUri);
-      const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
-      await saveProfile({
-        name: safeName,
-        height_cm: profile?.height_cm,
-        target_weight: profile?.target_weight,
-        start_weight: profile?.start_weight,
-        start_date: profile?.start_date,
-        avatar_gender: profile?.avatar_gender || 'homme',
-        profile_photo: photoUri,
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        selectionLimit: 1,
       });
-      await loadData();
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const photoUri = result.assets[0].uri;
+        setProfilePhoto(photoUri);
+        const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
+
+        await saveProfile({
+          name: safeName,
+          height_cm: profile?.height_cm,
+          target_weight: profile?.target_weight,
+          start_weight: profile?.start_weight,
+          start_date: profile?.start_date,
+          avatar_gender: profile?.avatar_gender || 'homme',
+          profile_photo: photoUri,
+        });
+
+        await loadData();
+        showPopup('Photo mise à jour', 'Ta photo de profil a été changée avec succès.');
+      }
+    } catch (error) {
+      logger.error('[Profile] Erreur sélection photo:', error);
+      showPopup('Erreur', 'Impossible de charger la photo. Réessaye plus tard.');
     }
   };
 
@@ -417,16 +461,35 @@ export default function ProfileScreen() {
   };
 
   const handleChangePhoto = () => {
-    showPopup(
-      'Photo de profil',
-      'Choisissez une option',
-      [
-        { text: 'Camera', style: 'primary', onPress: takeProfilePhoto },
-        { text: 'Galerie', style: 'default', onPress: pickProfilePhoto },
-        { text: 'Avatar', style: 'default', onPress: useAvatarPhoto },
-        { text: 'Annuler', style: 'cancel' },
-      ]
-    );
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Annuler', 'Prendre une photo', 'Choisir dans la galerie', 'Utiliser un avatar'],
+          cancelButtonIndex: 0,
+          title: 'Photo de profil',
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            takeProfilePhoto();
+          } else if (buttonIndex === 2) {
+            pickProfilePhoto();
+          } else if (buttonIndex === 3) {
+            useAvatarPhoto();
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Photo de profil',
+        'Choisissez une option',
+        [
+          { text: 'Prendre une photo', onPress: takeProfilePhoto },
+          { text: 'Choisir dans la galerie', onPress: pickProfilePhoto },
+          { text: 'Utiliser un avatar', onPress: useAvatarPhoto },
+          { text: 'Annuler', style: 'cancel' },
+        ]
+      );
+    }
   };
 
   const calculateBMI = () => {
@@ -482,7 +545,7 @@ export default function ProfileScreen() {
         {screenshotDetected && (
           <View style={styles.screenshotWarning}>
             <Text style={styles.screenshotWarningText}>
-              ⚠️ Screenshot détecté - Tes données sont sensibles
+              Screenshot détecté - Tes données sont sensibles
             </Text>
           </View>
         )}
@@ -510,7 +573,11 @@ export default function ProfileScreen() {
             )}
 
             {/* Photo de profil centrée */}
-            <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.8} style={{ alignItems: 'center' }}>
+            <Pressable
+              onPress={handleChangePhoto}
+              delayLongPress={0}
+              style={({ pressed }) => [{ alignItems: 'center', opacity: pressed ? 0.7 : 1 }]}
+            >
               <View style={{ position: 'relative' }}>
                 {profilePhoto ? (
                   <Image
@@ -527,7 +594,7 @@ export default function ProfileScreen() {
                   <Camera size={16} color="#FFF" />
                 </View>
               </View>
-            </TouchableOpacity>
+            </Pressable>
 
             {/* Date d'inscription */}
             {profile?.start_date && (
@@ -565,6 +632,51 @@ export default function ProfileScreen() {
             bgColor={weightGoal === 'gain' ? COLORS.warningMuted : weightGoal === 'maintain' ? COLORS.infoMuted : COLORS.successMuted}
           />
         </View>
+
+        {/* Section Dojo - XP, Niveau, Badges */}
+        <TouchableOpacity
+          style={styles.dojoCard}
+          onPress={() => router.push('/gamification')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.dojoHeader}>
+            <View style={[styles.dojoIconContainer, { backgroundColor: COLORS.goldMuted }]}>
+              <Sparkles size={20} color={COLORS.gold} strokeWidth={2.5} />
+            </View>
+            <Text style={styles.dojoTitle}>Mon Dojo</Text>
+            <ChevronRight size={20} color={COLORS.textMuted} />
+          </View>
+
+          <View style={styles.dojoStats}>
+            {/* XP */}
+            <View style={styles.dojoStatItem}>
+              <Zap size={18} color={COLORS.accent} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: COLORS.accent }]}>{totalPoints}</Text>
+              <Text style={styles.dojoStatLabel}>XP</Text>
+            </View>
+
+            {/* Niveau */}
+            <View style={styles.dojoStatItem}>
+              <Star size={18} color={COLORS.gold} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: COLORS.gold }]}>{level.level}</Text>
+              <Text style={styles.dojoStatLabel}>Niveau</Text>
+            </View>
+
+            {/* Rang */}
+            <View style={styles.dojoStatItem}>
+              <Trophy size={18} color={rank?.color || COLORS.gold} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: rank?.color || COLORS.gold }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
+              <Text style={styles.dojoStatLabel}>Rang</Text>
+            </View>
+
+            {/* Badges */}
+            <View style={styles.dojoStatItem}>
+              <Award size={18} color={COLORS.success} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: COLORS.success }]}>{unlockedBadgesCount}</Text>
+              <Text style={styles.dojoStatLabel}>Badges</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Progress to Goal */}
         <ProgressCard weightProgress={weightProgress} />
@@ -967,6 +1079,61 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+
+  // Dojo Card
+  dojoCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xxl,
+    borderWidth: 1.5,
+    borderColor: COLORS.goldMuted,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  dojoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  dojoIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.sm,
+  },
+  dojoTitle: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: '800',
+    color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  dojoStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  dojoStatItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  dojoStatValue: {
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  dojoStatLabel: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
 
   // Progress Card

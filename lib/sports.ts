@@ -162,6 +162,14 @@ export const SPORTS: Sport[] = [
     color: '#8B5CF6',
     category: 'fitness',
   },
+  {
+    id: 'street_workout',
+    name: 'Street Workout',
+    icon: 'arm-flex',
+    color: '#F59E0B',
+    category: 'fitness',
+    muscles: ['pectoraux', 'dos', 'epaules', 'biceps', 'triceps', 'abdos', 'jambes', 'fessiers'],
+  },
 
   // === CARDIO ===
   {
@@ -314,13 +322,13 @@ export const SPORTS_BY_CATEGORY = {
 
 // Labels français pour les catégories
 export const CATEGORY_LABELS: Record<string, string> = {
-  combat_striking: '🥊 Sports de Combat - Striking',
-  combat_grappling: '🥋 Sports de Combat - Grappling',
-  fitness: '🏋️ Fitness & Musculation',
-  cardio: '🏃 Cardio',
-  collectif: '⚽ Sports Collectifs',
-  raquettes: '🎾 Sports de Raquette',
-  autre: '🎯 Autres',
+  combat_striking: 'Sports de Combat - Striking',
+  combat_grappling: 'Sports de Combat - Grappling',
+  fitness: 'Fitness & Musculation',
+  cardio: 'Cardio',
+  collectif: 'Sports Collectifs',
+  raquettes: 'Sports de Raquette',
+  autre: 'Autres',
 };
 
 export interface Muscle {

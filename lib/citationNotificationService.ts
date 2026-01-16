@@ -25,6 +25,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -81,21 +83,19 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 /**
  * Heures de notification selon la fréquence
  * Réparties intelligemment sur la journée
+ * MAX 3 citations par jour pour ne pas spammer
  */
 const getNotificationHours = (frequency: number): number[] => {
   switch (frequency) {
     case 1:
-      return [8]; // 8h00
+      return [8]; // 8h00 (matin)
     case 2:
-      return [8, 14]; // 8h00 et 14h00
+      return [8, 19]; // 8h00 (matin) et 19h00 (soir)
     case 3:
-      return [8, 13, 19]; // 8h00, 13h00 et 19h00
-    case 4:
-      return [7, 11, 15, 19]; // 7h00, 11h00, 15h00 et 19h00
-    case 5:
-      return [7, 10, 13, 16, 20]; // 7h00, 10h00, 13h00, 16h00 et 20h00
+      return [8, 13, 19]; // 8h00 (matin), 13h00 (midi) et 19h00 (soir)
+    // SUPPRESSION de 4 et 5 - trop de notifications!
     default:
-      return [8];
+      return [8]; // Par défaut: 1 fois par jour
   }
 };
 
@@ -171,6 +171,7 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
             ...(Platform.OS === 'android' && { channelId: CITATION_CHANNEL_ID }),
           },
           trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
             date: triggerDate,
           },
         });
@@ -197,12 +198,12 @@ const getNotificationTitle = (): string => {
   const titles = [
     'Ta dose de motivation',
     'Citation du moment',
-    'Guerrier, ecoute ca',
+    'Écoute ça',
     'Focus du jour',
     'Motivation YOROI',
     'Boost mental',
     'Sagesse du dojo',
-    'Energie positive',
+    'Énergie positive',
   ];
   return titles[Math.floor(Math.random() * titles.length)];
 };

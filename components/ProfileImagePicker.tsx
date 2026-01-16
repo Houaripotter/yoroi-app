@@ -28,7 +28,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
     if (status !== 'granted') {
       showPopup(
         'Permission requise',
-        'Nous avons besoin d\'acceder a vos photos.',
+        'Nous avons besoin d\'acceder a tes photos.',
         [{ text: 'OK', style: 'primary' }]
       );
       return;
@@ -36,7 +36,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
 
     // Ouvrir la galerie avec crop
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,        // ← Permet le crop
       aspect: [1, 1],             // ← Carré
       quality: 0.8,
@@ -84,7 +84,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
   const showOptions = () => {
     showPopup(
       'Photo de profil',
-      'Comment voulez-vous ajouter votre photo ?',
+      'Comment veux-tu ajouter ton photo ?',
       [
         { text: 'Prendre une photo', style: 'primary', onPress: takePhoto },
         { text: 'Choisir dans la galerie', style: 'primary', onPress: pickImage },

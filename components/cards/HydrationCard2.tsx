@@ -173,7 +173,7 @@ export const HydrationCard2: React.FC<HydrationCard2Props> = ({
       onAddMl(amount);
       logger.info('💧 onAddMl executed with:', amount);
     } else {
-      logger.info('⚠️ onAddMl is not defined!');
+      logger.info('onAddMl is not defined!');
     }
   };
 
@@ -337,7 +337,7 @@ export const HydrationCard2: React.FC<HydrationCard2Props> = ({
       {/* Valeur ou message de félicitations */}
       {goalReached ? (
         <Text style={[styles.congratsText, { color: '#10B981' }]}>
-          Bravo {gender === 'female' ? 'Championne' : 'Champion'} ! 🎉
+          Bravo {gender === 'female' ? 'Championne' : 'Champion'} !
         </Text>
       ) : (
         <Text style={[styles.value, { color: colors.textPrimary }]}>

@@ -78,7 +78,7 @@ export function HealthSyncSettings() {
       if (!granted) {
         showPopup(
           'Permission requise',
-          'L\'accès à Apple Health est nécessaire pour l\'export automatique. Veuillez autoriser l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
+          'L\'accès à Apple Health est nécessaire pour l\'export automatique. Autorise l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
           [{ text: 'OK', style: 'primary' }]
         );
         return;

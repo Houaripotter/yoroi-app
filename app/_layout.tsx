@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, Text, AppState, AppStateStatus } from 'react-native';
+import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
+// Initialize i18n before anything else
+import '@/lib/i18n';
 import { DevModeProvider } from '@/lib/DevModeContext';
 import DevCodeModal from '@/components/DevCodeModal';
+import { NotificationApologyModal } from '@/components/NotificationApologyModal';
+import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { notificationService } from '@/lib/notificationService';
@@ -16,6 +20,7 @@ import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
+import { shouldShowChangelog, markChangelogAsRead } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // PRODUCTION: Désactiver tous les console.log
@@ -28,6 +33,14 @@ if (!__DEV__) {
   console.info = () => {};
 }
 
+// ============================================
+// Ignorer certains warnings en développement
+// ============================================
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+  'Sending `onAnimatedValueUpdate` with no listeners registered',
+]);
+
 // Couleurs pour le loading screen (avant que ThemeProvider soit monte)
 const LOADING_COLORS = {
   background: '#0D0D0F',
@@ -37,6 +50,24 @@ const LOADING_COLORS = {
 
 function RootLayoutContent() {
   const { isDark, colors } = useTheme();
+  const [showChangelog, setShowChangelog] = useState(false);
+
+  // Vérifier si on doit afficher le changelog
+  useEffect(() => {
+    const checkChangelog = async () => {
+      const shouldShow = await shouldShowChangelog();
+      if (shouldShow) {
+        // Attendre 1 seconde après le chargement pour afficher
+        setTimeout(() => setShowChangelog(true), 1000);
+      }
+    };
+    checkChangelog();
+  }, []);
+
+  const handleCloseChangelog = async () => {
+    await markChangelogAsRead();
+    setShowChangelog(false);
+  };
 
   // 🔒 SÉCURITÉ: Sauvegarde automatique quand l'app passe en background
   useEffect(() => {
@@ -86,6 +117,7 @@ function RootLayoutContent() {
         <Stack.Screen name="partners" options={{ presentation: 'card' }} />
         <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'card' }} />
+        <Stack.Screen name="help-tutorials" options={{ presentation: 'card' }} />
         <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
@@ -112,12 +144,17 @@ function RootLayoutContent() {
         <Stack.Screen name="gamification" options={{ presentation: 'card' }} />
         <Stack.Screen name="sleep" options={{ presentation: 'card' }} />
         <Stack.Screen name="hydration" options={{ presentation: 'card' }} />
+        <Stack.Screen name="charge" options={{ presentation: 'card' }} />
         <Stack.Screen name="avatar-selection" options={{ presentation: 'card' }} />
         <Stack.Screen name="screenshot-mode" options={{ presentation: 'card' }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <DevCodeModal />
+      <NotificationApologyModal />
+      {showChangelog && (
+        <UpdateChangelogModal visible={true} onClose={handleCloseChangelog} />
+      )}
     </View>
   );
 }
@@ -129,15 +166,15 @@ export default function RootLayout() {
   useEffect(() => {
     const init = async () => {
       try {
-        logger.info('⚔️ Yoroi - Initialisation...');
+        logger.info('Yoroi - Initialisation...');
 
         // Initialiser la base de donnees SQLite
         await initDatabase();
-        logger.info('✅ Base de donnees initialisee');
+        logger.info('Base de donnees initialisee');
 
         // Migrer le système d'avatars V2
         await migrateAvatarSystem();
-        logger.info('✅ Migration avatars effectuee');
+        logger.info('Migration avatars effectuee');
 
         // Auto-import des compétitions IBJJF et CFJJB au premier lancement
         await autoImportCompetitionsOnFirstLaunch();
@@ -145,14 +182,14 @@ export default function RootLayout() {
         // Initialiser le service de notifications
         const notifInitialized = await notificationService.initialize();
         if (notifInitialized) {
-          logger.info('✅ Service de notifications initialisé');
+          logger.info('Service de notifications initialisé');
         } else {
-          logger.warn('⚠️ Service de notifications non disponible (simulateur ou permissions refusées)');
+          logger.warn('Service de notifications non disponible (simulateur ou permissions refusées)');
         }
 
         // Initialiser les notifications de citations (replanifie si nécessaire)
         await initCitationNotifications();
-        logger.info('✅ Notifications citations initialisées');
+        logger.info('Notifications citations initialisées');
 
       } catch (error) {
         logger.error('❌ Erreur initialisation', error);

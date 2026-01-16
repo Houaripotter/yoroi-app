@@ -1,25 +1,32 @@
 // ============================================
-// YOROI - YEAR COUNTER V2 (X/365)
+// YOROI - YEAR COUNTER V2 (Design VictoryShareModal)
 // ============================================
-// Carte de partage avec photo en fond comme un filtre Instagram
+// Design identique au VictoryShareModal avec Photo/Sombre/Clair
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { captureRef } from 'react-native-view-shot';
+import {
+  X,
+  Share2,
+  Download,
+  Camera,
+  Image as ImageIcon,
+  Trophy,
+} from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
-import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon, Moon, Sun } from 'lucide-react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Haptics from 'expo-haptics';
+
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { YearCounterCardV2 } from '@/components/social-cards/YearCounterCardV2';
@@ -27,6 +34,8 @@ import { useYearStats } from '@/lib/social-cards/useYearStats';
 import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -37,18 +46,17 @@ export default function YearCounterV2Screen() {
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [format, setFormat] = useState<'stories' | 'square'>('stories');
-  const [isSaving, setIsSaving] = useState(false);
-  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('photo'); // Type de fond
+  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState<string | undefined>(undefined);
 
-  // Charger les stats de l'année
   const currentYear = new Date().getFullYear();
-  const { stats, isLoading, error } = useYearStats(currentYear);
+  const { stats, isLoading: statsLoading, error } = useYearStats(currentYear);
 
   // Charger le username
-  React.useEffect(() => {
+  useEffect(() => {
     loadUsername();
   }, []);
 
@@ -61,166 +69,132 @@ export default function YearCounterV2Screen() {
     }
   };
 
-  // Prendre une photo avec la caméra
+  // ============================================
+  // PHOTO PICKER
+  // ============================================
+
   const takePhoto = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à la caméra', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        setBackgroundType('photo');
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
+        setSelectedTemplate('photo');
       }
-    } catch (err) {
-      logger.error('Erreur prise de photo:', err);
+    } catch (error) {
+      logger.error('Erreur photo:', error);
       showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
-  // Choisir une photo depuis la galerie
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 1,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        setBackgroundType('photo');
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
+        setSelectedTemplate('photo');
       }
-    } catch (err) {
-      logger.error('Erreur sélection photo:', err);
-      showPopup('Erreur', 'Impossible de sélectionner la photo', [{ text: 'OK', style: 'primary' }]);
+    } catch (error) {
+      logger.error('Erreur galerie:', error);
+      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
-  // Sélectionner fond noir
-  const selectBlackBackground = () => {
-    setBackgroundImage(undefined);
-    setBackgroundType('black');
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
+  // ============================================
+  // SHARE & SAVE
+  // ============================================
 
-  // Sélectionner fond blanc
-  const selectWhiteBackground = () => {
-    setBackgroundImage(undefined);
-    setBackgroundType('white');
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  // Supprimer la photo de fond
-  const removePhoto = () => {
-    setBackgroundImage(undefined);
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  // Sauvegarder la carte en image
-  const saveCard = async () => {
-    try {
-      setIsSaving(true);
-
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      const uri = await captureRef(cardRef.current, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-
-      // Demander permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      // Sauvegarder dans la galerie
-      await MediaLibrary.saveToLibraryAsync(uri);
-
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-
-      showPopup('Sauvegardé', 'Ton Compteur Annuel est dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
-    } catch (err) {
-      logger.error('Erreur sauvegarde:', err);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Partager la carte
   const shareCard = async () => {
+    if (!cardRef.current) return;
+
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
       const uri = await captureRef(cardRef.current, {
         format: 'png',
         quality: 1,
-        result: 'tmpfile',
       });
 
-      // Vérifier si le partage est disponible
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager mon Compteur Annuel Yoroi',
+          dialogTitle: 'Partager mon Compteur Annuel',
         });
-      } else {
-        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
-    } catch (err) {
-      logger.error('Erreur partage:', err);
+    } catch (error) {
+      logger.error('Error sharing:', error);
       showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // État de chargement
-  if (isLoading) {
+  const saveToGallery = async () => {
+    if (!cardRef.current) return;
+
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const uri = await captureRef(cardRef.current, {
+        format: 'png',
+        quality: 1,
+      });
+
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+    } catch (error) {
+      logger.error('Error saving:', error);
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get background type for card component
+  const getBackgroundType = (): 'photo' | 'black' | 'white' => {
+    if (selectedTemplate === 'photo' && backgroundImage) return 'photo';
+    if (selectedTemplate === 'light') return 'white';
+    return 'black';
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
+
+  if (statsLoading) {
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
@@ -233,7 +207,6 @@ export default function YearCounterV2Screen() {
     );
   }
 
-  // Erreur
   if (error || !stats) {
     return (
       <ScreenWrapper>
@@ -252,23 +225,21 @@ export default function YearCounterV2Screen() {
     );
   }
 
-  // Pas de données
   if (stats.totalDays === 0) {
     return (
       <ScreenWrapper>
         <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconContainer} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Aucune donnée pour {currentYear}
           </Text>
-          <Text style={[styles.emptyMessage, { color: colors.textSecondary }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
             Commence à tracker tes entraînements pour générer ton Compteur Annuel !
           </Text>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.accent }]}
+            style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/add-training')}
           >
-            <Text style={[styles.buttonText, { color: colors.background }]}>
+            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>
               Ajouter un entraînement
             </Text>
           </TouchableOpacity>
@@ -279,139 +250,138 @@ export default function YearCounterV2Screen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            COMPTEUR ANNUEL
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {stats.totalDays} jours d'entraînement cette année
-          </Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <X size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Trophy size={20} color="#F59E0B" />
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+              Année {currentYear}
+            </Text>
+          </View>
+          <View style={{ width: 40 }} />
         </View>
 
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Toolbar compact */}
-        <View style={[styles.toolbar, { backgroundColor: colors.card }]}>
-          {/* Photo buttons */}
-          <View style={styles.toolbarSection}>
-            <TouchableOpacity
-              style={[styles.toolbarButton, backgroundType === 'photo' && backgroundImage ? { backgroundColor: colors.accent } : { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
-              onPress={takePhoto}
-            >
-              <Camera size={16} color={backgroundType === 'photo' && backgroundImage ? colors.textOnGold : colors.textPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
-              onPress={pickImage}
-            >
-              <ImageIcon size={16} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toolbarButton, backgroundType === 'black' ? { backgroundColor: '#1a1a1a', borderWidth: 2, borderColor: colors.accent } : { backgroundColor: '#1a1a1a', borderWidth: 1, borderColor: colors.border }]}
-              onPress={selectBlackBackground}
-            >
-              <Moon size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toolbarButton, backgroundType === 'white' ? { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.accent } : { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.border }]}
-              onPress={selectWhiteBackground}
-            >
-              <Sun size={16} color="#1a1a1a" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Format selector */}
-          <View style={[styles.formatSelector, { backgroundColor: colors.backgroundElevated || colors.background }]}>
-            <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'stories' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => setFormat('stories')}
-            >
-              <Smartphone size={14} color={format === 'stories' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'stories' ? colors.textOnGold : colors.textSecondary }]}>
-                Story
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.formatButton,
-                format === 'square' && { backgroundColor: colors.accent },
-              ]}
-              onPress={() => setFormat('square')}
-            >
-              <Square size={14} color={format === 'square' ? colors.textOnGold : colors.textSecondary} />
-              <Text style={[styles.formatButtonText, { color: format === 'square' ? colors.textOnGold : colors.textSecondary }]}>
-                Carré
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Carte Year Counter */}
+        {/* Card Preview */}
         <View style={styles.cardContainer}>
           <YearCounterCardV2
             ref={cardRef}
             stats={stats}
             format={format}
-            backgroundImage={backgroundImage}
-            backgroundType={backgroundType}
+            backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
+            backgroundType={getBackgroundType()}
             username="yoroiapp"
           />
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
+        {/* Template Selector */}
+        <View style={styles.templateRow}>
+          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+          {([
+            { key: 'photo', label: 'Photo' },
+            { key: 'dark', label: 'Sombre' },
+            { key: 'light', label: 'Clair' },
+          ] as const).map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={[
+                styles.templateBtn,
+                {
+                  backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
+                  borderColor: selectedTemplate === key ? colors.accent : colors.border,
+                }
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedTemplate(key);
+              }}
+            >
+              <Text style={[
+                styles.templateBtnText,
+                { color: selectedTemplate === key ? '#000000' : colors.textPrimary }
+              ]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
+        {selectedTemplate === 'photo' && !backgroundImage && (
+          <View style={styles.photoPickerContainer}>
+            <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
+              Ajoute ta photo
+            </Text>
+            <View style={styles.photoPickerButtons}>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
+                onPress={takePhoto}
+              >
+                <Camera size={22} color="#FFFFFF" />
+                <Text style={styles.photoPickerBtnText}>Prendre une photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, styles.photoPickerBtnSecondary, { borderColor: colors.accent }]}
+                onPress={pickImage}
+              >
+                <ImageIcon size={22} color={colors.accent} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.accent }]}>Galerie</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {selectedTemplate === 'photo' && backgroundImage && (
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={pickImage}
+            >
+              <ImageIcon size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={takePhoto}
+            >
+              <Camera size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Share Actions */}
+        <View style={styles.shareActions}>
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.card }]}
-            onPress={saveCard}
-            disabled={isSaving}
+            style={[styles.shareBtn, { backgroundColor: colors.accent }]}
+            onPress={shareCard}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Share2 size={20} color="#FFFFFF" />
+                <Text style={styles.shareBtnText}>Partager</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+            onPress={saveToGallery}
+            disabled={isLoading}
           >
             <Download size={20} color={colors.textPrimary} />
-            <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>
-              Sauvegarder
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.gold || colors.accent }]}
-            onPress={shareCard}
-          >
-            <Share2 size={20} color={colors.textOnGold} />
-            <Text style={[styles.actionButtonText, { color: colors.textOnGold }]}>
-              Partager
-            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Tips */}
-        <View style={[styles.tipCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.tipTitle, { color: colors.gold || colors.accent }]}>
-            Astuce
-          </Text>
-          <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Prends-toi en photo à la salle, chez toi ou après un entraînement ! Les stats s'afficheront par-dessus pour un rendu professionnel. Parfait pour Instagram Stories !
-          </Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {/* Close Button */}
+        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+        </TouchableOpacity>
+      </View>
       <PopupComponent />
     </ScreenWrapper>
   );
@@ -422,6 +392,9 @@ export default function YearCounterV2Screen() {
 // ============================================
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -449,137 +422,25 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 16,
   },
-  emptyIconContainer: {
-    width: 64,
-    height: 64,
-  },
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
   },
-  emptyMessage: {
+  emptyText: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-
-  // Toolbar compact
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  toolbarSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  toolbarButton: {
-    width: 42,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolbarButtonText: {
-    paddingHorizontal: 12,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Format Selector
-  formatSelector: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 10,
-  },
-  formatButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-  },
-  formatButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Card
-  cardContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-
-  // Actions
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+  addButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     borderRadius: 12,
   },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+  addButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
-
-  // Button
   button: {
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -589,20 +450,151 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-
-  // Tips
-  tipCard: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 16,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  tipTitle: {
-    fontSize: 14,
+  closeBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 6,
   },
-  tipText: {
+
+  // Card
+  cardContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  // Template Selector
+  templateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  templateLabel: {
     fontSize: 13,
-    lineHeight: 18,
+    marginRight: 8,
+  },
+  templateBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  templateBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Photo Picker (when no photo selected)
+  photoPickerContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  photoPickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  photoPickerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  photoPickerBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  photoPickerBtnSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+  },
+  photoPickerBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Photo Actions (when photo exists)
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  photoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  photoBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Share Actions
+  shareActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
+  },
+  shareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 8,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  saveBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 14,
   },
 });

@@ -1039,7 +1039,7 @@ export default function ChronoScreen() {
                             'Supprimer',
                             `Supprimer "${preset.name}" ?`,
                             [
-                              { text: 'Annuler', style: 'secondary' },
+                              { text: 'Annuler', style: 'cancel' },
                               { text: 'Supprimer', style: 'destructive', onPress: () => deleteCustomPreset(preset.id) },
                             ]
                           );

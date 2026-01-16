@@ -30,12 +30,12 @@ import logger from '@/lib/security/logger';
 
 // Calcul du rang basé sur le nombre de jours
 const RANKS = [
-  { minDays: 0, name: 'Recrue', emoji: '🎯' },
-  { minDays: 7, name: 'Ashigaru', emoji: '⚔️' },
+  { minDays: 0, name: 'Recrue', emoji: '' },
+  { minDays: 7, name: 'Ashigaru', emoji: '' },
   { minDays: 30, name: 'Samurai', emoji: '🥷' },
-  { minDays: 90, name: 'Ronin', emoji: '🗡️' },
+  { minDays: 90, name: 'Ronin', emoji: '' },
   { minDays: 180, name: 'Sensei', emoji: '🎌' },
-  { minDays: 365, name: 'Shogun', emoji: '👑' },
+  { minDays: 365, name: 'Shogun', emoji: '' },
 ];
 
 const getRank = (days: number) => {

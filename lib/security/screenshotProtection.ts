@@ -55,7 +55,7 @@ let screenshotListenerSubscription: any = null;
 // ============================================
 
 /**
- * ✅ Active la protection contre les screenshots
+ * Active la protection contre les screenshots
  */
 export async function enableScreenshotProtection(): Promise<void> {
   if (!SCREENSHOT_PROTECTION_CONFIG.enabled || !ScreenCapture) {
@@ -90,7 +90,7 @@ export async function enableScreenshotProtection(): Promise<void> {
 }
 
 /**
- * ✅ Désactive la protection contre les screenshots
+ * Désactive la protection contre les screenshots
  */
 export async function disableScreenshotProtection(): Promise<void> {
   if (!isProtectionActive || !ScreenCapture) {
@@ -138,7 +138,7 @@ let backgroundBlurEnabled = false;
 let appStateSubscription: any = null;
 
 /**
- * ✅ Active le floutage automatique quand l'app passe en arrière-plan
+ * Active le floutage automatique quand l'app passe en arrière-plan
  */
 export function enableBackgroundBlur(onBlur?: () => void, onUnblur?: () => void): void {
   if (!SCREENSHOT_PROTECTION_CONFIG.blurOnBackground) {
@@ -169,7 +169,7 @@ export function enableBackgroundBlur(onBlur?: () => void, onUnblur?: () => void)
 }
 
 /**
- * ✅ Désactive le floutage en arrière-plan
+ * Désactive le floutage en arrière-plan
  */
 export function disableBackgroundBlur(): void {
   if (!backgroundBlurEnabled) return;
@@ -188,7 +188,7 @@ export function disableBackgroundBlur(): void {
 // ============================================
 
 /**
- * ✅ Hook pour protéger un écran contre les screenshots
+ * Hook pour protéger un écran contre les screenshots
  *
  * Usage:
  * ```tsx
@@ -247,7 +247,7 @@ export function useScreenshotProtection(enabled: boolean = true) {
 }
 
 /**
- * ✅ Hook pour flouter l'app en arrière-plan
+ * Hook pour flouter l'app en arrière-plan
  *
  * Usage:
  * ```tsx
@@ -299,7 +299,7 @@ export function useBackgroundBlur() {
 }
 
 /**
- * ✅ Hook combiné pour écran sensible complet
+ * Hook combiné pour écran sensible complet
  *
  * Usage:
  * ```tsx
@@ -332,7 +332,7 @@ export function useSensitiveScreen(enabled: boolean = true) {
 // ============================================
 
 /**
- * ✅ Vérifie si un écran est sensible
+ * Vérifie si un écran est sensible
  */
 export function isSensitiveScreen(screenName: string): boolean {
   return SENSITIVE_SCREENS.some(
@@ -341,7 +341,7 @@ export function isSensitiveScreen(screenName: string): boolean {
 }
 
 /**
- * ✅ Obtient le statut de la protection
+ * Obtient le statut de la protection
  */
 export function getProtectionStatus() {
   return {
@@ -354,7 +354,7 @@ export function getProtectionStatus() {
 }
 
 /**
- * ✅ EXEMPLE D'UTILISATION DANS UN COMPOSANT:
+ * EXEMPLE D'UTILISATION DANS UN COMPOSANT:
  *
  * // Écran de mesures (sensible)
  * function MeasurementsScreen() {
@@ -364,7 +364,7 @@ export function getProtectionStatus() {
  *     <View style={{ flex: 1 }}>
  *       {screenshotDetected && (
  *         <View style={styles.warning}>
- *           <Text>⚠️ Screenshot détecté ! Vos données sont sensibles.</Text>
+ *           <Text>Screenshot détecté ! Vos données sont sensibles.</Text>
  *         </View>
  *       )}
  *

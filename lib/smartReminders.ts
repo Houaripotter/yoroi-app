@@ -347,7 +347,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
       type: 'training',
       title: 'Entrainement',
       body: `Tu t'entraines souvent le ${dayName}. C'est l'heure de se bouger !`,
-      emoji: '💪',
+      emoji: '',
     };
   }
 
@@ -355,7 +355,7 @@ export const generateTrainingReminderMessage = (habits: DetectedHabits): Reminde
     type: 'training',
     title: 'Entrainement',
     body: 'C\'est le moment de s\'entrainer !',
-    emoji: '💪',
+    emoji: '',
   };
 };
 
@@ -408,7 +408,7 @@ export const generateStreakProtectionMessage = (habits: DetectedHabits): Reminde
     type: 'streak',
     title: 'Streak en danger !',
     body: `Attention ! Tu n'as pas ouvert Yoroi aujourd'hui. Ton streak de ${habits.currentStreak} jours est en danger !`,
-    emoji: '🔥',
+    emoji: '',
   };
 };
 

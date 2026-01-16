@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { EssentielHeader } from './essentiel/EssentielHeader';
 import { EssentielWeightCard } from './essentiel/EssentielWeightCard';
@@ -12,8 +12,9 @@ import { QuestsCard } from '@/components/QuestsCard';
 import { ViewMode } from '@/hooks/useViewMode';
 import { Profile } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
-import { BookOpen, Target, FileText, ChevronRight, Plus, Award } from 'lucide-react-native';
+import { BookOpen, Target, FileText, ChevronRight, Plus, Award, Brain, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { getDailyQuote } from '@/lib/citations';
 
 interface HomeEssentielContentProps {
   // Profil
@@ -48,6 +49,9 @@ interface HomeEssentielContentProps {
   weekWeightChange?: number;
   weekHydrationRate?: number;
   weekAvgSleep?: number;
+
+  // Avatar refresh
+  refreshTrigger?: number;
 }
 
 export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
@@ -72,7 +76,64 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
   weekWeightChange,
   weekHydrationRate,
   weekAvgSleep,
+  refreshTrigger = 0,
 }) => {
+  const { colors, isDark } = useTheme();
+  const [dailyQuote, setDailyQuote] = useState<string>('');
+
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Charger la citation du jour
+  useEffect(() => {
+    const loadQuote = async () => {
+      try {
+        const quote = await getDailyQuote();
+        setDailyQuote(quote.text);
+
+        // Animation d'apparition
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      } catch (error) {
+        console.error('Error loading quote:', error);
+      }
+    };
+    loadQuote();
+  }, []);
+
+  // Animation pulse pour le cerveau
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
+
   const handleAddWeight = () => {
     router.push('/(tabs)/add');
   };
@@ -85,16 +146,20 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
     router.push('/stats');
   };
 
-  const { colors } = useTheme();
-
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      nestedScrollEnabled={true}
+    >
       {/* Salutation et citation */}
       <EssentielHeader
         userName={userName}
         viewMode={viewMode}
         onToggleMode={onToggleMode}
         profile={profile}
+        refreshTrigger={refreshTrigger}
       />
 
       {/* CARTE POIDS - FULL WIDTH */}
@@ -137,17 +202,50 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
         </View>
       </View>
 
-      {/* Citation motivante du jour */}
-      <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
-        <View style={[styles.citationCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.citationText, { color: colors.textSecondary }]}>
-            💪 Reste focus sur tes objectifs
-          </Text>
-        </View>
-      </View>
+      {/* Citation motivante - BULLE DE PENSÉE ANIMÉE */}
+      {dailyQuote && (
+        <Animated.View
+          style={[
+            { paddingHorizontal: 16, marginTop: 24 },
+            { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }
+          ]}
+        >
+          <View style={styles.speechBubbleContainer}>
+            {/* Cerveau animé */}
+            <Animated.View style={[styles.brainContainer, { transform: [{ scale: pulseAnim }] }]}>
+              <View style={styles.brainCircle}>
+                <Brain size={28} color="#8B5CF6" strokeWidth={2.5} />
+              </View>
+              {/* Mini éclairs d'idée */}
+              <View style={styles.ideaSparks}>
+                <Zap size={12} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -8, right: -4 }} />
+                <Zap size={10} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -4, right: 8 }} />
+              </View>
+            </Animated.View>
+
+            {/* Bulle de pensée (fond BLANC) */}
+            <View style={[styles.speechBubble, {
+              backgroundColor: '#FFFFFF',
+              shadowColor: isDark ? '#8B5CF6' : '#000',
+            }]}>
+              {/* Petite queue de bulle */}
+              <View style={[styles.bubbleTail, { backgroundColor: '#FFFFFF' }]} />
+
+              <Text style={styles.quoteTextBubble}>
+                "{dailyQuote}"
+              </Text>
+
+              {/* Badge "Citation du jour" */}
+              <View style={styles.quoteBadge}>
+                <Text style={styles.quoteBadgeText}>Citation du jour</Text>
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+      )}
 
       <View style={{ height: 120 }} />
-    </View>
+    </ScrollView>
   );
 };
 
@@ -187,7 +285,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 250,
   },
   row: {
     flexDirection: 'row',
@@ -267,17 +365,92 @@ const styles = StyleSheet.create({
   compactCard: {
     flex: 1,
   },
-  // Citation
-  citationCard: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  // ═══════════════════════════════════════════════
+  // CITATION - BULLE DE PENSÉE ANIMÉE
+  // ═══════════════════════════════════════════════
+
+  speechBubbleContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
   },
-  citationText: {
+
+  // Cerveau animé
+  brainContainer: {
+    position: 'relative',
+  },
+  brainCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  ideaSparks: {
+    position: 'relative',
+    width: 60,
+    height: 20,
+  },
+
+  // Bulle de pensée (FOND BLANC)
+  speechBubble: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+    position: 'relative',
+  },
+
+  // Queue de la bulle
+  bubbleTail: {
+    position: 'absolute',
+    left: -10,
+    top: 24,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    transform: [{ rotate: '-45deg' }],
+  },
+
+  // Texte de la citation
+  quoteTextBubble: {
     fontSize: 15,
     fontWeight: '600',
-    textAlign: 'center',
     lineHeight: 22,
+    color: '#1A1A1A',
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
+    marginBottom: 12,
+  },
+
+  // Badge "Citation du jour"
+  quoteBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
+  },
+  quoteBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#8B5CF6',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

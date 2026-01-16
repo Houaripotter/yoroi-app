@@ -153,7 +153,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
 
       {/* Radar SVG */}
       <Animated.View style={[styles.radarContainer, { opacity: fadeAnim }]}>
-        <Svg width={size + 60} height={size} viewBox={`-30 0 ${size + 60} ${size}`}>
+        <Svg width={size + 60} height={size + 30} viewBox={`-40 -30 ${size + 80} ${size + 30}`}>
           <Defs>
             <RadialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
               <Stop offset="0%" stopColor={colors.accent} stopOpacity="0.08" />

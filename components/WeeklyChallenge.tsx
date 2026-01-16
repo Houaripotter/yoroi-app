@@ -192,7 +192,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
       {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.headerIcon}>🎯</Text>
+          <Text style={styles.headerIcon}></Text>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
             Défi de la semaine
           </Text>

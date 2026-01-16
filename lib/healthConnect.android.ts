@@ -4,7 +4,7 @@
 // Intégration Apple Health (iOS) & Google Health Connect (Android)
 // Pour le tracking passif automatique
 //
-// ⚠️ NOTE: Health Connect (Android) est temporairement désactivé
+// NOTE: Health Connect (Android) est temporairement désactivé
 // car expo-health-connect cause des erreurs de bundling avec
 // @expo/config-plugins qui essaie d'importer le module Node.js "fs"
 //
@@ -672,9 +672,9 @@ export const healthConnect = new HealthConnectService();
 
 export const getProviderIcon = (): string => {
   if (Platform.OS === 'ios') {
-    return '❤️';
+    return '';
   }
-  return '💚';
+  return '';
 };
 
 export const getConnectionInstructions = (): string[] => {

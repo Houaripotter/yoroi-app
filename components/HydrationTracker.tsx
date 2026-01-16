@@ -21,6 +21,7 @@ import {
   hasWorkoutOnDate,
   HydrationSettings,
 } from '@/lib/storage';
+import HealthConnect from '@/lib/healthConnect.ios';
 
 // ============================================
 // HYDRATION TRACKER - SUIVI D'HYDRATATION
@@ -100,6 +101,18 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await addHydrationEntry(amount);
       setTodayAmount(prev => prev + amount);
+
+      // 🔄 SYNC VERS APPLE HEALTH
+      try {
+        const exported = await HealthConnect.writeHydration(amount);
+        if (exported) {
+          logger.info('Hydratation synchronisée vers Apple Health:', amount, 'ml');
+        }
+      } catch (healthError) {
+        // Ne pas bloquer l'ajout si l'export échoue
+        logger.warn('Export Apple Health échoué (non bloquant):', healthError);
+      }
+
       onUpdate?.();
     } catch (error) {
       logger.error('Erreur ajout hydratation:', error);
@@ -109,7 +122,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
   const handleCustomAdd = () => {
     const amount = parseInt(customAmount, 10);
     if (isNaN(amount) || amount <= 0) {
-      showPopup('Erreur', 'Veuillez entrer une quantite valide', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Entre une quantite valide', [{ text: 'OK', style: 'primary' }]);
       return;
     }
     addWater(amount);

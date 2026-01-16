@@ -35,7 +35,7 @@ interface BodyStatusData {
 
 const BODY_ZONES: Array<{ key: BodyZone; label: string; icon: string }> = [
   { key: 'neck', label: 'Cou', icon: '🫁' },
-  { key: 'shoulders', label: 'Épaules', icon: '💪' },
+  { key: 'shoulders', label: 'Épaules', icon: '' },
   { key: 'back', label: 'Dos', icon: '🦴' },
   { key: 'elbows', label: 'Coudes', icon: '🦾' },
   { key: 'wrists', label: 'Poignets', icon: '✋' },
@@ -93,7 +93,7 @@ export default function BodyStatusScreen() {
       zoneData.pain = painLevel;
     } else if (selectedStatus === 'injury') {
       if (!medicalNote.trim()) {
-        showPopup('Note requise', 'Veuillez ajouter une note medicale pour cette blessure.', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Note requise', 'Ajoute une note medicale pour cette blessure.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
       zoneData.note = medicalNote.trim();
@@ -207,7 +207,7 @@ export default function BodyStatusScreen() {
                       {getStatusLabel(zoneStatus.status)}
                     </Text>
                     {zoneStatus.pain && (
-                      <Text style={styles.zonePainText}>💥 Douleur: {zoneStatus.pain}/10</Text>
+                      <Text style={styles.zonePainText}>Douleur: {zoneStatus.pain}/10</Text>
                     )}
                     {zoneStatus.note && (
                       <Text style={styles.zoneNoteText} numberOfLines={1}>

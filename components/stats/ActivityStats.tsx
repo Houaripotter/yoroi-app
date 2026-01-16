@@ -194,7 +194,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
         <View style={styles.bigStatsRow}>
           {/* SEMAINE */}
           <View style={styles.bigStatItem}>
-            <Text style={[styles.bigStatNumber, { color: colors.accent }]}>
+            <Text style={[styles.bigStatNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>
               {thisWeekCount}
             </Text>
             <Text style={[styles.bigStatLabel, { color: colors.textMuted }]}>
@@ -229,7 +229,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
 
           {/* MOIS */}
           <View style={styles.bigStatItem}>
-            <Text style={[styles.bigStatNumber, { color: colors.accent }]}>
+            <Text style={[styles.bigStatNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>
               {thisMonthCount}
             </Text>
             <Text style={[styles.bigStatLabel, { color: colors.textMuted }]}>
@@ -264,7 +264,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
 
           {/* ANNÉE */}
           <View style={styles.bigStatItem}>
-            <Text style={[styles.bigStatNumber, { color: colors.accent }]}>
+            <Text style={[styles.bigStatNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>
               {thisYearCount}
             </Text>
             <Text style={[styles.bigStatLabel, { color: colors.textMuted }]}>
@@ -512,7 +512,7 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
             {/* Valeurs au-dessus des points */}
             {chartData.map((point, index) => (
               <View key={index} style={[styles.valueLabel, { left: point.x - 15, top: point.y - 28 }]}>
-                <Text style={[styles.valueLabelText, { color: colors.accent }]}>
+                <Text style={[styles.valueLabelText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                   {point.count}
                 </Text>
               </View>
@@ -583,8 +583,8 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                       {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
                     </View>
                     <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
-                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
-                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                      <Text style={[styles.countMultiplier, { color: isDark ? colors.accent : colors.textPrimary }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>{count}</Text>
                     </View>
                   </View>
                 );
@@ -633,8 +633,8 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                       {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
                     </View>
                     <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
-                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
-                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                      <Text style={[styles.countMultiplier, { color: isDark ? colors.accent : colors.textPrimary }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>{count}</Text>
                     </View>
                   </View>
                 );
@@ -683,8 +683,8 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                       {logo && sport && <Text style={[styles.clubSport, { color: colors.textMuted }]}>{sport.toUpperCase()}</Text>}
                     </View>
                     <View style={[styles.countBadge, { backgroundColor: colors.accent + '15' }]}>
-                      <Text style={[styles.countMultiplier, { color: colors.accent }]}>×</Text>
-                      <Text style={[styles.countNumber, { color: colors.accent }]}>{count}</Text>
+                      <Text style={[styles.countMultiplier, { color: isDark ? colors.accent : colors.textPrimary }]}>×</Text>
+                      <Text style={[styles.countNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>{count}</Text>
                     </View>
                   </View>
                 );
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 150,
   },
 
   // Grande carte statistiques

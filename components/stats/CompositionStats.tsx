@@ -4,18 +4,21 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Weight } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { SparklineChart } from '../charts/SparklineChart';
-import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2 } from 'lucide-react-native';
-import { StatsDetailModal } from '../StatsDetailModal';
+import { SparklineChart } from './charts/SparklineChart';
+import { Droplets, Dumbbell, Bone, Flame, Calendar, TrendingUp, TrendingDown, Target, Maximize2, Eye } from 'lucide-react-native';
+import { StatsDetailModal } from './StatsDetailModal';
 import { getHistoryDays, getChartDataPoints, scale, isIPad } from '@/constants/responsive';
 import { Dimensions } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
 const STATS_COLUMNS = isIPad() ? 4 : 2;
-const STATS_GAP = 12; // Gap fixe pour tous les appareils
-const CONTAINER_PADDING = isIPad() ? scale(8) : 16; // iPhone garde 16
-const STATS_CARD_WIDTH = (SCREEN_WIDTH - CONTAINER_PADDING * 2 - STATS_GAP * (STATS_COLUMNS - 1)) / STATS_COLUMNS;
+const STATS_GAP = 12;
+const CARD_PADDING_H = 16; // Padding horizontal du container
+// Largeur disponible après padding
+const AVAILABLE_WIDTH = SCREEN_WIDTH - (CARD_PADDING_H * 2);
+// Largeur de chaque carte = (largeur disponible - gaps entre colonnes) / nombre de colonnes
+const STATS_CARD_WIDTH = (AVAILABLE_WIDTH - (STATS_GAP * (STATS_COLUMNS - 1))) / STATS_COLUMNS;
 // Largeur du sparkline = largeur carte - padding (14*2) + margin négatif (6*2)
 const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
@@ -125,33 +128,62 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
     },
   ];
 
+  // Grouper les métriques en rangées de 2
+  const rows: typeof metrics[] = [];
+  for (let i = 0; i < metrics.length; i += STATS_COLUMNS) {
+    rows.push(metrics.slice(i, i + STATS_COLUMNS));
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Bouton TOUT en haut */}
+      <TouchableOpacity
+        style={[styles.viewAllButton, { backgroundColor: colors.accent }]}
+        onPress={() => setSelectedMetric({
+          key: 'fat_percent',
+          label: 'Toutes les métriques',
+          color: '#EF4444',
+          unit: '%',
+          icon: <Flame size={18} color="#EF4444" />,
+        })}
+        activeOpacity={0.8}
+      >
+        <Eye size={18} color={colors.textOnAccent} strokeWidth={2.5} />
+        <Text style={[styles.viewAllText, { color: colors.textOnAccent }]}>
+          Voir toutes les données de composition
+        </Text>
+      </TouchableOpacity>
+
       {/* Grille des 7 métriques */}
       <View style={styles.metricsGrid}>
-        {metrics.map((metric) => {
-          const sparklineData = getSparklineData(metric.key as keyof Weight);
-          const trend = getTrend(metric.value, previous?.[metric.key as keyof Weight] as number);
-          const change = getChange(metric.value, previous?.[metric.key as keyof Weight] as number);
-          const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
+        {rows.map((row, rowIndex) => (
+          <View key={rowIndex} style={styles.row}>
+            {row.map((metric) => {
+              const sparklineData = getSparklineData(metric.key as keyof Weight);
+              const trend = getTrend(metric.value, previous?.[metric.key as keyof Weight] as number);
+              const change = getChange(metric.value, previous?.[metric.key as keyof Weight] as number);
+              const hasData = sparklineData.length > 0 && sparklineData.some(d => d.value > 0);
 
-          // Calculer min/max pour les indicateurs
-          const minValue = hasData ? Math.min(...sparklineData.map(d => d.value)) : 0;
-          const maxValue = hasData ? Math.max(...sparklineData.map(d => d.value)) : 0;
+              // Calculer min/max pour les indicateurs
+              const minValue = hasData ? Math.min(...sparklineData.map(d => d.value)) : 0;
+              const maxValue = hasData ? Math.max(...sparklineData.map(d => d.value)) : 0;
 
-          return (
-            <TouchableOpacity
-              key={metric.key}
-              style={[styles.metricCard, { backgroundColor: colors.backgroundCard }]}
-              activeOpacity={0.7}
-              onPress={() => setSelectedMetric({
-                key: metric.key,
-                label: metric.label,
-                color: metric.color,
-                unit: metric.unit,
-                icon: metric.icon,
-              })}
-            >
+              return (
+                <TouchableOpacity
+                  key={metric.key}
+                  style={[
+                    styles.metricCard,
+                    { backgroundColor: colors.backgroundCard }
+                  ]}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedMetric({
+                    key: metric.key,
+                    label: metric.label,
+                    color: metric.color,
+                    unit: metric.unit,
+                    icon: metric.icon,
+                  })}
+                >
               {/* Expand icon */}
               <View style={styles.expandIcon}>
                 <Maximize2 size={16} color="#1F2937" opacity={0.9} />
@@ -215,6 +247,8 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
             </TouchableOpacity>
           );
         })}
+          </View>
+        ))}
       </View>
 
       {/* Historique détaillé */}
@@ -269,6 +303,7 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
           color={selectedMetric.color}
           unit={selectedMetric.unit}
           icon={selectedMetric.icon}
+          metricKey={selectedMetric.key}
         />
       )}
     </ScrollView>
@@ -278,16 +313,38 @@ export const CompositionStats: React.FC<CompositionStatsProps> = ({ data }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: isIPad() ? 0 : 16, // Pas de padding sur iPad, déjà géré par le parent
-    paddingBottom: 40,
+    paddingHorizontal: CARD_PADDING_H,
+    paddingBottom: 150,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  viewAllText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 
   // Grille des métriques
   metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: STATS_GAP,
   },
   metricCard: {
     width: STATS_CARD_WIDTH,
@@ -300,7 +357,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
-    marginBottom: STATS_GAP,
   },
   expandIcon: {
     position: 'absolute',

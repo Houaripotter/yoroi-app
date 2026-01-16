@@ -30,6 +30,7 @@ import logger from '@/lib/security/logger';
 import { FeatureTutorial } from '@/components/FeatureTutorial';
 
 const { width: screenWidth } = Dimensions.get('window');
+const IS_SMALL_SCREEN = screenWidth < 375; // iPhone SE, petits téléphones
 
 export default function ChargeScreen() {
   const { colors, isDark } = useTheme();
@@ -48,8 +49,9 @@ export default function ChargeScreen() {
       const load = await getWeeklyLoad();
       setWeeklyLoad(load);
       setRiskLevel(getRiskLevel(load));
-      // TODO: Calculer les sessions depuis la DB
-      setSessions(3);
+      // Calculer les sessions depuis la charge (approximation: 1 session = ~300 pts)
+      const estimatedSessions = load > 0 ? Math.max(1, Math.round(load / 300)) : 0;
+      setSessions(estimatedSessions);
     } catch (error) {
       logger.error('Erreur chargement charge:', error);
     }
@@ -262,7 +264,7 @@ export default function ChargeScreen() {
           </Text>
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -292,6 +294,7 @@ const styles = StyleSheet.create({
   mainCard: {
     borderRadius: 20,
     padding: 28,
+    paddingVertical: 36,
     alignItems: 'center',
     marginBottom: 20,
   },
@@ -306,29 +309,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   gaugeContainer: {
-    width: 180,
-    height: 110,
+    width: IS_SMALL_SCREEN ? 150 : 180,
+    height: IS_SMALL_SCREEN ? 100 : 120,
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginBottom: 20,
-    marginTop: 8,
+    marginBottom: IS_SMALL_SCREEN ? 30 : 36,
+    marginTop: IS_SMALL_SCREEN ? 16 : 20,
   },
   gaugeBg: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 12,
+    width: IS_SMALL_SCREEN ? 150 : 180,
+    height: IS_SMALL_SCREEN ? 150 : 180,
+    borderRadius: IS_SMALL_SCREEN ? 75 : 90,
+    borderWidth: IS_SMALL_SCREEN ? 10 : 12, // Bordure plus fine sur petits écrans
     borderBottomColor: 'transparent',
     top: 0,
   },
   gaugeFill: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 12,
+    width: IS_SMALL_SCREEN ? 150 : 180,
+    height: IS_SMALL_SCREEN ? 150 : 180,
+    borderRadius: IS_SMALL_SCREEN ? 75 : 90,
+    borderWidth: IS_SMALL_SCREEN ? 10 : 12,
     borderBottomColor: 'transparent',
     borderRightColor: 'transparent',
     top: 0,
@@ -337,7 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gaugeValue: {
-    fontSize: 32,
+    fontSize: IS_SMALL_SCREEN ? 28 : 32, // Plus petit sur petits écrans
     fontWeight: '900',
     letterSpacing: -1,
   },
@@ -349,7 +352,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 16,
   },
   currentLevelText: {
     fontSize: 14,
@@ -402,7 +406,7 @@ const styles = StyleSheet.create({
   },
   levelCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: IS_SMALL_SCREEN ? 12 : 16, // Padding adaptatif
     marginBottom: 12,
   },
   levelHeader: {
@@ -445,7 +449,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: IS_SMALL_SCREEN ? 12 : 16, // Padding adaptatif
     marginTop: 8,
   },
   infoTitle: {

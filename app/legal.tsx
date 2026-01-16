@@ -149,8 +149,8 @@ export default function LegalScreen() {
           onPress={handleAccept}
           disabled={isAccepting}
         >
-          <Ionicons name="rocket" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-          <Text style={[styles.acceptButtonText, { color: '#FFFFFF' }]}>
+          <Ionicons name="rocket" size={20} color={colors.textOnAccent} style={{ marginRight: 8 }} />
+          <Text style={[styles.acceptButtonText, { color: colors.textOnAccent }]}>
             {isAccepting ? 'Chargement...' : 'C\'est parti !'}
           </Text>
         </TouchableOpacity>

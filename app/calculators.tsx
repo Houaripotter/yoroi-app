@@ -125,11 +125,11 @@ const EXERCISES: Record<ExerciseType, { name: string; iconComponent: LucideIcon;
 export default function CalculatorsScreen() {
   const { colors } = useTheme();
 
-  // Donnees utilisateur pre-remplies
+  // Donnees utilisateur - VIDES par defaut
   const [userData, setUserData] = useState<UserData>({
-    weight: 75,
-    height: 175,
-    age: 30,
+    weight: 0,
+    height: 0,
+    age: 0,
     gender: 'male',
   });
 
@@ -146,17 +146,17 @@ export default function CalculatorsScreen() {
   // Etats pour les calculs
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderate');
   const [goal, setGoal] = useState<Goal>('lose');
-  const [exerciseHours, setExerciseHours] = useState(1);
+  const [exerciseHours, setExerciseHours] = useState(0);
 
-  // Etats pour le calcul 1RM
-  const [liftWeight, setLiftWeight] = useState(60);
-  const [liftReps, setLiftReps] = useState(5);
+  // Etats pour le calcul 1RM - VIDES par defaut
+  const [liftWeight, setLiftWeight] = useState(0);
+  const [liftReps, setLiftReps] = useState(0);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseType>('bench');
 
-  // Charger les donnees du profil
-  useEffect(() => {
-    loadUserData();
-  }, []);
+  // NE PAS charger automatiquement - L'utilisateur doit saisir lui-meme
+  // useEffect(() => {
+  //   loadUserData();
+  // }, []);
 
   const loadUserData = async () => {
     try {
@@ -535,28 +535,36 @@ export default function CalculatorsScreen() {
           </Text>
         </View>
 
-        {/* Donnees actuelles */}
-        <Card style={styles.userDataCard}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Tes donnees
-          </Text>
-          <View style={styles.userDataRow}>
-            <View style={styles.userDataItem}>
-              <Text style={[styles.userDataValue, { color: colors.gold }]}>{userData.weight}</Text>
-              <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>kg</Text>
+        {/* Donnees actuelles - Masquee si vide */}
+        {(userData.weight > 0 || userData.height > 0 || userData.age > 0) && (
+          <Card style={styles.userDataCard}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Tes donnees
+            </Text>
+            <View style={styles.userDataRow}>
+              <View style={styles.userDataItem}>
+                <Text style={[styles.userDataValue, { color: colors.gold }]}>
+                  {userData.weight > 0 ? userData.weight : '-'}
+                </Text>
+                <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>kg</Text>
+              </View>
+              <View style={[styles.userDataDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.userDataItem}>
+                <Text style={[styles.userDataValue, { color: colors.gold }]}>
+                  {userData.height > 0 ? userData.height : '-'}
+                </Text>
+                <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>cm</Text>
+              </View>
+              <View style={[styles.userDataDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.userDataItem}>
+                <Text style={[styles.userDataValue, { color: colors.gold }]}>
+                  {userData.age > 0 ? userData.age : '-'}
+                </Text>
+                <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>ans</Text>
+              </View>
             </View>
-            <View style={[styles.userDataDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.userDataItem}>
-              <Text style={[styles.userDataValue, { color: colors.gold }]}>{userData.height}</Text>
-              <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>cm</Text>
-            </View>
-            <View style={[styles.userDataDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.userDataItem}>
-              <Text style={[styles.userDataValue, { color: colors.gold }]}>{userData.age}</Text>
-              <Text style={[styles.userDataLabel, { color: colors.textMuted }]}>ans</Text>
-            </View>
-          </View>
-        </Card>
+          </Card>
+        )}
 
         {/* Liste des calculateurs */}
         <View style={styles.calculatorsList}>
