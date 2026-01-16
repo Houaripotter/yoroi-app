@@ -202,6 +202,11 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
         </View>
       </View>
 
+      {/* QUÊTES JOURNALIÈRES - Points XP */}
+      <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
+        <QuestsCard />
+      </View>
+
       {/* Citation motivante - BULLE DE PENSÉE ANIMÉE */}
       {dailyQuote && (
         <Animated.View

@@ -12,7 +12,7 @@ interface WeightDataPoint {
 interface WeightChartProps {
   data: WeightDataPoint[];
   onPointPress?: (point: WeightDataPoint) => void;
-  onPeriodChange?: (period: '7j' | '30j' | '90j' | 'tout') => void;
+  onPeriodChange?: (period: '30j' | '90j' | '6m' | '1a') => void;
 }
 
 export const WeightChart: React.FC<WeightChartProps> = ({
@@ -21,7 +21,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
   onPeriodChange,
 }) => {
   const { colors } = useTheme();
-  const [period, setPeriod] = useState<'7j' | '30j' | '90j' | 'tout'>('30j');
+  const [period, setPeriod] = useState<'30j' | '90j' | '6m' | '1a'>('30j');
 
   const chartWidth = 300;
   const chartHeight = 180;
@@ -32,7 +32,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
     if (data.length === 0) return [];
 
     const now = new Date();
-    const days = period === '7j' ? 7 : period === '30j' ? 30 : period === '90j' ? 90 : 365;
+    const days = period === '30j' ? 30 : period === '90j' ? 90 : period === '6m' ? 180 : 365;
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
     return data
@@ -44,7 +44,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
   const displayData = useMemo(() => {
     if (filteredData.length === 0) return [];
 
-    const maxPoints = period === '7j' ? 7 : period === '30j' ? 10 : 12;
+    const maxPoints = period === '30j' ? 10 : period === '90j' ? 12 : 15;
     const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
 
     return filteredData.filter((_, i) =>
@@ -117,7 +117,7 @@ export const WeightChart: React.FC<WeightChartProps> = ({
   };
 
   // Changer de période
-  const handlePeriodChange = (newPeriod: '7j' | '30j' | '90j' | 'tout') => {
+  const handlePeriodChange = (newPeriod: '30j' | '90j' | '6m' | '1a') => {
     setPeriod(newPeriod);
     onPeriodChange?.(newPeriod);
   };

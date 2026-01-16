@@ -12,6 +12,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { aggregateWeightData } from '@/lib/statsAggregation';
 import { Target, TrendingUp, TrendingDown, Scale, Activity, BarChart3 } from 'lucide-react-native';
@@ -322,31 +323,33 @@ export const PoidsPage: React.FC = () => {
         )}
       </StatsSection>
 
-      {/* IMC avec barre intégrée - CLIQUABLE */}
+      {/* IMC avec barre animée - CLIQUABLE */}
       {bmi && (
         <StatsSection
           title={t('statsPages.weight.bmiTitle')}
           description={t('statsPages.weight.bmiDesc')}
         >
           <TouchableOpacity
-            activeOpacity={0.7}
+            activeOpacity={0.9}
             onPress={() => setSelectedMetric({
               key: 'bmi',
               label: t('stats.bmi'),
-              color: '#6366F1',
+              color: bmiStatus?.color || '#6366F1',
               unit: '',
-              icon: <Scale size={18} color="#6366F1" strokeWidth={2.5} />,
+              icon: <Scale size={18} color={bmiStatus?.color || '#6366F1'} strokeWidth={2.5} />,
             })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
           >
-            <MetricCard
-              label={t('stats.bmi')}
-              value={bmi.toFixed(1)}
-              unit=""
-              icon={<Scale size={24} color="#6366F1" strokeWidth={2.5} />}
-              color="#6366F1"
-              statusColor={bmiStatus?.color}
-              statusLabel={bmiStatus?.label}
-              healthRange={BMI_RANGES}
+            <AnimatedMetricBar
+              value={bmi}
+              min={BMI_RANGES.min}
+              max={BMI_RANGES.max}
+              zones={BMI_RANGES.zones}
+              unit={BMI_RANGES.unit}
+              title={t('stats.bmi')}
+              source={BMI_RANGES.source}
+              sourceUrl={BMI_RANGES.sourceUrl}
+              animated={true}
             />
           </TouchableOpacity>
         </StatsSection>
@@ -465,5 +468,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  animatedBarCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

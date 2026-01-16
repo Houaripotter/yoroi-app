@@ -22,7 +22,17 @@ import {
   ArrowLeft,
   Check,
   AlertCircle,
+  Zap,
+  Flame,
+  Sparkles,
+  Heart,
+  Code,
+  Droplet,
+  Eye,
+  Circle,
+  Diamond,
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode, themeColors } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
@@ -55,6 +65,35 @@ const getTextColorForBackground = (hexColor: string): string => {
 
   // Si luminance > 0.6, couleur claire → texte noir, sinon texte blanc
   return luminance > 0.6 ? '#000000' : '#FFFFFF';
+};
+
+// Helper pour obtenir l'icône correspondant à chaque thème
+const getThemeIcon = (themeColorId: string, color: string, size: number = 28) => {
+  const iconProps = { size, color, strokeWidth: 2 };
+
+  switch (themeColorId) {
+    case 'volt':
+      return <Zap {...iconProps} fill={color} />;       // Éclair électrique
+    case 'tiffany':
+      return <Diamond {...iconProps} />;                 // Diamant Tiffany
+    case 'magma':
+      return <Flame {...iconProps} fill={color} />;     // Flamme
+    case 'sakura':
+      return <Heart {...iconProps} fill={color} />;     // Coeur rose
+    case 'matrix':
+      return <Code {...iconProps} />;                    // Code Matrix
+    case 'blaze':
+      return <Sun {...iconProps} fill={color} />;       // Soleil pêche
+    case 'phantom':
+      return <Sparkles {...iconProps} />;               // Étoiles violet
+    case 'ghost':
+      return <Eye {...iconProps} />;                    // Oeil fantôme
+    case 'ocean':
+      return <Droplet {...iconProps} fill={color} />;   // Goutte océan
+    case 'classic':
+    default:
+      return <Circle {...iconProps} fill={color} />;    // Cercle classic
+  }
 };
 
 export default function ThemesScreen() {
@@ -265,8 +304,21 @@ export default function ThemesScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.themeHeader}>
-                    <View style={styles.themeIconContainer}>
-                      <Palette size={24} color={themeAccentColor} />
+                    {/* Icône avec glow par le bas */}
+                    <View style={styles.themeIconWrapper}>
+                      <View style={styles.themeIconContainer}>
+                        {getThemeIcon(theme.themeColor, themeAccentColor, 28)}
+                      </View>
+                      {/* Glow effect par le bas */}
+                      <View
+                        style={[
+                          styles.iconGlow,
+                          {
+                            backgroundColor: themeAccentColor,
+                            shadowColor: themeAccentColor,
+                          },
+                        ]}
+                      />
                     </View>
                     <View style={[styles.colorCircle, { backgroundColor: themeAccentColor }]} />
                   </View>
@@ -414,12 +466,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.md,
   },
-  themeIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  themeIconWrapper: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  themeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  iconGlow: {
+    position: 'absolute',
+    bottom: -4,
+    left: '50%',
+    marginLeft: -16,
+    width: 32,
+    height: 12,
+    borderRadius: 16,
+    opacity: 0.7,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    elevation: 8,
+    transform: [{ scaleX: 1.2 }],
   },
   colorCircle: {
     width: 32,

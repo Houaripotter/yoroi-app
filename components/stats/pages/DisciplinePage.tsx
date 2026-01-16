@@ -38,7 +38,7 @@ export const DisciplinePage: React.FC = () => {
     ],
   };
 
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [allTrainingsData, setAllTrainingsData] = useState<any[]>([]);

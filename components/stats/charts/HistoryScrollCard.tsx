@@ -41,6 +41,25 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
 
+  // Fonction pour déterminer si une couleur est claire (besoin de texte foncé)
+  const isLightColor = (hexColor: string): boolean => {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    // Calcul de luminosité
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6; // Si lumineux, c'est une couleur claire
+  };
+
+  // Obtenir la couleur de texte appropriée pour le contraste
+  const getContrastTextColor = (bgColor: string): string => {
+    if (isLightColor(bgColor)) {
+      return isDark ? '#FFFFFF' : '#1a1a1a'; // Texte foncé sur fond clair en mode clair
+    }
+    return '#FFFFFF'; // Texte blanc sur fond foncé
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = date.getDate();
@@ -63,18 +82,18 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
     const isLoss = diff < -0.1;
 
     if (userGoal === 'lose') {
-      if (isLoss) return { color: '#2BCBBA', label: 'EN BAISSE' }; // Teal = bien (perte)
-      if (isGain) return { color: '#FC5C65', label: 'EN HAUSSE' }; // Coral = mal (prise)
-      return { color: '#FED330', label: 'STABLE' }; // Gold = stable
+      if (isLoss) return { color: '#00D9BB', label: 'EN BAISSE' }; // Teal = bien (perte)
+      if (isGain) return { color: '#FF4757', label: 'EN HAUSSE' }; // Red = mal (prise)
+      return { color: '#FFB800', label: 'STABLE' }; // Gold = stable
     } else if (userGoal === 'gain') {
-      if (isGain) return { color: '#2BCBBA', label: 'EN HAUSSE' }; // Teal = bien (prise)
-      if (isLoss) return { color: '#FC5C65', label: 'EN BAISSE' }; // Coral = mal (perte)
-      return { color: '#FED330', label: 'STABLE' }; // Gold = stable
+      if (isGain) return { color: '#00D9BB', label: 'EN HAUSSE' }; // Teal = bien (prise)
+      if (isLoss) return { color: '#FF4757', label: 'EN BAISSE' }; // Red = mal (perte)
+      return { color: '#FFB800', label: 'STABLE' }; // Gold = stable
     } else {
       // maintain
-      if (Math.abs(diff) < 0.3) return { color: '#2BCBBA', label: 'STABLE' }; // Teal = stable
-      if (isGain) return { color: '#FED330', label: 'EN HAUSSE' };
-      return { color: '#FED330', label: 'EN BAISSE' }; // Gold = variation
+      if (Math.abs(diff) < 0.3) return { color: '#00D9BB', label: 'STABLE' }; // Teal = stable
+      if (isGain) return { color: '#FFB800', label: 'EN HAUSSE' };
+      return { color: '#FFB800', label: 'EN BAISSE' }; // Gold = variation
     }
   };
 
@@ -93,18 +112,18 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
     const isDecrease = diff < -threshold;
 
     if (evolutionGoal === 'increase') {
-      if (isIncrease) return { color: '#2BCBBA', label: 'EN HAUSSE' }; // Teal = bien
-      if (isDecrease) return { color: '#FC5C65', label: 'EN BAISSE' }; // Coral = mal
-      return { color: '#FED330', label: 'STABLE' };
+      if (isIncrease) return { color: '#00D9BB', label: 'EN HAUSSE' }; // Teal = bien
+      if (isDecrease) return { color: '#FF4757', label: 'EN BAISSE' }; // Red = mal
+      return { color: '#FFB800', label: 'STABLE' };
     } else if (evolutionGoal === 'decrease') {
-      if (isDecrease) return { color: '#2BCBBA', label: 'EN BAISSE' }; // Teal = bien
-      if (isIncrease) return { color: '#FC5C65', label: 'EN HAUSSE' }; // Coral = mal
-      return { color: '#FED330', label: 'STABLE' };
+      if (isDecrease) return { color: '#00D9BB', label: 'EN BAISSE' }; // Teal = bien
+      if (isIncrease) return { color: '#FF4757', label: 'EN HAUSSE' }; // Red = mal
+      return { color: '#FFB800', label: 'STABLE' };
     } else {
       // stable
-      if (!isIncrease && !isDecrease) return { color: '#2BCBBA', label: 'STABLE' }; // Teal = bien
-      if (isIncrease) return { color: '#FED330', label: 'EN HAUSSE' };
-      return { color: '#FED330', label: 'EN BAISSE' };
+      if (!isIncrease && !isDecrease) return { color: '#00D9BB', label: 'STABLE' }; // Teal = bien
+      if (isIncrease) return { color: '#FFB800', label: 'EN HAUSSE' };
+      return { color: '#FFB800', label: 'EN BAISSE' };
     }
   };
 
@@ -139,15 +158,15 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
             >
               {/* Badge de statut - label complet (healthRange ou objectif poids) */}
               {statusLabel && (
-                <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-                  <Text style={[styles.statusText, { color: statusColor }]} numberOfLines={1}>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                  <Text style={[styles.statusText, { color: getContrastTextColor(statusColor) }]} numberOfLines={1}>
                     {statusLabel.toUpperCase()}
                   </Text>
                 </View>
               )}
 
-              {/* Valeur */}
-              <Text style={[styles.value, { color: statusColor }]}>
+              {/* Valeur - couleur ajustée pour le contraste */}
+              <Text style={[styles.value, { color: isLightColor(statusColor) && !isDark ? '#1a1a1a' : statusColor }]}>
                 {item.value.toFixed(1)}
               </Text>
               <Text style={[styles.unit, { color: colors.textMuted }]}>

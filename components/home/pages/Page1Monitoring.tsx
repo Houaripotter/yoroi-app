@@ -509,16 +509,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
 
           <View style={styles.predictionsRow}>
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>7 jours</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {(currentWeight - (totalLoss / 30) * 7).toFixed(1)} kg
-              </Text>
-            </View>
-
-            <View style={styles.predictionDivider} />
-
-            <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>30 jours</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>30 JOURS</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss).toFixed(1)} kg
               </Text>
@@ -527,9 +518,27 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionDivider} />
 
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>90 jours</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>90 JOURS</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss * 3).toFixed(1)} kg
+              </Text>
+            </View>
+
+            <View style={styles.predictionDivider} />
+
+            <View style={styles.predictionItem}>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>6 MOIS</Text>
+              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                {(currentWeight - totalLoss * 6).toFixed(1)} kg
+              </Text>
+            </View>
+
+            <View style={styles.predictionDivider} />
+
+            <View style={styles.predictionItem}>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>1 AN</Text>
+              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                {(currentWeight - totalLoss * 12).toFixed(1)} kg
               </Text>
             </View>
           </View>

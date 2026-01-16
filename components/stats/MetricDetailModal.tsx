@@ -30,7 +30,7 @@ export const MetricDetailModal: React.FC<MetricDetailModalProps> = ({
   loadData,
 }) => {
   const { colors, isDark } = useTheme();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

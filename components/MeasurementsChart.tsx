@@ -40,7 +40,7 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
   onPointPress,
 }) => {
   const { colors } = useTheme();
-  const [period, setPeriod] = useState<'7j' | '30j' | '90j' | 'tout'>('tout');
+  const [period, setPeriod] = useState<'30j' | '90j' | '6m' | '1a'>('90j');
   const [selectedMeasures, setSelectedMeasures] = useState<string[]>(DEFAULT_SELECTED);
 
   const chartWidth = 300;
@@ -52,7 +52,7 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
     if (data.length === 0) return [];
 
     const now = new Date();
-    const days = period === '7j' ? 7 : period === '30j' ? 30 : period === '90j' ? 90 : 365;
+    const days = period === '30j' ? 30 : period === '90j' ? 90 : period === '6m' ? 180 : 365;
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
     return data
@@ -64,7 +64,7 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
   const displayData = useMemo(() => {
     if (filteredData.length === 0) return [];
 
-    const maxPoints = period === '7j' ? 7 : period === '30j' ? 10 : 12;
+    const maxPoints = period === '30j' ? 10 : period === '90j' ? 12 : 15;
     const step = Math.max(1, Math.floor(filteredData.length / maxPoints));
 
     return filteredData.filter((_, i) =>

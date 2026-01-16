@@ -326,7 +326,7 @@ export const themes: Record<string, Theme> = {
     }, false),
   },
 
-  // TIFFANY - Turquoise Luxe INTENSE
+  // TIFFANY - BLEU TIFFANY & CO FLUO (Robin's Egg Blue)
   tiffany_dark: {
     id: 'tiffany_dark',
     colorId: 'tiffany',
@@ -339,17 +339,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#00FFFF',          // Cyan pur électrique
-      accentDark: '#00E6E6',
-      accentLight: '#66FFFF',     // Ultra brillant
+      accent: '#0FFFEF',          // TIFFANY BLUE FLUO - Turquoise distinct!
+      accentDark: '#00E8D8',
+      accentLight: '#7FFFF4',     // Tiffany clair brillant
       textPrimary: '#FFFFFF',
       textSecondary: '#E5E8E8',
-      textMuted: '#9AB0B0',
-      textOnAccent: '#000000',    // NOIR sur cyan vif ✓
-      border: '#1F2F2F',
-      borderLight: '#2A3A3A',
-      glow: 'rgba(0, 255, 255, 0.6)',
-      glowStrong: 'rgba(0, 255, 255, 0.85)',
+      textMuted: '#9AB0AD',
+      textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
+      border: '#1F2D2B',
+      borderLight: '#2A3836',
+      glow: 'rgba(15, 255, 239, 0.6)',
+      glowStrong: 'rgba(15, 255, 239, 0.85)',
     }, true),
   },
 
@@ -365,17 +365,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
       backgroundLight: '#FAFAFA',
-      accent: '#00FFFF',          // Cyan pur électrique identique au dark
-      accentDark: '#00EEEE',
-      accentLight: '#33FFFF',
+      accent: '#0FFFEF',          // TIFFANY BLUE FLUO - Turquoise distinct!
+      accentDark: '#00E8D8',
+      accentLight: '#7FFFF4',
       textPrimary: '#000000',
       textSecondary: '#1A1A1A',
       textMuted: '#666666',
-      textOnAccent: '#000000',    // NOIR sur cyan fluo ✓
+      textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
-      glow: 'rgba(0, 255, 255, 0.6)',        // Glow cyan intense
-      glowStrong: 'rgba(0, 255, 255, 0.85)',
+      glow: 'rgba(15, 255, 239, 0.6)',
+      glowStrong: 'rgba(15, 255, 239, 0.85)',
     }, false),
   },
 
@@ -432,7 +432,7 @@ export const themes: Record<string, Theme> = {
     }, false),
   },
 
-  // SAKURA - Rose Fluo ULTRA VIBRANT
+  // SAKURA - ROSE CERISE VRAI (pas magenta/violet!)
   sakura_dark: {
     id: 'sakura_dark',
     colorId: 'sakura',
@@ -445,17 +445,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#FF00FF',          // ROSE FLUO MAGENTA PUR
-      accentDark: '#EE00EE',
-      accentLight: '#FF66FF',     // Rose ultra brillant
+      accent: '#FF69B4',          // HOT PINK - Vrai rose fluo cerise!
+      accentDark: '#FF5BA7',
+      accentLight: '#FF8DC7',     // Rose bonbon brillant
       textPrimary: '#FFFFFF',
       textSecondary: '#E8E5E8',
-      textMuted: '#B098B0',
-      textOnAccent: '#000000',    // Noir sur rose fluo
-      border: '#2A1F2A',
-      borderLight: '#352A35',
-      glow: 'rgba(255, 0, 255, 0.6)',
-      glowStrong: 'rgba(255, 0, 255, 0.85)',
+      textMuted: '#B098A8',
+      textOnAccent: '#000000',    // Noir sur rose
+      border: '#2A1F25',
+      borderLight: '#352A30',
+      glow: 'rgba(255, 105, 180, 0.6)',
+      glowStrong: 'rgba(255, 105, 180, 0.85)',
     }, true),
   },
 
@@ -471,17 +471,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
       backgroundLight: '#FAFAFA',
-      accent: '#FF00FF',          // ROSE FLUO MAGENTA PUR
-      accentDark: '#EE00EE',
-      accentLight: '#FF66FF',
+      accent: '#FF69B4',          // HOT PINK - Vrai rose fluo cerise!
+      accentDark: '#FF5BA7',
+      accentLight: '#FF8DC7',
       textPrimary: '#000000',
       textSecondary: '#1A1A1A',
       textMuted: '#666666',
-      textOnAccent: '#000000',    // Noir sur rose fluo
+      textOnAccent: '#000000',    // Noir sur rose
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
-      glow: 'rgba(255, 0, 255, 0.6)',
-      glowStrong: 'rgba(255, 0, 255, 0.85)',
+      glow: 'rgba(255, 105, 180, 0.6)',
+      glowStrong: 'rgba(255, 105, 180, 0.85)',
     }, false),
   },
 
@@ -538,7 +538,7 @@ export const themes: Record<string, Theme> = {
     }, false),
   },
 
-  // BLAZE - Orange Feu ULTRA BRIGHT
+  // BLAZE - PÊCHE FLUO MAGNIFIQUE
   blaze_dark: {
     id: 'blaze_dark',
     colorId: 'blaze',
@@ -551,17 +551,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#151515',
       backgroundElevated: '#1F1F1F',
       backgroundLight: '#2A2A2A',
-      accent: '#FF9900',          // Orange vif éclatant
-      accentDark: '#FF8800',
-      accentLight: '#FFBB33',     // Orange solaire
+      accent: '#FF8574',          // PÊCHE FLUO - Corail lumineux!
+      accentDark: '#FF7563',
+      accentLight: '#FFA090',     // Pêche clair brillant
       textPrimary: '#FFFFFF',
-      textSecondary: '#E8E5D8',
-      textMuted: '#B0A088',
+      textSecondary: '#E8E5E0',
+      textMuted: '#B0A098',
       textOnAccent: '#000000',
-      border: '#2F2A1F',
-      borderLight: '#3A3025',
-      glow: 'rgba(255, 153, 0, 0.6)',
-      glowStrong: 'rgba(255, 153, 0, 0.85)',
+      border: '#2F2520',
+      borderLight: '#3A302A',
+      glow: 'rgba(255, 133, 116, 0.6)',
+      glowStrong: 'rgba(255, 133, 116, 0.85)',
     }, true),
   },
 
@@ -577,17 +577,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
       backgroundLight: '#FAFAFA',
-      accent: '#FF9900',          // Orange fluo identique au dark
-      accentDark: '#FF8800',
-      accentLight: '#FFAA33',
+      accent: '#FF8574',          // PÊCHE FLUO - Corail lumineux!
+      accentDark: '#FF7563',
+      accentLight: '#FFA090',
       textPrimary: '#000000',
       textSecondary: '#1A1A1A',
       textMuted: '#666666',
-      textOnAccent: '#000000',    // NOIR sur orange fluo ✓
+      textOnAccent: '#000000',    // NOIR sur pêche fluo ✓
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
-      glow: 'rgba(255, 153, 0, 0.6)',        // Glow orange intense
-      glowStrong: 'rgba(255, 153, 0, 0.85)',
+      glow: 'rgba(255, 133, 116, 0.6)',
+      glowStrong: 'rgba(255, 133, 116, 0.85)',
     }, false),
   },
 
@@ -810,12 +810,12 @@ export const themes: Record<string, Theme> = {
 
 export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: string; color: string }[] = [
   { id: 'classic', name: 'Classic', icon: '', kanji: '墨', color: '#1A1A1A' },
-  { id: 'tiffany', name: 'Tiffany', icon: '', kanji: '氷', color: '#00FFFF' },
+  { id: 'tiffany', name: 'Tiffany', icon: '', kanji: '氷', color: '#0FFFEF' },  // Bleu Tiffany & Co fluo
   { id: 'volt', name: 'Volt', icon: '', kanji: '雷', color: '#FFFF00' },
   { id: 'magma', name: 'Magma', icon: '', kanji: '炎', color: '#FF0000' },
-  { id: 'sakura', name: 'Sakura', icon: '', kanji: '桜', color: '#FF00FF' },  // ROSE FLUO
+  { id: 'sakura', name: 'Sakura', icon: '', kanji: '桜', color: '#FF69B4' },  // ROSE CERISE (Hot Pink)
   { id: 'matrix', name: 'Matrix', icon: '', kanji: '電', color: '#00FF00' },
-  { id: 'blaze', name: 'Blaze', icon: '', kanji: '火', color: '#FF9900' },
+  { id: 'blaze', name: 'Blaze', icon: '', kanji: '火', color: '#FF8574' },   // PÊCHE FLUO
   { id: 'phantom', name: 'Phantom', icon: '', kanji: '影', color: '#CC00FF' },
   { id: 'ghost', name: 'Ghost', icon: '', kanji: '魂', color: '#888888' },
   { id: 'ocean', name: 'Ocean', icon: '', kanji: '海', color: '#00D4FF' },

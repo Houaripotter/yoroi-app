@@ -12,6 +12,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { RingChart } from '../charts/RingChart';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { getLatestWeight, getAllWeights } from '@/lib/database';
 import { Activity, Droplet, Bone, Zap, Flame, Target } from 'lucide-react-native';
@@ -320,9 +321,137 @@ export const CompositionPage: React.FC = () => {
       </StatsSection>
 
 
+      {/* Barre animée Masse Grasse */}
+      {fatPercent > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.bodyFat')}
+          description={t('statsPages.composition.bodyFatDesc')}
+        >
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'fat_percent',
+              label: t('statsPages.composition.bodyFat'),
+              color: fatStatus?.color || '#F59E0B',
+              unit: '%',
+              icon: <Activity size={18} color={fatStatus?.color || '#F59E0B'} strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
+          >
+            <AnimatedMetricBar
+              value={fatPercent}
+              min={bodyFatRange.min}
+              max={bodyFatRange.max}
+              zones={bodyFatRange.zones}
+              unit={bodyFatRange.unit}
+              title={t('statsPages.composition.bodyFat')}
+              source={bodyFatRange.source}
+              sourceUrl={bodyFatRange.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
+      {/* Barre animée Masse Musculaire */}
+      {musclePercent > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.muscleMass')}
+          description={t('statsPages.composition.muscleMassDesc')}
+        >
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'muscle_percent',
+              label: t('statsPages.composition.muscleMass'),
+              color: muscleStatus?.color || '#10B981',
+              unit: '%',
+              icon: <Activity size={18} color={muscleStatus?.color || '#10B981'} strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
+          >
+            <AnimatedMetricBar
+              value={musclePercent}
+              min={muscleMassRange.min}
+              max={muscleMassRange.max}
+              zones={muscleMassRange.zones}
+              unit={muscleMassRange.unit}
+              title={t('statsPages.composition.muscleMass')}
+              source={muscleMassRange.source}
+              sourceUrl={muscleMassRange.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
+      {/* Barre animée Hydratation */}
+      {waterPercent > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.hydration')}
+          description={t('statsPages.composition.hydrationDesc')}
+        >
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'water_percent',
+              label: t('statsPages.composition.hydration'),
+              color: waterStatus?.color || '#06B6D4',
+              unit: '%',
+              icon: <Droplet size={18} color={waterStatus?.color || '#06B6D4'} strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
+          >
+            <AnimatedMetricBar
+              value={waterPercent}
+              min={WATER_PERCENTAGE_RANGES.min}
+              max={WATER_PERCENTAGE_RANGES.max}
+              zones={WATER_PERCENTAGE_RANGES.zones}
+              unit={WATER_PERCENTAGE_RANGES.unit}
+              title={t('statsPages.composition.hydration')}
+              source={WATER_PERCENTAGE_RANGES.source}
+              sourceUrl={WATER_PERCENTAGE_RANGES.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
+      {/* Barre animée Graisse Viscérale */}
+      {latestWeight?.visceral_fat > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.visceralFat')}
+          description={t('statsPages.composition.visceralFatDesc')}
+        >
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'visceral_fat',
+              label: t('statsPages.composition.visceralFat'),
+              color: '#EF4444',
+              unit: '/20',
+              icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
+          >
+            <AnimatedMetricBar
+              value={latestWeight.visceral_fat}
+              min={VISCERAL_FAT_RANGES.min}
+              max={VISCERAL_FAT_RANGES.max}
+              zones={VISCERAL_FAT_RANGES.zones}
+              unit={VISCERAL_FAT_RANGES.unit}
+              title={t('statsPages.composition.visceralFat')}
+              source={VISCERAL_FAT_RANGES.source}
+              sourceUrl={VISCERAL_FAT_RANGES.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        </StatsSection>
+      )}
+
       {/* Masse Grasse - Historique scrollable + CLIQUABLE */}
       <StatsSection
-        title={t('statsPages.composition.bodyFat')}
+        title={t('statsPages.composition.bodyFatHistory')}
         description={t('statsPages.clickToSeeChart')}
       >
         <TouchableOpacity
@@ -568,5 +697,14 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     flex: 1,
+  },
+  animatedBarCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

@@ -1,9 +1,9 @@
 // ============================================
 // YOROI - PAGE DOJO
+// Design Gaming Premium - Ton parcours champion
 // ============================================
-// Ton parcours champion : Rangs, Niveaux, Badges, Timeline
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Path, G } from 'react-native-svg';
 import {
   ChevronLeft,
   Trophy,
@@ -44,7 +46,8 @@ import {
   Camera,
   Droplets,
   Clock,
-  AlertCircle,
+  ChevronRight,
+  Play,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
@@ -218,9 +221,47 @@ const BADGES: Badge[] = [
   },
 ];
 
+// Composant Progress Ring animé
+const ProgressRing: React.FC<{
+  progress: number;
+  size: number;
+  strokeWidth: number;
+  color: string;
+  bgColor?: string;
+}> = ({ progress, size, strokeWidth, color, bgColor = 'rgba(255,255,255,0.1)' }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <Svg width={size} height={size}>
+      <Circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke={bgColor}
+        strokeWidth={strokeWidth}
+        fill="transparent"
+      />
+      <Circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="transparent"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={strokeDashoffset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </Svg>
+  );
+};
+
 export default function DojoScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -230,7 +271,12 @@ export default function DojoScreen() {
   const [hydrationDays, setHydrationDays] = useState(0);
   const [goalReached, setGoalReached] = useState(false);
 
-  const [selectedTab, setSelectedTab] = useState<'rangs' | 'niveaux' | 'historique'>('rangs');
+  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'historique'>('rangs');
+
+  // Animations
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   // Célébration
   const [celebrationVisible, setCelebrationVisible] = useState(false);
@@ -239,6 +285,40 @@ export default function DojoScreen() {
   // Historique
   const [achievementsHistory, setAchievementsHistory] = useState<AchievementUnlock[]>([]);
   const [todayAchievements, setTodayAchievements] = useState<AchievementUnlock[]>([]);
+
+  // Animations
+  useEffect(() => {
+    // Pulse animation
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    );
+
+    // Glow animation
+    const glow = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 2000, useNativeDriver: true }),
+      ])
+    );
+
+    // Rotate animation
+    const rotate = Animated.loop(
+      Animated.timing(rotateAnim, { toValue: 1, duration: 20000, useNativeDriver: true })
+    );
+
+    pulse.start();
+    glow.start();
+    rotate.start();
+
+    return () => {
+      pulse.stop();
+      glow.stop();
+      rotate.stop();
+    };
+  }, []);
 
   // Charger les données
   const loadData = useCallback(async () => {
@@ -302,76 +382,182 @@ export default function DojoScreen() {
   const unlockedBadges = BADGES.filter(badge => badge.unlockCondition(stats));
   const lockedBadges = BADGES.filter(badge => !badge.unlockCondition(stats));
 
-  // Badges proches du déblocage (>70%)
-  const closeToBadges = lockedBadges.filter(badge => {
-    const progress = badge.getProgress(stats);
-    return (progress.current / progress.target) >= 0.7;
+  // Rotation interpolation
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
   });
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ChevronLeft size={28} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Dojo</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>殿堂 - Ton Parcours Guerrier</Text>
+      {/* Header avec gradient */}
+      <LinearGradient
+        colors={isDark ? ['#1F1F3D', '#0F0F1F'] : ['#667EEA', '#764BA2']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: insets.top }]}
+      >
+        {/* Particules décoratives animées */}
+        <Animated.View style={[styles.particle, styles.particle1, { transform: [{ rotate: spin }] }]}>
+          <Star size={12} color="rgba(255,255,255,0.3)" fill="rgba(255,255,255,0.3)" />
+        </Animated.View>
+        <Animated.View style={[styles.particle, styles.particle2, { transform: [{ rotate: spin }] }]}>
+          <Sparkles size={10} color="rgba(255,255,255,0.2)" />
+        </Animated.View>
+        <Animated.View style={[styles.particle, styles.particle3, { transform: [{ rotate: spin }] }]}>
+          <Zap size={8} color="rgba(255,215,0,0.4)" />
+        </Animated.View>
+
+        {/* Navigation */}
+        <View style={styles.headerNav}>
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            style={styles.backBtn}
+          >
+            <ChevronLeft size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Dojo</Text>
+            <Text style={styles.headerSubtitle}>殿堂 - Ton Parcours</Text>
+          </View>
+          <View style={{ width: 44 }} />
         </View>
-        <View style={{ width: 28 }} />
-      </View>
+
+        {/* Hero Section - Rang & Niveau */}
+        <View style={styles.heroSection}>
+          {/* Rang actuel avec anneau de progression */}
+          <Animated.View style={[styles.rankHero, { transform: [{ scale: pulseAnim }] }]}>
+            <View style={styles.rankRingContainer}>
+              <ProgressRing
+                progress={rankProgress}
+                size={100}
+                strokeWidth={6}
+                color={currentRank.color}
+                bgColor="rgba(255,255,255,0.15)"
+              />
+              <View style={[styles.rankIconHero, { backgroundColor: currentRank.color }]}>
+                {React.createElement(RankIconMap[currentRank.icon] || Target, {
+                  size: 36,
+                  color: '#FFFFFF'
+                })}
+              </View>
+            </View>
+            <Text style={styles.rankNameHero}>{currentRank.name}</Text>
+            <Text style={styles.rankNameJpHero}>{currentRank.nameJp}</Text>
+          </Animated.View>
+
+          {/* Stats rapides */}
+          <View style={styles.quickStats}>
+            <View style={styles.quickStatItem}>
+              <View style={styles.quickStatIcon}>
+                <Flame size={20} color="#F97316" />
+              </View>
+              <Text style={styles.quickStatValue}>{streak}</Text>
+              <Text style={styles.quickStatLabel}>jours</Text>
+            </View>
+
+            <View style={styles.quickStatDivider} />
+
+            <View style={styles.quickStatItem}>
+              <View style={styles.quickStatIcon}>
+                <Zap size={20} color="#FFD700" />
+              </View>
+              <Text style={styles.quickStatValue}>{totalPoints}</Text>
+              <Text style={styles.quickStatLabel}>XP</Text>
+            </View>
+
+            <View style={styles.quickStatDivider} />
+
+            <View style={styles.quickStatItem}>
+              <View style={styles.quickStatIcon}>
+                <Medal size={20} color="#10B981" />
+              </View>
+              <Text style={styles.quickStatValue}>{unlockedBadges.length}</Text>
+              <Text style={styles.quickStatLabel}>badges</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Progression vers prochain rang */}
+        {nextRank && (
+          <View style={styles.nextRankBanner}>
+            <View style={styles.nextRankInfo}>
+              {React.createElement(RankIconMap[nextRank.icon] || Target, {
+                size: 18,
+                color: nextRank.color
+              })}
+              <Text style={styles.nextRankText}>
+                <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
+                {' '}dans <Text style={{ fontWeight: '800' }}>{daysToNextRank}</Text> jours
+              </Text>
+            </View>
+            <View style={styles.nextRankProgressBar}>
+              <View style={[styles.nextRankProgressFill, { width: `${rankProgress}%`, backgroundColor: nextRank.color }]} />
+            </View>
+          </View>
+        )}
+      </LinearGradient>
 
       {/* Achievements aujourd'hui */}
       {todayAchievements.length > 0 && (
-        <View style={[styles.todayBanner, { backgroundColor: colors.successLight }]}>
-          <Sparkles size={16} color={colors.success} />
-          <Text style={[styles.todayText, { color: colors.success }]}>
-            {todayAchievements.length} achievement{todayAchievements.length > 1 ? 's' : ''} débloqué{todayAchievements.length > 1 ? 's' : ''} aujourd'hui !
-          </Text>
-        </View>
+        <Animated.View style={[
+          styles.todayBanner,
+          {
+            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
+            opacity: glowAnim.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] })
+          }
+        ]}>
+          <View style={styles.todayBannerIcon}>
+            <Sparkles size={20} color="#10B981" />
+          </View>
+          <View style={styles.todayBannerContent}>
+            <Text style={styles.todayBannerTitle}>
+              {todayAchievements.length} achievement{todayAchievements.length > 1 ? 's' : ''} aujourd'hui !
+            </Text>
+            <Text style={styles.todayBannerSubtitle}>Continue comme ça, champion !</Text>
+          </View>
+          <ChevronRight size={20} color="#10B981" />
+        </Animated.View>
       )}
 
-      {/* Tabs */}
-      <View style={[styles.tabs, { backgroundColor: colors.backgroundCard }]}>
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            selectedTab === 'rangs' && { borderBottomColor: colors.accent, borderBottomWidth: 3 },
-          ]}
-          onPress={() => setSelectedTab('rangs')}
-        >
-          <Trophy size={18} color={selectedTab === 'rangs' ? colors.accent : colors.textMuted} />
-          <Text style={[styles.tabText, { color: selectedTab === 'rangs' ? colors.accent : colors.textMuted }]}>
-            Rangs
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            selectedTab === 'niveaux' && { borderBottomColor: colors.accent, borderBottomWidth: 3 },
-          ]}
-          onPress={() => setSelectedTab('niveaux')}
-        >
-          <Zap size={18} color={selectedTab === 'niveaux' ? colors.accent : colors.textMuted} />
-          <Text style={[styles.tabText, { color: selectedTab === 'niveaux' ? colors.accent : colors.textMuted }]}>
-            Niveaux
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            selectedTab === 'historique' && { borderBottomColor: colors.accent, borderBottomWidth: 3 },
-          ]}
-          onPress={() => setSelectedTab('historique')}
-        >
-          <Clock size={18} color={selectedTab === 'historique' ? colors.accent : colors.textMuted} />
-          <Text style={[styles.tabText, { color: selectedTab === 'historique' ? colors.accent : colors.textMuted }]}>
-            Historique
-          </Text>
-        </TouchableOpacity>
+      {/* Tabs améliorés */}
+      <View style={[styles.tabsContainer, { backgroundColor: isDark ? '#1A1A2E' : '#F8FAFC' }]}>
+        {[
+          { key: 'rangs', icon: Trophy, label: 'Rangs', color: '#F59E0B' },
+          { key: 'badges', icon: Award, label: 'Badges', color: '#8B5CF6' },
+          { key: 'historique', icon: Clock, label: 'Timeline', color: '#3B82F6' },
+        ].map((tab) => {
+          const isActive = selectedTab === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[
+                styles.tabItem,
+                isActive && { backgroundColor: isDark ? `${tab.color}20` : `${tab.color}15` },
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedTab(tab.key as any);
+              }}
+              activeOpacity={0.7}
+            >
+              <tab.icon
+                size={20}
+                color={isActive ? tab.color : colors.textMuted}
+              />
+              <Text style={[
+                styles.tabLabel,
+                { color: isActive ? tab.color : colors.textMuted }
+              ]}>
+                {tab.label}
+              </Text>
+              {isActive && <View style={[styles.tabIndicator, { backgroundColor: tab.color }]} />}
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <ScrollView
@@ -379,130 +565,163 @@ export default function DojoScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* RANGS */}
+        {/* ═══════════════════════════════════════ */}
+        {/* TAB: RANGS */}
+        {/* ═══════════════════════════════════════ */}
         {selectedTab === 'rangs' && (
           <View>
-            {/* Carte rang actuel */}
-            <AnimatedCard index={0}>
-              <View style={[styles.currentCard, { backgroundColor: `${currentRank.color}15`, borderColor: currentRank.color }]}>
-                <View style={styles.currentCardHeader}>
-                  <View style={[styles.currentRankIcon, { backgroundColor: currentRank.color }]}>
-                    {React.createElement(RankIconMap[currentRank.icon] || Target, { size: 32, color: '#FFFFFF' })}
-                  </View>
-                  <View style={styles.currentRankInfo}>
-                    <Text style={[styles.currentRankName, { color: currentRank.color }]}>
-                      {currentRank.name}
-                    </Text>
-                    <Text style={[styles.currentRankJp, { color: colors.textMuted }]}>
-                      {currentRank.nameJp}
-                    </Text>
-                  </View>
-                  <View style={styles.streakBadge}>
-                    <Flame size={18} color="#F97316" />
-                    <Text style={[styles.streakValue, { color: colors.textPrimary }]}>{streak}</Text>
-                  </View>
+            {/* Niveau XP Section */}
+            <View style={[styles.levelCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
+              <LinearGradient
+                colors={[`${currentLevel.color}20`, 'transparent']}
+                style={styles.levelCardGradient}
+              />
+              <View style={styles.levelCardHeader}>
+                <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
+                  <Text style={styles.levelBadgeText}>Niv. {currentLevel.level}</Text>
                 </View>
-                <Text style={[styles.currentRankDesc, { color: colors.textSecondary }]}>
-                  {currentRank.description}
-                </Text>
-
-                {/* Récompenses débloquées */}
-                <View style={[styles.rewardUnlockedBadge, { backgroundColor: `${currentRank.color}20` }]}>
-                  <Gift size={14} color={currentRank.color} />
-                  <Text style={[styles.rewardUnlockedText, { color: currentRank.color }]}>
-                    {currentRank.reward}
-                  </Text>
+                <View style={styles.levelInfo}>
+                  <Text style={[styles.levelName, { color: colors.textPrimary }]}>{currentLevel.name}</Text>
+                  <Text style={[styles.levelNameJp, { color: colors.textMuted }]}>{currentLevel.nameJp}</Text>
                 </View>
-
-                {/* Progression vers prochain rang */}
-                {nextRank && (
-                  <View style={styles.nextRankSection}>
-                    <View style={styles.nextRankHeader}>
-                      <Text style={[styles.nextRankLabel, { color: colors.textMuted }]}>Prochain rang</Text>
-                      <Text style={[styles.daysRemaining, { color: colors.textPrimary }]}>
-                        {daysToNextRank} jours restants
-                      </Text>
-                    </View>
-                    <View style={styles.nextRankRow}>
-                      {React.createElement(RankIconMap[nextRank.icon] || Target, { size: 16, color: nextRank.color })}
-                      <Text style={[styles.nextRankName, { color: nextRank.color }]}>
-                        {nextRank.name}
-                      </Text>
-                      <Text style={[styles.nextRankPercent, { color: colors.textMuted }]}>
-                        {Math.round(rankProgress)}%
-                      </Text>
-                    </View>
-                    <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                      <View style={[styles.progressFill, { width: `${rankProgress}%`, backgroundColor: nextRank.color }]} />
-                    </View>
-
-                    {/* Aperçu récompense */}
-                    <View style={styles.nextRewardPreview}>
-                      <Gift size={12} color={nextRank.color} />
-                      <Text style={[styles.nextRewardText, { color: colors.textMuted }]}>
-                        Récompense : {nextRank.reward}
-                      </Text>
-                    </View>
-                  </View>
-                )}
+                <View style={styles.xpContainer}>
+                  <Zap size={18} color="#FFD700" fill="#FFD700" />
+                  <Text style={[styles.xpText, { color: colors.textPrimary }]}>{totalPoints}</Text>
+                </View>
               </View>
-            </AnimatedCard>
 
-            {/* Liste de tous les rangs */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TOUS LES RANGS</Text>
+              {nextLevel && (
+                <View style={styles.levelProgressSection}>
+                  <View style={styles.levelProgressHeader}>
+                    <Text style={[styles.levelProgressLabel, { color: colors.textMuted }]}>
+                      Prochain: <Text style={{ color: nextLevel.color, fontWeight: '700' }}>{nextLevel.name}</Text>
+                    </Text>
+                    <Text style={[styles.levelProgressXp, { color: colors.textPrimary }]}>
+                      {levelProgressData.pointsToNext} XP
+                    </Text>
+                  </View>
+                  <View style={[styles.levelProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}>
+                    <LinearGradient
+                      colors={[currentLevel.color, nextLevel.color]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.levelProgressFill, { width: `${levelProgressData.progress}%` }]}
+                    />
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Liste des rangs */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              PROGRESSION DES RANGS
+            </Text>
+
             {RANKS.map((rank, index) => {
               const unlocked = streak >= rank.minDays;
               const isCurrent = rank.id === currentRank.id;
               const RankIcon = RankIconMap[rank.icon] || Target;
+              const progressToRank = unlocked ? 100 : Math.min((streak / rank.minDays) * 100, 100);
 
               return (
-                <AnimatedCard key={rank.id} index={index + 1}>
-                  <View
-                    style={[
-                      styles.rankCard,
-                      { backgroundColor: colors.backgroundCard },
-                      isCurrent && { borderColor: rank.color, borderWidth: 2 },
-                      !unlocked && { opacity: 0.6 },
-                    ]}
-                  >
-                    <View style={[styles.rankIconContainer, { backgroundColor: unlocked ? `${rank.color}20` : colors.border }]}>
-                      {unlocked ? (
-                        <RankIcon size={28} color={rank.color} />
-                      ) : (
-                        <Lock size={24} color={colors.textMuted} />
+                <AnimatedCard key={rank.id} index={index}>
+                  <View style={[
+                    styles.rankCard,
+                    { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' },
+                    isCurrent && {
+                      borderWidth: 2,
+                      borderColor: rank.color,
+                      shadowColor: rank.color,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      elevation: 8,
+                    },
+                  ]}>
+                    {/* Gradient overlay pour le rang actuel */}
+                    {isCurrent && (
+                      <LinearGradient
+                        colors={[`${rank.color}15`, 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.rankCardGradient}
+                      />
+                    )}
+
+                    {/* Icône avec ring de progression */}
+                    <View style={styles.rankCardIconContainer}>
+                      {!unlocked && (
+                        <ProgressRing
+                          progress={progressToRank}
+                          size={64}
+                          strokeWidth={4}
+                          color={rank.color}
+                          bgColor={isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}
+                        />
                       )}
+                      <View style={[
+                        styles.rankCardIcon,
+                        {
+                          backgroundColor: unlocked ? rank.color : (isDark ? '#2D2D4D' : '#F3F4F6'),
+                          position: unlocked ? 'relative' : 'absolute',
+                        },
+                      ]}>
+                        {unlocked ? (
+                          <RankIcon size={28} color="#FFFFFF" />
+                        ) : (
+                          <Lock size={24} color={colors.textMuted} />
+                        )}
+                      </View>
                     </View>
 
-                    <View style={styles.rankInfo}>
-                      <View style={styles.rankNameRow}>
-                        <Text style={[styles.rankName, { color: unlocked ? rank.color : colors.textMuted }]}>
+                    {/* Infos du rang */}
+                    <View style={styles.rankCardInfo}>
+                      <View style={styles.rankCardNameRow}>
+                        <Text style={[
+                          styles.rankCardName,
+                          { color: unlocked ? rank.color : colors.textMuted }
+                        ]}>
                           {rank.name}
                         </Text>
                         {isCurrent && (
-                          <View style={[styles.currentBadge, { backgroundColor: rank.color }]}>
-                            <Text style={styles.currentBadgeText}>ACTUEL</Text>
+                          <View style={[styles.currentTag, { backgroundColor: rank.color }]}>
+                            <Text style={styles.currentTagText}>ACTUEL</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={[styles.rankNameJp, { color: colors.textMuted }]}>{rank.nameJp}</Text>
-                      <Text style={[styles.rankDesc, { color: colors.textSecondary }]}>{rank.description}</Text>
+                      <Text style={[styles.rankCardNameJp, { color: colors.textMuted }]}>
+                        {rank.nameJp}
+                      </Text>
+                      <Text style={[styles.rankCardDesc, { color: colors.textSecondary }]} numberOfLines={2}>
+                        {rank.description}
+                      </Text>
 
                       {/* Récompense */}
-                      <View style={styles.rewardRow}>
+                      <View style={styles.rankCardReward}>
                         <Gift size={14} color={unlocked ? rank.color : colors.textMuted} />
-                        <Text style={[styles.rewardText, { color: unlocked ? rank.color : colors.textMuted }]}>
+                        <Text style={[
+                          styles.rankCardRewardText,
+                          { color: unlocked ? rank.color : colors.textMuted }
+                        ]}>
                           {rank.reward}
                         </Text>
                       </View>
                     </View>
 
-                    <View style={styles.statusContainer}>
+                    {/* Status */}
+                    <View style={styles.rankCardStatus}>
                       {unlocked ? (
-                        <Check size={20} color={rank.color} />
+                        <View style={[styles.checkCircle, { backgroundColor: `${rank.color}20` }]}>
+                          <Check size={18} color={rank.color} />
+                        </View>
                       ) : (
-                        <View style={styles.daysRequiredBadge}>
-                          <Text style={[styles.daysRequired, { color: colors.textMuted }]}>{rank.minDays}</Text>
-                          <Text style={[styles.daysLabel, { color: colors.textMuted }]}>jours</Text>
+                        <View style={styles.daysNeeded}>
+                          <Text style={[styles.daysNeededValue, { color: colors.textPrimary }]}>
+                            {rank.minDays - streak}
+                          </Text>
+                          <Text style={[styles.daysNeededLabel, { color: colors.textMuted }]}>
+                            jours
+                          </Text>
                         </View>
                       )}
                     </View>
@@ -513,171 +732,290 @@ export default function DojoScreen() {
           </View>
         )}
 
-        {/* NIVEAUX - Similaire mais avec XP */}
-        {selectedTab === 'niveaux' && (
+        {/* ═══════════════════════════════════════ */}
+        {/* TAB: BADGES */}
+        {/* ═══════════════════════════════════════ */}
+        {selectedTab === 'badges' && (
           <View>
-            <AnimatedCard index={0}>
-              <View style={[styles.currentCard, { backgroundColor: `${currentLevel.color}15`, borderColor: currentLevel.color }]}>
-                <View style={styles.currentCardHeader}>
-                  <View style={[styles.currentLevelIcon, { backgroundColor: currentLevel.color }]}>
-                    <Text style={styles.levelNumber}>{currentLevel.level}</Text>
-                  </View>
-                  <View style={styles.currentLevelInfo}>
-                    <Text style={[styles.currentLevelName, { color: currentLevel.color }]}>
-                      {currentLevel.name}
+            {/* Stats des badges */}
+            <View style={[styles.badgesStatsCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
+              <LinearGradient
+                colors={['#8B5CF620', 'transparent']}
+                style={styles.badgesStatsGradient}
+              />
+              <View style={styles.badgesStatsContent}>
+                <View style={styles.badgesStatItem}>
+                  <View style={[styles.badgesStatCircle, { borderColor: '#10B981' }]}>
+                    <Text style={[styles.badgesStatValue, { color: '#10B981' }]}>
+                      {unlockedBadges.length}
                     </Text>
-                    <Text style={[styles.currentLevelJp, { color: colors.textMuted }]}>
-                      {currentLevel.nameJp}
-                    </Text>
                   </View>
-                  <View style={styles.xpBadge}>
-                    <Sparkles size={18} color={colors.accent} />
-                    <Text style={[styles.xpValue, { color: colors.textPrimary }]}>{totalPoints} XP</Text>
-                  </View>
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Débloqués</Text>
                 </View>
-                <Text style={[styles.currentLevelDesc, { color: colors.textSecondary }]}>
-                  {currentLevel.description}
-                </Text>
 
-                {nextLevel && (
-                  <View style={styles.nextLevelSection}>
-                    <View style={styles.nextLevelHeader}>
-                      <Text style={[styles.nextLevelLabel, { color: colors.textMuted }]}>Prochain niveau</Text>
-                      <Text style={[styles.xpRemaining, { color: colors.textPrimary }]}>
-                        {levelProgressData.pointsToNext} XP restants
-                      </Text>
-                    </View>
-                    <View style={styles.nextLevelRow}>
-                      <Text style={[styles.nextLevelNumber, { color: nextLevel.color }]}>
-                        Niv. {nextLevel.level}
-                      </Text>
-                      <Text style={[styles.nextLevelName, { color: nextLevel.color }]}>
-                        {nextLevel.name}
-                      </Text>
-                      <Text style={[styles.nextLevelPercent, { color: colors.textMuted }]}>
-                        {levelProgressData.progress}%
-                      </Text>
-                    </View>
-                    <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                      <View style={[styles.progressFill, { width: `${levelProgressData.progress}%`, backgroundColor: nextLevel.color }]} />
-                    </View>
+                <View style={styles.badgesStatDivider}>
+                  <View style={[styles.badgesStatDividerLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                <View style={styles.badgesStatItem}>
+                  <View style={[styles.badgesStatCircle, { borderColor: colors.textMuted }]}>
+                    <Text style={[styles.badgesStatValue, { color: colors.textMuted }]}>
+                      {lockedBadges.length}
+                    </Text>
                   </View>
-                )}
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Restants</Text>
+                </View>
+
+                <View style={styles.badgesStatDivider}>
+                  <View style={[styles.badgesStatDividerLine, { backgroundColor: colors.border }]} />
+                </View>
+
+                <View style={styles.badgesStatItem}>
+                  <View style={[styles.badgesStatCircle, { borderColor: '#8B5CF6' }]}>
+                    <Text style={[styles.badgesStatValue, { color: '#8B5CF6' }]}>
+                      {BADGES.length}
+                    </Text>
+                  </View>
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Total</Text>
+                </View>
               </View>
-            </AnimatedCard>
 
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>TOUS LES NIVEAUX</Text>
-            {LEVELS.map((level, index) => {
-              const unlocked = totalPoints >= level.pointsRequired;
-              const isCurrent = level.level === currentLevel.level;
-              const LevelIcon = LevelIconMap[level.icon] || Shield;
-
-              return (
-                <AnimatedCard key={level.level} index={index + 1}>
-                  <View
-                    style={[
-                      styles.levelCard,
-                      { backgroundColor: colors.backgroundCard },
-                      isCurrent && { borderColor: level.color, borderWidth: 2 },
-                      !unlocked && { opacity: 0.6 },
-                    ]}
-                  >
-                    <View style={[styles.levelIconContainer, { backgroundColor: unlocked ? `${level.color}20` : colors.border }]}>
-                      {unlocked ? (
-                        <LevelIcon size={28} color={level.color} />
-                      ) : (
-                        <Lock size={24} color={colors.textMuted} />
-                      )}
-                      <View style={[styles.levelNumberBadge, { backgroundColor: unlocked ? level.color : colors.textMuted }]}>
-                        <Text style={styles.levelNumberSmall}>{level.level}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.levelInfo}>
-                      <View style={styles.levelNameRow}>
-                        <Text style={[styles.levelName, { color: unlocked ? level.color : colors.textMuted }]}>
-                          {level.name}
-                        </Text>
-                        {isCurrent && (
-                          <View style={[styles.currentBadge, { backgroundColor: level.color }]}>
-                            <Text style={styles.currentBadgeText}>ACTUEL</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={[styles.levelNameJp, { color: colors.textMuted }]}>{level.nameJp}</Text>
-                      <Text style={[styles.levelDesc, { color: colors.textSecondary }]}>{level.description}</Text>
-                    </View>
-
-                    <View style={styles.statusContainer}>
-                      {unlocked ? (
-                        <Check size={20} color={level.color} />
-                      ) : (
-                        <View style={styles.xpRequiredBadge}>
-                          <Text style={[styles.xpRequired, { color: colors.textMuted }]}>{level.pointsRequired}</Text>
-                          <Text style={[styles.xpLabel, { color: colors.textMuted }]}>XP</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                </AnimatedCard>
-              );
-            })}
-          </View>
-        )}
-
-        {/* HISTORIQUE */}
-        {selectedTab === 'historique' && (
-          <View>
-            {achievementsHistory.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Clock size={48} color={colors.textMuted} />
-                <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
-                  Aucun achievement débloqué pour le moment
-                </Text>
-                <Text style={[styles.emptyStateSubtext, { color: colors.textMuted }]}>
-                  Continue ton effort et reviens ici !
+              {/* Progress bar global */}
+              <View style={styles.badgesProgressGlobal}>
+                <View style={[styles.badgesProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }]}>
+                  <LinearGradient
+                    colors={['#8B5CF6', '#06B6D4']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.badgesProgressFill, { width: `${(unlockedBadges.length / BADGES.length) * 100}%` }]}
+                  />
+                </View>
+                <Text style={[styles.badgesProgressText, { color: colors.textPrimary }]}>
+                  {Math.round((unlockedBadges.length / BADGES.length) * 100)}% complété
                 </Text>
               </View>
-            ) : (
+            </View>
+
+            {/* Badges débloqués */}
+            {unlockedBadges.length > 0 && (
               <>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                  HISTORIQUE DES ACHIEVEMENTS ({achievementsHistory.length})
+                <Text style={[styles.sectionTitle, { color: '#10B981' }]}>
+                  BADGES DÉBLOQUÉS
                 </Text>
-                {achievementsHistory.map((achievement, index) => (
-                  <AnimatedCard key={`${achievement.id}-${achievement.unlockedAt}`} index={index}>
-                    <View style={[styles.historyCard, { backgroundColor: colors.backgroundCard, borderLeftColor: achievement.color }]}>
-                      <View style={[styles.historyIconContainer, { backgroundColor: `${achievement.color}20` }]}>
-                        <View style={styles.historyIconContainer}>
-                          {achievement.type === 'badge' ? (
-                            <Medal size={20} color={colors.textPrimary} />
-                          ) : achievement.type === 'rank' ? (
-                            <Trophy size={20} color={colors.textPrimary} />
-                          ) : (
-                            <Zap size={20} color={colors.textPrimary} />
-                          )}
+                {unlockedBadges.map((badge, index) => (
+                  <AnimatedCard key={badge.id} index={index}>
+                    <View style={[
+                      styles.badgeCard,
+                      { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' },
+                    ]}>
+                      <LinearGradient
+                        colors={[`${badge.color}15`, 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.badgeCardGradient}
+                      />
+
+                      <View style={[styles.badgeIconContainer, { backgroundColor: badge.color }]}>
+                        <badge.icon size={26} color="#FFFFFF" />
+                      </View>
+
+                      <View style={styles.badgeInfo}>
+                        <View style={styles.badgeNameRow}>
+                          <Text style={[styles.badgeName, { color: badge.color }]}>{badge.name}</Text>
+                          <View style={[styles.unlockedTag, { backgroundColor: '#10B98120' }]}>
+                            <Check size={12} color="#10B981" />
+                          </View>
                         </View>
+                        <Text style={[styles.badgeNameJp, { color: colors.textMuted }]}>{badge.nameJp}</Text>
+                        <Text style={[styles.badgeDesc, { color: colors.textSecondary }]}>{badge.description}</Text>
                       </View>
 
-                      <View style={styles.historyInfo}>
-                        <Text style={[styles.historyName, { color: achievement.color }]}>{achievement.name}</Text>
-                        <Text style={[styles.historyNameJp, { color: colors.textMuted }]}>{achievement.nameJp}</Text>
-                        <Text style={[styles.historyDate, { color: colors.textMuted }]}>
-                          {format(new Date(achievement.unlockedAt), 'dd MMMM yyyy', { locale: fr })}
-                        </Text>
-                      </View>
-
-                      <View style={[styles.historyRewardBadge, { backgroundColor: `${achievement.color}15` }]}>
-                        <Text style={[styles.historyRewardText, { color: achievement.color }]}>{achievement.reward}</Text>
+                      <View style={[styles.badgeRewardTag, { backgroundColor: `${badge.color}15` }]}>
+                        <Zap size={14} color={badge.color} fill={badge.color} />
+                        <Text style={[styles.badgeRewardText, { color: badge.color }]}>{badge.reward}</Text>
                       </View>
                     </View>
                   </AnimatedCard>
                 ))}
               </>
             )}
+
+            {/* Badges à débloquer */}
+            {lockedBadges.length > 0 && (
+              <>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                  À DÉBLOQUER
+                </Text>
+                {lockedBadges.map((badge, index) => {
+                  const progress = badge.getProgress(stats);
+                  const progressPercent = (progress.current / progress.target) * 100;
+                  const isClose = progressPercent >= 70;
+
+                  return (
+                    <AnimatedCard key={badge.id} index={index + unlockedBadges.length}>
+                      <View style={[
+                        styles.badgeCard,
+                        styles.badgeCardLocked,
+                        { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' },
+                        isClose && { borderWidth: 1, borderColor: `${badge.color}40` },
+                      ]}>
+                        {isClose && (
+                          <View style={[styles.closeBadge, { backgroundColor: badge.color }]}>
+                            <Text style={styles.closeBadgeText}>PROCHE !</Text>
+                          </View>
+                        )}
+
+                        <View style={styles.badgeIconContainerLocked}>
+                          <ProgressRing
+                            progress={progressPercent}
+                            size={58}
+                            strokeWidth={4}
+                            color={badge.color}
+                            bgColor={isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB'}
+                          />
+                          <View style={[styles.badgeIconLocked, { backgroundColor: isDark ? '#2D2D4D' : '#F3F4F6' }]}>
+                            <badge.icon size={22} color={colors.textMuted} />
+                          </View>
+                        </View>
+
+                        <View style={styles.badgeInfo}>
+                          <Text style={[styles.badgeName, { color: colors.textMuted }]}>{badge.name}</Text>
+                          <Text style={[styles.badgeNameJp, { color: colors.textMuted, opacity: 0.6 }]}>{badge.nameJp}</Text>
+                          <Text style={[styles.badgeDesc, { color: colors.textMuted }]}>{badge.description}</Text>
+
+                          {/* Progress info */}
+                          <View style={styles.badgeProgressInfo}>
+                            <Text style={[styles.badgeProgressText, { color: badge.color }]}>
+                              {progress.current}/{progress.target}
+                            </Text>
+                            <Text style={[styles.badgeConditionText, { color: colors.textMuted }]}>
+                              {badge.condition}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.badgeLockedStatus}>
+                          <Lock size={18} color={colors.textMuted} />
+                        </View>
+                      </View>
+                    </AnimatedCard>
+                  );
+                })}
+              </>
+            )}
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        {/* ═══════════════════════════════════════ */}
+        {/* TAB: HISTORIQUE (Timeline) */}
+        {/* ═══════════════════════════════════════ */}
+        {selectedTab === 'historique' && (
+          <View>
+            {achievementsHistory.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={[styles.emptyStateIcon, { backgroundColor: isDark ? '#1F1F3D' : '#F3F4F6' }]}>
+                  <Clock size={48} color={colors.textMuted} />
+                </View>
+                <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
+                  Ton histoire commence ici
+                </Text>
+                <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
+                  Chaque badge débloqué, chaque rang atteint sera immortalisé dans ta timeline.
+                </Text>
+                <TouchableOpacity
+                  style={styles.emptyStateButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setSelectedTab('badges');
+                  }}
+                >
+                  <LinearGradient
+                    colors={['#8B5CF6', '#6366F1']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.emptyStateButtonGradient}
+                  >
+                    <Play size={18} color="#FFFFFF" />
+                    <Text style={styles.emptyStateButtonText}>Voir les badges</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+                  TA TIMELINE ({achievementsHistory.length})
+                </Text>
+
+                {/* Timeline */}
+                <View style={styles.timeline}>
+                  {achievementsHistory.map((achievement, index) => (
+                    <AnimatedCard key={`${achievement.id}-${achievement.unlockedAt}`} index={index}>
+                      <View style={styles.timelineItem}>
+                        {/* Ligne verticale */}
+                        {index < achievementsHistory.length - 1 && (
+                          <View style={[styles.timelineLine, { backgroundColor: achievement.color }]} />
+                        )}
+
+                        {/* Point sur la timeline */}
+                        <View style={[styles.timelineDot, { backgroundColor: achievement.color }]}>
+                          {achievement.type === 'badge' ? (
+                            <Medal size={14} color="#FFFFFF" />
+                          ) : achievement.type === 'rank' ? (
+                            <Trophy size={14} color="#FFFFFF" />
+                          ) : (
+                            <Zap size={14} color="#FFFFFF" />
+                          )}
+                        </View>
+
+                        {/* Carte d'achievement */}
+                        <View style={[
+                          styles.timelineCard,
+                          { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' },
+                        ]}>
+                          <LinearGradient
+                            colors={[`${achievement.color}10`, 'transparent']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.timelineCardGradient}
+                          />
+
+                          <View style={styles.timelineCardHeader}>
+                            <View>
+                              <Text style={[styles.timelineCardName, { color: achievement.color }]}>
+                                {achievement.name}
+                              </Text>
+                              <Text style={[styles.timelineCardNameJp, { color: colors.textMuted }]}>
+                                {achievement.nameJp}
+                              </Text>
+                            </View>
+                            <View style={[styles.timelineReward, { backgroundColor: `${achievement.color}15` }]}>
+                              <Text style={[styles.timelineRewardText, { color: achievement.color }]}>
+                                {achievement.reward}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <View style={styles.timelineCardFooter}>
+                            <Text style={[styles.timelineDate, { color: colors.textMuted }]}>
+                              {format(new Date(achievement.unlockedAt), "d MMMM yyyy 'à' HH:mm", { locale: fr })}
+                            </Text>
+                            <View style={[styles.timelineType, { backgroundColor: isDark ? '#2D2D4D' : '#F3F4F6' }]}>
+                              <Text style={[styles.timelineTypeText, { color: colors.textMuted }]}>
+                                {achievement.type === 'badge' ? 'Badge' : achievement.type === 'rank' ? 'Rang' : 'Niveau'}
+                              </Text>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    </AnimatedCard>
+                  ))}
+                </View>
+              </>
+            )}
+          </View>
+        )}
+
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Popup de célébration */}
@@ -699,289 +1037,738 @@ export default function DojoScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  header: {
+
+  // ═══════════════════════════════════════
+  // HEADER GRADIENT
+  // ═══════════════════════════════════════
+  headerGradient: {
+    paddingBottom: 20,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    overflow: 'hidden',
+  },
+  headerNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingVertical: 12,
   },
-  backBtn: { padding: 4 },
-  headerCenter: { alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontWeight: '900' },
-  headerSubtitle: { fontSize: 11, fontStyle: 'italic', marginTop: 2 },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleContainer: { alignItems: 'center' },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
 
+  // Particules décoratives
+  particle: { position: 'absolute' },
+  particle1: { top: 60, left: 30 },
+  particle2: { top: 100, right: 40 },
+  particle3: { bottom: 80, left: 60 },
+
+  // ═══════════════════════════════════════
+  // HERO SECTION
+  // ═══════════════════════════════════════
+  heroSection: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+  rankHero: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  rankRingContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankIconHero: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  rankNameHero: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginTop: 12,
+  },
+  rankNameJpHero: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+  },
+
+  // Quick Stats
+  quickStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    gap: 20,
+  },
+  quickStatItem: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  quickStatIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickStatValue: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  quickStatLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quickStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+
+  // Next Rank Banner
+  nextRankBanner: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  nextRankInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  nextRankText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  nextRankProgressBar: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+  },
+  nextRankProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+
+  // ═══════════════════════════════════════
+  // TODAY BANNER
+  // ═══════════════════════════════════════
   todayBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
     marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 16,
+    gap: 12,
   },
-  todayText: { fontSize: 13, fontWeight: '700' },
-
-  closeToUnlockBanner: {
-    flexDirection: 'row',
+  todayBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#10B98120',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 12,
   },
-  closeToUnlockText: { fontSize: 13, fontWeight: '700' },
+  todayBannerContent: {
+    flex: 1,
+  },
+  todayBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  todayBannerSubtitle: {
+    fontSize: 11,
+    color: '#059669',
+    marginTop: 2,
+  },
 
-  tabs: {
+  // ═══════════════════════════════════════
+  // TABS
+  // ═══════════════════════════════════════
+  tabsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 8,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 6,
+    gap: 6,
   },
-  tab: {
+  tabItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 10,
-  },
-  tabText: { fontSize: 11, fontWeight: '700' },
-
-  scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16 },
-
-  sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginTop: 16, marginBottom: 12 },
-
-  currentCard: {
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-    marginBottom: 16,
-  },
-  currentCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  currentRankIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  currentRankInfo: { flex: 1 },
-  currentRankName: { fontSize: 20, fontWeight: '900' },
-  currentRankJp: { fontSize: 12, marginTop: 2 },
-  currentRankDesc: { fontSize: 13, marginBottom: 12, lineHeight: 20 },
-  streakBadge: { alignItems: 'center', gap: 2 },
-  streakValue: { fontSize: 24, fontWeight: '900' },
-
-  rewardUnlockedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    marginBottom: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    position: 'relative',
   },
-  rewardUnlockedText: { fontSize: 12, fontWeight: '700' },
+  tabLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+  },
 
-  currentLevelIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+  // ═══════════════════════════════════════
+  // SCROLL VIEW
+  // ═══════════════════════════════════════
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20 },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginTop: 24,
+    marginBottom: 14,
+    textTransform: 'uppercase',
+  },
+
+  // ═══════════════════════════════════════
+  // LEVEL CARD
+  // ═══════════════════════════════════════
+  levelCard: {
+    borderRadius: 20,
+    padding: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  levelCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  levelCardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
   },
-  levelNumber: { fontSize: 28, fontWeight: '900', color: '#FFFFFF' },
-  currentLevelInfo: { flex: 1 },
-  currentLevelName: { fontSize: 20, fontWeight: '900' },
-  currentLevelJp: { fontSize: 12, marginTop: 2 },
-  currentLevelDesc: { fontSize: 13, marginBottom: 12, lineHeight: 20 },
-  xpBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  xpValue: { fontSize: 16, fontWeight: '800' },
+  levelBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  levelBadgeText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  levelInfo: {
+    flex: 1,
+  },
+  levelName: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  levelNameJp: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  xpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  xpText: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  levelProgressSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  levelProgressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  levelProgressLabel: {
+    fontSize: 12,
+  },
+  levelProgressXp: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  levelProgressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  levelProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
 
-  nextRankSection: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)' },
-  nextRankHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  nextRankLabel: { fontSize: 11, fontWeight: '600' },
-  daysRemaining: { fontSize: 13, fontWeight: '700' },
-  nextRankRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  nextRankName: { fontSize: 15, fontWeight: '700', flex: 1 },
-  nextRankPercent: { fontSize: 12, fontWeight: '600' },
-  progressBar: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 4 },
-  nextRewardPreview: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
-  nextRewardText: { fontSize: 11, fontWeight: '600' },
-
-  nextLevelSection: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)' },
-  nextLevelHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  nextLevelLabel: { fontSize: 11, fontWeight: '600' },
-  xpRemaining: { fontSize: 13, fontWeight: '700' },
-  nextLevelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  nextLevelNumber: { fontSize: 15, fontWeight: '900' },
-  nextLevelName: { fontSize: 15, fontWeight: '700', flex: 1 },
-  nextLevelPercent: { fontSize: 12, fontWeight: '600' },
-
+  // ═══════════════════════════════════════
+  // RANK CARDS
+  // ═══════════════════════════════════════
   rankCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+    overflow: 'hidden',
   },
-  rankIconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 14,
+  rankCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  rankCardIconContainer: {
+    width: 64,
+    height: 64,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankInfo: { flex: 1, marginLeft: 12 },
-  rankNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rankName: { fontSize: 16, fontWeight: '700' },
-  rankNameJp: { fontSize: 11, marginTop: 2 },
-  rankDesc: { fontSize: 12, marginTop: 4, lineHeight: 18 },
-  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  rewardText: { fontSize: 11, fontWeight: '600' },
-  currentBadge: {
+  rankCardIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankCardInfo: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  rankCardNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rankCardName: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  currentTag: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
-  currentBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
-  statusContainer: { alignItems: 'center', justifyContent: 'center', minWidth: 50 },
-  daysRequiredBadge: { alignItems: 'center' },
-  daysRequired: { fontSize: 16, fontWeight: '800' },
-  daysLabel: { fontSize: 9, fontWeight: '600' },
-
-  levelCard: {
+  currentTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  rankCardNameJp: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  rankCardDesc: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  rankCardReward: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
+    gap: 4,
+    marginTop: 8,
   },
-  levelIconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 14,
+  rankCardRewardText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  rankCardStatus: {
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
+    marginLeft: 10,
   },
-  levelNumberBadge: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  checkCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  levelNumberSmall: { fontSize: 11, fontWeight: '900', color: '#FFFFFF' },
-  levelInfo: { flex: 1, marginLeft: 12 },
-  levelNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  levelName: { fontSize: 16, fontWeight: '700' },
-  levelNameJp: { fontSize: 11, marginTop: 2 },
-  levelDesc: { fontSize: 12, marginTop: 4, lineHeight: 18 },
-  xpRequiredBadge: { alignItems: 'center' },
-  xpRequired: { fontSize: 16, fontWeight: '800' },
-  xpLabel: { fontSize: 9, fontWeight: '600' },
-
-  statsCard: {
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 16,
+  daysNeeded: {
+    alignItems: 'center',
   },
-  statsTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  badgesProgress: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  badgesStat: { alignItems: 'center', flex: 1 },
-  badgesStatValue: { fontSize: 28, fontWeight: '900' },
-  badgesStatLabel: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-  badgesDivider: { width: 1, height: 40, backgroundColor: 'rgba(0,0,0,0.1)' },
+  daysNeededValue: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  daysNeededLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
 
+  // ═══════════════════════════════════════
+  // BADGES STATS CARD
+  // ═══════════════════════════════════════
+  badgesStatsCard: {
+    borderRadius: 20,
+    padding: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  badgesStatsGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  badgesStatsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  badgesStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  badgesStatCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  badgesStatValue: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  badgesStatLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  badgesStatDivider: {
+    height: 60,
+    justifyContent: 'center',
+  },
+  badgesStatDividerLine: {
+    width: 1,
+    height: 40,
+  },
+  badgesProgressGlobal: {
+    marginTop: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  badgesProgressBar: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  badgesProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  badgesProgressText: {
+    fontSize: 12,
+    fontWeight: '700',
+    minWidth: 80,
+    textAlign: 'right',
+  },
+
+  // ═══════════════════════════════════════
+  // BADGE CARDS
+  // ═══════════════════════════════════════
   badgeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  badgeCardLocked: {
+    opacity: 0.85,
+  },
+  badgeCardGradient: {
+    ...StyleSheet.absoluteFillObject,
   },
   badgeIconContainer: {
     width: 54,
     height: 54,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  badgeIconContainerLocked: {
+    width: 58,
+    height: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  badgeIconLocked: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeInfo: { flex: 1, marginLeft: 12 },
-  badgeName: { fontSize: 16, fontWeight: '700' },
-  badgeNameJp: { fontSize: 11, marginTop: 2 },
-  badgeDesc: { fontSize: 12, marginTop: 4, lineHeight: 18 },
-  badgeProgressContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  badgeProgressBar: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
-  badgeProgressFill: { height: '100%', borderRadius: 3 },
-  badgeProgressText: { fontSize: 11, fontWeight: '700', minWidth: 50, textAlign: 'right' },
-  conditionRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  conditionText: { fontSize: 11, fontWeight: '600' },
-  unlockedBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  badgeInfo: {
+    flex: 1,
+    marginLeft: 14,
   },
-  lockedBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  historyCard: {
+  badgeNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
-    borderLeftWidth: 4,
+    gap: 8,
   },
-  historyIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
+  badgeName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  unlockedTag: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  historyIconPlaceholder: { fontSize: 24 },
-  historyInfo: { flex: 1, marginLeft: 12 },
-  historyName: { fontSize: 15, fontWeight: '700' },
-  historyNameJp: { fontSize: 10, marginTop: 2 },
-  historyDate: { fontSize: 10, marginTop: 4 },
-  historyRewardBadge: {
+  badgeNameJp: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  badgeDesc: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  badgeProgressInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  badgeProgressText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  badgeConditionText: {
+    fontSize: 11,
+  },
+  badgeRewardTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
   },
-  historyRewardText: { fontSize: 10, fontWeight: '700' },
+  badgeRewardText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  badgeLockedStatus: {
+    marginLeft: 10,
+  },
+  closeBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderBottomLeftRadius: 12,
+    borderTopRightRadius: 16,
+  },
+  closeBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
 
+  // ═══════════════════════════════════════
+  // TIMELINE (HISTORIQUE)
+  // ═══════════════════════════════════════
+  timeline: {
+    paddingLeft: 20,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    position: 'relative',
+  },
+  timelineLine: {
+    position: 'absolute',
+    left: 15,
+    top: 40,
+    bottom: -20,
+    width: 2,
+    borderRadius: 1,
+  },
+  timelineDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  timelineCard: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  timelineCardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  timelineCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  timelineCardName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  timelineCardNameJp: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  timelineReward: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  timelineRewardText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  timelineCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  timelineDate: {
+    fontSize: 10,
+  },
+  timelineType: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  timelineTypeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // ═══════════════════════════════════════
+  // EMPTY STATE
+  // ═══════════════════════════════════════
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    gap: 12,
+    paddingHorizontal: 24,
   },
-  emptyStateText: { fontSize: 16, fontWeight: '600', textAlign: 'center' },
-  emptyStateSubtext: { fontSize: 13, textAlign: 'center' },
+  emptyStateIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  emptyStateButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+  },
+  emptyStateButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });

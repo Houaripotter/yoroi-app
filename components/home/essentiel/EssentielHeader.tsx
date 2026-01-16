@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Sparkles } from 'lucide-react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Pressable } from 'react-native';
+import { Sparkles, Flame, Zap, Trophy, ChevronRight } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { ViewMode } from '@/hooks/useViewMode';
 import AvatarDisplay from '@/components/AvatarDisplay';
-import { Profile } from '@/lib/database';
+import { Profile, calculateStreak, getWeights, getTrainings } from '@/lib/database';
+import { getCurrentRank } from '@/lib/ranks';
+import { getLevel } from '@/lib/gamification';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 
 const quotes = [
   "Chaque jour est une nouvelle chance.",
@@ -42,13 +46,41 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
   profile,
   refreshTrigger = 0,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [quote, setQuote] = useState(quotes[0]);
+  const [streak, setStreak] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  // Charger les données de gamification
+  const loadGamificationData = useCallback(async () => {
+    try {
+      const [streakDays, weights, trainings] = await Promise.all([
+        calculateStreak(),
+        getWeights(365),
+        getTrainings(),
+      ]);
+      setStreak(streakDays);
+      const points = weights.length * 5 + trainings.length * 20 +
+        (streakDays >= 100 ? 500 : streakDays >= 30 ? 200 : streakDays >= 7 ? 50 : 0);
+      setTotalPoints(points);
+    } catch (error) {
+      console.error('Erreur chargement gamification:', error);
+    }
+  }, []);
 
   useEffect(() => {
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     setQuote(randomQuote);
-  }, []);
+    loadGamificationData();
+  }, [loadGamificationData]);
+
+  const currentRank = getCurrentRank(streak);
+  const currentLevel = getLevel(totalPoints);
+
+  const handleGamificationPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/gamification');
+  };
 
   return (
     <>
@@ -84,6 +116,67 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Badges Rang & Niveau - Cliquables vers Gamification */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.gamificationBanner,
+          pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] }
+        ]}
+        onPress={handleGamificationPress}
+      >
+        <LinearGradient
+          colors={isDark ? ['#1F1F3D', '#16213E'] : ['#F0F4FF', '#E8EEFF']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gamificationGradient}
+        >
+          {/* Rang */}
+          <View style={styles.gamificationItem}>
+            <View style={[styles.rankBadge, { backgroundColor: currentRank.color }]}>
+              <Trophy size={14} color="#FFFFFF" />
+            </View>
+            <View style={styles.gamificationInfo}>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Rang</Text>
+              <Text style={[styles.gamificationValue, { color: currentRank.color }]}>{currentRank.name}</Text>
+            </View>
+          </View>
+
+          {/* Séparateur */}
+          <View style={[styles.gamificationDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
+
+          {/* Streak */}
+          <View style={styles.gamificationItem}>
+            <View style={[styles.streakBadge, { backgroundColor: '#F9731620' }]}>
+              <Flame size={14} color="#F97316" />
+            </View>
+            <View style={styles.gamificationInfo}>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Streak</Text>
+              <Text style={[styles.gamificationValue, { color: '#F97316' }]}>{streak} jours</Text>
+            </View>
+          </View>
+
+          {/* Séparateur */}
+          <View style={[styles.gamificationDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
+
+          {/* Niveau XP */}
+          <View style={styles.gamificationItem}>
+            <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
+              <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
+            </View>
+            <View style={styles.gamificationInfo}>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Niveau</Text>
+              <View style={styles.xpRow}>
+                <Zap size={12} color="#FFD700" fill="#FFD700" />
+                <Text style={[styles.gamificationValue, { color: currentLevel.color }]}>{totalPoints}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Flèche pour indiquer que c'est cliquable */}
+          <ChevronRight size={18} color={colors.textMuted} style={{ marginLeft: 4 }} />
+        </LinearGradient>
+      </Pressable>
 
       {/* Citation */}
       <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
@@ -133,6 +226,85 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
   },
+
+  // Gamification Banner
+  gamificationBanner: {
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#667EEA',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  gamificationGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(102, 126, 234, 0.2)',
+  },
+  gamificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  gamificationInfo: {
+    flex: 1,
+  },
+  gamificationLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  gamificationValue: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  gamificationDivider: {
+    width: 1,
+    height: 32,
+    marginHorizontal: 8,
+  },
+  rankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  levelBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  levelBadgeText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  xpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+
+  // Citation
   container: {
     flexDirection: 'row',
     alignItems: 'flex-start',

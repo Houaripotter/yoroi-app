@@ -12,6 +12,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { RecoveryCircle } from '../whoop/RecoveryCircle';
 import { SleepPhasesBar } from '../whoop/SleepPhasesBar';
@@ -27,7 +28,7 @@ export const VitalitePage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
   const dateLocale = language === 'fr' ? fr : enUS;
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -262,6 +263,33 @@ export const VitalitePage: React.FC = () => {
           />
         )}
 
+        {/* Barre animée Durée de sommeil */}
+        {healthData?.sleep?.duration > 0 && (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'sleep',
+              label: t('statsPages.vitality.sleepDuration'),
+              color: '#6366F1',
+              unit: 'h',
+              icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
+          >
+            <AnimatedMetricBar
+              value={healthData.sleep.duration}
+              min={SLEEP_DURATION_RANGES.min}
+              max={SLEEP_DURATION_RANGES.max}
+              zones={SLEEP_DURATION_RANGES.zones}
+              unit={SLEEP_DURATION_RANGES.unit}
+              title={t('statsPages.vitality.sleepDuration')}
+              source={SLEEP_DURATION_RANGES.source}
+              sourceUrl={SLEEP_DURATION_RANGES.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.grid}>
           <TouchableOpacity
             style={styles.gridItem}
@@ -373,6 +401,60 @@ export const VitalitePage: React.FC = () => {
         title={t('statsPages.vitality.heartAndHRV')}
         description={t('statsPages.clickToSeeChart')}
       >
+        {/* Barre animée HRV */}
+        {healthData?.hrv?.value > 0 && (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'hrv',
+              label: t('statsPages.vitality.hrv'),
+              color: '#10B981',
+              unit: 'ms',
+              icon: <Zap size={18} color="#10B981" strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
+          >
+            <AnimatedMetricBar
+              value={healthData.hrv.value}
+              min={HRV_RANGES.min}
+              max={HRV_RANGES.max}
+              zones={HRV_RANGES.zones}
+              unit={HRV_RANGES.unit}
+              title={t('statsPages.vitality.hrv')}
+              source={HRV_RANGES.source}
+              sourceUrl={HRV_RANGES.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* Barre animée FC Repos */}
+        {healthData?.heartRate?.resting > 0 && (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => setSelectedMetric({
+              key: 'resting_hr',
+              label: t('statsPages.vitality.restingHeartRate'),
+              color: '#EC4899',
+              unit: 'bpm',
+              icon: <Heart size={18} color="#EC4899" strokeWidth={2.5} />,
+            })}
+            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
+          >
+            <AnimatedMetricBar
+              value={healthData.heartRate.resting}
+              min={RESTING_HEART_RATE_RANGES.min}
+              max={RESTING_HEART_RATE_RANGES.max}
+              zones={RESTING_HEART_RATE_RANGES.zones}
+              unit={RESTING_HEART_RATE_RANGES.unit}
+              title={t('statsPages.vitality.restingHeartRate')}
+              source={RESTING_HEART_RATE_RANGES.source}
+              sourceUrl={RESTING_HEART_RATE_RANGES.sourceUrl}
+              animated={true}
+            />
+          </TouchableOpacity>
+        )}
+
         {/* HRV Card style Whoop */}
         {healthData?.hrv?.value && healthData?.hrv?.baseline && (
           <TouchableOpacity
@@ -538,5 +620,14 @@ const styles = StyleSheet.create({
   hydrationContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  animatedBarCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

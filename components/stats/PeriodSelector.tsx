@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useTheme } from '@/lib/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
-export type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
+export type Period = '30j' | '90j' | '6m' | '1a';
 
 interface PeriodSelectorProps {
   selected: Period;
@@ -16,12 +16,10 @@ interface PeriodSelectorProps {
 }
 
 const PERIODS: Array<{ value: Period; label: string }> = [
-  { value: '7j', label: '7J' },
   { value: '30j', label: '30J' },
   { value: '90j', label: '90J' },
   { value: '6m', label: '6M' },
   { value: '1a', label: '1A' },
-  { value: 'tout', label: 'Tout' },
 ];
 
 export const PeriodSelector: React.FC<PeriodSelectorProps> = ({

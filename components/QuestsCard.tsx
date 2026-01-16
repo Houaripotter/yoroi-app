@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Easing,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   getDailyQuestsProgress,
   getWeeklyQuestsProgress,
@@ -20,9 +21,27 @@ import {
 } from '@/lib/quests';
 import * as Haptics from 'expo-haptics';
 import logger from '@/lib/security/logger';
+import {
+  Target,
+  Flame,
+  Trophy,
+  Star,
+  Zap,
+  ChevronRight,
+  Droplets,
+  Moon,
+  Footprints,
+  Dumbbell,
+  Award,
+  Gift,
+  Lock,
+  CheckCircle2,
+  Sparkles
+} from 'lucide-react-native';
+import { router } from 'expo-router';
 
 // ============================================
-// QUESTS CARD - COMPOSANT QUETES JOURNALIERES
+// QUESTS CARD - VERSION GAMING PREMIUM
 // ============================================
 
 interface QuestsCardProps {
@@ -39,443 +58,528 @@ interface QuestsSummary {
   xpEarned: number;
 }
 
-type TabType = 'daily' | 'weekly' | 'monthly';
-
 export const QuestsCard: React.FC<QuestsCardProps> = ({
   onXPGained,
   onRefresh,
 }) => {
-  const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const { colors, isDark } = useTheme();
   const [dailyQuests, setDailyQuests] = useState<QuestsSummary | null>(null);
-  const [weeklyQuests, setWeeklyQuests] = useState<QuestsSummary | null>(null);
-  const [monthlyQuests, setMonthlyQuests] = useState<QuestsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hydration, setHydration] = useState(0);
+  const [totalXP, setTotalXP] = useState(0);
 
-  // Animation pour le compteur XP
-  const xpAnim = useState(new Animated.Value(0))[0];
+  // Animations
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
-  // Charger toutes les quetes
+  // Animation pulse pour l'icône
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // Animation glow
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
+  }, []);
+
   const loadQuests = useCallback(async () => {
     try {
       setIsLoading(true);
-
-      // Verifier et mettre a jour les quetes automatiquement
-      const completedQuests = await checkAndUpdateQuests();
-
-      // Callback si des quetes ont ete completees
-      if (completedQuests.length > 0 && onXPGained) {
-        // On ne peut pas facilement calculer l'XP ici sans plus de logique
-        // Le callback sera appele depuis le parent
-      }
-
-      // Charger les progressions
-      const [daily, weekly, monthly, currentHydration] = await Promise.all([
-        getDailyQuestsProgress(),
-        getWeeklyQuestsProgress(),
-        getMonthlyQuestsProgress(),
-        getDailyHydration(),
-      ]);
-
+      await checkAndUpdateQuests();
+      const daily = await getDailyQuestsProgress();
       setDailyQuests(daily);
-      setWeeklyQuests(weekly);
-      setMonthlyQuests(monthly);
-      setHydration(currentHydration);
+      setTotalXP(daily?.xpEarned || 0);
+
+      // Animer la barre de progression
+      if (daily) {
+        Animated.timing(progressAnim, {
+          toValue: daily.completed / daily.total,
+          duration: 800,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: false,
+        }).start();
+      }
     } catch (error) {
-      logger.error('Erreur chargement quetes:', error);
+      logger.error('Erreur chargement quêtes:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [onXPGained]);
+  }, []);
 
   useEffect(() => {
     loadQuests();
   }, [loadQuests]);
 
-  // Ajouter de l'hydratation
-  const handleAddHydration = async (amount: number) => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const newAmount = await addHydration(amount);
-      setHydration(newAmount);
-
-      // Recharger les quetes pour mettre a jour la progression
-      await loadQuests();
-
-      if (onRefresh) {
-        onRefresh();
-      }
-    } catch (error) {
-      logger.error('Erreur ajout hydratation:', error);
-    }
+  const getQuestIcon = (questId: string) => {
+    if (questId.includes('hydration')) return Droplets;
+    if (questId.includes('sleep')) return Moon;
+    if (questId.includes('steps')) return Footprints;
+    if (questId.includes('training') || questId.includes('workout')) return Dumbbell;
+    if (questId.includes('weight')) return Target;
+    return Star;
   };
 
-  // Obtenir les quetes actives selon l'onglet
-  const getActiveQuests = (): QuestsSummary | null => {
-    switch (activeTab) {
-      case 'daily':
-        return dailyQuests;
-      case 'weekly':
-        return weeklyQuests;
-      case 'monthly':
-        return monthlyQuests;
-    }
+  const getQuestColor = (questId: string) => {
+    if (questId.includes('hydration')) return '#06B6D4';
+    if (questId.includes('sleep')) return '#8B5CF6';
+    if (questId.includes('steps')) return '#10B981';
+    if (questId.includes('training') || questId.includes('workout')) return '#F97316';
+    if (questId.includes('weight')) return '#EC4899';
+    return '#FFD700';
   };
 
-  const activeQuests = getActiveQuests();
-
-  if (isLoading) {
+  if (isLoading || !dailyQuests) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.card }]}>
-        <View style={[styles.loadingBar, { backgroundColor: colors.cardHover }]} />
+      <View style={[styles.container, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
+        <View style={[styles.loadingBar, { backgroundColor: colors.border }]} />
       </View>
     );
   }
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.card }]}>
-      {/* En-tete */}
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.headerIcon}></Text>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Quetes
-          </Text>
-        </View>
-        {activeQuests && (
-          <View style={[styles.counterBadge, { backgroundColor: colors.cardHover }]}>
-            <Text style={[styles.counterText, { color: colors.gold }]}>
-              {activeQuests.completed}/{activeQuests.total} ✓
-            </Text>
-          </View>
-        )}
-      </View>
+  const completedCount = dailyQuests.completed;
+  const totalCount = dailyQuests.total;
+  const progressPercent = (completedCount / totalCount) * 100;
 
-      {/* Onglets */}
-      <View style={[styles.tabs, { backgroundColor: colors.cardHover }]}>
-        {(['daily', 'weekly', 'monthly'] as TabType[]).map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[
-              styles.tab,
-              activeTab === tab && { backgroundColor: colors.card },
-            ]}
-            onPress={() => setActiveTab(tab)}
-            activeOpacity={0.7}
-          >
-            <Text
+  return (
+    <TouchableOpacity
+      activeOpacity={0.95}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push('/gamification');
+      }}
+    >
+      <LinearGradient
+        colors={isDark
+          ? ['#1A1A2E', '#16213E', '#0F3460']
+          : ['#FFFFFF', '#F8FAFC', '#EFF6FF']
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        {/* Header Gaming */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Animated.View style={[styles.iconWrapper, { transform: [{ scale: pulseAnim }] }]}>
+              <LinearGradient
+                colors={['#FFD700', '#FFA500']}
+                style={styles.iconGradient}
+              >
+                <Target size={22} color="#FFFFFF" strokeWidth={2.5} />
+              </LinearGradient>
+            </Animated.View>
+            <View>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>
+                Quêtes du jour
+              </Text>
+              <View style={styles.xpBadge}>
+                <Zap size={12} color="#FFD700" fill="#FFD700" />
+                <Text style={styles.xpText}>+{totalXP} XP disponibles</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Compteur circulaire */}
+          <View style={styles.counterCircle}>
+            <Text style={[styles.counterValue, { color: completedCount === totalCount ? '#10B981' : '#FFD700' }]}>
+              {completedCount}
+            </Text>
+            <Text style={[styles.counterTotal, { color: colors.textMuted }]}>/{totalCount}</Text>
+          </View>
+        </View>
+
+        {/* Barre de progression animée */}
+        <View style={styles.progressSection}>
+          <View style={[styles.progressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
+            <Animated.View
               style={[
-                styles.tabText,
-                { color: activeTab === tab ? colors.gold : colors.textSecondary },
+                styles.progressFill,
+                {
+                  width: progressAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  })
+                }
               ]}
             >
-              {tab === 'daily' ? 'Jour' : tab === 'weekly' ? 'Semaine' : 'Mois'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Liste des quetes */}
-      <View style={styles.questsList}>
-        {activeQuests?.quests.map((quest, index) => (
-          <QuestItem
-            key={quest.id}
-            quest={quest}
-            colors={colors}
-            hydration={hydration}
-            onAddHydration={quest.id === 'daily_hydration' ? handleAddHydration : undefined}
-          />
-        ))}
-      </View>
-
-      {/* XP total gagne */}
-      {activeQuests && activeQuests.xpEarned > 0 && (
-        <View style={[styles.xpTotal, { borderTopColor: colors.border }]}>
-          <Text style={[styles.xpTotalLabel, { color: colors.textSecondary }]}>
-            XP gagnes
-          </Text>
-          <Text style={[styles.xpTotalValue, { color: colors.gold }]}>
-            +{activeQuests.xpEarned} XP
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-};
-
-// ============================================
-// QUEST ITEM - ELEMENT DE QUETE INDIVIDUEL
-// ============================================
-
-interface QuestItemProps {
-  quest: QuestWithProgress;
-  colors: any;
-  hydration: number;
-  onAddHydration?: (amount: number) => void;
-}
-
-const QuestItem: React.FC<QuestItemProps> = ({
-  quest,
-  colors,
-  hydration,
-  onAddHydration,
-}) => {
-  const progressPercent = Math.min(100, (quest.current / quest.target) * 100);
-  const isHydrationQuest = quest.id === 'daily_hydration';
-
-  return (
-    <View style={styles.questItem}>
-      {/* Icone et statut */}
-      <View style={styles.questLeft}>
-        {quest.completed ? (
-          <View style={[styles.checkCircle, { backgroundColor: colors.success }]}>
-            <Text style={styles.checkMark}>✓</Text>
-          </View>
-        ) : (
-          <View style={[styles.iconCircle, { backgroundColor: colors.cardHover }]}>
-            <Text style={styles.questIcon}>{quest.icon}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Contenu */}
-      <View style={styles.questContent}>
-        <View style={styles.questTitleRow}>
-          <Text
-            style={[
-              styles.questTitle,
-              { color: quest.completed ? colors.textSecondary : colors.textPrimary },
-              quest.completed && styles.questTitleCompleted,
-            ]}
-          >
-            {quest.title}
-          </Text>
-          <Text style={[styles.questXp, { color: colors.gold }]}>
-            +{quest.xp} XP
-          </Text>
-        </View>
-
-        {/* Barre de progression pour les quetes avec target > 1 */}
-        {quest.target > 1 && (
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardHover }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${progressPercent}%`,
-                    backgroundColor: quest.completed ? colors.success : colors.gold,
-                  },
-                ]}
+              <LinearGradient
+                colors={['#FFD700', '#FFA500', '#FF8C00']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.progressGradient}
               />
+            </Animated.View>
+
+            {/* Étoiles sur la barre */}
+            {[0.25, 0.5, 0.75, 1].map((pos, i) => (
+              <View key={i} style={[styles.progressStar, { left: `${pos * 100 - 3}%` }]}>
+                <Star
+                  size={14}
+                  color={progressPercent >= pos * 100 ? '#FFD700' : (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)')}
+                  fill={progressPercent >= pos * 100 ? '#FFD700' : 'transparent'}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Liste des quêtes (3 max affichées) */}
+        <View style={styles.questsList}>
+          {dailyQuests.quests.slice(0, 3).map((quest, index) => {
+            const IconComponent = getQuestIcon(quest.id);
+            const questColor = getQuestColor(quest.id);
+            const questProgress = Math.min(100, (quest.current / quest.target) * 100);
+
+            return (
+              <View
+                key={quest.id}
+                style={[
+                  styles.questItem,
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }
+                ]}
+              >
+                {/* Icône avec état */}
+                <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
+                  {quest.completed ? (
+                    <CheckCircle2 size={20} color="#10B981" fill="#10B98130" />
+                  ) : (
+                    <IconComponent size={20} color={questColor} />
+                  )}
+                </View>
+
+                {/* Contenu */}
+                <View style={styles.questContent}>
+                  <View style={styles.questTitleRow}>
+                    <Text
+                      style={[
+                        styles.questTitle,
+                        { color: quest.completed ? colors.textMuted : colors.textPrimary },
+                        quest.completed && styles.questTitleCompleted
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {quest.title}
+                    </Text>
+                  </View>
+
+                  {/* Mini barre de progression */}
+                  {!quest.completed && quest.target > 1 && (
+                    <View style={styles.questProgressContainer}>
+                      <View style={[styles.questProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
+                        <View
+                          style={[
+                            styles.questProgressFill,
+                            { width: `${questProgress}%`, backgroundColor: questColor }
+                          ]}
+                        />
+                      </View>
+                      <Text style={[styles.questProgressText, { color: colors.textMuted }]}>
+                        {quest.current}/{quest.target}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* XP Reward */}
+                <View style={[styles.xpReward, { backgroundColor: quest.completed ? '#10B98120' : '#FFD70020' }]}>
+                  <Text style={[styles.xpRewardText, { color: quest.completed ? '#10B981' : '#FFD700' }]}>
+                    {quest.completed ? '✓' : `+${quest.xp}`}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Footer avec badges à débloquer */}
+        <View style={styles.footer}>
+          <View style={styles.badgesPreview}>
+            <View style={styles.badgesList}>
+              {[1, 2, 3].map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.miniBadge,
+                    {
+                      backgroundColor: i < completedCount
+                        ? (i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32')
+                        : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')
+                    }
+                  ]}
+                >
+                  {i < completedCount ? (
+                    <Trophy size={12} color="#FFFFFF" />
+                  ) : (
+                    <Lock size={10} color={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'} />
+                  )}
+                </View>
+              ))}
             </View>
-            <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-              {quest.current}/{quest.target}
-              {quest.unit ? ` ${quest.unit}` : ''}
+            <Text style={[styles.badgesText, { color: colors.textMuted }]}>
+              {completedCount} badge{completedCount > 1 ? 's' : ''} débloqué{completedCount > 1 ? 's' : ''}
             </Text>
           </View>
-        )}
 
-        {/* Boutons hydratation */}
-        {isHydrationQuest && !quest.completed && onAddHydration && (
-          <View style={styles.hydrationButtons}>
-            <TouchableOpacity
-              style={[styles.hydrationBtn, { backgroundColor: colors.cardHover }]}
-              onPress={() => onAddHydration(0.25)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.hydrationBtnText, { color: colors.textPrimary }]}>
-                +0.25L
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.hydrationBtn, { backgroundColor: colors.cardHover }]}
-              onPress={() => onAddHydration(0.5)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.hydrationBtnText, { color: colors.textPrimary }]}>
-                +0.5L
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.hydrationBtn, { backgroundColor: colors.gold }]}
-              onPress={() => onAddHydration(1)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.hydrationBtnText, { color: '#000' }]}>
-                +1L
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.seeAllButton}>
+            <Text style={styles.seeAllText}>Voir tout</Text>
+            <ChevronRight size={16} color="#FFD700" />
+          </View>
+        </View>
+
+        {/* Effet brillance */}
+        {completedCount === totalCount && (
+          <View style={styles.completedOverlay}>
+            <Sparkles size={20} color="#FFD700" />
+            <Text style={styles.completedText}>Toutes les quêtes terminées !</Text>
           </View>
         )}
-      </View>
-    </View>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 };
-
-// ============================================
-// STYLES
-// ============================================
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 16,
     overflow: 'hidden',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   loadingBar: {
-    height: 200,
-    borderRadius: 8,
+    height: 180,
+    borderRadius: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerIcon: {
-    fontSize: 18,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  counterBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  counterText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  tabs: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    padding: 3,
     marginBottom: 16,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  questsList: {
-    gap: 12,
-  },
-  questItem: {
+  headerLeft: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
   },
-  questLeft: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+  iconWrapper: {
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  checkCircle: {
-    width: 28,
-    height: 28,
+  iconGradient: {
+    width: 44,
+    height: 44,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkMark: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+  title: {
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
+  xpBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  xpText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFD700',
+  },
+  counterCircle: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  counterValue: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  counterTotal: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressSection: {
+    marginBottom: 16,
+  },
+  progressBar: {
+    height: 12,
+    borderRadius: 6,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  progressGradient: {
+    flex: 1,
+  },
+  progressStar: {
+    position: 'absolute',
+    top: -4,
+  },
+  questsList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  questItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    gap: 12,
   },
   questIcon: {
-    fontSize: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   questContent: {
     flex: 1,
   },
   questTitleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
   },
   questTitle: {
     fontSize: 14,
     fontWeight: '600',
+    flex: 1,
   },
   questTitleCompleted: {
     textDecorationLine: 'line-through',
+    opacity: 0.7,
   },
-  questXp: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  progressContainer: {
+  questProgressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginTop: 6,
   },
-  progressBar: {
+  questProgressBar: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
     overflow: 'hidden',
   },
-  progressFill: {
+  questProgressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2,
   },
-  progressText: {
+  questProgressText: {
     fontSize: 11,
-    fontWeight: '500',
-    minWidth: 45,
-  },
-  hydrationButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  hydrationBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  hydrationBtnText: {
-    fontSize: 12,
     fontWeight: '600',
+    minWidth: 35,
   },
-  xpTotal: {
+  xpReward: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  xpRewardText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
     paddingTop: 12,
     borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 215, 0, 0.15)',
   },
-  xpTotalLabel: {
+  badgesPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  badgesList: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  miniBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgesText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  seeAllText: {
     fontSize: 13,
-  },
-  xpTotalValue: {
-    fontSize: 16,
     fontWeight: '700',
+    color: '#FFD700',
+  },
+  completedOverlay: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  completedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
 

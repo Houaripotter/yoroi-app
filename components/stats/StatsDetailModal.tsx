@@ -13,25 +13,21 @@ import { getUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
 import * as Haptics from 'expo-haptics';
 
-type Period = '7j' | '30j' | '90j' | '6m' | '1a' | 'tout';
+type Period = '30j' | '90j' | '6m' | '1a';
 
 const PERIODS: Array<{ value: Period; label: string }> = [
-  { value: '7j', label: '7J' },
   { value: '30j', label: '30J' },
   { value: '90j', label: '90J' },
   { value: '6m', label: '6M' },
   { value: '1a', label: '1A' },
-  { value: 'tout', label: 'TOUT' },
 ];
 
 const getPeriodDays = (period: Period): number => {
   switch (period) {
-    case '7j': return 7;
     case '30j': return 30;
     case '90j': return 90;
     case '6m': return 180;
     case '1a': return 365;
-    case 'tout': return 3650;
     default: return 30;
   }
 };
@@ -360,7 +356,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             {/* Graphique complet */}
             <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                Évolution sur {selectedPeriod === '7j' ? '7 jours' : selectedPeriod === '30j' ? '30 jours' : selectedPeriod === '90j' ? '90 jours' : selectedPeriod === '6m' ? '6 mois' : selectedPeriod === '1a' ? '1 an' : 'tout'}
+                Évolution sur {selectedPeriod === '30j' ? '30 jours' : selectedPeriod === '90j' ? '90 jours' : selectedPeriod === '6m' ? '6 mois' : '1 an'}
               </Text>
               {filteredData.length > 0 ? (
                 <ModernLineChart
@@ -369,7 +365,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                   height={260}
                   showGrid={true}
                   showGradient={true}
-                  maxDataPoints={selectedPeriod === 'tout' ? 100 : selectedPeriod === '1a' ? 60 : 30}
+                  maxDataPoints={selectedPeriod === '1a' ? 60 : selectedPeriod === '6m' ? 45 : 30}
                 />
               ) : (
                 <View style={styles.noDataContainer}>

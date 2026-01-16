@@ -14,7 +14,7 @@ import { Flame, Dumbbell, Clock, Target } from 'lucide-react-native';
 
 export const EntrainementPage: React.FC = () => {
   const { colors } = useTheme();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [trainingData, setTrainingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

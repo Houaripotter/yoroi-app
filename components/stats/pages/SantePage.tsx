@@ -16,7 +16,7 @@ import { CircularProgress } from '@/components/charts/CircularProgress';
 
 export const SantePage: React.FC = () => {
   const { colors } = useTheme();
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('7j');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
   const [healthData, setHealthData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

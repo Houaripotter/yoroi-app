@@ -26,11 +26,11 @@ interface ActivityStatsProps {
   data: Training[];
 }
 
-type Period = '7j' | '30j' | '90j' | 'year';
+type Period = '30j' | '90j' | '6m' | '1a';
 
 export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
   const { colors, isDark } = useTheme();
-  const [period, setPeriod] = useState<Period>('7j');
+  const [period, setPeriod] = useState<Period>('30j');
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
     count: number;
@@ -49,10 +49,6 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
     let numberOfWeeks: number;
 
     switch (period) {
-      case '7j':
-        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        numberOfWeeks = 2; // Afficher 2 semaines pour avoir plus de contexte
-        break;
       case '30j':
         cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         numberOfWeeks = 5;
@@ -61,7 +57,11 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
         cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         numberOfWeeks = 13;
         break;
-      case 'year':
+      case '6m':
+        cutoffDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        numberOfWeeks = 26;
+        break;
+      case '1a':
         cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         numberOfWeeks = 52;
         break;
