@@ -32,6 +32,11 @@ export default function StatsScreen() {
     setShowTutorial(false);
   };
 
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = () => {
+    setShowTutorial(false);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatsTabViewNew initialTab={tab} />
@@ -42,6 +47,7 @@ export default function StatsScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.stats}
           onClose={handleCloseTutorial}
+          onLater={handleLaterTutorial}
         />
       )}
     </View>

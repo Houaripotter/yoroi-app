@@ -59,6 +59,8 @@
     <string>YOROI utilise votre calendrier pour planifier vos entraînements.</string>
     <key>NSCameraUsageDescription</key>
     <string>YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
     <key>NSHealthShareUsageDescription</key>
     <string>YOROI synchronise vos données de santé pour un suivi complet.</string>
     <key>NSHealthUpdateUsageDescription</key>

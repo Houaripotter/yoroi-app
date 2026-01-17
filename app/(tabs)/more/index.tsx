@@ -492,6 +492,33 @@ const getSupportItems = (t: TranslateFunction): MenuItem[] => [
     iconBg: '#8B5CF620',
   },
   {
+    id: 'app-store',
+    label: t('menu.appStore') || 'YOROI sur l\'App Store',
+    sublabel: t('menu.appStoreDescription') || 'Voir l\'app sur l\'App Store',
+    Icon: Apple,
+    onPress: () => Linking.openURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612'),
+    iconColor: '#007AFF',
+    iconBg: '#007AFF20',
+  },
+  {
+    id: 'instagram',
+    label: t('menu.instagram') || 'Instagram',
+    sublabel: t('menu.instagramDescription') || '@yoroiapp',
+    Icon: Camera,
+    onPress: () => Linking.openURL('https://www.instagram.com/yoroiapp'),
+    iconColor: '#E4405F',
+    iconBg: '#E4405F20',
+  },
+  {
+    id: 'privacy-policy',
+    label: t('menu.privacyPolicy') || 'Politique de confidentialite',
+    sublabel: t('menu.privacyPolicyDescription') || 'Conditions et confidentialite',
+    Icon: Shield,
+    onPress: () => Linking.openURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'),
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
+  {
     id: 'ideas',
     label: t('menu.ideas'),
     sublabel: t('menu.ideasDescription'),
@@ -599,6 +626,11 @@ export default function MoreScreen() {
 
   const handleCloseTutorial = async () => {
     await markPageAsVisited('menu');
+    setShowTutorial(false);
+  };
+
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = () => {
     setShowTutorial(false);
   };
 
@@ -2253,6 +2285,7 @@ export default function MoreScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.menu}
           onClose={handleCloseTutorial}
+          onLater={handleLaterTutorial}
         />
       )}
 

@@ -630,17 +630,17 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#FFFFFF',
       backgroundElevated: '#FFFFFF',
       backgroundLight: '#FAFAFA',
-      accent: '#CC00FF',          // Violet néon électrique identique au dark
-      accentDark: '#BB00EE',
-      accentLight: '#DD66FF',
+      accent: '#9900CC', // Violet plus fonce pour meilleur contraste WCAG AA (etait #CC00FF)
+      accentDark: '#7700AA',
+      accentLight: '#BB33EE',
       textPrimary: '#000000',
       textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textMuted: '#505050', // Ameliore contraste (etait #666666)
       textOnAccent: '#FFFFFF',
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
-      glow: 'rgba(204, 0, 255, 0.6)',        // Glow violet néon intense
-      glowStrong: 'rgba(204, 0, 255, 0.85)',
+      glow: 'rgba(153, 0, 204, 0.6)',
+      glowStrong: 'rgba(153, 0, 204, 0.85)',
     }, false),
   },
 
@@ -683,12 +683,12 @@ export const themes: Record<string, Theme> = {
       backgroundCard: '#F5F5F5',
       backgroundElevated: '#F0F0F0',
       backgroundLight: '#EAEAEA',
-      accent: '#888888',
-      accentDark: '#666666',
-      accentLight: '#AAAAAA',
+      accent: '#5A5A5A', // Ameliore contraste WCAG AA (etait #888888)
+      accentDark: '#404040',
+      accentLight: '#707070',
       textPrimary: '#1A1A1A',
-      textSecondary: '#3A3A3A',
-      textMuted: '#666666',
+      textSecondary: '#2A2A2A', // Ameliore contraste (etait #3A3A3A)
+      textMuted: '#505050', // Ameliore contraste (etait #666666)
       textOnAccent: '#FFFFFF',
       border: '#DEDEDE',
       borderLight: '#EEEEEE',

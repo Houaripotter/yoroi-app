@@ -155,6 +155,11 @@ export default function PlanningScreen() {
     setShowTutorial(false);
   };
 
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = () => {
+    setShowTutorial(false);
+  };
+
   // ============================================
   // CATALOG STATE (for "Trouver" feature)
   // ============================================
@@ -1847,6 +1852,7 @@ export default function PlanningScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.planning}
           onClose={handleCloseTutorial}
+          onLater={handleLaterTutorial}
         />
       )}
 

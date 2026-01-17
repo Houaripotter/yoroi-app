@@ -64,7 +64,14 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 interface TabBarProps extends BottomTabBarProps {}
 
 export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) {
-  const { colors } = useTheme();
+  const { colors, themeColor, isDark } = useTheme();
+
+  // Pour le thème classic en mode light, on inverse les couleurs du bouton +
+  // L'utilisateur veut un bouton blanc avec "+" noir (pas noir avec "+" blanc)
+  const isClassicLight = themeColor === 'classic' && !isDark;
+  const plusButtonBgColor = isClassicLight ? '#FFFFFF' : colors.accent;
+  const plusButtonBgColorDark = isClassicLight ? '#F5F5F5' : (colors.accentDark || colors.accent);
+  const plusIconColor = isClassicLight ? '#000000' : colors.textOnAccent;
 
   // Position animée du creux
   const notchPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
@@ -216,8 +223,8 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
             styles.pulseRing,
             {
               transform: [{ scale: pulseAnim }],
-              backgroundColor: `${colors.accent}15`,
-              borderColor: `${colors.accent}30`,
+              backgroundColor: isClassicLight ? 'rgba(0,0,0,0.08)' : `${colors.accent}15`,
+              borderColor: isClassicLight ? 'rgba(0,0,0,0.15)' : `${colors.accent}30`,
             },
           ]}
         />
@@ -235,15 +242,18 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
             activeOpacity={0.9}
             onPress={handlePressAdd}
             style={styles.buttonTouchable}
+            accessibilityLabel="Ajouter une entrée"
+            accessibilityRole="button"
+            accessibilityHint="Ouvre le menu d'ajout rapide"
           >
             <LinearGradient
-              colors={[colors.accent, colors.accentDark || colors.accent]}
+              colors={[plusButtonBgColor, plusButtonBgColorDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.buttonGradient}
             >
               <View style={styles.shineEffect} />
-              <Plus size={28} color={colors.textOnAccent} strokeWidth={3.5} />
+              <Plus size={28} color={plusIconColor} strokeWidth={3.5} />
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
@@ -272,12 +282,16 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
               return <View key={route.key} style={styles.tabItem} />;
             }
 
+            const tabLabel = getLabel(route.name);
             return (
               <TouchableOpacity
                 key={route.key}
                 style={styles.tabItem}
                 onPress={() => handleTabPress(route.name, isFocused)}
                 activeOpacity={0.7}
+                accessibilityLabel={`Onglet ${tabLabel}`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isFocused }}
               >
                 <View style={[
                   styles.iconWrapper,
@@ -301,7 +315,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
                     },
                   ]}
                 >
-                  {getLabel(route.name)}
+                  {tabLabel}
                 </Animated.Text>
               </TouchableOpacity>
             );

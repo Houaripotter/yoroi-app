@@ -10,11 +10,15 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Image,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { Trophy, Heart, ChevronRight, Shield, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Trophy, Heart, ChevronRight, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { setUserMode } from '@/lib/fighterModeService';
@@ -22,11 +26,37 @@ import { UserMode } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Couleurs forcées en mode sombre pour la sélection de mode (fond noir, texte blanc)
+// Cela assure une expérience cohérente pour tous les nouveaux utilisateurs
+const MODE_SELECTION_COLORS = {
+  background: '#0A0A0A',
+  backgroundCard: '#151515',
+  backgroundElevated: '#1F1F1F',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8B8B8',
+  textMuted: '#808080',
+  accent: '#FFFFFF',
+  accentText: '#FFFFFF',
+  border: '#2A2A2A',
+};
+
 export default function ModeSelectionScreen() {
-  const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
+
+  // Utiliser les couleurs forcées sombres
+  const colors = MODE_SELECTION_COLORS;
+  const isDark = true; // Toujours en mode sombre pour cette page
   const [selectedMode, setSelectedMode] = useState<UserMode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calcul du padding top pour éviter le Dynamic Island / notch
+  // SCREEN_HEIGHT > 800 = iPhone avec Dynamic Island ou grand écran
+  const topPadding = Platform.OS === 'ios'
+    ? Math.max(insets.top, SCREEN_HEIGHT > 800 ? 60 : 50)
+    : insets.top + 20;
 
   const handleSelectMode = (mode: UserMode) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -57,17 +87,21 @@ export default function ModeSelectionScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="light-content" />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: topPadding }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Shield size={40} color={colors.accentText} strokeWidth={2.5} />
-            <Text style={[styles.logo, { color: colors.accentText }]}>YOROI</Text>
+            <Image
+              source={require('../assets/images/logo2010.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={[styles.logo, { color: colors.textPrimary }]}>YOROI</Text>
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('screens.modeSelection.title')}
@@ -361,8 +395,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: SPACING.xl,
-    paddingTop: SPACING.xl * 2,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.xl,
   },
   header: {
     alignItems: 'center',
@@ -371,12 +405,18 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  logoImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
   },
   logo: {
-    fontSize: 40,
-    fontWeight: '800',
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: 4,
   },
   title: {
     fontSize: 28,

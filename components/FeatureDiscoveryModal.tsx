@@ -1,5 +1,5 @@
 // ============================================
-// MODAL DE DÉCOUVERTE DES FONCTIONNALITÉS
+// MODAL DE DÉCOUVERTE DES FONCTIONNALITÉS - PLEIN ÉCRAN
 // Affiche un tutoriel à la première visite de chaque page
 // ============================================
 
@@ -12,9 +12,11 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  StatusBar,
+  Image,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Home,
   BarChart3,
@@ -28,15 +30,17 @@ import {
   HeartPulse,
   Gauge,
   Check,
+  ChevronRight,
 } from 'lucide-react-native';
 import { PageTutorial } from '@/lib/featureDiscoveryService';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface FeatureDiscoveryModalProps {
   visible: boolean;
   tutorial: PageTutorial;
-  onClose: () => void;
+  onClose: () => void; // Appelé quand l'utilisateur clique sur "Compris" (marque comme vu)
+  onLater?: () => void; // Appelé quand l'utilisateur clique sur "Plus tard" (ne marque pas comme vu)
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -57,160 +61,264 @@ export const FeatureDiscoveryModal: React.FC<FeatureDiscoveryModalProps> = ({
   visible,
   tutorial,
   onClose,
+  onLater,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const IconComponent = ICON_MAP[tutorial.icon] || Home;
 
+  // Si onLater n'est pas fourni, on utilise onClose pour fermer sans marquer comme vu
+  const handleLater = () => {
+    if (onLater) {
+      onLater();
+    }
+  };
+
   return (
-    <Modal visible={visible} animationType="fade" transparent>
-      <BlurView intensity={isDark ? 60 : 80} style={styles.overlay} tint={isDark ? 'dark' : 'light'}>
-        <View style={styles.container}>
-          <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
-            {/* Icône et Titre */}
-            <View style={styles.header}>
-              <View style={[styles.iconCircle, { backgroundColor: tutorial.color + '20' }]}>
-                <IconComponent size={40} color={tutorial.color} />
-              </View>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>
-                {tutorial.title}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {tutorial.description}
-              </Text>
+    <Modal visible={visible} animationType="slide" statusBarTranslucent>
+      <View style={[styles.fullScreenContainer, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 120 }
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Logo Header */}
+          <View style={styles.logoHeader}>
+            <Image
+              source={require('../assets/images/logo2010.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={[styles.appName, { color: colors.textPrimary }]}>YOROI</Text>
+          </View>
+
+          {/* Titre principal avec icône */}
+          <View style={styles.header}>
+            <View style={[styles.iconCircle, { backgroundColor: tutorial.color + '20' }]}>
+              <IconComponent size={56} color={tutorial.color} />
             </View>
-
-            {/* Liste des fonctionnalités */}
-            <ScrollView
-              style={styles.featureList}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 16 }}
-            >
-              {tutorial.features.map((feature, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.featureItem,
-                    {
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                    },
-                  ]}
-                >
-                  <View style={[styles.checkCircle, { backgroundColor: tutorial.color + '20' }]}>
-                    <Check size={14} color={tutorial.color} strokeWidth={3} />
-                  </View>
-                  <Text style={[styles.featureText, { color: colors.textPrimary }]}>
-                    {feature}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-
-            {/* Bouton Compris */}
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: tutorial.color }]}
-              onPress={onClose}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>C'est compris !</Text>
-            </TouchableOpacity>
-
-            {/* Note */}
-            <Text style={[styles.note, { color: colors.textMuted }]}>
-              Tu peux revoir ce tutoriel depuis le Menu → Aide & Tutoriels
+            <Text style={[styles.title, { color: colors.textPrimary }]}>
+              {tutorial.title}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+              {tutorial.description}
             </Text>
           </View>
+
+          {/* Badge "Découvre cette section" */}
+          <View style={[styles.discoveryBadge, { backgroundColor: tutorial.color + '15', borderColor: tutorial.color + '30' }]}>
+            <Text style={[styles.discoveryText, { color: tutorial.color }]}>
+              Découvre cette section
+            </Text>
+          </View>
+
+          {/* Liste des fonctionnalités */}
+          <View style={styles.featureList}>
+            {tutorial.features.map((feature, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.featureItem,
+                  {
+                    backgroundColor: colors.backgroundCard,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={[styles.checkCircle, { backgroundColor: tutorial.color + '20' }]}>
+                  <Check size={16} color={tutorial.color} strokeWidth={3} />
+                </View>
+                <Text style={[styles.featureText, { color: colors.textPrimary }]}>
+                  {feature}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Note */}
+          <View style={[styles.noteBox, { backgroundColor: colors.backgroundCard }]}>
+            <Text style={[styles.note, { color: colors.textMuted }]}>
+              Tu peux revoir ce tutoriel depuis{'\n'}
+              <Text style={{ fontWeight: '700', color: colors.textSecondary }}>Menu → Aide & Tutoriels</Text>
+            </Text>
+          </View>
+        </ScrollView>
+
+        {/* Boutons en bas fixes */}
+        <View style={[styles.bottomContainer, { paddingBottom: insets.bottom + 16, backgroundColor: colors.background }]}>
+          {/* Bouton Compris - Principal */}
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: tutorial.color }]}
+            onPress={onClose}
+            activeOpacity={0.85}
+          >
+            <Check size={22} color="#FFFFFF" />
+            <Text style={styles.primaryButtonText}>C'est compris !</Text>
+          </TouchableOpacity>
+
+          {/* Bouton Plus tard - Secondaire */}
+          {onLater && (
+            <TouchableOpacity
+              style={[styles.secondaryButton, { borderColor: colors.border }]}
+              onPress={handleLater}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>
+                Plus tard
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
-      </BlurView>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  fullScreenContainer: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+  },
+  logoHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 40,
   },
-  container: {
-    width: '100%',
-    maxWidth: 400,
+  logo: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
   },
-  modalContent: {
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+  appName: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: 3,
   },
   header: {
     alignItems: 'center',
     marginBottom: 24,
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 32,
+    fontWeight: '900',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 24,
+  },
+  discoveryBadge: {
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    marginBottom: 28,
+  },
+  discoveryText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   featureList: {
-    maxHeight: 300,
+    marginBottom: 24,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 10,
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 12,
     borderWidth: 1,
-    gap: 12,
+    gap: 14,
   },
   checkCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
   },
   featureText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
-    lineHeight: 20,
+    lineHeight: 24,
   },
-  button: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '700',
+  noteBox: {
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
   },
   note: {
-    fontSize: 12,
+    fontSize: 14,
     textAlign: 'center',
-    marginTop: 12,
     fontWeight: '500',
+    lineHeight: 22,
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    gap: 12,
+  },
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

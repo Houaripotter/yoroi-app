@@ -95,12 +95,30 @@ interface Slide {
   highlights?: Highlight[];
 }
 
+// Couleurs forcées en mode sombre pour l'onboarding (fond noir, texte blanc)
+// Cela assure une expérience cohérente pour tous les nouveaux utilisateurs
+const ONBOARDING_COLORS = {
+  background: '#0A0A0A',
+  backgroundCard: '#151515',
+  backgroundElevated: '#1F1F1F',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8B8B8',
+  textMuted: '#808080',
+  accent: '#FFFFFF',
+  accentText: '#FFFFFF',
+  border: '#2A2A2A',
+  textOnGold: '#000000',
+};
+
 export default function OnboardingScreen() {
-  const { colors } = useTheme();
+  const { colors: themeColors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  // Couleur du texte du bouton adaptée à la couleur d'accent
-  const buttonTextColor = isLightColor(colors.accent) ? '#000000' : '#FFFFFF';
+  // Utiliser les couleurs forcées sombres pour l'onboarding
+  const colors = ONBOARDING_COLORS;
+
+  // Couleur du texte du bouton (noir sur blanc)
+  const buttonTextColor = '#000000';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -120,8 +138,8 @@ export default function OnboardingScreen() {
       const slides: Slide[] = [
     {
       id: 'welcome',
-      icon: <Sparkles size={64} color={colors.accentText} />,
-      title: 'Ton Armure Digitale',
+      icon: <Image source={require('../assets/images/logo2010.png')} style={{ width: 100, height: 100, borderRadius: 24 }} resizeMode="contain" />,
+      title: 'Bienvenue dans la team YOROI',
       description: 'YOROI fonctionne 100% HORS LIGNE. Desert, foret, mer, montagne sans reseau ? Pas de probleme. Tes donnees restent sur TON telephone. Pas de compte, pas de cloud, pas de tracking.',
       color: colors.accent,
       highlights: [
@@ -772,41 +790,19 @@ export default function OnboardingScreen() {
         keyExtractor={(item) => item.id}
       />
 
-      {/* Indicateurs */}
+      {/* Indicateur de page numérique */}
       <View style={styles.pagination}>
-        {slides.map((_, index) => {
-          const inputRange = [
-            (index - 1) * width,
-            index * width,
-            (index + 1) * width,
-          ];
-
-          const dotWidth = scrollX.interpolate({
-            inputRange,
-            outputRange: [8, 24, 8],
-            extrapolate: 'clamp',
-          });
-
-          const dotOpacity = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.3, 1, 0.3],
-            extrapolate: 'clamp',
-          });
-
-          return (
-            <Animated.View
-              key={index}
-              style={[
-                styles.dot,
-                {
-                  width: dotWidth,
-                  opacity: dotOpacity,
-                  backgroundColor: colors.accent,
-                },
-              ]}
-            />
-          );
-        })}
+        <View style={[styles.pageIndicator, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+          <Text style={[styles.pageNumber, { color: colors.accent }]}>
+            {currentIndex + 1}
+          </Text>
+          <Text style={[styles.pageSeparator, { color: colors.textMuted }]}>
+            /
+          </Text>
+          <Text style={[styles.pageTotal, { color: colors.textSecondary }]}>
+            {slides.length}
+          </Text>
+        </View>
       </View>
 
       {/* Bouton */}
@@ -929,17 +925,33 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
 
-  // Pagination
+  // Pagination numérique
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
   },
-  dot: {
-    height: 8,
-    borderRadius: 4,
+  pageIndicator: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  pageNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  pageSeparator: {
+    fontSize: 18,
+    fontWeight: '600',
     marginHorizontal: 4,
+  },
+  pageTotal: {
+    fontSize: 18,
+    fontWeight: '600',
   },
 
   // Footer

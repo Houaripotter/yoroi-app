@@ -203,6 +203,11 @@ export default function HomeScreen() {
     setShowTutorial(false);
   };
 
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = () => {
+    setShowTutorial(false);
+  };
+
   // Rafraîchir l'avatar quand la page devient active
   useFocusEffect(
     useCallback(() => {
@@ -1435,6 +1440,7 @@ export default function HomeScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.home}
           onClose={handleCloseTutorial}
+          onLater={handleLaterTutorial}
         />
       )}
     </View>

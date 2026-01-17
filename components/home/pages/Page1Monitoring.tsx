@@ -2,7 +2,7 @@
 // PAGE 1 - MONITORING (Redesign Premium)
 // ============================================
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -51,7 +51,7 @@ interface Page1MonitoringProps {
   refreshTrigger?: number;
 }
 
-export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
+const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   userName = 'Athlète',
   profilePhoto,
   dailyQuote,
@@ -953,6 +953,9 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
     </ScrollView>
   );
 };
+
+// Export avec memo pour optimiser les re-renders
+export const Page1Monitoring = memo(Page1MonitoringComponent);
 
 const styles = StyleSheet.create({
   container: {

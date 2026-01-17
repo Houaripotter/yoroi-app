@@ -431,6 +431,7 @@ class HealthConnectService {
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: yesterday.getTime(),
         to: new Date().getTime(),
+        limit: 100, // Limiter pour eviter surcharge memoire
       });
 
       if (samples && samples.length > 0) {
@@ -896,17 +897,23 @@ class HealthConnectService {
       });
 
       if (samples && samples.length > 0) {
-        return samples.map((workout: any) => ({
-          id: workout.uuid || workout.id || Math.random().toString(),
-          activityType: workout.workoutActivityType || 'Unknown',
-          startDate: workout.startDate,
-          endDate: workout.endDate,
-          duration: Math.round((new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime()) / 60000),
-          distance: workout.totalDistance ? Math.round(workout.totalDistance / 1000 * 10) / 10 : undefined,
-          calories: workout.totalEnergyBurned ? Math.round(workout.totalEnergyBurned) : undefined,
-          averageHeartRate: workout.averageHeartRate ? Math.round(workout.averageHeartRate) : undefined,
-          maxHeartRate: workout.maxHeartRate ? Math.round(workout.maxHeartRate) : undefined,
-        }));
+        return samples.map((workout: any) => {
+          // Generer un ID deterministe base sur les donnees du workout pour eviter les doublons
+          const workoutFingerprint = `${workout.startDate}_${workout.endDate}_${workout.workoutActivityType || 'unknown'}`;
+          const deterministicId = workout.uuid || workout.id || `workout_${Buffer.from(workoutFingerprint).toString('base64').slice(0, 16)}`;
+
+          return {
+            id: deterministicId,
+            activityType: workout.workoutActivityType || 'Unknown',
+            startDate: workout.startDate,
+            endDate: workout.endDate,
+            duration: Math.round((new Date(workout.endDate).getTime() - new Date(workout.startDate).getTime()) / 60000),
+            distance: workout.totalDistance ? Math.round(workout.totalDistance / 1000 * 10) / 10 : undefined,
+            calories: workout.totalEnergyBurned ? Math.round(workout.totalEnergyBurned) : undefined,
+            averageHeartRate: workout.averageHeartRate ? Math.round(workout.averageHeartRate) : undefined,
+            maxHeartRate: workout.maxHeartRate ? Math.round(workout.maxHeartRate) : undefined,
+          };
+        });
       }
     } catch (error) {
       logger.error('Erreur lecture workouts iOS:', error);
@@ -1152,10 +1159,11 @@ class HealthConnectService {
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: fromDate.getTime(),
         to: new Date().getTime(),
+        limit: 500, // Limiter pour eviter surcharge memoire sur historique long
       });
 
       if (samples && samples.length > 0) {
-        // Grouper par date (considérer le sommeil de la nuit précédente)
+        // Grouper par date (considerer le sommeil de la nuit precedente)
         const sleepByDate: { [key: string]: {
           deep: number;
           rem: number;

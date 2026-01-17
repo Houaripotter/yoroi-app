@@ -430,7 +430,7 @@ export default function ClubsScreen() {
               />
             </View>
 
-            {/* SPORT - PAR CATÉGORIE */}
+            {/* SPORT - STYLE CARTE COMME AJOUT SEANCE */}
             <View style={styles.inputGroup}>
               <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('screens.clubs.sport')}</Text>
 
@@ -456,36 +456,55 @@ export default function ClubsScreen() {
                       <Text style={[styles.categoryTitle, { color: colors.textMuted }]}>
                         {categoryLabels[category]}
                       </Text>
-                      <View style={styles.sportsGrid}>
-                        {sportsInCategory.map((sport) => (
-                          <TouchableOpacity
-                            key={sport.id}
-                            style={[
-                              styles.sportItem,
-                              {
-                                backgroundColor: selectedSport === sport.id ? colors.cardHover : colors.backgroundCard,
-                                borderColor: selectedSport === sport.id ? colors.gold : colors.border,
-                              },
-                            ]}
-                            onPress={() => setSelectedSport(sport.id)}
-                          >
-                            <MaterialCommunityIcons
-                              name={sport.icon as any}
-                              size={24}
-                              color={selectedSport === sport.id ? colors.gold : colors.textPrimary}
-                            />
-                            <Text
+                      <View style={styles.sportsGridCards}>
+                        {sportsInCategory.map((sport) => {
+                          const isSelected = selectedSport === sport.id;
+                          const sportColor = getSportColor(sport.id);
+                          return (
+                            <TouchableOpacity
+                              key={sport.id}
                               style={[
-                                styles.sportName,
+                                styles.sportCard,
                                 {
-                                  color: selectedSport === sport.id ? colors.gold : colors.textPrimary,
+                                  backgroundColor: colors.backgroundCard,
+                                  borderColor: isSelected ? sportColor : colors.border,
+                                  borderWidth: isSelected ? 2 : 1,
                                 },
                               ]}
+                              onPress={() => setSelectedSport(sport.id)}
+                              activeOpacity={0.7}
                             >
-                              {sport.name}
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
+                              {/* Cercle avec icone */}
+                              <View style={[styles.sportCardLogo, { backgroundColor: `${sportColor}20` }]}>
+                                <MaterialCommunityIcons
+                                  name={sport.icon as any}
+                                  size={28}
+                                  color={sportColor}
+                                />
+                              </View>
+                              {/* Nom du sport */}
+                              <Text
+                                style={[styles.sportCardName, { color: colors.textPrimary }]}
+                                numberOfLines={1}
+                              >
+                                {sport.name}
+                              </Text>
+                              {/* Categorie */}
+                              <Text
+                                style={[styles.sportCardCategory, { color: colors.textMuted }]}
+                                numberOfLines={1}
+                              >
+                                {categoryLabels[category]}
+                              </Text>
+                              {/* Indicateur de selection */}
+                              {isSelected && (
+                                <View style={[styles.sportCardCheck, { backgroundColor: sportColor }]}>
+                                  <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
                       </View>
                     </View>
                   );
@@ -747,7 +766,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // SPORTS GRID
+  // SPORTS GRID - Ancien style (garde pour compatibilite)
   categoryBlock: {
     marginBottom: 16,
   },
@@ -781,6 +800,51 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sportNameActive: {},
+
+  // SPORTS GRID CARDS - Nouveau style comme AddSessionModal
+  sportsGridCards: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'flex-start',
+  },
+  sportCard: {
+    width: '30%',
+    aspectRatio: 0.85,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+    position: 'relative',
+  },
+  sportCardLogo: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  sportCardName: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  sportCardCategory: {
+    fontSize: 9,
+    textAlign: 'center',
+  },
+  sportCardCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
   // COLORS GRID
   colorsGrid: {

@@ -142,6 +142,11 @@ export default function AddScreen() {
     setShowTutorial(false);
   };
 
+  // Fermer sans marquer comme vu (bouton "Plus tard")
+  const handleLaterTutorial = () => {
+    setShowTutorial(false);
+  };
+
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1039,6 +1044,7 @@ export default function AddScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.add}
           onClose={handleCloseTutorial}
+          onLater={handleLaterTutorial}
         />
       )}
 
