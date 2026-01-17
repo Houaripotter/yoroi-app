@@ -1,11 +1,11 @@
 // ============================================
 // 🔓 YOROI - MODE CRÉATEUR / DÉVELOPPEUR
 // ============================================
-// Code secret : 2412
 // Débloque TOUTES les fonctionnalités Premium
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -27,10 +27,28 @@ interface DevModeContextType {
 // CONFIGURATION
 // ============================================
 
-const DEV_CODE = '2412';
+// Hash SHA-256 du code secret (ne pas stocker le code en clair)
+const DEV_CODE_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // Hash de code à 4 chiffres
 const STORAGE_KEY = '@yoroi_dev_mode';
 const TAP_THRESHOLD = 5; // Nombre de taps pour afficher le champ de code
 const TAP_TIMEOUT = 2000; // Reset des taps après 2 secondes
+
+/**
+ * Vérifie si le code entré correspond au code secret
+ * Compare les hash pour ne jamais exposer le code en clair
+ */
+async function verifyDevCode(inputCode: string): Promise<boolean> {
+  try {
+    const inputHash = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      inputCode
+    );
+    return inputHash === DEV_CODE_HASH;
+  } catch (error) {
+    logger.error('Error verifying dev code', error);
+    return false;
+  }
+}
 
 // ============================================
 // CONTEXT
@@ -91,9 +109,10 @@ export const DevModeProvider = ({ children }: { children: ReactNode }) => {
     setTapTimeoutId(timeoutId);
   }, [tapCount, tapTimeoutId]);
 
-  // Vérifier le code (mémoïsé)
+  // Vérifier le code (mémoïsé) - utilise le hash pour ne pas exposer le code
   const verifyCode = useCallback(async (code: string): Promise<boolean> => {
-    if (code === DEV_CODE) {
+    const isValid = await verifyDevCode(code);
+    if (isValid) {
       setIsDevMode(true);
       setShowCodeInput(false);
       await AsyncStorage.setItem(STORAGE_KEY, 'true');

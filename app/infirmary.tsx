@@ -66,9 +66,9 @@ export default function InfirmaryScreen() {
       const injuryStats = await getInjuryStats();
       setStats(injuryStats);
 
-      // Vérifier le mode créateur (code 2412)
-      const creatorCode = await AsyncStorage.getItem('@yoroi_creator_mode');
-      setIsCreatorMode(creatorCode === '2412');
+      // Vérifier le mode créateur
+      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      setIsCreatorMode(creatorMode === 'true');
     } catch (error) {
       logger.error('[Infirmary] Erreur chargement:', error);
     }

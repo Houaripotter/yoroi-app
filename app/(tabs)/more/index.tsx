@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
 import * as Haptics from 'expo-haptics';
+import * as Crypto from 'expo-crypto';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   User,
@@ -610,10 +611,23 @@ export default function MoreScreen() {
   const [longPressActive, setLongPressActive] = useState(false);
   const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
 
-  // Clé secrète (obfusquée)
-  const getSecretKey = () => {
-    const k = [50, 48, 50, 50]; // ASCII codes
-    return k.map(c => String.fromCharCode(c)).join('');
+  // Hash des codes secrets valides (ne jamais stocker les codes en clair)
+  const SECRET_HASHES = [
+    'f5903f51e341a783e69ffc2d9b335048716f5f040a782a2e1e1e14f8767e8c23', // Hash du code principal
+    '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // Hash du code secondaire
+  ];
+
+  // Vérifie si le code est valide via hash
+  const verifySecretCode = async (code: string): Promise<boolean> => {
+    try {
+      const inputHash = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        code
+      );
+      return SECRET_HASHES.includes(inputHash);
+    } catch {
+      return false;
+    }
   };
 
   const handleVersionTap = () => {
@@ -644,8 +658,9 @@ export default function MoreScreen() {
   };
 
   const handleCreatorCodeSubmit = async () => {
-    // Vérifier juste le code - simplifié !
-    if (creatorCode === getSecretKey() || creatorCode === '2412') {
+    // Vérifier le code via hash (jamais de comparaison en clair)
+    const isValidCode = await verifySecretCode(creatorCode);
+    if (isValidCode) {
       setCreatorModeActive(true);
       setShowCreatorInput(false);
       setCreatorCode('');
@@ -653,9 +668,6 @@ export default function MoreScreen() {
       await AsyncStorage.setItem('@yoroi_creator_mode', 'true');
       showPopup(t('menu.creatorMode'), t('menu.creatorModeActivated'), [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
       router.push('/screenshot-mode');
-    } else if (creatorCode === getSecretKey() && secretGestureDone < 3) {
-      // Code correct mais geste secret pas fait - message générique pour ne pas révéler le secret
-      showPopup(t('common.error'), t('menu.incompleteActivation'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
     } else {
       showPopup(t('menu.incorrectCode'), t('menu.tryAgain'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
       setCreatorCode('');

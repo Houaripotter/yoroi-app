@@ -57,7 +57,7 @@ export default function LogoSelectionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       showPopup(
         'Logo Premium',
-        'Ce logo nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 1.0.0" dans les Réglages et entrez le code 2412.',
+        'Ce logo nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 1.0.0" dans les Réglages pour débloquer.',
         [{ text: 'OK', style: 'primary' }]
       );
       return;

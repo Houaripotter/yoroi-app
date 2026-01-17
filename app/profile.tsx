@@ -135,7 +135,10 @@ const StatBadge = ({
   unit,
   label,
   color,
-  bgColor
+  bgColor,
+  textColor,
+  cardBgColor,
+  borderColor
 }: {
   icon: any;
   value: string;
@@ -143,42 +146,45 @@ const StatBadge = ({
   label: string;
   color: string;
   bgColor: string;
+  textColor: string;
+  cardBgColor?: string;
+  borderColor?: string;
 }) => (
-  <View style={styles.statBadge}>
+  <View style={[styles.statBadge, cardBgColor && { backgroundColor: cardBgColor }, borderColor && { borderColor }]}>
     <View style={[styles.statBadgeIcon, { backgroundColor: bgColor }]}>
       <Icon size={22} color={color} strokeWidth={2.5} />
     </View>
     <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-      <Text style={styles.statBadgeValue}>{value}</Text>
-      {unit && <Text style={[styles.statBadgeUnit, { color: COLORS.text }]}>{unit}</Text>}
+      <Text style={[styles.statBadgeValue, { color: textColor }]}>{value}</Text>
+      {unit && <Text style={[styles.statBadgeUnit, { color: textColor }]}>{unit}</Text>}
     </View>
-    <Text style={styles.statBadgeLabel}>{label}</Text>
+    <Text style={[styles.statBadgeLabel, { color: textColor, opacity: 0.7 }]}>{label}</Text>
   </View>
 );
 
 // Progress Card Component
-const ProgressCard = ({ weightProgress, t }: { weightProgress: any; t: (key: string) => string }) => {
+const ProgressCard = ({ weightProgress, t, colors }: { weightProgress: any; t: (key: string) => string; colors: any }) => {
   if (!weightProgress?.target) return null;
 
   const progress = Math.min(weightProgress.progress || 0, 100);
 
   return (
-    <View style={styles.progressCard}>
+    <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.progressHeader}>
         <View style={styles.progressTitleRow}>
-          <Target size={18} color={COLORS.accent} />
-          <Text style={styles.progressTitle}>{t('profile.goal')}</Text>
+          <Target size={18} color={colors.accent} />
+          <Text style={[styles.progressTitle, { color: colors.textPrimary }]}>{t('profile.goal')}</Text>
         </View>
-        <View style={styles.progressPercentBadge}>
-          <Text style={styles.progressPercent}>{progress.toFixed(0)}%</Text>
+        <View style={[styles.progressPercentBadge, { backgroundColor: colors.accentMuted }]}>
+          <Text style={[styles.progressPercent, { color: colors.accent }]}>{progress.toFixed(0)}%</Text>
         </View>
       </View>
 
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
-        <View style={styles.progressBarBg}>
+        <View style={[styles.progressBarBg, { backgroundColor: colors.backgroundElevated }]}>
           <LinearGradient
-            colors={GRADIENTS.primary}
+            colors={[colors.accent, colors.accentDark || colors.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.progressBarFill, { width: `${progress}%` }]}
@@ -189,18 +195,18 @@ const ProgressCard = ({ weightProgress, t }: { weightProgress: any; t: (key: str
       {/* Labels */}
       <View style={styles.progressLabels}>
         <View style={styles.progressLabelItem}>
-          <Text style={styles.progressLabelValue}>{weightProgress.start}</Text>
-          <Text style={styles.progressLabelText}>{t('profile.start')}</Text>
+          <Text style={[styles.progressLabelValue, { color: colors.textPrimary }]}>{weightProgress.start}</Text>
+          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.start')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'center' }]}>
-          <Text style={[styles.progressLabelValue, { color: COLORS.accent, fontSize: TYPOGRAPHY.size.xl }]}>
+          <Text style={[styles.progressLabelValue, { color: colors.accent, fontSize: TYPOGRAPHY.size.xl }]}>
             {weightProgress.current}
           </Text>
-          <Text style={styles.progressLabelText}>{t('profile.current')}</Text>
+          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.current')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'flex-end' }]}>
-          <Text style={[styles.progressLabelValue, { color: COLORS.success }]}>{weightProgress.target}</Text>
-          <Text style={styles.progressLabelText}>{t('profile.goal')}</Text>
+          <Text style={[styles.progressLabelValue, { color: colors.success }]}>{weightProgress.target}</Text>
+          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.goal')}</Text>
         </View>
       </View>
     </View>
@@ -213,20 +219,26 @@ const InfoRow = ({
   label,
   value,
   color,
-  bgColor
+  bgColor,
+  textColor,
+  textSecondaryColor,
+  successColor
 }: {
   icon: any;
   label: string;
   value: string;
   color: string;
   bgColor: string;
+  textColor: string;
+  textSecondaryColor: string;
+  successColor: string;
 }) => (
   <View style={styles.infoRow}>
     <View style={[styles.infoIcon, { backgroundColor: bgColor }]}>
       <Icon size={18} color={color} strokeWidth={2.5} />
     </View>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={[styles.infoValue, value.includes('kg') && parseFloat(value) < 80 ? { color: COLORS.success } : {}]}>
+    <Text style={[styles.infoLabel, { color: textSecondaryColor }]}>{label}</Text>
+    <Text style={[styles.infoValue, { color: textColor }, value.includes('kg') && parseFloat(value) < 80 ? { color: successColor } : {}]}>
       {value}
     </Text>
   </View>
@@ -526,20 +538,20 @@ export default function ProfileScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => router.back()}
           >
-            <ChevronLeft size={22} color={COLORS.text} />
+            <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
           <TouchableOpacity
-            style={[styles.editButton, isEditing && styles.editButtonActive]}
+            style={[styles.editButton, { backgroundColor: colors.card, borderColor: colors.border }, isEditing && { borderColor: colors.error, backgroundColor: colors.errorMuted }]}
             onPress={() => setIsEditing(!isEditing)}
           >
             {isEditing ? (
-              <X size={18} color={COLORS.error} />
+              <X size={18} color={colors.error} />
             ) : (
-              <Edit3 size={18} color={COLORS.accent} />
+              <Edit3 size={18} color={colors.accent} />
             )}
           </TouchableOpacity>
         </View>
@@ -554,19 +566,19 @@ export default function ProfileScreen() {
         )}
 
         {/* Profile Hero Card - Photo centrée avec nom */}
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { borderColor: colors.border }]}>
           <LinearGradient
-            colors={[COLORS.surface, COLORS.background]}
+            colors={[colors.card, colors.background]}
             style={styles.heroGradient}
           >
             {/* Nom au-dessus */}
             {isEditing ? (
               <TextInput
-                style={[styles.nameInput, { color: colors.textPrimary, marginBottom: 16 }]}
+                style={[styles.nameInput, { color: colors.textPrimary, marginBottom: 16, borderBottomColor: colors.accent }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Ton nom"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 textAlign="center"
                 maxLength={50}
               />
@@ -594,8 +606,8 @@ export default function ProfileScreen() {
                     <User size={48} color={colors.textMuted} />
                   </View>
                 )}
-                <View style={[styles.cameraButton, { bottom: 4, right: 4 }]}>
-                  <Camera size={16} color="#FFF" />
+                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors.accent }]}>
+                  <Camera size={16} color={colors.textOnAccent} />
                 </View>
               </View>
             </Pressable>
@@ -616,102 +628,111 @@ export default function ProfileScreen() {
             value={weightProgress?.lost > 0 ? (weightGoal === 'gain' ? `+${weightProgress.lost.toFixed(1)}` : `-${weightProgress.lost.toFixed(1)}`) : '0'}
             unit=" kg"
             label={weightGoal === 'gain' ? t('profile.gained') : t('profile.lost')}
-            color={weightGoal === 'gain' ? COLORS.warning : COLORS.success}
-            bgColor={weightGoal === 'gain' ? COLORS.warningMuted : COLORS.successMuted}
+            color={weightGoal === 'gain' ? colors.warning : colors.success}
+            bgColor={weightGoal === 'gain' ? colors.warningMuted : colors.successMuted}
+            textColor={colors.textPrimary}
+            cardBgColor={colors.card}
+            borderColor={colors.border}
           />
           <StatBadge
             icon={Target}
             value={weightProgress?.target ? `${weightProgress.target}` : '-'}
             unit=" kg"
             label={t('profile.target')}
-            color={COLORS.accent}
-            bgColor={COLORS.accentMuted}
+            color={colors.accent}
+            bgColor={colors.accentMuted}
+            textColor={colors.textPrimary}
+            cardBgColor={colors.card}
+            borderColor={colors.border}
           />
           <StatBadge
             icon={Activity}
             value={weightProgress?.remaining > 0 ? weightProgress.remaining.toFixed(1) : '0'}
             unit=" kg"
             label={weightGoal === 'gain' ? t('profile.toGain') : weightGoal === 'maintain' ? t('profile.maintenance') : t('profile.toLoose')}
-            color={weightGoal === 'gain' ? COLORS.warning : weightGoal === 'maintain' ? COLORS.info : COLORS.success}
-            bgColor={weightGoal === 'gain' ? COLORS.warningMuted : weightGoal === 'maintain' ? COLORS.infoMuted : COLORS.successMuted}
+            color={weightGoal === 'gain' ? colors.warning : weightGoal === 'maintain' ? colors.info : colors.success}
+            bgColor={weightGoal === 'gain' ? colors.warningMuted : weightGoal === 'maintain' ? colors.infoMuted : colors.successMuted}
+            textColor={colors.textPrimary}
+            cardBgColor={colors.card}
+            borderColor={colors.border}
           />
         </View>
 
         {/* Section Dojo - XP, Niveau, Badges */}
         <TouchableOpacity
-          style={styles.dojoCard}
+          style={[styles.dojoCard, { backgroundColor: colors.card, borderColor: colors.gold + '40' }]}
           onPress={() => router.push('/gamification')}
           activeOpacity={0.8}
         >
           <View style={styles.dojoHeader}>
-            <View style={[styles.dojoIconContainer, { backgroundColor: COLORS.goldMuted }]}>
-              <Sparkles size={20} color={COLORS.gold} strokeWidth={2.5} />
+            <View style={[styles.dojoIconContainer, { backgroundColor: colors.gold + '20' }]}>
+              <Sparkles size={20} color={colors.gold} strokeWidth={2.5} />
             </View>
-            <Text style={styles.dojoTitle}>{t('gamification.title')}</Text>
-            <ChevronRight size={20} color={COLORS.textMuted} />
+            <Text style={[styles.dojoTitle, { color: colors.textPrimary }]}>{t('gamification.title')}</Text>
+            <ChevronRight size={20} color={colors.textMuted} />
           </View>
 
           <View style={styles.dojoStats}>
             {/* XP */}
             <View style={styles.dojoStatItem}>
-              <Zap size={18} color={COLORS.accent} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: COLORS.accent }]}>{totalPoints}</Text>
-              <Text style={styles.dojoStatLabel}>XP</Text>
+              <Zap size={18} color={colors.accent} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors.accent }]}>{totalPoints}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>XP</Text>
             </View>
 
             {/* Niveau */}
             <View style={styles.dojoStatItem}>
-              <Star size={18} color={COLORS.gold} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: COLORS.gold }]}>{level.level}</Text>
-              <Text style={styles.dojoStatLabel}>{t('gamification.level')}</Text>
+              <Star size={18} color={colors.gold} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors.gold }]}>{level.level}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.level')}</Text>
             </View>
 
             {/* Rang */}
             <View style={styles.dojoStatItem}>
-              <Trophy size={18} color={rank?.color || COLORS.gold} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: rank?.color || COLORS.gold }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
-              <Text style={styles.dojoStatLabel}>{t('gamification.rank')}</Text>
+              <Trophy size={18} color={rank?.color || colors.gold} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: rank?.color || colors.gold }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.rank')}</Text>
             </View>
 
             {/* Badges */}
             <View style={styles.dojoStatItem}>
-              <Award size={18} color={COLORS.success} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: COLORS.success }]}>{unlockedBadgesCount}</Text>
-              <Text style={styles.dojoStatLabel}>{t('gamification.badges')}</Text>
+              <Award size={18} color={colors.success} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors.success }]}>{unlockedBadgesCount}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.badges')}</Text>
             </View>
           </View>
         </TouchableOpacity>
 
         {/* Progress to Goal */}
-        <ProgressCard weightProgress={weightProgress} t={t} />
+        <ProgressCard weightProgress={weightProgress} t={t} colors={colors} />
 
         {/* Personal Info Card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>{t('profile.informations')}</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('profile.informations')}</Text>
 
           {isEditing ? (
             <View style={styles.editForm}>
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>{t('profile.height')} (cm)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.height')} (cm)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                     value={heightCm}
                     onChangeText={setHeightCm}
                     placeholder="175"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
                     maxLength={3}
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Date de naissance</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Date de naissance</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                     value={birthDate}
                     onChangeText={setBirthDate}
                     placeholder="15/06/1995"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="default"
                     maxLength={10}
                   />
@@ -725,25 +746,25 @@ export default function ProfileScreen() {
 
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>{t('profile.startingWeight')} (kg)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.startingWeight')} (kg)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                     value={startWeight}
                     onChangeText={setStartWeight}
                     placeholder="85.0"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"
                     maxLength={6}
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>{t('profile.target')} (kg)</Text>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.target')} (kg)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                     value={targetWeight}
                     onChangeText={setTargetWeight}
                     placeholder="75.0"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"
                     maxLength={6}
                   />
@@ -751,46 +772,46 @@ export default function ProfileScreen() {
               </View>
 
               {/* Weight Goal Selector */}
-              <Text style={styles.inputLabel}>Mon objectif</Text>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Mon objectif</Text>
               <View style={styles.goalSelector}>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'lose' ? COLORS.success : colors.border },
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'lose' ? colors.success : colors.border },
                     weightGoal === 'lose' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('lose')}
                 >
-                  <TrendingDown size={20} color={weightGoal === 'lose' ? COLORS.success : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? COLORS.success : colors.textPrimary }]}>Perte</Text>
+                  <TrendingDown size={20} color={weightGoal === 'lose' ? colors.success : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors.success : colors.textPrimary }]}>Perte</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'maintain' ? COLORS.info : colors.border },
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'maintain' ? colors.info : colors.border },
                     weightGoal === 'maintain' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('maintain')}
                 >
-                  <Minus size={20} color={weightGoal === 'maintain' ? COLORS.info : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? COLORS.info : colors.textPrimary }]}>Maintien</Text>
+                  <Minus size={20} color={weightGoal === 'maintain' ? colors.info : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors.info : colors.textPrimary }]}>Maintien</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'gain' ? COLORS.warning : colors.border },
+                    { backgroundColor: colors.card, borderColor: weightGoal === 'gain' ? colors.warning : colors.border },
                     weightGoal === 'gain' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('gain')}
                 >
-                  <TrendingUp size={20} color={weightGoal === 'gain' ? COLORS.warning : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? COLORS.warning : colors.textPrimary }]}>Prise</Text>
+                  <TrendingUp size={20} color={weightGoal === 'gain' ? colors.warning : colors.textMuted} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors.warning : colors.textPrimary }]}>Prise</Text>
                 </TouchableOpacity>
               </View>
 
               <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                 <LinearGradient
-                  colors={GRADIENTS.primary}
+                  colors={[colors.accent, colors.accentDark || colors.accent]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.saveButtonGradient}
@@ -806,36 +827,51 @@ export default function ProfileScreen() {
                 icon={Ruler}
                 label={t('profile.height')}
                 value={profile?.height_cm ? `${profile.height_cm} cm` : '-'}
-                color={COLORS.info}
-                bgColor={COLORS.infoMuted}
+                color={colors.info}
+                bgColor={colors.infoMuted}
+                textColor={colors.textPrimary}
+                textSecondaryColor={colors.textSecondary}
+                successColor={colors.success}
               />
               <InfoRow
                 icon={Calendar}
                 label={t('profile.age')}
                 value={calculatedAge ? `${calculatedAge} ans` : (profile?.age ? `${profile.age} ans` : '-')}
-                color={COLORS.accent}
-                bgColor={COLORS.accentMuted}
+                color={colors.accent}
+                bgColor={colors.accentMuted}
+                textColor={colors.textPrimary}
+                textSecondaryColor={colors.textSecondary}
+                successColor={colors.success}
               />
               <InfoRow
                 icon={Scale}
                 label={t('profile.startingWeight')}
                 value={weightProgress?.start ? `${weightProgress.start} kg` : '-'}
-                color={COLORS.warning}
-                bgColor={COLORS.warningMuted}
+                color={colors.warning}
+                bgColor={colors.warningMuted}
+                textColor={colors.textPrimary}
+                textSecondaryColor={colors.textSecondary}
+                successColor={colors.success}
               />
               <InfoRow
                 icon={Target}
                 label={t('profile.target')}
                 value={weightProgress?.target ? `${weightProgress.target} kg` : '-'}
-                color={COLORS.success}
-                bgColor={COLORS.successMuted}
+                color={colors.success}
+                bgColor={colors.successMuted}
+                textColor={colors.textPrimary}
+                textSecondaryColor={colors.textSecondary}
+                successColor={colors.success}
               />
               <InfoRow
                 icon={profile?.weight_goal === 'lose' ? TrendingDown : profile?.weight_goal === 'gain' ? TrendingUp : Minus}
                 label={t('profile.goalType')}
                 value={profile?.weight_goal === 'lose' ? t('profile.weightLoss') : profile?.weight_goal === 'gain' ? t('profile.massGain') : t('profile.maintenance')}
-                color={profile?.weight_goal === 'lose' ? COLORS.success : profile?.weight_goal === 'gain' ? COLORS.warning : COLORS.info}
-                bgColor={profile?.weight_goal === 'lose' ? COLORS.successMuted : profile?.weight_goal === 'gain' ? COLORS.warningMuted : COLORS.infoMuted}
+                color={profile?.weight_goal === 'lose' ? colors.success : profile?.weight_goal === 'gain' ? colors.warning : colors.info}
+                bgColor={profile?.weight_goal === 'lose' ? colors.successMuted : profile?.weight_goal === 'gain' ? colors.warningMuted : colors.infoMuted}
+                textColor={colors.textPrimary}
+                textSecondaryColor={colors.textSecondary}
+                successColor={colors.success}
               />
             </View>
           )}
@@ -843,16 +879,16 @@ export default function ProfileScreen() {
 
 
         {/* Motivational Quote */}
-        <View style={[styles.quoteCard, { borderColor: isDark ? 'rgba(0, 214, 143, 0.3)' : COLORS.accentMuted }]}>
+        <View style={[styles.quoteCard, { borderColor: colors.accentMuted }]}>
           <LinearGradient
-            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : ['rgba(0, 214, 143, 0.1)', 'rgba(0, 214, 143, 0.05)']}
+            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : [colors.accentMuted, colors.background]}
             style={styles.quoteGradient}
           >
             <Trophy size={24} color={colors.accentText} />
             <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
               "La victoire appartient au plus persévérant"
             </Text>
-            <Text style={[styles.quoteAuthor, { color: isDark ? colors.accent : '#000000', fontWeight: '600' }]}>Napoléon Bonaparte</Text>
+            <Text style={[styles.quoteAuthor, { color: colors.textPrimary, fontWeight: '600' }]}>Napoléon Bonaparte</Text>
           </LinearGradient>
         </View>
 
