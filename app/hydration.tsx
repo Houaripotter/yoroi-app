@@ -14,6 +14,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -52,6 +53,7 @@ export default function HydrationScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { t } = useI18n();
 
   const [currentAmount, setCurrentAmount] = useState(0);
   const [goal, setGoal] = useState(2.5);
@@ -216,7 +218,7 @@ export default function HydrationScreen() {
     });
 
     if (value) {
-      showPopup('Activé', 'Tu recevras des rappels pour boire de l\'eau !');
+      showPopup(t('hydration.activated'), t('hydration.reminderActivatedMessage'));
     }
   };
 
@@ -247,7 +249,7 @@ export default function HydrationScreen() {
     });
     setShowNotificationSettings(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showPopup('Enregistré', 'Tes rappels ont été programmés !');
+    showPopup(t('hydration.saved'), t('hydration.remindersSavedMessage'));
   };
 
   const percentage = Math.min((currentAmount / goal) * 100, 100);

@@ -28,7 +28,7 @@ import {
   BellOff,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { format, subDays } from 'date-fns';
+import { format, subDays, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
@@ -197,7 +197,7 @@ export default function SleepScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {stats ? formatSleepDuration(stats.averageDuration) : '--'}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moyenne</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.average')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <View style={[styles.statIconContainer, { backgroundColor: '#F59E0B15' }]}>
@@ -206,7 +206,7 @@ export default function SleepScreen() {
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {stats?.averageQuality.toFixed(1) || '--'}/5
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Qualité</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.quality')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <View style={[styles.statIconContainer, { backgroundColor: stats?.trend === 'improving' ? '#10B98115' : stats?.trend === 'declining' ? '#EF444415' : colors.border }]}>
@@ -217,13 +217,13 @@ export default function SleepScreen() {
             <Text style={[styles.statValue, { color: stats?.trend === 'improving' ? '#10B981' : stats?.trend === 'declining' ? '#EF4444' : colors.textPrimary }]}>
               {stats?.trend === 'improving' ? '↗' : stats?.trend === 'declining' ? '↘' : '→'}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Tendance</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.trend')}</Text>
           </View>
         </View>
 
         {/* Objectif */}
         <View style={[styles.goalCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.goalTitle, { color: colors.textMuted }]}>OBJECTIF SOMMEIL</Text>
+          <Text style={[styles.goalTitle, { color: colors.textMuted }]}>{t('sleep.sleepGoal')}</Text>
           <View style={styles.goalRow}>
             <TouchableOpacity onPress={() => handleGoalChange(-30)} style={[styles.goalBtn, { backgroundColor: colors.border }]}>
               <Text style={[styles.goalBtnText, { color: colors.textPrimary }]}>-30min</Text>
@@ -239,7 +239,7 @@ export default function SleepScreen() {
         <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.notificationHeader}>
             {notificationsEnabled ? <Bell size={18} color="#8B5CF6" /> : <BellOff size={18} color={colors.textMuted} />}
-            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>Rappel coucher</Text>
+            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>{t('sleep.bedtimeReminder')}</Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={handleToggleNotifications}
@@ -251,7 +251,7 @@ export default function SleepScreen() {
           {notificationsEnabled && (
             <>
               <Text style={[styles.notificationSubtext, { color: colors.textMuted }]}>
-                Reçois un rappel pour aller dormir et atteindre ton objectif
+                {t('sleep.reminderDescription')}
               </Text>
 
               {!showNotificationSettings ? (
@@ -261,12 +261,12 @@ export default function SleepScreen() {
                 >
                   <Clock size={16} color="#8B5CF6" />
                   <Text style={[styles.notificationTimeText, { color: colors.textPrimary }]}>
-                    Rappel à {bedtimeReminder}
+                    {t('sleep.reminderAt', { time: bedtimeReminder })}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.notificationTimeEditor}>
-                  <Text style={[styles.notificationLabel, { color: colors.textMuted }]}>Heure du rappel</Text>
+                  <Text style={[styles.notificationLabel, { color: colors.textMuted }]}>{t('sleep.reminderTime')}</Text>
                   <TextInput
                     style={[styles.notificationTimeInput, { color: colors.textPrimary, borderColor: colors.border }]}
                     value={bedtimeReminder}
@@ -280,13 +280,13 @@ export default function SleepScreen() {
                       onPress={() => setShowNotificationSettings(false)}
                       style={[styles.notificationCancelBtn, { borderColor: colors.border }]}
                     >
-                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>Annuler</Text>
+                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={handleSaveBedtimeReminder}
                       style={[styles.notificationSaveBtn, { backgroundColor: '#8B5CF6' }]}
                     >
-                      <Text style={styles.notificationSaveText}>Enregistrer</Text>
+                      <Text style={styles.notificationSaveText}>{t('common.save')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -299,15 +299,15 @@ export default function SleepScreen() {
         <View style={[styles.protocolCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF620', borderWidth: 1 }]}>
           <View style={styles.protocolHeader}>
             <CheckCircle2 size={18} color="#8B5CF6" />
-            <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>Protocole Sommeil</Text>
+            <Text style={[styles.protocolTitle, { color: colors.textPrimary }]}>{t('sleep.sleepProtocol')}</Text>
           </View>
           <Text style={[styles.protocolText, { color: colors.textSecondary }]}>
-            💤 Avant de dormir, pense à faire ton check-up :
+            💤 {t('sleep.protocolDescription')}
           </Text>
           <View style={styles.protocolList}>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Enregistrer ta nuit (heure coucher/réveil)</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Noter la qualité de ton sommeil</Text>
-            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• Ajouter des notes si besoin</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem1')}</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem2')}</Text>
+            <Text style={[styles.protocolItem, { color: colors.textMuted }]}>• {t('sleep.protocolItem3')}</Text>
           </View>
         </View>
 
@@ -315,16 +315,16 @@ export default function SleepScreen() {
         {!showAddModal ? (
           <TouchableOpacity style={[styles.addBtn, { backgroundColor: '#8B5CF6' }]} onPress={() => setShowAddModal(true)}>
             <Moon size={18} color="#FFFFFF" />
-            <Text style={styles.addBtnText}>Enregistrer ma nuit</Text>
+            <Text style={styles.addBtnText}>{t('sleep.recordMyNight')}</Text>
           </TouchableOpacity>
         ) : (
           <View style={[styles.addCard, { backgroundColor: colors.backgroundCard }]}>
-            <Text style={[styles.addTitle, { color: colors.textPrimary }]}>Ma nuit</Text>
+            <Text style={[styles.addTitle, { color: colors.textPrimary }]}>{t('sleep.myNight')}</Text>
             
             <View style={styles.timeRow}>
               <View style={styles.timeInput}>
                 <Sun size={14} color="#F59E0B" />
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>Coucher</Text>
+                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('sleep.bedtime')}</Text>
                 <TextInput
                   style={[styles.timeField, { color: colors.textPrimary, borderColor: colors.border }]}
                   value={bedTime}
@@ -336,7 +336,7 @@ export default function SleepScreen() {
               </View>
               <View style={styles.timeInput}>
                 <Moon size={14} color="#8B5CF6" />
-                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>Réveil</Text>
+                <Text style={[styles.timeLabel, { color: colors.textMuted }]}>{t('sleep.wakeUp')}</Text>
                 <TextInput
                   style={[styles.timeField, { color: colors.textPrimary, borderColor: colors.border }]}
                   value={wakeTime}
@@ -348,7 +348,7 @@ export default function SleepScreen() {
               </View>
             </View>
 
-            <Text style={[styles.qualityLabel, { color: colors.textMuted }]}>Qualité du sommeil</Text>
+            <Text style={[styles.qualityLabel, { color: colors.textMuted }]}>{t('sleep.sleepQuality')}</Text>
             <View style={styles.starsRow}>
               {[1, 2, 3, 4, 5].map((i) => (
                 <TouchableOpacity key={i} onPress={() => { setQuality(i); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
@@ -359,22 +359,22 @@ export default function SleepScreen() {
 
             <View style={styles.addActions}>
               <TouchableOpacity onPress={() => setShowAddModal(false)} style={[styles.cancelBtn, { borderColor: colors.border }]}>
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Annuler</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={handleSave} style={[styles.saveBtn, { backgroundColor: '#8B5CF6' }]}>
-                <Text style={styles.saveBtnText}>Enregistrer</Text>
+                <Text style={styles.saveBtnText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
         {/* Historique */}
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>HISTORIQUE</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('sleep.history')}</Text>
         {entries.slice(0, 7).map((entry) => (
           <View key={entry.id} style={[styles.entryCard, { backgroundColor: colors.backgroundCard }]}>
             <View>
               <Text style={[styles.entryDate, { color: colors.textMuted }]}>
-                {format(new Date(entry.date), 'EEEE d MMMM', { locale: fr })}
+                {format(new Date(entry.date), 'EEEE d MMMM', { locale: dateLocale })}
               </Text>
               <Text style={[styles.entryDuration, { color: colors.textPrimary }]}>
                 {formatSleepDuration(entry.duration)}
