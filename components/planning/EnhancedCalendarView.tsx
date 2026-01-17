@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Plus, Moon } from 'lucide-react-native';
 import { getMonthRestDays } from '@/lib/restDaysService';
 import {
@@ -23,7 +24,20 @@ import {
   startOfWeek,
   endOfWeek,
 } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, es, de, it, pt, ru, ar, zhCN, type Locale } from 'date-fns/locale';
+
+// Mapping des langues vers les locales date-fns
+const DATE_LOCALES: Record<string, Locale> = {
+  fr: fr,
+  en: enUS,
+  es: es,
+  de: de,
+  it: it,
+  pt: pt,
+  ru: ru,
+  ar: ar,
+  zh: zhCN,
+};
 import { Training, Club } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
@@ -47,7 +61,22 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   selectedDate,
 }) => {
   const { colors } = useTheme();
+  const { t, language } = useI18n();
   const [restDays, setRestDays] = useState<Set<string>>(new Set());
+
+  // Obtenir la locale date-fns basée sur la langue sélectionnée
+  const dateLocale = DATE_LOCALES[language] || fr;
+
+  // Jours de la semaine traduits
+  const weekDays = [
+    t('dates.mondayShort'),
+    t('dates.tuesdayShort'),
+    t('dates.wednesdayShort'),
+    t('dates.thursdayShort'),
+    t('dates.fridayShort'),
+    t('dates.saturdayShort'),
+    t('dates.sundayShort'),
+  ];
 
   // Charger les jours de repos pour le mois affiché
   useEffect(() => {
@@ -117,7 +146,7 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.calendarTitle, { color: colors.textPrimary }]}>
-          {format(currentMonth, 'MMMM yyyy', { locale: fr })}
+          {format(currentMonth, 'MMMM yyyy', { locale: dateLocale })}
         </Text>
         <TouchableOpacity
           onPress={() => onMonthChange(addMonths(currentMonth, 1))}
@@ -144,9 +173,9 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
         >
           {/* Header jours */}
           <View style={styles.weekHeader}>
-            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+            {weekDays.map((day, index) => (
               <Text
-                key={day}
+                key={index}
                 style={[styles.weekHeaderText, { color: colors.textMuted }]}
               >
                 {day}
