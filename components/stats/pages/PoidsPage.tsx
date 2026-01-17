@@ -7,12 +7,13 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
-import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
+import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { aggregateWeightData } from '@/lib/statsAggregation';
 import { Target, TrendingUp, TrendingDown, Scale, Activity, BarChart3 } from 'lucide-react-native';
@@ -25,6 +26,7 @@ import { fr, enUS } from 'date-fns/locale';
 export const PoidsPage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
 
   // Get locale for date formatting
@@ -247,6 +249,8 @@ export const PoidsPage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       {/* Header */}
       <StatsHeader
@@ -344,8 +348,15 @@ export const PoidsPage: React.FC = () => {
           title={t('statsPages.weight.bmiTitle')}
           description={t('statsPages.weight.bmiDesc')}
         >
-          <TouchableOpacity
-            activeOpacity={0.9}
+          <SimpleMetricCard
+            value={bmi}
+            min={translatedBMIRanges.min}
+            max={translatedBMIRanges.max}
+            zones={translatedBMIRanges.zones}
+            unit=""
+            title={t('stats.bmi')}
+            source={translatedBMIRanges.source}
+            sourceUrl={translatedBMIRanges.sourceUrl}
             onPress={() => setSelectedMetric({
               key: 'bmi',
               label: t('stats.bmi'),
@@ -353,20 +364,7 @@ export const PoidsPage: React.FC = () => {
               unit: '',
               icon: <Scale size={18} color={bmiStatus?.color || '#6366F1'} strokeWidth={2.5} />,
             })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
-          >
-            <AnimatedMetricBar
-              value={bmi}
-              min={translatedBMIRanges.min}
-              max={translatedBMIRanges.max}
-              zones={translatedBMIRanges.zones}
-              unit={translatedBMIRanges.unit}
-              title={t('stats.bmi')}
-              source={translatedBMIRanges.source}
-              sourceUrl={translatedBMIRanges.sourceUrl}
-              animated={true}
-            />
-          </TouchableOpacity>
+          />
         </StatsSection>
       )}
 
@@ -483,14 +481,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     paddingVertical: 20,
-  },
-  animatedBarCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
 });

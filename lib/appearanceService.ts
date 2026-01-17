@@ -116,6 +116,48 @@ export const WARRIOR_THEMES: WarriorTheme[] = [
     unlockXP: 8000,
     icon: '',
   },
+
+  // === 5 NOUVEAUX THÈMES ===
+  {
+    id: 'indigo',
+    name: 'Indigo',
+    themeColor: 'indigo',
+    description: 'Bleu-violet profond',
+    unlockXP: 0, // GRATUIT
+    icon: '',
+  },
+  {
+    id: 'gold',
+    name: 'Gold',
+    themeColor: 'gold',
+    description: 'Or luxueux',
+    unlockXP: 0, // GRATUIT
+    icon: '',
+  },
+  {
+    id: 'emerald',
+    name: 'Emerald',
+    themeColor: 'emerald',
+    description: 'Émeraude profond',
+    unlockXP: 0, // GRATUIT
+    icon: '',
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset',
+    themeColor: 'sunset',
+    description: 'Coucher de soleil',
+    unlockXP: 0, // GRATUIT
+    icon: '',
+  },
+  {
+    id: 'lavender',
+    name: 'Lavender',
+    themeColor: 'lavender',
+    description: 'Lavande douce',
+    unlockXP: 0, // GRATUIT
+    icon: '',
+  },
 ];
 
 // ============================================

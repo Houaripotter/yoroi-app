@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
@@ -14,6 +15,7 @@ import { Award, TrendingUp, Target, Zap } from 'lucide-react-native';
 export const PerformancePage: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
 
   return (
@@ -22,6 +24,8 @@ export const PerformancePage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       <StatsHeader
         title={t('statsPages.performance.title')}

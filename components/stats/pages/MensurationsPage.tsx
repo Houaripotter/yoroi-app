@@ -18,10 +18,12 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { WAIST_CIRCUMFERENCE_RANGES_MALE, WAIST_CIRCUMFERENCE_RANGES_FEMALE, getWaistCircumferenceRange, getMetricStatus } from '@/lib/healthRanges';
 import { getUserSettings } from '@/lib/storage';
+import { useScrollContext } from '@/lib/ScrollContext';
 
 export const MensurationsPage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = language === 'fr' ? fr : enUS;
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [latestMeasurement, setLatestMeasurement] = useState<any>(null);
@@ -174,6 +176,8 @@ export const MensurationsPage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       <StatsHeader
         title={t('statsPages.measurements.title')}

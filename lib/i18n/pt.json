@@ -1453,6 +1453,95 @@
     "objective": "Obj",
     "remaining": "Falta"
   },
+  "healthRanges": {
+    "zones": {
+      "athlete": "Atleta",
+      "fit": "Em forma",
+      "average": "Média",
+      "high": "Alto",
+      "low": "Baixo",
+      "normal": "Normal",
+      "good": "Bom",
+      "excellent": "Excelente",
+      "optimal": "Ótimo",
+      "dehydrated": "Desidratado",
+      "underHydrated": "Pouco hidratado",
+      "veryHigh": "Muito alto",
+      "tired": "Cansado",
+      "insufficient": "Insuficiente",
+      "short": "Curto",
+      "long": "Longo",
+      "red": "Vermelho",
+      "yellow": "Amarelo",
+      "green": "Verde",
+      "underweight": "Abaixo do peso",
+      "overweight": "Sobrepeso",
+      "obese": "Obesidade",
+      "attention": "Atenção",
+      "highRisk": "Risco alto",
+      "light": "Leve",
+      "moderate": "Moderado",
+      "intense": "Intenso",
+      "maximal": "Máximo"
+    },
+    "bodyFat": {
+      "title": "Gordura corporal",
+      "explanationMale": "A percentagem de gordura corporal mede a proporção de gordura em relação ao peso total.\n\nCLASSIFICAÇÃO (Gallagher et al. 2000, n=1626 indivíduos):\n- 3-13%: Atleta - Nível competição\n- 14-17%: Em forma - Excelente condição\n- 18-24%: Média - População geral saudável\n- 25%+: Alto - Riscos metabólicos aumentados\n\nEVIDÊNCIAS CIENTÍFICAS:\n- >25% em homens = 2,5x risco diabetes tipo 2 (Prospective Studies Collaboration, Lancet 2009)\n- <5% crônico = disfunção hormonal, imunidade enfraquecida\n\nPRECISÃO DAS MEDIÇÕES:\n- Bioimpedância: +/-3-5% erro (Kyle et al. 2004)\n- DEXA: +/-1-2% (referência clínica)\n\nCONSELHO:\nAcompanhe a TENDÊNCIA durante 4-8 semanas em vez das variações diárias.",
+      "explanationFemale": "A percentagem de gordura corporal mede a proporção de gordura em relação ao peso total.\n\nCLASSIFICAÇÃO (Gallagher et al. 2000):\n- 10-20%: Atleta - Nível competição\n- 21-24%: Em forma - Excelente condição\n- 25-31%: Média - População geral\n- 32%+: Alto - Riscos metabólicos aumentados\n\nDIFERENÇA BIOLÓGICA HOMENS/MULHERES:\nAs mulheres têm naturalmente 8-12% mais gordura que os homens (seios, quadris, reserva reprodutiva). Isso é NORMAL e SAUDÁVEL.\n\nEVIDÊNCIAS CIENTÍFICAS:\n- <15% prolongado = amenorreia, infertilidade (Loucks AB, J Sports Sci 2004)\n- >32% = risco diabetes/cardiovascular aumentado\n\nCONSELHO:\nUma perda de 0,5-1% por mês é um ritmo saudável e sustentável."
+    },
+    "muscleMass": {
+      "title": "Massa muscular",
+      "explanationMale": "A massa muscular esquelética (SMM) representa os músculos voluntários do seu corpo.\n\nCLASSIFICAÇÃO (Janssen et al. 2000, estudo MRI em 468 indivíduos):\n- <38%: Baixo - Provável sarcopenia\n- 38-44%: Normal - População sedentária\n- 44-52%: Bom - Atividade física regular\n- 52%+: Excelente - Nível atlético\n\nEVIDÊNCIAS CIENTÍFICAS:\n- +10% massa muscular = -11% risco mortalidade total (Srikanthan P, Am J Med 2016)\n- Músculo = órgão metabólico: secreta miocinas anti-inflamatórias\n- Sensibilidade à insulina correlacionada positivamente\n\nSARCOPENIA (Cruz-Jentoft AJ, Lancet 2019):\nPerda de 3-8% de músculo por década após os 30 anos.\nO treino de força é o tratamento #1 cientificamente validado.\n\nRECOMENDAÇÕES (ACSM):\n2-3 sessões de força/semana, todos os grupos musculares.",
+      "explanationFemale": "A massa muscular esquelética (SMM) representa os músculos voluntários do seu corpo.\n\nCLASSIFICAÇÃO (Janssen et al. 2000):\n- <31%: Baixo - Provável sarcopenia\n- 31-36%: Normal - População sedentária\n- 36-42%: Bom - Atividade física regular\n- 42%+: Excelente - Nível atlético\n\nDIFERENÇA BIOLÓGICA:\nAs mulheres têm naturalmente 30-40% menos massa muscular que os homens (testosterona 10-20x menor). Isso é NORMAL.\n\nEVIDÊNCIAS CIENTÍFICAS:\n- Treino de força = prevenção osteoporose pós-menopausa (Kohrt WM, Med Sci Sports 2004)\n- Sem \"inchaço\" em mulheres sem esteroides\n- Melhora sensibilidade à insulina e metabolismo\n\nRECOMENDAÇÕES (ACSM):\n2-3 sessões de força/semana. Os pesos pesados são seguros e eficazes."
+    },
+    "waterPercentage": {
+      "title": "Água corporal",
+      "explanation": "A água corporal total (TBW) representa cerca de 60% do peso em homens adultos e 50-55% em mulheres.\n\nCLASSIFICAÇÃO (Watson et al. 1980):\n- <50%: Provável desidratação\n- 50-54%: Ligeiramente baixo\n- 55-60%: Normal\n- 61-70%: Ótimo - Excelente hidratação\n\nEVIDÊNCIAS CIENTÍFICAS:\n- Músculo = 73% água, Gordura = 10% água (Wang Z, Am J Clin Nutr 1999)\n- 2% desidratação = -10-20% desempenho (Sawka MN, Med Sci Sports 2007)\n\nO QUE INFLUENCIA A MEDIÇÃO:\n- Hora do dia\n- Refeições recentes\n- Exercício, temperatura\n- Cafeína, álcool\n\nNECESSIDADES DIÁRIAS (IOM 2004):\n- Homens: ~3,7L/dia (todas as fontes)\n- Mulheres: ~2,7L/dia (todas as fontes)\n\nCONSELHO:\nMonitore a cor da urina: amarelo claro = bem hidratado."
+    },
+    "visceralFat": {
+      "title": "Gordura visceral",
+      "explanation": "A gordura visceral é a gordura profunda que envolve os órgãos (fígado, intestinos, coração).\n\nCLASSIFICAÇÃO CIENTÍFICA:\n- Pontuação 1-9: Ótimo - Risco cardiometabólico mínimo\n- Pontuação 10-14: Alto - Provável síndrome metabólica\n- Pontuação 15+: Muito alto - Risco cardiovascular significativo\n\nEVIDÊNCIAS CIENTÍFICAS (Després et al. 2008):\nA gordura visceral é o fator #1 da \"síndrome metabólica\":\n- Aumenta inflamação sistêmica (CRP, IL-6)\n- Resistência à insulina levando a pré-diabetes\n- Risco cardiovascular 2x a 3x\n\nO QUE FUNCIONA (meta-análises):\n- Exercício aeróbico: redução média de 6,1% (Vissers et al. 2013)\n- Déficit calórico moderado: visa principalmente a gordura visceral\n- Redução do estresse (cortisol = armazenamento visceral)\n\nMEDIÇÃO:\nA MRI continua sendo a referência. A bioimpedância dá uma estimativa correlacionada mas não exata."
+    },
+    "hrv": {
+      "title": "Variabilidade da Frequência Cardíaca (HRV)",
+      "explanation": "A HRV mede as variações entre cada batimento cardíaco em milissegundos.\n\nCLASSIFICAÇÃO (RMSSD, valores médios):\n- 70+ ms: Excelente - Recuperação ótima\n- 50-69 ms: Bom - Boa adaptação\n- 30-49 ms: Normal - Recuperação em andamento\n- 10-29 ms: Cansado - Estresse fisiológico\n\nVARIABILIDADE INDIVIDUAL:\nCompare com a SUA média de 7-14 dias. Os valores absolutos variam por idade, condição física, genética.\n\nEVIDÊNCIAS (Task Force 1996 + meta-análises):\n- HRV baixo = preditor independente de mortalidade CV (Thayer JF, Neurosci Biobehav Rev 2012)\n- HRV reflete equilíbrio simpático/parassimpático\n\nO QUE BAIXA A HRV:\n- Overtraining\n- Álcool (mesmo moderado)\n- Estresse crônico\n- Infecção/doença\n- Falta de sono\n\nMELHORIA:\n- Treino aeróbico regular\n- Respiração lenta (6/min)\n- 7-9h de sono\n\nMEDIÇÃO:\nManhã ao acordar, mesmas condições, durante 1-5 min."
+    },
+    "restingHeartRate": {
+      "title": "Frequência cardíaca em repouso",
+      "explanation": "A frequência cardíaca em repouso é um preditor independente de mortalidade cardiovascular.\n\nCLASSIFICAÇÃO (Fox et al. 2007, meta-análise 46 estudos):\n- 40-60 bpm: Atleta - Coração muito eficiente\n- 61-70 bpm: Excelente\n- 71-80 bpm: Normal - Média da população\n- 81-100 bpm: Alto - Risco CV aumentado\n\nEVIDÊNCIAS CIENTÍFICAS:\n- +10 bpm FC repouso = +20% risco mortalidade CV (Cooney MT, Eur J Prev Cardiol 2010)\n- FC <60 bpm associada a melhor sobrevivência a longo prazo\n\nEFEITO DO TREINO:\n- Resistência regular: -10 a -15 bpm em 3-6 meses\n- Atletas de elite: 35-45 bpm (bradicardia fisiológica)\n\nFATORES AGUDOS:\nEstresse, cafeína, desidratação, febre, falta de sono\n\nMEDIÇÃO:\nManhã ao acordar, antes de se levantar, durante 1 minuto."
+    },
+    "sleepDuration": {
+      "title": "Duração do sono",
+      "explanation": "Duração ótima do sono para a saúde.\n\nCLASSIFICAÇÃO (Cappuccio et al. 2010, meta-análise 16 estudos):\n- <6h: Insuficiente - +48% risco mortalidade\n- 6-7h: Curto - Risco ligeiramente aumentado\n- 7-9h: Ótimo - Mortalidade mínima\n- >9h: Longo - +30% mortalidade (pode indicar patologia)\n\nEVIDÊNCIAS CIENTÍFICAS:\n1,3 milhão de indivíduos analisados:\n- <5h/noite = +52% risco cardiovascular\n- 6-8h = risco mínimo\n- >9h = associado a depressão, inflamação\n\nNECESSIDADES INDIVIDUAIS:\n- Atletas: 9-10h para recuperação ótima (Mah CD, Sleep 2011)\n- Genética: 3-5% são verdadeiros \"dormidores curtos\"\n\nHIGIENE DO SONO:\n- Horário regular\n- Sem telas 1h antes\n- Quarto 18-20°C\n- Evitar cafeína após as 14h"
+    },
+    "recoveryScore": {
+      "title": "Pontuação de recuperação",
+      "explanation": "A pontuação de recuperação estima sua capacidade de performar e treinar.\n\nCLASSIFICAÇÃO:\n- 0-33%: Vermelho - Descanso recomendado\n- 34-66%: Amarelo - Treino moderado possível\n- 67-100%: Verde - Capacidade ótima\n\nBASE CIENTÍFICA (Plews et al. 2013):\nA pontuação combina vários indicadores:\n- HRV (variabilidade frequência cardíaca)\n- Qualidade do sono\n- FC repouso\n- Fadiga percebida\n\nINTERPRETAÇÃO:\n- Pontuação baixa ocasional = normal após esforço intenso\n- Pontuação baixa crônica = risco de overtraining\n\nCONSELHO:\nAdapte a intensidade do seu treino à sua pontuação de recuperação."
+    },
+    "bmi": {
+      "title": "Índice de Massa Corporal (IMC)",
+      "explanation": "Índice de Massa Corporal (IMC) = Peso (kg) / Altura ao quadrado (m²)\n\nCLASSIFICAÇÃO (Prospective Studies Collaboration 2009):\nMeta-análise de 57 estudos, 894.576 indivíduos:\n- < 18,5: Abaixo do peso - Mortalidade aumentada\n- 18,5-25: Normal - Mortalidade mínima\n- 25-30: Sobrepeso - ~+30% mortalidade\n- 30+: Obesidade - ~+70% mortalidade\n\nEVIDÊNCIAS CIENTÍFICAS:\n- IMC ótimo = 22,5-25 para mortalidade mínima\n- +5 kg/m² acima de 25 = +30% mortalidade cardiovascular\n\nLIMITAÇÕES RECONHECIDAS:\n- Não distingue músculo/gordura\n- Menos confiável: atletas, idosos, etnias asiáticas\n\nCONSELHO:\nComplemente com circunferência da cintura (WHtR) e percentagem de gordura corporal para avaliação completa."
+    },
+    "waistCircumference": {
+      "title": "Circunferência da cintura",
+      "explanationMale": "A circunferência da cintura mede a gordura abdominal, um fator de risco cardiovascular.\n\nNOTA: Os limites absolutos (90cm, 102cm) são referências GERAIS.\n\nMÉTODO MAIS PRECISO - Relação Cintura/Altura (WHtR):\nDivida sua cintura pela sua altura:\n- < 0,4: Possível baixo peso\n- 0,4-0,5: Zona ideal\n- 0,5-0,6: Risco moderado\n- > 0,6: Risco alto\n\nEXEMPLOS CONCRETOS:\n- 1m75 de altura → Cintura ideal: 70-87cm\n- 1m90 de altura → Cintura ideal: 76-95cm\n- 2m10 de altura → Cintura ideal: 84-105cm\n\nEVIDÊNCIAS (Ashwell et al. 2012, meta-análise):\nO WHtR prediz MELHOR o risco cardiometabólico que o IMC ou a cintura sozinhos.\n\"Mantenha sua cintura em menos da metade da sua altura\"\n\nMEDIÇÃO:\nNo nível do umbigo, em pé, após expiração normal.",
+      "explanationFemale": "A circunferência da cintura mede a gordura abdominal, um fator de risco cardiovascular.\n\nNOTA: Os limites absolutos (80cm, 88cm) são referências GERAIS.\n\nMÉTODO MAIS PRECISO - Relação Cintura/Altura (WHtR):\nDivida sua cintura pela sua altura:\n- < 0,4: Possível baixo peso\n- 0,4-0,5: Zona ideal\n- 0,5-0,6: Risco moderado\n- > 0,6: Risco alto\n\nEXEMPLOS CONCRETOS:\n- 1m60 de altura → Cintura ideal: 64-80cm\n- 1m70 de altura → Cintura ideal: 68-85cm\n- 1m80 de altura → Cintura ideal: 72-90cm\n\nEVIDÊNCIAS (Ashwell et al. 2012):\nO WHtR é um melhor preditor do risco cardiometabólico que o IMC ou a cintura sozinhos.\n\nMEDIÇÃO:\nNo nível do umbigo, em pé, após expiração normal."
+    },
+    "boneMass": {
+      "title": "Massa óssea",
+      "explanationMale": "A massa óssea representa o peso mineral do seu esqueleto.\n\nCLASSIFICAÇÃO (proporcional ao peso corporal):\n- <2,8 kg: Baixo - Risco osteoporótico\n- 2,8-3,2 kg: Normal\n- >3,2 kg: Bom - Densidade ótima\n\nVARIAÇÃO POR PESO:\n- 60kg = ~2,6 kg osso esperado (~4,3%)\n- 80kg = ~3,3 kg osso esperado\n- 100kg = ~3,8 kg osso esperado\n\nEVIDÊNCIAS CIENTÍFICAS (Kanis et al. Lancet 2002):\n- Pico de massa óssea atingido por volta dos 25-30 anos\n- Perda de 0,5-1% por ano após os 40\n- Osteoporose = T-score < -2,5 (DEXA)\n\nINTERVENÇÕES VALIDADAS:\n- Treino de força: +1-3% densidade óssea (Martyn-St James M, Br J Sports Med 2009)\n- Cálcio 1000-1200mg/dia + Vitamina D 800-1000 UI/dia\n- Esportes de impacto: corrida, saltos\n\nLIMITAÇÕES:\nA bioimpedância estima massa, não densidade. DEXA = referência.",
+      "explanationFemale": "A massa óssea representa o peso mineral do seu esqueleto.\n\nCLASSIFICAÇÃO (proporcional ao peso corporal):\n- <2,2 kg: Baixo - Risco osteoporótico\n- 2,2-2,5 kg: Normal\n- >2,5 kg: Bom - Densidade ótima\n\nRISCO FEMININO (Kanis et al. Lancet 2002):\n- 1 em cada 3 mulheres terá uma fratura osteoporótica após os 50\n- Queda de estrogênio na menopausa = perda de 2-3%/ano durante 5-10 anos\n\nEVIDÊNCIAS CIENTÍFICAS:\n- Pico de massa óssea: 25-30 anos\n- Treino de força = intervenção #1 validada\n- Cálcio + Vitamina D = essenciais\n\nPREVENÇÃO:\n- Treino de força com pesos 2-3x/semana\n- Cálcio 1000-1200mg/dia\n- Vitamina D 800-1000 UI/dia\n- Evitar dietas muito baixas em calorias prolongadas\n\nCONSELHO:\nConstrua seu \"banco ósseo\" antes dos 30. Depois, o objetivo é MANTER."
+    },
+    "bmr": {
+      "title": "Taxa Metabólica Basal (BMR)",
+      "explanation": "A taxa metabólica basal (BMR) = energia queimada em repouso completo durante 24h.\n\nSEU BMR ESTIMADO: ~{{bmrValue}} kcal/dia\n(Baseado em: {{weight}}kg, {{height}}cm, {{age}} anos)\n\nEQUAÇÃO MIFFLIN-ST JEOR (Mifflin et al. 1990):\nValidada em 498 indivíduos, precisão +/-10% vs calorimetria indireta.\n\nGASTO TOTAL (fatores de atividade validados):\n- Sedentário (1,2): ~{{sedentary}} kcal\n- Pouco ativo (1,375): ~{{lightlyActive}} kcal\n- Ativo (1,55): ~{{active}} kcal\n- Muito ativo (1,725): ~{{veryActive}} kcal\n\nFATORES DE INFLUÊNCIA:\n- Massa muscular: +13 kcal/kg músculo/dia\n- Idade: -2% por década após os 20\n- Genética: +/-5-10% variação\n\nCONSELHO:\nAumente seu BMR através da massa muscular!"
+    },
+    "intensity": {
+      "title": "Intensidade de treino",
+      "explanation": "A intensidade de treino mede o esforço relativo comparado à sua capacidade máxima.\n\nCLASSIFICAÇÃO (modelo TRIMP de Banister):\n- 0-50%: Leve - Recuperação ativa\n- 50-70%: Moderado - Zona aeróbica, resistência base\n- 70-85%: Intenso - Zona limiar de lactato\n- 85-100%: Máximo - Zona anaeróbica\n\nEVIDÊNCIAS CIENTÍFICAS:\n- 80% volume na zona 1-2 + 20% na zona 4-5 = distribuição polarizada ótima (Seiler S, Int J Sports Physiol 2010)\n- Overtraining = volume demais na zona 3 (terra de ninguém)\n\nCONSELHO:\nA maioria dos seus treinos deve ser na zona fácil (conversa possível)."
+    },
+    "unknown": "Desconhecido"
+  },
   "trainingJournal": {
     "title": "Diário de Treino",
     "daysAgo": "Há {{days}} dias",

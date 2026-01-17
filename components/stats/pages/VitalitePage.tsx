@@ -7,12 +7,13 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
-import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
+import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { RecoveryCircle } from '../whoop/RecoveryCircle';
 import { SleepPhasesBar } from '../whoop/SleepPhasesBar';
@@ -27,6 +28,7 @@ import { fr, enUS } from 'date-fns/locale';
 export const VitalitePage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = language === 'fr' ? fr : enUS;
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [isHealthKitConnected, setIsHealthKitConnected] = useState(false);
@@ -208,7 +210,9 @@ export const VitalitePage: React.FC = () => {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         showsVerticalScrollIndicator={false}
-      nestedScrollEnabled={true}
+        nestedScrollEnabled={true}
+        onScroll={onScrollContext}
+        scrollEventThrottle={16}
       >
         <StatsHeader
           title={t('statsPages.vitality.title')}
@@ -232,6 +236,8 @@ export const VitalitePage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       <StatsHeader
         title={t('statsPages.vitality.title')}
@@ -263,20 +269,10 @@ export const VitalitePage: React.FC = () => {
           />
         )}
 
-        {/* Barre animée Durée de sommeil */}
+        {/* Carte Durée de sommeil */}
         {healthData?.sleep?.duration > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => setSelectedMetric({
-              key: 'sleep',
-              label: t('statsPages.vitality.sleepDuration'),
-              color: '#6366F1',
-              unit: 'h',
-              icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
-            })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
-          >
-            <AnimatedMetricBar
+          <View style={{ marginBottom: 16 }}>
+            <SimpleMetricCard
               value={healthData.sleep.duration}
               min={SLEEP_DURATION_RANGES.min}
               max={SLEEP_DURATION_RANGES.max}
@@ -285,9 +281,15 @@ export const VitalitePage: React.FC = () => {
               title={t('statsPages.vitality.sleepDuration')}
               source={SLEEP_DURATION_RANGES.source}
               sourceUrl={SLEEP_DURATION_RANGES.sourceUrl}
-              animated={true}
+              onPress={() => setSelectedMetric({
+                key: 'sleep',
+                label: t('statsPages.vitality.sleepDuration'),
+                color: '#6366F1',
+                unit: 'h',
+                icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
+              })}
             />
-          </TouchableOpacity>
+          </View>
         )}
 
         <View style={styles.grid}>
@@ -401,20 +403,10 @@ export const VitalitePage: React.FC = () => {
         title={t('statsPages.vitality.heartAndHRV')}
         description={t('statsPages.clickToSeeChart')}
       >
-        {/* Barre animée HRV */}
+        {/* Carte HRV */}
         {healthData?.hrv?.value > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => setSelectedMetric({
-              key: 'hrv',
-              label: t('statsPages.vitality.hrv'),
-              color: '#10B981',
-              unit: 'ms',
-              icon: <Zap size={18} color="#10B981" strokeWidth={2.5} />,
-            })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
-          >
-            <AnimatedMetricBar
+          <View style={{ marginBottom: 16 }}>
+            <SimpleMetricCard
               value={healthData.hrv.value}
               min={HRV_RANGES.min}
               max={HRV_RANGES.max}
@@ -423,25 +415,21 @@ export const VitalitePage: React.FC = () => {
               title={t('statsPages.vitality.hrv')}
               source={HRV_RANGES.source}
               sourceUrl={HRV_RANGES.sourceUrl}
-              animated={true}
+              onPress={() => setSelectedMetric({
+                key: 'hrv',
+                label: t('statsPages.vitality.hrv'),
+                color: '#10B981',
+                unit: 'ms',
+                icon: <Zap size={18} color="#10B981" strokeWidth={2.5} />,
+              })}
             />
-          </TouchableOpacity>
+          </View>
         )}
 
-        {/* Barre animée FC Repos */}
+        {/* Carte FC Repos */}
         {healthData?.heartRate?.resting > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => setSelectedMetric({
-              key: 'resting_hr',
-              label: t('statsPages.vitality.restingHeartRate'),
-              color: '#EC4899',
-              unit: 'bpm',
-              icon: <Heart size={18} color="#EC4899" strokeWidth={2.5} />,
-            })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard, marginBottom: 16 }]}
-          >
-            <AnimatedMetricBar
+          <View style={{ marginBottom: 16 }}>
+            <SimpleMetricCard
               value={healthData.heartRate.resting}
               min={RESTING_HEART_RATE_RANGES.min}
               max={RESTING_HEART_RATE_RANGES.max}
@@ -450,9 +438,15 @@ export const VitalitePage: React.FC = () => {
               title={t('statsPages.vitality.restingHeartRate')}
               source={RESTING_HEART_RATE_RANGES.source}
               sourceUrl={RESTING_HEART_RATE_RANGES.sourceUrl}
-              animated={true}
+              onPress={() => setSelectedMetric({
+                key: 'resting_hr',
+                label: t('statsPages.vitality.restingHeartRate'),
+                color: '#EC4899',
+                unit: 'bpm',
+                icon: <Heart size={18} color="#EC4899" strokeWidth={2.5} />,
+              })}
             />
-          </TouchableOpacity>
+          </View>
         )}
 
         {/* HRV Card style Whoop */}
@@ -620,14 +614,5 @@ const styles = StyleSheet.create({
   hydrationContainer: {
     alignItems: 'center',
     marginBottom: 24,
-  },
-  animatedBarCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
 });

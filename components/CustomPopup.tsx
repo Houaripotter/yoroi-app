@@ -45,10 +45,15 @@ export const CustomPopup: React.FC<CustomPopupProps> = ({
 
   const handleButtonPress = (button: PopupButton) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (button.onPress) {
-      button.onPress();
-    }
+    // Fermer d'abord le popup actuel
     onClose();
+    // Puis executer l'action apres un court delai pour permettre
+    // l'affichage d'un nouveau popup si necessaire
+    if (button.onPress) {
+      setTimeout(() => {
+        button.onPress?.();
+      }, 100);
+    }
   };
 
   const getButtonStyle = (style?: string) => {

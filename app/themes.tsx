@@ -31,6 +31,12 @@ import {
   Eye,
   Circle,
   Diamond,
+  // Nouveaux icons pour les 5 thèmes
+  Star,
+  Coins,
+  Gem,
+  Sunset as SunsetIcon,
+  Flower2,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
@@ -91,6 +97,17 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
       return <Eye {...iconProps} />;                    // Oeil fantôme
     case 'ocean':
       return <Droplet {...iconProps} fill={color} />;   // Goutte océan
+    // 5 Nouveaux thèmes
+    case 'indigo':
+      return <Star {...iconProps} fill={color} />;      // Étoile indigo
+    case 'gold':
+      return <Coins {...iconProps} fill={color} />;     // Pièces dorées
+    case 'emerald':
+      return <Gem {...iconProps} fill={color} />;       // Gemme émeraude
+    case 'sunset':
+      return <SunsetIcon {...iconProps} fill={color} />; // Coucher de soleil
+    case 'lavender':
+      return <Flower2 {...iconProps} fill={color} />;   // Fleur lavande
     case 'classic':
     default:
       return <Circle {...iconProps} fill={color} />;    // Cercle classic

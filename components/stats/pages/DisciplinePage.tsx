@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
@@ -22,6 +23,7 @@ import { fr, enUS } from 'date-fns/locale';
 export const DisciplinePage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const dateLocale = language === 'fr' ? fr : enUS;
 
   // Plage pour l'intensité d'entraînement
@@ -226,6 +228,8 @@ export const DisciplinePage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       <StatsHeader
         title={t('statsPages.discipline.title')}

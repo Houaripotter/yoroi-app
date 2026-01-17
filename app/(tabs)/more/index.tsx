@@ -634,6 +634,35 @@ export default function MoreScreen() {
     setShowTutorial(false);
   };
 
+  // Charger l'état du bouton partage flottant
+  const SHARE_BUTTON_KEY = '@yoroi_stats_share_button_hidden';
+  useEffect(() => {
+    const loadShareButtonState = async () => {
+      try {
+        const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
+        setShareButtonVisible(!hidden);
+      } catch (error) {
+        logger.error('[More] Error loading share button state:', error);
+      }
+    };
+    loadShareButtonState();
+  }, []);
+
+  // Toggle du bouton partage flottant
+  const toggleShareButton = async (value: boolean) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setShareButtonVisible(value);
+      if (value) {
+        await AsyncStorage.removeItem(SHARE_BUTTON_KEY);
+      } else {
+        await AsyncStorage.setItem(SHARE_BUTTON_KEY, 'true');
+      }
+    } catch (error) {
+      logger.error('[More] Error toggling share button:', error);
+    }
+  };
+
   // Mode Créateur secret
   const [versionTapCount, setVersionTapCount] = useState(0);
   const [showCreatorInput, setShowCreatorInput] = useState(false);
@@ -642,6 +671,7 @@ export default function MoreScreen() {
   const [lastTapTime, setLastTapTime] = useState(0);
   const [longPressActive, setLongPressActive] = useState(false);
   const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
+  const [shareButtonVisible, setShareButtonVisible] = useState(true); // Bouton partage flottant
 
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
@@ -1450,6 +1480,30 @@ export default function MoreScreen() {
                 </View>
                 <ChevronRight size={18} color={colors.textMuted} />
               </TouchableOpacity>
+
+              <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+              {/* Toggle Bouton Partage Stats */}
+              <View style={[styles.menuItem, { backgroundColor: colors.card }]}>
+                <View style={[styles.menuItemIcon, { backgroundColor: '#3B82F615' }]}>
+                  <Share2 size={20} color="#3B82F6" strokeWidth={2} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
+                    {t('menu.shareStatsButton') || 'Bouton Partage Stats'}
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                    {t('menu.shareStatsButtonDescription') || 'Afficher le bouton flottant'}
+                  </Text>
+                </View>
+                <Switch
+                  value={shareButtonVisible}
+                  onValueChange={toggleShareButton}
+                  trackColor={{ false: colors.border, true: colors.accent + '60' }}
+                  thumbColor={shareButtonVisible ? colors.accent : colors.textMuted}
+                  ios_backgroundColor={colors.border}
+                />
+              </View>
             </View>
           </View>
 

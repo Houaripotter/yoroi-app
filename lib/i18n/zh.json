@@ -1536,6 +1536,88 @@
     "objective": "目标",
     "remaining": "剩余"
   },
+  "healthRanges": {
+    "zones": {
+      "athlete": "运动员",
+      "fit": "健康",
+      "average": "平均",
+      "high": "偏高",
+      "low": "偏低",
+      "optimal": "最佳",
+      "good": "良好",
+      "moderate": "中等",
+      "elevated": "略高",
+      "veryHigh": "很高",
+      "excellent": "优秀",
+      "aboveAverage": "高于平均",
+      "belowAverage": "低于平均",
+      "poor": "较差",
+      "normal": "正常",
+      "overweight": "超重",
+      "obese": "肥胖",
+      "underweight": "体重过轻",
+      "healthy": "健康",
+      "attention": "注意",
+      "danger": "危险"
+    },
+    "bodyFat": {
+      "title": "体脂率",
+      "explanationMale": "体脂率测量脂肪占总体重的比例。对于男性，低于14%属于运动员水平，14-17%表示身体健康，18-24%为平均水平，高于25%被视为偏高。保持健康的体脂率可以降低心血管疾病风险，提高身体表现，并支持激素平衡。（Gallagher等人，American Journal of Clinical Nutrition，2000年）",
+      "explanationFemale": "体脂率测量脂肪占总体重的比例。对于女性，低于21%属于运动员水平，21-24%表示身体健康，25-31%为平均水平，高于32%被视为偏高。女性需要更高的体脂率来维持激素和生殖功能。保持健康的体脂率可以降低心血管疾病风险，提高身体表现，并支持激素平衡。（Gallagher等人，American Journal of Clinical Nutrition，2000年）"
+    },
+    "muscleMass": {
+      "title": "肌肉量",
+      "explanationMale": "肌肉量代表身体骨骼肌的总重量。对于男性，超过体重44%被视为高水平，40-44%为平均水平，低于40%为偏低。较高的肌肉量与更好的静息代谢率、更高的胰岛素敏感性以及降低年龄相关肌肉流失风险相关。力量训练对于维持和发展肌肉量至关重要。（Janssen等人，Journal of Applied Physiology，2000年）",
+      "explanationFemale": "肌肉量代表身体骨骼肌的总重量。对于女性，超过体重36%被视为高水平，31-36%为平均水平，低于31%为偏低。较高的肌肉量与更好的静息代谢率、更高的胰岛素敏感性以及降低年龄相关肌肉流失风险相关。力量训练对于维持和发展肌肉量至关重要。（Janssen等人，Journal of Applied Physiology，2000年）"
+    },
+    "waterPercentage": {
+      "title": "身体水分",
+      "explanation": "身体水分百分比表示水分含量水平，对多种生理功能至关重要。55-65%的最佳范围表示良好的水分状态，45-55%是可接受的，低于45%表示脱水。适当的水分对于体温调节、营养运输、关节健康和认知功能至关重要。水分需求因身体活动、气候和个人代谢而异。（Sawka等人，Medicine & Science in Sports & Exercise，2007年）"
+    },
+    "visceralFat": {
+      "title": "内脏脂肪",
+      "explanation": "内脏脂肪积聚在腹腔内的内脏器官周围。1-9级被视为最佳，10-14为偏高，超过15为很高。过多的内脏脂肪与代谢疾病、心血管疾病和2型糖尿病的风险增加有关。与皮下脂肪不同，内脏脂肪具有代谢活性，会释放炎症物质。均衡饮食和规律运动是减少内脏脂肪的主要方法。（Després，Nature，2006年）"
+    },
+    "hrv": {
+      "title": "心率变异性（HRV）",
+      "explanation": "心率变异性测量连续心跳之间的间隔变化，反映自主神经系统的活动。超过50毫秒被认为优秀，30-50毫秒为平均，低于30毫秒为偏低。较高的HRV与更好的恢复能力、更好的压力管理和心血管健康相关。HRV受睡眠、压力、运动和整体健康状况的影响。定期监测可以帮助优化训练负荷。（Shaffer & Ginsberg，Frontiers in Public Health，2017年）"
+    },
+    "restingHeartRate": {
+      "title": "静息心率",
+      "explanation": "静息心率是完全休息状态下的心跳次数。低于60次/分钟通常表示良好的心血管健康（运动员通常为40-50次/分钟），60-80次/分钟是正常范围，高于80次/分钟可能表示需要改善心血管健康。较低的静息心率与心脏效率、更好的耐力和降低心血管风险相关。受训练、压力水平和睡眠质量影响。（Jensen等人，European Heart Journal，2013年）"
+    },
+    "sleepDuration": {
+      "title": "睡眠时长",
+      "explanation": "睡眠时长在身体恢复中起着关键作用。7-9小时被认为是成人的最佳睡眠时长，6-7小时是可接受的，而少于6小时与健康负面影响相关。优质睡眠对于肌肉恢复、记忆巩固、激素调节（包括生长激素和睾酮）以及免疫系统功能至关重要。长期睡眠不足会增加肥胖、糖尿病和心血管疾病的风险。（Walker，Why We Sleep，2017年）"
+    },
+    "recoveryScore": {
+      "title": "恢复评分",
+      "explanation": "恢复评分反映身体从体力消耗中恢复的能力。80-100%表示恢复极佳，适合高强度训练；60-79%表示恢复良好，适合中等强度训练；40-59%表示部分恢复，建议轻度训练；低于40%表示需要休息。该评分考虑多个因素：HRV、睡眠质量、累积疲劳和压力水平。关注恢复可以降低过度训练的风险。（Kellmann等人，International Journal of Sports Physiology and Performance，2018年）"
+    },
+    "bmi": {
+      "title": "身体质量指数（BMI）",
+      "explanation": "身体质量指数（BMI）通过体重（公斤）除以身高（米）的平方计算。BMI低于18.5表示体重过轻，18.5-24.9为正常体重，25-29.9为超重，超过30为肥胖。虽然BMI被广泛使用，但它不区分肌肉和脂肪，因此对运动员或肌肉量高的人可能不准确。建议与其他指标如体脂率和腰围一起使用。（WHO Technical Report Series，2000年）"
+    },
+    "waistCircumference": {
+      "title": "腰围",
+      "explanationMale": "腰围是评估腹部脂肪分布的简单指标。对于男性，低于94厘米被视为最佳，94-102厘米为中等风险，超过102厘米表示代谢疾病风险增加。该指标对于评估与心血管疾病和2型糖尿病相关的内脏脂肪特别有用。它通过提供身体脂肪分布信息来补充BMI。（Lean等人，The Lancet，1995年）",
+      "explanationFemale": "腰围是评估腹部脂肪分布的简单指标。对于女性，低于80厘米被视为最佳，80-88厘米为中等风险，超过88厘米表示代谢疾病风险增加。该指标对于评估与心血管疾病和2型糖尿病相关的内脏脂肪特别有用。它通过提供身体脂肪分布信息来补充BMI。（Lean等人，The Lancet，1995年）"
+    },
+    "boneMass": {
+      "title": "骨量",
+      "explanationMale": "骨量代表身体骨骼的总重量。对于男性，超过3.5公斤被视为最佳，2.5-3.5公斤为正常，低于2.5公斤为偏低。良好的骨密度对于预防骨质疏松和骨折至关重要。力量训练和高冲击运动，以及充足的钙和维生素D摄入，有助于维持和加强骨量。（Kanis等人，Osteoporosis International，2013年）",
+      "explanationFemale": "骨量代表身体骨骼的总重量。对于女性，超过2.5公斤被视为最佳，1.8-2.5公斤为正常，低于1.8公斤为偏低。女性更容易患骨质疏松症，尤其是更年期后由于雌激素水平下降。力量训练和高冲击运动，以及充足的钙和维生素D摄入，有助于维持和加强骨量。（Kanis等人，Osteoporosis International，2013年）"
+    },
+    "bmr": {
+      "title": "基础代谢率（BMR）",
+      "explanation": "基础代谢率（BMR）代表身体在休息时为维持生命功能（呼吸、血液循环、细胞再生）所燃烧的卡路里数。您的估计BMR：{{bmrValue}}卡路里/天，基于体重（{{weight}}公斤）、身高（{{height}}厘米）和年龄（{{age}}岁）。该值作为计算每日热量需求的基础：久坐生活方式（约{{sedentary}}卡路里）、轻度活动（约{{lightlyActive}}卡路里）、中等活动（约{{active}}卡路里）、高强度活动（约{{veryActive}}卡路里）。（Mifflin等人，American Journal of Clinical Nutrition，1990年）"
+    },
+    "intensity": {
+      "title": "训练强度",
+      "explanation": "训练强度测量身体活动期间的努力程度。高强度（80-100%）对应最大努力，建议限量使用；中等强度（60-79%）为持续努力，适合大多数训练；低强度（40-59%）为轻度活动，适合恢复或热身。适当的强度变化对于进步和预防受伤至关重要。训练周期化可以优化适应和恢复。（Seiler & Kjerland，International Journal of Sports Physiology and Performance，2006年）"
+    },
+    "unknown": "未知指标"
+  },
   "trainingJournal": {
     "title": "训练日志",
     "daysAgo": "{{days}}天前",

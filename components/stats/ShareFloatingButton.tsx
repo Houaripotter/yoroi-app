@@ -1,35 +1,139 @@
 /**
  * ShareFloatingButton.tsx
  * Bouton flottant pour partager les statistiques sur les réseaux sociaux
- * Peut être fermé définitivement par l'utilisateur
+ * - Animation pulsation comme un cœur
+ * - Se cache au scroll vers le bas, réapparaît au scroll vers le haut
+ * - Bouton croix bien visible pour fermer
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Animated,
+  Dimensions,
 } from 'react-native';
-import { Share2, X } from 'lucide-react-native';
+import { Share2, X, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useI18n } from '@/lib/I18nContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STORAGE_KEY = '@yoroi_stats_share_button_hidden';
 
 export const ShareFloatingButton: React.FC = () => {
-  // DÉSACTIVÉ - Bouton retiré car jugé moche
-  return null;
-
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+  const { scrollY, isScrollingDown } = useScrollContext();
   const [isHidden, setIsHidden] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const slideAnim = useState(new Animated.Value(0))[0];
-  const scaleAnim = useState(new Animated.Value(1))[0];
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Animations
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
+  const lastScrollYRef = useRef(0);
+  const wasScrollingDown = useRef(false);
+
+  // Animation pulsation cœur continue
+  useEffect(() => {
+    const heartbeatAnimation = Animated.loop(
+      Animated.sequence([
+        // Premier battement (fort)
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        // Deuxième battement (léger)
+        Animated.timing(pulseAnim, {
+          toValue: 1.08,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        // Pause entre les battements
+        Animated.delay(800),
+      ])
+    );
+
+    heartbeatAnimation.start();
+
+    return () => heartbeatAnimation.stop();
+  }, []);
+
+  // Animation glow pulsante
+  useEffect(() => {
+    const glowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    glowAnimation.start();
+
+    return () => glowAnimation.stop();
+  }, []);
+
+  // Gérer le scroll pour cacher/montrer le bouton
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      const diff = value - lastScrollYRef.current;
+
+      // Scroll vers le bas - cacher le bouton (avec seuil)
+      if (diff > 8 && !wasScrollingDown.current) {
+        wasScrollingDown.current = true;
+        Animated.spring(translateYAnim, {
+          toValue: 200, // Déplacer vers le bas (hors écran)
+          useNativeDriver: true,
+          tension: 40,
+          friction: 10,
+        }).start();
+      }
+      // Scroll vers le haut - montrer le bouton
+      else if (diff < -8 && wasScrollingDown.current) {
+        wasScrollingDown.current = false;
+        Animated.spring(translateYAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }).start();
+      }
+
+      lastScrollYRef.current = value;
+    });
+
+    return () => scrollY.removeListener(listenerId);
+  }, [scrollY]);
+
+  // Vérifier si le bouton doit être affiché
   useEffect(() => {
     checkVisibility();
   }, []);
@@ -43,25 +147,34 @@ export const ShareFloatingButton: React.FC = () => {
         Animated.spring(slideAnim, {
           toValue: 1,
           useNativeDriver: true,
-          tension: 50,
+          tension: 40,
           friction: 8,
         }).start();
       }
     } catch (error) {
       console.error('Error checking button visibility:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleClose = async () => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
       // Animation de sortie
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(async () => {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.5,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(async () => {
         await AsyncStorage.setItem(STORAGE_KEY, 'true');
         setIsHidden(true);
       });
@@ -71,18 +184,18 @@ export const ShareFloatingButton: React.FC = () => {
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
 
     // Animation du bouton
     Animated.sequence([
       Animated.timing(scaleAnim, {
-        toValue: 0.9,
+        toValue: 0.85,
         duration: 100,
         useNativeDriver: true,
       }),
       Animated.timing(scaleAnim, {
         toValue: 1,
-        duration: 100,
+        duration: 150,
         useNativeDriver: true,
       }),
     ]).start();
@@ -90,12 +203,7 @@ export const ShareFloatingButton: React.FC = () => {
     router.push('/share-hub');
   };
 
-  const toggleExpanded = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsExpanded(!isExpanded);
-  };
-
-  if (isHidden) return null;
+  if (isLoading || isHidden) return null;
 
   return (
     <Animated.View
@@ -104,64 +212,98 @@ export const ShareFloatingButton: React.FC = () => {
         {
           transform: [
             {
-              translateX: slideAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-200, 0],
-              }),
+              translateY: Animated.add(
+                slideAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [100, 0],
+                }),
+                translateYAnim
+              ),
             },
-            { scale: scaleAnim },
+            { scale: Animated.multiply(scaleAnim, pulseAnim) },
           ],
           opacity: slideAnim,
         },
       ]}
     >
-      <TouchableOpacity
+      {/* Glow effect derrière */}
+      <Animated.View
         style={[
-          styles.button,
+          styles.glowEffect,
           {
-            backgroundColor: isDark
-              ? 'rgba(212, 175, 55, 0.15)'
-              : 'rgba(212, 175, 55, 0.1)',
-            borderColor: colors.gold + '40',
+            backgroundColor: colors.accent,
+            opacity: glowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.3, 0.6],
+            }),
+            transform: [
+              {
+                scale: glowAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 1.3],
+                }),
+              },
+            ],
           },
         ]}
+      />
+
+      {/* Bouton principal */}
+      <TouchableOpacity
+        style={styles.mainButton}
         onPress={handlePress}
-        onLongPress={toggleExpanded}
-        activeOpacity={0.8}
+        activeOpacity={0.9}
       >
-        {/* Icône */}
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: colors.gold + '20' },
-          ]}
+        <LinearGradient
+          colors={[colors.accent, colors.accentDark || colors.accent]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientButton}
         >
-          <Share2 size={18} color={colors.gold} strokeWidth={2.5} />
-        </View>
+          {/* Effet brillant */}
+          <View style={styles.shineEffect} />
 
-        {/* Texte (si expanded) */}
-        {isExpanded && (
-          <View style={styles.textContainer}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Partager
-            </Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Tes stats
-            </Text>
+          {/* Icône et texte */}
+          <View style={styles.contentRow}>
+            <View style={styles.iconWrapper}>
+              <Share2 size={22} color={colors.textOnAccent} strokeWidth={2.5} />
+              <Animated.View
+                style={[
+                  styles.sparkle,
+                  {
+                    opacity: glowAnim,
+                    transform: [{ rotate: '15deg' }],
+                  },
+                ]}
+              >
+                <Sparkles size={12} color={colors.textOnAccent} />
+              </Animated.View>
+            </View>
+            <View style={styles.textWrapper}>
+              <Text style={[styles.buttonTitle, { color: colors.textOnAccent }]}>
+                {t('share.shareButton') || 'Partager'}
+              </Text>
+              <Text style={[styles.buttonSubtitle, { color: colors.textOnAccent + 'CC' }]}>
+                {t('share.yourStats') || 'Tes stats'}
+              </Text>
+            </View>
           </View>
-        )}
+        </LinearGradient>
+      </TouchableOpacity>
 
-        {/* Bouton fermer */}
-        <TouchableOpacity
-          style={[
-            styles.closeButton,
-            { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
-          ]}
-          onPress={handleClose}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <X size={14} color={colors.textMuted} strokeWidth={2.5} />
-        </TouchableOpacity>
+      {/* Bouton fermer - bien visible en rouge */}
+      <TouchableOpacity
+        style={[
+          styles.closeButton,
+          {
+            backgroundColor: '#EF4444',
+            borderColor: '#F87171',
+          },
+        ]}
+        onPress={handleClose}
+        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+      >
+        <X size={14} color="#FFFFFF" strokeWidth={3} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -170,50 +312,91 @@ export const ShareFloatingButton: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 180,
-    left: 16,
-    zIndex: 99,
+    bottom: 140,
+    right: 16,
+    zIndex: 999,
+    alignItems: 'flex-end',
   },
-  button: {
+  glowEffect: {
+    position: 'absolute',
+    width: 140,
+    height: 56,
+    borderRadius: 28,
+    top: 4,
+    right: 4,
+  },
+  mainButton: {
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  gradientButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    maxWidth: 160,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 28,
+    minWidth: 140,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  shineEffect: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconWrapper: {
+    position: 'relative',
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  textContainer: {
-    flex: 1,
+  sparkle: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
   },
-  title: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+  textWrapper: {
+    justifyContent: 'center',
   },
-  subtitle: {
-    fontSize: 10,
+  buttonTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  buttonSubtitle: {
+    fontSize: 11,
     fontWeight: '600',
     marginTop: -2,
   },
   closeButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
 });

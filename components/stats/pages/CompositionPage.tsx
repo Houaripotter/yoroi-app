@@ -7,12 +7,13 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, View, StyleSheet, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { useScrollContext } from '@/lib/ScrollContext';
 import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
-import { RingChart } from '../charts/RingChart';
+import { SimpleCompositionCard } from '../charts/SimpleCompositionCard';
+import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
-import { AnimatedMetricBar } from '../charts/AnimatedMetricBar';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { getLatestWeight, getAllWeights } from '@/lib/database';
 import { Activity, Droplet, Bone, Zap, Flame, Target } from 'lucide-react-native';
@@ -39,6 +40,7 @@ import { fr, enUS } from 'date-fns/locale';
 export const CompositionPage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
+  const { handleScroll: onScrollContext } = useScrollContext();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const dateLocale = language === 'fr' ? fr : enUS;
   const [latestWeight, setLatestWeight] = useState<any>(null);
@@ -269,6 +271,8 @@ export const CompositionPage: React.FC = () => {
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
+      onScroll={onScrollContext}
+      scrollEventThrottle={16}
     >
       <StatsHeader
         title={t('statsPages.composition.title')}
@@ -278,35 +282,19 @@ export const CompositionPage: React.FC = () => {
         showPeriodSelector={true}
       />
 
-      {/* Section Anneaux Principaux */}
+      {/* Section Composition Globale */}
       <StatsSection
         title={t('statsPages.composition.globalComposition')}
         description={t('statsPages.composition.globalCompositionDesc')}
       >
         {hasData ? (
-          <RingChart
-            rings={[
-              {
-                percentage: fatPercent,
-                color: '#F59E0B',
-                label: t('statsPages.composition.bodyFat'),
-                value: `${fatPercent.toFixed(1)}%`,
-              },
-              {
-                percentage: musclePercent,
-                color: '#10B981',
-                label: t('statsPages.composition.muscle'),
-                value: `${musclePercent.toFixed(1)}%`,
-              },
-              {
-                percentage: waterPercent,
-                color: '#06B6D4',
-                label: t('statsPages.composition.water'),
-                value: `${waterPercent.toFixed(1)}%`,
-              },
-            ]}
-            size={240}
-            strokeWidth={14}
+          <SimpleCompositionCard
+            fatPercent={fatPercent}
+            musclePercent={musclePercent}
+            waterPercent={waterPercent}
+            fatLabel={t('statsPages.composition.bodyFat')}
+            muscleLabel={t('statsPages.composition.muscle')}
+            waterLabel={t('statsPages.composition.water')}
           />
         ) : (
           <View style={styles.emptyState}>
@@ -321,7 +309,7 @@ export const CompositionPage: React.FC = () => {
       </StatsSection>
 
 
-      {/* Barre animée Masse Grasse */}
+      {/* Masse Grasse */}
       {fatPercent > 0 && (
         <StatsSection
           title={t('statsPages.composition.bodyFat')}
@@ -336,24 +324,22 @@ export const CompositionPage: React.FC = () => {
               unit: '%',
               icon: <Activity size={18} color={fatStatus?.color || '#F59E0B'} strokeWidth={2.5} />,
             })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
           >
-            <AnimatedMetricBar
+            <SimpleMetricCard
               value={fatPercent}
-              min={bodyFatRange.min}
-              max={bodyFatRange.max}
-              zones={bodyFatRange.zones}
               unit={bodyFatRange.unit}
               title={t('statsPages.composition.bodyFat')}
+              zones={bodyFatRange.zones}
+              min={bodyFatRange.min}
+              max={bodyFatRange.max}
               source={bodyFatRange.source}
               sourceUrl={bodyFatRange.sourceUrl}
-              animated={true}
             />
           </TouchableOpacity>
         </StatsSection>
       )}
 
-      {/* Barre animée Masse Musculaire */}
+      {/* Masse Musculaire */}
       {musclePercent > 0 && (
         <StatsSection
           title={t('statsPages.composition.muscleMass')}
@@ -368,24 +354,22 @@ export const CompositionPage: React.FC = () => {
               unit: '%',
               icon: <Activity size={18} color={muscleStatus?.color || '#10B981'} strokeWidth={2.5} />,
             })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
           >
-            <AnimatedMetricBar
+            <SimpleMetricCard
               value={musclePercent}
-              min={muscleMassRange.min}
-              max={muscleMassRange.max}
-              zones={muscleMassRange.zones}
               unit={muscleMassRange.unit}
               title={t('statsPages.composition.muscleMass')}
+              zones={muscleMassRange.zones}
+              min={muscleMassRange.min}
+              max={muscleMassRange.max}
               source={muscleMassRange.source}
               sourceUrl={muscleMassRange.sourceUrl}
-              animated={true}
             />
           </TouchableOpacity>
         </StatsSection>
       )}
 
-      {/* Barre animée Hydratation */}
+      {/* Hydratation */}
       {waterPercent > 0 && (
         <StatsSection
           title={t('statsPages.composition.hydration')}
@@ -400,24 +384,22 @@ export const CompositionPage: React.FC = () => {
               unit: '%',
               icon: <Droplet size={18} color={waterStatus?.color || '#06B6D4'} strokeWidth={2.5} />,
             })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
           >
-            <AnimatedMetricBar
+            <SimpleMetricCard
               value={waterPercent}
-              min={WATER_PERCENTAGE_RANGES.min}
-              max={WATER_PERCENTAGE_RANGES.max}
-              zones={WATER_PERCENTAGE_RANGES.zones}
               unit={WATER_PERCENTAGE_RANGES.unit}
               title={t('statsPages.composition.hydration')}
+              zones={WATER_PERCENTAGE_RANGES.zones}
+              min={WATER_PERCENTAGE_RANGES.min}
+              max={WATER_PERCENTAGE_RANGES.max}
               source={WATER_PERCENTAGE_RANGES.source}
               sourceUrl={WATER_PERCENTAGE_RANGES.sourceUrl}
-              animated={true}
             />
           </TouchableOpacity>
         </StatsSection>
       )}
 
-      {/* Barre animée Graisse Viscérale */}
+      {/* Graisse Viscérale */}
       {latestWeight?.visceral_fat > 0 && (
         <StatsSection
           title={t('statsPages.composition.visceralFat')}
@@ -432,39 +414,37 @@ export const CompositionPage: React.FC = () => {
               unit: '/20',
               icon: <Activity size={18} color="#EF4444" strokeWidth={2.5} />,
             })}
-            style={[styles.animatedBarCard, { backgroundColor: colors.backgroundCard }]}
           >
-            <AnimatedMetricBar
+            <SimpleMetricCard
               value={latestWeight.visceral_fat}
-              min={VISCERAL_FAT_RANGES.min}
-              max={VISCERAL_FAT_RANGES.max}
-              zones={VISCERAL_FAT_RANGES.zones}
               unit={VISCERAL_FAT_RANGES.unit}
               title={t('statsPages.composition.visceralFat')}
+              zones={VISCERAL_FAT_RANGES.zones}
+              min={VISCERAL_FAT_RANGES.min}
+              max={VISCERAL_FAT_RANGES.max}
               source={VISCERAL_FAT_RANGES.source}
               sourceUrl={VISCERAL_FAT_RANGES.sourceUrl}
-              animated={true}
             />
           </TouchableOpacity>
         </StatsSection>
       )}
 
-      {/* Masse Grasse - Historique scrollable + CLIQUABLE */}
-      <StatsSection
-        title={t('statsPages.composition.bodyFatHistory')}
-        description={t('statsPages.clickToSeeChart')}
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setSelectedMetric({
-            key: 'fat_percent',
-            label: t('statsPages.composition.bodyFat'),
-            color: '#F59E0B',
-            unit: '%',
-            icon: <Activity size={18} color="#F59E0B" strokeWidth={2.5} />,
-          })}
+      {/* Masse Grasse - Historique scrollable */}
+      {historyData.bodyFat.length > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.bodyFatHistory')}
+          description={t('statsPages.clickToSeeChart')}
         >
-          {historyData.bodyFat.length > 0 ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setSelectedMetric({
+              key: 'fat_percent',
+              label: t('statsPages.composition.bodyFat'),
+              color: '#F59E0B',
+              unit: '%',
+              icon: <Activity size={18} color="#F59E0B" strokeWidth={2.5} />,
+            })}
+          >
             <HistoryScrollCard
               data={historyData.bodyFat}
               unit="%"
@@ -472,30 +452,26 @@ export const CompositionPage: React.FC = () => {
               color="#F59E0B"
               getStatus={(value) => getMetricStatus(value, bodyFatRange)}
             />
-          ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('statsPages.noDataForPeriod')}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </StatsSection>
+          </TouchableOpacity>
+        </StatsSection>
+      )}
 
-      {/* Muscle - Historique scrollable + CLIQUABLE */}
-      <StatsSection
-        title={t('statsPages.composition.muscleMass')}
-        description={t('statsPages.clickToSeeChart')}
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => setSelectedMetric({
-            key: 'muscle_percent',
-            label: t('statsPages.composition.muscleMass'),
-            color: '#10B981',
-            unit: '%',
-            icon: <Activity size={18} color="#10B981" strokeWidth={2.5} />,
-          })}
+      {/* Muscle - Historique scrollable */}
+      {historyData.muscle.length > 0 && (
+        <StatsSection
+          title={t('statsPages.composition.muscleHistory')}
+          description={t('statsPages.clickToSeeChart')}
         >
-          {historyData.muscle.length > 0 ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setSelectedMetric({
+              key: 'muscle_percent',
+              label: t('statsPages.composition.muscleMass'),
+              color: '#10B981',
+              unit: '%',
+              icon: <Activity size={18} color="#10B981" strokeWidth={2.5} />,
+            })}
+          >
             <HistoryScrollCard
               data={historyData.muscle}
               unit="%"
@@ -503,13 +479,9 @@ export const CompositionPage: React.FC = () => {
               color="#10B981"
               getStatus={(value) => getMetricStatus(value, muscleMassRange)}
             />
-          ) : (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-              {t('statsPages.noDataForPeriod')}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </StatsSection>
+          </TouchableOpacity>
+        </StatsSection>
+      )}
 
       {/* Eau - Historique scrollable + CLIQUABLE */}
       <StatsSection
@@ -697,14 +669,5 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     flex: 1,
-  },
-  animatedBarCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
 });

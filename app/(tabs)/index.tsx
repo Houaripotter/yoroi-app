@@ -68,6 +68,7 @@ import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings, Profile, Weight, Training } from '@/lib/database';
 import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getSessionQuote, Citation } from '@/lib/citations';
@@ -140,6 +141,7 @@ const DEFAULT_HYDRATION_GOAL = 2500;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
 
   // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
@@ -416,7 +418,7 @@ export default function HomeScreen() {
         getLatestWeight(),
         getWeights(30),
         calculateStreak(),
-        getSessionQuote(),
+        getSessionQuote(language as any),
         getTrainings(),
         getUserMode(),
         getSleepStats(),
@@ -486,12 +488,12 @@ export default function HomeScreen() {
   // Rotation automatique des citations toutes les 5 minutes
   useEffect(() => {
     const interval = setInterval(async () => {
-      const newQuote = await getSessionQuote();
+      const newQuote = await getSessionQuote(language as any);
       setDailyQuote(newQuote);
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(interval);
-  }, []);
+  }, [language]);
 
   // Calculs
   const rank = getCurrentRank(streak);
@@ -780,7 +782,7 @@ export default function HomeScreen() {
                       backgroundColor: `${colors.accent}15`,
                       borderColor: `${colors.accent}40`,
                     }]}>
-                      <Text style={[styles.quoteBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>Citation du jour</Text>
+                      <Text style={[styles.quoteBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('home.quoteOfTheDay')}</Text>
                     </View>
                   </View>
                 </View>

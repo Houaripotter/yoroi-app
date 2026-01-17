@@ -16,6 +16,7 @@ import { PerformancePage } from './pages/PerformancePage';
 import { VitalitePage } from './pages/VitalitePage';
 import { Scale, Activity, Ruler, Flame, Award, Heart } from 'lucide-react-native';
 import { ShareFloatingButton } from './ShareFloatingButton';
+import { ScrollProvider } from '@/lib/ScrollContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -102,11 +103,12 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header avec tabs circulaires */}
-      <View style={[styles.header, {
-        backgroundColor: colors.background,
-      }]}>
+    <ScrollProvider>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header avec tabs circulaires */}
+        <View style={[styles.header, {
+          backgroundColor: colors.background,
+        }]}>
         <ScrollView
           ref={tabScrollRef}
           horizontal
@@ -180,9 +182,10 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
         })}
       </ScrollView>
 
-      {/* Bouton de partage social flottant en bas à gauche */}
-      <ShareFloatingButton />
-    </View>
+        {/* Bouton de partage social flottant */}
+        <ShareFloatingButton />
+      </View>
+    </ScrollProvider>
   );
 };
 

@@ -52,7 +52,9 @@
     "weeklyCard": "Hebdo",
     "monthlyCard": "Mensuel",
     "yearlyCard": "Annuel",
-    "shareYourProgress": "Partage ta progression"
+    "shareYourProgress": "Partage ta progression",
+    "shareButton": "Partager",
+    "yourStats": "Tes stats"
   },
   "home": {
     "title": "Accueil",
@@ -498,6 +500,8 @@
     "citationsDescription": "Style et notifications",
     "avatar": "Avatar",
     "avatarDescription": "Personnalise ton personnage",
+    "shareStatsButton": "Bouton Partage Stats",
+    "shareStatsButtonDescription": "Afficher le bouton flottant",
     "dark": "Sombre",
     "light": "Clair",
     "auto": "Auto",
@@ -993,12 +997,18 @@
       "noCompositionData": "Aucune donnée de composition",
       "addDataToSeeRings": "Ajoute tes données pour voir les anneaux",
       "bodyFat": "Masse grasse",
+      "bodyFatDesc": "Pourcentage de graisse dans ton corps",
+      "bodyFatHistory": "Évolution Masse grasse",
       "muscleMass": "Masse Musculaire",
+      "muscleMassDesc": "Pourcentage de muscle dans ton corps",
+      "muscleHistory": "Évolution Masse musculaire",
       "hydration": "Hydratation",
+      "hydrationDesc": "Pourcentage d'eau dans ton corps",
       "detailedMetrics": "Métriques Détaillées",
       "boneMass": "Masse osseuse",
       "visceralFat": "Graisse viscérale",
-      "bmr": "BMR",
+      "visceralFatDesc": "Graisse autour des organes internes",
+      "bmr": "Métabolisme de base",
       "metabolicAge": "Âge métabolique",
       "muscle": "Muscle",
       "water": "Eau",
@@ -1489,6 +1499,95 @@
     "title": "POIDS ACTUEL ET PRÉDICTIONS",
     "objective": "Obj",
     "remaining": "Reste"
+  },
+  "healthRanges": {
+    "zones": {
+      "athlete": "Athlète",
+      "fit": "Forme",
+      "average": "Moyen",
+      "high": "Élevé",
+      "low": "Faible",
+      "normal": "Normal",
+      "good": "Bon",
+      "excellent": "Excellent",
+      "optimal": "Optimal",
+      "dehydrated": "Déshydraté",
+      "underHydrated": "Sous-hydraté",
+      "veryHigh": "Très élevé",
+      "tired": "Fatigué",
+      "insufficient": "Insuffisant",
+      "short": "Court",
+      "long": "Long",
+      "red": "Rouge",
+      "yellow": "Jaune",
+      "green": "Vert",
+      "underweight": "Sous-poids",
+      "overweight": "Surpoids",
+      "obese": "Obésité",
+      "attention": "Attention",
+      "highRisk": "Risque élevé",
+      "light": "Léger",
+      "moderate": "Modéré",
+      "intense": "Intense",
+      "maximal": "Maximal"
+    },
+    "bodyFat": {
+      "title": "Masse grasse",
+      "explanationMale": "Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.\n\nCLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):\n- 3-13% : Athlète - Niveau compétition\n- 14-17% : Forme - Excellente condition\n- 18-24% : Moyen - Population générale en bonne santé\n- 25%+ : Élevé - Risques métaboliques accrus\n\nPREUVES SCIENTIFIQUES:\n- >25% chez l'homme = risque diabète type 2 x2.5 (Prospective Studies Collaboration, Lancet 2009)\n- <5% chronique = dysfonction hormonale, immunité affaiblie\n\nPRÉCISION DES MESURES:\n- Impédancemétrie: +/-3-5% d'erreur (Kyle et al. 2004)\n- DEXA: +/-1-2% (référence clinique)\n\nCONSEIL:\nSuis la TENDANCE sur 4-8 semaines plutôt que les variations quotidiennes.",
+      "explanationFemale": "Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.\n\nCLASSIFICATION (Gallagher et al. 2000):\n- 10-20% : Athlète - Niveau compétition\n- 21-24% : Forme - Excellente condition\n- 25-31% : Moyen - Population générale\n- 32%+ : Élevé - Risques métaboliques accrus\n\nDIFFÉRENCE BIOLOGIQUE HOMMES/FEMMES:\nLes femmes ont naturellement 8-12% de graisse de plus que les hommes (seins, hanches, réserve reproductive). C'est NORMAL et SAIN.\n\nPREUVES SCIENTIFIQUES:\n- <15% prolongé = aménorrhée, infertilité (Loucks AB, J Sports Sci 2004)\n- >32% = risque diabète/cardiovasculaire augmenté\n\nCONSEIL:\nUne perte de 0.5-1% par mois est un rythme sain et durable."
+    },
+    "muscleMass": {
+      "title": "Masse musculaire",
+      "explanationMale": "La masse musculaire squelettique (SMM) représente les muscles volontaires de ton corps.\n\nCLASSIFICATION (Janssen et al. 2000, étude IRM sur 468 sujets):\n- <38% : Faible - Sarcopénie probable\n- 38-44% : Normal - Population sédentaire\n- 44-52% : Bon - Activité physique régulière\n- 52%+ : Excellent - Niveau sportif\n\nPREUVES SCIENTIFIQUES:\n- +10% de masse musculaire = -11% risque de mortalité toutes causes (Srikanthan P, Am J Med 2016)\n- Muscle = organe métabolique: sécrète myokines anti-inflammatoires\n- Sensibilité à l'insuline corrélée positivement\n\nSARCOPÉNIE (Cruz-Jentoft AJ, Lancet 2019):\nPerte de 3-8% de muscle par décennie après 30 ans.\nLa musculation est le traitement n°1 validé scientifiquement.\n\nRECOMMANDATIONS (ACSM):\n2-3 séances de musculation/semaine, tous les groupes musculaires.",
+      "explanationFemale": "La masse musculaire squelettique (SMM) représente les muscles volontaires de ton corps.\n\nCLASSIFICATION (Janssen et al. 2000):\n- <31% : Faible - Sarcopénie probable\n- 31-36% : Normal - Population sédentaire\n- 36-42% : Bon - Activité physique régulière\n- 42%+ : Excellent - Niveau sportif\n\nDIFFÉRENCE BIOLOGIQUE:\nLes femmes ont naturellement 30-40% moins de masse musculaire que les hommes (testostérone 10-20x plus basse). C'est NORMAL.\n\nPREUVES SCIENTIFIQUES:\n- Musculation = prévention ostéoporose post-ménopause (Kohrt WM, Med Sci Sports 2004)\n- Pas de \"prise de volume\" chez les femmes sans stéroïdes\n- Améliore sensibilité insuline et métabolisme\n\nRECOMMANDATIONS (ACSM):\n2-3 séances de musculation/semaine. Les charges lourdes sont sûres et efficaces."
+    },
+    "waterPercentage": {
+      "title": "Eau corporelle",
+      "explanation": "L'eau corporelle totale (TBW) représente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.\n\nCLASSIFICATION (Watson et al. 1980):\n- <50% : Déshydratation probable\n- 50-54% : Légèrement bas\n- 55-60% : Normal\n- 61-70% : Optimal - Excellente hydratation\n\nPREUVES SCIENTIFIQUES:\n- Muscle = 73% d'eau, Graisse = 10% d'eau (Wang Z, Am J Clin Nutr 1999)\n- Déshydratation de 2% = -10-20% de performance (Sawka MN, Med Sci Sports 2007)\n\nCE QUI INFLUENCE LA MESURE:\n- Moment de la journée\n- Repas récents\n- Exercice, température\n- Caféine, alcool\n\nBESOINS QUOTIDIENS (IOM 2004):\n- Hommes: environ 3.7L/jour (toutes sources)\n- Femmes: environ 2.7L/jour (toutes sources)\n\nCONSEIL:\nSurveille la couleur de l'urine: jaune pâle = bien hydraté."
+    },
+    "visceralFat": {
+      "title": "Graisse viscérale",
+      "explanation": "La graisse viscérale est la graisse profonde qui entoure les organes (foie, intestins, cœur).\n\nCLASSIFICATION SCIENTIFIQUE:\n- Score 1-9 : Optimal - Risque cardiométabolique minimal\n- Score 10-14 : Élevé - Syndrome métabolique probable\n- Score 15+ : Très élevé - Risque cardiovasculaire significatif\n\nPREUVES SCIENTIFIQUES (Després et al. 2008):\nLa graisse viscérale est le facteur n°1 du \"syndrome métabolique\":\n- Augmente l'inflammation systémique (CRP, IL-6)\n- Résistance à l'insuline conduisant au prédiabète\n- Risque cardiovasculaire x2 à x3\n\nCE QUI FONCTIONNE (méta-analyses):\n- Exercice aérobie: réduction moyenne de 6.1% (Vissers et al. 2013)\n- Déficit calorique modéré: cible en priorité la graisse viscérale\n- Réduction du stress (cortisol = stockage viscéral)\n\nMESURE:\nL'IRM reste la référence. L'impédancemétrie donne une estimation corrélée mais pas exacte."
+    },
+    "hrv": {
+      "title": "Variabilité cardiaque (HRV)",
+      "explanation": "La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.\n\nCLASSIFICATION (RMSSD, valeurs moyennes):\n- 70+ ms : Excellent - Récupération optimale\n- 50-69 ms : Bon - Bonne adaptation\n- 30-49 ms : Normal - Récupération en cours\n- 10-29 ms : Fatigué - Stress physiologique\n\nVARIABILITÉ INDIVIDUELLE:\nCompare à TA moyenne sur 7-14 jours. Les valeurs absolues varient selon l'âge, la forme physique, la génétique.\n\nPREUVES (Task Force 1996 + méta-analyses):\n- HRV bas = prédicteur indépendant de mortalité CV (Thayer JF, Neurosci Biobehav Rev 2012)\n- HRV reflète l'équilibre sympathique/parasympathique\n\nCE QUI BAISSE L'HRV:\n- Surentraînement\n- Alcool (même modéré)\n- Stress chronique\n- Infection/maladie\n- Manque de sommeil\n\nAMÉLIORATION:\n- Entraînement aérobie régulier\n- Respiration lente (6/min)\n- Sommeil 7-9h\n\nMESURE:\nMatin au réveil, mêmes conditions, pendant 1-5 min."
+    },
+    "restingHeartRate": {
+      "title": "Fréquence cardiaque au repos",
+      "explanation": "La fréquence cardiaque au repos est un prédicteur indépendant de mortalité cardiovasculaire.\n\nCLASSIFICATION (Fox et al. 2007, méta-analyse 46 études):\n- 40-60 bpm : Athlète - Cœur très efficace\n- 61-70 bpm : Excellent\n- 71-80 bpm : Normal - Moyenne population\n- 81-100 bpm : Élevé - Risque CV augmenté\n\nPREUVES SCIENTIFIQUES:\n- +10 bpm de FC repos = +20% risque mortalité CV (Cooney MT, Eur J Prev Cardiol 2010)\n- FC <60 bpm associée à meilleure survie long terme\n\nEFFET DE L'ENTRAÎNEMENT:\n- Endurance régulière: -10 à -15 bpm en 3-6 mois\n- Athlètes élite: 35-45 bpm (bradycardie physiologique)\n\nFACTEURS AIGUS:\nStress, caféine, déshydratation, fièvre, manque de sommeil\n\nMESURE:\nMatin au réveil, avant de te lever, pendant 1 minute."
+    },
+    "sleepDuration": {
+      "title": "Durée de sommeil",
+      "explanation": "La durée de sommeil optimale pour la santé.\n\nCLASSIFICATION (Cappuccio et al. 2010, méta-analyse 16 études):\n- <6h : Insuffisant - +48% risque mortalité\n- 6-7h : Court - Risque légèrement augmenté\n- 7-9h : Optimal - Mortalité minimale\n- >9h : Long - +30% mortalité (peut indiquer pathologie)\n\nPREUVES SCIENTIFIQUES:\n1.3 million de sujets analysés:\n- <5h/nuit = +52% risque cardiovasculaire\n- 6-8h = risque minimal\n- >9h = associé à dépression, inflammation\n\nBESOINS INDIVIDUELS:\n- Athlètes: 9-10h pour récupération optimale (Mah CD, Sleep 2011)\n- Génétique: 3-5% sont \"short sleepers\" vrais\n\nHYGIÈNE DU SOMMEIL:\n- Horaires réguliers\n- Pas d'écrans 1h avant\n- Chambre 18-20°C\n- Éviter caféine après 14h"
+    },
+    "recoveryScore": {
+      "title": "Score de récupération",
+      "explanation": "Le score de récupération estime ta capacité à performer et t'entraîner.\n\nCLASSIFICATION:\n- 0-33% : Rouge - Repos recommandé\n- 34-66% : Jaune - Entraînement modéré possible\n- 67-100% : Vert - Capacité optimale\n\nBASE SCIENTIFIQUE (Plews et al. 2013):\nLe score combine plusieurs indicateurs:\n- HRV (variabilité cardiaque)\n- Qualité du sommeil\n- FC repos\n- Fatigue perçue\n\nINTERPRÉTATION:\n- Score bas occasionnel = normal après effort intense\n- Score bas chronique = risque de surentraînement\n\nCONSEIL:\nAdapte l'intensité de ton entraînement à ton score de récupération."
+    },
+    "bmi": {
+      "title": "Indice de Masse Corporelle (IMC)",
+      "explanation": "L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carré (m²)\n\nCLASSIFICATION (Prospective Studies Collaboration 2009):\nMéta-analyse de 57 études, 894 576 sujets:\n- < 18.5 : Sous-poids - Mortalité augmentée\n- 18.5-25 : Normal - Mortalité minimale\n- 25-30 : Surpoids - +30% environ mortalité\n- 30+ : Obésité - +70% environ mortalité\n\nPREUVES SCIENTIFIQUES:\n- IMC optimal = 22.5-25 pour mortalité minimale\n- +5 kg/m² au-dessus de 25 = +30% mortalité cardiovasculaire\n\nLIMITES RECONNUES:\n- Ne distingue pas muscle/graisse\n- Moins fiable: athlètes, personnes âgées, ethnies asiatiques\n\nCONSEIL:\nComplète avec tour de taille (WHtR) et pourcentage de masse grasse pour une évaluation complète."
+    },
+    "waistCircumference": {
+      "title": "Tour de taille",
+      "explanationMale": "Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.\n\nATTENTION: Les seuils absolus (90cm, 102cm) sont des repères GÉNÉRAUX.\n\nMÉTHODE PLUS PRÉCISE - Ratio Tour de taille/Taille (WHtR):\nDivise ton tour de taille par ta taille:\n- < 0.4 : Sous-poids possible\n- 0.4-0.5 : Zone idéale\n- 0.5-0.6 : Risque modéré\n- > 0.6 : Risque élevé\n\nEXEMPLES CONCRETS:\n- 1m75 de taille → Tour de taille idéal: 70-87cm\n- 1m90 de taille → Tour de taille idéal: 76-95cm\n- 2m10 de taille → Tour de taille idéal: 84-105cm\n\nPREUVES (Ashwell et al. 2012, méta-analyse):\nLe WHtR prédit MIEUX le risque cardiométabolique que l'IMC ou le tour de taille seul.\n\"Keep your waist to less than half your height\"\n\nMESURE:\nAu niveau du nombril, debout, après expiration normale.",
+      "explanationFemale": "Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.\n\nATTENTION: Les seuils absolus (80cm, 88cm) sont des repères GÉNÉRAUX.\n\nMÉTHODE PLUS PRÉCISE - Ratio Tour de taille/Taille (WHtR):\nDivise ton tour de taille par ta taille:\n- < 0.4 : Sous-poids possible\n- 0.4-0.5 : Zone idéale\n- 0.5-0.6 : Risque modéré\n- > 0.6 : Risque élevé\n\nEXEMPLES CONCRETS:\n- 1m60 de taille → Tour de taille idéal: 64-80cm\n- 1m70 de taille → Tour de taille idéal: 68-85cm\n- 1m80 de taille → Tour de taille idéal: 72-90cm\n\nPREUVES (Ashwell et al. 2012):\nLe WHtR est un meilleur prédicteur du risque cardiométabolique que l'IMC ou le tour de taille seul.\n\nMESURE:\nAu niveau du nombril, debout, après expiration normale."
+    },
+    "boneMass": {
+      "title": "Masse osseuse",
+      "explanationMale": "La masse osseuse représente le poids minéral de ton squelette.\n\nCLASSIFICATION (proportionnelle au poids corporel):\n- <2.8 kg : Faible - Risque ostéoporotique\n- 2.8-3.2 kg : Normal\n- >3.2 kg : Bon - Densité optimale\n\nVARIATION SELON LE POIDS:\n- 60kg = environ 2.6 kg d'os attendu (environ 4.3%)\n- 80kg = environ 3.3 kg d'os attendu\n- 100kg = environ 3.8 kg d'os attendu\n\nPREUVES SCIENTIFIQUES (Kanis et al. Lancet 2002):\n- Pic de masse osseuse atteint vers 25-30 ans\n- Perte de 0.5-1% par an après 40 ans\n- Ostéoporose = T-score < -2.5 (DEXA)\n\nINTERVENTIONS VALIDÉES:\n- Musculation: +1-3% de densité osseuse (Martyn-St James M, Br J Sports Med 2009)\n- Calcium 1000-1200mg/j + Vitamine D 800-1000 UI/j\n- Sports d'impact: course, sauts\n\nLIMITES:\nL'impédancemétrie estime la masse, pas la densité. DEXA = référence.",
+      "explanationFemale": "La masse osseuse représente le poids minéral de ton squelette.\n\nCLASSIFICATION (proportionnelle au poids corporel):\n- <2.2 kg : Faible - Risque ostéoporotique\n- 2.2-2.5 kg : Normal\n- >2.5 kg : Bon - Densité optimale\n\nRISQUE FÉMININ (Kanis et al. Lancet 2002):\n- 1 femme sur 3 aura une fracture ostéoporotique après 50 ans\n- Chute d'œstrogènes à la ménopause = perte de 2-3%/an pendant 5-10 ans\n\nPREUVES SCIENTIFIQUES:\n- Pic de masse osseuse: 25-30 ans\n- Musculation = intervention n°1 validée\n- Calcium + Vitamine D = essentiels\n\nPRÉVENTION:\n- Musculation avec charges 2-3x/semaine\n- Calcium 1000-1200mg/j\n- Vitamine D 800-1000 UI/j\n- Éviter régimes hypocaloriques prolongés\n\nCONSEIL:\nConstruis ta \"banque osseuse\" avant 30 ans. Après, l'objectif est de MAINTENIR."
+    },
+    "bmr": {
+      "title": "Métabolisme de base (BMR)",
+      "explanation": "Le métabolisme de base (BMR) = énergie brûlée au repos complet pendant 24h.\n\nTON BMR ESTIMÉ: environ {{bmrValue}} kcal/jour\n(Basé sur: {{weight}}kg, {{height}}cm, {{age}} ans)\n\nÉQUATION MIFFLIN-ST JEOR (Mifflin et al. 1990):\nValidée sur 498 sujets, précision +/-10% vs calorimétrie indirecte.\n\nDÉPENSE TOTALE (facteurs d'activité validés):\n- Sédentaire (1.2): environ {{sedentary}} kcal\n- Peu actif (1.375): environ {{lightlyActive}} kcal\n- Actif (1.55): environ {{active}} kcal\n- Très actif (1.725): environ {{veryActive}} kcal\n\nFACTEURS D'INFLUENCE:\n- Masse musculaire: +13 kcal/kg muscle/jour\n- Âge: -2% par décennie après 20 ans\n- Génétique: +/-5-10% de variation\n\nCONSEIL:\nAugmente ton BMR via la masse musculaire!"
+    },
+    "intensity": {
+      "title": "Intensité d'entraînement",
+      "explanation": "L'intensité d'entraînement mesure l'effort relatif par rapport à ta capacité maximale.\n\nCLASSIFICATION (Banister TRIMP model):\n- 0-50% : Léger - Récupération active\n- 50-70% : Modéré - Zone aérobie, endurance fondamentale\n- 70-85% : Intense - Zone seuil lactique\n- 85-100% : Maximal - Zone anaérobie\n\nPREUVES SCIENTIFIQUES:\n- 80% du volume en zone 1-2 + 20% en zone 4-5 = distribution polarisée optimale (Seiler S, Int J Sports Physiol 2010)\n- Surentraînement = trop de volume en zone 3 (no man's land)\n\nCONSEIL:\nLa majorité de tes entraînements devraient être en zone facile (conversation possible)."
+    },
+    "unknown": "Inconnu"
   },
   "trainingJournal": {
     "title": "Carnet d'Entraînement",

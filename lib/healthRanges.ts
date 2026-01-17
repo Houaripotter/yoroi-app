@@ -6,16 +6,40 @@
 import { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
 export { MetricRange } from '@/components/stats/charts/MetricRangeIndicator';
 
+// Translation key type for i18n
+export type HealthRangeTranslationKey =
+  | 'bodyFat'
+  | 'muscleMass'
+  | 'waterPercentage'
+  | 'visceralFat'
+  | 'hrv'
+  | 'restingHeartRate'
+  | 'sleepDuration'
+  | 'recoveryScore'
+  | 'bmi'
+  | 'waistCircumference'
+  | 'boneMass'
+  | 'bmr'
+  | 'intensity';
+
+// Extended MetricRange with translation key
+export interface MetricRangeWithTranslation extends MetricRange {
+  translationKey: HealthRangeTranslationKey;
+  genderSpecific?: boolean;
+}
+
 // ============================================
 // COMPOSITION CORPORELLE
 // ============================================
 
-export const BODY_FAT_RANGES_MALE: MetricRange = {
+export const BODY_FAT_RANGES_MALE: MetricRangeWithTranslation = {
   min: 3,
   max: 40,
   unit: '%',
   source: 'Gallagher D et al. Am J Clin Nutr 2000 - PMID: 10966886',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
+  translationKey: 'bodyFat',
+  genderSpecific: true,
   explanation: `Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000, n=1626 sujets):
@@ -35,10 +59,10 @@ PRECISION DES MESURES:
 CONSEIL:
 Suis la TENDANCE sur 4-8 semaines plutot que les variations quotidiennes.`,
   zones: [
-    { label: 'Athlète', start: 3, end: 13, color: '#00D9BB', status: 'optimal' },
-    { label: 'Forme', start: 14, end: 17, color: '#00D26A', status: 'good' },
-    { label: 'Moyen', start: 18, end: 24, color: '#FFB800', status: 'moderate' },
-    { label: 'Élevé', start: 25, end: 40, color: '#FF4757', status: 'attention' },
+    { label: 'athlete', start: 3, end: 13, color: '#22C55E', status: 'optimal' },
+    { label: 'fit', start: 14, end: 17, color: '#EAB308', status: 'good' },
+    { label: 'average', start: 18, end: 24, color: '#F97316', status: 'moderate' },
+    { label: 'high', start: 25, end: 40, color: '#EF4444', status: 'attention' },
   ],
 };
 
@@ -66,10 +90,10 @@ PREUVES SCIENTIFIQUES:
 CONSEIL:
 Une perte de 0.5-1% par mois est un rythme sain et durable.`,
   zones: [
-    { label: 'Athlète', start: 10, end: 20, color: '#00D9BB', status: 'optimal' },
-    { label: 'Forme', start: 21, end: 24, color: '#00D26A', status: 'good' },
-    { label: 'Moyen', start: 25, end: 31, color: '#FFB800', status: 'moderate' },
-    { label: 'Élevé', start: 32, end: 45, color: '#FF4757', status: 'attention' },
+    { label: 'Athlète', start: 10, end: 20, color: '#22C55E', status: 'optimal' },
+    { label: 'Forme', start: 21, end: 24, color: '#EAB308', status: 'good' },
+    { label: 'Moyen', start: 25, end: 31, color: '#F97316', status: 'moderate' },
+    { label: 'Élevé', start: 32, end: 45, color: '#EF4444', status: 'attention' },
   ],
 };
 
@@ -99,10 +123,10 @@ La musculation est le traitement n°1 valide scientifiquement.
 RECOMMANDATIONS (ACSM):
 2-3 seances de musculation/semaine, tous les groupes musculaires.`,
   zones: [
-    { label: 'Faible', start: 30, end: 38, color: '#FF4757', status: 'attention' },
-    { label: 'Normal', start: 39, end: 44, color: '#FFB800', status: 'moderate' },
-    { label: 'Bon', start: 45, end: 52, color: '#00D26A', status: 'good' },
-    { label: 'Excellent', start: 53, end: 60, color: '#00D9BB', status: 'optimal' },
+    { label: 'Faible', start: 30, end: 38, color: '#EF4444', status: 'attention' },
+    { label: 'Normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
+    { label: 'Bon', start: 45, end: 52, color: '#EAB308', status: 'good' },
+    { label: 'Excellent', start: 53, end: 60, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -131,10 +155,10 @@ PREUVES SCIENTIFIQUES:
 RECOMMANDATIONS (ACSM):
 2-3 seances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
   zones: [
-    { label: 'Faible', start: 25, end: 33, color: '#FF4757', status: 'attention' },
-    { label: 'Normal', start: 34, end: 39, color: '#FFB800', status: 'moderate' },
-    { label: 'Bon', start: 40, end: 46, color: '#00D26A', status: 'good' },
-    { label: 'Excellent', start: 47, end: 55, color: '#00D9BB', status: 'optimal' },
+    { label: 'Faible', start: 25, end: 33, color: '#EF4444', status: 'attention' },
+    { label: 'Normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
+    { label: 'Bon', start: 40, end: 46, color: '#EAB308', status: 'good' },
+    { label: 'Excellent', start: 47, end: 55, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -169,10 +193,10 @@ BESOINS QUOTIDIENS (IOM 2004):
 CONSEIL:
 Surveille la couleur de l'urine: jaune pale = bien hydrate.`,
   zones: [
-    { label: 'Déshydraté', start: 40, end: 49, color: '#FF3838', status: 'danger' },
-    { label: 'Sous-hydraté', start: 50, end: 54, color: '#FFB800', status: 'moderate' },
-    { label: 'Normal', start: 55, end: 60, color: '#00D26A', status: 'good' },
-    { label: 'Optimal', start: 61, end: 70, color: '#00D9BB', status: 'optimal' },
+    { label: 'Déshydraté', start: 40, end: 49, color: '#EF4444', status: 'danger' },
+    { label: 'Sous-hydraté', start: 50, end: 54, color: '#F97316', status: 'moderate' },
+    { label: 'Normal', start: 55, end: 60, color: '#EAB308', status: 'good' },
+    { label: 'Optimal', start: 61, end: 70, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -203,9 +227,9 @@ CE QUI FONCTIONNE (meta-analyses):
 MESURE:
 L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais pas exacte.`,
   zones: [
-    { label: 'Optimal', start: 1, end: 9, color: '#00D9BB', status: 'optimal' },
-    { label: 'Élevé', start: 10, end: 14, color: '#FFB800', status: 'moderate' },
-    { label: 'Très élevé', start: 15, end: 20, color: '#FF3838', status: 'danger' },
+    { label: 'Optimal', start: 1, end: 9, color: '#22C55E', status: 'optimal' },
+    { label: 'Élevé', start: 10, end: 14, color: '#F97316', status: 'moderate' },
+    { label: 'Très élevé', start: 15, end: 20, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -249,10 +273,10 @@ AMELIORATION:
 MESURE:
 Matin au reveil, memes conditions, pendant 1-5 min.`,
   zones: [
-    { label: 'Fatigué', start: 10, end: 29, color: '#FF4757', status: 'attention' },
-    { label: 'Normal', start: 30, end: 49, color: '#FFB800', status: 'moderate' },
-    { label: 'Bon', start: 50, end: 69, color: '#00D26A', status: 'good' },
-    { label: 'Excellent', start: 70, end: 100, color: '#00D9BB', status: 'optimal' },
+    { label: 'Fatigué', start: 10, end: 29, color: '#EF4444', status: 'attention' },
+    { label: 'Normal', start: 30, end: 49, color: '#F97316', status: 'moderate' },
+    { label: 'Bon', start: 50, end: 69, color: '#EAB308', status: 'good' },
+    { label: 'Excellent', start: 70, end: 100, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -284,10 +308,10 @@ Stress, cafeine, deshydratation, fievre, manque de sommeil
 MESURE:
 Matin au reveil, avant de te lever, pendant 1 minute.`,
   zones: [
-    { label: 'Athlète', start: 40, end: 60, color: '#00D9BB', status: 'optimal' },
-    { label: 'Excellent', start: 61, end: 70, color: '#00D26A', status: 'good' },
-    { label: 'Normal', start: 71, end: 80, color: '#FFB800', status: 'moderate' },
-    { label: 'Élevé', start: 81, end: 100, color: '#FF4757', status: 'attention' },
+    { label: 'Athlète', start: 40, end: 60, color: '#22C55E', status: 'optimal' },
+    { label: 'Excellent', start: 61, end: 70, color: '#EAB308', status: 'good' },
+    { label: 'Normal', start: 71, end: 80, color: '#F97316', status: 'moderate' },
+    { label: 'Élevé', start: 81, end: 100, color: '#EF4444', status: 'attention' },
   ],
 };
 
@@ -321,10 +345,10 @@ HYGIENE DU SOMMEIL:
 - Chambre 18-20 degres C
 - Eviter cafeine apres 14h`,
   zones: [
-    { label: 'Insuffisant', start: 4, end: 6, color: '#FF3838', status: 'danger' },
-    { label: 'Court', start: 6.1, end: 6.9, color: '#FFB800', status: 'moderate' },
-    { label: 'Optimal', start: 7, end: 9, color: '#00D9BB', status: 'optimal' },
-    { label: 'Long', start: 9.1, end: 11, color: '#FFB800', status: 'moderate' },
+    { label: 'Insuffisant', start: 4, end: 6, color: '#EF4444', status: 'danger' },
+    { label: 'Court', start: 6.1, end: 6.9, color: '#F97316', status: 'moderate' },
+    { label: 'Optimal', start: 7, end: 9, color: '#22C55E', status: 'optimal' },
+    { label: 'Long', start: 9.1, end: 11, color: '#F97316', status: 'moderate' },
   ],
 };
 
@@ -355,9 +379,9 @@ INTERPRETATION:
 CONSEIL:
 Adapte l'intensite de ton entrainement a ton score de recuperation.`,
   zones: [
-    { label: 'Rouge', start: 0, end: 33, color: '#FF3838', status: 'danger' },
-    { label: 'Jaune', start: 34, end: 66, color: '#FFB800', status: 'moderate' },
-    { label: 'Vert', start: 67, end: 100, color: '#00D9BB', status: 'optimal' },
+    { label: 'Rouge', start: 0, end: 33, color: '#EF4444', status: 'danger' },
+    { label: 'Jaune', start: 34, end: 66, color: '#EAB308', status: 'moderate' },
+    { label: 'Vert', start: 67, end: 100, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -391,10 +415,10 @@ LIMITES RECONNUES:
 CONSEIL:
 Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une evaluation complete.`,
   zones: [
-    { label: 'Sous-poids', start: 15, end: 18.49, color: '#FF4757', status: 'attention' },
-    { label: 'Normal', start: 18.5, end: 24.99, color: '#00D26A', status: 'optimal' },
-    { label: 'Surpoids', start: 25, end: 29.99, color: '#FFB800', status: 'moderate' },
-    { label: 'Obésité', start: 30, end: 35, color: '#FF3838', status: 'danger' },
+    { label: 'Sous-poids', start: 15, end: 18.49, color: '#F97316', status: 'attention' },
+    { label: 'Normal', start: 18.5, end: 24.99, color: '#22C55E', status: 'optimal' },
+    { label: 'Surpoids', start: 25, end: 29.99, color: '#EAB308', status: 'moderate' },
+    { label: 'Obésité', start: 30, end: 35, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -431,9 +455,9 @@ Le WHtR predit MIEUX le risque cardiometabolique que l'IMC ou le tour de taille 
 MESURE:
 Au niveau du nombril, debout, apres expiration normale.`,
   zones: [
-    { label: 'Optimal', start: 60, end: 89, color: '#00D9BB', status: 'optimal' },
-    { label: 'Attention', start: 90, end: 101, color: '#FFB800', status: 'moderate' },
-    { label: 'Risque élevé', start: 102, end: 120, color: '#FF3838', status: 'danger' },
+    { label: 'Optimal', start: 60, end: 89, color: '#22C55E', status: 'optimal' },
+    { label: 'Attention', start: 90, end: 101, color: '#EAB308', status: 'moderate' },
+    { label: 'Risque élevé', start: 102, end: 120, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -465,9 +489,9 @@ Le WHtR est un meilleur predicteur du risque cardiometabolique que l'IMC ou le t
 MESURE:
 Au niveau du nombril, debout, apres expiration normale.`,
   zones: [
-    { label: 'Optimal', start: 55, end: 79, color: '#00D9BB', status: 'optimal' },
-    { label: 'Attention', start: 80, end: 87, color: '#FFB800', status: 'moderate' },
-    { label: 'Risque élevé', start: 88, end: 110, color: '#FF3838', status: 'danger' },
+    { label: 'Optimal', start: 55, end: 79, color: '#22C55E', status: 'optimal' },
+    { label: 'Attention', start: 80, end: 87, color: '#EAB308', status: 'moderate' },
+    { label: 'Risque élevé', start: 88, end: 110, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -506,9 +530,9 @@ INTERVENTIONS VALIDEES:
 LIMITES:
 L'impedancemetrie estime la masse, pas la densite. DEXA = reference.`,
   zones: [
-    { label: 'Faible', start: 2.0, end: 2.8, color: '#FF3838', status: 'danger' },
-    { label: 'Normal', start: 2.9, end: 3.2, color: '#FFB800', status: 'moderate' },
-    { label: 'Bon', start: 3.3, end: 4.5, color: '#00D9BB', status: 'optimal' },
+    { label: 'Faible', start: 2.0, end: 2.8, color: '#EF4444', status: 'danger' },
+    { label: 'Normal', start: 2.9, end: 3.2, color: '#EAB308', status: 'moderate' },
+    { label: 'Bon', start: 3.3, end: 4.5, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -543,9 +567,9 @@ PREVENTION:
 CONSEIL:
 Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`,
   zones: [
-    { label: 'Faible', start: 1.5, end: 2.2, color: '#FF3838', status: 'danger' },
-    { label: 'Normal', start: 2.3, end: 2.5, color: '#FFB800', status: 'moderate' },
-    { label: 'Bon', start: 2.6, end: 3.5, color: '#00D9BB', status: 'optimal' },
+    { label: 'Faible', start: 1.5, end: 2.2, color: '#EF4444', status: 'danger' },
+    { label: 'Normal', start: 2.3, end: 2.5, color: '#EAB308', status: 'moderate' },
+    { label: 'Bon', start: 2.6, end: 3.5, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -590,9 +614,9 @@ FACTEURS D'INFLUENCE:
 CONSEIL:
 Augmente ton BMR via la masse musculaire!`,
     zones: [
-      { label: 'Faible', start: min, end: Math.floor(idealBMR * 0.85), color: '#FFB800', status: 'moderate' },
-      { label: 'Normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#00D9BB', status: 'optimal' },
-      { label: 'Eleve', start: Math.floor(idealBMR * 1.15) + 1, end: max, color: '#00D26A', status: 'good' },
+      { label: 'Faible', start: min, end: Math.floor(idealBMR * 0.85), color: '#F97316', status: 'moderate' },
+      { label: 'Normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#22C55E', status: 'optimal' },
+      { label: 'Eleve', start: Math.floor(idealBMR * 1.15) + 1, end: max, color: '#EAB308', status: 'good' },
     ],
   };
 };
@@ -622,10 +646,10 @@ PREUVES SCIENTIFIQUES:
 CONSEIL:
 La majorite de tes entrainements devraient etre en zone facile (conversation possible).`,
   zones: [
-    { label: 'Léger', start: 0, end: 50, color: '#00D26A', status: 'good' },
-    { label: 'Modéré', start: 51, end: 70, color: '#00D9BB', status: 'optimal' },
-    { label: 'Intense', start: 71, end: 85, color: '#FFB800', status: 'moderate' },
-    { label: 'Maximal', start: 86, end: 100, color: '#FF4757', status: 'attention' },
+    { label: 'Léger', start: 0, end: 50, color: '#EAB308', status: 'good' },
+    { label: 'Modéré', start: 51, end: 70, color: '#22C55E', status: 'optimal' },
+    { label: 'Intense', start: 71, end: 85, color: '#F97316', status: 'moderate' },
+    { label: 'Maximal', start: 86, end: 100, color: '#EF4444', status: 'attention' },
   ],
 };
 

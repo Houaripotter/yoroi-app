@@ -66,12 +66,21 @@ interface TabBarProps extends BottomTabBarProps {}
 export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) {
   const { colors, themeColor, isDark } = useTheme();
 
-  // Pour le thème classic en mode light, on inverse les couleurs du bouton +
+  // Pour le theme classic en mode light, on inverse les couleurs du bouton +
   // L'utilisateur veut un bouton blanc avec "+" noir (pas noir avec "+" blanc)
   const isClassicLight = themeColor === 'classic' && !isDark;
   const plusButtonBgColor = isClassicLight ? '#FFFFFF' : colors.accent;
-  const plusButtonBgColorDark = isClassicLight ? '#F5F5F5' : (colors.accentDark || colors.accent);
+  const plusButtonBgColorDark = isClassicLight ? '#EEEEEE' : (colors.accentDark || colors.accent);
   const plusIconColor = isClassicLight ? '#000000' : colors.textOnAccent;
+
+  // Style special pour le bouton en mode classic light (ombre pour visibilite)
+  const plusButtonShadow = isClassicLight ? {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 10,
+  } : {};
 
   // Position animée du creux
   const notchPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
@@ -250,7 +259,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
               colors={[plusButtonBgColor, plusButtonBgColorDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.buttonGradient}
+              style={[styles.buttonGradient, plusButtonShadow]}
             >
               <View style={styles.shineEffect} />
               <Plus size={28} color={plusIconColor} strokeWidth={3.5} />

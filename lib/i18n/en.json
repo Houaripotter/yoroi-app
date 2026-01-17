@@ -52,7 +52,9 @@
     "weeklyCard": "Weekly",
     "monthlyCard": "Monthly",
     "yearlyCard": "Yearly",
-    "shareYourProgress": "Share your progress"
+    "shareYourProgress": "Share your progress",
+    "shareButton": "Share",
+    "yourStats": "Your stats"
   },
   "home": {
     "title": "Home",
@@ -498,6 +500,8 @@
     "citationsDescription": "Style and notifications",
     "avatar": "Avatar",
     "avatarDescription": "Customize your character",
+    "shareStatsButton": "Share Stats Button",
+    "shareStatsButtonDescription": "Show floating button",
     "dark": "Dark",
     "light": "Light",
     "auto": "Auto",
@@ -1466,6 +1470,95 @@
     "title": "CURRENT WEIGHT & PREDICTIONS",
     "objective": "Goal",
     "remaining": "Left"
+  },
+  "healthRanges": {
+    "zones": {
+      "athlete": "Athlete",
+      "fit": "Fit",
+      "average": "Average",
+      "high": "High",
+      "low": "Low",
+      "normal": "Normal",
+      "good": "Good",
+      "excellent": "Excellent",
+      "optimal": "Optimal",
+      "dehydrated": "Dehydrated",
+      "underHydrated": "Under-hydrated",
+      "veryHigh": "Very high",
+      "tired": "Tired",
+      "insufficient": "Insufficient",
+      "short": "Short",
+      "long": "Long",
+      "red": "Red",
+      "yellow": "Yellow",
+      "green": "Green",
+      "underweight": "Underweight",
+      "overweight": "Overweight",
+      "obese": "Obese",
+      "attention": "Caution",
+      "highRisk": "High risk",
+      "light": "Light",
+      "moderate": "Moderate",
+      "intense": "Intense",
+      "maximal": "Maximal"
+    },
+    "bodyFat": {
+      "title": "Body fat",
+      "explanationMale": "Body fat percentage measures the proportion of fat relative to total weight.\n\nCLASSIFICATION (Gallagher et al. 2000, n=1626 subjects):\n- 3-13%: Athlete - Competition level\n- 14-17%: Fit - Excellent condition\n- 18-24%: Average - Healthy general population\n- 25%+: High - Increased metabolic risks\n\nSCIENTIFIC EVIDENCE:\n- >25% in men = 2.5x type 2 diabetes risk (Prospective Studies Collaboration, Lancet 2009)\n- <5% chronic = hormonal dysfunction, weakened immunity\n\nMEASUREMENT ACCURACY:\n- Bioimpedance: +/-3-5% error (Kyle et al. 2004)\n- DEXA: +/-1-2% (clinical reference)\n\nADVICE:\nFollow the TREND over 4-8 weeks rather than daily variations.",
+      "explanationFemale": "Body fat percentage measures the proportion of fat relative to total weight.\n\nCLASSIFICATION (Gallagher et al. 2000):\n- 10-20%: Athlete - Competition level\n- 21-24%: Fit - Excellent condition\n- 25-31%: Average - General population\n- 32%+: High - Increased metabolic risks\n\nBIOLOGICAL DIFFERENCE BETWEEN MEN/WOMEN:\nWomen naturally have 8-12% more fat than men (breasts, hips, reproductive reserve). This is NORMAL and HEALTHY.\n\nSCIENTIFIC EVIDENCE:\n- <15% prolonged = amenorrhea, infertility (Loucks AB, J Sports Sci 2004)\n- >32% = increased diabetes/cardiovascular risk\n\nADVICE:\nA loss of 0.5-1% per month is a healthy and sustainable rate."
+    },
+    "muscleMass": {
+      "title": "Muscle mass",
+      "explanationMale": "Skeletal muscle mass (SMM) represents the voluntary muscles in your body.\n\nCLASSIFICATION (Janssen et al. 2000, MRI study on 468 subjects):\n- <38%: Low - Probable sarcopenia\n- 38-44%: Normal - Sedentary population\n- 44-52%: Good - Regular physical activity\n- 52%+: Excellent - Athletic level\n\nSCIENTIFIC EVIDENCE:\n- +10% muscle mass = -11% all-cause mortality risk (Srikanthan P, Am J Med 2016)\n- Muscle = metabolic organ: secretes anti-inflammatory myokines\n- Positively correlated insulin sensitivity\n\nSARCOPENIA (Cruz-Jentoft AJ, Lancet 2019):\nLoss of 3-8% muscle per decade after age 30.\nStrength training is the #1 scientifically validated treatment.\n\nRECOMMENDATIONS (ACSM):\n2-3 strength training sessions/week, all muscle groups.",
+      "explanationFemale": "Skeletal muscle mass (SMM) represents the voluntary muscles in your body.\n\nCLASSIFICATION (Janssen et al. 2000):\n- <31%: Low - Probable sarcopenia\n- 31-36%: Normal - Sedentary population\n- 36-42%: Good - Regular physical activity\n- 42%+: Excellent - Athletic level\n\nBIOLOGICAL DIFFERENCE:\nWomen naturally have 30-40% less muscle mass than men (testosterone 10-20x lower). This is NORMAL.\n\nSCIENTIFIC EVIDENCE:\n- Strength training = post-menopausal osteoporosis prevention (Kohrt WM, Med Sci Sports 2004)\n- No \"bulking up\" in women without steroids\n- Improves insulin sensitivity and metabolism\n\nRECOMMENDATIONS (ACSM):\n2-3 strength training sessions/week. Heavy weights are safe and effective."
+    },
+    "waterPercentage": {
+      "title": "Body water",
+      "explanation": "Total body water (TBW) represents about 60% of weight in adult men and 50-55% in women.\n\nCLASSIFICATION (Watson et al. 1980):\n- <50%: Probable dehydration\n- 50-54%: Slightly low\n- 55-60%: Normal\n- 61-70%: Optimal - Excellent hydration\n\nSCIENTIFIC EVIDENCE:\n- Muscle = 73% water, Fat = 10% water (Wang Z, Am J Clin Nutr 1999)\n- 2% dehydration = -10-20% performance (Sawka MN, Med Sci Sports 2007)\n\nWHAT INFLUENCES THE MEASUREMENT:\n- Time of day\n- Recent meals\n- Exercise, temperature\n- Caffeine, alcohol\n\nDAILY NEEDS (IOM 2004):\n- Men: about 3.7L/day (all sources)\n- Women: about 2.7L/day (all sources)\n\nADVICE:\nMonitor urine color: pale yellow = well hydrated."
+    },
+    "visceralFat": {
+      "title": "Visceral fat",
+      "explanation": "Visceral fat is the deep fat surrounding organs (liver, intestines, heart).\n\nSCIENTIFIC CLASSIFICATION:\n- Score 1-9: Optimal - Minimal cardiometabolic risk\n- Score 10-14: High - Probable metabolic syndrome\n- Score 15+: Very high - Significant cardiovascular risk\n\nSCIENTIFIC EVIDENCE (Després et al. 2008):\nVisceral fat is the #1 factor of \"metabolic syndrome\":\n- Increases systemic inflammation (CRP, IL-6)\n- Insulin resistance leading to prediabetes\n- 2x to 3x cardiovascular risk\n\nWHAT WORKS (meta-analyses):\n- Aerobic exercise: average 6.1% reduction (Vissers et al. 2013)\n- Moderate caloric deficit: primarily targets visceral fat\n- Stress reduction (cortisol = visceral storage)\n\nMEASUREMENT:\nMRI remains the reference. Bioimpedance gives a correlated but not exact estimate."
+    },
+    "hrv": {
+      "title": "Heart Rate Variability (HRV)",
+      "explanation": "HRV measures the variations between each heartbeat in milliseconds.\n\nCLASSIFICATION (RMSSD, average values):\n- 70+ ms: Excellent - Optimal recovery\n- 50-69 ms: Good - Good adaptation\n- 30-49 ms: Normal - Recovery in progress\n- 10-29 ms: Tired - Physiological stress\n\nINDIVIDUAL VARIABILITY:\nCompare to YOUR average over 7-14 days. Absolute values vary by age, fitness level, genetics.\n\nEVIDENCE (Task Force 1996 + meta-analyses):\n- Low HRV = independent predictor of CV mortality (Thayer JF, Neurosci Biobehav Rev 2012)\n- HRV reflects sympathetic/parasympathetic balance\n\nWHAT LOWERS HRV:\n- Overtraining\n- Alcohol (even moderate)\n- Chronic stress\n- Infection/illness\n- Lack of sleep\n\nIMPROVEMENT:\n- Regular aerobic training\n- Slow breathing (6/min)\n- 7-9h sleep\n\nMEASUREMENT:\nMorning upon waking, same conditions, for 1-5 min."
+    },
+    "restingHeartRate": {
+      "title": "Resting heart rate",
+      "explanation": "Resting heart rate is an independent predictor of cardiovascular mortality.\n\nCLASSIFICATION (Fox et al. 2007, meta-analysis 46 studies):\n- 40-60 bpm: Athlete - Very efficient heart\n- 61-70 bpm: Excellent\n- 71-80 bpm: Normal - Population average\n- 81-100 bpm: High - Increased CV risk\n\nSCIENTIFIC EVIDENCE:\n- +10 bpm resting HR = +20% CV mortality risk (Cooney MT, Eur J Prev Cardiol 2010)\n- HR <60 bpm associated with better long-term survival\n\nTRAINING EFFECT:\n- Regular endurance: -10 to -15 bpm in 3-6 months\n- Elite athletes: 35-45 bpm (physiological bradycardia)\n\nACUTE FACTORS:\nStress, caffeine, dehydration, fever, lack of sleep\n\nMEASUREMENT:\nMorning upon waking, before getting up, for 1 minute."
+    },
+    "sleepDuration": {
+      "title": "Sleep duration",
+      "explanation": "Optimal sleep duration for health.\n\nCLASSIFICATION (Cappuccio et al. 2010, meta-analysis 16 studies):\n- <6h: Insufficient - +48% mortality risk\n- 6-7h: Short - Slightly increased risk\n- 7-9h: Optimal - Minimal mortality\n- >9h: Long - +30% mortality (may indicate pathology)\n\nSCIENTIFIC EVIDENCE:\n1.3 million subjects analyzed:\n- <5h/night = +52% cardiovascular risk\n- 6-8h = minimal risk\n- >9h = associated with depression, inflammation\n\nINDIVIDUAL NEEDS:\n- Athletes: 9-10h for optimal recovery (Mah CD, Sleep 2011)\n- Genetics: 3-5% are true \"short sleepers\"\n\nSLEEP HYGIENE:\n- Regular schedule\n- No screens 1h before\n- Room 18-20°C (64-68°F)\n- Avoid caffeine after 2pm"
+    },
+    "recoveryScore": {
+      "title": "Recovery score",
+      "explanation": "Recovery score estimates your ability to perform and train.\n\nCLASSIFICATION:\n- 0-33%: Red - Rest recommended\n- 34-66%: Yellow - Moderate training possible\n- 67-100%: Green - Optimal capacity\n\nSCIENTIFIC BASIS (Plews et al. 2013):\nThe score combines several indicators:\n- HRV (heart rate variability)\n- Sleep quality\n- Resting HR\n- Perceived fatigue\n\nINTERPRETATION:\n- Occasional low score = normal after intense effort\n- Chronic low score = overtraining risk\n\nADVICE:\nAdjust your training intensity to your recovery score."
+    },
+    "bmi": {
+      "title": "Body Mass Index (BMI)",
+      "explanation": "Body Mass Index (BMI) = Weight (kg) / Height squared (m²)\n\nCLASSIFICATION (Prospective Studies Collaboration 2009):\nMeta-analysis of 57 studies, 894,576 subjects:\n- < 18.5: Underweight - Increased mortality\n- 18.5-25: Normal - Minimal mortality\n- 25-30: Overweight - ~+30% mortality\n- 30+: Obese - ~+70% mortality\n\nSCIENTIFIC EVIDENCE:\n- Optimal BMI = 22.5-25 for minimal mortality\n- +5 kg/m² above 25 = +30% cardiovascular mortality\n\nRECOGNIZED LIMITATIONS:\n- Does not distinguish muscle/fat\n- Less reliable: athletes, elderly, Asian ethnicities\n\nADVICE:\nComplement with waist circumference (WHtR) and body fat percentage for complete assessment."
+    },
+    "waistCircumference": {
+      "title": "Waist circumference",
+      "explanationMale": "Waist circumference measures abdominal fat, a cardiovascular risk factor.\n\nNOTE: Absolute thresholds (90cm/35in, 102cm/40in) are GENERAL benchmarks.\n\nMORE PRECISE METHOD - Waist-to-Height Ratio (WHtR):\nDivide your waist by your height:\n- < 0.4: Possible underweight\n- 0.4-0.5: Ideal zone\n- 0.5-0.6: Moderate risk\n- > 0.6: High risk\n\nCONCRETE EXAMPLES:\n- 5'9\" (175cm) height → Ideal waist: 28-34\" (70-87cm)\n- 6'3\" (190cm) height → Ideal waist: 30-37\" (76-95cm)\n- 6'11\" (210cm) height → Ideal waist: 33-41\" (84-105cm)\n\nEVIDENCE (Ashwell et al. 2012, meta-analysis):\nWHtR BETTER predicts cardiometabolic risk than BMI or waist alone.\n\"Keep your waist to less than half your height\"\n\nMEASUREMENT:\nAt navel level, standing, after normal exhale.",
+      "explanationFemale": "Waist circumference measures abdominal fat, a cardiovascular risk factor.\n\nNOTE: Absolute thresholds (80cm/31in, 88cm/35in) are GENERAL benchmarks.\n\nMORE PRECISE METHOD - Waist-to-Height Ratio (WHtR):\nDivide your waist by your height:\n- < 0.4: Possible underweight\n- 0.4-0.5: Ideal zone\n- 0.5-0.6: Moderate risk\n- > 0.6: High risk\n\nCONCRETE EXAMPLES:\n- 5'3\" (160cm) height → Ideal waist: 25-31\" (64-80cm)\n- 5'7\" (170cm) height → Ideal waist: 27-33\" (68-85cm)\n- 5'11\" (180cm) height → Ideal waist: 28-35\" (72-90cm)\n\nEVIDENCE (Ashwell et al. 2012):\nWHtR is a better predictor of cardiometabolic risk than BMI or waist alone.\n\nMEASUREMENT:\nAt navel level, standing, after normal exhale."
+    },
+    "boneMass": {
+      "title": "Bone mass",
+      "explanationMale": "Bone mass represents the mineral weight of your skeleton.\n\nCLASSIFICATION (proportional to body weight):\n- <2.8 kg: Low - Osteoporotic risk\n- 2.8-3.2 kg: Normal\n- >3.2 kg: Good - Optimal density\n\nVARIATION BY WEIGHT:\n- 60kg (132lbs) = about 2.6 kg bone expected (~4.3%)\n- 80kg (176lbs) = about 3.3 kg bone expected\n- 100kg (220lbs) = about 3.8 kg bone expected\n\nSCIENTIFIC EVIDENCE (Kanis et al. Lancet 2002):\n- Peak bone mass reached around 25-30 years\n- Loss of 0.5-1% per year after 40\n- Osteoporosis = T-score < -2.5 (DEXA)\n\nVALIDATED INTERVENTIONS:\n- Strength training: +1-3% bone density (Martyn-St James M, Br J Sports Med 2009)\n- Calcium 1000-1200mg/day + Vitamin D 800-1000 IU/day\n- Impact sports: running, jumping\n\nLIMITATIONS:\nBioimpedance estimates mass, not density. DEXA = reference.",
+      "explanationFemale": "Bone mass represents the mineral weight of your skeleton.\n\nCLASSIFICATION (proportional to body weight):\n- <2.2 kg: Low - Osteoporotic risk\n- 2.2-2.5 kg: Normal\n- >2.5 kg: Good - Optimal density\n\nFEMALE RISK (Kanis et al. Lancet 2002):\n- 1 in 3 women will have an osteoporotic fracture after 50\n- Estrogen drop at menopause = loss of 2-3%/year for 5-10 years\n\nSCIENTIFIC EVIDENCE:\n- Peak bone mass: 25-30 years\n- Strength training = #1 validated intervention\n- Calcium + Vitamin D = essential\n\nPREVENTION:\n- Strength training with weights 2-3x/week\n- Calcium 1000-1200mg/day\n- Vitamin D 800-1000 IU/day\n- Avoid prolonged very low-calorie diets\n\nADVICE:\nBuild your \"bone bank\" before 30. After, the goal is to MAINTAIN."
+    },
+    "bmr": {
+      "title": "Basal Metabolic Rate (BMR)",
+      "explanation": "Basal metabolic rate (BMR) = energy burned at complete rest over 24h.\n\nYOUR ESTIMATED BMR: about {{bmrValue}} kcal/day\n(Based on: {{weight}}kg, {{height}}cm, {{age}} years)\n\nMIFFLIN-ST JEOR EQUATION (Mifflin et al. 1990):\nValidated on 498 subjects, +/-10% accuracy vs indirect calorimetry.\n\nTOTAL EXPENDITURE (validated activity factors):\n- Sedentary (1.2): about {{sedentary}} kcal\n- Lightly active (1.375): about {{lightlyActive}} kcal\n- Active (1.55): about {{active}} kcal\n- Very active (1.725): about {{veryActive}} kcal\n\nINFLUENCING FACTORS:\n- Muscle mass: +13 kcal/kg muscle/day\n- Age: -2% per decade after 20\n- Genetics: +/-5-10% variation\n\nADVICE:\nIncrease your BMR through muscle mass!"
+    },
+    "intensity": {
+      "title": "Training intensity",
+      "explanation": "Training intensity measures relative effort compared to your maximum capacity.\n\nCLASSIFICATION (Banister TRIMP model):\n- 0-50%: Light - Active recovery\n- 50-70%: Moderate - Aerobic zone, base endurance\n- 70-85%: Intense - Lactate threshold zone\n- 85-100%: Maximal - Anaerobic zone\n\nSCIENTIFIC EVIDENCE:\n- 80% volume in zone 1-2 + 20% in zone 4-5 = optimal polarized distribution (Seiler S, Int J Sports Physiol 2010)\n- Overtraining = too much volume in zone 3 (no man's land)\n\nADVICE:\nMost of your training should be in the easy zone (conversation possible)."
+    },
+    "unknown": "Unknown"
   },
   "trainingJournal": {
     "title": "Training Journal",

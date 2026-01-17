@@ -1452,6 +1452,95 @@
     "objective": "Ziel",
     "remaining": "Übrig"
   },
+  "healthRanges": {
+    "zones": {
+      "athlete": "Athlet",
+      "fit": "Fit",
+      "average": "Durchschnitt",
+      "high": "Hoch",
+      "low": "Niedrig",
+      "normal": "Normal",
+      "good": "Gut",
+      "excellent": "Ausgezeichnet",
+      "optimal": "Optimal",
+      "dehydrated": "Dehydriert",
+      "underHydrated": "Unterhydriert",
+      "veryHigh": "Sehr hoch",
+      "tired": "Müde",
+      "insufficient": "Unzureichend",
+      "short": "Kurz",
+      "long": "Lang",
+      "red": "Rot",
+      "yellow": "Gelb",
+      "green": "Grün",
+      "underweight": "Untergewicht",
+      "overweight": "Übergewicht",
+      "obese": "Adipositas",
+      "attention": "Vorsicht",
+      "highRisk": "Hohes Risiko",
+      "light": "Leicht",
+      "moderate": "Moderat",
+      "intense": "Intensiv",
+      "maximal": "Maximal"
+    },
+    "bodyFat": {
+      "title": "Körperfett",
+      "explanationMale": "Der Körperfettanteil misst den Anteil von Fett am Gesamtgewicht.\n\nKLASSIFIKATION (Gallagher et al. 2000, n=1626 Probanden):\n- 3-13%: Athlet - Wettkampfniveau\n- 14-17%: Fit - Ausgezeichnete Kondition\n- 18-24%: Durchschnitt - Gesunde Allgemeinbevölkerung\n- 25%+: Hoch - Erhöhte metabolische Risiken\n\nWISSENSCHAFTLICHE BELEGE:\n- >25% bei Männern = 2,5x Diabetes-Typ-2-Risiko (Prospective Studies Collaboration, Lancet 2009)\n- <5% chronisch = hormonelle Dysfunktion, geschwächte Immunität\n\nMESSGENAUIGKEIT:\n- Bioimpedanz: +/-3-5% Fehler (Kyle et al. 2004)\n- DEXA: +/-1-2% (klinische Referenz)\n\nRATSCHLAG:\nVerfolge den TREND über 4-8 Wochen statt täglicher Schwankungen.",
+      "explanationFemale": "Der Körperfettanteil misst den Anteil von Fett am Gesamtgewicht.\n\nKLASSIFIKATION (Gallagher et al. 2000):\n- 10-20%: Athletin - Wettkampfniveau\n- 21-24%: Fit - Ausgezeichnete Kondition\n- 25-31%: Durchschnitt - Allgemeinbevölkerung\n- 32%+: Hoch - Erhöhte metabolische Risiken\n\nBIOLOGISCHER UNTERSCHIED MÄNNER/FRAUEN:\nFrauen haben natürlicherweise 8-12% mehr Fett als Männer (Brüste, Hüften, reproduktive Reserve). Das ist NORMAL und GESUND.\n\nWISSENSCHAFTLICHE BELEGE:\n- <15% verlängert = Amenorrhoe, Unfruchtbarkeit (Loucks AB, J Sports Sci 2004)\n- >32% = erhöhtes Diabetes-/Herz-Kreislauf-Risiko\n\nRATSCHLAG:\nEin Verlust von 0,5-1% pro Monat ist ein gesundes und nachhaltiges Tempo."
+    },
+    "muscleMass": {
+      "title": "Muskelmasse",
+      "explanationMale": "Die Skelettmuskelmasse (SMM) repräsentiert die willentlichen Muskeln in deinem Körper.\n\nKLASSIFIKATION (Janssen et al. 2000, MRT-Studie an 468 Probanden):\n- <38%: Niedrig - Wahrscheinliche Sarkopenie\n- 38-44%: Normal - Sesshafte Bevölkerung\n- 44-52%: Gut - Regelmäßige körperliche Aktivität\n- 52%+: Ausgezeichnet - Athletisches Niveau\n\nWISSENSCHAFTLICHE BELEGE:\n- +10% Muskelmasse = -11% Gesamtmortalitätsrisiko (Srikanthan P, Am J Med 2016)\n- Muskel = metabolisches Organ: sezerniert entzündungshemmende Myokine\n- Positiv korrelierte Insulinsensitivität\n\nSARKOPENIE (Cruz-Jentoft AJ, Lancet 2019):\nVerlust von 3-8% Muskeln pro Jahrzehnt nach dem 30. Lebensjahr.\nKrafttraining ist die #1 wissenschaftlich validierte Behandlung.\n\nEMPFEHLUNGEN (ACSM):\n2-3 Krafttrainingseinheiten/Woche, alle Muskelgruppen.",
+      "explanationFemale": "Die Skelettmuskelmasse (SMM) repräsentiert die willentlichen Muskeln in deinem Körper.\n\nKLASSIFIKATION (Janssen et al. 2000):\n- <31%: Niedrig - Wahrscheinliche Sarkopenie\n- 31-36%: Normal - Sesshafte Bevölkerung\n- 36-42%: Gut - Regelmäßige körperliche Aktivität\n- 42%+: Ausgezeichnet - Athletisches Niveau\n\nBIOLOGISCHER UNTERSCHIED:\nFrauen haben natürlicherweise 30-40% weniger Muskelmasse als Männer (Testosteron 10-20x niedriger). Das ist NORMAL.\n\nWISSENSCHAFTLICHE BELEGE:\n- Krafttraining = postmenopausale Osteoporose-Prävention (Kohrt WM, Med Sci Sports 2004)\n- Kein \"Aufblähen\" bei Frauen ohne Steroide\n- Verbessert Insulinsensitivität und Stoffwechsel\n\nEMPFEHLUNGEN (ACSM):\n2-3 Krafttrainingseinheiten/Woche. Schwere Gewichte sind sicher und effektiv."
+    },
+    "waterPercentage": {
+      "title": "Körperwasser",
+      "explanation": "Das Gesamtkörperwasser (TBW) macht etwa 60% des Gewichts bei erwachsenen Männern und 50-55% bei Frauen aus.\n\nKLASSIFIKATION (Watson et al. 1980):\n- <50%: Wahrscheinliche Dehydration\n- 50-54%: Leicht niedrig\n- 55-60%: Normal\n- 61-70%: Optimal - Ausgezeichnete Hydration\n\nWISSENSCHAFTLICHE BELEGE:\n- Muskel = 73% Wasser, Fett = 10% Wasser (Wang Z, Am J Clin Nutr 1999)\n- 2% Dehydration = -10-20% Leistung (Sawka MN, Med Sci Sports 2007)\n\nWAS DIE MESSUNG BEEINFLUSST:\n- Tageszeit\n- Kürzliche Mahlzeiten\n- Bewegung, Temperatur\n- Koffein, Alkohol\n\nTÄGLICHER BEDARF (IOM 2004):\n- Männer: ~3,7L/Tag (alle Quellen)\n- Frauen: ~2,7L/Tag (alle Quellen)\n\nRATSCHLAG:\nÜberwache die Urinfarbe: blassgelb = gut hydratisiert."
+    },
+    "visceralFat": {
+      "title": "Viszerales Fett",
+      "explanation": "Viszerales Fett ist das tiefe Fett, das die Organe umgibt (Leber, Darm, Herz).\n\nWISSENSCHAFTLICHE KLASSIFIKATION:\n- Score 1-9: Optimal - Minimales kardiometabolisches Risiko\n- Score 10-14: Hoch - Wahrscheinliches metabolisches Syndrom\n- Score 15+: Sehr hoch - Signifikantes kardiovaskuläres Risiko\n\nWISSENSCHAFTLICHE BELEGE (Després et al. 2008):\nViszerales Fett ist der #1 Faktor des \"metabolischen Syndroms\":\n- Erhöht systemische Entzündung (CRP, IL-6)\n- Insulinresistenz führend zu Prädiabetes\n- 2x bis 3x kardiovaskuläres Risiko\n\nWAS FUNKTIONIERT (Metaanalysen):\n- Ausdauertraining: durchschnittlich 6,1% Reduktion (Vissers et al. 2013)\n- Moderates Kaloriendefizit: zielt primär auf viszerales Fett\n- Stressreduktion (Cortisol = viszerale Speicherung)\n\nMESSUNG:\nMRT bleibt die Referenz. Bioimpedanz gibt eine korrelierte aber nicht exakte Schätzung."
+    },
+    "hrv": {
+      "title": "Herzfrequenzvariabilität (HRV)",
+      "explanation": "Die HRV misst die Variationen zwischen jedem Herzschlag in Millisekunden.\n\nKLASSIFIKATION (RMSSD, Durchschnittswerte):\n- 70+ ms: Ausgezeichnet - Optimale Erholung\n- 50-69 ms: Gut - Gute Anpassung\n- 30-49 ms: Normal - Erholung im Gange\n- 10-29 ms: Müde - Physiologischer Stress\n\nINDIVIDUELLE VARIABILITÄT:\nVergleiche mit DEINEM Durchschnitt über 7-14 Tage. Absolute Werte variieren nach Alter, Fitness, Genetik.\n\nBELEGE (Task Force 1996 + Metaanalysen):\n- Niedrige HRV = unabhängiger Prädiktor für CV-Mortalität (Thayer JF, Neurosci Biobehav Rev 2012)\n- HRV reflektiert sympathisch/parasympathisches Gleichgewicht\n\nWAS DIE HRV SENKT:\n- Übertraining\n- Alkohol (auch moderat)\n- Chronischer Stress\n- Infektion/Krankheit\n- Schlafmangel\n\nVERBESSERUNG:\n- Regelmäßiges Ausdauertraining\n- Langsames Atmen (6/min)\n- 7-9h Schlaf\n\nMESSUNG:\nMorgens beim Aufwachen, gleiche Bedingungen, für 1-5 Min."
+    },
+    "restingHeartRate": {
+      "title": "Ruheherzfrequenz",
+      "explanation": "Die Ruheherzfrequenz ist ein unabhängiger Prädiktor für kardiovaskuläre Mortalität.\n\nKLASSIFIKATION (Fox et al. 2007, Metaanalyse 46 Studien):\n- 40-60 bpm: Athlet - Sehr effizientes Herz\n- 61-70 bpm: Ausgezeichnet\n- 71-80 bpm: Normal - Bevölkerungsdurchschnitt\n- 81-100 bpm: Hoch - Erhöhtes CV-Risiko\n\nWISSENSCHAFTLICHE BELEGE:\n- +10 bpm Ruhe-HF = +20% CV-Mortalitätsrisiko (Cooney MT, Eur J Prev Cardiol 2010)\n- HF <60 bpm assoziiert mit besserer Langzeitüberlebensrate\n\nTRAININGSEFFEKT:\n- Regelmäßige Ausdauer: -10 bis -15 bpm in 3-6 Monaten\n- Elite-Athleten: 35-45 bpm (physiologische Bradykardie)\n\nAKUTE FAKTOREN:\nStress, Koffein, Dehydration, Fieber, Schlafmangel\n\nMESSUNG:\nMorgens beim Aufwachen, vor dem Aufstehen, für 1 Minute."
+    },
+    "sleepDuration": {
+      "title": "Schlafdauer",
+      "explanation": "Optimale Schlafdauer für die Gesundheit.\n\nKLASSIFIKATION (Cappuccio et al. 2010, Metaanalyse 16 Studien):\n- <6h: Unzureichend - +48% Mortalitätsrisiko\n- 6-7h: Kurz - Leicht erhöhtes Risiko\n- 7-9h: Optimal - Minimale Mortalität\n- >9h: Lang - +30% Mortalität (kann auf Pathologie hinweisen)\n\nWISSENSCHAFTLICHE BELEGE:\n1,3 Millionen Probanden analysiert:\n- <5h/Nacht = +52% kardiovaskuläres Risiko\n- 6-8h = minimales Risiko\n- >9h = assoziiert mit Depression, Entzündung\n\nINDIVIDUELLE BEDÜRFNISSE:\n- Athleten: 9-10h für optimale Erholung (Mah CD, Sleep 2011)\n- Genetik: 3-5% sind echte \"Kurzschläfer\"\n\nSCHLAFHYGIENE:\n- Regelmäßiger Zeitplan\n- Keine Bildschirme 1h vorher\n- Zimmer 18-20°C\n- Koffein nach 14 Uhr vermeiden"
+    },
+    "recoveryScore": {
+      "title": "Erholungsscore",
+      "explanation": "Der Erholungsscore schätzt deine Fähigkeit zu performen und zu trainieren.\n\nKLASSIFIKATION:\n- 0-33%: Rot - Ruhe empfohlen\n- 34-66%: Gelb - Moderates Training möglich\n- 67-100%: Grün - Optimale Kapazität\n\nWISSENSCHAFTLICHE GRUNDLAGE (Plews et al. 2013):\nDer Score kombiniert mehrere Indikatoren:\n- HRV (Herzfrequenzvariabilität)\n- Schlafqualität\n- Ruhe-HF\n- Wahrgenommene Müdigkeit\n\nINTERPRETATION:\n- Gelegentlich niedriger Score = normal nach intensiver Anstrengung\n- Chronisch niedriger Score = Übertrainingsrisiko\n\nRATSCHLAG:\nPasse deine Trainingsintensität an deinen Erholungsscore an."
+    },
+    "bmi": {
+      "title": "Body-Mass-Index (BMI)",
+      "explanation": "Body-Mass-Index (BMI) = Gewicht (kg) / Größe zum Quadrat (m²)\n\nKLASSIFIKATION (Prospective Studies Collaboration 2009):\nMetaanalyse von 57 Studien, 894.576 Probanden:\n- < 18,5: Untergewicht - Erhöhte Mortalität\n- 18,5-25: Normal - Minimale Mortalität\n- 25-30: Übergewicht - ~+30% Mortalität\n- 30+: Adipositas - ~+70% Mortalität\n\nWISSENSCHAFTLICHE BELEGE:\n- Optimaler BMI = 22,5-25 für minimale Mortalität\n- +5 kg/m² über 25 = +30% kardiovaskuläre Mortalität\n\nANERKANNTE GRENZEN:\n- Unterscheidet nicht Muskel/Fett\n- Weniger zuverlässig: Athleten, Ältere, asiatische Ethnien\n\nRATSCHLAG:\nErgänze mit Taillenumfang (WHtR) und Körperfettanteil für vollständige Bewertung."
+    },
+    "waistCircumference": {
+      "title": "Taillenumfang",
+      "explanationMale": "Der Taillenumfang misst abdominales Fett, einen kardiovaskulären Risikofaktor.\n\nHINWEIS: Absolute Schwellenwerte (90cm, 102cm) sind ALLGEMEINE Richtwerte.\n\nGENAUERE METHODE - Taille-zu-Größe-Verhältnis (WHtR):\nTeile deine Taille durch deine Größe:\n- < 0,4: Mögliches Untergewicht\n- 0,4-0,5: Ideale Zone\n- 0,5-0,6: Moderates Risiko\n- > 0,6: Hohes Risiko\n\nKONKRETE BEISPIELE:\n- 1,75m Größe → Ideale Taille: 70-87cm\n- 1,90m Größe → Ideale Taille: 76-95cm\n- 2,10m Größe → Ideale Taille: 84-105cm\n\nBELEGE (Ashwell et al. 2012, Metaanalyse):\nWHtR sagt kardiometabolisches Risiko BESSER vorher als BMI oder Taillenumfang allein.\n\"Halte deine Taille unter der Hälfte deiner Größe\"\n\nMESSUNG:\nAuf Nabelhöhe, stehend, nach normaler Ausatmung.",
+      "explanationFemale": "Der Taillenumfang misst abdominales Fett, einen kardiovaskulären Risikofaktor.\n\nHINWEIS: Absolute Schwellenwerte (80cm, 88cm) sind ALLGEMEINE Richtwerte.\n\nGENAUERE METHODE - Taille-zu-Größe-Verhältnis (WHtR):\nTeile deine Taille durch deine Größe:\n- < 0,4: Mögliches Untergewicht\n- 0,4-0,5: Ideale Zone\n- 0,5-0,6: Moderates Risiko\n- > 0,6: Hohes Risiko\n\nKONKRETE BEISPIELE:\n- 1,60m Größe → Ideale Taille: 64-80cm\n- 1,70m Größe → Ideale Taille: 68-85cm\n- 1,80m Größe → Ideale Taille: 72-90cm\n\nBELEGE (Ashwell et al. 2012):\nWHtR ist ein besserer Prädiktor für kardiometabolisches Risiko als BMI oder Taillenumfang allein.\n\nMESSUNG:\nAuf Nabelhöhe, stehend, nach normaler Ausatmung."
+    },
+    "boneMass": {
+      "title": "Knochenmasse",
+      "explanationMale": "Die Knochenmasse repräsentiert das Mineralgewicht deines Skeletts.\n\nKLASSIFIKATION (proportional zum Körpergewicht):\n- <2,8 kg: Niedrig - Osteoporotisches Risiko\n- 2,8-3,2 kg: Normal\n- >3,2 kg: Gut - Optimale Dichte\n\nVARIATION NACH GEWICHT:\n- 60kg = ~2,6 kg Knochen erwartet (~4,3%)\n- 80kg = ~3,3 kg Knochen erwartet\n- 100kg = ~3,8 kg Knochen erwartet\n\nWISSENSCHAFTLICHE BELEGE (Kanis et al. Lancet 2002):\n- Spitzenknochenmasse erreicht um 25-30 Jahre\n- Verlust von 0,5-1% pro Jahr nach 40\n- Osteoporose = T-Score < -2,5 (DEXA)\n\nVALIDIERTE INTERVENTIONEN:\n- Krafttraining: +1-3% Knochendichte (Martyn-St James M, Br J Sports Med 2009)\n- Kalzium 1000-1200mg/Tag + Vitamin D 800-1000 IE/Tag\n- Stoßsportarten: Laufen, Springen\n\nGRENZEN:\nBioimpedanz schätzt Masse, nicht Dichte. DEXA = Referenz.",
+      "explanationFemale": "Die Knochenmasse repräsentiert das Mineralgewicht deines Skeletts.\n\nKLASSIFIKATION (proportional zum Körpergewicht):\n- <2,2 kg: Niedrig - Osteoporotisches Risiko\n- 2,2-2,5 kg: Normal\n- >2,5 kg: Gut - Optimale Dichte\n\nWEIBLICHES RISIKO (Kanis et al. Lancet 2002):\n- 1 von 3 Frauen wird nach 50 eine osteoporotische Fraktur haben\n- Östrogenabfall in der Menopause = Verlust von 2-3%/Jahr für 5-10 Jahre\n\nWISSENSCHAFTLICHE BELEGE:\n- Spitzenknochenmasse: 25-30 Jahre\n- Krafttraining = #1 validierte Intervention\n- Kalzium + Vitamin D = essentiell\n\nPRÄVENTION:\n- Krafttraining mit Gewichten 2-3x/Woche\n- Kalzium 1000-1200mg/Tag\n- Vitamin D 800-1000 IE/Tag\n- Längere Sehr-niedrig-Kalorien-Diäten vermeiden\n\nRATSCHLAG:\nBaue deine \"Knochenbank\" vor 30 auf. Danach ist das Ziel ERHALTEN."
+    },
+    "bmr": {
+      "title": "Grundumsatz (BMR)",
+      "explanation": "Der Grundumsatz (BMR) = Energie, die in völliger Ruhe über 24h verbrannt wird.\n\nDEIN GESCHÄTZTER BMR: ~{{bmrValue}} kcal/Tag\n(Basierend auf: {{weight}}kg, {{height}}cm, {{age}} Jahre)\n\nMIFFLIN-ST JEOR GLEICHUNG (Mifflin et al. 1990):\nValidiert an 498 Probanden, +/-10% Genauigkeit vs indirekte Kalorimetrie.\n\nGESAMTVERBRAUCH (validierte Aktivitätsfaktoren):\n- Sesshaft (1,2): ~{{sedentary}} kcal\n- Leicht aktiv (1,375): ~{{lightlyActive}} kcal\n- Aktiv (1,55): ~{{active}} kcal\n- Sehr aktiv (1,725): ~{{veryActive}} kcal\n\nEINFLUSSFAKTOREN:\n- Muskelmasse: +13 kcal/kg Muskel/Tag\n- Alter: -2% pro Jahrzehnt nach 20\n- Genetik: +/-5-10% Variation\n\nRATSCHLAG:\nErhöhe deinen BMR durch Muskelmasse!"
+    },
+    "intensity": {
+      "title": "Trainingsintensität",
+      "explanation": "Die Trainingsintensität misst die relative Anstrengung im Vergleich zu deiner maximalen Kapazität.\n\nKLASSIFIKATION (Banister TRIMP-Modell):\n- 0-50%: Leicht - Aktive Erholung\n- 50-70%: Moderat - Aerobe Zone, Grundlagenausdauer\n- 70-85%: Intensiv - Laktatschwellenzone\n- 85-100%: Maximal - Anaerobe Zone\n\nWISSENSCHAFTLICHE BELEGE:\n- 80% Volumen in Zone 1-2 + 20% in Zone 4-5 = optimale polarisierte Verteilung (Seiler S, Int J Sports Physiol 2010)\n- Übertraining = zu viel Volumen in Zone 3 (Niemandsland)\n\nRATSCHLAG:\nDie meisten deiner Trainings sollten in der leichten Zone sein (Gespräch möglich)."
+    },
+    "unknown": "Unbekannt"
+  },
   "trainingJournal": {
     "title": "Trainingstagebuch",
     "daysAgo": "Vor {{days}} Tagen",
