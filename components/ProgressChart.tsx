@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Line, Circle, Polyline, Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 const CHART_WIDTH = Dimensions.get('window').width - 64;
 const CHART_HEIGHT = 120;
@@ -33,6 +34,7 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
   color,
 }) => {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const chartColor = color || colors.accent;
 
   if (!data || data.length === 0) {
@@ -179,13 +181,13 @@ export const ProgressChart: React.FC<ProgressChartProps> = ({
       {/* Labels des dates */}
       <View style={styles.labelsRow}>
         <Text style={[styles.dateLabel, { color: colors.textMuted }]}>
-          {new Date(sortedData[0].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+          {new Date(sortedData[0].date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
         </Text>
         <Text style={[styles.dateLabel, { color: colors.textMuted }]}>
           {sortedData.length} séances
         </Text>
         <Text style={[styles.dateLabel, { color: colors.textMuted }]}>
-          {new Date(sortedData[sortedData.length - 1].date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+          {new Date(sortedData[sortedData.length - 1].date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
         </Text>
       </View>
     </View>

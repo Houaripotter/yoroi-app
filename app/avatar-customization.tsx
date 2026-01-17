@@ -14,6 +14,7 @@ import { useDevMode } from '@/lib/DevModeContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { CustomizableAvatar } from '@/components/CustomizableAvatar';
+import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
 import {
   AvatarCustomization,
@@ -37,6 +38,7 @@ import {
 export default function AvatarCustomizationScreen() {
   const { colors } = useTheme();
   const { isPro } = useDevMode();
+  const { t } = useI18n();
 
   const [customization, setCustomization] = useState<AvatarCustomization>({
     frame: 'none',
@@ -186,7 +188,7 @@ export default function AvatarCustomizationScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Mon Guerrier" showBack />
+      <Header title={t('screens.avatarCustomization.title')} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -202,7 +204,7 @@ export default function AvatarCustomizationScreen() {
             refreshTrigger={refreshTrigger}
           />
           <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
-            Apercu en temps reel
+            {t('screens.avatarCustomization.realtimePreview')}
           </Text>
         </View>
 
@@ -210,7 +212,7 @@ export default function AvatarCustomizationScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              CADRE
+              {t('screens.avatarCustomization.frameSection')}
             </Text>
             <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>
               {unlocked.frames.length}/{Object.keys(AVATAR_FRAMES).length}
@@ -239,7 +241,7 @@ export default function AvatarCustomizationScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              FOND
+              {t('screens.avatarCustomization.backgroundSection')}
             </Text>
             <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>
               {unlocked.backgrounds.length}/{Object.keys(AVATAR_BACKGROUNDS).length}
@@ -268,7 +270,7 @@ export default function AvatarCustomizationScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              EFFET
+              {t('screens.avatarCustomization.effectSection')}
             </Text>
             <Text style={[styles.sectionCount, { color: colors.textSecondary }]}>
               {unlocked.effects.length}/{Object.keys(AVATAR_EFFECTS).length}
@@ -296,34 +298,34 @@ export default function AvatarCustomizationScreen() {
         {/* LEGENDE */}
         <View style={[styles.legendSection, { backgroundColor: colors.card }]}>
           <Text style={[styles.legendTitle, { color: colors.textPrimary }]}>
-            Comment debloquer ?
+            {t('screens.avatarCustomization.howToUnlock')}
           </Text>
 
           <View style={styles.legendItem}>
             <Text style={styles.legendEmoji}>🥉🥈🥇</Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              Cadres : Maintiens ton streak (30, 100, 365 jours)
+              {t('screens.avatarCustomization.framesUnlock')}
             </Text>
           </View>
 
           <View style={styles.legendItem}>
             <Text style={styles.legendEmoji}></Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              Diamant : Atteins ton objectif de poids
+              {t('screens.avatarCustomization.diamondUnlock')}
             </Text>
           </View>
 
           <View style={styles.legendItem}>
             <Text style={styles.legendEmoji}>🌌🐉</Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              Fonds : Monte en rang (Ashigaru → Shōgun)
+              {t('screens.avatarCustomization.backgroundsUnlock')}
             </Text>
           </View>
 
           <View style={styles.legendItem}>
             <Text style={styles.legendEmoji}>💙💛</Text>
             <Text style={[styles.legendText, { color: colors.textSecondary }]}>
-              Effets : Entrainements (100) et perte de poids (-15kg, -25kg)
+              {t('screens.avatarCustomization.effectsUnlock')}
             </Text>
           </View>
         </View>
@@ -331,7 +333,7 @@ export default function AvatarCustomizationScreen() {
         {/* Info */}
         <View style={styles.infoSection}>
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
-            Ton avatar personnalise s'affiche sur le dashboard, la fiche Instagram et les badges.
+            {t('screens.avatarCustomization.infoText')}
           </Text>
         </View>
       </ScrollView>

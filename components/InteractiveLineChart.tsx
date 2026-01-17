@@ -13,6 +13,7 @@ interface InteractiveLineChartProps {
   height?: number;
   color?: string;
   unit?: string;
+  locale?: string;
 }
 
 export function InteractiveLineChart({
@@ -21,6 +22,7 @@ export function InteractiveLineChart({
   height = 220,
   color = '#007AFF',
   unit = 'kg',
+  locale = 'fr-FR',
 }: InteractiveLineChartProps) {
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
@@ -186,7 +188,7 @@ export function InteractiveLineChart({
               {selectedPoint.value.toFixed(1)} {unit}
             </Text>
             <Text style={styles.tooltipDate}>
-              {new Date(selectedPoint.date).toLocaleDateString('fr-FR', {
+              {new Date(selectedPoint.date).toLocaleDateString(locale, {
                 day: 'numeric',
                 month: 'short',
               })}

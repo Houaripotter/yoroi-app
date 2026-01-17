@@ -63,8 +63,6 @@
 	<string>YOROI synchronise vos données de santé pour un suivi complet.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>YOROI enregistre vos données dans Apple Santé.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow $(PRODUCT_NAME) to access your microphone</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow $(PRODUCT_NAME) to save photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>

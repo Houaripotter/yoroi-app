@@ -10,6 +10,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ const IS_SMALL_SCREEN = screenWidth < 375; // iPhone SE, petits téléphones
 
 export default function ChargeScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   const [weeklyLoad, setWeeklyLoad] = useState(0);
@@ -60,44 +62,44 @@ export default function ChargeScreen() {
   // Niveaux expliqués
   const levelInfo = [
     {
-      level: 'Récupération',
+      level: t('screens.charge.levels.recovery.name'),
       range: '0 - 500 pts',
       color: '#0EA5E9',
       icon: Heart,
-      description: 'Phase de récupération. Ta charge est légère, ton corps se régénère. C\'est le moment parfait pour des activités douces.',
-      advice: 'Profite de cette période pour bien récupérer et te préparer pour la suite.',
+      description: t('screens.charge.levels.recovery.description'),
+      advice: t('screens.charge.levels.recovery.advice'),
     },
     {
-      level: 'Équilibré',
+      level: t('screens.charge.levels.balanced.name'),
       range: '500 - 1000 pts',
       color: '#10B981',
       icon: CheckCircle,
-      description: 'Zone équilibrée. Tu maintiens un bon rythme avec un équilibre sain entre effort et récupération.',
-      advice: 'Continue sur cette lancée, c\'est un excellent rythme pour progresser.',
+      description: t('screens.charge.levels.balanced.description'),
+      advice: t('screens.charge.levels.balanced.advice'),
     },
     {
-      level: 'Optimal',
+      level: t('screens.charge.levels.optimal.name'),
       range: '1000 - 1500 pts',
       color: '#22C55E',
       icon: Sparkles,
-      description: 'Zone de performance optimale. Tu es dans la zone idéale pour développer tes capacités tout en restant frais.',
-      advice: 'Tu es au top ! Continue à écouter ton corps.',
+      description: t('screens.charge.levels.optimal.description'),
+      advice: t('screens.charge.levels.optimal.advice'),
     },
     {
-      level: 'Intense',
+      level: t('screens.charge.levels.intense.name'),
       range: '1500 - 2000 pts',
       color: '#F59E0B',
       icon: TrendingUp,
-      description: 'Entraînement intensif. Ta charge est élevée. Veille à bien récupérer entre les séances.',
-      advice: 'Assure-toi de bien dormir, t\'hydrater et t\'alimenter pour optimiser ta récupération.',
+      description: t('screens.charge.levels.intense.description'),
+      advice: t('screens.charge.levels.intense.advice'),
     },
     {
-      level: 'Très intense',
+      level: t('screens.charge.levels.veryIntense.name'),
       range: '> 2000 pts',
       color: '#EF4444',
       icon: AlertCircle,
-      description: 'Zone très intense. Ta charge est très élevée. Ton corps a besoin de plus de temps pour récupérer.',
-      advice: 'Considère une journée de repos actif ou complet. Priorise le sommeil et la récupération.',
+      description: t('screens.charge.levels.veryIntense.description'),
+      advice: t('screens.charge.levels.veryIntense.advice'),
     },
   ];
 
@@ -121,13 +123,13 @@ export default function ChargeScreen() {
       {/* Tutoriel de fonctionnalité */}
       <FeatureTutorial
         featureId="charge"
-        title="Charge d'entraînement"
-        description="La charge d'entraînement mesure l'intensité de tes séances pour optimiser tes performances et éviter le surmenage."
+        title={t('screens.charge.title')}
+        description={t('screens.charge.tutorialDescription')}
         keyPoints={[
-          'Visualise ta charge hebdomadaire en un coup d\'œil',
-          'Reçois des conseils adaptés selon ton niveau d\'intensité',
-          'Évite le surentraînement et les blessures',
-          'Trouve l\'équilibre parfait entre effort et récupération',
+          t('screens.charge.keyPoint1'),
+          t('screens.charge.keyPoint2'),
+          t('screens.charge.keyPoint3'),
+          t('screens.charge.keyPoint4'),
         ]}
         icon="flash"
       />
@@ -137,7 +139,7 @@ export default function ChargeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Charge d'entraînement</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('screens.charge.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -150,7 +152,7 @@ export default function ChargeScreen() {
           <View style={styles.mainCardHeader}>
             <Activity size={24} color={currentLevel.color} />
             <Text style={[styles.mainCardTitle, { color: colors.textPrimary }]}>
-              Cette semaine
+              {t('screens.charge.thisWeek')}
             </Text>
           </View>
 
@@ -170,7 +172,7 @@ export default function ChargeScreen() {
               <Text style={[styles.gaugeValue, { color: colors.textPrimary }]}>
                 {formatLoad(weeklyLoad)}
               </Text>
-              <Text style={[styles.gaugeUnit, { color: colors.textMuted }]}>points</Text>
+              <Text style={[styles.gaugeUnit, { color: colors.textMuted }]}>{t('screens.charge.points')}</Text>
             </View>
           </View>
 
@@ -198,20 +200,20 @@ export default function ChargeScreen() {
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Calendar size={20} color="#8B5CF6" />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{sessions}</Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>séances</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('screens.charge.sessions')}</Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Target size={20} color="#F59E0B" />
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {weeklyLoad > 0 ? Math.round(weeklyLoad / Math.max(sessions, 1)) : 0}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>pts/séance</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('screens.charge.ptsPerSession')}</Text>
           </View>
         </View>
 
         {/* Explication des niveaux */}
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-          Comprendre les niveaux
+          {t('screens.charge.understandLevels')}
         </Text>
 
         {levelInfo.map((level, index) => {
@@ -241,7 +243,7 @@ export default function ChargeScreen() {
                 </View>
                 {isCurrent && (
                   <View style={[styles.currentBadge, { backgroundColor: level.color }]}>
-                    <Text style={styles.currentBadgeText}>Actuel</Text>
+                    <Text style={styles.currentBadgeText}>{t('screens.charge.current')}</Text>
                   </View>
                 )}
               </View>
@@ -255,12 +257,10 @@ export default function ChargeScreen() {
         {/* Comment ça marche */}
         <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.infoTitle, { color: colors.textPrimary }]}>
-            Comment c'est calculé ?
+            {t('screens.charge.howCalculated')}
           </Text>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            La charge d'entraînement est calculée avec la méthode Foster :{'\n\n'}
-            <Text style={{ fontWeight: '700' }}>Charge = RPE × Durée (min)</Text>{'\n\n'}
-            RPE (Rate of Perceived Exertion) est une note de 1 à 10 que tu donnes à l'intensité de ta séance après l'entraînement.
+            {t('screens.charge.calculationExplanation')}
           </Text>
         </View>
 

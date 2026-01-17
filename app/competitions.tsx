@@ -15,6 +15,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight, Download } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { getCompetitions, getUpcomingCompetitions } from '@/lib/fighterModeService';
@@ -26,6 +27,7 @@ import logger from '@/lib/security/logger';
 
 export default function CompetitionsScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [upcomingCompetitions, setUpcomingCompetitions] = useState<Competition[]>([]);
@@ -176,7 +178,7 @@ export default function CompetitionsScreen() {
         <View style={styles.cardDate}>
           <Calendar size={16} color={colors.accent} />
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {new Date(competition.date).toLocaleDateString('fr-FR', {
+            {new Date(competition.date).toLocaleDateString(locale, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

@@ -38,7 +38,7 @@ interface StatsDetailModalProps {
   icon?: React.ReactNode;
 }
 
-type Period = '30j' | '90j' | '6m' | '1a';
+type Period = '7j' | '30j' | '90j' | 'all';
 
 export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   visible,
@@ -60,14 +60,14 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   // Filtrer les données selon la période
   const getFilteredData = () => {
     switch (selectedPeriod) {
+      case '7j':
+        return data.slice(-7);
       case '30j':
         return data.slice(-30);
       case '90j':
         return data.slice(-90);
-      case '6m':
-        return data.slice(-180);
-      case '1a':
-        return data.slice(-365);
+      case 'all':
+        return data;
       default:
         return data.slice(-30);
     }

@@ -2,9 +2,10 @@
 // MORE TAB VIEW - Navigation avec onglets circulaires
 // ============================================
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
 import { User, Palette, Settings, Heart } from 'lucide-react-native';
 
@@ -14,16 +15,21 @@ interface MoreTabViewProps {
   children: React.ReactNode[];
 }
 
-const PAGES = [
-  { id: 'profile', title: 'Profil', icon: User },
-  { id: 'appearance', title: 'Apparence', icon: Palette },
-  { id: 'data', title: 'Données', icon: Settings },
-  { id: 'support', title: 'Support', icon: Heart },
-];
+const PAGE_ICONS = [User, Palette, Settings, Heart];
+const PAGE_IDS = ['profile', 'appearance', 'data', 'support'];
 
 export const MoreTabView: React.FC<MoreTabViewProps> = ({ children }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Create pages with translated titles
+  const PAGES = useMemo(() => [
+    { id: 'profile', title: t('menu.profileTab'), icon: User },
+    { id: 'appearance', title: t('menu.appearanceTab'), icon: Palette },
+    { id: 'data', title: t('menu.dataTab'), icon: Settings },
+    { id: 'support', title: t('menu.supportTab'), icon: Heart },
+  ], [t]);
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -117,24 +123,6 @@ export const MoreTabView: React.FC<MoreTabViewProps> = ({ children }) => {
         </ScrollView>
       </View>
 
-      {/* Indicateurs de pagination (dots) */}
-      <View style={styles.dotsContainer}>
-        {PAGES.map((page, index) => (
-          <View
-            key={`dot-${page.id}`}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: currentPage === index
-                  ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
-                width: currentPage === index ? 20 : 5,
-              },
-            ]}
-          />
-        ))}
-      </View>
-
       {/* Horizontal Pager */}
       <ScrollView
         ref={scrollViewRef}
@@ -197,17 +185,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
     textAlign: 'center',
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 8,
-  },
-  dot: {
-    height: 5,
-    borderRadius: 2.5,
   },
   scrollContent: {
     flexDirection: 'row',

@@ -36,6 +36,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getAllMeasurements, Measurement } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
@@ -98,7 +99,7 @@ const getToday = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
-const formatDate = (dateStr: string): string => {
+const formatDate = (dateStr: string, locale: string = 'fr-FR'): string => {
   const date = new Date(dateStr);
   const today = new Date();
   const yesterday = new Date(today);
@@ -112,21 +113,22 @@ const formatDate = (dateStr: string): string => {
   }
 
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-  return date.toLocaleDateString('fr-FR', options);
+  return date.toLocaleDateString(locale, options);
 };
 
-const formatFullDate = (dateStr: string): string => {
+const formatFullDate = (dateStr: string, locale: string = 'fr-FR'): string => {
   const date = new Date(dateStr);
   const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
   };
-  return date.toLocaleDateString('fr-FR', options);
+  return date.toLocaleDateString(locale, options);
 };
 
 export default function JournalScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // State
@@ -404,7 +406,7 @@ export default function JournalScreen() {
                 <Calendar size={22} color={colors.gold} strokeWidth={2.5} />
               </View>
               <Text style={[styles.todayTitle, { color: colors.textPrimary }]}>
-                {formatFullDate(getToday())}
+                {formatFullDate(getToday(), locale)}
               </Text>
             </View>
 
@@ -653,7 +655,7 @@ export default function JournalScreen() {
                       </View>
                       <View style={styles.entryInfo}>
                         <Text style={[styles.entryDate, { color: colors.textPrimary }]}>
-                          {formatDate(entry.date)}
+                          {formatDate(entry.date, locale)}
                         </Text>
                         {entry.note && !isExpanded && (
                           <Text

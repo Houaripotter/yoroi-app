@@ -33,6 +33,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { TransformationCardV2, TransformationStats } from '@/components/social-cards/TransformationCardV2';
 import { Photo, getPhotosFromStorage } from '@/lib/storage';
 import logger from '@/lib/security/logger';
@@ -52,6 +53,7 @@ type Step = 'select_before' | 'select_after' | 'preview';
 
 export default function TransformationV2Screen() {
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -101,7 +103,7 @@ export default function TransformationV2Screen() {
   // ============================================
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -109,7 +111,7 @@ export default function TransformationV2Screen() {
   };
 
   const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       month: 'short',
       year: 'numeric',
     });

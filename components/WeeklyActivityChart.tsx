@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 interface DayActivity {
   day: string;
@@ -10,25 +11,29 @@ interface DayActivity {
 }
 
 interface WeeklyActivityChartProps {
-  data: DayActivity[];
+  data?: DayActivity[];
   onPress?: () => void;
 }
 
-const DEFAULT_DATA: DayActivity[] = [
-  { day: 'Lundi', shortDay: 'L', percentage: 80 },
-  { day: 'Mardi', shortDay: 'M', percentage: 60 },
-  { day: 'Mercredi', shortDay: 'M', percentage: 100 },
-  { day: 'Jeudi', shortDay: 'J', percentage: 40 },
-  { day: 'Vendredi', shortDay: 'V', percentage: 90 },
-  { day: 'Samedi', shortDay: 'S', percentage: 20 },
-  { day: 'Dimanche', shortDay: 'D', percentage: 0 },
-];
-
 export const WeeklyActivityChart: React.FC<WeeklyActivityChartProps> = ({
-  data = DEFAULT_DATA,
+  data,
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+
+  // Données par défaut avec traductions
+  const defaultData: DayActivity[] = useMemo(() => [
+    { day: t('dates.monday'), shortDay: t('dates.mondayShort').charAt(0), percentage: 80 },
+    { day: t('dates.tuesday'), shortDay: t('dates.tuesdayShort').charAt(0), percentage: 60 },
+    { day: t('dates.wednesday'), shortDay: t('dates.wednesdayShort').charAt(0), percentage: 100 },
+    { day: t('dates.thursday'), shortDay: t('dates.thursdayShort').charAt(0), percentage: 40 },
+    { day: t('dates.friday'), shortDay: t('dates.fridayShort').charAt(0), percentage: 90 },
+    { day: t('dates.saturday'), shortDay: t('dates.saturdayShort').charAt(0), percentage: 20 },
+    { day: t('dates.sunday'), shortDay: t('dates.sundayShort').charAt(0), percentage: 0 },
+  ], [t]);
+
+  const activeData = data || defaultData;
 
   const chartWidth = 300;
   const chartHeight = 120;
@@ -36,18 +41,18 @@ export const WeeklyActivityChart: React.FC<WeeklyActivityChartProps> = ({
 
   // Calculer les positions
   const chartData = useMemo(() => {
-    if (data.length === 0) return [];
+    if (activeData.length === 0) return [];
 
     const maxValue = 100;
-    const xStep = (chartWidth - padding * 2) / (data.length - 1);
+    const xStep = (chartWidth - padding * 2) / (activeData.length - 1);
 
-    return data.map((item, index) => ({
+    return activeData.map((item, index) => ({
       x: padding + index * xStep,
       y: chartHeight - padding - (item.percentage / maxValue) * (chartHeight - padding * 2),
       value: item.percentage,
       label: item.shortDay,
     }));
-  }, [data]);
+  }, [activeData]);
 
   // Créer le path avec courbes de Bézier
   const createPath = () => {

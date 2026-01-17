@@ -23,6 +23,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { getCombats } from '@/lib/fighterModeService';
@@ -34,6 +35,7 @@ type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
 
 export default function PalmaresScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [combats, setCombats] = useState<Combat[]>([]);
   const [filteredCombats, setFilteredCombats] = useState<Combat[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -272,7 +274,7 @@ export default function PalmaresScreen() {
                     <View style={styles.fightDate}>
                       <Calendar size={14} color={colors.textMuted} />
                       <Text style={[styles.dateText, { color: colors.textMuted }]}>
-                        {new Date(combat.date).toLocaleDateString('fr-FR', {
+                        {new Date(combat.date).toLocaleDateString(locale, {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',

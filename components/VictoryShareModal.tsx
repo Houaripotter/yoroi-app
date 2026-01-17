@@ -35,6 +35,7 @@ import {
   Timer,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
 import { calculatePace, formatDuration, formatDistance } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,6 +76,7 @@ export default function VictoryShareModal({
   clubName = '',
 }: VictoryShareModalProps) {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
 
@@ -533,7 +535,7 @@ export default function VictoryShareModal({
                       { color: getSecondaryTextColor() },
                       getTextShadow()
                     ]}>
-                      {new Date(sessionData.date).toLocaleDateString('fr-FR', {
+                      {new Date(sessionData.date).toLocaleDateString(locale, {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',

@@ -26,6 +26,7 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/design';
 import { healthConnect, type HealthData } from '@/lib/healthConnect';
 import * as Haptics from 'expo-haptics';
@@ -88,6 +89,7 @@ const TERM_DEFINITIONS: Record<string, { short: string; full: string }> = {
 export default function HealthMetricsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -644,7 +646,7 @@ export default function HealthMetricsScreen() {
                     data: sleepHistory.map(s => ({
                       value: s.total / 60, // Convertir en heures
                       date: s.date,
-                      label: new Date(s.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                      label: new Date(s.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                     })),
                     color: colors.purple,
                     unit: 'h',
@@ -711,7 +713,7 @@ export default function HealthMetricsScreen() {
                     data: caloriesHistory.map(c => ({
                       value: c.active,
                       date: c.date,
-                      label: new Date(c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                      label: new Date(c.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                     })),
                     color: colors.danger,
                     unit: 'kcal',
@@ -822,7 +824,7 @@ export default function HealthMetricsScreen() {
               </Text>
 
               {healthData.workouts.slice(0, 5).map((workout, index) => (
-                <WorkoutCard key={index} workout={workout} colors={colors} />
+                <WorkoutCard key={index} workout={workout} colors={colors} locale={locale} />
               ))}
             </View>
           )}
@@ -1088,9 +1090,9 @@ function SleepPhaseLegendItem({
 // WORKOUT CARD COMPONENT
 // ============================================
 
-function WorkoutCard({ workout, colors }: { workout: any; colors: any }) {
+function WorkoutCard({ workout, colors, locale }: { workout: any; colors: any; locale: string }) {
   const startDate = new Date(workout.startDate);
-  const formattedDate = startDate.toLocaleDateString('fr-FR', {
+  const formattedDate = startDate.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',

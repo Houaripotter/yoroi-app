@@ -19,6 +19,7 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { successHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
 
@@ -43,6 +44,7 @@ const SLIDER_WIDTH = screenWidth - 40;
 
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedBefore, setSelectedBefore] = useState<ProgressPhoto | null>(null);
   const [selectedAfter, setSelectedAfter] = useState<ProgressPhoto | null>(null);
@@ -129,7 +131,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
     : null;
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -137,7 +139,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
   };
 
   const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       month: 'short',
       year: 'numeric',
     });

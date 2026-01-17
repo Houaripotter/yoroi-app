@@ -367,23 +367,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         </ScrollView>
       </View>
 
-      {/* Indicateurs de pagination (dots) - zIndex bas */}
-      <View style={[styles.dotsContainer, { zIndex: 1 }]}>
-        {pageOrder.map((page, index) => (
-          <View
-            key={`dot-${page.id}`}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: currentPage === index
-                  ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
-                width: currentPage === index ? 20 : 5,
-              },
-            ]}
-          />
-        ))}
-      </View>
 
       {/* Horizontal Pager - zIndex élevé pour passer devant les onglets */}
       <ScrollView
@@ -426,19 +409,19 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
             <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
               <View style={styles.modalHeader}>
                 <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  Organiser les pages
+                  {t('screens.modal.organizePages')}
                 </Text>
                 <TouchableOpacity
                   style={[styles.doneButton, { backgroundColor: colors.accent }]}
                   onPress={handleDoneEditing}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.doneButtonText, { color: colors.textOnAccent }]}>Terminé</Text>
+                  <Text style={[styles.doneButtonText, { color: colors.textOnAccent }]}>{t('screens.modal.done')}</Text>
                 </TouchableOpacity>
               </View>
 
               <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                Maintenez et faites glisser pour réorganiser
+                {t('screens.modal.dragToReorganize')}
               </Text>
 
               <DraggableFlatList
@@ -540,18 +523,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 0,
-  },
-  dot: {
-    height: 5,
-    borderRadius: 2.5,
-  },
-
   // Modal Styles
   modalOverlay: {
     flex: 1,

@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { SocialStatsCard } from '@/components/SocialStatsCard';
 import { getUserSettings } from '@/lib/storage';
@@ -23,7 +24,8 @@ import logger from '@/lib/security/logger';
 
 export default function SocialCardScreen() {
   const { colors } = useTheme();
-  const [userName, setUserName] = useState('Guerrier');
+  const { t } = useI18n();
+  const [userName, setUserName] = useState(t('screens.socialCard.warrior'));
   const [rank, setRank] = useState({ name: 'Aspirant', icon: '' });
   const [stats, setStats] = useState({
     workouts: 0,
@@ -41,7 +43,7 @@ export default function SocialCardScreen() {
       // Load user settings
       const settings = await getUserSettings();
       const profile = await getProfile();
-      setUserName(profile?.name || settings?.username || 'Guerrier');
+      setUserName(profile?.name || settings?.username || t('screens.socialCard.warrior'));
 
       // Load stats
       const [trainings, latestWeight, weights, streak] = await Promise.all([
@@ -86,7 +88,7 @@ export default function SocialCardScreen() {
       <View style={[styles.header, { backgroundColor: colors.backgroundCard, borderBottomColor: colors.border }]}>
         <View style={{ width: 40 }} />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Partager mes stats
+          {t('screens.socialCard.shareMyStats')}
         </Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
           <X size={24} color={colors.textPrimary} />
@@ -101,11 +103,10 @@ export default function SocialCardScreen() {
         {/* Instructions */}
         <View style={[styles.instructions, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
           <Text style={[styles.instructionsTitle, { color: colors.textPrimary }]}>
-            📲 Partage ta progression
+            📲 {t('screens.socialCard.shareYourProgress')}
           </Text>
           <Text style={[styles.instructionsText, { color: colors.textSecondary }]}>
-            Partage ta carte de stats sur Instagram, Snapchat ou tes réseaux sociaux préférés.
-            Le format 1:1 est parfait pour les posts et stories !
+            {t('screens.socialCard.instructionsText')}
           </Text>
         </View>
 
@@ -121,9 +122,9 @@ export default function SocialCardScreen() {
 
         {/* Tips */}
         <View style={[styles.tips, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Text style={[styles.tipsTitle, { color: colors.textPrimary }]}>💡 Astuce</Text>
+          <Text style={[styles.tipsTitle, { color: colors.textPrimary }]}>💡 {t('screens.socialCard.tip')}</Text>
           <Text style={[styles.tipsText, { color: colors.textSecondary }]}>
-            Inspire tes amis à se lancer dans leur transformation ! Tag @yoroi_app pour être mis en avant.
+            {t('screens.socialCard.tipText')}
           </Text>
         </View>
 

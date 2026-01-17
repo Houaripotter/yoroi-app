@@ -25,6 +25,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import {
@@ -44,6 +45,7 @@ import logger from '@/lib/security/logger';
 
 export default function CompetitionDetailScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const params = useLocalSearchParams();
   const competitionId = params.id as string;
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -183,7 +185,7 @@ export default function CompetitionDetailScreen() {
           <View style={styles.dateRow}>
             <Calendar size={20} color={colors.accent} />
             <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-              {new Date(competition.date).toLocaleDateString('fr-FR', {
+              {new Date(competition.date).toLocaleDateString(locale, {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

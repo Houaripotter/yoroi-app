@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { ProgressChart } from './ProgressChart';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Trophy, Target, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -26,6 +27,7 @@ interface ShareableProgressCardProps {
 export const ShareableProgressCard = React.forwardRef<View, ShareableProgressCardProps>(
   ({ itemName, sport, chartData, targetValue, unit, type, practiceCount, currentValue, progressPercent }, ref) => {
     const { colors } = useTheme();
+    const { locale } = useI18n();
 
     // Calculer l'évolution
     const firstValue = chartData.length > 0 ? chartData[0].value : currentValue;
@@ -145,7 +147,7 @@ export const ShareableProgressCard = React.forwardRef<View, ShareableProgressCar
             📖 Yoroi - Carnet d'Entraînement
           </Text>
           <Text style={[styles.footerDate, { color: colors.textMuted }]}>
-            {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </Text>
         </View>
       </View>

@@ -23,6 +23,7 @@ import { MapPin, ExternalLink, Search, ArrowLeft, Plus, Check } from 'lucide-rea
 import * as Haptics from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
@@ -70,6 +71,7 @@ const ITEM_HEIGHT = 160;
 
 export default function EventsScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
@@ -237,7 +239,7 @@ export default function EventsScreen() {
   // Render individual event item
   const renderEventItem = useCallback(({ item }: { item: SportEvent }) => {
     const eventDate = new Date(item.date_start);
-    const formattedDate = eventDate.toLocaleDateString('fr-FR', {
+    const formattedDate = eventDate.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

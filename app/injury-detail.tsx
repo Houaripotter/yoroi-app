@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import {
@@ -56,6 +57,7 @@ import logger from '@/lib/security/logger';
 
 export default function InjuryDetailScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
   const injuryId = parseInt(params.id as string);
@@ -375,7 +377,7 @@ export default function InjuryDetailScreen() {
                     ]}
                   />
                   <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
-                    {new Date(entry.date).toLocaleDateString('fr-FR')}
+                    {new Date(entry.date).toLocaleDateString(locale)}
                   </Text>
                   <Text style={[styles.historyEva, { color: colors.textPrimary }]}>
                     EVA {entry.eva_score}
@@ -423,7 +425,7 @@ export default function InjuryDetailScreen() {
                     {treatment.label}
                   </Text>
                   <Text style={[styles.treatmentHistoryDate, { color: colors.textMuted }]}>
-                    {new Date(treatment.date).toLocaleDateString('fr-FR')}
+                    {new Date(treatment.date).toLocaleDateString(locale)}
                   </Text>
                 </View>
               ))}

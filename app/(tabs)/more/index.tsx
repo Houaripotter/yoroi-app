@@ -16,6 +16,7 @@ import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   User,
@@ -897,15 +898,14 @@ export default function MoreScreen() {
   };
 
   const handleChangeLanguage = async (langCode: string) => {
+    // Ne rien faire si c'est déjà la langue sélectionnée
+    if (langCode === language) return;
+
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await setLanguage(langCode);
-      setLanguageModalVisible(false);
-      showPopup(
-        t('common.success'),
-        t('menu.languageChanged') || 'Langue changee avec succes',
-        [{ text: 'OK', style: 'primary' }],
-        <CheckCircle size={32} color="#10B981" />
-      );
+      setLanguageModalVisible(false); // Ferme le modal si ouvert
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[MoreScreen] Error changing language:', error);
       showPopup(
@@ -1409,28 +1409,47 @@ export default function MoreScreen() {
             </View>
           </View>
 
-          {/* LANGUE */}
+          {/* LANGUE - Drapeaux cliquables */}
           <View style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.language') || 'Langue'}</Text>
-            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: colors.card }]}
-                onPress={() => setLanguageModalVisible(true)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuItemIcon, { backgroundColor: '#10B98115' }]}>
-                  <Globe size={20} color="#10B981" strokeWidth={2} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>
-                    {supportedLanguages.find(l => l.code === language)?.flag} {supportedLanguages.find(l => l.code === language)?.nativeName || 'Français'}
-                  </Text>
-                  <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
-                    {t('menu.languageDescription') || 'Choisir la langue de l\'app'}
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={colors.textMuted} />
-              </TouchableOpacity>
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border, padding: 16 }]}>
+              <View style={styles.languageFlagsGrid}>
+                {supportedLanguages.map((lang) => {
+                  const isSelected = language === lang.code;
+                  return (
+                    <TouchableOpacity
+                      key={lang.code}
+                      style={[
+                        styles.languageFlagButton,
+                        {
+                          backgroundColor: isSelected ? colors.accent : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
+                          borderWidth: isSelected ? 2 : 1,
+                          borderColor: isSelected ? colors.accent : colors.border,
+                        },
+                      ]}
+                      onPress={() => handleChangeLanguage(lang.code)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.languageFlagEmoji}>{lang.flag}</Text>
+                      <Text
+                        style={[
+                          styles.languageFlagLabel,
+                          {
+                            color: isSelected ? colors.textOnAccent : colors.textPrimary,
+                            fontWeight: isSelected ? '700' : '500',
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {lang.code.toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <Text style={[styles.languageHint, { color: colors.textMuted }]}>
+                {t('menu.languageDescription') || "La langue s'applique à toute l'interface"}
+              </Text>
             </View>
           </View>
 
@@ -1524,14 +1543,34 @@ export default function MoreScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Mode Créateur activé - accès rapide */}
+          {/* Mode Créateur activé - BOUTON VISIBLE */}
           {creatorModeActive && (
             <TouchableOpacity
-              onPress={() => router.push('/screenshot-mode')}
-              style={{ marginTop: 8 }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push('/screenshot-mode');
+              }}
+              style={{
+                marginTop: 16,
+                backgroundColor: '#8B5CF6',
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                borderRadius: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                shadowColor: '#8B5CF6',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 6,
+              }}
+              activeOpacity={0.8}
             >
-              <Text style={{ color: colors.accent, fontSize: 11, textAlign: 'center' }}>
-                {t('menu.creatorModeActive')}
+              <Camera size={20} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+                Mode Screenshot
               </Text>
             </TouchableOpacity>
           )}
@@ -2475,6 +2514,38 @@ const styles = StyleSheet.create({
   },
   madeWith: {
     // View style - text styles applied inline
+  },
+
+  // LANGUAGE FLAGS GRID
+  languageFlagsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  languageFlagButton: {
+    width: (SCREEN_WIDTH - 100) / 5,
+    minWidth: 56,
+    maxWidth: 70,
+    aspectRatio: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  languageFlagEmoji: {
+    fontSize: 24,
+  },
+  languageFlagLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  languageHint: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 
   // MODALS

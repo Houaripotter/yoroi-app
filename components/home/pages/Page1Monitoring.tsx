@@ -2,11 +2,12 @@
 // PAGE 1 - MONITORING (Redesign Premium)
 // ============================================
 
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, Animated, FlatList, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet } from 'lucide-react-native';
+import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -16,7 +17,9 @@ import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
 import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -47,13 +50,6 @@ interface Page1MonitoringProps {
   refreshTrigger?: number;
 }
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon après-midi';
-  return 'Bonsoir';
-};
-
 export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
   userName = 'Athlète',
   profilePhoto,
@@ -78,8 +74,31 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t, locale } = useI18n();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Localized greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('home.greetingMorning');
+    if (hour < 18) return t('home.greetingAfternoon');
+    return t('home.greetingEvening');
+  };
+
+  // Localized month names
+  const monthNames = useMemo(() => [
+    t('dates.januaryShort'), t('dates.februaryShort'), t('dates.marchShort'),
+    t('dates.aprilShort'), t('dates.mayShort'), t('dates.juneShort'),
+    t('dates.julyShort'), t('dates.augustShort'), t('dates.septemberShort'),
+    t('dates.octoberShort'), t('dates.novemberShort'), t('dates.decemberShort')
+  ], [t]);
+
+  // Share button state
+  const [showShareButton, setShowShareButton] = useState(true);
+  const shareButtonScale = useRef(new Animated.Value(1)).current;
+  const shareButtonGlow = useRef(new Animated.Value(0.4)).current;
+  const shareButtonRotate = useRef(new Animated.Value(0)).current;
 
   // Animations citation - apparition simple
   const quoteFadeAnim = useRef(new Animated.Value(0)).current;
@@ -123,6 +142,85 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
     loadGoal();
   }, []);
 
+  // Check if share button was dismissed
+  useEffect(() => {
+    const checkShareButtonDismissed = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem('@share_button_dismissed');
+        if (dismissed === 'true') {
+          setShowShareButton(false);
+        }
+      } catch (error) {
+        console.error('Error checking share button:', error);
+      }
+    };
+    checkShareButtonDismissed();
+  }, []);
+
+  // Share button animations
+  useEffect(() => {
+    if (!showShareButton) return;
+
+    // Pulse animation
+    const pulseAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shareButtonScale, {
+          toValue: 1.15,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(shareButtonScale, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    // Glow animation
+    const glowAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shareButtonGlow, {
+          toValue: 0.8,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(shareButtonGlow, {
+          toValue: 0.3,
+          duration: 1500,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseAnimation.start();
+    glowAnimation.start();
+
+    return () => {
+      pulseAnimation.stop();
+      glowAnimation.stop();
+    };
+  }, [showShareButton]);
+
+  const handleSharePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/share-hub');
+  };
+
+  const handleDismissShareButton = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowShareButton(false);
+    try {
+      await AsyncStorage.setItem('@share_button_dismissed', 'true');
+    } catch (error) {
+      console.error('Error saving share button state:', error);
+    }
+  };
+
   const weightDiff = currentWeight - targetWeight;
   const startWeight = weightHistory.length > 0 ? weightHistory[0] : currentWeight;
   const totalLoss = startWeight - currentWeight;
@@ -135,9 +233,9 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
   };
 
   const getWeightLabel = () => {
-    if (userGoal === 'lose') return 'Perdu';
-    if (userGoal === 'gain') return 'Pris';
-    return 'Stable';
+    if (userGoal === 'lose') return t('home.lost');
+    if (userGoal === 'gain') return t('home.gained');
+    return t('home.stable');
   };
 
   const TrendIcon = getTrendIcon();
@@ -196,7 +294,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
               backgroundColor: `${colors.accent}15`,
               borderColor: `${colors.accent}40`,
             }]}>
-              <Text style={[styles.quoteBadgeTextTop, { color: isDark ? colors.accent : colors.textPrimary }]}>Citation du jour</Text>
+              <Text style={[styles.quoteBadgeTextTop, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('home.dailyQuote')}</Text>
             </View>
 
             {/* Carte citation avec fond adaptatif - PLEINE LARGEUR */}
@@ -230,7 +328,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             style={styles.statValueWhite}
             duration={800}
           />
-          <Text style={styles.statLabelWhite}>PAS</Text>
+          <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
         </LinearGradient>
 
         <LinearGradient
@@ -245,7 +343,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             style={styles.statValueWhite}
             duration={800}
           />
-          <Text style={styles.statLabelWhite}>SÉRIE</Text>
+          <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
         </LinearGradient>
 
         <LinearGradient
@@ -260,7 +358,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             style={styles.statValueWhite}
             duration={800}
           />
-          <Text style={styles.statLabelWhite}>NIV</Text>
+          <Text style={styles.statLabelWhite}>{t('home.levelLabel')}</Text>
         </LinearGradient>
 
         <LinearGradient
@@ -273,7 +371,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           <Text style={[styles.statValueWhite, { fontSize: 11, color: colors.textOnAccent }]} numberOfLines={1}>
             {rankName}
           </Text>
-          <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>RANG</Text>
+          <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
         </LinearGradient>
       </View>
 
@@ -296,12 +394,12 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             </LinearGradient>
             <View>
               <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
-                Poids Actuel
+                {t('home.currentWeight')}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Target size={12} color="#EF4444" strokeWidth={2.5} />
                 <Text style={[styles.weightSubtitle, { color: colors.textMuted }]}>
-                  Objectif: {targetWeight} kg
+                  {t('home.objective')} {targetWeight} kg
                 </Text>
               </View>
             </View>
@@ -339,7 +437,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
 
           {/* Reste à droite */}
           <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: '#F59E0B' }]}>Reste</Text>
+            <Text style={[styles.metricTopLabel, { color: '#F59E0B' }]}>{t('home.remaining')}</Text>
             <Text style={[styles.metricTopValue, { color: '#F59E0B' }]}>
               {Math.abs(weightDiff).toFixed(1)} kg
             </Text>
@@ -351,7 +449,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           <View style={styles.compositionItem}>
             <Dumbbell size={16} color="#EF4444" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>Muscle</Text>
+              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
                 {currentWeight > 0 ? `${(currentWeight * 0.40).toFixed(1)} kg` : '--'}
               </Text>
@@ -364,7 +462,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           <View style={styles.compositionItem}>
             <Apple size={16} color="#F59E0B" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>Graisse</Text>
+              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
                 {currentWeight > 0 ? `${(currentWeight * 0.20).toFixed(1)} kg` : '--'}
               </Text>
@@ -377,7 +475,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           <View style={styles.compositionItem}>
             <Droplet size={16} color="#3B82F6" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
-              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>Eau</Text>
+              <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
                 {currentWeight > 0 ? `${(currentWeight * 0.40).toFixed(1)} kg` : '--'}
               </Text>
@@ -410,7 +508,6 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             const date = new Date(today);
             date.setDate(date.getDate() - daysAgo);
             const dayOfMonth = date.getDate();
-            const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
             const monthLabel = monthNames[date.getMonth()];
 
             // Calculer la variation
@@ -503,13 +600,13 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           <View style={styles.predictionsHeader}>
             <TrendingUp size={14} color="#8B5CF6" strokeWidth={2.5} />
             <Text style={[styles.predictionsTitle, { color: '#8B5CF6' }]}>
-              Prédictions basées sur tes données
+              {t('home.predictions.title')}
             </Text>
           </View>
 
           <View style={styles.predictionsRow}>
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>30 JOURS</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.30days')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss).toFixed(1)} kg
               </Text>
@@ -518,7 +615,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionDivider} />
 
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>90 JOURS</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.90days')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss * 3).toFixed(1)} kg
               </Text>
@@ -527,7 +624,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionDivider} />
 
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>6 MOIS</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.6months')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss * 6).toFixed(1)} kg
               </Text>
@@ -536,13 +633,54 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionDivider} />
 
             <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>1 AN</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.1year')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {(currentWeight - totalLoss * 12).toFixed(1)} kg
               </Text>
             </View>
           </View>
         </TouchableOpacity>
+
+        {/* FLOATING SHARE BUTTON - Animated */}
+        {showShareButton && (
+          <Animated.View
+            style={[
+              styles.shareButtonContainer,
+              {
+                transform: [{ scale: shareButtonScale }],
+              }
+            ]}
+          >
+            {/* Glow effect */}
+            <Animated.View
+              style={[
+                styles.shareButtonGlow,
+                {
+                  opacity: shareButtonGlow,
+                  backgroundColor: colors.accent,
+                }
+              ]}
+            />
+
+            {/* Main button */}
+            <TouchableOpacity
+              style={[styles.shareButton, { backgroundColor: colors.accent }]}
+              onPress={handleSharePress}
+              activeOpacity={0.8}
+            >
+              <Share2 size={18} color={colors.textOnAccent} strokeWidth={2.5} />
+            </TouchableOpacity>
+
+            {/* Dismiss X button */}
+            <TouchableOpacity
+              style={[styles.shareButtonDismiss, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}
+              onPress={handleDismissShareButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <X size={10} color={colors.textMuted} strokeWidth={3} />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
 
       {/* VITALS - Pleine largeur verticalement */}
@@ -962,5 +1100,46 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     fontStyle: 'italic',
     letterSpacing: 0.2,
+  },
+
+  // ═══════════════════════════════════════════════
+  // FLOATING SHARE BUTTON
+  // ═══════════════════════════════════════════════
+  shareButtonContainer: {
+    position: 'absolute',
+    bottom: 60,
+    right: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
+  shareButtonGlow: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    transform: [{ scale: 1.4 }],
+  },
+  shareButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  shareButtonDismiss: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

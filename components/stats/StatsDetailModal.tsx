@@ -3,8 +3,9 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform, Linking } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useCustomPopup } from '@/components/CustomPopup';
 import { X, TrendingUp, TrendingDown, Minus, BookOpen, AlertTriangle, ExternalLink } from 'lucide-react-native';
 import { ModernLineChart } from './charts/ModernLineChart';
 import { MetricRangeIndicator, MetricRange } from './charts/MetricRangeIndicator';
@@ -58,6 +59,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   healthRange: passedHealthRange,
 }) => {
   const { colors, isDark } = useTheme();
+  const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
   const [userAge, setUserAge] = useState(30);
@@ -180,7 +182,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
 
   const handleInfoPress = () => {
     if (metricRange?.explanation) {
-      Alert.alert(title, metricRange.explanation, [{ text: 'OK', style: 'default' }]);
+      showPopup(title, metricRange.explanation, [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -198,6 +200,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   };
 
   return (
+    <>
     <Modal
       visible={visible}
       animationType="slide"
@@ -414,6 +417,8 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
         </View>
       </View>
     </Modal>
+    <PopupComponent />
+    </>
   );
 };
 

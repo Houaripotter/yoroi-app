@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAllMeasurements, Measurement, getAllWorkouts, getWorkoutsByMonth, getUserSettings, addWorkout, deleteWorkout, getUserClubs } from '@/lib/storage';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Workout, WorkoutType } from '@/types/workout';
 import { ActivityModal } from '@/components/ActivityModal';
 import { checkWorkoutBadges } from '@/lib/badgeService';
@@ -77,13 +78,16 @@ const MEASUREMENT_METRICS: MeasurementMetricOption[] = [
 
 // SUPPRIMÉ POUR PRODUCTION - Données de test retirées (lignes 79-188)
 
-const MONTHS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-];
-
 export default function HistoryScreen() {
   const { colors: themeColors } = useTheme();
+  const { t, formatDate, locale } = useI18n();
+
+  // Mois traduits dynamiquement
+  const MONTHS = useMemo(() => [
+    t('dates.january'), t('dates.february'), t('dates.march'), t('dates.april'),
+    t('dates.may'), t('dates.june'), t('dates.july'), t('dates.august'),
+    t('dates.september'), t('dates.october'), t('dates.november'), t('dates.december')
+  ], [t]);
   const [viewMode, setViewMode] = useState<'calendar' | 'stats'>('calendar');
   const [selectedComposition, setSelectedComposition] = useState<CompositionMetric>('weight');
   const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementMetric>('waist');
@@ -235,7 +239,7 @@ export default function HistoryScreen() {
         }
         return {
           value,
-          label: new Date(record.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+          label: new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
           date: record.date,
           frontColor: index % 2 === 0 ? '#1A1A2E' : '#FFFFFF', // Barres alternées noir/blanc
         };
@@ -282,7 +286,7 @@ export default function HistoryScreen() {
         
         return {
           value,
-          label: new Date(record.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+          label: new Date(record.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
           date: record.date,
         };
       })
@@ -342,7 +346,7 @@ export default function HistoryScreen() {
         
         return {
           value,
-          label: new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+          label: new Date(date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }),
           date,
         };
       }).filter(item => item.value > 0);

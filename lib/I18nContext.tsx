@@ -5,9 +5,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Import direct des traductions
+// Import direct des traductions - TOUTES LES 9 LANGUES
 import frTranslations from './i18n/fr.json';
 import enTranslations from './i18n/en.json';
+import esTranslations from './i18n/es.json';
+import ptTranslations from './i18n/pt.json';
+import deTranslations from './i18n/de.json';
+import itTranslations from './i18n/it.json';
+import ruTranslations from './i18n/ru.json';
+import arTranslations from './i18n/ar.json';
+import zhTranslations from './i18n/zh.json';
 
 const LANGUAGE_KEY = '@yoroi_language';
 
@@ -15,13 +22,40 @@ const LANGUAGE_KEY = '@yoroi_language';
 const translations: Record<string, any> = {
   fr: frTranslations,
   en: enTranslations,
+  es: esTranslations,
+  pt: ptTranslations,
+  de: deTranslations,
+  it: itTranslations,
+  ru: ruTranslations,
+  ar: arTranslations,
+  zh: zhTranslations,
 };
 
-// Langues supportées
+// Langues supportées - TOUTES LES 9 LANGUES
 export const SUPPORTED_LANGUAGES = [
   { code: 'fr', name: 'Français', nativeName: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
+  { code: 'es', name: 'Español', nativeName: 'Español', flag: '🇪🇸' },
+  { code: 'pt', name: 'Português', nativeName: 'Português', flag: '🇵🇹' },
+  { code: 'de', name: 'Deutsch', nativeName: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', name: 'Italiano', nativeName: 'Italiano', flag: '🇮🇹' },
+  { code: 'ru', name: 'Русский', nativeName: 'Русский', flag: '🇷🇺' },
+  { code: 'ar', name: 'العربية', nativeName: 'العربية', flag: '🇸🇦' },
+  { code: 'zh', name: '中文', nativeName: '中文', flag: '🇨🇳' },
 ] as const;
+
+// Map des locales pour toLocaleDateString
+export const LOCALE_MAP: Record<string, string> = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  es: 'es-ES',
+  pt: 'pt-PT',
+  de: 'de-DE',
+  it: 'it-IT',
+  ru: 'ru-RU',
+  ar: 'ar-SA',
+  zh: 'zh-CN',
+};
 
 // Cache pour les traductions (évite de recalculer)
 const translationCache = new Map<string, string>();
@@ -80,8 +114,10 @@ const clearCache = () => {
 
 interface I18nContextType {
   language: string;
+  locale: string; // Locale pour toLocaleDateString (ex: 'en-US', 'fr-FR')
   setLanguage: (lang: string) => Promise<void>;
   t: (key: string, options?: any) => string;
+  formatDate: (date: Date | string, options?: Intl.DateTimeFormatOptions) => string;
   isLoading: boolean;
   isRTL: boolean;
   supportedLanguages: typeof SUPPORTED_LANGUAGES;
@@ -109,7 +145,9 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     const loadLanguage = async () => {
       try {
         const savedLang = await AsyncStorage.getItem(LANGUAGE_KEY);
-        if (savedLang && (savedLang === 'fr' || savedLang === 'en')) {
+        // Vérifier si la langue sauvegardée est supportée
+        const validCodes = SUPPORTED_LANGUAGES.map(l => l.code);
+        if (savedLang && validCodes.includes(savedLang as any)) {
           setLanguageState(savedLang);
           languageRef.current = savedLang;
         }
@@ -138,11 +176,20 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     }
   });
 
+  // Fonction de formatage de date selon la langue
+  const formatDateRef = useRef((date: Date | string, options?: Intl.DateTimeFormatOptions): string => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const locale = LOCALE_MAP[languageRef.current] || 'fr-FR';
+    return d.toLocaleDateString(locale, options);
+  });
+
   // Value stable - ne change que quand language ou isLoading change
   const value: I18nContextType = useMemo(() => ({
     language,
+    locale: LOCALE_MAP[language] || 'fr-FR',
     setLanguage: setLanguageRef.current,
     t: tRef.current,
+    formatDate: formatDateRef.current,
     isLoading,
     isRTL: language === 'ar',
     supportedLanguages: SUPPORTED_LANGUAGES,

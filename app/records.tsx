@@ -28,6 +28,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import {
   PersonalRecords,
   NewRecordEvent,
@@ -47,6 +48,7 @@ import logger from '@/lib/security/logger';
 
 export default function RecordsScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const [records, setRecords] = useState<PersonalRecords | null>(null);
   const [newRecords, setNewRecords] = useState<NewRecordEvent[]>([]);
@@ -185,11 +187,11 @@ export default function RecordsScreen() {
   if (isLoading) {
     return (
       <ScreenWrapper noPadding>
-        <Header title="Mes Records" showBack />
+        <Header title={t('screens.records.title')} showBack />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.gold} />
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            Calcul des records...
+            {t('screens.records.calculating')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -198,7 +200,7 @@ export default function RecordsScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Mes Records" showBack />
+      <Header title={t('screens.records.title')} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -211,7 +213,7 @@ export default function RecordsScreen() {
             <Trophy size={40} color={colors.gold} strokeWidth={2} />
           </View>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Tes accomplissements personnels
+            {t('screens.records.subtitle')}
           </Text>
 
           {/* Bouton refresh */}
@@ -234,7 +236,7 @@ export default function RecordsScreen() {
             <View style={styles.newRecordsHeader}>
               <Star size={20} color={colors.gold} strokeWidth={2} />
               <Text style={[styles.newRecordsTitle, { color: colors.gold }]}>
-                Nouveaux records !
+                {t('screens.records.newRecords')}
               </Text>
             </View>
             {newRecords.map((nr, i) => (
@@ -253,12 +255,12 @@ export default function RecordsScreen() {
           icon={Scale}
           iconColor={colors.gold}
           iconBg={colors.goldMuted}
-          title="POIDS"
+          title={t('screens.records.sections.weight')}
         >
           {records?.lowestWeight && (
             <RecordRow
               emoji=""
-              label="Plus bas atteint"
+              label={t('screens.records.lowestWeight')}
               value={`${records.lowestWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.lowestWeight.date)}
               isRecord
@@ -269,7 +271,7 @@ export default function RecordsScreen() {
           {records?.startingWeight && (
             <RecordRow
               emoji=""
-              label="Poids de depart"
+              label={t('screens.records.startingWeight')}
               value={`${records.startingWeight.value.toFixed(1)} kg`}
               date={formatRecordDate(records.startingWeight.date)}
             />
@@ -277,7 +279,7 @@ export default function RecordsScreen() {
           {records?.maxWeeklyLoss && records.maxWeeklyLoss.value > 0 && (
             <RecordRow
               emoji="⚖️"
-              label="Perte max en 1 semaine"
+              label={t('screens.records.maxWeeklyLoss')}
               value={`-${records.maxWeeklyLoss.value.toFixed(1)} kg`}
               date={formatRecordDate(records.maxWeeklyLoss.date)}
               isRecord
@@ -288,7 +290,7 @@ export default function RecordsScreen() {
           {records?.maxMonthlyLoss && records.maxMonthlyLoss.value > 0 && (
             <RecordRow
               emoji=""
-              label="Perte max en 1 mois"
+              label={t('screens.records.maxMonthlyLoss')}
               value={`-${records.maxMonthlyLoss.value.toFixed(1)} kg`}
               date={records.maxMonthlyLoss.label}
               isRecord
@@ -299,7 +301,7 @@ export default function RecordsScreen() {
           {records && records.totalWeightLoss > 0 && (
             <RecordRow
               emoji=""
-              label="Perte totale"
+              label={t('screens.records.totalLoss')}
               value={`-${records.totalWeightLoss.toFixed(1)} kg`}
             />
           )}
@@ -310,13 +312,13 @@ export default function RecordsScreen() {
           icon={Flame}
           iconColor="#F59E0B"
           iconBg="#FEF3C7"
-          title="STREAK"
+          title={t('screens.records.sections.streak')}
         >
           {records?.longestStreak && (
             <RecordRow
               emoji=""
-              label="Record de streak"
-              value={`${records.longestStreak.value} jours`}
+              label={t('screens.records.longestStreak')}
+              value={`${records.longestStreak.value} ${t('screens.records.days')}`}
               date={formatRecordDate(records.longestStreak.date)}
               isRecord
               shareType="longestStreak"
@@ -325,8 +327,8 @@ export default function RecordsScreen() {
           )}
           <RecordRow
             emoji="📆"
-            label="Streak actuel"
-            value={`${records?.currentStreak || 0} jours`}
+            label={t('screens.records.currentStreak')}
+            value={`${records?.currentStreak || 0} ${t('screens.records.days')}`}
           />
         </RecordCard>
 
@@ -336,12 +338,12 @@ export default function RecordsScreen() {
             icon={Ruler}
             iconColor="#A855F7"
             iconBg="#F3E8FF"
-            title="MENSURATIONS"
+            title={t('screens.records.sections.measurements')}
           >
             {records?.lowestWaist && (
               <RecordRow
                 emoji="📏"
-                label="Tour de taille min"
+                label={t('screens.records.lowestWaist')}
                 value={`${records.lowestWaist.value} cm`}
                 date={formatRecordDate(records.lowestWaist.date)}
                 isRecord
@@ -352,7 +354,7 @@ export default function RecordsScreen() {
             {records && records.totalWaistLoss > 0 && (
               <RecordRow
                 emoji="📐"
-                label="Perte taille totale"
+                label={t('screens.records.totalWaistLoss')}
                 value={`-${records.totalWaistLoss.toFixed(0)} cm`}
               />
             )}
@@ -365,13 +367,13 @@ export default function RecordsScreen() {
             icon={Dumbbell}
             iconColor="#22C55E"
             iconBg="#DCFCE7"
-            title="ENTRAINEMENT"
+            title={t('screens.records.sections.training')}
           >
             {records?.maxWeeklyWorkouts && (
               <RecordRow
                 emoji=""
-                label="Max en 1 semaine"
-                value={`${records.maxWeeklyWorkouts.value} sessions`}
+                label={t('screens.records.maxWeeklyWorkouts')}
+                value={`${records.maxWeeklyWorkouts.value} ${t('screens.records.sessions')}`}
                 date={formatRecordDate(records.maxWeeklyWorkouts.date)}
                 isRecord
                 shareType="maxWeeklyWorkouts"
@@ -380,13 +382,13 @@ export default function RecordsScreen() {
             )}
             <RecordRow
               emoji=""
-              label="Total sessions"
+              label={t('screens.records.totalSessions')}
               value={`${records.totalWorkouts}`}
             />
             {records?.favoriteSport && (
               <RecordRow
                 emoji=""
-                label="Sport prefere"
+                label={t('screens.records.favoriteSport')}
                 value={`${getSportName(records.favoriteSport.type)} (${records.favoriteSport.count})`}
               />
             )}
@@ -398,12 +400,12 @@ export default function RecordsScreen() {
           icon={Calendar}
           iconColor="#3B82F6"
           iconBg="#DBEAFE"
-          title="REGULARITE"
+          title={t('screens.records.sections.regularity')}
         >
           {records?.bestMonthRegularity && (
             <RecordRow
               emoji=""
-              label="Meilleur mois"
+              label={t('screens.records.bestMonth')}
               value={`${records.bestMonthRegularity.value}%`}
               date={records.bestMonthRegularity.label}
               isRecord
@@ -413,7 +415,7 @@ export default function RecordsScreen() {
           )}
           <RecordRow
             emoji="⚖️"
-            label="Pesees totales"
+            label={t('screens.records.totalWeighings')}
             value={`${records?.totalMeasurements || 0}`}
           />
         </RecordCard>
@@ -424,12 +426,12 @@ export default function RecordsScreen() {
             icon={Zap}
             iconColor="#F59E0B"
             iconBg="#FEF3C7"
-            title="ENERGIE"
+            title={t('screens.records.sections.energy')}
           >
             <RecordRow
               emoji=""
-              label="Plus longue serie haute energie"
-              value={`${records.bestEnergyStreak.value} jours`}
+              label={t('screens.records.bestEnergyStreak')}
+              value={`${records.bestEnergyStreak.value} ${t('screens.records.days')}`}
               date={formatRecordDate(records.bestEnergyStreak.date)}
               isRecord
               shareType="bestEnergyStreak"
@@ -442,8 +444,7 @@ export default function RecordsScreen() {
         <View style={[styles.motivationCard, { backgroundColor: colors.card }]}>
           <Award size={24} color={colors.gold} strokeWidth={2} />
           <Text style={[styles.motivationText, { color: colors.textSecondary }]}>
-            Chaque record battu est une victoire.{'\n'}
-            Continue a repousser tes limites !
+            {t('screens.records.motivationText')}
           </Text>
         </View>
 

@@ -36,6 +36,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode, themeColors } from '@/constants/themes';
 import { appearanceService, WARRIOR_THEMES } from '@/lib/appearanceService';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import { getWeights, getTrainings, getPhotos } from '@/lib/database';
@@ -98,6 +99,7 @@ const getThemeIcon = (themeColorId: string, color: string, size: number = 28) =>
 
 export default function ThemesScreen() {
   const { colors, themeColor, themeMode, setThemeColor, setThemeMode } = useTheme();
+  const { t } = useI18n();
   const [userXP, setUserXP] = useState(0);
   const [loading, setLoading] = useState(true);
   const [creatorModeActive, setCreatorModeActive] = useState(false);
@@ -147,9 +149,9 @@ export default function ThemesScreen() {
     // Verifier si debloque
     if (!appearanceService.isWarriorThemeUnlocked(warriorThemeId, userXP)) {
       showPopup(
-        'Theme verrouille',
-        `Debloquez ce theme en atteignant ${warriorTheme.unlockXP} XP.\nVous avez actuellement ${userXP} XP.`,
-        [{ text: 'OK', style: 'primary' }],
+        t('screens.themes.themeLocked'),
+        t('screens.themes.unlockThemeMessage', { xp: warriorTheme.unlockXP, currentXp: userXP }),
+        [{ text: t('common.ok'), style: 'primary' }],
         <AlertCircle size={32} color="#F59E0B" />
       );
       return;
@@ -161,7 +163,7 @@ export default function ThemesScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[Themes] Erreur changement theme:', error);
-      showPopup('Erreur', 'Impossible de changer le theme', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('screens.themes.errorChangingTheme'), [{ text: t('common.ok'), style: 'primary' }]);
     }
   };
 
@@ -179,7 +181,7 @@ export default function ThemesScreen() {
       <ScreenWrapper>
         <View style={[styles.container, { backgroundColor: colors.background }]}>
           <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            Chargement...
+            {t('common.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -220,10 +222,10 @@ export default function ThemesScreen() {
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Thèmes
+                {t('screens.themes.title')}
               </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                Choisis ton style guerrier
+                {t('screens.themes.subtitle')}
               </Text>
             </View>
           </View>
@@ -232,13 +234,13 @@ export default function ThemesScreen() {
         {/* Mode d'affichage */}
         <View style={[styles.modeSection, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.modeSectionTitle, { color: colors.textPrimary }]}>
-            Mode d'affichage
+            {t('screens.themes.displayMode')}
           </Text>
           <View style={styles.modesContainer}>
             {[
-              { mode: 'dark' as ThemeMode, label: 'Sombre', icon: Moon },
-              { mode: 'light' as ThemeMode, label: 'Clair', icon: Sun },
-              { mode: 'auto' as ThemeMode, label: 'Auto', icon: Smartphone },
+              { mode: 'dark' as ThemeMode, label: t('screens.themes.dark'), icon: Moon },
+              { mode: 'light' as ThemeMode, label: t('screens.themes.light'), icon: Sun },
+              { mode: 'auto' as ThemeMode, label: t('screens.themes.auto'), icon: Smartphone },
             ].map(({ mode, label, icon: Icon }) => {
               const isActive = themeMode === mode;
               return (
@@ -273,12 +275,12 @@ export default function ThemesScreen() {
         {/* Section: Thèmes Guerriers */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Thèmes Guerriers
+            {t('screens.themes.warriorThemes')}
           </Text>
           <Text style={[styles.sectionDescription, { color: colors.textMuted }]}>
             {creatorModeActive
-              ? `⚙️ Mode Créateur - Tous les thèmes débloqués !`
-              : `${unlockedThemes.length}/${WARRIOR_THEMES.length} débloqués • ${userXP} XP`}
+              ? `⚙️ ${t('screens.themes.creatorModeActive')}`
+              : t('screens.themes.unlockedCount', { unlocked: unlockedThemes.length, total: WARRIOR_THEMES.length, xp: userXP })}
           </Text>
 
           <View style={styles.themesGrid}>
@@ -348,7 +350,7 @@ export default function ThemesScreen() {
             <View style={[styles.nextUnlock, { backgroundColor: colors.backgroundElevated }]}>
               <Crown size={16} color={colors.accent} />
               <Text style={[styles.nextUnlockText, { color: colors.textSecondary }]}>
-                Prochain: {nextTheme.name} dans {nextTheme.unlockXP - userXP} XP
+                {t('screens.themes.nextUnlock', { name: nextTheme.name, xp: nextTheme.unlockXP - userXP })}
               </Text>
             </View>
           )}

@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Flame, Zap, TrendingUp, Activity } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
 import logger from '@/lib/security/logger';
@@ -27,6 +28,7 @@ type Period = '7d' | '30d' | '90d' | 'all';
 export default function PerformanceDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [period, setPeriod] = useState<Period>('30d');
   const [trainings, setTrainings] = useState<Training[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function PerformanceDetailScreen() {
 
   // Calculer la charge d'entraînement (RPE × Durée)
   const trainingLoadData = filteredTrainings.map(t => ({
-    date: new Date(t.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+    date: new Date(t.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
     value: ((t.intensity || 5) * (t.duration || 60)) / 60, // Charge en heures pondérées
   }));
 

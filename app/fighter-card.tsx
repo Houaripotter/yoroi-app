@@ -37,6 +37,7 @@ import {
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import { getCurrentRank, RANKS } from '@/lib/ranks';
 import { getTrainingStats, calculateStreak, getProfile } from '@/lib/database';
@@ -76,6 +77,7 @@ interface FighterStats {
 
 export default function FighterCardScreen() {
   const { colors, isDark, gradients } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const cardRef = useRef<View>(null);
 
@@ -138,7 +140,7 @@ export default function FighterCardScreen() {
         totalTrainings,
         totalMinutes: Math.round(totalMinutes),
         discipline: topDiscipline,
-        joinDate: joinDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
+        joinDate: joinDate.toLocaleDateString(locale, { month: 'short', year: 'numeric' }),
         weightLost: Math.round(weightLost * 10) / 10,
         badges: 0, // À récupérer depuis la base de données
       });

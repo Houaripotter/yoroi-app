@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import {
@@ -42,6 +43,7 @@ import logger from '@/lib/security/logger';
 
 export default function CombatDetailScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const params = useLocalSearchParams();
   const combatId = params.id as string;
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -183,7 +185,7 @@ export default function CombatDetailScreen() {
             </Text>
           </View>
           <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-            {new Date(combat.date).toLocaleDateString('fr-FR', {
+            {new Date(combat.date).toLocaleDateString(locale, {
               weekday: 'long',
               day: 'numeric',
               month: 'long',

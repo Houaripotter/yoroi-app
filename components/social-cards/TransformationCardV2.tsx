@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions, ImageBackground } from 'react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingDown, TrendingUp, Calendar, Zap } from 'lucide-react-native';
 import { SocialCardTopBanner, SocialCardFooter } from './SocialCardBranding';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // TRANSFORMATION CARD V2 - Avant/Après
@@ -34,6 +35,7 @@ export interface TransformationCardV2Props {
 
 export const TransformationCardV2 = forwardRef<View, TransformationCardV2Props>(
   ({ stats, format, username }, ref) => {
+    const { locale } = useI18n();
     const isStories = format === 'stories';
 
     // Dimensions adaptées au format
@@ -42,7 +44,7 @@ export const TransformationCardV2 = forwardRef<View, TransformationCardV2Props>(
 
     // Formater les dates
     const formatDate = (dateString: string) => {
-      return new Date(dateString).toLocaleDateString('fr-FR', {
+      return new Date(dateString).toLocaleDateString(locale, {
         month: 'short',
         year: 'numeric',
       });

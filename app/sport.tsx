@@ -19,6 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Check, X, Plus, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { useFocusEffect } from 'expo-router';
 import { getUserSettings, saveUserSettings, addWorkout, getAllWorkouts, getUserClubs } from '@/lib/storage';
 import { UserClub } from '@/lib/storage';
@@ -37,6 +38,7 @@ interface RoutineBlock {
 
 export default function SportScreen() {
   const { colors: themeColors } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [routine, setRoutine] = useState<{ [key: string]: Array<RoutineBlock> }>({});
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,11 @@ export default function SportScreen() {
   const [workoutType, setWorkoutType] = useState<string>('');
   const rewardOverlayRef = useRef<{ trigger: () => void }>(null);
 
-  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  // Jours traduits dynamiquement
+  const days = useMemo(() => [
+    t('dates.monday'), t('dates.tuesday'), t('dates.wednesday'), t('dates.thursday'),
+    t('dates.friday'), t('dates.saturday'), t('dates.sunday')
+  ], [t]);
   const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   // Obtenir les clubs depuis le stockage ou utiliser les défauts

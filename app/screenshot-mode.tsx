@@ -13,11 +13,13 @@ import { router } from 'expo-router';
 import { ChevronLeft, Camera, Trash2, Check, AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useI18n } from '@/lib/I18nContext';
 import { loadScreenshotDemoData, clearScreenshotDemoData, isScreenshotModeEnabled, cleanDuplicateTrainings, resetCompleteDatabase } from '@/lib/screenshotDemoData';
 import * as Haptics from 'expo-haptics';
 
 export default function ScreenshotModeScreen() {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [loading, setLoading] = useState(false);
@@ -269,7 +271,7 @@ export default function ScreenshotModeScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Mode Screenshot
+          {t('screens.screenshotMode.title')}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -281,10 +283,10 @@ export default function ScreenshotModeScreen() {
             <Camera size={28} color={isEnabled ? '#10B981' : '#9CA3AF'} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.statusTitle, { color: colors.textPrimary }]}>
-                Mode Screenshot
+                {t('screens.screenshotMode.title')}
               </Text>
               <Text style={[styles.statusSubtitle, { color: colors.textMuted }]}>
-                {isEnabled ? 'Activé' : 'Désactivé'}
+                {isEnabled ? t('screens.screenshotMode.enabled') : t('screens.screenshotMode.disabled')}
               </Text>
             </View>
             <Switch
@@ -306,7 +308,7 @@ export default function ScreenshotModeScreen() {
             <View style={[styles.statusBanner, { backgroundColor: '#10B98115' }]}>
               <Check size={16} color="#10B981" />
               <Text style={[styles.statusBannerText, { color: '#10B981' }]}>
-                Données de démo chargées
+                {t('screens.screenshotMode.demoLoaded')}
               </Text>
             </View>
           )}
@@ -328,10 +330,10 @@ export default function ScreenshotModeScreen() {
                   <RefreshCw size={20} color="#F59E0B" />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.cleanButtonTitle, { color: colors.textPrimary }]}>
-                      Nettoyer les entraînements
+                      {t('screens.screenshotMode.cleanTrainings')}
                     </Text>
                     <Text style={[styles.cleanButtonSubtitle, { color: colors.textMuted }]}>
-                      Si tu as trop d'entraînements par jour (13+)
+                      {t('screens.screenshotMode.cleanTrainingsDesc')}
                     </Text>
                   </View>
                 </>
@@ -352,10 +354,10 @@ export default function ScreenshotModeScreen() {
                   <Trash2 size={20} color="#EF4444" />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.resetButtonTitle, { color: '#EF4444' }]}>
-                      RESET COMPLET (DANGER)
+                      {t('screens.screenshotMode.resetComplete')}
                     </Text>
                     <Text style={[styles.cleanButtonSubtitle, { color: colors.textMuted }]}>
-                      Efface TOUT : entraînements, clubs, pesées, profil
+                      {t('screens.screenshotMode.resetCompleteDesc')}
                     </Text>
                   </View>
                 </>
@@ -367,18 +369,17 @@ export default function ScreenshotModeScreen() {
         {/* Info Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            À propos
+            {t('screens.screenshotMode.about')}
           </Text>
           <Text style={[styles.sectionText, { color: colors.textMuted }]}>
-            Le mode Screenshot charge des données de démonstration complètes pour tous les écrans de l'app,
-            parfait pour prendre de beaux screenshots pour l'App Store.
+            {t('screens.screenshotMode.aboutDesc')}
           </Text>
         </View>
 
         {/* Features */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Données générées
+            {t('screens.screenshotMode.generatedData')}
           </Text>
 
           <View style={styles.featuresList}>

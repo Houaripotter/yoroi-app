@@ -23,6 +23,7 @@ import { MapPin, ExternalLink, Search, ArrowLeft, Plus, Check } from 'lucide-rea
 import * as Haptics from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
@@ -69,6 +70,7 @@ const ITEM_HEIGHT = 160;
 
 export default function EventsSimpleScreen() {
   const { colors } = useTheme();
+  const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
@@ -160,14 +162,14 @@ export default function EventsSimpleScreen() {
           newSet.delete(event.id);
           return newSet;
         });
-        showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de ton planning`, [
+        showPopup(t('screens.eventsSimple.removed'), `"${event.title.substring(0, 40)}..." ${t('screens.eventsSimple.removedFromPlanning')}`, [
           { text: 'OK', style: 'primary' }
         ]);
       } else {
         // Add to planning
         savedEvents.push(event);
         setSavedEventIds(prev => new Set(prev).add(event.id));
-        showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à ton planning`, [
+        showPopup(t('screens.eventsSimple.added'), `"${event.title.substring(0, 40)}..." ${t('screens.eventsSimple.addedToPlanning')}`, [
           { text: 'OK', style: 'primary' }
         ]);
       }
@@ -176,11 +178,11 @@ export default function EventsSimpleScreen() {
       logger.info(`Event ${isAlreadySaved ? 'removed from' : 'added to'} planning:`, event.id);
     } catch (error) {
       logger.error('Error toggling event in planning:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder l\'événement', [
+      showPopup(t('common.error'), t('screens.eventsSimple.saveError'), [
         { text: 'OK', style: 'primary' }
       ]);
     }
-  }, [showPopup]);
+  }, [showPopup, t]);
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
@@ -204,7 +206,7 @@ export default function EventsSimpleScreen() {
   // Render individual event item
   const renderEventItem = useCallback(({ item }: { item: SportEvent }) => {
     const eventDate = new Date(item.date_start);
-    const formattedDate = eventDate.toLocaleDateString('fr-FR', {
+    const formattedDate = eventDate.toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -258,7 +260,7 @@ export default function EventsSimpleScreen() {
           >
             <ExternalLink size={12} color={colors.primary} />
             <Text style={[styles.linkText, { color: colors.primary }]}>
-              Voir l'événement
+              {t('screens.eventsSimple.viewEvent')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -283,19 +285,19 @@ export default function EventsSimpleScreen() {
         </TouchableOpacity>
       </View>
     );
-  }, [colors, savedEventIds, handleOpenEvent, toggleEventInPlanning]);
+  }, [colors, savedEventIds, handleOpenEvent, toggleEventInPlanning, t]);
 
   // Empty state
   const renderEmptyState = useCallback(() => (
     <View style={[styles.emptyState, { backgroundColor: colors.card }]}>
       <Text style={[styles.emptyText, { color: colors.text }]}>
-        Aucun événement trouvé
+        {t('screens.eventsSimple.noEventsFound')}
       </Text>
       <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-        Essaie de modifier tes filtres ou ton recherche
+        {t('screens.eventsSimple.tryModifyFilters')}
       </Text>
     </View>
-  ), [colors]);
+  ), [colors, t]);
 
   if (isLoading) {
     return (
@@ -303,7 +305,7 @@ export default function EventsSimpleScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.text }]}>
-            Chargement des événements...
+            {t('screens.eventsSimple.loading')}
           </Text>
         </View>
       </ScreenWrapper>
@@ -319,10 +321,10 @@ export default function EventsSimpleScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>
-            Événements Sportifs
+            {t('screens.eventsSimple.title')}
           </Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''}
+            {filteredEvents.length} {filteredEvents.length > 1 ? t('screens.eventsSimple.events') : t('screens.eventsSimple.event')}
           </Text>
         </View>
       </View>
@@ -332,7 +334,7 @@ export default function EventsSimpleScreen() {
         <Search size={20} color={colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
-          placeholder="Rechercher par nom, ville, pays..."
+          placeholder={t('screens.eventsSimple.searchPlaceholder')}
           placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -360,7 +362,7 @@ export default function EventsSimpleScreen() {
               { color: selectedLocation === 'monde' ? colors.textOnAccent : colors.text },
             ]}
           >
-            🌍 Monde ({eventCounts.monde})
+            🌍 {t('screens.eventsSimple.world')} ({eventCounts.monde})
           </Text>
         </TouchableOpacity>
 
@@ -383,7 +385,7 @@ export default function EventsSimpleScreen() {
               { color: selectedLocation === 'europe' ? colors.textOnAccent : colors.text },
             ]}
           >
-            🇪🇺 Europe ({eventCounts.europe})
+            🇪🇺 {t('screens.eventsSimple.europe')} ({eventCounts.europe})
           </Text>
         </TouchableOpacity>
 
@@ -406,7 +408,7 @@ export default function EventsSimpleScreen() {
               { color: selectedLocation === 'france' ? colors.textOnAccent : colors.text },
             ]}
           >
-            🇫🇷 France ({eventCounts.france})
+            🇫🇷 {t('screens.eventsSimple.france')} ({eventCounts.france})
           </Text>
         </TouchableOpacity>
       </View>
@@ -432,7 +434,7 @@ export default function EventsSimpleScreen() {
               { color: selectedCategory === 'all' ? colors.textOnAccent : colors.text },
             ]}
           >
-            Tous ({eventCounts.all})
+            {t('screens.eventsSimple.all')} ({eventCounts.all})
           </Text>
         </TouchableOpacity>
 
@@ -455,7 +457,7 @@ export default function EventsSimpleScreen() {
               { color: selectedCategory === 'combat' ? colors.textOnAccent : colors.text },
             ]}
           >
-            Combat ({eventCounts.combat})
+            {t('screens.eventsSimple.combat')} ({eventCounts.combat})
           </Text>
         </TouchableOpacity>
 
@@ -478,7 +480,7 @@ export default function EventsSimpleScreen() {
               { color: selectedCategory === 'endurance' ? colors.textOnAccent : colors.text },
             ]}
           >
-            Endurance ({eventCounts.endurance})
+            {t('screens.eventsSimple.endurance')} ({eventCounts.endurance})
           </Text>
         </TouchableOpacity>
       </View>

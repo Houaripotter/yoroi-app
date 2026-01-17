@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Ruler, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
 import { SparklineChart } from '../charts/SparklineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
@@ -20,6 +21,7 @@ interface MeasurementsStatsProps {
 
 export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) => {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [selectedMeasurement, setSelectedMeasurement] = useState<{
     id: string;
     label: string;
@@ -173,7 +175,7 @@ export const MeasurementsStats: React.FC<MeasurementsStatsProps> = ({ data }) =>
           subtitle="Évolution complète"
           data={getFullHistory(selectedMeasurement.id).map((entry) => ({
             value: entry.value,
-            label: new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+            label: new Date(entry.date).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
           }))}
           color={selectedMeasurement.color}
           unit="cm"

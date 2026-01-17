@@ -30,6 +30,7 @@ import {
   Smartphone,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
 import {
   healthConnect, 
@@ -42,6 +43,7 @@ import {
 export default function HealthConnectScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
@@ -150,7 +152,7 @@ export default function HealthConnectScreen() {
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `Il y a ${diffHours}h`;
     
-    return date.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString(locale);
   };
 
   const providerName = healthConnect.getProviderName();

@@ -31,6 +31,7 @@ import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { getClubs, addClub, updateClub, deleteClub, Club } from '@/lib/database';
 import { SPORTS, getSportIcon, getSportColor, getSportName, getClubLogoSource } from '@/lib/sports';
+import { useI18n } from '@/lib/I18nContext';
 
 // ============================================
 // GESTION DES CLUBS / SALLES
@@ -44,6 +45,7 @@ const CLUB_COLORS = [
 
 export default function ClubsScreen() {
   const { colors, gradients } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -110,8 +112,8 @@ export default function ClubsScreen() {
   const pickImageFromGallery = async () => {
     const hasPermission = await requestPermission('gallery');
     if (!hasPermission) {
-      showPopup('Permission requise', 'Autorisez l\'acces a la galerie pour ajouter un logo', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('screens.clubs.permissionRequired'), t('screens.clubs.galleryPermission'), [
+        { text: t('common.ok'), style: 'primary' }
       ]);
       return;
     }
@@ -131,8 +133,8 @@ export default function ClubsScreen() {
   const takePhoto = async () => {
     const hasPermission = await requestPermission('camera');
     if (!hasPermission) {
-      showPopup('Permission requise', 'Autorisez l\'acces a la camera pour prendre une photo', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('screens.clubs.permissionRequired'), t('screens.clubs.cameraPermission'), [
+        { text: t('common.ok'), style: 'primary' }
       ]);
       return;
     }
@@ -150,20 +152,20 @@ export default function ClubsScreen() {
 
   const showImageOptions = () => {
     showPopup(
-      'Logo du club',
-      'Comment veux-tu ajouter le logo ?',
+      t('screens.clubs.clubLogo'),
+      t('screens.clubs.howToAddLogo'),
       [
-        { text: 'Galerie', onPress: pickImageFromGallery, style: 'primary' },
-        { text: 'Camera', onPress: takePhoto, style: 'primary' },
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('screens.clubs.gallery'), onPress: pickImageFromGallery, style: 'primary' },
+        { text: t('screens.clubs.camera'), onPress: takePhoto, style: 'primary' },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
 
   const handleSave = async () => {
     if (!name.trim()) {
-      showPopup('Erreur', 'Le nom du club est requis', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('common.error'), t('screens.clubs.nameRequired'), [
+        { text: t('common.ok'), style: 'primary' }
       ]);
       return;
     }
@@ -189,20 +191,20 @@ export default function ClubsScreen() {
       handleCloseModal();
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder le club', [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('common.error'), t('screens.clubs.saveError'), [
+        { text: t('common.ok'), style: 'primary' }
       ]);
     }
   };
 
   const handleDelete = (club: Club) => {
     showPopup(
-      'Supprimer le club ?',
-      `Veux-tu vraiment supprimer "${club.name}" ?`,
+      t('screens.clubs.deleteClub'),
+      t('screens.clubs.deleteConfirm', { name: club.name }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Supprimer',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -210,8 +212,8 @@ export default function ClubsScreen() {
               await loadClubs();
             } catch (error) {
               console.error('Erreur suppression:', error);
-              showPopup('Erreur', 'Impossible de supprimer le club', [
-                { text: 'OK', style: 'primary' }
+              showPopup(t('common.error'), t('screens.clubs.deleteError'), [
+                { text: t('common.ok'), style: 'primary' }
               ]);
             }
           },
@@ -255,7 +257,7 @@ export default function ClubsScreen() {
   return (
     <ScreenWrapper noPadding>
       <Header
-        title="Clubs & Coach"
+        title={t('screens.clubs.title')}
         showBack
         rightElement={
           <TouchableOpacity
@@ -274,16 +276,16 @@ export default function ClubsScreen() {
 
         {/* DESCRIPTION */}
         <Text style={[styles.description, { color: colors.textSecondary }]}>
-          Ajoute tes salles et clubs pour suivre tes entrainements
+          {t('screens.clubs.description')}
         </Text>
 
         {/* LISTE DES CLUBS */}
         {clubs.length === 0 ? (
           <Card style={styles.emptyCard}>
             <Building2 size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Aucun club</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('screens.clubs.noClubs')}</Text>
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              Ajoute ton premier club ou salle de sport
+              {t('screens.clubs.addFirstClub')}
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
@@ -294,7 +296,7 @@ export default function ClubsScreen() {
                 style={styles.emptyButtonGradient}
               >
                 <Plus size={20} color={colors.textOnGold} />
-                <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>Ajouter un club</Text>
+                <Text style={[styles.emptyButtonText, { color: colors.textOnGold }]}>{t('screens.clubs.addClub')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </Card>
@@ -346,7 +348,7 @@ export default function ClubsScreen() {
               <X size={24} color={colors.textPrimary} />
             </TouchableOpacity>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {editingClub ? 'Modifier le club' : 'Nouveau club'}
+              {editingClub ? t('screens.clubs.editClub') : t('screens.clubs.newClub')}
             </Text>
             <TouchableOpacity onPress={handleSave} style={styles.modalSave}>
               <Check size={24} color={colors.gold} />
@@ -356,7 +358,7 @@ export default function ClubsScreen() {
           <ScrollView style={styles.modalContent}>
             {/* LOGO */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Logo du club</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('screens.clubs.clubLogo')}</Text>
               <View style={styles.logoSection}>
                 <TouchableOpacity
                   style={styles.logoPreview}
@@ -388,14 +390,14 @@ export default function ClubsScreen() {
                     onPress={pickImageFromGallery}
                   >
                     <ImageIcon size={18} color={colors.gold} />
-                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>Galerie</Text>
+                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>{t('screens.clubs.gallery')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.logoButton, { borderColor: colors.border }]}
                     onPress={takePhoto}
                   >
                     <Camera size={18} color={colors.gold} />
-                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>Camera</Text>
+                    <Text style={[styles.logoButtonText, { color: colors.textPrimary }]}>{t('screens.clubs.camera')}</Text>
                   </TouchableOpacity>
                   {logoUri && (
                     <TouchableOpacity
@@ -404,7 +406,7 @@ export default function ClubsScreen() {
                     >
                       <X size={18} color={colors.danger} />
                       <Text style={[styles.logoButtonText, { color: colors.danger }]}>
-                        Supprimer
+                        {t('common.delete')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -414,7 +416,7 @@ export default function ClubsScreen() {
 
             {/* NOM */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom du club</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('screens.clubs.clubName')}</Text>
               <TextInput
                 style={[styles.input, {
                   color: colors.textPrimary,
@@ -423,24 +425,24 @@ export default function ClubsScreen() {
                 }]}
                 value={name}
                 onChangeText={setName}
-                placeholder="Ex: Gracie Barra, Basic Fit..."
+                placeholder={t('screens.clubs.clubNamePlaceholder')}
                 placeholderTextColor={colors.textMuted}
               />
             </View>
 
             {/* SPORT - PAR CATÉGORIE */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Sport</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('screens.clubs.sport')}</Text>
 
               {(() => {
                 const categoryLabels: Record<string, string> = {
-                  combat_striking: 'Sports de Frappe',
-                  combat_grappling: 'Sports de Préhension',
-                  fitness: 'Musculation',
-                  cardio: 'Cardio',
-                  collectif: 'Collectifs',
-                  raquettes: 'Raquettes',
-                  autre: 'Autres',
+                  combat_striking: t('screens.clubs.categories.striking'),
+                  combat_grappling: t('screens.clubs.categories.grappling'),
+                  fitness: t('screens.clubs.categories.fitness'),
+                  cardio: t('screens.clubs.categories.cardio'),
+                  collectif: t('screens.clubs.categories.team'),
+                  raquettes: t('screens.clubs.categories.racket'),
+                  autre: t('screens.clubs.categories.other'),
                 };
 
                 const categories = ['combat_striking', 'combat_grappling', 'fitness', 'cardio', 'collectif', 'raquettes', 'autre'];
@@ -493,7 +495,7 @@ export default function ClubsScreen() {
 
             {/* COULEUR */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Couleur (si pas de logo)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('screens.clubs.color')}</Text>
               <View style={styles.colorsGrid}>
                 {CLUB_COLORS.map((color) => (
                   <TouchableOpacity
@@ -522,7 +524,7 @@ export default function ClubsScreen() {
                 style={styles.saveButtonGradient}
               >
                 <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
-                  {editingClub ? 'Mettre a jour' : 'Ajouter le club'}
+                  {editingClub ? t('screens.clubs.update') : t('screens.clubs.addClub')}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

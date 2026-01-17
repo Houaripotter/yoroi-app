@@ -18,6 +18,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { Calendar, MapPin, Trophy, Save } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import {
@@ -32,6 +33,7 @@ import logger from '@/lib/security/logger';
 
 export default function AddCompetitionScreen() {
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [nom, setNom] = useState('');
   const [lieu, setLieu] = useState('');
@@ -215,7 +217,7 @@ export default function AddCompetitionScreen() {
           >
             <Calendar size={20} color={colors.textMuted} />
             <Text style={[styles.inputText, { color: colors.textPrimary }]}>
-              {date.toLocaleDateString('fr-FR', {
+              {date.toLocaleDateString(locale, {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

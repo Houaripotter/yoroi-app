@@ -7,9 +7,10 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n, LOCALE_MAP } from '@/lib/I18nContext';
 import { LineChart } from 'react-native-chart-kit';
 import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -21,6 +22,19 @@ interface ScrollableLineChartProps {
   unit?: string;
 }
 
+// Map language codes to date-fns locales
+const DATE_LOCALES: Record<string, Locale> = {
+  fr: fr,
+  en: enUS,
+  es: es,
+  de: de,
+  it: it,
+  pt: pt,
+  ru: ru,
+  ar: ar,
+  zh: zhCN,
+};
+
 export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   data,
   color,
@@ -29,13 +43,17 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   unit = '',
 }) => {
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Get the correct date-fns locale
+  const dateLocale = DATE_LOCALES[language] || fr;
 
   if (!data || data.length === 0) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.backgroundCard }]}>
         <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-          Aucune donnée
+          {t('stats.noData')}
         </Text>
       </View>
     );
@@ -52,7 +70,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     if (!d.date) return `J${index + 1}`;
     try {
       const date = typeof d.date === 'string' ? parseISO(d.date) : d.date;
-      return format(date, 'd MMM', { locale: fr });
+      return format(date, 'd MMM', { locale: dateLocale });
     } catch (e) {
       return `J${index + 1}`;
     }
@@ -168,7 +186,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
       {!compact && calculatedWidth > MIN_WIDTH && (
         <View style={[styles.scrollHint, { backgroundColor: colors.infoMuted }]}>
           <Text style={[styles.scrollHintText, { color: colors.info }]}>
-            ← Glisse pour voir toutes les données →
+            {t('stats.scrollHint')}
           </Text>
         </View>
       )}

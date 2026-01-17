@@ -2,6 +2,7 @@ import { Modal, StyleSheet, Text, View, TouchableOpacity, Image, Pressable } fro
 import { X } from 'lucide-react-native';
 import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 interface WorkoutModalProps {
   visible: boolean;
@@ -12,11 +13,12 @@ interface WorkoutModalProps {
 
 export function WorkoutModal({ visible, selectedDate, onClose, onSelectWorkout }: WorkoutModalProps) {
   const { colors, themeName } = useTheme();
+  const { locale } = useI18n();
   const isWellness = false;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',

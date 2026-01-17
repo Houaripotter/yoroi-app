@@ -157,24 +157,6 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
         </ScrollView>
       </View>
 
-      {/* Indicateurs de pagination (dots) */}
-      <View style={styles.dotsContainer}>
-        {PAGES.map((page, index) => (
-          <View
-            key={`dot-${page.id}`}
-            style={[
-              styles.dot,
-              {
-                backgroundColor: currentPage === index
-                  ? colors.accent
-                  : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
-                width: currentPage === index ? 20 : 5,
-              },
-            ]}
-          />
-        ))}
-      </View>
-
       {/* Horizontal Pager */}
       <ScrollView
         ref={scrollViewRef}
@@ -243,17 +225,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.2,
     textAlign: 'center',
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 8,
-  },
-  dot: {
-    height: 5,
-    borderRadius: 2.5,
   },
   scrollContent: {
     flexDirection: 'row',

@@ -16,6 +16,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Photo, getPhotosFromStorage } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 
@@ -28,6 +29,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function TransformationScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +81,7 @@ export default function TransformationScreen() {
 
   // Formater la date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -87,7 +89,7 @@ export default function TransformationScreen() {
   };
 
   const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+    return new Date(dateString).toLocaleDateString(locale, {
       month: 'short',
       year: 'numeric',
     });

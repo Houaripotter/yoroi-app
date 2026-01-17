@@ -1,25 +1,20 @@
 // ============================================
 // YOROI - SÉLECTEUR DE LANGUE
 // ============================================
-// Composant pour changer la langue de l'app (FR/EN)
+// Composant pour changer la langue de l'app (9 langues)
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Globe } from 'lucide-react-native';
+import { Globe, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { useI18n } from '@/lib/I18nContext';
+import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
-const LANGUAGES = [
-  { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-];
-
 export function LanguageSelector() {
   const { colors } = useTheme();
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
 
   const handleLanguageChange = async (newLanguage: string) => {
     if (newLanguage === language) return;
@@ -38,14 +33,16 @@ export function LanguageSelector() {
       {/* Header */}
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: colors.backgroundElevated }]}>
-          <Globe size={20} color={colors.accentText} />
+          <Globe size={20} color={colors.accent} />
         </View>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Langue</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          {t('menu.language') || 'Langue'}
+        </Text>
       </View>
 
-      {/* Sélection de langue */}
-      <View style={styles.languageOptions}>
-        {LANGUAGES.map((lang) => {
+      {/* Grille de langues - 3 colonnes */}
+      <View style={styles.languageGrid}>
+        {SUPPORTED_LANGUAGES.map((lang) => {
           const isSelected = language === lang.code;
           return (
             <TouchableOpacity
@@ -53,7 +50,10 @@ export function LanguageSelector() {
               style={[
                 styles.languageButton,
                 { backgroundColor: colors.backgroundElevated },
-                isSelected && { backgroundColor: colors.accent },
+                isSelected && {
+                  backgroundColor: colors.accent,
+                  borderColor: colors.accent,
+                },
               ]}
               onPress={() => handleLanguageChange(lang.code)}
               activeOpacity={0.7}
@@ -63,14 +63,15 @@ export function LanguageSelector() {
                 style={[
                   styles.languageLabel,
                   { color: colors.textPrimary },
-                  isSelected && { color: '#FFFFFF', fontWeight: '700' },
+                  isSelected && { color: colors.textOnAccent, fontWeight: '700' },
                 ]}
+                numberOfLines={1}
               >
-                {lang.label}
+                {lang.nativeName}
               </Text>
               {isSelected && (
-                <View style={styles.checkMark}>
-                  <Text style={styles.checkMarkText}>✓</Text>
+                <View style={[styles.checkMark, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
+                  <Check size={12} color="#FFFFFF" strokeWidth={3} />
                 </View>
               )}
             </TouchableOpacity>
@@ -80,7 +81,7 @@ export function LanguageSelector() {
 
       {/* Description */}
       <Text style={[styles.description, { color: colors.textMuted }]}>
-        La langue s'applique à toute l'interface de l'app
+        {t('menu.languageDescription') || "La langue s'applique à toute l'interface"}
       </Text>
     </View>
   );
@@ -110,48 +111,46 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
-  languageOptions: {
+  languageGrid: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
     marginBottom: SPACING.sm,
   },
   languageButton: {
-    flex: 1,
-    flexDirection: 'row',
+    width: '31.5%',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 12,
-    gap: SPACING.xs,
+    gap: 4,
     position: 'relative',
+    minHeight: 70,
   },
   languageFlag: {
-    fontSize: 20,
+    fontSize: 24,
   },
   languageLabel: {
-    fontSize: 15,
+    fontSize: 11,
     fontWeight: '600',
+    textAlign: 'center',
   },
   checkMark: {
     position: 'absolute',
-    top: 6,
-    right: 6,
+    top: 4,
+    right: 4,
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  checkMarkText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
   },
   description: {
     fontSize: 12,
     lineHeight: 16,
     textAlign: 'center',
+    marginTop: SPACING.xs,
   },
 });

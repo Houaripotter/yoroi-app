@@ -66,6 +66,7 @@ import {
   RotateCcw,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -172,6 +173,7 @@ const getRelativeDate = (dateString: string): string => {
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Data state
@@ -886,10 +888,10 @@ export default function TrainingJournalScreen() {
     }
 
     // Confirmation avant suppression définitive
-    Alert.alert(
-      'Vider la corbeille ?',
-      `${trashCount} élément(s) seront définitivement supprimés. Cette action est irréversible.`,
-      [
+    showPopup({
+      title: 'Vider la corbeille ?',
+      message: `${trashCount} élément(s) seront définitivement supprimés. Cette action est irréversible.`,
+      buttons: [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Vider',
@@ -918,7 +920,7 @@ export default function TrainingJournalScreen() {
           },
         },
       ]
-    );
+    });
   };
 
   // ============================================
@@ -1641,7 +1643,7 @@ export default function TrainingJournalScreen() {
                   <Edit3 size={16} color={entryDate === 'custom' ? '#FFFFFF' : colors.textMuted} />
                   <Text style={[styles.dateOptionText, { color: entryDate === 'custom' ? '#FFFFFF' : colors.textPrimary }]}>
                     {entryDate === 'custom'
-                      ? customDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                      ? customDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                       : 'Autre'}
                   </Text>
                 </TouchableOpacity>
@@ -2121,7 +2123,7 @@ export default function TrainingJournalScreen() {
                 </Text>
                 {pr && (
                   <Text style={[styles.prCardDate, { color: colors.textMuted }]}>
-                    {new Date(pr.date).toLocaleDateString('fr-FR')}
+                    {new Date(pr.date).toLocaleDateString(locale)}
                   </Text>
                 )}
               </View>
@@ -2191,7 +2193,7 @@ export default function TrainingJournalScreen() {
                           : formatValue(entry.value, selectedBenchmark.unit)}
                       </Text>
                       <Text style={[styles.historyDate, { color: colors.textMuted }]}>
-                        {new Date(entry.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(entry.date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                       </Text>
                     </View>
                     {isPR && (
@@ -2342,7 +2344,7 @@ export default function TrainingJournalScreen() {
                     <Text style={[styles.noteText, { color: colors.textPrimary }]}>{note.text}</Text>
                     <View style={styles.noteFooter}>
                       <Text style={[styles.noteDate, { color: colors.textMuted }]}>
-                        {new Date(note.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        {new Date(note.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
                       </Text>
                       <TouchableOpacity
                         onPress={() => {

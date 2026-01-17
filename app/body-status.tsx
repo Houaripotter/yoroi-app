@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getUserBodyStatus, saveUserBodyStatus } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
+import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
 
 type BodyZoneStatus = 'ok' | 'warning' | 'injury';
@@ -33,21 +34,27 @@ interface BodyStatusData {
   [key: string]: BodyZoneData;
 }
 
-const BODY_ZONES: Array<{ key: BodyZone; label: string; icon: string }> = [
-  { key: 'neck', label: 'Cou', icon: '🫁' },
-  { key: 'shoulders', label: 'Épaules', icon: '' },
-  { key: 'back', label: 'Dos', icon: '🦴' },
-  { key: 'elbows', label: 'Coudes', icon: '🦾' },
-  { key: 'wrists', label: 'Poignets', icon: '✋' },
-  { key: 'hips', label: 'Hanches', icon: '🦵' },
-  { key: 'knees', label: 'Genoux', icon: '🦵' },
-  { key: 'ankles', label: 'Chevilles', icon: '🦶' },
+const BODY_ZONES: Array<{ key: BodyZone; icon: string }> = [
+  { key: 'neck', icon: '🫁' },
+  { key: 'shoulders', icon: '' },
+  { key: 'back', icon: '🦴' },
+  { key: 'elbows', icon: '🦾' },
+  { key: 'wrists', icon: '✋' },
+  { key: 'hips', icon: '🦵' },
+  { key: 'knees', icon: '🦵' },
+  { key: 'ankles', icon: '🦶' },
 ];
 
 export default function BodyStatusScreen() {
   const router = useRouter();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [bodyStatus, setBodyStatus] = useState<BodyStatusData>({});
+
+  // Helper pour obtenir le label traduit d'une zone
+  const getZoneLabel = (zoneKey: BodyZone): string => {
+    return t(`screens.bodyStatus.${zoneKey}`);
+  };
   const [selectedZone, setSelectedZone] = useState<BodyZone | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<BodyZoneStatus>('ok');
@@ -93,7 +100,7 @@ export default function BodyStatusScreen() {
       zoneData.pain = painLevel;
     } else if (selectedStatus === 'injury') {
       if (!medicalNote.trim()) {
-        showPopup('Note requise', 'Ajoute une note medicale pour cette blessure.', [{ text: 'OK', style: 'primary' }]);
+        showPopup(t('screens.bodyStatus.noteRequired'), t('screens.bodyStatus.noteRequiredDesc'), [{ text: t('common.ok'), style: 'primary' }]);
         return;
       }
       zoneData.note = medicalNote.trim();
@@ -112,7 +119,7 @@ export default function BodyStatusScreen() {
       setMedicalNote('');
     } catch (error) {
       logger.error('Erreur sauvegarde statut:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder le statut.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('screens.bodyStatus.saveError'), [{ text: t('common.ok'), style: 'primary' }]);
     }
   };
 
@@ -129,7 +136,7 @@ export default function BodyStatusScreen() {
       setSelectedZone(null);
     } catch (error) {
       logger.error('Erreur suppression statut:', error);
-      showPopup('Erreur', 'Impossible de supprimer le statut.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('screens.bodyStatus.deleteError'), [{ text: t('common.ok'), style: 'primary' }]);
     }
   };
 
@@ -150,14 +157,14 @@ export default function BodyStatusScreen() {
   };
 
   const getStatusLabel = (status?: BodyZoneStatus): string => {
-    if (!status || status === 'ok') return 'Opérationnel';
-    if (status === 'warning') return 'Gêne / Douleur';
-    return 'Blessure / Arrêt';
+    if (!status || status === 'ok') return t('screens.bodyStatus.statusOk');
+    if (status === 'warning') return t('screens.bodyStatus.statusWarning');
+    return t('screens.bodyStatus.statusInjury');
   };
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Maintenance Corporelle" showBack />
+      <Header title={t('screens.bodyStatus.title')} showBack />
 
       <ScrollView
         style={styles.scrollView}
@@ -167,7 +174,7 @@ export default function BodyStatusScreen() {
         <View style={styles.headerCard}>
           <Activity size={22} color="#0EA5E9" strokeWidth={2.5} />
           <Text style={styles.subtitle}>
-            Surveille l'état de ta machine de combat
+            {t('screens.bodyStatus.subtitle')}
           </Text>
         </View>
 
@@ -197,7 +204,7 @@ export default function BodyStatusScreen() {
                 <View style={[styles.zoneIconContainer, { backgroundColor: statusColor + '20' }]}>
                   <Text style={styles.zoneIcon}>{zone.icon}</Text>
                 </View>
-                <Text style={styles.zoneLabel}>{zone.label}</Text>
+                <Text style={styles.zoneLabel}>{getZoneLabel(zone.key)}</Text>
                 {zoneStatus ? (
                   <View style={styles.zoneStatusContainer}>
                     <View style={[styles.statusIconWrapper, { backgroundColor: statusColor + '20' }]}>
@@ -207,7 +214,7 @@ export default function BodyStatusScreen() {
                       {getStatusLabel(zoneStatus.status)}
                     </Text>
                     {zoneStatus.pain && (
-                      <Text style={styles.zonePainText}>Douleur: {zoneStatus.pain}/10</Text>
+                      <Text style={styles.zonePainText}>{t('screens.bodyStatus.painLevel')}: {zoneStatus.pain}/10</Text>
                     )}
                     {zoneStatus.note && (
                       <Text style={styles.zoneNoteText} numberOfLines={1}>
@@ -216,7 +223,7 @@ export default function BodyStatusScreen() {
                     )}
                   </View>
                 ) : (
-                  <Text style={styles.zoneEmptyText}>Appuie pour définir</Text>
+                  <Text style={styles.zoneEmptyText}>{t('screens.bodyStatus.tapToSet')}</Text>
                 )}
               </TouchableOpacity>
             );
@@ -238,7 +245,7 @@ export default function BodyStatusScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {selectedZone ? BODY_ZONES.find(z => z.key === selectedZone)?.label : ''}
+                {selectedZone ? getZoneLabel(selectedZone) : ''}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <X size={24} color="#1F2937" strokeWidth={2.5} />
@@ -262,7 +269,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <CheckCircle size={32} color="#10B981" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>Opérationnel</Text>
+                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusOk')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -275,7 +282,7 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <AlertTriangle size={32} color="#F59E0B" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>Gêne / Douleur</Text>
+                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusWarning')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -288,14 +295,14 @@ export default function BodyStatusScreen() {
                 activeOpacity={0.7}
               >
                 <Activity size={32} color="#EF4444" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>Blessure / Arrêt</Text>
+                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusInjury')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Niveau de douleur (si warning) */}
             {selectedStatus === 'warning' && (
               <View style={styles.painSection}>
-                <Text style={styles.painLabel}>Niveau de douleur (1-10)</Text>
+                <Text style={styles.painLabel}>{t('screens.bodyStatus.painLevelLabel')}</Text>
                 <View style={styles.painSliderContainer}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
                     <TouchableOpacity
@@ -325,10 +332,10 @@ export default function BodyStatusScreen() {
             {/* Note médicale (si injury) */}
             {selectedStatus === 'injury' && (
               <View style={styles.noteSection}>
-                <Text style={styles.noteLabel}>Note médicale (ex: "Strapping", "Glace")</Text>
+                <Text style={styles.noteLabel}>{t('screens.bodyStatus.medicalNoteLabel')}</Text>
                 <TextInput
                   style={styles.noteInput}
-                  placeholder="Décrivez la blessure ou le traitement..."
+                  placeholder={t('screens.bodyStatus.medicalNotePlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   value={medicalNote}
                   onChangeText={setMedicalNote}
@@ -345,7 +352,7 @@ export default function BodyStatusScreen() {
                     onPress={handleRemoveStatus}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.removeButtonText}>Supprimer</Text>
+                    <Text style={styles.removeButtonText}>{t('common.delete')}</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -353,7 +360,7 @@ export default function BodyStatusScreen() {
                   onPress={handleSaveStatus}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.saveButtonText}>Enregistrer</Text>
+                  <Text style={styles.saveButtonText}>{t('common.save')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

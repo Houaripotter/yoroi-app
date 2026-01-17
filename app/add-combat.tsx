@@ -29,6 +29,7 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { addCombat, getCompetitions } from '@/lib/fighterModeService';
@@ -53,6 +54,7 @@ const METHODES: { value: CombatMethode; label: string }[] = [
 
 export default function AddCombatScreen() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams();
   const competitionIdParam = params.competitionId as string | undefined;
@@ -229,7 +231,7 @@ export default function AddCombatScreen() {
           >
             <Calendar size={20} color={colors.textMuted} />
             <Text style={[styles.inputText, { color: colors.textPrimary }]}>
-              {date.toLocaleDateString('fr-FR', {
+              {date.toLocaleDateString(locale, {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

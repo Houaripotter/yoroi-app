@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Moon, Droplets, Heart, TrendingUp, TrendingDown, Clock, Lightbulb, Maximize2, AlertTriangle, CheckCircle, ChevronRight } from 'lucide-react-native';
 import { getSleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,6 +37,7 @@ interface VitalityStatsProps {
 
 export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) => {
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
   const [sleepStats, setSleepStats] = useState<any>(null);
   const [hydrationWeek, setHydrationWeek] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
   const [vitalityScore, setVitalityScore] = useState(0);
@@ -440,7 +442,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
                 return (
                   <View key={index} style={[styles.xLabel, { left: x - 15 }]}>
                     <Text style={[styles.xLabelText, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
-                      {new Date(entry.date).toLocaleDateString('fr-FR', { weekday: 'short' }).substring(0, 1).toUpperCase()}
+                      {new Date(entry.date).toLocaleDateString(locale, { weekday: 'short' }).substring(0, 1).toUpperCase()}
                     </Text>
                   </View>
                 );

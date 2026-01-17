@@ -17,6 +17,7 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { successHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
@@ -51,6 +52,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   style,
 }) => {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
   const sliderWidth = SCREEN_WIDTH - 40;
@@ -95,7 +97,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('fr-FR', {
+      return date.toLocaleDateString(locale, {
         month: 'short',
         year: 'numeric',
       });
@@ -322,6 +324,7 @@ export const BeforeAfterPreview: React.FC<{
   onPress?: () => void;
 }> = ({ before, after, onPress }) => {
   const { colors } = useTheme();
+  const { locale } = useI18n();
 
   const weightDiff = before.weight && after.weight
     ? after.weight - before.weight

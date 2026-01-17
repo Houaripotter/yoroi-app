@@ -10,9 +10,6 @@ import {
   Dimensions,
   Animated,
   Image,
-  ActionSheetIOS,
-  Platform,
-  Alert,
   Pressable,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -366,7 +363,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const takeProfilePhoto = async () => {
+  const takeProfilePhoto = async (withEditing: boolean = false) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -376,9 +373,9 @@ export default function ProfileScreen() {
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
+        allowsEditing: withEditing,
+        aspect: withEditing ? [1, 1] : undefined,
+        quality: 0.8,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
@@ -405,7 +402,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const pickProfilePhoto = async () => {
+  const pickProfilePhoto = async (withEditing: boolean = false) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
@@ -415,9 +412,9 @@ export default function ProfileScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
+        allowsEditing: withEditing,
+        aspect: withEditing ? [1, 1] : undefined,
+        quality: 0.8,
         selectionLimit: 1,
       });
 
@@ -461,35 +458,15 @@ export default function ProfileScreen() {
   };
 
   const handleChangePhoto = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Annuler', 'Prendre une photo', 'Choisir dans la galerie', 'Utiliser un avatar'],
-          cancelButtonIndex: 0,
-          title: 'Photo de profil',
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            takeProfilePhoto();
-          } else if (buttonIndex === 2) {
-            pickProfilePhoto();
-          } else if (buttonIndex === 3) {
-            useAvatarPhoto();
-          }
-        }
-      );
-    } else {
-      Alert.alert(
-        'Photo de profil',
-        'Choisissez une option',
-        [
-          { text: 'Prendre une photo', onPress: takeProfilePhoto },
-          { text: 'Choisir dans la galerie', onPress: pickProfilePhoto },
-          { text: 'Utiliser un avatar', onPress: useAvatarPhoto },
-          { text: 'Annuler', style: 'cancel' },
-        ]
-      );
-    }
+    showPopup(
+      'Photo de profil',
+      'Comment veux-tu ajouter ta photo ?',
+      [
+        { text: 'Choisir dans la galerie', style: 'primary', onPress: () => pickProfilePhoto(false) },
+        { text: 'Prendre une photo', style: 'default', onPress: () => takeProfilePhoto(false) },
+        { text: 'Annuler', style: 'cancel' },
+      ]
+    );
   };
 
   const calculateBMI = () => {

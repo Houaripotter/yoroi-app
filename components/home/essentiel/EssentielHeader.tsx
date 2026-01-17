@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated, Pressable } from 'react-native';
 import { Sparkles, Flame, Zap, Trophy, ChevronRight } from 'lucide-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ViewModeSwitch } from '@/components/home/ViewModeSwitch';
 import { ViewMode } from '@/hooks/useViewMode';
 import AvatarDisplay from '@/components/AvatarDisplay';
@@ -13,17 +14,16 @@ import { getLevel } from '@/lib/gamification';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
+// Citations motivantes
 const quotes = [
-  "Chaque jour est une nouvelle chance.",
-  "Petit à petit, l'oiseau fait son nid.",
-  "Le plus dur, c'est de commencer.",
-  "Tu es plus fort que tu ne le penses.",
-  "La constance bat l'intensité.",
-  "Un pas à la fois vers ton objectif.",
-  "Crois en toi, tu en es capable.",
-  "Chaque effort compte.",
+  'Le succès est la somme de petits efforts répétés jour après jour.',
+  'Chaque entraînement te rapproche de ton objectif.',
+  'La discipline est le pont entre les objectifs et les résultats.',
+  'Ton seul concurrent, c\'est celui que tu étais hier.',
+  'La douleur est temporaire, la fierté est permanente.',
 ];
 
+// Fonction pour le message de salutation
 const getGreeting = () => {
   const hour = new Date().getHours();
   if (hour < 12) return 'Bonjour';
@@ -213,18 +213,18 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   profilePhotoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 85,
+    height: 85,
+    borderRadius: 42.5,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 2,
+    borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
   profilePhotoImage: {
-    width: 70,
-    height: 70,
+    width: 85,
+    height: 85,
   },
 
   // Gamification Banner

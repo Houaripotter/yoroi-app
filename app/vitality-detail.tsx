@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Moon, Droplets, Heart, Battery } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getSleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -28,6 +29,7 @@ type Period = '7d' | '30d' | '90d';
 export default function VitalityDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [period, setPeriod] = useState<Period>('30d');
   const [sleepData, setSleepData] = useState<{ date: string; value: number }[]>([]);
   const [hydrationData, setHydrationData] = useState<{ date: string; value: number }[]>([]);
@@ -92,12 +94,12 @@ export default function VitalityDetailScreen() {
         const value = await AsyncStorage.getItem(key);
         const hours = value ? parseFloat(value) : 0;
         history.push({
-          date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          date: date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
           value: hours,
         });
       } catch {
         history.push({
-          date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          date: date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
           value: 0,
         });
       }
@@ -119,12 +121,12 @@ export default function VitalityDetailScreen() {
         const value = await AsyncStorage.getItem(key);
         const liters = value ? parseFloat(value) / 1000 : 0;
         history.push({
-          date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          date: date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
           value: liters,
         });
       } catch {
         history.push({
-          date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+          date: date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
           value: 0,
         });
       }

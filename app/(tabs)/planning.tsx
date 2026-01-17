@@ -110,7 +110,7 @@ const SAVED_EVENTS_KEY = 'my_saved_events';
 export default function PlanningScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [workouts, setWorkouts] = useState<Training[]>([]);
@@ -795,27 +795,6 @@ export default function PlanningScreen() {
         </View>
       </View>
 
-      {/* Indicateurs de pagination (dots) */}
-      <View style={styles.dotsContainer}>
-        {tabs.map((tab, index) => {
-          const currentIndex = tabs.findIndex(t => t.key === viewMode);
-          return (
-            <View
-              key={`dot-${tab.key}`}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: currentIndex === index
-                    ? colors.accent
-                    : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),
-                  width: currentIndex === index ? 20 : 5,
-                },
-              ]}
-            />
-          );
-        })}
-      </View>
-
       {/* ScrollView horizontal avec pagination */}
       <ScrollView
         ref={horizontalScrollRef}
@@ -999,7 +978,7 @@ export default function PlanningScreen() {
                           const formatDate = (dateStr: string) => {
                             const date = new Date(dateStr);
                             const day = date.getDate();
-                            const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                            const month = date.toLocaleDateString(locale, { month: 'short' });
                             return `${day} ${month}`;
                           };
 
@@ -1199,7 +1178,7 @@ export default function PlanningScreen() {
                           const formatDate = (dateStr: string) => {
                             const date = new Date(dateStr);
                             const day = date.getDate();
-                            const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+                            const month = date.toLocaleDateString(locale, { month: 'short' });
                             return `${day} ${month}`;
                           };
 
@@ -1520,7 +1499,7 @@ export default function PlanningScreen() {
                                   {eventDate.getDate()}
                                 </Text>
                                 <Text style={[styles.savedEventMonth, { color: categoryColor }]}>
-                                  {eventDate.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase()}
+                                  {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
                                 </Text>
                               </View>
                             </View>
@@ -1682,7 +1661,7 @@ export default function PlanningScreen() {
                 ) : (
                   filteredCatalogEvents.slice(0, 20).map((event) => {
                     const eventDate = new Date(event.date_start);
-                    const formattedDate = eventDate.toLocaleDateString('fr-FR', {
+                    const formattedDate = eventDate.toLocaleDateString(locale, {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
@@ -2003,17 +1982,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     lineHeight: 20,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 8,
-  },
-  dot: {
-    height: 5,
-    borderRadius: 2.5,
   },
 
   // CALENDAR HEADER
@@ -3198,5 +3166,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 5,
+  },
+  dot: {
+    borderRadius: 4,
   },
 });

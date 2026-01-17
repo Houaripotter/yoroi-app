@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { useFocusEffect, router } from 'expo-router';
 import { BeforeAfterComparison } from '@/components/BeforeAfterComparison';
 import { Photo, savePhotoToStorage, getPhotosFromStorage, deletePhotoFromStorage, getUserSettings, saveUserSettings } from '@/lib/storage';
@@ -36,6 +37,7 @@ const PRIVACY_CHALLENGE_KEY = '@yoroi_privacy_challenge_shown';
 
 export default function PhotosScreen() {
   const { colors: themeColors, isDark } = useTheme();
+  const { locale } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred: isScreenshotBlurred, screenshotDetected } = useSensitiveScreen();
@@ -576,7 +578,7 @@ export default function PhotosScreen() {
                 )}
                 <View style={[styles.photoInfo, { backgroundColor: themeColors.card }]}>
                   <Text style={[styles.photoDate, { color: themeColors.textSecondary }]}>
-                    {new Date(photo.date).toLocaleDateString('fr-FR', {
+                    {new Date(photo.date).toLocaleDateString(locale, {
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',

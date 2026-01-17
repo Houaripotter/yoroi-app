@@ -33,7 +33,7 @@ interface WeightStatsProps {
   data: Weight[];
 }
 
-type Period = '30j' | '90j' | '6m' | '1a';
+type Period = '7j' | '30j' | '90j' | 'all';
 
 export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
   const { colors, isDark } = useTheme();

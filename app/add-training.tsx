@@ -628,7 +628,7 @@ export default function AddTrainingScreen() {
 
     try {
       await addTraining({
-        club_id: null,
+        club_id: undefined,
         sport: quickSport,
         date: format(new Date(), 'yyyy-MM-dd'),
         duration_minutes: quickDuration,

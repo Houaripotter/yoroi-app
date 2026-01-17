@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getMeasurements } from '@/lib/database';
 import { Ruler, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
 import { SparklineChart } from '../charts/SparklineChart';
@@ -18,6 +19,7 @@ const SPARKLINE_WIDTH = STATS_CARD_WIDTH - 28 + 12;
 
 export default function MesuresTab() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [measurementsData, setMeasurementsData] = useState<any[]>([]);
   const [selectedMeasurement, setSelectedMeasurement] = useState<{
     id: string;
@@ -221,7 +223,7 @@ export default function MesuresTab() {
           subtitle="Évolution complète"
           data={getFullHistory(selectedMeasurement.id).map((entry) => ({
             value: entry.value,
-            label: new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+            label: new Date(entry.date).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
           }))}
           color={selectedMeasurement.color}
           unit="cm"

@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Trophy, Heart, ChevronRight, Shield, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { setUserMode } from '@/lib/fighterModeService';
 import { UserMode } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -23,6 +24,7 @@ import logger from '@/lib/security/logger';
 
 export default function ModeSelectionScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [selectedMode, setSelectedMode] = useState<UserMode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,10 +70,10 @@ export default function ModeSelectionScreen() {
             <Text style={[styles.logo, { color: colors.accentText }]}>YOROI</Text>
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Quel champion es-tu ?
+            {t('screens.modeSelection.title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Choisis ton mode d'entraînement
+            {t('screens.modeSelection.subtitle')}
           </Text>
         </View>
 
@@ -128,7 +130,7 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                COMPÉTITEUR
+                {t('screens.modeSelection.competitor.title')}
               </Text>
 
               {/* Description */}
@@ -143,15 +145,15 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                Je veux performer
+                {t('screens.modeSelection.competitor.description')}
               </Text>
 
               {/* Features */}
               <View style={styles.featuresList}>
                 {[
-                  'Je prépare une compétition',
-                  'Je gère ma catégorie de poids',
-                  'Je veux un suivi professionnel',
+                  t('screens.modeSelection.competitor.feature1'),
+                  t('screens.modeSelection.competitor.feature2'),
+                  t('screens.modeSelection.competitor.feature3'),
                 ].map((feature, index) => (
                   <View key={index} style={styles.featureItem}>
                     <Text
@@ -188,7 +190,7 @@ export default function ModeSelectionScreen() {
               {selectedMode === 'competiteur' && (
                 <View style={styles.selectedBadge}>
                   <Trophy size={16} color="#FFFFFF" />
-                  <Text style={styles.selectedText}>Sélectionné</Text>
+                  <Text style={styles.selectedText}>{t('screens.modeSelection.selected')}</Text>
                 </View>
               )}
             </LinearGradient>
@@ -245,7 +247,7 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                LOISIR
+                {t('screens.modeSelection.leisure.title')}
               </Text>
 
               {/* Description */}
@@ -260,15 +262,15 @@ export default function ModeSelectionScreen() {
                   },
                 ]}
               >
-                Je veux me sentir mieux
+                {t('screens.modeSelection.leisure.description')}
               </Text>
 
               {/* Features */}
               <View style={styles.featuresList}>
                 {[
-                  'Perte de poids et bien-être',
-                  'Je progresse à mon rythme',
-                  'Sans pression, juste pour moi',
+                  t('screens.modeSelection.leisure.feature1'),
+                  t('screens.modeSelection.leisure.feature2'),
+                  t('screens.modeSelection.leisure.feature3'),
                 ].map((feature, index) => (
                   <View key={index} style={styles.featureItem}>
                     <Text
@@ -305,7 +307,7 @@ export default function ModeSelectionScreen() {
               {selectedMode === 'loisir' && (
                 <View style={styles.selectedBadge}>
                   <Heart size={16} color="#FFFFFF" fill="#FFFFFF" />
-                  <Text style={styles.selectedText}>Sélectionné</Text>
+                  <Text style={styles.selectedText}>{t('screens.modeSelection.selected')}</Text>
                 </View>
               )}
             </LinearGradient>
@@ -317,7 +319,7 @@ export default function ModeSelectionScreen() {
           <View style={styles.infoContent}>
             <Lightbulb size={16} color={colors.textMuted} strokeWidth={2} />
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Tu pourras changer de mode à tout moment dans les réglages
+              {t('screens.modeSelection.infoText')}
             </Text>
           </View>
         </View>
@@ -344,7 +346,7 @@ export default function ModeSelectionScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.continueButtonText}>
-              {isLoading ? 'Chargement...' : 'Continuer'}
+              {isLoading ? t('common.loading') : t('screens.modeSelection.continue')}
             </Text>
             <ChevronRight size={20} color="#FFFFFF" />
           </TouchableOpacity>

@@ -16,6 +16,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Ruler, TrendingDown, TrendingUp, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getMeasurements, Measurement } from '@/lib/database';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
@@ -47,6 +48,7 @@ const MEASUREMENT_COLORS: Record<MeasurementType, string> = {
 export default function MeasurementsDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -89,7 +91,7 @@ export default function MeasurementsDetailScreen() {
     return filteredMeasurements
       .filter(m => m[type] != null)
       .map(m => ({
-        date: new Date(m.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }),
+        date: new Date(m.date).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' }),
         value: m[type] as number,
       }));
   };

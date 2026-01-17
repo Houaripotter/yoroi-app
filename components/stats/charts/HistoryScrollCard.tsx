@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MetricRange } from '@/lib/healthRanges';
 
@@ -40,6 +41,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
   evolutionGoal = 'increase', // Par défaut, une augmentation est positive (ex: muscle)
 }) => {
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
 
   // Fonction pour déterminer si une couleur est claire (besoin de texte foncé)
   const isLightColor = (hexColor: string): boolean => {
@@ -63,7 +65,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const day = date.getDate();
-    const month = date.toLocaleDateString('fr-FR', { month: 'short' });
+    const month = date.toLocaleDateString(locale, { month: 'short' });
     return `${day} ${month}`;
   };
 

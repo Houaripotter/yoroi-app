@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { X } from 'lucide-react-native';
 import { WorkoutType, WORKOUT_TYPES } from '@/types/workout';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 interface ActivityModalProps {
   visible: boolean;
@@ -15,6 +16,7 @@ interface ActivityModalProps {
 
 export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity, currentActivities = [] }: ActivityModalProps) {
   const { colors, themeName } = useTheme();
+  const { locale } = useI18n();
   const isWellness = false;
   const [selectedActivities, setSelectedActivities] = useState<WorkoutType[]>(currentActivities);
 
@@ -27,7 +29,7 @@ export function ActivityModal({ visible, selectedDate, onClose, onSelectActivity
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',

@@ -30,6 +30,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { FighterCardV2, FighterStats, CombatClub } from '@/components/social-cards/FighterCardV2';
 import { getUserSettings, getLatestMeasurement } from '@/lib/storage';
 import { getCurrentRank, RANKS } from '@/lib/ranks';
@@ -44,6 +45,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 
 export default function FighterCardV2Screen() {
   const { colors, isDark } = useTheme();
+  const { locale } = useI18n();
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -134,7 +136,7 @@ export default function FighterCardV2Screen() {
         totalTrainings,
         clubName: topClubName,
         clubLogo: topClubLogo,
-        joinDate: joinDate.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }),
+        joinDate: joinDate.toLocaleDateString(locale, { month: 'short', year: 'numeric' }),
         weightLost: Math.round(weightLost * 10) / 10,
         badges: 0,
         // Nouveaux champs

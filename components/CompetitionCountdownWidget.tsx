@@ -13,12 +13,14 @@ import { router } from 'expo-router';
 import { Clock, Trophy, MapPin, Calendar, Scale } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getNextCompetition } from '@/lib/fighterModeService';
 import { Competition, calculateDaysUntil, SPORT_ICONS } from '@/lib/fighterMode';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 
 export function CompetitionCountdownWidget() {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const [nextCompetition, setNextCompetition] = useState<Competition | null>(null);
   const [daysUntil, setDaysUntil] = useState<number>(0);
 
@@ -182,7 +184,7 @@ export function CompetitionCountdownWidget() {
         <View style={styles.detailRow}>
           <Calendar size={16} color={colors.textMuted} />
           <Text style={[styles.detailText, { color: colors.textMuted }]}>
-            {new Date(nextCompetition.date).toLocaleDateString('fr-FR', {
+            {new Date(nextCompetition.date).toLocaleDateString(locale, {
               day: 'numeric',
               month: 'long',
               year: 'numeric',
