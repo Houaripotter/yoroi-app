@@ -8,6 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { getUserSettings } from './storage';
 import { infirmaryService } from './infirmary';
+import { calculateStreak, getTrainings } from './database';
+import { isRestDay } from './restDaysService';
 import logger from '@/lib/security/logger';
 
 const BRIEFING_SETTINGS_KEY = '@yoroi_briefing_settings';
@@ -76,20 +78,25 @@ class BriefingService {
 
       let message = `Bonjour ${userName} !\n\n`;
 
-      // Note: Current weight would come from getLatestWeight(), not userSettings
-      // userSettings doesn't have a weight property
+      // Calculer le vrai streak
+      const streak = await calculateStreak();
+      if (streak > 0) {
+        message += `Série : ${streak} jour${streak > 1 ? 's' : ''} consécutif${streak > 1 ? 's' : ''}\n`;
+      }
 
-      // Streak (simulation - à remplacer par vraie logique)
-      const streak = 3; // TODO: Calculer le vrai streak
-      message += `Série : ${streak} jours consécutifs\n`;
+      // Vérifier les entraînements du jour
+      const today = new Date().toISOString().split('T')[0];
+      const trainings = await getTrainings();
+      const todayTrainings = trainings.filter(t => t.date === today);
+      const isRest = await isRestDay(today);
 
-      // Entraînement prévu (simulation)
-      // TODO: Intégrer avec le planning
-      const todayWorkout = null;
-      if (todayWorkout) {
-        message += `Prévu : ${todayWorkout}\n`;
+      if (isRest) {
+        message += `😴 Jour de repos planifié\n`;
+      } else if (todayTrainings.length > 0) {
+        const sportsList = [...new Set(todayTrainings.map(t => t.sport))].join(', ');
+        message += `Prévu : ${sportsList}\n`;
       } else {
-        message += `😴 Jour de repos\n`;
+        message += `Pas d'entraînement prévu\n`;
       }
 
       // Blessures actives

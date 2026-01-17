@@ -5,6 +5,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Moon, Plus, TrendingUp, AlertTriangle, CheckCircle, Settings } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -26,6 +27,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   // Protection contre division par zéro
   const safeGoal = goal > 0 ? goal : 8;
   const percentage = Math.min((hours / safeGoal) * 100, 100);
@@ -158,10 +160,10 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
           </LinearGradient>
           <View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Sommeil
+              {t('home.sleepCard.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Objectif: {safeGoal}h
+              {t('home.sleepCard.objective')} {safeGoal}h
             </Text>
           </View>
         </View>
@@ -296,7 +298,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
       <View style={styles.metricsRowBottom}>
         <View style={styles.metricCard}>
           <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-            DETTE
+            {t('home.sleepCard.debt')}
           </Text>
           <Text style={[styles.metricValueBottom, { color: debt > 0 ? '#EF4444' : '#10B981' }]}>
             {debt > 0 ? `${debt.toFixed(1)}h` : '0h'}
@@ -305,7 +307,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
 
         <View style={styles.metricCard}>
           <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-            QUALITÉ
+            {t('home.sleepCard.quality')}
           </Text>
           <Text style={[styles.metricValueBottom, { color: qualityColor }]}>
             {percentage.toFixed(0)}%
@@ -331,7 +333,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
           activeOpacity={0.7}
         >
           <Plus size={18} color="#8B5CF6" strokeWidth={2.5} />
-          <Text style={[styles.actionText, { color: '#8B5CF6' }]}>Ajouter Sommeil</Text>
+          <Text style={[styles.actionText, { color: '#8B5CF6' }]}>{t('home.sleepCard.addSleep')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

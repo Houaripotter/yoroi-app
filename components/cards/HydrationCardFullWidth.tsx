@@ -5,6 +5,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Droplets, Plus, Minus, Settings, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -23,6 +24,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
   onAddMl,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const percentage = Math.min((currentMl / goalMl) * 100, 100);
 
   // Toast state (comme Apple Watch)
@@ -205,10 +207,10 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
           </LinearGradient>
           <View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Hydratation
+              {t('home.hydrationCard.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Objectif: {(goalMl / 1000).toFixed(1)}L
+              {t('home.hydrationCard.objective')} {(goalMl / 1000).toFixed(1)}L
             </Text>
           </View>
         </View>

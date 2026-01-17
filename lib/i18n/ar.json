@@ -102,6 +102,38 @@
       "90days": "90 يوم",
       "6months": "6 أشهر",
       "1year": "سنة"
+    },
+    "hydrationCard": {
+      "title": "الترطيب",
+      "objective": "الهدف:"
+    },
+    "sleepCard": {
+      "title": "النوم",
+      "objective": "الهدف:",
+      "debt": "الدين",
+      "quality": "الجودة",
+      "addSleep": "إضافة نوم"
+    },
+    "chargeCard": {
+      "title": "حمل التدريب",
+      "noData": "لا توجد بيانات",
+      "activeRest": "راحة نشطة",
+      "highLoad": "حمل عالي",
+      "moderateLoad": "حمل متوسط",
+      "startFirst": "ابدأ تدريبك الأول",
+      "lightSubtitle": "حمل خفيف - تعافي مثالي",
+      "highSubtitle": "يحتاج للتعافي",
+      "moderateSubtitle": "توازن مثالي",
+      "addFirst": "أضف جلستك الأولى",
+      "idealDay": "يوم مثالي للتدريب المكثف",
+      "prioritizeRecovery": "أعط الأولوية للتعافي اليوم",
+      "continueRoutine": "استمر في روتين تدريبك",
+      "intensity": "الشدة",
+      "restNeeded": "الراحة المطلوبة",
+      "newTraining": "تدريب جديد",
+      "intensityLow": "منخفضة",
+      "intensityMedium": "متوسطة",
+      "intensityHigh": "عالية"
     }
   },
   "tools": {
@@ -213,7 +245,19 @@
     "calves": "الساقين",
     "shoulders": "الكتفين",
     "forearms": "الساعدين",
-    "neck": "الرقبة"
+    "neck": "الرقبة",
+    "noData": "لا توجد بيانات",
+    "scrollHint": "مرر لرؤية جميع البيانات",
+    "bmiUnderweight": "نقص الوزن",
+    "bmiNormal": "طبيعي",
+    "bmiOverweight": "زيادة الوزن",
+    "bmiObese": "سمنة",
+    "bmiTitle": "مؤشر كتلة الجسم",
+    "bmiCategoryUnderweight": "نقص الوزن",
+    "bmiCategoryNormal": "وزن طبيعي",
+    "bmiCategoryOverweight": "زيادة الوزن",
+    "bmiCategoryObese": "سمنة",
+    "stable": "ثابت"
   },
   "planning": {
     "title": "التخطيط",
@@ -279,6 +323,10 @@
     "backupAndRestore": "النسخ الاحتياطي والاستعادة",
     "data": "البيانات",
     "support": "الدعم",
+    "dataTab": "البيانات",
+    "supportTab": "الدعم",
+    "profileTab": "الملف الشخصي",
+    "appearanceTab": "المظهر",
     "security": "الأمان",
     "mode": "الوضع",
     "competitorConfig": "إعدادات المنافس",
@@ -613,7 +661,19 @@
     "september": "سبتمبر",
     "october": "أكتوبر",
     "november": "نوفمبر",
-    "december": "ديسمبر"
+    "december": "ديسمبر",
+    "januaryShort": "يناير",
+    "februaryShort": "فبراير",
+    "marchShort": "مارس",
+    "aprilShort": "أبريل",
+    "mayShort": "مايو",
+    "juneShort": "يونيو",
+    "julyShort": "يوليو",
+    "augustShort": "أغسطس",
+    "septemberShort": "سبتمبر",
+    "octoberShort": "أكتوبر",
+    "novemberShort": "نوفمبر",
+    "decemberShort": "ديسمبر"
   },
   "sports": {
     "musculation": "رفع الأثقال",
@@ -883,6 +943,11 @@
         "royal": "ملكي",
         "ghost": "شبح"
       }
+    },
+    "modal": {
+      "organizePages": "ترتيب الصفحات",
+      "done": "تم",
+      "dragToReorganize": "اسحب للترتيب"
     },
     "customizeHome": {
       "title": "تخصيص الرئيسية",

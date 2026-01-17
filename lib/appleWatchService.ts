@@ -6,6 +6,7 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
+import { addWeight } from './database';
 
 const WatchBridge = Platform.OS === 'ios' ? NativeModules.WatchBridge : null;
 const watchEmitter = WatchBridge ? new NativeEventEmitter(WatchBridge) : null;
@@ -221,11 +222,19 @@ class AppleWatchService {
    */
   private async handleWeightFromWatch(weight: number) {
     try {
-      // TODO: Utiliser ta fonction addWeight() du database.ts
-      // Pour l'instant, on met juste à jour le poids actuel
+      const today = new Date().toISOString().split('T')[0];
+
+      // Sauvegarder dans la base de données SQLite
+      await addWeight({
+        weight,
+        source: 'apple',
+        date: today,
+      });
+
+      // Aussi mettre à jour le cache AsyncStorage pour accès rapide
       await AsyncStorage.setItem('@yoroi_current_weight', weight.toString());
 
-      logger.info(`⚖️ Poids mis à jour: ${weight}kg`);
+      logger.info(`⚖️ Poids sauvegardé dans la DB: ${weight}kg`);
 
       // Re-sync vers la watch
       await this.syncToWatch();

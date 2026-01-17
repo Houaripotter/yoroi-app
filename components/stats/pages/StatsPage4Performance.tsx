@@ -9,6 +9,7 @@ import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { Trophy, TrendingUp, Target, TrendingDown } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SparklineChart } from '@/components/charts/SparklineChart';
+import { getTrainings, getWeights } from '@/lib/database';
 
 const CARD_PADDING = 16;
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -26,17 +27,35 @@ export const StatsPage4Performance: React.FC<StatsPage4PerformanceProps> = ({
   const [performanceHistory, setPerformanceHistory] = useState<any[]>([]);
 
   useEffect(() => {
-    // Générer des données d'historique factices pour les 7 derniers jours
-    // TODO: Remplacer par de vraies données depuis la DB
-    const history = [];
-    for (let i = 6; i >= 0; i--) {
-      history.push({
-        trainings: Math.round(12 + (Math.random() - 0.5) * 4),
-        weight: 75.2 + (Math.random() - 0.5) * 2,
-        steps: Math.round(8000 + Math.random() * 4000),
-      });
-    }
-    setPerformanceHistory(history);
+    const loadPerformanceData = async () => {
+      try {
+        const [trainings, weights] = await Promise.all([
+          getTrainings(),
+          getWeights(30),
+        ]);
+
+        // Grouper par jour les 7 derniers jours
+        const history = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+
+          const dayTrainings = trainings.filter(t => t.date === dateStr);
+          const dayWeight = weights.find(w => w.date === dateStr);
+
+          history.push({
+            trainings: dayTrainings.length,
+            weight: dayWeight?.weight || (weights[weights.length - 1]?.weight || 0),
+            steps: 0, // Les pas viennent de HealthKit, pas de la DB
+          });
+        }
+        setPerformanceHistory(history);
+      } catch (error) {
+        console.error('Erreur chargement performance:', error);
+      }
+    };
+    loadPerformanceData();
   }, []);
 
   const getSparklineData = (field: 'trainings' | 'weight' | 'steps') => {

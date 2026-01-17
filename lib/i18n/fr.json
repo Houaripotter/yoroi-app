@@ -102,6 +102,38 @@
       "90days": "90 JOURS",
       "6months": "6 MOIS",
       "1year": "1 AN"
+    },
+    "hydrationCard": {
+      "title": "Hydratation",
+      "objective": "Objectif:"
+    },
+    "sleepCard": {
+      "title": "Sommeil",
+      "objective": "Objectif:",
+      "debt": "DETTE",
+      "quality": "QUALITÉ",
+      "addSleep": "Ajouter Sommeil"
+    },
+    "chargeCard": {
+      "title": "Charge d'Entraînement",
+      "noData": "Aucune Donnée",
+      "activeRest": "Repos Actif",
+      "highLoad": "Charge Élevée",
+      "moderateLoad": "Charge Modérée",
+      "startFirst": "Commencez ton premier entraînement",
+      "lightSubtitle": "Charge légère - Récupération optimale",
+      "highSubtitle": "Besoin de récupération",
+      "moderateSubtitle": "Équilibre optimal",
+      "addFirst": "Ajoutez ta première séance",
+      "idealDay": "Journée idéale pour un entraînement intense",
+      "prioritizeRecovery": "Priorisez la récupération aujourd'hui",
+      "continueRoutine": "Continuez ta routine d'entraînement",
+      "intensity": "INTENSITÉ",
+      "restNeeded": "REPOS NÉCESSAIRE",
+      "newTraining": "Nouvel Entraînement",
+      "intensityLow": "Faible",
+      "intensityMedium": "Moyenne",
+      "intensityHigh": "Élevée"
     }
   },
   "tools": {
@@ -200,10 +232,16 @@
     "scrollHint": "Glisse pour voir toutes les données",
     "bmi": "IMC",
     "bmiDescription": "Indice de Masse Corporelle",
+    "bmiTitle": "INDICE DE MASSE CORPORELLE",
     "bmiUnderweight": "SOUS-POIDS",
     "bmiNormal": "NORMAL",
     "bmiOverweight": "SURPOIDS",
     "bmiObese": "OBÉSITÉ",
+    "bmiCategoryUnderweight": "Insuffisance pondérale",
+    "bmiCategoryNormal": "Poids normal",
+    "bmiCategoryOverweight": "Surpoids",
+    "bmiCategoryObese": "Obésité",
+    "stable": "STABLE",
     "bodyFat": "Masse grasse",
     "muscleMass": "Masse musculaire",
     "waterPercentage": "Eau corporelle",
@@ -623,7 +661,19 @@
     "september": "Septembre",
     "october": "Octobre",
     "november": "Novembre",
-    "december": "Décembre"
+    "december": "Décembre",
+    "januaryShort": "Jan",
+    "februaryShort": "Fév",
+    "marchShort": "Mar",
+    "aprilShort": "Avr",
+    "mayShort": "Mai",
+    "juneShort": "Juin",
+    "julyShort": "Juil",
+    "augustShort": "Août",
+    "septemberShort": "Sep",
+    "octoberShort": "Oct",
+    "novemberShort": "Nov",
+    "decemberShort": "Déc"
   },
   "sports": {
     "musculation": "Musculation",

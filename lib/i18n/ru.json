@@ -102,6 +102,38 @@
       "90days": "90 ДНЕЙ",
       "6months": "6 МЕСЯЦЕВ",
       "1year": "1 ГОД"
+    },
+    "hydrationCard": {
+      "title": "Гидратация",
+      "objective": "Цель:"
+    },
+    "sleepCard": {
+      "title": "Сон",
+      "objective": "Цель:",
+      "debt": "ДОЛГ",
+      "quality": "КАЧЕСТВО",
+      "addSleep": "Добавить сон"
+    },
+    "chargeCard": {
+      "title": "Тренировочная нагрузка",
+      "noData": "Нет данных",
+      "activeRest": "Активный отдых",
+      "highLoad": "Высокая нагрузка",
+      "moderateLoad": "Умеренная нагрузка",
+      "startFirst": "Начните первую тренировку",
+      "lightSubtitle": "Легкая нагрузка - Оптимальное восстановление",
+      "highSubtitle": "Требуется восстановление",
+      "moderateSubtitle": "Оптимальный баланс",
+      "addFirst": "Добавьте первую сессию",
+      "idealDay": "Идеальный день для интенсивной тренировки",
+      "prioritizeRecovery": "Приоритет восстановлению сегодня",
+      "continueRoutine": "Продолжайте тренировочную рутину",
+      "intensity": "ИНТЕНСИВНОСТЬ",
+      "restNeeded": "НЕОБХОДИМЫЙ ОТДЫХ",
+      "newTraining": "Новая тренировка",
+      "intensityLow": "Низкая",
+      "intensityMedium": "Средняя",
+      "intensityHigh": "Высокая"
     }
   },
   "tools": {
@@ -213,7 +245,19 @@
     "calves": "Икры",
     "shoulders": "Плечи",
     "forearms": "Предплечья",
-    "neck": "Шея"
+    "neck": "Шея",
+    "noData": "Нет данных",
+    "scrollHint": "Листайте для просмотра всех данных",
+    "bmiUnderweight": "НЕДОВЕС",
+    "bmiNormal": "НОРМА",
+    "bmiOverweight": "ИЗБЫТОК ВЕСА",
+    "bmiObese": "ОЖИРЕНИЕ",
+    "bmiTitle": "ИНДЕКС МАССЫ ТЕЛА",
+    "bmiCategoryUnderweight": "Недовес",
+    "bmiCategoryNormal": "Нормальный вес",
+    "bmiCategoryOverweight": "Избыточный вес",
+    "bmiCategoryObese": "Ожирение",
+    "stable": "СТАБИЛЬНО"
   },
   "planning": {
     "title": "Планирование",
@@ -280,6 +324,10 @@
     "backupAndRestore": "РЕЗЕРВНОЕ КОПИРОВАНИЕ",
     "data": "ДАННЫЕ",
     "support": "ПОДДЕРЖКА",
+    "dataTab": "Данные",
+    "supportTab": "Поддержка",
+    "profileTab": "Профиль",
+    "appearanceTab": "Оформление",
     "security": "БЕЗОПАСНОСТЬ",
     "mode": "РЕЖИМ",
     "competitorConfig": "НАСТРОЙКА СОРЕВНОВАНИЙ",
@@ -614,7 +662,19 @@
     "september": "Сентябрь",
     "october": "Октябрь",
     "november": "Ноябрь",
-    "december": "Декабрь"
+    "december": "Декабрь",
+    "januaryShort": "Янв",
+    "februaryShort": "Фев",
+    "marchShort": "Мар",
+    "aprilShort": "Апр",
+    "mayShort": "Май",
+    "juneShort": "Июн",
+    "julyShort": "Июл",
+    "augustShort": "Авг",
+    "septemberShort": "Сен",
+    "octoberShort": "Окт",
+    "novemberShort": "Ноя",
+    "decemberShort": "Дек"
   },
   "sports": {
     "musculation": "Силовые тренировки",
@@ -884,6 +944,11 @@
         "royal": "Королевский",
         "ghost": "Призрак"
       }
+    },
+    "modal": {
+      "organizePages": "Упорядочить страницы",
+      "done": "Готово",
+      "dragToReorganize": "Удерживайте и перетащите для сортировки"
     },
     "customizeHome": {
       "title": "Настроить главную",

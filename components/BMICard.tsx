@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Circle, G } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 
 interface BMICardProps {
   weight: number;
@@ -9,15 +10,16 @@ interface BMICardProps {
 
 export function BMICard({ weight, height }: BMICardProps) {
   const { colors, isDark, themeName } = useTheme();
+  const { t } = useI18n();
   const isWellness = false;
 
   const bmi = weight / ((height / 100) ** 2);
 
   const getBMICategory = (bmiValue: number) => {
-    if (bmiValue < 18.5) return { label: 'Insuffisance pondérale', color: colors.textMuted };
-    if (bmiValue < 25) return { label: 'Poids normal', color: colors.success };
-    if (bmiValue < 30) return { label: 'Surpoids', color: colors.warning };
-    return { label: 'Obésité', color: colors.error };
+    if (bmiValue < 18.5) return { label: t('stats.bmiCategoryUnderweight'), color: colors.textMuted };
+    if (bmiValue < 25) return { label: t('stats.bmiCategoryNormal'), color: colors.success };
+    if (bmiValue < 30) return { label: t('stats.bmiCategoryOverweight'), color: colors.warning };
+    return { label: t('stats.bmiCategoryObese'), color: colors.error };
   };
 
   const category = getBMICategory(bmi);
@@ -68,7 +70,7 @@ export function BMICard({ weight, height }: BMICardProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.textSecondary }]}>INDICE DE MASSE CORPORELLE</Text>
+      <Text style={[styles.title, { color: colors.textSecondary }]}>{t('stats.bmiTitle')}</Text>
 
       <View style={styles.gaugeContainer}>
         <Svg width={size} height={size / 2 + 40}>
@@ -102,7 +104,7 @@ export function BMICard({ weight, height }: BMICardProps) {
           <Text style={[styles.bmiValue, { color: category.color }]}>
             {bmi.toFixed(1)}
           </Text>
-          <Text style={[styles.bmiLabel, { color: colors.textSecondary }]}>IMC</Text>
+          <Text style={[styles.bmiLabel, { color: colors.textSecondary }]}>{t('stats.bmi')}</Text>
         </View>
       </View>
 

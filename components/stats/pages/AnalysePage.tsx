@@ -14,6 +14,7 @@ import { ComparisonChart } from '../charts/ComparisonChart';
 import { RadarChart } from '../charts/RadarChart';
 import { aggregateWeightData, aggregateTrainingData, aggregateCompositionData, calculateCorrelation } from '@/lib/statsAggregation';
 import { TrendingUp, Zap, Target, Award, AlertCircle, TrendingDown, Activity } from 'lucide-react-native';
+import { healthConnect } from '@/lib/healthConnect';
 
 export const AnalysePage: React.FC = () => {
   const { colors } = useTheme();
@@ -21,6 +22,7 @@ export const AnalysePage: React.FC = () => {
   const [weightData, setWeightData] = useState<any>(null);
   const [trainingData, setTrainingData] = useState<any>(null);
   const [compositionData, setCompositionData] = useState<any>(null);
+  const [vitalityScore, setVitalityScore] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +40,64 @@ export const AnalysePage: React.FC = () => {
       setWeightData(weight);
       setTrainingData(training);
       setCompositionData(composition);
+
+      // Calculer score vitalité depuis données santé
+      try {
+        const [sleepData, hydrationData, heartRateData] = await Promise.all([
+          healthConnect.getLastSleep(),
+          healthConnect.getTodayHydration(),
+          healthConnect.getTodayHeartRate(),
+        ]);
+
+        let vitality = 0;
+        let factors = 0;
+
+        // Score sommeil (0-35 points) - 8h = 100%
+        if (sleepData?.duration) {
+          const sleepHours = sleepData.duration / 60;
+          const sleepScore = Math.min((sleepHours / 8) * 35, 35);
+          vitality += sleepScore;
+          factors++;
+        }
+
+        // Score hydratation (0-25 points) - 2500ml = 100%
+        if (hydrationData?.amount) {
+          const hydrationScore = Math.min((hydrationData.amount / 2500) * 25, 25);
+          vitality += hydrationScore;
+          factors++;
+        }
+
+        // Score cardiaque (0-20 points) - FC repos basse = mieux
+        if (heartRateData?.resting) {
+          // FC repos idéale athlète: 50-60 BPM
+          const restingHR = heartRateData.resting;
+          const hrScore = restingHR < 50 ? 20 : restingHR < 60 ? 18 : restingHR < 70 ? 15 : restingHR < 80 ? 10 : 5;
+          vitality += hrScore;
+          factors++;
+        }
+
+        // Score activité (0-20 points) - basé sur les entraînements
+        if (training?.count) {
+          const activityScore = Math.min((training.count / 15) * 20, 20);
+          vitality += activityScore;
+          factors++;
+        }
+
+        // Si on n'a pas de données santé, utiliser un score par défaut basé sur l'activité
+        if (factors === 0) {
+          const defaultScore = training?.count ? Math.min(50 + (training.count * 3), 85) : 50;
+          setVitalityScore(Math.round(defaultScore));
+        } else {
+          // Normaliser le score sur 100
+          const maxPossible = factors === 4 ? 100 : factors * 25;
+          const normalizedScore = (vitality / maxPossible) * 100;
+          setVitalityScore(Math.round(normalizedScore));
+        }
+      } catch (healthError) {
+        // Fallback si erreur santé
+        const defaultScore = training?.count ? Math.min(50 + (training.count * 3), 85) : 50;
+        setVitalityScore(Math.round(defaultScore));
+      }
     } catch (error) {
       console.error('Error loading analysis data:', error);
     } finally {
@@ -208,7 +268,7 @@ export const AnalysePage: React.FC = () => {
           <View style={styles.gridItem}>
             <MetricCard
               label="Vitalité"
-              value="85"
+              value={vitalityScore.toString()}
               unit="/100"
               icon={<Zap size={24} color="#10B981" strokeWidth={2.5} />}
               color="#10B981"
@@ -246,7 +306,7 @@ export const AnalysePage: React.FC = () => {
             },
             {
               label: 'Vitalité',
-              value: 85, // TODO: Calculer depuis données santé (sommeil, hydratation, etc.)
+              value: vitalityScore,
             },
             {
               label: 'Composition',

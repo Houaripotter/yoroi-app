@@ -102,6 +102,38 @@
       "90days": "90 GIORNI",
       "6months": "6 MESI",
       "1year": "1 ANNO"
+    },
+    "hydrationCard": {
+      "title": "Idratazione",
+      "objective": "Obiettivo:"
+    },
+    "sleepCard": {
+      "title": "Sonno",
+      "objective": "Obiettivo:",
+      "debt": "DEBITO",
+      "quality": "QUALITÀ",
+      "addSleep": "Aggiungi Sonno"
+    },
+    "chargeCard": {
+      "title": "Carico di Allenamento",
+      "noData": "Nessun Dato",
+      "activeRest": "Riposo Attivo",
+      "highLoad": "Carico Alto",
+      "moderateLoad": "Carico Moderato",
+      "startFirst": "Inizia il tuo primo allenamento",
+      "lightSubtitle": "Carico leggero - Recupero ottimale",
+      "highSubtitle": "Recupero necessario",
+      "moderateSubtitle": "Equilibrio ottimale",
+      "addFirst": "Aggiungi la tua prima sessione",
+      "idealDay": "Giorno ideale per allenamento intenso",
+      "prioritizeRecovery": "Dai priorità al recupero oggi",
+      "continueRoutine": "Continua la tua routine di allenamento",
+      "intensity": "INTENSITÀ",
+      "restNeeded": "RIPOSO NECESSARIO",
+      "newTraining": "Nuovo Allenamento",
+      "intensityLow": "Bassa",
+      "intensityMedium": "Media",
+      "intensityHigh": "Alta"
     }
   },
   "tools": {
@@ -213,7 +245,19 @@
     "calves": "Polpacci",
     "shoulders": "Spalle",
     "forearms": "Avambracci",
-    "neck": "Collo"
+    "neck": "Collo",
+    "noData": "Nessun dato",
+    "scrollHint": "Scorri per vedere tutti i dati",
+    "bmiUnderweight": "SOTTOPESO",
+    "bmiNormal": "NORMALE",
+    "bmiOverweight": "SOVRAPPESO",
+    "bmiObese": "OBESITÀ",
+    "bmiTitle": "INDICE DI MASSA CORPOREA",
+    "bmiCategoryUnderweight": "Sottopeso",
+    "bmiCategoryNormal": "Peso normale",
+    "bmiCategoryOverweight": "Sovrappeso",
+    "bmiCategoryObese": "Obesità",
+    "stable": "STABILE"
   },
   "planning": {
     "title": "Pianificazione",
@@ -279,6 +323,10 @@
     "backupAndRestore": "BACKUP E RIPRISTINO",
     "data": "DATI",
     "support": "SUPPORTO",
+    "dataTab": "Dati",
+    "supportTab": "Supporto",
+    "profileTab": "Profilo",
+    "appearanceTab": "Aspetto",
     "security": "SICUREZZA",
     "mode": "MODALITÀ",
     "competitorConfig": "CONFIG COMPETITORE",
@@ -613,7 +661,19 @@
     "september": "Settembre",
     "october": "Ottobre",
     "november": "Novembre",
-    "december": "Dicembre"
+    "december": "Dicembre",
+    "januaryShort": "Gen",
+    "februaryShort": "Feb",
+    "marchShort": "Mar",
+    "aprilShort": "Apr",
+    "mayShort": "Mag",
+    "juneShort": "Giu",
+    "julyShort": "Lug",
+    "augustShort": "Ago",
+    "septemberShort": "Set",
+    "octoberShort": "Ott",
+    "novemberShort": "Nov",
+    "decemberShort": "Dic"
   },
   "sports": {
     "musculation": "Pesi",
@@ -866,6 +926,11 @@
       "themeLocked": "Tema bloccato",
       "unlockThemeMessage": "Sblocca questo tema raggiungendo {{xp}} XP.\nAttualmente hai {{currentXp}} XP.",
       "errorChangingTheme": "Impossibile cambiare tema"
+    },
+    "modal": {
+      "organizePages": "Organizza pagine",
+      "done": "Fatto",
+      "dragToReorganize": "Tieni premuto e trascina per riorganizzare"
     },
     "customizeHome": {
       "title": "Personalizza",

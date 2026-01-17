@@ -5,6 +5,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { Zap, Activity, TrendingUp, AlertCircle, Settings } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -20,6 +21,7 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -31,43 +33,43 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
     switch (level) {
       case 'none':
         return {
-          label: 'Aucune Donnée',
-          subtitle: 'Commencez ton premier entraînement',
+          label: t('home.chargeCard.noData'),
+          subtitle: t('home.chargeCard.startFirst'),
           percentage: 0,
           color: '#94A3B8',
           gradient: ['#94A3B8', '#64748B'] as const,
           icon: Activity,
-          recommendation: 'Ajoutez ton première séance d\'entraînement',
+          recommendation: t('home.chargeCard.addFirst'),
         };
       case 'light':
         return {
-          label: 'Repos Actif',
-          subtitle: 'Charge légère - Récupération optimale',
+          label: t('home.chargeCard.activeRest'),
+          subtitle: t('home.chargeCard.lightSubtitle'),
           percentage: 33,
           color: '#10B981',
           gradient: ['#10B981', '#059669'] as const,
           icon: Activity,
-          recommendation: 'Journée idéale pour un entraînement intense',
+          recommendation: t('home.chargeCard.idealDay'),
         };
       case 'intense':
         return {
-          label: 'Charge Élevée',
-          subtitle: 'Besoin de récupération',
+          label: t('home.chargeCard.highLoad'),
+          subtitle: t('home.chargeCard.highSubtitle'),
           percentage: 90,
           color: '#EF4444',
           gradient: ['#EF4444', '#DC2626'] as const,
           icon: AlertCircle,
-          recommendation: 'Priorisez la récupération aujourd\'hui',
+          recommendation: t('home.chargeCard.prioritizeRecovery'),
         };
       default:
         return {
-          label: 'Charge Modérée',
-          subtitle: 'Équilibre optimal',
+          label: t('home.chargeCard.moderateLoad'),
+          subtitle: t('home.chargeCard.moderateSubtitle'),
           percentage: 65,
           color: '#F59E0B',
           gradient: ['#F59E0B', '#D97706'] as const,
           icon: Zap,
-          recommendation: 'Continuez ton routine d\'entraînement',
+          recommendation: t('home.chargeCard.continueRoutine'),
         };
     }
   };
@@ -200,7 +202,7 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
           </Animated.View>
           <View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Charge d'Entraînement
+              {t('home.chargeCard.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
               {chargeInfo.subtitle}
@@ -267,16 +269,16 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
         <View style={styles.metricsRow}>
           <View style={styles.metricCard}>
             <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-              INTENSITÉ
+              {t('home.chargeCard.intensity')}
             </Text>
             <Text style={[styles.metricValue, { color: chargeInfo.color }]}>
-              {level === 'none' ? '-' : level === 'light' ? 'Faible' : level === 'intense' ? 'Élevée' : 'Moyenne'}
+              {level === 'none' ? '-' : level === 'light' ? t('home.chargeCard.intensityLow') : level === 'intense' ? t('home.chargeCard.intensityHigh') : t('home.chargeCard.intensityMedium')}
             </Text>
           </View>
 
           <View style={styles.metricCard}>
             <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-              REPOS NÉCESSAIRE
+              {t('home.chargeCard.restNeeded')}
             </Text>
             <Text style={[styles.metricValue, { color: chargeInfo.color }]}>
               {level === 'none' ? '-' : level === 'light' ? '12h' : level === 'intense' ? '48h' : '24h'}
@@ -293,7 +295,7 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
           activeOpacity={0.7}
         >
           <Activity size={18} color={level === 'none' ? '#3B82F6' : chargeInfo.color} strokeWidth={2.5} />
-          <Text style={[styles.actionText, { color: level === 'none' ? '#3B82F6' : chargeInfo.color }]}>Nouvel Entraînement</Text>
+          <Text style={[styles.actionText, { color: level === 'none' ? '#3B82F6' : chargeInfo.color }]}>{t('home.chargeCard.newTraining')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

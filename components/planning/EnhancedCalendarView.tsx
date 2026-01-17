@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Plus, Moon } from 'lucide-react-native';
+import { getMonthRestDays } from '@/lib/restDaysService';
 import {
   format,
   addMonths,
@@ -46,6 +47,19 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
   selectedDate,
 }) => {
   const { colors } = useTheme();
+  const [restDays, setRestDays] = useState<Set<string>>(new Set());
+
+  // Charger les jours de repos pour le mois affiché
+  useEffect(() => {
+    const loadRestDays = async () => {
+      const monthRestDays = await getMonthRestDays(
+        currentMonth.getFullYear(),
+        currentMonth.getMonth()
+      );
+      setRestDays(monthRestDays);
+    };
+    loadRestDays();
+  }, [currentMonth]);
 
   // Calendar logic
   const monthStart = startOfMonth(currentMonth);
@@ -158,8 +172,9 @@ export const EnhancedCalendarView: React.FC<EnhancedCalendarViewProps> = ({
                   .map((id) => clubs.find((c) => c.id === id))
                   .filter(Boolean) as Club[];
 
-                // TODO: Récupérer l'état repos depuis la base de données
-                const isRest = false;
+                // Vérifier si c'est un jour de repos
+                const dateStr = format(day, 'yyyy-MM-dd');
+                const isRest = restDays.has(dateStr);
 
                 return (
                   <TouchableOpacity

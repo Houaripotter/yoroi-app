@@ -102,6 +102,38 @@
       "90days": "90 DAYS",
       "6months": "6 MONTHS",
       "1year": "1 YEAR"
+    },
+    "hydrationCard": {
+      "title": "Hydration",
+      "objective": "Target:"
+    },
+    "sleepCard": {
+      "title": "Sleep",
+      "objective": "Target:",
+      "debt": "DEBT",
+      "quality": "QUALITY",
+      "addSleep": "Add Sleep"
+    },
+    "chargeCard": {
+      "title": "Training Load",
+      "noData": "No Data",
+      "activeRest": "Active Rest",
+      "highLoad": "High Load",
+      "moderateLoad": "Moderate Load",
+      "startFirst": "Start your first training",
+      "lightSubtitle": "Light load - Optimal recovery",
+      "highSubtitle": "Recovery needed",
+      "moderateSubtitle": "Optimal balance",
+      "addFirst": "Add your first session",
+      "idealDay": "Ideal day for intense training",
+      "prioritizeRecovery": "Prioritize recovery today",
+      "continueRoutine": "Continue your training routine",
+      "intensity": "INTENSITY",
+      "restNeeded": "REST NEEDED",
+      "newTraining": "New Training",
+      "intensityLow": "Low",
+      "intensityMedium": "Medium",
+      "intensityHigh": "High"
     }
   },
   "tools": {
@@ -200,10 +232,16 @@
     "scrollHint": "Swipe to see all data",
     "bmi": "BMI",
     "bmiDescription": "Body Mass Index",
+    "bmiTitle": "BODY MASS INDEX",
     "bmiUnderweight": "UNDERWEIGHT",
     "bmiNormal": "NORMAL",
     "bmiOverweight": "OVERWEIGHT",
     "bmiObese": "OBESE",
+    "bmiCategoryUnderweight": "Underweight",
+    "bmiCategoryNormal": "Normal weight",
+    "bmiCategoryOverweight": "Overweight",
+    "bmiCategoryObese": "Obesity",
+    "stable": "STABLE",
     "bodyFat": "Body fat",
     "muscleMass": "Muscle mass",
     "waterPercentage": "Body water",
@@ -623,7 +661,19 @@
     "september": "September",
     "october": "October",
     "november": "November",
-    "december": "December"
+    "december": "December",
+    "januaryShort": "Jan",
+    "februaryShort": "Feb",
+    "marchShort": "Mar",
+    "aprilShort": "Apr",
+    "mayShort": "May",
+    "juneShort": "Jun",
+    "julyShort": "Jul",
+    "augustShort": "Aug",
+    "septemberShort": "Sep",
+    "octoberShort": "Oct",
+    "novemberShort": "Nov",
+    "decemberShort": "Dec"
   },
   "sports": {
     "musculation": "Weight training",

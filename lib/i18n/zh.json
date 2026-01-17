@@ -102,6 +102,38 @@
       "90days": "90天",
       "6months": "6个月",
       "1year": "1年"
+    },
+    "hydrationCard": {
+      "title": "饮水",
+      "objective": "目标:"
+    },
+    "sleepCard": {
+      "title": "睡眠",
+      "objective": "目标:",
+      "debt": "欠债",
+      "quality": "质量",
+      "addSleep": "添加睡眠"
+    },
+    "chargeCard": {
+      "title": "训练负荷",
+      "noData": "无数据",
+      "activeRest": "积极休息",
+      "highLoad": "高负荷",
+      "moderateLoad": "中等负荷",
+      "startFirst": "开始你的第一次训练",
+      "lightSubtitle": "轻负荷 - 最佳恢复",
+      "highSubtitle": "需要恢复",
+      "moderateSubtitle": "最佳平衡",
+      "addFirst": "添加你的第一次训练",
+      "idealDay": "高强度训练的理想日",
+      "prioritizeRecovery": "今天优先恢复",
+      "continueRoutine": "继续你的训练计划",
+      "intensity": "强度",
+      "restNeeded": "所需休息",
+      "newTraining": "新训练",
+      "intensityLow": "低",
+      "intensityMedium": "中",
+      "intensityHigh": "高"
     }
   },
   "tools": {
@@ -213,7 +245,19 @@
     "calves": "小腿",
     "shoulders": "肩膀",
     "forearms": "前臂",
-    "neck": "颈围"
+    "neck": "颈围",
+    "noData": "暂无数据",
+    "scrollHint": "滑动查看所有数据",
+    "bmiUnderweight": "偏瘦",
+    "bmiNormal": "正常",
+    "bmiOverweight": "超重",
+    "bmiObese": "肥胖",
+    "bmiTitle": "身体质量指数",
+    "bmiCategoryUnderweight": "体重过轻",
+    "bmiCategoryNormal": "正常体重",
+    "bmiCategoryOverweight": "超重",
+    "bmiCategoryObese": "肥胖",
+    "stable": "稳定"
   },
   "planning": {
     "title": "计划",
@@ -279,6 +323,10 @@
     "backupAndRestore": "备份和恢复",
     "data": "数据",
     "support": "支持",
+    "dataTab": "数据",
+    "supportTab": "支持",
+    "profileTab": "个人资料",
+    "appearanceTab": "外观",
     "security": "安全",
     "mode": "模式",
     "competitorConfig": "竞赛者设置",
@@ -613,7 +661,19 @@
     "september": "九月",
     "october": "十月",
     "november": "十一月",
-    "december": "十二月"
+    "december": "十二月",
+    "januaryShort": "1月",
+    "februaryShort": "2月",
+    "marchShort": "3月",
+    "aprilShort": "4月",
+    "mayShort": "5月",
+    "juneShort": "6月",
+    "julyShort": "7月",
+    "augustShort": "8月",
+    "septemberShort": "9月",
+    "octoberShort": "10月",
+    "novemberShort": "11月",
+    "decemberShort": "12月"
   },
   "sports": {
     "musculation": "力量训练",
@@ -883,6 +943,11 @@
         "royal": "皇家",
         "ghost": "幽灵"
       }
+    },
+    "modal": {
+      "organizePages": "整理页面",
+      "done": "完成",
+      "dragToReorganize": "长按拖动以重新排序"
     },
     "customizeHome": {
       "title": "自定义首页",

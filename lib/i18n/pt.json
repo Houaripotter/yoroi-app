@@ -102,6 +102,38 @@
       "90days": "90 DIAS",
       "6months": "6 MESES",
       "1year": "1 ANO"
+    },
+    "hydrationCard": {
+      "title": "Hidratação",
+      "objective": "Meta:"
+    },
+    "sleepCard": {
+      "title": "Sono",
+      "objective": "Meta:",
+      "debt": "DÍVIDA",
+      "quality": "QUALIDADE",
+      "addSleep": "Adicionar Sono"
+    },
+    "chargeCard": {
+      "title": "Carga de Treino",
+      "noData": "Sem Dados",
+      "activeRest": "Descanso Ativo",
+      "highLoad": "Carga Alta",
+      "moderateLoad": "Carga Moderada",
+      "startFirst": "Comece seu primeiro treino",
+      "lightSubtitle": "Carga leve - Recuperação ótima",
+      "highSubtitle": "Precisa de recuperação",
+      "moderateSubtitle": "Equilíbrio ótimo",
+      "addFirst": "Adicione sua primeira sessão",
+      "idealDay": "Dia ideal para treino intenso",
+      "prioritizeRecovery": "Priorize a recuperação hoje",
+      "continueRoutine": "Continue sua rotina de treino",
+      "intensity": "INTENSIDADE",
+      "restNeeded": "DESCANSO NECESSÁRIO",
+      "newTraining": "Novo Treino",
+      "intensityLow": "Baixa",
+      "intensityMedium": "Média",
+      "intensityHigh": "Alta"
     }
   },
   "tools": {
@@ -213,7 +245,19 @@
     "calves": "Panturrilhas",
     "shoulders": "Ombros",
     "forearms": "Antebraços",
-    "neck": "Pescoço"
+    "neck": "Pescoço",
+    "noData": "Sem dados",
+    "scrollHint": "Deslize para ver todos os dados",
+    "bmiUnderweight": "ABAIXO DO PESO",
+    "bmiNormal": "NORMAL",
+    "bmiOverweight": "SOBREPESO",
+    "bmiObese": "OBESIDADE",
+    "bmiTitle": "ÍNDICE DE MASSA CORPORAL",
+    "bmiCategoryUnderweight": "Abaixo do peso",
+    "bmiCategoryNormal": "Peso normal",
+    "bmiCategoryOverweight": "Sobrepeso",
+    "bmiCategoryObese": "Obesidade",
+    "stable": "ESTÁVEL"
   },
   "planning": {
     "title": "Agenda",
@@ -280,6 +324,10 @@
     "backupAndRestore": "BACKUP E RESTAURAÇÃO",
     "data": "DADOS",
     "support": "SUPORTE",
+    "dataTab": "Dados",
+    "supportTab": "Suporte",
+    "profileTab": "Perfil",
+    "appearanceTab": "Aparência",
     "security": "SEGURANÇA",
     "mode": "MODO",
     "competitorConfig": "CONFIG COMPETIDOR",
@@ -614,7 +662,19 @@
     "september": "Setembro",
     "october": "Outubro",
     "november": "Novembro",
-    "december": "Dezembro"
+    "december": "Dezembro",
+    "januaryShort": "Jan",
+    "februaryShort": "Fev",
+    "marchShort": "Mar",
+    "aprilShort": "Abr",
+    "mayShort": "Mai",
+    "juneShort": "Jun",
+    "julyShort": "Jul",
+    "augustShort": "Ago",
+    "septemberShort": "Set",
+    "octoberShort": "Out",
+    "novemberShort": "Nov",
+    "decemberShort": "Dez"
   },
   "sports": {
     "musculation": "Musculação",
@@ -867,6 +927,11 @@
       "themeLocked": "Tema bloqueado",
       "unlockThemeMessage": "Desbloqueie este tema atingindo {{xp}} XP.\nVocê tem atualmente {{currentXp}} XP.",
       "errorChangingTheme": "Não é possível alterar o tema"
+    },
+    "modal": {
+      "organizePages": "Organizar páginas",
+      "done": "Concluído",
+      "dragToReorganize": "Segure e arraste para reorganizar"
     },
     "customizeHome": {
       "title": "Personalizar",

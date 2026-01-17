@@ -9,7 +9,7 @@ import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n, LOCALE_MAP } from '@/lib/I18nContext';
 import { LineChart } from 'react-native-chart-kit';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, Locale } from 'date-fns';
 import { fr, enUS, es, de, it, pt, ru, ar, zhCN } from 'date-fns/locale';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

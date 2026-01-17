@@ -6,6 +6,7 @@
 // des versions chiffrées, validées et sauvegardées.
 
 import * as FS from 'expo-file-system';
+import Constants from 'expo-constants';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -347,7 +348,7 @@ async function exportAllData(): Promise<string> {
   const data: SecureBackupData = {
     version: EXPORT_VERSION,
     exported_at: new Date().toISOString(),
-    app_version: '1.0.0', // TODO: récupérer depuis app.json
+    app_version: Constants.expoConfig?.version || (Constants.manifest as any)?.version || '1.0.0',
     device_info: {
       platform: 'mobile',
     },

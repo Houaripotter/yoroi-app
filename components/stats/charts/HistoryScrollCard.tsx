@@ -41,7 +41,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
   evolutionGoal = 'increase', // Par défaut, une augmentation est positive (ex: muscle)
 }) => {
   const { colors, isDark } = useTheme();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
 
   // Fonction pour déterminer si une couleur est claire (besoin de texte foncé)
   const isLightColor = (hexColor: string): boolean => {
@@ -84,18 +84,18 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
     const isLoss = diff < -0.1;
 
     if (userGoal === 'lose') {
-      if (isLoss) return { color: '#00D9BB', label: 'EN BAISSE' }; // Teal = bien (perte)
-      if (isGain) return { color: '#FF4757', label: 'EN HAUSSE' }; // Red = mal (prise)
-      return { color: '#FFB800', label: 'STABLE' }; // Gold = stable
+      if (isLoss) return { color: '#00D9BB', label: t('stats.trendDown').toUpperCase() }; // Teal = bien (perte)
+      if (isGain) return { color: '#FF4757', label: t('stats.trendUp').toUpperCase() }; // Red = mal (prise)
+      return { color: '#FFB800', label: t('stats.stable') }; // Gold = stable
     } else if (userGoal === 'gain') {
-      if (isGain) return { color: '#00D9BB', label: 'EN HAUSSE' }; // Teal = bien (prise)
-      if (isLoss) return { color: '#FF4757', label: 'EN BAISSE' }; // Red = mal (perte)
-      return { color: '#FFB800', label: 'STABLE' }; // Gold = stable
+      if (isGain) return { color: '#00D9BB', label: t('stats.trendUp').toUpperCase() }; // Teal = bien (prise)
+      if (isLoss) return { color: '#FF4757', label: t('stats.trendDown').toUpperCase() }; // Red = mal (perte)
+      return { color: '#FFB800', label: t('stats.stable') }; // Gold = stable
     } else {
       // maintain
-      if (Math.abs(diff) < 0.3) return { color: '#00D9BB', label: 'STABLE' }; // Teal = stable
-      if (isGain) return { color: '#FFB800', label: 'EN HAUSSE' };
-      return { color: '#FFB800', label: 'EN BAISSE' }; // Gold = variation
+      if (Math.abs(diff) < 0.3) return { color: '#00D9BB', label: t('stats.stable') }; // Teal = stable
+      if (isGain) return { color: '#FFB800', label: t('stats.trendUp').toUpperCase() };
+      return { color: '#FFB800', label: t('stats.trendDown').toUpperCase() }; // Gold = variation
     }
   };
 

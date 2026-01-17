@@ -45,6 +45,7 @@ import {
 
 // Import events catalog data
 import eventsData from '@/src/data/events.json';
+import { toggleRestDay } from '@/lib/restDaysService';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useTheme } from '@/lib/ThemeContext';
@@ -640,18 +641,35 @@ export default function PlanningScreen() {
     return { type: 'color' as const, color: club.color || colors.accent };
   };
 
-  // Handler: Toggle repos (à implémenter avec une table dédiée)
-  const handleToggleRest = (dayId: string) => {
+  // Handler: Toggle repos
+  const handleToggleRest = async (dayId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // TODO: Implémenter la logique de repos avec une table dédiée
-    showPopup('Repos', `Fonction repos pour ${dayId} a implementer`);
+
+    // Calculer la date du jour sélectionné dans la semaine courante
+    const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    const targetDate = new Date(monday);
+    targetDate.setDate(monday.getDate() + dayIndex);
+    const dateStr = targetDate.toISOString().split('T')[0];
+
+    const isNowRest = await toggleRestDay(dateStr);
+    showPopup(
+      isNowRest ? 'Jour de repos' : 'Repos annulé',
+      isNowRest
+        ? `${dayId.charAt(0).toUpperCase() + dayId.slice(1)} marqué comme jour de repos`
+        : `${dayId.charAt(0).toUpperCase() + dayId.slice(1)} n'est plus un jour de repos`,
+      [{ text: 'OK', style: 'primary' }]
+    );
   };
 
   // Handler: Ouvrir une séance depuis la vue programme
   const handleSessionPress = (dayId: string, sessionIndex: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // TODO: Ouvrir le modal de détail de la séance
-    showPopup('Seance', `Ouvrir la seance ${sessionIndex} du ${dayId}`);
+    // Ouvrir le détail de la séance dans l'historique
+    router.push('/history');
   };
 
   // Handler: Ajouter une séance depuis la vue emploi du temps

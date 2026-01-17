@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getTrainings, getClubs, Training, Club } from '@/lib/database';
 import { getDay, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { getWeekRestDays } from '@/lib/restDaysService';
 import logger from '@/lib/security/logger';
 
 export interface SessionDetail {
@@ -27,18 +28,21 @@ export interface DaySchedule {
 export const useWeekSchedule = () => {
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [restDays, setRestDays] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       logger.info('🔄 useWeekSchedule: Chargement des données...');
-      const [trainingsData, clubsData] = await Promise.all([
+      const [trainingsData, clubsData, restDaysData] = await Promise.all([
         getTrainings(),
         getClubs(),
+        getWeekRestDays(),
       ]);
       logger.info('🔄 useWeekSchedule: Trainings chargés:', trainingsData.length);
       setWorkouts(trainingsData);
       setClubs(clubsData);
+      setRestDays(restDaysData);
     } catch (error) {
       logger.error('Erreur chargement planning:', error);
     } finally {
@@ -144,11 +148,11 @@ export const useWeekSchedule = () => {
       return {
         id: day.id,
         label: day.label,
-        isRest: false, // TODO: implémenter la logique repos
+        isRest: restDays.has(day.id),
         sessions: daySessions,
       };
     });
-  }, [workouts, clubs]);
+  }, [workouts, clubs, restDays]);
 
   return {
     weekSchedule,

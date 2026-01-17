@@ -132,7 +132,7 @@ export const PlanningPage4Clubs: React.FC = () => {
         style={[styles.addButton, { backgroundColor: colors.accent }]}
         activeOpacity={0.8}
         onPress={() => {
-          // TODO: Navigation vers l'ajout de club
+          router.push('/clubs');
         }}
       >
         <Text style={styles.addButtonText}>+ Ajouter un club</Text>
