@@ -1420,6 +1420,22 @@ class HealthConnectService {
     }
   }
 
+  async writeBodyFat(percentage: number): Promise<boolean> {
+    try {
+      // Apple Health attend un ratio (0-1), on convertit depuis le pourcentage
+      const ratio = percentage / 100;
+
+      await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyFatPercentage', ratio, {
+        start: new Date(),
+        end: new Date(),
+      });
+      return true;
+    } catch (error) {
+      logger.error('Erreur écriture body fat:', error);
+      return false;
+    }
+  }
+
   async writeWorkout(workout: {
     activityType: string;
     startDate: Date;

@@ -103,6 +103,13 @@
       "6months": "6 MONATE",
       "1year": "1 JAHR"
     },
+    "quotes": {
+      "quote1": "Erfolg ist die Summe kleiner Anstrengungen, die Tag für Tag wiederholt werden.",
+      "quote2": "Jedes Training bringt dich deinem Ziel näher.",
+      "quote3": "Disziplin ist die Brücke zwischen Zielen und Ergebnissen.",
+      "quote4": "Dein einziger Konkurrent ist die Person, die du gestern warst.",
+      "quote5": "Schmerz ist vorübergehend, Stolz ist dauerhaft."
+    },
     "hydrationCard": {
       "title": "Hydration",
       "objective": "Ziel:"

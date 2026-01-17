@@ -5,7 +5,7 @@
 // ============================================
 
 import { useEffect, useState } from 'react';
-import { Platform, Alert } from 'react-native';
+import { Platform, Alert, Linking } from 'react-native';
 import healthConnect from '@/lib/healthConnect.ios';
 import logger from '@/lib/security/logger';
 
@@ -120,8 +120,7 @@ export function useHealthKit(): UseHealthKitReturn {
                         {
                           text: 'Ouvrir Réglages',
                           onPress: () => {
-                            // TODO: Implémenter l'ouverture des Réglages iOS
-                            // Linking.openSettings();
+                            Linking.openSettings();
                           },
                         },
                       ]

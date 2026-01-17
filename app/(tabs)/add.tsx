@@ -348,7 +348,15 @@ export default function AddScreen() {
             logger.info('Poids synchronisé vers Apple Health:', weight);
           }
         }
-        // TODO: Export body fat % si disponible (nécessite fonction writeBodyFat)
+        if (fatPercent) {
+          const fatValue = parseFloat(fatPercent);
+          if (!isNaN(fatValue) && fatValue > 0 && fatValue < 100) {
+            const exported = await HealthConnect.writeBodyFat(fatValue);
+            if (exported) {
+              logger.info('Body fat synchronisé vers Apple Health:', fatValue);
+            }
+          }
+        }
       } catch (healthError) {
         // Ne pas bloquer la sauvegarde si l'export échoue
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);

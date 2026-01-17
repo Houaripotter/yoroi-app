@@ -3,6 +3,10 @@
 // ============================================
 // Remplace tous les console.log pour éviter les fuites de données en production
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ERROR_LOG_KEY = '@yoroi_error_logs';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
@@ -79,9 +83,23 @@ class Logger {
     if (this.isDev) {
       console.error(`❌ [ERROR] ${message}`, error ?? '');
     } else {
-      // TODO: En production, envoyer à un service de monitoring
-      // Exemples: Sentry, Crashlytics, etc.
-      // Sentry.captureException(error, { extra: { message } });
+      // En production, sauvegarder les erreurs critiques pour diagnostic
+      this.saveErrorToStorage(entry);
+    }
+  }
+
+  private async saveErrorToStorage(entry: LogEntry) {
+    try {
+      const existingLogsStr = await AsyncStorage.getItem(ERROR_LOG_KEY);
+      const existingLogs = existingLogsStr ? JSON.parse(existingLogsStr) : [];
+
+      existingLogs.unshift(entry);
+      // Garder les 50 dernières erreurs
+      const logsToSave = existingLogs.slice(0, 50);
+
+      await AsyncStorage.setItem(ERROR_LOG_KEY, JSON.stringify(logsToSave));
+    } catch (e) {
+      // Silently fail - on ne veut pas créer une boucle d'erreurs
     }
   }
 

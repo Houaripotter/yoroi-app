@@ -29,9 +29,15 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { format, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
+
+// Map des locales date-fns par langue
+const DATE_LOCALES: Record<string, Locale> = {
+  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
+};
 import {
   getSleepEntries,
   addSleepEntry,
@@ -52,6 +58,8 @@ export default function SleepScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { t, language } = useI18n();
+  const dateLocale = DATE_LOCALES[language] || fr;
 
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
@@ -101,9 +109,9 @@ export default function SleepScreen() {
       setQuality(3);
       setNotes('');
       loadData();
-      showPopup('Enregistre', 'Ton sommeil a ete enregistre !', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
-      showPopup('Erreur', 'Impossible d\'enregistrer.', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('common.error'), t('sleep.saveError'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -127,7 +135,7 @@ export default function SleepScreen() {
     });
 
     if (value) {
-      showPopup('Active', 'Tu recevras un rappel pour aller dormir !', [{ text: 'OK', style: 'primary' }]);
+      showPopup(t('sleep.activated'), t('sleep.reminderActivatedMessage'), [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -141,7 +149,7 @@ export default function SleepScreen() {
     });
     setShowNotificationSettings(false);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    showPopup('Enregistre', `Rappel programme a ${bedtimeReminder}`, [{ text: 'OK', style: 'primary' }]);
+    showPopup(t('sleep.saved'), t('sleep.reminderScheduled', { time: bedtimeReminder }), [{ text: 'OK', style: 'primary' }]);
   };
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
@@ -153,7 +161,7 @@ export default function SleepScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Sommeil</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('sleep.title')}</Text>
         <Moon size={24} color="#8B5CF6" />
       </View>
 
@@ -164,7 +172,7 @@ export default function SleepScreen() {
             <View style={[styles.mainIconContainer, { backgroundColor: '#8B5CF615' }]}>
               <Battery size={24} color="#8B5CF6" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.mainTitle, { color: colors.textMuted }]}>DETTE DE SOMMEIL</Text>
+            <Text style={[styles.mainTitle, { color: colors.textMuted }]}>{t('sleep.sleepDebt')}</Text>
           </View>
           <Text style={[styles.debtValue, { color: advice?.severity === 'good' ? '#10B981' : advice?.severity === 'danger' ? '#EF4444' : '#F59E0B' }]}>
             {stats?.sleepDebtHours || 0}<Text style={styles.debtUnit}>h</Text>

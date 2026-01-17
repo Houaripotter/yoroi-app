@@ -103,6 +103,13 @@
       "6months": "6 MOIS",
       "1year": "1 AN"
     },
+    "quotes": {
+      "quote1": "Le succès est la somme de petits efforts répétés jour après jour.",
+      "quote2": "Chaque entraînement te rapproche de ton objectif.",
+      "quote3": "La discipline est le pont entre les objectifs et les résultats.",
+      "quote4": "Ton seul concurrent, c'est celui que tu étais hier.",
+      "quote5": "La douleur est temporaire, la fierté est permanente."
+    },
     "hydrationCard": {
       "title": "Hydratation",
       "objective": "Objectif:"

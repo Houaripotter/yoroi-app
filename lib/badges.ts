@@ -40,6 +40,7 @@ import {
   Measurement,
   Workout,
 } from './storage';
+import { getProfile } from './database';
 import { getSleepEntries } from './sleepService';
 
 // ============================================
@@ -788,6 +789,7 @@ export interface BadgeStats {
   totalMeasurements: number;
   weightLost: number;
   goalReached: boolean;
+  halfwayGoalReached: boolean;
 
   // Entrainements
   totalWorkouts: number;
@@ -1044,6 +1046,7 @@ export const calculateBadgeStats = async (): Promise<BadgeStats> => {
   const workouts = await getAllWorkouts();
   const photos = await getPhotosFromStorage();
   const settings = await getUserSettings();
+  const profile = await getProfile();
   const firstUseDate = await getFirstUseDate();
 
   // Streak
@@ -1054,9 +1057,30 @@ export const calculateBadgeStats = async (): Promise<BadgeStats> => {
 
   // Objectif atteint
   let goalReached = false;
+  let halfwayGoalReached = false;
+
   if (settings.weight_goal && measurements.length > 0) {
     const latestWeight = measurements[0].weight;
     goalReached = latestWeight <= settings.weight_goal;
+
+    // Calculer 50% de l'objectif
+    // On utilise le poids de départ du profil ou le premier poids enregistré
+    const startWeight = profile?.start_weight ||
+      (measurements.length > 0
+        ? [...measurements].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0].weight
+        : 0);
+
+    if (startWeight > settings.weight_goal) {
+      // L'utilisateur veut perdre du poids
+      const totalToLose = startWeight - settings.weight_goal;
+      const actuallyLost = startWeight - latestWeight;
+      halfwayGoalReached = actuallyLost >= totalToLose * 0.5;
+    } else if (startWeight < settings.weight_goal) {
+      // L'utilisateur veut prendre du poids
+      const totalToGain = settings.weight_goal - startWeight;
+      const actuallyGained = latestWeight - startWeight;
+      halfwayGoalReached = actuallyGained >= totalToGain * 0.5;
+    }
   }
 
   // Sessions multiples (2 ou 3 entraînements/jour)
@@ -1092,6 +1116,7 @@ export const calculateBadgeStats = async (): Promise<BadgeStats> => {
     totalMeasurements: measurements.length,
     weightLost,
     goalReached,
+    halfwayGoalReached,
     totalWorkouts: workouts.length,
     earlyMeasurements: countEarlyMeasurements(measurements),
     lateWorkouts: countLateWorkouts(workouts),
@@ -1222,7 +1247,7 @@ export const checkAndUnlockBadges = async (): Promise<Badge[]> => {
         shouldUnlock = stats.weightLost >= 30;
         break;
       case 'halfway_goal':
-        shouldUnlock = stats.goalReached; // TODO: calculer 50% objectif
+        shouldUnlock = stats.halfwayGoalReached;
         break;
 
       // NOUVEAUX BADGES ENTRAINEMENT
@@ -1404,8 +1429,10 @@ export const getAllBadgesProgress = async (): Promise<BadgeProgress[]> => {
         currentProgress = stats.weightLost;
         break;
       case 'goal_reached':
-      case 'halfway_goal':
         currentProgress = stats.goalReached ? 1 : 0;
+        break;
+      case 'halfway_goal':
+        currentProgress = stats.halfwayGoalReached ? 1 : 0;
         break;
 
       // ENTRAINEMENT

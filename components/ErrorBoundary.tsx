@@ -4,9 +4,13 @@
 // Capture toutes les erreurs React et affiche un écran d'erreur convivial
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { logger } from '@/lib/logger';
+import * as Clipboard from 'expo-clipboard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ERROR_STORAGE_KEY = '@yoroi_crash_reports';
 
 interface Props {
   children: React.ReactNode;
@@ -38,17 +42,32 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
     this.setState({ error, errorInfo });
 
-    // TODO: En production, envoyer à un service de monitoring
-    // Exemples: Sentry, Crashlytics
-    // if (!__DEV__) {
-    //   Sentry.captureException(error, {
-    //     contexts: {
-    //       react: {
-    //         componentStack: errorInfo.componentStack,
-    //       },
-    //     },
-    //   });
-    // }
+    // Sauvegarder le rapport d'erreur pour analyse ultérieure
+    this.saveCrashReport(error, errorInfo);
+  }
+
+  private async saveCrashReport(error: Error, errorInfo: React.ErrorInfo) {
+    try {
+      const report = {
+        timestamp: new Date().toISOString(),
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      };
+
+      // Récupérer les rapports existants
+      const existingReportsStr = await AsyncStorage.getItem(ERROR_STORAGE_KEY);
+      const existingReports = existingReportsStr ? JSON.parse(existingReportsStr) : [];
+
+      // Ajouter le nouveau rapport (garder les 10 derniers)
+      existingReports.unshift(report);
+      const reportsToSave = existingReports.slice(0, 10);
+
+      await AsyncStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(reportsToSave));
+      logger.info('Crash report saved for later analysis');
+    } catch (saveError) {
+      logger.error('Failed to save crash report', saveError);
+    }
   }
 
   handleReset = () => {
@@ -63,14 +82,39 @@ export class ErrorBoundary extends React.Component<Props, State> {
     }
   };
 
-  handleExportLogs = () => {
-    const logs = logger.exportLogs();
-    logger.info('Logs exported for debugging', { logsLength: logs.length });
+  handleExportLogs = async () => {
+    try {
+      const logs = logger.exportLogs();
 
-    // TODO: Permettre à l'utilisateur de copier/partager les logs
-    // Peut utiliser expo-clipboard ou expo-sharing
-    // await Clipboard.setStringAsync(logs);
-    // Alert.alert('Logs copiés', 'Les logs ont été copiés dans le presse-papier');
+      // Construire le rapport complet
+      const errorReport = this.state.error ? `
+=== ERREUR ===
+${this.state.error.toString()}
+
+=== STACK TRACE ===
+${this.state.error.stack || 'N/A'}
+
+=== COMPONENT STACK ===
+${this.state.errorInfo?.componentStack || 'N/A'}
+
+` : '';
+
+      const fullReport = `=== YOROI CRASH REPORT ===
+Date: ${new Date().toISOString()}
+
+${errorReport}=== LOGS ===
+${logs}`;
+
+      await Clipboard.setStringAsync(fullReport);
+      Alert.alert(
+        'Logs copiés',
+        'Les logs ont été copiés dans le presse-papier. Tu peux les coller pour les envoyer au support.'
+      );
+      logger.info('Logs exported to clipboard', { logsLength: logs.length });
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de copier les logs');
+      logger.error('Failed to export logs', error);
+    }
   };
 
   render() {

@@ -29,6 +29,21 @@ export const PoidsPage: React.FC = () => {
 
   // Get locale for date formatting
   const dateLocale = language === 'fr' ? fr : enUS;
+
+  // Traduire les labels des zones BMI
+  const translatedBMIZones = BMI_RANGES.zones.map(zone => ({
+    ...zone,
+    label: zone.label === 'Sous-poids' ? t('stats.bmiUnderweight') :
+           zone.label === 'Normal' ? t('stats.bmiNormal') :
+           zone.label === 'Surpoids' ? t('stats.bmiOverweight') :
+           zone.label === 'Obésité' ? t('stats.bmiObese') : zone.label
+  }));
+
+  // BMI_RANGES traduit
+  const translatedBMIRanges = {
+    ...BMI_RANGES,
+    zones: translatedBMIZones
+  };
   const [weightData, setWeightData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bmi, setBmi] = useState<number | null>(null);
@@ -224,7 +239,7 @@ export const PoidsPage: React.FC = () => {
   }
 
   const currentWeight = weightData?.values?.[weightData.values.length - 1]?.value || 0;
-  const bmiStatus = bmi ? getMetricStatus(bmi, BMI_RANGES) : null;
+  const bmiStatus = bmi ? getMetricStatus(bmi, translatedBMIRanges) : null;
 
   return (
     <ScrollView
@@ -342,13 +357,13 @@ export const PoidsPage: React.FC = () => {
           >
             <AnimatedMetricBar
               value={bmi}
-              min={BMI_RANGES.min}
-              max={BMI_RANGES.max}
-              zones={BMI_RANGES.zones}
-              unit={BMI_RANGES.unit}
+              min={translatedBMIRanges.min}
+              max={translatedBMIRanges.max}
+              zones={translatedBMIRanges.zones}
+              unit={translatedBMIRanges.unit}
               title={t('stats.bmi')}
-              source={BMI_RANGES.source}
-              sourceUrl={BMI_RANGES.sourceUrl}
+              source={translatedBMIRanges.source}
+              sourceUrl={translatedBMIRanges.sourceUrl}
               animated={true}
             />
           </TouchableOpacity>
@@ -364,9 +379,9 @@ export const PoidsPage: React.FC = () => {
           <HistoryScrollCard
             data={bmiHistory}
             unit=""
-            healthRange={BMI_RANGES}
+            healthRange={translatedBMIRanges}
             color="#6366F1"
-            getStatus={(value) => getMetricStatus(value, BMI_RANGES)}
+            getStatus={(value) => getMetricStatus(value, translatedBMIRanges)}
           />
         </StatsSection>
       )}
@@ -436,7 +451,7 @@ export const PoidsPage: React.FC = () => {
           unit={selectedMetric.unit}
           icon={selectedMetric.icon}
           metricKey={selectedMetric.key}
-          healthRange={selectedMetric.key === 'bmi' ? BMI_RANGES : undefined}
+          healthRange={selectedMetric.key === 'bmi' ? translatedBMIRanges : undefined}
         />
       )}
     </ScrollView>

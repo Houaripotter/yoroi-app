@@ -103,6 +103,13 @@
       "6months": "6 MONTHS",
       "1year": "1 YEAR"
     },
+    "quotes": {
+      "quote1": "Success is the sum of small efforts repeated day in and day out.",
+      "quote2": "Every workout brings you closer to your goal.",
+      "quote3": "Discipline is the bridge between goals and results.",
+      "quote4": "Your only competitor is the person you were yesterday.",
+      "quote5": "Pain is temporary, pride is permanent."
+    },
     "hydrationCard": {
       "title": "Hydration",
       "objective": "Target:"

@@ -14,21 +14,21 @@ import { getLevel } from '@/lib/gamification';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
-// Citations motivantes
-const quotes = [
-  'Le succès est la somme de petits efforts répétés jour après jour.',
-  'Chaque entraînement te rapproche de ton objectif.',
-  'La discipline est le pont entre les objectifs et les résultats.',
-  'Ton seul concurrent, c\'est celui que tu étais hier.',
-  'La douleur est temporaire, la fierté est permanente.',
+// Clés des citations motivantes (pour i18n)
+const quoteKeys = [
+  'home.quotes.quote1',
+  'home.quotes.quote2',
+  'home.quotes.quote3',
+  'home.quotes.quote4',
+  'home.quotes.quote5',
 ];
 
-// Fonction pour le message de salutation
-const getGreeting = () => {
+// Fonction pour obtenir la clé de salutation selon l'heure
+const getGreetingKey = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Bonjour';
-  if (hour < 18) return 'Bon après-midi';
-  return 'Bonsoir';
+  if (hour < 12) return 'home.greetingMorning';
+  if (hour < 18) return 'home.greetingAfternoon';
+  return 'home.greetingEvening';
 };
 
 interface EssentielHeaderProps {
@@ -47,7 +47,8 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
-  const [quote, setQuote] = useState(quotes[0]);
+  const { t } = useI18n();
+  const [quoteKey, setQuoteKey] = useState(quoteKeys[0]);
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
 
@@ -69,8 +70,8 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
   }, []);
 
   useEffect(() => {
-    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-    setQuote(randomQuote);
+    const randomQuoteKey = quoteKeys[Math.floor(Math.random() * quoteKeys.length)];
+    setQuoteKey(randomQuoteKey);
     loadGamificationData();
   }, [loadGamificationData]);
 
@@ -91,7 +92,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
         </TouchableOpacity>
 
         <View style={styles.greetingContainer}>
-          <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+          <Text style={[styles.greeting, { color: colors.textMuted }]}>{t(getGreetingKey())}</Text>
           <View style={styles.userNameRow}>
             <Text style={[styles.userName, { color: colors.textPrimary }]}>{userName}</Text>
             {onToggleMode && (
@@ -181,7 +182,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
       {/* Citation */}
       <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
         <Sparkles size={18} color="#F59E0B" />
-        <Text style={[styles.quote, { color: colors.textSecondary }]} numberOfLines={2}>"{quote}"</Text>
+        <Text style={[styles.quote, { color: colors.textSecondary }]} numberOfLines={2}>"{t(quoteKey)}"</Text>
       </View>
     </>
   );
