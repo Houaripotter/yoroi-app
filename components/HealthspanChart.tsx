@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import Svg, { Path, Line, Circle, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { router } from 'expo-router';
 import { ChevronRight, Moon, Activity, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { format, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
@@ -24,11 +25,20 @@ interface HealthspanChartProps {
 
 export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, screenshotMode = false }) => {
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const [data, setData] = useState<DayData[]>([]);
 
   const chartWidth = SCREEN_WIDTH - 60;
   const chartHeight = 100;
   const padding = { left: 25, right: 10, top: 10, bottom: 25 };
+
+  // Locale pour date-fns basée sur la langue
+  const dateLocale = useMemo(() => {
+    const locales: { [key: string]: Locale } = {
+      fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
+    };
+    return locales[language] || fr;
+  }, [language]);
 
   useEffect(() => {
     loadHealthData();
@@ -82,7 +92,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Activity size={16} color={colors.accentText} />
-            <Text style={[styles.title, { color: colors.textMuted }]}>TENDANCE SANTÉ</Text>
+            <Text style={[styles.title, { color: colors.textMuted }]}>{t('healthspan.healthTrend')}</Text>
           </View>
           <View style={styles.headerRight}>
             <ChevronRight size={14} color={colors.textMuted} />
@@ -92,7 +102,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
         <View style={styles.emptyState}>
           <Moon size={24} color={colors.textMuted} style={{ opacity: 0.5 }} />
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            Connectez Apple Health pour suivre ton sommeil et stress
+            {t('healthspan.connectAppleHealth')}
           </Text>
         </View>
 
@@ -100,13 +110,13 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
             <Moon size={12} color="#8B5CF6" />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Sommeil</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('healthspan.sleep')}</Text>
             <Text style={[styles.legendValue, { color: colors.textMuted }]}>--%</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#22D3EE' }]} />
             <Activity size={12} color="#22D3EE" />
-            <Text style={[styles.legendText, { color: colors.textMuted }]}>Calme</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('healthspan.calm')}</Text>
             <Text style={[styles.legendValue, { color: colors.textMuted }]}>--%</Text>
           </View>
         </View>
@@ -198,7 +208,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Activity size={16} color={colors.accentText} />
-          <Text style={[styles.title, { color: colors.textMuted }]}>TENDANCE SANTÉ</Text>
+          <Text style={[styles.title, { color: colors.textMuted }]}>{t('healthspan.healthTrend')}</Text>
         </View>
         <View style={styles.headerRight}>
           <TrendIcon size={14} color={trendColor} />
@@ -296,7 +306,7 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
                 { color: isDark ? '#FFFFFF' : colors.textMuted, width: (chartWidth - padding.left - padding.right) / (data.length - 1) }
               ]}
             >
-              {format(new Date(d.date), 'EEE', { locale: fr }).slice(0, 2)}
+              {format(new Date(d.date), 'EEE', { locale: dateLocale }).slice(0, 2)}
             </Text>
           ))}
         </View>
@@ -307,13 +317,13 @@ export const HealthspanChart: React.FC<HealthspanChartProps> = ({ days = 7, scre
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
           <Moon size={12} color="#8B5CF6" />
-          <Text style={[styles.legendText, { color: colors.textMuted }]}>Sommeil</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('healthspan.sleep')}</Text>
           <Text style={[styles.legendValue, { color: '#8B5CF6' }]}>{avgSleep}%</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: '#22D3EE' }]} />
           <Activity size={12} color="#22D3EE" />
-          <Text style={[styles.legendText, { color: colors.textMuted }]}>Calme</Text>
+          <Text style={[styles.legendText, { color: colors.textMuted }]}>{t('healthspan.calm')}</Text>
           <Text style={[styles.legendValue, { color: '#22D3EE' }]}>{avgStress}%</Text>
         </View>
       </View>

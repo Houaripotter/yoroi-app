@@ -5,6 +5,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform, Linking } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { X, TrendingUp, TrendingDown, Minus, BookOpen, AlertTriangle, ExternalLink } from 'lucide-react-native';
 import { ModernLineChart } from './charts/ModernLineChart';
@@ -59,6 +60,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
   healthRange: passedHealthRange,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
@@ -279,7 +281,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                 <View style={styles.currentValueRow}>
                   <View>
                     <Text style={[styles.currentValueLabel, { color: colors.textMuted }]}>
-                      Valeur actuelle
+                      {t('statsModal.currentValue')}
                     </Text>
                     <Text style={[styles.currentValue, { color: color }]}>
                       {stats.latest.toFixed(1)}
@@ -302,10 +304,10 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                 <AlertTriangle size={20} color="#F59E0B" strokeWidth={2.5} />
                 <View style={styles.warningContent}>
                   <Text style={[styles.warningTitle, { color: '#F59E0B' }]}>
-                    Données profil manquantes
+                    {t('statsModal.missingProfileData')}
                   </Text>
                   <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-                    Pour des résultats scientifiques précis, renseigne ta taille et ta date de naissance dans ton profil.
+                    {t('statsModal.missingProfileDescription')}
                   </Text>
                 </View>
               </View>
@@ -328,7 +330,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                 <View style={styles.scienceHeader}>
                   <BookOpen size={18} color={colors.accentText} strokeWidth={2.5} />
                   <Text style={[styles.scienceTitle, { color: colors.textPrimary }]}>
-                    Explication scientifique
+                    {t('statsModal.scientificExplanation')}
                   </Text>
                 </View>
                 <Text style={[styles.scienceText, { color: colors.textSecondary }]}>
@@ -359,7 +361,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             {/* Graphique complet */}
             <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-                Évolution sur {selectedPeriod === '30j' ? '30 jours' : selectedPeriod === '90j' ? '90 jours' : selectedPeriod === '6m' ? '6 mois' : '1 an'}
+                {t('statsModal.evolutionOver')} {selectedPeriod === '30j' ? t('statsModal.30days') : selectedPeriod === '90j' ? t('statsModal.90days') : selectedPeriod === '6m' ? t('statsModal.6months') : t('statsModal.1year')}
               </Text>
               {filteredData.length > 0 ? (
                 <ModernLineChart
@@ -373,7 +375,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
               ) : (
                 <View style={styles.noDataContainer}>
                   <Text style={[styles.noDataText, { color: colors.textMuted }]}>
-                    Aucune donnée pour cette période
+                    {t('statsModal.noDataForPeriod')}
                   </Text>
                 </View>
               )}
@@ -383,29 +385,29 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
             {stats && (
               <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
                 <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>
-                  Statistiques détaillées
+                  {t('statsModal.detailedStats')}
                 </Text>
                 <View style={styles.statsGrid}>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>MIN</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.min')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                       {stats.min.toFixed(1)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>MAX</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.max')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                       {stats.max.toFixed(1)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>MOY</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.avg')}</Text>
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                       {stats.avg.toFixed(1)} {unit}
                     </Text>
                   </View>
                   <View style={[styles.statItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>ÉVOL</Text>
+                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('statsModal.evolution')}</Text>
                     <Text style={[styles.statValue, { color: stats.changePercent >= 0 ? '#2BCBBA' : '#FC5C65' }]}>
                       {stats.changePercent >= 0 ? '+' : ''}{stats.changePercent.toFixed(1)}%
                     </Text>

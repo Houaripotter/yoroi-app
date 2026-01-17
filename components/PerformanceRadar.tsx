@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from '
 import Svg, { Polygon, Line, Circle, Defs, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { Info, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
 import {
   calculateRadarScores,
@@ -19,6 +20,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
   size = 300,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [scores, setScores] = useState<RadarScores>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
   const [evolution, setEvolution] = useState<RadarEvolution | null>(null);
 
@@ -39,11 +41,11 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
 
   // 5 axes équidistants (72° entre chaque, commençant en haut à -90°)
   const axes = [
-    { key: 'force', label: 'Force', angle: -90, color: axisColors.force },
-    { key: 'cardio', label: 'Cardio', angle: -18, color: axisColors.cardio },
-    { key: 'souplesse', label: 'Souplesse', angle: 54, color: axisColors.souplesse },
-    { key: 'mental', label: 'Mental', angle: 126, color: axisColors.mental },
-    { key: 'technique', label: 'Technique', angle: 198, color: axisColors.technique },
+    { key: 'force', label: t('radar.strength'), angle: -90, color: axisColors.force },
+    { key: 'cardio', label: t('radar.cardio'), angle: -18, color: axisColors.cardio },
+    { key: 'souplesse', label: t('radar.flexibility'), angle: 54, color: axisColors.souplesse },
+    { key: 'mental', label: t('radar.mental'), angle: 126, color: axisColors.mental },
+    { key: 'technique', label: t('radar.technique'), angle: 198, color: axisColors.technique },
   ];
 
   useEffect(() => {
@@ -145,7 +147,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textMuted }]}>RADAR PERFORMANCE</Text>
+        <Text style={[styles.title, { color: colors.textMuted }]}>{t('radar.title')}</Text>
         <View style={[styles.infoBtn, { backgroundColor: colors.accent + '20' }]}>
           <Info size={12} color={colors.accentText} />
         </View>
@@ -294,7 +296,7 @@ export const PerformanceRadar: React.FC<PerformanceRadarProps> = ({
           <Text style={[styles.avgValue, { color: isDark ? colors.accent : '#000000', fontWeight: '800' }]}>
             {avgScore}  %
           </Text>
-          <Text style={[styles.avgLabel, { color: colors.textMuted }]}>Score Global</Text>
+          <Text style={[styles.avgLabel, { color: colors.textMuted }]}>{t('radar.globalScore')}</Text>
         </View>
         {evolution && evolution.average !== 0 && (
           <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>

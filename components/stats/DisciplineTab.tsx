@@ -51,7 +51,7 @@ export default function DisciplineTab() {
 
         disciplineHistory.push({
           date: dateStr,
-          weeklyLoad: stats?.totalLoad || Math.round(800 + Math.random() * 1200),
+          weeklyLoad: stats?.totalLoad || 0, // Pas de données fictives
           sessionsCount,
           avgIntensity,
           goalProgress: (sessionsCount / weeklyGoal) * 100,

@@ -28,37 +28,36 @@ export default function VitaliteTab() {
     try {
       setLoading(true);
 
-      // Récupérer les données sur 30 jours
-      const days = 30;
+      // Récupérer les VRAIES données uniquement
+      const sleepStats = await getSleepStats();
+      const hydrationHistory = await getHydrationHistory();
+      const readiness = await calculateReadinessScore(7);
+
+      // Ne créer des données que si on a des vraies données
       const vitalityHistory: VitalityData[] = [];
 
-      for (let i = days - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+      // Utiliser l'historique réel de sommeil si disponible
+      if (sleepStats.history && sleepStats.history.length > 0) {
+        for (const entry of sleepStats.history.slice(-30)) {
+          const dateStr = entry.date;
 
-        // Score vitalité
-        const readiness = await calculateReadinessScore(7);
+          // Chercher l'hydratation pour cette date
+          const hydrationEntry = hydrationHistory?.find((h: any) => h.date === dateStr);
 
-        // Sommeil (générer des données factices pour l'instant - TODO: vraies données)
-        const sleepHours = 7 + Math.random() * 2;
-        const sleepDebt = (8 - sleepHours) * (i + 1) / days;
-
-        // Hydratation (TODO: vraies données)
-        const hydrationMl = 1800 + Math.random() * 1000;
-
-        vitalityHistory.push({
-          date: dateStr,
-          vitalityScore: Math.max(0, Math.min(100, readiness.score + (Math.random() - 0.5) * 10)),
-          sleepHours,
-          hydrationMl,
-          sleepDebt: Math.max(0, sleepDebt),
-        });
+          vitalityHistory.push({
+            date: dateStr,
+            vitalityScore: readiness.score,
+            sleepHours: entry.hours || 0,
+            hydrationMl: hydrationEntry?.total || 0,
+            sleepDebt: sleepStats.debt || 0,
+          });
+        }
       }
 
       setData(vitalityHistory);
     } catch (error) {
       logger.error('Erreur chargement Vitalité:', error);
+      setData([]); // Pas de données fictives en cas d'erreur
     } finally {
       setLoading(false);
     }

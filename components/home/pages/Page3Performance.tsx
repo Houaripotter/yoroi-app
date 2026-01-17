@@ -214,7 +214,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
             {weeklyReport.totalSteps !== undefined && (
               <View style={styles.reportStat}>
                 <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
-                  Pas Total
+                  {t('analysis.totalSteps')}
                 </Text>
                 <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
                   {weeklyReport.totalSteps.toLocaleString()}
@@ -228,7 +228,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
       {/* CARD 1 - RADAR CHART */}
       <View style={[styles.radarCard, { backgroundColor: colors.backgroundCard }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-          Profil Athlète
+          {t('analysis.athleteProfile')}
         </Text>
         <View style={styles.radarContainer}>
           <PerformanceRadar size={240} />
@@ -238,7 +238,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
       {/* CARD 2 - HEALTHSPAN */}
       <View style={[styles.healthspanCard, { backgroundColor: colors.backgroundCard }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-          Santé & Longévité
+          {t('analysis.healthLongevity')}
         </Text>
         <HealthspanChart />
       </View>
@@ -246,7 +246,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
       {/* CARD 3 - DÉFIS DU JOUR */}
       <View style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-          Défis du Jour
+          {t('analysis.challenges')}
         </Text>
 
         <View style={styles.challengesList}>
@@ -275,7 +275,7 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
         {/* Progress Bar */}
         <View style={styles.progressSection}>
           <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
-            Progression
+            {t('analysis.progression')}
           </Text>
           <View style={styles.progressBar}>
             <View

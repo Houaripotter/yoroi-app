@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getTrainings, getClubs, type Training, type Club } from '@/lib/database';
 import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { router } from 'expo-router';
@@ -13,6 +14,7 @@ const CARD_PADDING = 16;
 
 export const PlanningPage4Clubs: React.FC = () => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
 
@@ -56,7 +58,7 @@ export const PlanningPage4Clubs: React.FC = () => {
       nestedScrollEnabled={true}
     >
       <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-        MES CLUBS
+        {t('planning.myClubs')}
       </Text>
 
       {/* Cartes de clubs */}
@@ -89,7 +91,7 @@ export const PlanningPage4Clubs: React.FC = () => {
                 {club.name}
               </Text>
               <Text style={[styles.clubDiscipline, { color: colors.textMuted }]}>
-                {club.sport || 'Musculation'}
+                {club.sport || t('sports.musculation')}
               </Text>
             </View>
 
@@ -99,7 +101,7 @@ export const PlanningPage4Clubs: React.FC = () => {
                 {club.monthCount}
               </Text>
               <Text style={[styles.clubCountLabel, { color: colors.textMuted }]}>
-                ce mois
+                {t('planning.thisMonth')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -113,7 +115,7 @@ export const PlanningPage4Clubs: React.FC = () => {
             {totalSessions}
           </Text>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-            total séances
+            {t('planning.totalSessions')}
           </Text>
         </View>
 
@@ -122,7 +124,7 @@ export const PlanningPage4Clubs: React.FC = () => {
             {clubs.length}
           </Text>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-            clubs
+            {t('planning.clubs')}
           </Text>
         </View>
       </View>
@@ -135,7 +137,7 @@ export const PlanningPage4Clubs: React.FC = () => {
           router.push('/clubs');
         }}
       >
-        <Text style={styles.addButtonText}>+ Ajouter un club</Text>
+        <Text style={styles.addButtonText}>+ {t('planning.addClub')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

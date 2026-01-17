@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { getTrainings, getClubs, type Training, type Club } from '@/lib/database';
 import { startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, addDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -19,6 +20,7 @@ export const PlanningPage2TimeTable: React.FC<PlanningPage2TimeTableProps> = ({
   weeklyTrainings = [],
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -65,9 +67,9 @@ export const PlanningPage2TimeTable: React.FC<PlanningPage2TimeTableProps> = ({
   };
 
   const timeSlots = [
-    { id: 'morning', label: 'Matin', time: '07:00 - 12:00' },
-    { id: 'afternoon', label: 'Après-midi', time: '12:00 - 18:00' },
-    { id: 'evening', label: 'Soir', time: '18:00 - 23:00' },
+    { id: 'morning', label: t('planning.morning'), time: '07:00 - 12:00' },
+    { id: 'afternoon', label: t('planning.afternoon'), time: '12:00 - 18:00' },
+    { id: 'evening', label: t('planning.evening'), time: '18:00 - 23:00' },
   ];
 
   return (
@@ -143,7 +145,7 @@ export const PlanningPage2TimeTable: React.FC<PlanningPage2TimeTableProps> = ({
                     })
                   ) : (
                     <Text style={[styles.restLabel, { color: colors.textMuted }]}>
-                      Repos
+                      {t('planning.rest')}
                     </Text>
                   )}
                 </View>

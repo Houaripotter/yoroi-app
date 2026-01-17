@@ -37,45 +37,28 @@ export const StatsPage2Activity: React.FC<StatsPage2ActivityProps> = ({
   useEffect(() => {
     const loadActivityHistory = async () => {
       try {
-        // Essayer de charger l'historique depuis HealthKit
+        // Charger l'historique RÉEL depuis HealthKit uniquement
         const stepsHistory = await healthConnect.getStepsHistory(7);
 
         if (stepsHistory && stepsHistory.length > 0) {
           // Utiliser les vraies données HealthKit
           const history = stepsHistory.map(entry => ({
             steps: entry.value || 0,
-            calories: Math.round((entry.value || 0) * 0.04), // Estimation: 0.04 kcal par pas
-            distance: parseFloat(((entry.value || 0) * 0.0008).toFixed(1)), // Estimation: 0.8m par pas
-            activeMinutes: Math.round((entry.value || 0) / 100), // Estimation
+            // Note: calories/distance/activeMinutes sont estimés à partir des pas réels
+            // Ce ne sont pas des données fictives, mais des calculs basés sur les vrais pas
+            calories: Math.round((entry.value || 0) * 0.04),
+            distance: parseFloat(((entry.value || 0) * 0.0008).toFixed(1)),
+            activeMinutes: Math.round((entry.value || 0) / 100),
           }));
           setActivityHistory(history);
         } else {
-          // Fallback: utiliser les données actuelles avec variance
-          const history = [];
-          for (let i = 6; i >= 0; i--) {
-            const variance = 0.8 + Math.random() * 0.4;
-            history.push({
-              steps: Math.round((steps || 8000) * variance),
-              calories: Math.round((calories || 400) * variance),
-              distance: parseFloat(((distance || 6) * variance).toFixed(1)),
-              activeMinutes: Math.round((activeMinutes || 45) * variance),
-            });
-          }
-          setActivityHistory(history);
+          // Pas de données réelles → pas de graphique historique
+          setActivityHistory([]);
         }
       } catch (error) {
-        // Fallback en cas d'erreur
-        const history = [];
-        for (let i = 6; i >= 0; i--) {
-          const variance = 0.8 + Math.random() * 0.4;
-          history.push({
-            steps: Math.round((steps || 8000) * variance),
-            calories: Math.round((calories || 400) * variance),
-            distance: parseFloat(((distance || 6) * variance).toFixed(1)),
-            activeMinutes: Math.round((activeMinutes || 45) * variance),
-          });
-        }
-        setActivityHistory(history);
+        // En cas d'erreur → pas de données fictives
+        console.error('Error loading activity history:', error);
+        setActivityHistory([]);
       }
     };
     loadActivityHistory();

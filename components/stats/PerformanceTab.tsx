@@ -54,7 +54,7 @@ export default function PerformanceTab() {
 
         performanceHistory.push({
           date: dateStr,
-          weeklyLoad: stats?.totalLoad || Math.round(1000 + Math.random() * 1000),
+          weeklyLoad: stats?.totalLoad || 0, // Pas de données fictives
           trainingHours,
           sleepHours: sleepHours / 7, // Moyenne par jour
           workRestRatio,

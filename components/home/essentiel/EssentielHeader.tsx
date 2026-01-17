@@ -138,7 +138,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
               <Trophy size={14} color="#FFFFFF" />
             </View>
             <View style={styles.gamificationInfo}>
-              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Rang</Text>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>{t('home.rank')}</Text>
               <Text style={[styles.gamificationValue, { color: currentRank.color }]}>{currentRank.name}</Text>
             </View>
           </View>
@@ -152,8 +152,8 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
               <Flame size={14} color="#F97316" />
             </View>
             <View style={styles.gamificationInfo}>
-              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Streak</Text>
-              <Text style={[styles.gamificationValue, { color: '#F97316' }]}>{streak} jours</Text>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>{t('home.streak')}</Text>
+              <Text style={[styles.gamificationValue, { color: '#F97316' }]}>{streak} {t('common.days')}</Text>
             </View>
           </View>
 
@@ -166,7 +166,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
               <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
             </View>
             <View style={styles.gamificationInfo}>
-              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>Niveau</Text>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>{t('gamification.level')}</Text>
               <View style={styles.xpRow}>
                 <Zap size={12} color="#FFD700" fill="#FFD700" />
                 <Text style={[styles.gamificationValue, { color: currentLevel.color }]}>{totalPoints}</Text>

@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X } from 'lucide-react-native';
+import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -18,6 +18,7 @@ import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 
@@ -76,6 +77,7 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
   const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
+  const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Localized greeting based on time
@@ -96,9 +98,14 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
 
   // Share button state
   const [showShareButton, setShowShareButton] = useState(true);
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const shareButtonScale = useRef(new Animated.Value(1)).current;
   const shareButtonGlow = useRef(new Animated.Value(0.4)).current;
   const shareButtonRotate = useRef(new Animated.Value(0)).current;
+  const shareMenuAnim = useRef(new Animated.Value(0)).current;
+  const menuItem1Anim = useRef(new Animated.Value(0)).current;
+  const menuItem2Anim = useRef(new Animated.Value(0)).current;
+  const menuItem3Anim = useRef(new Animated.Value(0)).current;
 
   // Animations citation - apparition simple
   const quoteFadeAnim = useRef(new Animated.Value(0)).current;
@@ -141,6 +148,19 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
     };
     loadGoal();
   }, []);
+
+  // Load body composition data
+  useEffect(() => {
+    const loadBodyComposition = async () => {
+      try {
+        const data = await getLatestBodyComposition();
+        setBodyComposition(data);
+      } catch (error) {
+        console.error('Error loading body composition:', error);
+      }
+    };
+    loadBodyComposition();
+  }, [refreshTrigger]);
 
   // Check if share button was dismissed
   useEffect(() => {
@@ -206,13 +226,89 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
     };
   }, [showShareButton]);
 
-  const handleSharePress = () => {
+  const openShareMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/share-hub');
+    setShowShareMenu(true);
+
+    // Animation d'ouverture du menu avec effet cascade
+    Animated.parallel([
+      Animated.spring(shareMenuAnim, {
+        toValue: 1,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.spring(shareButtonRotate, {
+        toValue: 1,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Animation cascade des items
+    Animated.stagger(80, [
+      Animated.spring(menuItem1Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
+      Animated.spring(menuItem2Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
+      Animated.spring(menuItem3Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const closeShareMenu = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Animation de fermeture
+    Animated.parallel([
+      Animated.timing(shareMenuAnim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(shareButtonRotate, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(menuItem1Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
+      Animated.timing(menuItem2Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
+      Animated.timing(menuItem3Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
+    ]).start(() => setShowShareMenu(false));
+  };
+
+  const handleSharePress = () => {
+    if (showShareMenu) {
+      closeShareMenu();
+    } else {
+      openShareMenu();
+    }
+  };
+
+  const handleShareCard = (type: 'weekly' | 'monthly' | 'yearly') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    closeShareMenu();
+
+    // Naviguer vers la carte appropriée
+    setTimeout(() => {
+      switch (type) {
+        case 'weekly':
+          router.push('/social-share/weekly-recap-v2');
+          break;
+        case 'monthly':
+          router.push('/social-share/monthly-recap-v2');
+          break;
+        case 'yearly':
+          router.push('/social-share/year-counter-v2');
+          break;
+      }
+    }, 200);
   };
 
   const handleDismissShareButton = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (showShareMenu) {
+      closeShareMenu();
+    }
     setShowShareButton(false);
     try {
       await AsyncStorage.setItem('@share_button_dismissed', 'true');
@@ -444,16 +540,20 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           </View>
         </View>
 
-        {/* Composition corporelle */}
+        {/* Composition corporelle - Données réelles uniquement */}
         <View style={[styles.bodyComposition, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
           <View style={styles.compositionItem}>
             <Dumbbell size={16} color="#EF4444" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {currentWeight > 0 ? `${(currentWeight * 0.40).toFixed(1)} kg` : '--'}
+                {bodyComposition?.muscleMass ? `${bodyComposition.muscleMass.toFixed(1)} kg` : '--'}
               </Text>
-              <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>{currentWeight > 0 ? '40%' : '--%'}</Text>
+              <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>
+                {bodyComposition?.muscleMass && currentWeight > 0
+                  ? `${((bodyComposition.muscleMass / currentWeight) * 100).toFixed(0)}%`
+                  : '--%'}
+              </Text>
             </View>
           </View>
 
@@ -464,9 +564,13 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {currentWeight > 0 ? `${(currentWeight * 0.20).toFixed(1)} kg` : '--'}
+                {bodyComposition?.bodyFatPercent != null && currentWeight > 0
+                  ? `${((bodyComposition.bodyFatPercent / 100) * currentWeight).toFixed(1)} kg`
+                  : '--'}
               </Text>
-              <Text style={[styles.compositionPercent, { color: '#F59E0B' }]}>{currentWeight > 0 ? '20%' : '--%'}</Text>
+              <Text style={[styles.compositionPercent, { color: '#F59E0B' }]}>
+                {bodyComposition?.bodyFatPercent != null ? `${bodyComposition.bodyFatPercent.toFixed(0)}%` : '--%'}
+              </Text>
             </View>
           </View>
 
@@ -477,9 +581,13 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {currentWeight > 0 ? `${(currentWeight * 0.40).toFixed(1)} kg` : '--'}
+                {bodyComposition?.waterPercent != null && currentWeight > 0
+                  ? `${((bodyComposition.waterPercent / 100) * currentWeight).toFixed(1)} kg`
+                  : '--'}
               </Text>
-              <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>{currentWeight > 0 ? '40%' : '--%'}</Text>
+              <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>
+                {bodyComposition?.waterPercent != null ? `${bodyComposition.waterPercent.toFixed(0)}%` : '--%'}
+              </Text>
             </View>
           </View>
         </View>
@@ -641,45 +749,183 @@ export const Page1Monitoring: React.FC<Page1MonitoringProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* FLOATING SHARE BUTTON - Animated */}
+        {/* FLOATING SHARE BUTTON WITH MENU - Animated */}
         {showShareButton && (
-          <Animated.View
-            style={[
-              styles.shareButtonContainer,
-              {
-                transform: [{ scale: shareButtonScale }],
-              }
-            ]}
-          >
+          <View style={styles.shareButtonContainer}>
+            {/* Menu des cartes - apparaît au-dessus du bouton */}
+            {showShareMenu && (
+              <Animated.View
+                style={[
+                  styles.shareMenuContainer,
+                  {
+                    opacity: shareMenuAnim,
+                    transform: [{
+                      translateY: shareMenuAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    }],
+                  },
+                ]}
+              >
+                {/* Carte Hebdo */}
+                <Animated.View
+                  style={{
+                    opacity: menuItem1Anim,
+                    transform: [{
+                      scale: menuItem1Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 1],
+                      }),
+                    }, {
+                      translateX: menuItem1Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    }],
+                  }}
+                >
+                  <TouchableOpacity
+                    style={[styles.shareMenuItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => handleShareCard('weekly')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#3B82F6', '#2563EB']}
+                      style={styles.shareMenuIcon}
+                    >
+                      <CalendarDays size={16} color="#FFF" strokeWidth={2.5} />
+                    </LinearGradient>
+                    <Text style={[styles.shareMenuText, { color: colors.textPrimary }]}>
+                      {t('share.weeklyCard') || 'Hebdo'}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+
+                {/* Carte Mensuelle */}
+                <Animated.View
+                  style={{
+                    opacity: menuItem2Anim,
+                    transform: [{
+                      scale: menuItem2Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 1],
+                      }),
+                    }, {
+                      translateX: menuItem2Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    }],
+                  }}
+                >
+                  <TouchableOpacity
+                    style={[styles.shareMenuItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => handleShareCard('monthly')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#8B5CF6', '#7C3AED']}
+                      style={styles.shareMenuIcon}
+                    >
+                      <Calendar size={16} color="#FFF" strokeWidth={2.5} />
+                    </LinearGradient>
+                    <Text style={[styles.shareMenuText, { color: colors.textPrimary }]}>
+                      {t('share.monthlyCard') || 'Mensuel'}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+
+                {/* Carte Annuelle */}
+                <Animated.View
+                  style={{
+                    opacity: menuItem3Anim,
+                    transform: [{
+                      scale: menuItem3Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.5, 1],
+                      }),
+                    }, {
+                      translateX: menuItem3Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    }],
+                  }}
+                >
+                  <TouchableOpacity
+                    style={[styles.shareMenuItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => handleShareCard('yearly')}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={['#F59E0B', '#D97706']}
+                      style={styles.shareMenuIcon}
+                    >
+                      <CalendarRange size={16} color="#FFF" strokeWidth={2.5} />
+                    </LinearGradient>
+                    <Text style={[styles.shareMenuText, { color: colors.textPrimary }]}>
+                      {t('share.yearlyCard') || 'Annuel'}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Animated.View>
+            )}
+
             {/* Glow effect */}
             <Animated.View
               style={[
                 styles.shareButtonGlow,
                 {
-                  opacity: shareButtonGlow,
+                  opacity: showShareMenu ? 0 : shareButtonGlow,
                   backgroundColor: colors.accent,
                 }
               ]}
             />
 
-            {/* Main button */}
-            <TouchableOpacity
-              style={[styles.shareButton, { backgroundColor: colors.accent }]}
-              onPress={handleSharePress}
-              activeOpacity={0.8}
+            {/* Main button with rotation */}
+            <Animated.View
+              style={[
+                {
+                  transform: [
+                    { scale: showShareMenu ? 1 : shareButtonScale },
+                    {
+                      rotate: shareButtonRotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '45deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <Share2 size={18} color={colors.textOnAccent} strokeWidth={2.5} />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.shareButton,
+                  { backgroundColor: showShareMenu ? colors.textMuted : colors.accent },
+                ]}
+                onPress={handleSharePress}
+                activeOpacity={0.8}
+              >
+                {showShareMenu ? (
+                  <X size={18} color="#FFF" strokeWidth={2.5} />
+                ) : (
+                  <Share2 size={18} color={colors.textOnAccent} strokeWidth={2.5} />
+                )}
+              </TouchableOpacity>
+            </Animated.View>
 
-            {/* Dismiss X button */}
-            <TouchableOpacity
-              style={[styles.shareButtonDismiss, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}
-              onPress={handleDismissShareButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <X size={10} color={colors.textMuted} strokeWidth={3} />
-            </TouchableOpacity>
-          </Animated.View>
+            {/* Dismiss X button - only when menu is closed */}
+            {!showShareMenu && (
+              <TouchableOpacity
+                style={[styles.shareButtonDismiss, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}
+                onPress={handleDismissShareButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={10} color={colors.textMuted} strokeWidth={3} />
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
 
@@ -1141,5 +1387,42 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // ═══════════════════════════════════════════════
+  // SHARE MENU
+  // ═══════════════════════════════════════════════
+  shareMenuContainer: {
+    position: 'absolute',
+    bottom: 60,
+    right: 0,
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  shareMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    minWidth: 120,
+  },
+  shareMenuIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareMenuText: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });

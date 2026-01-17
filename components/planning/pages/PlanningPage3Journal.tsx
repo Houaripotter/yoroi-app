@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { BookOpen, CheckCircle2, Clock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -19,6 +20,7 @@ export const PlanningPage3Journal: React.FC<PlanningPage3JournalProps> = ({
   completedTrainings = [],
 }) => {
   const { colors } = useTheme();
+  const { t } = useI18n();
   const router = useRouter();
 
   // Données d'exemple
@@ -54,11 +56,11 @@ export const PlanningPage3Journal: React.FC<PlanningPage3JournalProps> = ({
       nestedScrollEnabled={true}
     >
       <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>
-        Carnet
+        {t('planning.journal')}
       </Text>
 
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-        Journal de tes entraînements
+        {t('planning.journalSubtitle')}
       </Text>
 
       {/* Stats header */}
@@ -76,14 +78,14 @@ export const PlanningPage3Journal: React.FC<PlanningPage3JournalProps> = ({
             {recentTrainings.length}
           </Text>
           <Text style={[styles.statsLabel, { color: colors.textMuted }]}>
-            ENTRAÎNEMENTS CETTE SEMAINE
+            {t('planning.trainingsThisWeek')}
           </Text>
         </View>
       </View>
 
       {/* Liste des entraînements */}
       <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-        Entraînements récents
+        {t('planning.recentTrainings')}
       </Text>
 
       <View style={styles.trainingsList}>

@@ -39,40 +39,25 @@ export const StatsPage5Health: React.FC<StatsPage5HealthProps> = ({
   useEffect(() => {
     const loadHealthHistory = async () => {
       try {
-        // Charger l'historique de sommeil depuis HealthKit
+        // Charger l'historique de sommeil RÉEL depuis HealthKit uniquement
         const sleepHistory = await healthConnect.getSleepHistory(7);
 
         if (sleepHistory && sleepHistory.length > 0) {
-          // Utiliser les vraies données
+          // Utiliser les vraies données uniquement
           const history = sleepHistory.map(entry => ({
             sleep: entry.total || 0,
-            hydration: hydration + Math.round((Math.random() - 0.5) * 500), // Estimé
-            charge: Math.round(800 + Math.random() * 800), // La charge vient des entraînements
+            hydration: hydration, // Utiliser la valeur réelle passée en props
+            charge: 0, // La charge doit venir des vrais entraînements, pas de données fictives
           }));
           setHealthHistory(history);
         } else {
-          // Fallback: données simulées
-          const history = [];
-          for (let i = 6; i >= 0; i--) {
-            history.push({
-              sleep: parseFloat((7 + Math.random() * 2).toFixed(1)),
-              hydration: Math.round(1800 + Math.random() * 1000),
-              charge: Math.round(800 + Math.random() * 800),
-            });
-          }
-          setHealthHistory(history);
+          // Pas de données réelles → pas de graphique historique
+          setHealthHistory([]);
         }
       } catch (error) {
-        // Fallback en cas d'erreur
-        const history = [];
-        for (let i = 6; i >= 0; i--) {
-          history.push({
-            sleep: parseFloat((7 + Math.random() * 2).toFixed(1)),
-            hydration: Math.round(1800 + Math.random() * 1000),
-            charge: Math.round(800 + Math.random() * 800),
-          });
-        }
-        setHealthHistory(history);
+        // En cas d'erreur → pas de données fictives
+        console.error('Error loading health history:', error);
+        setHealthHistory([]);
       }
     };
     loadHealthHistory();

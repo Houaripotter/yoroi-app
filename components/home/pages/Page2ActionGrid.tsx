@@ -60,6 +60,26 @@ const getIconComponent = (iconName: string) => {
 
 const cardWidth = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) / COLUMNS;
 
+// Map tool IDs to translation keys
+const TOOL_TRANSLATION_KEYS: { [key: string]: { label: string; description: string } } = {
+  'blessures': { label: 'tools.injuries', description: 'tools.injuriesDescription' },
+  'timer': { label: 'tools.timer', description: 'tools.timerDescription' },
+  'carnet': { label: 'tools.journal', description: 'tools.journalDescription' },
+  'calculateurs': { label: 'tools.calculators', description: 'tools.calculatorsDescription' },
+  'jeune': { label: 'tools.fasting', description: 'tools.fastingDescription' },
+  'nutrition': { label: 'tools.nutrition', description: 'tools.nutritionDescription' },
+  'health': { label: 'tools.appleHealth', description: 'tools.appleHealthDescription' },
+  'savoir': { label: 'tools.knowledge', description: 'tools.knowledgeDescription' },
+  'dojo': { label: 'tools.myDojo', description: 'tools.myDojoDescription' },
+  'notifications': { label: 'tools.notifications', description: 'tools.notificationsDescription' },
+  'partager': { label: 'tools.share', description: 'tools.shareDescription' },
+  'clubs': { label: 'tools.clubsCoach', description: 'tools.clubsCoachDescription' },
+  'competiteur': { label: 'tools.compete', description: 'tools.competeDescription' },
+  'profil': { label: 'tools.profile', description: 'tools.profileDescription' },
+  'themes': { label: 'tools.themes', description: 'tools.themesDescription' },
+  'photos': { label: 'tools.photos', description: 'tools.photosDescription' },
+};
+
 export const Page2ActionGrid: React.FC = () => {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -106,6 +126,9 @@ export const Page2ActionGrid: React.FC = () => {
           <View style={styles.row}>
             {row.map((item) => {
               const Icon = getIconComponent(item.icon);
+              const translationKeys = TOOL_TRANSLATION_KEYS[item.id];
+              const label = translationKeys ? t(translationKeys.label) : item.label;
+              const description = translationKeys ? t(translationKeys.description) : item.description;
               return (
                 <TouchableOpacity
                   key={item.id}
@@ -118,10 +141,10 @@ export const Page2ActionGrid: React.FC = () => {
                       <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
                     </View>
                     <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={2}>
-                      {item.label}
+                      {label}
                     </Text>
                     <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-                      {item.description}
+                      {description}
                     </Text>
                   </View>
                 </TouchableOpacity>

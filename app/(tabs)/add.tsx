@@ -41,10 +41,11 @@ import {
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/design';
 import { addWeight } from '@/lib/database';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
 import { WeightInput, WeightInputHandle } from '@/components/WeightInput';
 import { backupReminderService } from '@/lib/backupReminderService';
@@ -61,20 +62,27 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ECRAN AJOUTER - DESIGN UNIFIE
 // ============================================
 
-// Mood options
-const MOODS: { id: string; icon: LucideIcon; label: string; color: string }[] = [
-  { id: 'amazing', icon: Flame, label: 'Au top', color: '#10B981' },
-  { id: 'good', icon: Smile, label: 'Bien', color: '#3B82F6' },
-  { id: 'okay', icon: Meh, label: 'Moyen', color: '#F59E0B' },
-  { id: 'tired', icon: Moon, label: 'Fatigué', color: '#8B5CF6' },
-  { id: 'bad', icon: Frown, label: 'Pas top', color: '#EF4444' },
+// Mood options - labels are translation keys
+const MOODS: { id: string; icon: LucideIcon; labelKey: string; color: string }[] = [
+  { id: 'amazing', icon: Flame, labelKey: 'add.moodAmazing', color: '#10B981' },
+  { id: 'good', icon: Smile, labelKey: 'add.moodGood', color: '#3B82F6' },
+  { id: 'okay', icon: Meh, labelKey: 'add.moodOkay', color: '#F59E0B' },
+  { id: 'tired', icon: Moon, labelKey: 'add.moodTired', color: '#8B5CF6' },
+  { id: 'bad', icon: Frown, labelKey: 'add.moodBad', color: '#EF4444' },
 ];
+
+// Date locales map
+const DATE_LOCALES: { [key: string]: Locale } = {
+  fr, en: enUS, es, pt, de, it, ru, ar, zh: zhCN
+};
 
 export default function AddScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t, language } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const dateLocale = DATE_LOCALES[language] || fr;
 
   // Weight input ref - Isolé pour éviter les re-renders
   const weightInputRef = useRef<WeightInputHandle>(null);
@@ -148,38 +156,36 @@ export default function AddScreen() {
         const draftAge = await draftService.getWeightDraftAgeInDays();
         const isExpiringSoon = await draftService.isWeightDraftExpiringSoon();
 
-        let message = 'Tu as des données non sauvegardées.';
+        let message = t('add.draftUnsaved');
 
         if (draftAge !== null) {
           if (draftAge === 0) {
-            message += ' Sauvegardées aujourd\'hui.';
-          } else if (draftAge === 1) {
-            message += ' Sauvegardées il y a 1 jour.';
+            message += ' ' + t('add.draftSavedToday');
           } else {
-            message += ` Sauvegardées il y a ${draftAge} jours.`;
+            message += ' ' + t('add.draftSavedDaysAgo', { days: draftAge });
           }
 
           if (isExpiringSoon) {
             const daysLeft = 7 - draftAge;
-            message += `\n\nATTENTION : Ce brouillon sera supprimé dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''} ! N'oublie pas de l'enregistrer.`;
+            message += '\n\n' + t('add.draftExpiringWarning', { days: daysLeft });
           }
         }
 
-        message += '\n\nVeux-tu restaurer ces données ?';
+        message += '\n\n' + t('add.restoreDraft');
 
         showPopup(
-          'Brouillon trouvé',
+          t('add.draftFound'),
           message,
           [
             {
-              text: 'Supprimer',
+              text: t('add.delete'),
               style: 'destructive',
               onPress: async () => {
                 await draftService.clearWeightDraft();
               },
             },
             {
-              text: 'Restaurer',
+              text: t('add.restore'),
               style: 'primary',
               onPress: () => {
                 // Restaurer les valeurs
@@ -210,7 +216,7 @@ export default function AddScreen() {
     };
 
     loadDraft();
-  }, []);
+  }, [t]);
 
   // Auto-sauvegarder quand les valeurs changent
   const autoSaveDraft = () => {
@@ -308,9 +314,9 @@ export default function AddScreen() {
 
     if (!weight && !hasMeasurements && !hasComposition) {
       showPopup(
-        'Aucune donnée',
-        'Entre au moins :\n\nVotre poids\nDes mensurations (tour de taille, etc.)\nVotre composition corporelle (% de graisse, etc.)',
-        [{ text: 'OK', style: 'primary' }]
+        t('add.noData'),
+        t('add.noDataMessage'),
+        [{ text: t('add.ok'), style: 'primary' }]
       );
       return;
     }
@@ -370,8 +376,8 @@ export default function AddScreen() {
       setShowSuccessModal(true);
     } catch (error) {
       logger.error('Erreur:', error);
-      showPopup('Erreur', "Impossible d'enregistrer", [
-        { text: 'OK', style: 'primary' }
+      showPopup(t('common.error'), t('common.error'), [
+        { text: t('add.ok'), style: 'primary' }
       ]);
     } finally {
       setIsSaving(false);
@@ -386,16 +392,16 @@ export default function AddScreen() {
 
     // Proposer les deux formats
     showPopup(
-      'Choisir le format',
-      'Quel format veux-tu utiliser pour sauvegarder tes données ?',
+      t('add.chooseFormat'),
+      t('add.chooseFormatMessage'),
       [
         {
-          text: 'Annuler',
+          text: t('add.cancel'),
           style: 'cancel',
           onPress: () => setShowSuccessModal(true),
         },
         {
-          text: 'CSV (Excel/Numbers)',
+          text: t('add.csvFormat'),
           style: 'primary',
           onPress: async () => {
             const success = await exportDataToCSV();
@@ -407,7 +413,7 @@ export default function AddScreen() {
           },
         },
         {
-          text: 'JSON (Réimport)',
+          text: t('add.jsonFormat'),
           style: 'primary',
           onPress: async () => {
             const success = await exportDataToJSON();
@@ -506,7 +512,7 @@ export default function AddScreen() {
         >
           <X size={24} color={colors.textSecondary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Ajouter</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('add.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -515,7 +521,7 @@ export default function AddScreen() {
         <View style={[styles.autoSaveIndicator, { backgroundColor: colors.success + '20', borderColor: colors.success }]}>
           <Check size={16} color={colors.success} />
           <Text style={[styles.autoSaveText, { color: colors.success }]}>
-            Brouillon sauvegardé
+            {t('add.draftSaved')}
           </Text>
         </View>
       )}
@@ -541,10 +547,10 @@ export default function AddScreen() {
           </View>
           <View style={styles.trainingQuickContent}>
             <Text style={[styles.trainingQuickTitle, { color: colors.textPrimary }]}>
-              Ajouter une séance
+              {t('add.addSession')}
             </Text>
             <Text style={[styles.trainingQuickSubtitle, { color: colors.textMuted }]}>
-              Entraînement, sparring, cours...
+              {t('add.sessionSubtitle')}
             </Text>
           </View>
           <ChevronRight size={24} color="#8B5CF6" />
@@ -560,7 +566,7 @@ export default function AddScreen() {
         >
           <Calendar size={20} color={colors.accentText} />
           <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })}
+            {format(selectedDate, "EEEE d MMMM yyyy", { locale: dateLocale })}
           </Text>
           <ChevronRight size={20} color={colors.textMuted} />
         </TouchableOpacity>
@@ -569,7 +575,7 @@ export default function AddScreen() {
         {/* POIDS - SECTION PRINCIPALE */}
         {/* ═══════════════════════════════════════════ */}
         <Card style={styles.weightCard}>
-          <SectionHeader icon={Scale} color={colors.accentText} title="Mon Poids" />
+          <SectionHeader icon={Scale} color={colors.accentText} title={t('add.myWeight')} />
 
           {/* Weight Input - Isolé pour éviter les bugs de re-render */}
           <WeightInput
@@ -585,8 +591,8 @@ export default function AddScreen() {
           <SectionHeader
             icon={Droplets}
             color="#4ECDC4"
-            title="Composition Corporelle"
-            subtitle="(balance connectée)"
+            title={t('add.bodyComposition')}
+            subtitle={t('add.connectedScale')}
           />
 
           {/* Ligne 1: Graisse, Muscle, Eau */}
@@ -595,7 +601,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
                 <Flame size={18} color="#EF4444" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Graisse</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.fat')}</Text>
               <NumericInput
                 value={fatPercent}
                 onValueChange={setFatPercent}
@@ -615,7 +621,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(34,197,94,0.15)' }]}>
                 <Dumbbell size={18} color="#22C55E" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Muscle</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.muscle')}</Text>
               <NumericInput
                 value={musclePercent}
                 onValueChange={setMusclePercent}
@@ -635,7 +641,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(6,182,212,0.15)' }]}>
                 <Droplets size={18} color="#06B6D4" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Eau</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.water')}</Text>
               <NumericInput
                 value={waterPercent}
                 onValueChange={setWaterPercent}
@@ -658,7 +664,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(168,162,158,0.15)' }]}>
                 <Bone size={18} color="#A8A29E" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Os</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.bone')}</Text>
               <NumericInput
                 value={boneMass}
                 onValueChange={setBoneMass}
@@ -678,7 +684,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(249,115,22,0.15)' }]}>
                 <CircleDot size={18} color="#F97316" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Viscérale</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.visceral')}</Text>
               <NumericInput
                 value={visceralFat}
                 onValueChange={setVisceralFat}
@@ -696,7 +702,7 @@ export default function AddScreen() {
               <View style={[styles.compIcon, { backgroundColor: 'rgba(168,85,247,0.15)' }]}>
                 <Activity size={18} color="#A855F7" />
               </View>
-              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>Âge Méta.</Text>
+              <Text style={[styles.compLabel, { color: colors.textPrimary }]}>{t('add.metabolicAge')}</Text>
               <NumericInput
                 value={metabolicAge}
                 onValueChange={setMetabolicAge}
@@ -717,7 +723,7 @@ export default function AddScreen() {
             <View style={[styles.compIcon, { backgroundColor: 'rgba(234,179,8,0.15)' }]}>
               <Zap size={18} color="#EAB308" />
             </View>
-            <Text style={[styles.bmrLabel, { color: colors.textPrimary }]}>Métabolisme de base (BMR)</Text>
+            <Text style={[styles.bmrLabel, { color: colors.textPrimary }]}>{t('add.basalMetabolism')}</Text>
             <NumericInput
               value={bmr}
               onValueChange={setBmr}
@@ -737,10 +743,10 @@ export default function AddScreen() {
         {/* MENSURATIONS */}
         {/* ═══════════════════════════════════════════ */}
         <Card>
-          <SectionHeader icon={Ruler} color="#8B5CF6" title="Mensurations" />
+          <SectionHeader icon={Ruler} color="#8B5CF6" title={t('add.measurements')} />
 
           <InputRow
-            label="Tour de taille"
+            label={t('add.waist')}
             value={waist}
             onChangeText={setWaist}
             placeholder="00"
@@ -748,7 +754,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Hanches"
+            label={t('add.hips')}
             value={hips}
             onChangeText={setHips}
             placeholder="00"
@@ -756,7 +762,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Poitrine"
+            label={t('add.chest')}
             value={chest}
             onChangeText={setChest}
             placeholder="00"
@@ -764,7 +770,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Cou"
+            label={t('add.neck')}
             value={neck}
             onChangeText={setNeck}
             placeholder="00"
@@ -772,7 +778,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Bras (biceps)"
+            label={t('add.arm')}
             value={arm}
             onChangeText={setArm}
             placeholder="00"
@@ -780,7 +786,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Cuisse"
+            label={t('add.thigh')}
             value={thigh}
             onChangeText={setThigh}
             placeholder="00"
@@ -788,7 +794,7 @@ export default function AddScreen() {
             color="#8B5CF6"
           />
           <InputRow
-            label="Mollet"
+            label={t('add.calf')}
             value={calf}
             onChangeText={setCalf}
             placeholder="00"
@@ -801,7 +807,7 @@ export default function AddScreen() {
         {/* MON RESSENTI */}
         {/* ═══════════════════════════════════════════ */}
         <Card>
-          <SectionHeader icon={Heart} color="#EC4899" title="Mon Ressenti" />
+          <SectionHeader icon={Heart} color="#EC4899" title={t('add.myFeeling')} />
 
           <View style={styles.moodGrid}>
             {MOODS.map((mood) => {
@@ -832,7 +838,7 @@ export default function AddScreen() {
                     styles.moodLabel,
                     { color: colors.textSecondary },
                     selectedMood === mood.id && { color: mood.color, fontWeight: '700' }
-                  ]}>{mood.label}</Text>
+                  ]}>{t(mood.labelKey)}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -858,10 +864,10 @@ export default function AddScreen() {
               </View>
               <View style={styles.photoTextContainer}>
                 <Text style={[styles.photoTitleLarge, { color: colors.textPrimary }]}>
-                  Ma Transformation
+                  {t('add.myTransformation')}
                 </Text>
                 <Text style={[styles.photoSubtitleLarge, { color: colors.textMuted }]}>
-                  Ajoute & Compare tes photos
+                  {t('add.addComparePhotos')}
                 </Text>
               </View>
             </View>
@@ -872,7 +878,7 @@ export default function AddScreen() {
                 <View style={[styles.photoMiniIcon, { backgroundColor: '#EF444420' }]}>
                   <Camera size={16} color="#EF4444" />
                 </View>
-                <Text style={[styles.photoBeforeText, { color: colors.textSecondary }]}>Avant</Text>
+                <Text style={[styles.photoBeforeText, { color: colors.textSecondary }]}>{t('add.before')}</Text>
               </View>
 
               <View style={styles.photoArrowContainer}>
@@ -883,13 +889,13 @@ export default function AddScreen() {
                 <View style={[styles.photoMiniIcon, { backgroundColor: '#10B98120' }]}>
                   <Camera size={16} color="#10B981" />
                 </View>
-                <Text style={[styles.photoAfterText, { color: colors.textSecondary }]}>Après</Text>
+                <Text style={[styles.photoAfterText, { color: colors.textSecondary }]}>{t('add.after')}</Text>
               </View>
             </View>
 
             {/* CTA */}
             <View style={[styles.photoCTA, { backgroundColor: colors.accent }]}>
-              <Text style={[styles.photoCTAText, { color: colors.textOnGold }]}>Comparer mes photos</Text>
+              <Text style={[styles.photoCTAText, { color: colors.textOnGold }]}>{t('add.comparePhotos')}</Text>
               <ChevronRight size={18} color={colors.textOnGold} strokeWidth={3} />
             </View>
           </View>
@@ -911,7 +917,7 @@ export default function AddScreen() {
             styles.saveButtonText,
             { color: colors.textOnGold }
           ]}>
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+            {isSaving ? t('add.saving') : t('add.save')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -928,10 +934,10 @@ export default function AddScreen() {
               <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.datePickerHeader}>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000' }]}>Annuler</Text>
+                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000' }]}>{t('add.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>OK</Text>
+                    <Text style={[styles.datePickerButton, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>{t('add.ok')}</Text>
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
@@ -973,7 +979,7 @@ export default function AddScreen() {
 
             {/* Titre */}
             <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
-              Données enregistrées !
+              {t('add.dataSaved')}
             </Text>
 
             {/* Détails */}
@@ -981,13 +987,13 @@ export default function AddScreen() {
               <View style={styles.successDetailRow}>
                 <Scale size={18} color={colors.accentText} />
                 <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
-                  Poids : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
+                  {t('add.weight')} : <Text style={{ fontWeight: '700', color: colors.textPrimary }}>{savedWeight} kg</Text>
                 </Text>
               </View>
               <View style={styles.successDetailRow}>
                 <Calendar size={18} color={colors.accentText} />
                 <Text style={[styles.successDetailText, { color: colors.textSecondary }]}>
-                  {format(selectedDate, 'dd MMMM yyyy', { locale: fr })}
+                  {format(selectedDate, 'dd MMMM yyyy', { locale: dateLocale })}
                 </Text>
               </View>
             </View>
@@ -996,7 +1002,7 @@ export default function AddScreen() {
             <View style={[styles.warningBox, { backgroundColor: colors.gold + '15', borderColor: colors.gold }]}>
               <Cloud size={20} color={colors.gold} />
               <Text style={[styles.warningText, { color: colors.textPrimary }]}>
-                <Text style={{ fontWeight: '700' }}>Important :</Text> Sauvegarde tes données sur iCloud pour ne jamais les perdre !
+                <Text style={{ fontWeight: '700' }}>{t('add.important')}</Text> {t('add.backupReminder')}
               </Text>
             </View>
 
@@ -1009,7 +1015,7 @@ export default function AddScreen() {
                 activeOpacity={0.8}
               >
                 <Cloud size={24} color={colors.textOnGold} strokeWidth={2.5} />
-                <Text style={[styles.cloudButtonText, { color: colors.textOnGold }]}>Sauvegarder sur iCloud</Text>
+                <Text style={[styles.cloudButtonText, { color: colors.textOnGold }]}>{t('add.backupToCloud')}</Text>
               </TouchableOpacity>
 
               {/* Bouton secondaire : Plus tard */}
@@ -1019,7 +1025,7 @@ export default function AddScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[styles.laterButtonText, { color: colors.textMuted }]}>
-                  Plus tard
+                  {t('add.later')}
                 </Text>
               </TouchableOpacity>
             </View>

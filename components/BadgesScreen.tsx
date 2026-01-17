@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { X, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { BADGES, BADGE_CATEGORIES, Badge, BadgeId, BadgeCategory } from '@/types/badges';
 import { BadgeItem } from './BadgeItem';
@@ -54,6 +55,7 @@ const calculateUnlockedBadges = async (): Promise<Set<BadgeId>> => {
 
 export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
   const { colors, themeName } = useTheme();
+  const { t } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const isWellness = false;
 
@@ -68,13 +70,13 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
       const badges = await calculateUnlockedBadges();
       setUnlockedBadges(badges);
     } catch (error) {
-      logger.error('❌ Erreur lors du calcul des badges:', error);
-      showPopup('Erreur', 'Impossible de charger les badges.', [{ text: 'OK', style: 'primary' }]);
+      logger.error('Error loading badges:', error);
+      showPopup(t('common.error'), t('badges.loadError'), [{ text: 'OK', style: 'primary' }]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [t, showPopup]);
 
   useFocusEffect(
     useCallback(() => {
@@ -120,7 +122,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
       <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
         <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.gold} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des badges...</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>{t('badges.loading')}</Text>
         </View>
       </Modal>
     );
@@ -134,7 +136,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
           <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: colors.card }, cardShadow]}>
             <X size={24} color={colors.textPrimary} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>Mes Badges</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('badges.myBadges')}</Text>
           <View style={[styles.iconContainer, { backgroundColor: colors.card }, cardShadow]}>
             <Award size={24} color={colors.gold} strokeWidth={2.5} />
           </View>
@@ -143,7 +145,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
         {/* Progress */}
         <View style={[styles.progressCard, { backgroundColor: colors.card }, cardShadow]}>
           <View style={styles.progressHeader}>
-            <Text style={[styles.progressTitle, { color: colors.textPrimary }]}>Progression</Text>
+            <Text style={[styles.progressTitle, { color: colors.textPrimary }]}>{t('badges.progression')}</Text>
             <Text style={[styles.progressCount, { color: colors.gold }]}>
               {unlockedCount} / {totalCount}
             </Text>
@@ -151,7 +153,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
           <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
             <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: colors.gold }]} />
           </View>
-          <Text style={[styles.progressText, { color: colors.textSecondary }]}>{progress.toFixed(0)}% complété</Text>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>{progress.toFixed(0)}% {t('badges.completed')}</Text>
         </View>
 
         <ScrollView
@@ -222,12 +224,12 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
                 <Text style={[styles.badgeDetailName, { color: colors.textPrimary }]}>{selectedBadge.name}</Text>
                 <Text style={[styles.badgeDetailDescription, { color: colors.textSecondary }]}>{selectedBadge.description}</Text>
                 <View style={[styles.badgeDetailRequirement, { backgroundColor: colors.cardHover }]}>
-                  <Text style={[styles.requirementLabel, { color: colors.textSecondary }]}>Condition :</Text>
+                  <Text style={[styles.requirementLabel, { color: colors.textSecondary }]}>{t('badges.condition')}</Text>
                   <Text style={[styles.requirementText, { color: colors.textPrimary }]}>{selectedBadge.requirement}</Text>
                 </View>
                 {unlockedBadges.has(selectedBadge.id) && (
                   <View style={styles.unlockedBanner}>
-                    <Text style={[styles.unlockedText, { color: colors.gold }]}>✓ Badge débloqué</Text>
+                    <Text style={[styles.unlockedText, { color: colors.gold }]}>{t('badges.badgeUnlocked')}</Text>
                   </View>
                 )}
               </View>

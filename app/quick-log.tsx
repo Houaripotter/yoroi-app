@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -32,44 +33,44 @@ type ActivityType = 'musculation' | 'running' | 'combat' | 'autre';
 
 interface ActivityOption {
   id: ActivityType;
-  label: string;
+  labelKey: string;
   icon: string;
   color: string;
-  description: string;
+  descriptionKey: string;
   iconType: 'lucide' | 'material';
 }
 
 const ACTIVITIES: ActivityOption[] = [
   {
     id: 'musculation',
-    label: 'Musculation',
+    labelKey: 'quickLog.musculation',
     icon: 'dumbbell',
     color: '#F97316',
-    description: 'Poids, séries, reps',
+    descriptionKey: 'quickLog.musculationDesc',
     iconType: 'lucide',
   },
   {
     id: 'running',
-    label: 'Running',
+    labelKey: 'quickLog.running',
     icon: 'run',
     color: '#3B82F6',
-    description: 'Distance, temps, allure',
+    descriptionKey: 'quickLog.runningDesc',
     iconType: 'material',
   },
   {
     id: 'combat',
-    label: 'Sports de Combat',
+    labelKey: 'quickLog.combat',
     icon: 'karate',
     color: '#EF4444',
-    description: 'Techniques, sparring',
+    descriptionKey: 'quickLog.combatDesc',
     iconType: 'material',
   },
   {
     id: 'autre',
-    label: 'Autre Activité',
+    labelKey: 'quickLog.other',
     icon: 'activity',
     color: '#10B981',
-    description: 'Yoga, vélo, natation...',
+    descriptionKey: 'quickLog.otherDesc',
     iconType: 'lucide',
   },
 ];
@@ -77,6 +78,7 @@ const ACTIVITIES: ActivityOption[] = [
 export default function QuickLogScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { t } = useI18n();
 
   const handleSelectActivity = (activityId: ActivityType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -128,7 +130,7 @@ export default function QuickLogScreen() {
           <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Saisie Rapide
+          {t('quickLog.title')}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -141,10 +143,10 @@ export default function QuickLogScreen() {
         {/* Message d'intro */}
         <View style={styles.introSection}>
           <Text style={[styles.introTitle, { color: colors.textPrimary }]}>
-            Qu'as-tu fait aujourd'hui ?
+            {t('quickLog.question')}
           </Text>
           <Text style={[styles.introSubtitle, { color: colors.textMuted }]}>
-            Choisis ton activité pour logger rapidement
+            {t('quickLog.subtitle')}
           </Text>
         </View>
 
@@ -172,12 +174,12 @@ export default function QuickLogScreen() {
 
               {/* Label */}
               <Text style={[styles.activityLabel, { color: colors.textPrimary }]}>
-                {activity.label}
+                {t(activity.labelKey)}
               </Text>
 
               {/* Description */}
               <Text style={[styles.activityDescription, { color: colors.textMuted }]}>
-                {activity.description}
+                {t(activity.descriptionKey)}
               </Text>
 
               {/* Indicateur visuel de sélection */}
@@ -208,7 +210,7 @@ export default function QuickLogScreen() {
         >
           <MaterialCommunityIcons name="notebook" size={20} color={colors.accent} />
           <Text style={[styles.fullJournalText, { color: colors.textPrimary }]}>
-            Voir mon Carnet Complet
+            {t('quickLog.viewFullJournal')}
           </Text>
         </TouchableOpacity>
 

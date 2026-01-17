@@ -12,8 +12,23 @@ import {
   getCitationStyle,
   getCitationNotifSettings,
   CitationNotifSettings,
+  SupportedLanguage,
 } from './citations';
 import logger from './security/logger';
+
+const LANGUAGE_KEY = '@yoroi_language';
+
+/**
+ * Get current language from AsyncStorage
+ */
+const getCurrentLanguage = async (): Promise<SupportedLanguage> => {
+  try {
+    const lang = await AsyncStorage.getItem(LANGUAGE_KEY);
+    return (lang as SupportedLanguage) || 'fr';
+  } catch {
+    return 'fr';
+  }
+};
 
 // ═══════════════════════════════════════════════
 // CONFIGURATION
@@ -143,6 +158,7 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
     await cancelAllCitationNotifications();
 
     const style = await getCitationStyle();
+    const language = await getCurrentLanguage();
     const hours = getNotificationHours(settings.frequency);
     const scheduledIds: string[] = [];
 
@@ -158,8 +174,8 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
           continue;
         }
 
-        // Obtenir une citation aléatoire
-        const citation = getRandomQuote(style);
+        // Obtenir une citation aléatoire dans la langue de l'utilisateur
+        const citation = getRandomQuote(style, language);
 
         // Planifier la notification
         const notifId = await Notifications.scheduleNotificationAsync({
@@ -244,7 +260,8 @@ export const sendImmediateCitationNotification = async (): Promise<boolean> => {
     }
 
     const style = await getCitationStyle();
-    const citation = getRandomQuote(style);
+    const language = await getCurrentLanguage();
+    const citation = getRandomQuote(style, language);
 
     await Notifications.scheduleNotificationAsync({
       content: {

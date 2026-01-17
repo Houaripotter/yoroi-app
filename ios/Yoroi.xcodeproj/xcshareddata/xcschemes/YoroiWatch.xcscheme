@@ -15,9 +15,23 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "97E1BED82F04ACD0006B6F08"
-               BuildableName = "Yoroi.app"
-               BlueprintName = "Yoroi"
+               BlueprintIdentifier = "9770F0642F1A98D500C506A7"
+               BuildableName = "YoroiWatch.app"
+               BlueprintName = "YoroiWatch"
+               ReferencedContainer = "container:Yoroi.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "9770F05F2F1A98D500C506A7"
+               BuildableName = "YoroiWatch Watch App.app"
+               BlueprintName = "YoroiWatch Watch App"
                ReferencedContainer = "container:Yoroi.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -35,9 +49,9 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "97E1BEE72F04ACD1006B6F08"
-               BuildableName = "YoroiTests.xctest"
-               BlueprintName = "YoroiTests"
+               BlueprintIdentifier = "9770F0732F1A98D800C506A7"
+               BuildableName = "YoroiWatchTests.xctest"
+               BlueprintName = "YoroiWatchTests"
                ReferencedContainer = "container:Yoroi.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -46,9 +60,9 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "97E1BEF12F04ACD1006B6F08"
-               BuildableName = "YoroiUITests.xctest"
-               BlueprintName = "YoroiUITests"
+               BlueprintIdentifier = "9770F07D2F1A98D800C506A7"
+               BuildableName = "YoroiWatchUITests.xctest"
+               BlueprintName = "YoroiWatchUITests"
                ReferencedContainer = "container:Yoroi.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -68,9 +82,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "97E1BED82F04ACD0006B6F08"
-            BuildableName = "Yoroi.app"
-            BlueprintName = "Yoroi"
+            BlueprintIdentifier = "9770F0642F1A98D500C506A7"
+            BuildableName = "YoroiWatch.app"
+            BlueprintName = "YoroiWatch"
             ReferencedContainer = "container:Yoroi.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -85,9 +99,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "97E1BED82F04ACD0006B6F08"
-            BuildableName = "Yoroi.app"
-            BlueprintName = "Yoroi"
+            BlueprintIdentifier = "9770F0642F1A98D500C506A7"
+            BuildableName = "YoroiWatch.app"
+            BlueprintName = "YoroiWatch"
             ReferencedContainer = "container:Yoroi.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

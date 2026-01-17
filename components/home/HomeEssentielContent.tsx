@@ -14,7 +14,8 @@ import { Profile } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
 import { BookOpen, Target, FileText, ChevronRight, Plus, Award, Brain, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { getDailyQuote } from '@/lib/citations';
+import { getDailyQuote, SupportedLanguage } from '@/lib/citations';
+import { useI18n } from '@/lib/I18nContext';
 
 interface HomeEssentielContentProps {
   // Profil
@@ -79,6 +80,7 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
+  const { language } = useI18n();
   const [dailyQuote, setDailyQuote] = useState<string>('');
 
   // Animations
@@ -90,7 +92,7 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
   useEffect(() => {
     const loadQuote = async () => {
       try {
-        const quote = await getDailyQuote();
+        const quote = await getDailyQuote(language as SupportedLanguage);
         setDailyQuote(quote.text);
 
         // Animation d'apparition
@@ -112,7 +114,7 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
       }
     };
     loadQuote();
-  }, []);
+  }, [language]);
 
   // Animation pulse pour le cerveau
   useEffect(() => {

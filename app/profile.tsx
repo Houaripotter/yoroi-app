@@ -63,6 +63,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
@@ -156,7 +157,7 @@ const StatBadge = ({
 );
 
 // Progress Card Component
-const ProgressCard = ({ weightProgress }: { weightProgress: any }) => {
+const ProgressCard = ({ weightProgress, t }: { weightProgress: any; t: (key: string) => string }) => {
   if (!weightProgress?.target) return null;
 
   const progress = Math.min(weightProgress.progress || 0, 100);
@@ -166,7 +167,7 @@ const ProgressCard = ({ weightProgress }: { weightProgress: any }) => {
       <View style={styles.progressHeader}>
         <View style={styles.progressTitleRow}>
           <Target size={18} color={COLORS.accent} />
-          <Text style={styles.progressTitle}>Objectif</Text>
+          <Text style={styles.progressTitle}>{t('profile.goal')}</Text>
         </View>
         <View style={styles.progressPercentBadge}>
           <Text style={styles.progressPercent}>{progress.toFixed(0)}%</Text>
@@ -189,17 +190,17 @@ const ProgressCard = ({ weightProgress }: { weightProgress: any }) => {
       <View style={styles.progressLabels}>
         <View style={styles.progressLabelItem}>
           <Text style={styles.progressLabelValue}>{weightProgress.start}</Text>
-          <Text style={styles.progressLabelText}>Départ</Text>
+          <Text style={styles.progressLabelText}>{t('profile.start')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'center' }]}>
           <Text style={[styles.progressLabelValue, { color: COLORS.accent, fontSize: TYPOGRAPHY.size.xl }]}>
             {weightProgress.current}
           </Text>
-          <Text style={styles.progressLabelText}>Actuel</Text>
+          <Text style={styles.progressLabelText}>{t('profile.current')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'flex-end' }]}>
           <Text style={[styles.progressLabelValue, { color: COLORS.success }]}>{weightProgress.target}</Text>
-          <Text style={styles.progressLabelText}>Objectif</Text>
+          <Text style={styles.progressLabelText}>{t('profile.goal')}</Text>
         </View>
       </View>
     </View>
@@ -236,6 +237,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
   const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
@@ -505,7 +507,7 @@ export default function ProfileScreen() {
           >
             <ChevronLeft size={22} color={COLORS.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profil</Text>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
           <TouchableOpacity
             style={[styles.editButton, isEditing && styles.editButtonActive]}
             onPress={() => setIsEditing(!isEditing)}
@@ -576,7 +578,7 @@ export default function ProfileScreen() {
             {/* Date d'inscription */}
             {profile?.start_date && (
               <Text style={[styles.memberSince, { color: colors.textMuted }]}>
-                Membre depuis {format(new Date(profile.start_date), 'MMMM yyyy', { locale: fr })}
+                {t('profile.memberSince')} {format(new Date(profile.start_date), 'MMMM yyyy', { locale: fr })}
               </Text>
             )}
           </LinearGradient>
@@ -588,7 +590,7 @@ export default function ProfileScreen() {
             icon={weightGoal === 'gain' ? TrendingUp : TrendingDown}
             value={weightProgress?.lost > 0 ? (weightGoal === 'gain' ? `+${weightProgress.lost.toFixed(1)}` : `-${weightProgress.lost.toFixed(1)}`) : '0'}
             unit=" kg"
-            label={weightGoal === 'gain' ? 'Pris' : 'Perdus'}
+            label={weightGoal === 'gain' ? t('profile.gained') : t('profile.lost')}
             color={weightGoal === 'gain' ? COLORS.warning : COLORS.success}
             bgColor={weightGoal === 'gain' ? COLORS.warningMuted : COLORS.successMuted}
           />
@@ -596,7 +598,7 @@ export default function ProfileScreen() {
             icon={Target}
             value={weightProgress?.target ? `${weightProgress.target}` : '-'}
             unit=" kg"
-            label="Objectif"
+            label={t('profile.target')}
             color={COLORS.accent}
             bgColor={COLORS.accentMuted}
           />
@@ -604,7 +606,7 @@ export default function ProfileScreen() {
             icon={Activity}
             value={weightProgress?.remaining > 0 ? weightProgress.remaining.toFixed(1) : '0'}
             unit=" kg"
-            label={weightGoal === 'gain' ? 'À prendre' : weightGoal === 'maintain' ? 'Maintien' : 'À perdre'}
+            label={weightGoal === 'gain' ? t('profile.toGain') : weightGoal === 'maintain' ? t('profile.maintenance') : t('profile.toLoose')}
             color={weightGoal === 'gain' ? COLORS.warning : weightGoal === 'maintain' ? COLORS.info : COLORS.success}
             bgColor={weightGoal === 'gain' ? COLORS.warningMuted : weightGoal === 'maintain' ? COLORS.infoMuted : COLORS.successMuted}
           />
@@ -620,7 +622,7 @@ export default function ProfileScreen() {
             <View style={[styles.dojoIconContainer, { backgroundColor: COLORS.goldMuted }]}>
               <Sparkles size={20} color={COLORS.gold} strokeWidth={2.5} />
             </View>
-            <Text style={styles.dojoTitle}>Mon Dojo</Text>
+            <Text style={styles.dojoTitle}>{t('gamification.title')}</Text>
             <ChevronRight size={20} color={COLORS.textMuted} />
           </View>
 
@@ -636,37 +638,37 @@ export default function ProfileScreen() {
             <View style={styles.dojoStatItem}>
               <Star size={18} color={COLORS.gold} strokeWidth={2.5} />
               <Text style={[styles.dojoStatValue, { color: COLORS.gold }]}>{level.level}</Text>
-              <Text style={styles.dojoStatLabel}>Niveau</Text>
+              <Text style={styles.dojoStatLabel}>{t('gamification.level')}</Text>
             </View>
 
             {/* Rang */}
             <View style={styles.dojoStatItem}>
               <Trophy size={18} color={rank?.color || COLORS.gold} strokeWidth={2.5} />
               <Text style={[styles.dojoStatValue, { color: rank?.color || COLORS.gold }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
-              <Text style={styles.dojoStatLabel}>Rang</Text>
+              <Text style={styles.dojoStatLabel}>{t('gamification.rank')}</Text>
             </View>
 
             {/* Badges */}
             <View style={styles.dojoStatItem}>
               <Award size={18} color={COLORS.success} strokeWidth={2.5} />
               <Text style={[styles.dojoStatValue, { color: COLORS.success }]}>{unlockedBadgesCount}</Text>
-              <Text style={styles.dojoStatLabel}>Badges</Text>
+              <Text style={styles.dojoStatLabel}>{t('gamification.badges')}</Text>
             </View>
           </View>
         </TouchableOpacity>
 
         {/* Progress to Goal */}
-        <ProgressCard weightProgress={weightProgress} />
+        <ProgressCard weightProgress={weightProgress} t={t} />
 
         {/* Personal Info Card */}
         <View style={styles.infoCard}>
-          <Text style={styles.sectionTitle}>Informations</Text>
+          <Text style={styles.sectionTitle}>{t('profile.informations')}</Text>
 
           {isEditing ? (
             <View style={styles.editForm}>
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Taille (cm)</Text>
+                  <Text style={styles.inputLabel}>{t('profile.height')} (cm)</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
                     value={heightCm}
@@ -696,7 +698,7 @@ export default function ProfileScreen() {
 
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Poids départ (kg)</Text>
+                  <Text style={styles.inputLabel}>{t('profile.startingWeight')} (kg)</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
                     value={startWeight}
@@ -707,7 +709,7 @@ export default function ProfileScreen() {
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Objectif (kg)</Text>
+                  <Text style={styles.inputLabel}>{t('profile.target')} (kg)</Text>
                   <TextInput
                     style={[styles.input, { backgroundColor: colors.card, color: colors.textPrimary, borderColor: colors.border }]}
                     value={targetWeight}
@@ -773,36 +775,36 @@ export default function ProfileScreen() {
             <View style={styles.infoList}>
               <InfoRow
                 icon={Ruler}
-                label="Taille"
+                label={t('profile.height')}
                 value={profile?.height_cm ? `${profile.height_cm} cm` : '-'}
                 color={COLORS.info}
                 bgColor={COLORS.infoMuted}
               />
               <InfoRow
                 icon={Calendar}
-                label="Âge"
+                label={t('profile.age')}
                 value={calculatedAge ? `${calculatedAge} ans` : (profile?.age ? `${profile.age} ans` : '-')}
                 color={COLORS.accent}
                 bgColor={COLORS.accentMuted}
               />
               <InfoRow
                 icon={Scale}
-                label="Poids de départ"
+                label={t('profile.startingWeight')}
                 value={weightProgress?.start ? `${weightProgress.start} kg` : '-'}
                 color={COLORS.warning}
                 bgColor={COLORS.warningMuted}
               />
               <InfoRow
                 icon={Target}
-                label="Objectif"
+                label={t('profile.target')}
                 value={weightProgress?.target ? `${weightProgress.target} kg` : '-'}
                 color={COLORS.success}
                 bgColor={COLORS.successMuted}
               />
               <InfoRow
                 icon={profile?.weight_goal === 'lose' ? TrendingDown : profile?.weight_goal === 'gain' ? TrendingUp : Minus}
-                label="Type d'objectif"
-                value={profile?.weight_goal === 'lose' ? 'Perte de poids' : profile?.weight_goal === 'gain' ? 'Prise de masse' : 'Maintien'}
+                label={t('profile.goalType')}
+                value={profile?.weight_goal === 'lose' ? t('profile.weightLoss') : profile?.weight_goal === 'gain' ? t('profile.massGain') : t('profile.maintenance')}
                 color={profile?.weight_goal === 'lose' ? COLORS.success : profile?.weight_goal === 'gain' ? COLORS.warning : COLORS.info}
                 bgColor={profile?.weight_goal === 'lose' ? COLORS.successMuted : profile?.weight_goal === 'gain' ? COLORS.warningMuted : COLORS.infoMuted}
               />

@@ -50,6 +50,7 @@ import {
   Play,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { RANKS, getCurrentRank, getNextRank, getRankProgress, getDaysToNextRank } from '@/lib/ranks';
 import { LEVELS, getLevel, getNextLevel, getLevelProgress } from '@/lib/gamification';
 import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/database';
@@ -262,6 +263,7 @@ const ProgressRing: React.FC<{
 export default function DojoScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -420,8 +422,8 @@ export default function DojoScreen() {
             <ChevronLeft size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Dojo</Text>
-            <Text style={styles.headerSubtitle}>殿堂 - Ton Parcours</Text>
+            <Text style={styles.headerTitle}>{t('gamification.dojo')}</Text>
+            <Text style={styles.headerSubtitle}>殿堂 - {t('gamification.yourJourney')}</Text>
           </View>
           <View style={{ width: 44 }} />
         </View>
@@ -456,7 +458,7 @@ export default function DojoScreen() {
                 <Flame size={20} color="#F97316" />
               </View>
               <Text style={styles.quickStatValue}>{streak}</Text>
-              <Text style={styles.quickStatLabel}>jours</Text>
+              <Text style={styles.quickStatLabel}>{t('common.days')}</Text>
             </View>
 
             <View style={styles.quickStatDivider} />
@@ -476,7 +478,7 @@ export default function DojoScreen() {
                 <Medal size={20} color="#10B981" />
               </View>
               <Text style={styles.quickStatValue}>{unlockedBadges.length}</Text>
-              <Text style={styles.quickStatLabel}>badges</Text>
+              <Text style={styles.quickStatLabel}>{t('gamification.badges').toLowerCase()}</Text>
             </View>
           </View>
         </View>
@@ -491,7 +493,7 @@ export default function DojoScreen() {
               })}
               <Text style={styles.nextRankText}>
                 <Text style={{ fontWeight: '800', color: nextRank.color }}>{nextRank.name}</Text>
-                {' '}dans <Text style={{ fontWeight: '800' }}>{daysToNextRank}</Text> jours
+                {' '}{t('gamification.in')} <Text style={{ fontWeight: '800' }}>{daysToNextRank}</Text> {t('common.days').toLowerCase()}
               </Text>
             </View>
             <View style={styles.nextRankProgressBar}>
@@ -526,9 +528,9 @@ export default function DojoScreen() {
       {/* Tabs améliorés */}
       <View style={[styles.tabsContainer, { backgroundColor: isDark ? '#1A1A2E' : '#F8FAFC' }]}>
         {[
-          { key: 'rangs', icon: Trophy, label: 'Rangs', color: '#F59E0B' },
-          { key: 'badges', icon: Award, label: 'Badges', color: '#8B5CF6' },
-          { key: 'historique', icon: Clock, label: 'Timeline', color: '#3B82F6' },
+          { key: 'rangs', icon: Trophy, label: t('gamification.ranks'), color: '#F59E0B' },
+          { key: 'badges', icon: Award, label: t('gamification.badges'), color: '#8B5CF6' },
+          { key: 'historique', icon: Clock, label: t('gamification.timeline'), color: '#3B82F6' },
         ].map((tab) => {
           const isActive = selectedTab === tab.key;
           return (
@@ -578,7 +580,7 @@ export default function DojoScreen() {
               />
               <View style={styles.levelCardHeader}>
                 <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
-                  <Text style={styles.levelBadgeText}>Niv. {currentLevel.level}</Text>
+                  <Text style={styles.levelBadgeText}>{t('gamification.lvl')} {currentLevel.level}</Text>
                 </View>
                 <View style={styles.levelInfo}>
                   <Text style={[styles.levelName, { color: colors.textPrimary }]}>{currentLevel.name}</Text>
@@ -594,7 +596,7 @@ export default function DojoScreen() {
                 <View style={styles.levelProgressSection}>
                   <View style={styles.levelProgressHeader}>
                     <Text style={[styles.levelProgressLabel, { color: colors.textMuted }]}>
-                      Prochain: <Text style={{ color: nextLevel.color, fontWeight: '700' }}>{nextLevel.name}</Text>
+                      {t('gamification.next')}: <Text style={{ color: nextLevel.color, fontWeight: '700' }}>{nextLevel.name}</Text>
                     </Text>
                     <Text style={[styles.levelProgressXp, { color: colors.textPrimary }]}>
                       {levelProgressData.pointsToNext} XP
@@ -614,7 +616,7 @@ export default function DojoScreen() {
 
             {/* Liste des rangs */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              PROGRESSION DES RANGS
+              {t('gamification.ranksProgression')}
             </Text>
 
             {RANKS.map((rank, index) => {
@@ -720,7 +722,7 @@ export default function DojoScreen() {
                             {rank.minDays - streak}
                           </Text>
                           <Text style={[styles.daysNeededLabel, { color: colors.textMuted }]}>
-                            jours
+                            {t('common.days').toLowerCase()}
                           </Text>
                         </View>
                       )}
@@ -750,7 +752,7 @@ export default function DojoScreen() {
                       {unlockedBadges.length}
                     </Text>
                   </View>
-                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Débloqués</Text>
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>{t('gamification.unlocked')}</Text>
                 </View>
 
                 <View style={styles.badgesStatDivider}>
@@ -763,7 +765,7 @@ export default function DojoScreen() {
                       {lockedBadges.length}
                     </Text>
                   </View>
-                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Restants</Text>
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>{t('gamification.remaining')}</Text>
                 </View>
 
                 <View style={styles.badgesStatDivider}>
@@ -776,7 +778,7 @@ export default function DojoScreen() {
                       {BADGES.length}
                     </Text>
                   </View>
-                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>Total</Text>
+                  <Text style={[styles.badgesStatLabel, { color: colors.textMuted }]}>{t('gamification.total')}</Text>
                 </View>
               </View>
 
@@ -791,7 +793,7 @@ export default function DojoScreen() {
                   />
                 </View>
                 <Text style={[styles.badgesProgressText, { color: colors.textPrimary }]}>
-                  {Math.round((unlockedBadges.length / BADGES.length) * 100)}% complété
+                  {Math.round((unlockedBadges.length / BADGES.length) * 100)}% {t('gamification.completed')}
                 </Text>
               </View>
             </View>
@@ -800,7 +802,7 @@ export default function DojoScreen() {
             {unlockedBadges.length > 0 && (
               <>
                 <Text style={[styles.sectionTitle, { color: '#10B981' }]}>
-                  BADGES DÉBLOQUÉS
+                  {t('gamification.unlockedBadges')}
                 </Text>
                 {unlockedBadges.map((badge, index) => (
                   <AnimatedCard key={badge.id} index={index}>
@@ -844,7 +846,7 @@ export default function DojoScreen() {
             {lockedBadges.length > 0 && (
               <>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                  À DÉBLOQUER
+                  {t('gamification.toUnlock')}
                 </Text>
                 {lockedBadges.map((badge, index) => {
                   const progress = badge.getProgress(stats);
@@ -861,7 +863,7 @@ export default function DojoScreen() {
                       ]}>
                         {isClose && (
                           <View style={[styles.closeBadge, { backgroundColor: badge.color }]}>
-                            <Text style={styles.closeBadgeText}>PROCHE !</Text>
+                            <Text style={styles.closeBadgeText}>{t('gamification.close')}</Text>
                           </View>
                         )}
 
@@ -917,10 +919,10 @@ export default function DojoScreen() {
                   <Clock size={48} color={colors.textMuted} />
                 </View>
                 <Text style={[styles.emptyStateTitle, { color: colors.textPrimary }]}>
-                  Ton histoire commence ici
+                  {t('gamification.storyStartsHere')}
                 </Text>
                 <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
-                  Chaque badge débloqué, chaque rang atteint sera immortalisé dans ta timeline.
+                  {t('gamification.timelineDescription')}
                 </Text>
                 <TouchableOpacity
                   style={styles.emptyStateButton}
@@ -936,14 +938,14 @@ export default function DojoScreen() {
                     style={styles.emptyStateButtonGradient}
                   >
                     <Play size={18} color="#FFFFFF" />
-                    <Text style={styles.emptyStateButtonText}>Voir les badges</Text>
+                    <Text style={styles.emptyStateButtonText}>{t('gamification.viewBadges')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                  TA TIMELINE ({achievementsHistory.length})
+                  {t('gamification.yourTimeline')} ({achievementsHistory.length})
                 </Text>
 
                 {/* Timeline */}
@@ -1001,7 +1003,7 @@ export default function DojoScreen() {
                             </Text>
                             <View style={[styles.timelineType, { backgroundColor: isDark ? '#2D2D4D' : '#F3F4F6' }]}>
                               <Text style={[styles.timelineTypeText, { color: colors.textMuted }]}>
-                                {achievement.type === 'badge' ? 'Badge' : achievement.type === 'rank' ? 'Rang' : 'Niveau'}
+                                {achievement.type === 'badge' ? t('gamification.badge') : achievement.type === 'rank' ? t('gamification.rank') : t('gamification.level')}
                               </Text>
                             </View>
                           </View>
