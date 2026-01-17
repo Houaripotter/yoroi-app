@@ -1,4 +1,4 @@
-package com.houari.yoroi
+package com.yoroi
 
 import android.app.Application
 import android.content.res.Configuration
