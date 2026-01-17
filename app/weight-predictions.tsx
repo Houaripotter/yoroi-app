@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { ArrowLeft, TrendingUp, BookOpen, ExternalLink, Target, Calendar } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function WeightPredictionsScreen() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
 
   // Données de prédiction (à calculer depuis les vraies données utilisateur)
   const currentWeight = 78.4;
@@ -36,7 +38,7 @@ export default function WeightPredictionsScreen() {
           <ArrowLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Prédictions de Poids
+          {t('weightPredictions.title')}
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -50,22 +52,22 @@ export default function WeightPredictionsScreen() {
           style={styles.introCard}
         >
           <TrendingUp size={32} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={styles.introTitle}>Prédictions Basées sur la Science</Text>
+          <Text style={styles.introTitle}>{t('weightPredictions.scienceBasedPredictions')}</Text>
           <Text style={styles.introText}>
-            Nos prédictions utilisent des modèles mathématiques validés par la recherche scientifique pour estimer ton progression de poids.
+            {t('weightPredictions.introText')}
           </Text>
         </LinearGradient>
 
         {/* Prédictions */}
         <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Tes Prédictions Personnalisées
+            {t('weightPredictions.yourPersonalizedPredictions')}
           </Text>
 
           <View style={styles.predictionsGrid}>
             <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)' }]}>
               <Calendar size={20} color="#3B82F6" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>7 Jours</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days7')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {prediction7Days.toFixed(1)} kg
               </Text>
@@ -76,7 +78,7 @@ export default function WeightPredictionsScreen() {
 
             <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}>
               <Calendar size={20} color="#8B5CF6" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>30 Jours</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days30')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {prediction30Days.toFixed(1)} kg
               </Text>
@@ -87,7 +89,7 @@ export default function WeightPredictionsScreen() {
 
             <View style={[styles.predictionCard, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)' }]}>
               <Calendar size={20} color="#10B981" strokeWidth={2.5} />
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>90 Jours</Text>
+              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('weightPredictions.days90')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
                 {prediction90Days.toFixed(1)} kg
               </Text>
@@ -100,8 +102,10 @@ export default function WeightPredictionsScreen() {
           <View style={[styles.targetBox, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)' }]}>
             <Target size={20} color="#EF4444" strokeWidth={2.5} />
             <Text style={[styles.targetText, { color: colors.textSecondary }]}>
-              À ce rythme, tu atteindras ton objectif de <Text style={{ color: '#EF4444', fontWeight: '900' }}>{targetWeight} kg</Text> dans environ{' '}
-              <Text style={{ color: '#EF4444', fontWeight: '900' }}>{Math.ceil((currentWeight - targetWeight) / weeklyLoss)} semaines</Text>
+              {t('weightPredictions.targetMessage', {
+                targetWeight: targetWeight,
+                weeks: Math.ceil((currentWeight - targetWeight) / weeklyLoss)
+              })}
             </Text>
           </View>
         </View>
@@ -111,48 +115,48 @@ export default function WeightPredictionsScreen() {
           <View style={styles.sectionHeader}>
             <BookOpen size={20} color="#8B5CF6" strokeWidth={2.5} />
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Méthodologie Scientifique
+              {t('weightPredictions.scientificMethodology')}
             </Text>
           </View>
 
           <Text style={[styles.methodText, { color: colors.textSecondary }]}>
-            Nos prédictions sont basées sur le modèle énergétique validé par la recherche, qui prend en compte:
+            {t('weightPredictions.methodologyDescription')}
           </Text>
 
           <View style={styles.bulletPoints}>
             <View style={styles.bulletPoint}>
               <View style={styles.bullet} />
               <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                Ton métabolisme basal (BMR)
+                {t('weightPredictions.bmr')}
               </Text>
             </View>
             <View style={styles.bulletPoint}>
               <View style={styles.bullet} />
               <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                Ton niveau d'activité physique (TDEE)
+                {t('weightPredictions.tdee')}
               </Text>
             </View>
             <View style={styles.bulletPoint}>
               <View style={styles.bullet} />
               <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                Le déficit/surplus calorique calculé
+                {t('weightPredictions.caloricDeficit')}
               </Text>
             </View>
             <View style={styles.bulletPoint}>
               <View style={styles.bullet} />
               <Text style={[styles.bulletText, { color: colors.textSecondary }]}>
-                L'adaptation métabolique au fil du temps
+                {t('weightPredictions.metabolicAdaptation')}
               </Text>
             </View>
           </View>
 
           <View style={[styles.formulaBox, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}>
-            <Text style={[styles.formulaTitle, { color: '#8B5CF6' }]}>Formule de Base</Text>
+            <Text style={[styles.formulaTitle, { color: '#8B5CF6' }]}>{t('weightPredictions.basicFormula')}</Text>
             <Text style={[styles.formula, { color: colors.textPrimary }]}>
-              Perte de poids (kg) = Déficit calorique (kcal) ÷ 7700
+              {t('weightPredictions.formulaText')}
             </Text>
             <Text style={[styles.formulaNote, { color: colors.textMuted }]}>
-              1 kg de graisse ≈ 7700 kcal (Hall et al., 2011)
+              {t('weightPredictions.formulaNote')}
             </Text>
           </View>
         </View>
@@ -160,7 +164,7 @@ export default function WeightPredictionsScreen() {
         {/* Études scientifiques */}
         <View style={[styles.section, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Références Scientifiques
+            {t('weightPredictions.scientificReferences')}
           </Text>
 
           <TouchableOpacity
@@ -180,7 +184,7 @@ export default function WeightPredictionsScreen() {
               The Lancet, 2011
             </Text>
             <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              Modèle mathématique validé pour prédire les changements de poids corporel en fonction du bilan énergétique.
+              {t('weightPredictions.study1Description')}
             </Text>
           </TouchableOpacity>
 
@@ -201,7 +205,7 @@ export default function WeightPredictionsScreen() {
               Circulation, 2012
             </Text>
             <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              Analyse approfondie du bilan énergétique et des facteurs influençant la perte de poids à long terme.
+              {t('weightPredictions.study2Description')}
             </Text>
           </TouchableOpacity>
 
@@ -222,19 +226,19 @@ export default function WeightPredictionsScreen() {
               Journal of the International Society of Sports Nutrition, 2014
             </Text>
             <Text style={[styles.studyDescription, { color: colors.textSecondary }]}>
-              Étude sur l'adaptation métabolique pendant la perte de poids et stratégies pour la minimiser.
+              {t('weightPredictions.study3Description')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Avertissement */}
         <View style={[styles.disclaimerBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.05)' }]}>
-          <Text style={[styles.disclaimerTitle, { color: '#F59E0B' }]}>Important</Text>
+          <Text style={[styles.disclaimerTitle, { color: '#F59E0B' }]}>{t('weightPredictions.important')}</Text>
           <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
-            Ces prédictions sont des estimations basées sur des moyennes statistiques. Les résultats individuels peuvent varier en fonction de nombreux facteurs: génétique, hormones, stress, sommeil, composition corporelle, etc.
+            {t('weightPredictions.disclaimerText1')}
           </Text>
           <Text style={[styles.disclaimerText, { color: colors.textSecondary, marginTop: 8 }]}>
-            Consultez toujours un professionnel de santé avant d'entreprendre un programme de perte de poids.
+            {t('weightPredictions.disclaimerText2')}
           </Text>
         </View>
 
