@@ -158,10 +158,12 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     loadLanguage();
   }, []);
 
-  // Fonction de traduction stable (utilise ref pour éviter re-création)
-  const tRef = useRef((key: string, options?: any): string => {
-    return getTranslation(key, languageRef.current, options);
-  });
+  // Fonction de traduction - recréée quand la langue change pour forcer le re-render
+  const t = useMemo(() => {
+    return (key: string, options?: any): string => {
+      return getTranslation(key, language, options);
+    };
+  }, [language]);
 
   // Changer la langue
   const setLanguageRef = useRef(async (lang: string) => {
@@ -188,12 +190,12 @@ export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
     language,
     locale: LOCALE_MAP[language] || 'fr-FR',
     setLanguage: setLanguageRef.current,
-    t: tRef.current,
+    t,
     formatDate: formatDateRef.current,
     isLoading,
     isRTL: language === 'ar',
     supportedLanguages: SUPPORTED_LANGUAGES,
-  }), [language, isLoading]);
+  }), [language, isLoading, t]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 };
