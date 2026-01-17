@@ -60,6 +60,7 @@
     "greetingMorning": "Bonjour",
     "greetingAfternoon": "Bon après-midi",
     "greetingEvening": "Bonsoir",
+    "quoteOfTheDay": "Citation du jour",
     "greetingChampion": "Champion",
     "tools": "Outils",
     "toolsDescription": "Raccourcis rapides vers tes actions favorites",
@@ -152,7 +153,7 @@
   "tools": {
     "title": "Outils",
     "subtitle": "Tous tes outils pour progresser",
-    "injuries": "Blessures",
+    "injuries": "Infirmerie",
     "injuriesDescription": "Suivi de vos blessures",
     "timer": "Timer",
     "timerDescription": "Chronomètres séances",
@@ -1409,11 +1410,11 @@
         "feature3": "Je veux un suivi professionnel"
       },
       "leisure": {
-        "title": "LOISIR",
-        "description": "Je veux me sentir mieux",
-        "feature1": "Perte de poids et bien-être",
-        "feature2": "Je progresse à mon rythme",
-        "feature3": "Sans pression, juste pour moi"
+        "title": "OBJECTIF FORME",
+        "description": "Atteindre mon poids idéal",
+        "feature1": "Perdre ou prendre du poids",
+        "feature2": "Maintenir ma forme actuelle",
+        "feature3": "Suivi personnalisé de mes progrès"
       }
     },
     "modal": {
@@ -1452,6 +1453,14 @@
     "max": "MAX",
     "avg": "MOY",
     "evolution": "ÉVOL"
+  },
+  "predictions": {
+    "title": "Prédictions"
+  },
+  "weightCard": {
+    "title": "POIDS ACTUEL ET PRÉDICTIONS",
+    "objective": "Obj",
+    "remaining": "Reste"
   },
   "trainingJournal": {
     "title": "Carnet d'Entraînement",

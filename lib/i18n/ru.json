@@ -60,6 +60,7 @@
     "greetingMorning": "Доброе утро",
     "greetingAfternoon": "Добрый день",
     "greetingEvening": "Добрый вечер",
+    "quoteOfTheDay": "Цитата дня",
     "greetingChampion": "Чемпион",
     "tools": "Инструменты",
     "toolsDescription": "Быстрый доступ к избранным действиям",
@@ -1505,6 +1506,14 @@
     "max": "МАКС",
     "avg": "СРЕД",
     "evolution": "ДИНАМ"
+  },
+  "predictions": {
+    "title": "Прогнозы"
+  },
+  "weightCard": {
+    "title": "ТЕКУЩИЙ ВЕС И ПРОГНОЗЫ",
+    "objective": "Цель",
+    "remaining": "Осталось"
   },
   "trainingJournal": {
     "title": "Дневник тренировок",

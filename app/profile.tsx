@@ -766,8 +766,8 @@ export default function ProfileScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.saveButtonGradient}
                 >
-                  <Check size={20} color="#000" />
-                  <Text style={styles.saveButtonText}>Enregistrer</Text>
+                  <Check size={20} color="#FFFFFF" />
+                  <Text style={styles.saveButtonText}>{t('common.save')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: TYPOGRAPHY.weight.bold,
-    color: '#000',
+    color: '#FFFFFF',
   },
 
   // Quote Card

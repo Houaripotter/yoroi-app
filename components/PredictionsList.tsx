@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Calendar, Target } from 'lucide-react-native';
+import { useI18n } from '@/lib/I18nContext';
 
 interface Prediction {
   label: string;
@@ -13,9 +14,10 @@ interface PredictionsListProps {
 }
 
 export function PredictionsList({ predictions }: PredictionsListProps) {
+  const { t } = useI18n();
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Prédictions</Text>
+      <Text style={styles.title}>{t('predictions.title')}</Text>
       <View style={styles.list}>
         {predictions.map((prediction, index) => (
           <View

@@ -60,6 +60,7 @@
     "greetingMorning": "早上好",
     "greetingAfternoon": "下午好",
     "greetingEvening": "晚上好",
+    "quoteOfTheDay": "今日名言",
     "greetingChampion": "冠军",
     "tools": "工具",
     "toolsDescription": "常用功能快捷入口",
@@ -1504,6 +1505,14 @@
     "max": "最大",
     "avg": "平均",
     "evolution": "变化"
+  },
+  "predictions": {
+    "title": "预测"
+  },
+  "weightCard": {
+    "title": "当前体重和预测",
+    "objective": "目标",
+    "remaining": "剩余"
   },
   "trainingJournal": {
     "title": "训练日志",

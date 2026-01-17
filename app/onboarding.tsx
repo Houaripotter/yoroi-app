@@ -331,8 +331,10 @@ export default function OnboardingScreen() {
     return age;
   };
 
+  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
+
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) {
+    if (viewableItems.length > 0 && viewableItems[0].index !== undefined) {
       setCurrentIndex(viewableItems[0].index);
     }
   }).current;
@@ -763,7 +765,7 @@ export default function OnboardingScreen() {
           { useNativeDriver: false }
         )}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+        viewabilityConfig={viewabilityConfig}
         keyExtractor={(item) => item.id}
       />
 

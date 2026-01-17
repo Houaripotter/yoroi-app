@@ -14,7 +14,6 @@ import { Profile } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
 import { BookOpen, Target, FileText, ChevronRight, Plus, Award, Brain, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { getDailyQuote, SupportedLanguage } from '@/lib/citations';
 import { useI18n } from '@/lib/I18nContext';
 
 interface HomeEssentielContentProps {
@@ -80,41 +79,45 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
-  const { language } = useI18n();
-  const [dailyQuote, setDailyQuote] = useState<string>('');
+  const { t } = useI18n();
+
+  // Quote keys for i18n
+  const quoteKeys = [
+    'home.quotes.quote1',
+    'home.quotes.quote2',
+    'home.quotes.quote3',
+    'home.quotes.quote4',
+    'home.quotes.quote5',
+  ];
+
+  // Select a deterministic quote based on the day
+  const dayOfYear = Math.floor(
+    (new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  const quoteKey = quoteKeys[dayOfYear % quoteKeys.length];
+  const dailyQuote = t(quoteKey);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Charger la citation du jour
+  // Animation d'apparition de la citation
   useEffect(() => {
-    const loadQuote = async () => {
-      try {
-        const quote = await getDailyQuote(language as SupportedLanguage);
-        setDailyQuote(quote.text);
-
-        // Animation d'apparition
-        Animated.parallel([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.spring(scaleAnim, {
-            toValue: 1,
-            tension: 50,
-            friction: 7,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      } catch (error) {
-        console.error('Error loading quote:', error);
-      }
-    };
-    loadQuote();
-  }, [language]);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // Animation pulse pour le cerveau
   useEffect(() => {
@@ -244,7 +247,7 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
 
               {/* Badge "Citation du jour" */}
               <View style={styles.quoteBadge}>
-                <Text style={styles.quoteBadgeText}>Citation du jour</Text>
+                <Text style={styles.quoteBadgeText}>{t('home.quoteOfTheDay')}</Text>
               </View>
             </View>
           </View>

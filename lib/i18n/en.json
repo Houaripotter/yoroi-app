@@ -60,6 +60,7 @@
     "greetingMorning": "Good morning",
     "greetingAfternoon": "Good afternoon",
     "greetingEvening": "Good evening",
+    "quoteOfTheDay": "Quote of the day",
     "greetingChampion": "Champion",
     "tools": "Tools",
     "toolsDescription": "Quick shortcuts to your favorite actions",
@@ -152,7 +153,7 @@
   "tools": {
     "title": "Tools",
     "subtitle": "All your tools to progress",
-    "injuries": "Injuries",
+    "injuries": "Infirmary",
     "injuriesDescription": "Track your injuries",
     "timer": "Timer",
     "timerDescription": "Workout timers",
@@ -1386,11 +1387,11 @@
         "feature3": "I want professional tracking"
       },
       "leisure": {
-        "title": "LEISURE",
-        "description": "I want to feel better",
-        "feature1": "Weight loss and wellness",
-        "feature2": "I progress at my own pace",
-        "feature3": "No pressure, just for me"
+        "title": "FITNESS GOAL",
+        "description": "Reach my ideal weight",
+        "feature1": "Lose or gain weight",
+        "feature2": "Maintain my current shape",
+        "feature3": "Personalized progress tracking"
       }
     },
     "modal": {
@@ -1429,6 +1430,14 @@
     "max": "MAX",
     "avg": "AVG",
     "evolution": "EVOL"
+  },
+  "predictions": {
+    "title": "Predictions"
+  },
+  "weightCard": {
+    "title": "CURRENT WEIGHT & PREDICTIONS",
+    "objective": "Goal",
+    "remaining": "Left"
   },
   "trainingJournal": {
     "title": "Training Journal",

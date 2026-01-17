@@ -60,6 +60,7 @@
     "greetingMorning": "Buenos días",
     "greetingAfternoon": "Buenas tardes",
     "greetingEvening": "Buenas noches",
+    "quoteOfTheDay": "Cita del día",
     "greetingChampion": "Campeón",
     "tools": "Herramientas",
     "toolsDescription": "Accesos rápidos a tus acciones favoritas",
@@ -1420,6 +1421,14 @@
     "max": "MÁX",
     "avg": "PROM",
     "evolution": "EVOL"
+  },
+  "predictions": {
+    "title": "Predicciones"
+  },
+  "weightCard": {
+    "title": "PESO ACTUAL Y PREDICCIONES",
+    "objective": "Obj",
+    "remaining": "Falta"
   },
   "trainingJournal": {
     "title": "Diario de Entrenamiento",

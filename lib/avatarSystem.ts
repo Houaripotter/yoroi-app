@@ -153,7 +153,7 @@ const PACK_METADATA: PackMetadata[] = [
 
   // NIVEAU 2 - BUSHI (Avatars intermédiaires)
   { id: 'karateka', name: 'Karatéka', type: 'character', requiredRankLevel: 2, category: 'male' },
-  { id: 'wrestler', name: 'Catcheur', type: 'character', requiredRankLevel: 2, category: 'male' },
+  { id: 'wrestler', name: 'Lutteur', type: 'character', requiredRankLevel: 2, category: 'male' },
   { id: 'mma', name: 'Combattant MMA', type: 'character', requiredRankLevel: 2, category: 'male' },
 
   // NIVEAU 3 - SAMURAI (Avatars élites)

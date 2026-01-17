@@ -60,6 +60,7 @@
     "greetingMorning": "Guten Morgen",
     "greetingAfternoon": "Guten Tag",
     "greetingEvening": "Guten Abend",
+    "quoteOfTheDay": "Zitat des Tages",
     "greetingChampion": "Champion",
     "tools": "Werkzeuge",
     "toolsDescription": "Schnellzugriff auf deine Lieblingsaktionen",
@@ -1420,6 +1421,14 @@
     "max": "MAX",
     "avg": "DURCHSCHN",
     "evolution": "ENTW"
+  },
+  "predictions": {
+    "title": "Vorhersagen"
+  },
+  "weightCard": {
+    "title": "AKTUELLES GEWICHT & VORHERSAGEN",
+    "objective": "Ziel",
+    "remaining": "Übrig"
   },
   "trainingJournal": {
     "title": "Trainingstagebuch",

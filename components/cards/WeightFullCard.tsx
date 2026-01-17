@@ -5,6 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { TrendingDown, TrendingUp, ChevronRight } from 'lucide-react-native';
 import Svg, { Line, Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 
@@ -29,6 +30,7 @@ export const WeightFullCard: React.FC<WeightFullCardProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export const WeightFullCard: React.FC<WeightFullCardProps> = ({
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.textMuted }]}>POIDS ACTUEL ET PRÉDICTIONS</Text>
+          <Text style={[styles.title, { color: colors.textMuted }]}>{t('weightCard.title')}</Text>
           {onPress && <ChevronRight size={16} color={colors.textMuted} />}
         </View>
 
@@ -203,14 +205,14 @@ export const WeightFullCard: React.FC<WeightFullCardProps> = ({
         {/* Stats mini */}
         <View style={styles.statsRow}>
           <Text style={[styles.statText, { color: colors.accent }]}>
-            Obj: {target.toFixed(1)}kg
+            {t('weightCard.objective')}: {target.toFixed(1)}kg
           </Text>
           <Text style={[styles.statText, { color: totalChange < 0 ? '#10B981' : '#EF4444' }]}>
             {totalChange > 0 ? '+' : ''}{totalChange.toFixed(1)}kg
           </Text>
           {Math.abs(remaining) > 0.1 && (
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              Reste: {Math.abs(remaining).toFixed(1)}kg
+              {t('weightCard.remaining')}: {Math.abs(remaining).toFixed(1)}kg
             </Text>
           )}
         </View>

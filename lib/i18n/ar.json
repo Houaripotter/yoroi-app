@@ -60,6 +60,7 @@
     "greetingMorning": "صباح الخير",
     "greetingAfternoon": "مساء الخير",
     "greetingEvening": "مساء الخير",
+    "quoteOfTheDay": "اقتباس اليوم",
     "greetingChampion": "البطل",
     "tools": "الأدوات",
     "toolsDescription": "اختصارات سريعة لأعمالك المفضلة",
@@ -1504,6 +1505,14 @@
     "max": "أقصى",
     "avg": "متوسط",
     "evolution": "تطور"
+  },
+  "predictions": {
+    "title": "التوقعات"
+  },
+  "weightCard": {
+    "title": "الوزن الحالي والتوقعات",
+    "objective": "الهدف",
+    "remaining": "المتبقي"
   },
   "trainingJournal": {
     "title": "دفتر التدريب",

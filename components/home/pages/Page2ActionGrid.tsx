@@ -63,6 +63,7 @@ const cardWidth = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * (COLUMNS - 1)) /
 // Map tool IDs to translation keys
 const TOOL_TRANSLATION_KEYS: { [key: string]: { label: string; description: string } } = {
   'blessures': { label: 'tools.injuries', description: 'tools.injuriesDescription' },
+  'infirmerie': { label: 'tools.injuries', description: 'tools.injuriesDescription' },
   'timer': { label: 'tools.timer', description: 'tools.timerDescription' },
   'carnet': { label: 'tools.journal', description: 'tools.journalDescription' },
   'calculateurs': { label: 'tools.calculators', description: 'tools.calculatorsDescription' },

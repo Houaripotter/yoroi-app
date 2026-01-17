@@ -44,19 +44,28 @@ import logger from '@/lib/security/logger';
 export default function CombatDetailScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
-  const params = useLocalSearchParams();
-  const combatId = params.id as string;
+  const params = useLocalSearchParams<{ id?: string }>();
+  const combatId = params.id ?? '';
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [combat, setCombat] = useState<Combat | null>(null);
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     loadCombatData();
   }, [combatId]);
 
   const loadCombatData = async () => {
+    // Validation du paramètre
+    if (!combatId || isNaN(parseInt(combatId))) {
+      showPopup('Erreur', 'Combat non trouvé', [{ text: 'OK', style: 'primary', onPress: () => router.back() }]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const fightData = await getCombatById(parseInt(combatId));
       setCombat(fightData);

@@ -21,11 +21,11 @@ export interface ActionGridItem {
 export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
   // LIGNE 1 - BLESSURES, TIMER, CARNET
   {
-    id: 'blessures',
-    label: 'Blessures',
+    id: 'infirmerie',
+    label: 'Infirmerie',
     description: 'Suivi de vos blessures',
     icon: 'Plus',
-    color: '#EF4444',
+    color: '#DC2626',
     route: '/infirmary',
     order: 0,
   },
