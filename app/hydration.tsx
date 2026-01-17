@@ -271,7 +271,7 @@ export default function HydrationScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Hydratation</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('hydration.title')}</Text>
         <TouchableOpacity onPress={() => setEditingGoal(!editingGoal)} style={styles.settingsButton}>
           <Settings size={22} color={colors.textMuted} />
         </TouchableOpacity>
@@ -304,7 +304,7 @@ export default function HydrationScreen() {
           {percentage >= 100 && (
             <View style={styles.successBadge}>
               <Check size={20} color="#FFFFFF" />
-              <Text style={styles.successText}>Objectif atteint !</Text>
+              <Text style={styles.successText}>{t('hydration.goalReached')}</Text>
             </View>
           )}
 
@@ -349,7 +349,7 @@ export default function HydrationScreen() {
         <View style={[styles.buttonsCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.cardHeader}>
             <Droplets size={22} color="#0EA5E9" strokeWidth={2.5} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Ajouter de l'eau</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('hydration.addWater')}</Text>
           </View>
 
           <View style={styles.buttonsRow}>
@@ -409,7 +409,7 @@ export default function HydrationScreen() {
           <View style={[styles.goalCard, { backgroundColor: colors.backgroundCard }]}>
             <View style={styles.goalHeader}>
               <Target size={18} color="#F59E0B" />
-              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Objectif quotidien</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('hydration.dailyGoal')}</Text>
             </View>
 
             <View style={styles.goalInputRow}>
@@ -431,7 +431,7 @@ export default function HydrationScreen() {
                   keyboardType="decimal-pad"
                   textAlign="center"
                 />
-                <Text style={[styles.goalInputUnit, { color: colors.textMuted }]}>litres</Text>
+                <Text style={[styles.goalInputUnit, { color: colors.textMuted }]}>{t('hydration.liters')}</Text>
               </View>
 
               <TouchableOpacity
@@ -450,7 +450,7 @@ export default function HydrationScreen() {
               onPress={() => saveGoal(parseFloat(goalInput))}
             >
               <Check size={18} color="#FFFFFF" />
-              <Text style={styles.saveButtonText}>Enregistrer</Text>
+              <Text style={styles.saveButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -459,7 +459,7 @@ export default function HydrationScreen() {
         <View style={[styles.notificationCard, { backgroundColor: colors.backgroundCard }]}>
           <View style={styles.notificationHeader}>
             {notificationsEnabled ? <Bell size={18} color="#0EA5E9" /> : <BellOff size={18} color={colors.textMuted} />}
-            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>Rappels hydratation</Text>
+            <Text style={[styles.notificationTitle, { color: colors.textPrimary }]}>{t('hydration.hydrationReminders')}</Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={handleToggleNotifications}
@@ -471,7 +471,7 @@ export default function HydrationScreen() {
           {notificationsEnabled && (
             <>
               <Text style={[styles.notificationSubtext, { color: colors.textMuted }]}>
-                Reçois des rappels pour boire de l'eau tout au long de la journée
+                {t('hydration.reminderDescription')}
               </Text>
 
               {!showNotificationSettings ? (
@@ -481,7 +481,7 @@ export default function HydrationScreen() {
                 >
                   <Settings size={16} color="#0EA5E9" />
                   <Text style={[styles.notificationSettingsText, { color: colors.textPrimary }]}>
-                    Configurer les rappels
+                    {t('hydration.configureReminders')}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -490,7 +490,7 @@ export default function HydrationScreen() {
                   <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
                     <View style={styles.slotHeader}>
                       <Sun size={16} color="#F59E0B" />
-                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Matin</Text>
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>{t('hydration.morning')}</Text>
                       <Switch
                         value={morningEnabled}
                         onValueChange={setMorningEnabled}
@@ -501,7 +501,7 @@ export default function HydrationScreen() {
                     {morningEnabled && (
                       <View style={styles.slotInputs}>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.time')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={morningTime}
@@ -511,7 +511,7 @@ export default function HydrationScreen() {
                           />
                         </View>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.quantity')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={morningAmount}
@@ -530,7 +530,7 @@ export default function HydrationScreen() {
                   <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
                     <View style={styles.slotHeader}>
                       <CloudRain size={16} color="#0EA5E9" />
-                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Après-midi</Text>
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>{t('hydration.afternoon')}</Text>
                       <Switch
                         value={afternoonEnabled}
                         onValueChange={setAfternoonEnabled}
@@ -541,7 +541,7 @@ export default function HydrationScreen() {
                     {afternoonEnabled && (
                       <View style={styles.slotInputs}>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.time')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={afternoonTime}
@@ -551,7 +551,7 @@ export default function HydrationScreen() {
                           />
                         </View>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.quantity')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={afternoonAmount}
@@ -570,7 +570,7 @@ export default function HydrationScreen() {
                   <View style={[styles.slotCard, { backgroundColor: colors.background }]}>
                     <View style={styles.slotHeader}>
                       <MoonIcon size={16} color="#8B5CF6" />
-                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>Soir</Text>
+                      <Text style={[styles.slotTitle, { color: colors.textPrimary }]}>{t('hydration.evening')}</Text>
                       <Switch
                         value={eveningEnabled}
                         onValueChange={setEveningEnabled}
@@ -581,7 +581,7 @@ export default function HydrationScreen() {
                     {eveningEnabled && (
                       <View style={styles.slotInputs}>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Heure</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.time')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={eveningTime}
@@ -591,7 +591,7 @@ export default function HydrationScreen() {
                           />
                         </View>
                         <View style={styles.slotInputGroup}>
-                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>Quantité</Text>
+                          <Text style={[styles.slotLabel, { color: colors.textMuted }]}>{t('hydration.quantity')}</Text>
                           <TextInput
                             style={[styles.slotInput, { color: colors.textPrimary, borderColor: colors.border }]}
                             value={eveningAmount}
@@ -612,13 +612,13 @@ export default function HydrationScreen() {
                       onPress={() => setShowNotificationSettings(false)}
                       style={[styles.notificationCancelBtn, { borderColor: colors.border }]}
                     >
-                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>Annuler</Text>
+                      <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={handleSaveNotificationSettings}
                       style={[styles.notificationSaveBtn, { backgroundColor: '#0EA5E9' }]}
                     >
-                      <Text style={styles.notificationSaveText}>Enregistrer</Text>
+                      <Text style={styles.notificationSaveText}>{t('common.save')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -629,25 +629,25 @@ export default function HydrationScreen() {
 
         {/* Statistiques */}
         <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Cette semaine</Text>
-          
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('hydration.thisWeek')}</Text>
+
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <TrendingUp size={18} color="#10B981" />
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>{successRate}%</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Réussite</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('hydration.successRate')}</Text>
             </View>
 
             <View style={styles.statItem}>
               <Droplets size={18} color="#0EA5E9" />
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>{avgAmount.toFixed(2)}L</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Moyenne/jour</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('hydration.averagePerDay')}</Text>
             </View>
 
             <View style={styles.statItem}>
               <Calendar size={18} color="#8B5CF6" />
               <Text style={[styles.statValue, { color: colors.textPrimary }]}>{successDays}/7</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Jours réussis</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('hydration.successfulDays')}</Text>
             </View>
           </View>
 
