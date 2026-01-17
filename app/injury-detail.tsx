@@ -59,8 +59,9 @@ export default function InjuryDetailScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const params = useLocalSearchParams();
-  const injuryId = parseInt(params.id as string);
+  const params = useLocalSearchParams<{ id?: string }>();
+  const injuryIdStr = params.id ?? '';
+  const injuryId = injuryIdStr ? parseInt(injuryIdStr) : NaN;
 
   const [injury, setInjury] = useState<Injury | null>(null);
   const [evaHistory, setEvaHistory] = useState<InjuryEvaHistory[]>([]);
@@ -69,8 +70,21 @@ export default function InjuryDetailScreen() {
   const [evaNote, setEvaNote] = useState('');
   const [creatorModeActive, setCreatorModeActive] = useState(false);
   const [showSurgeonMode, setShowSurgeonMode] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const loadData = async () => {
+    // Validation du paramètre
+    if (!injuryIdStr || isNaN(injuryId)) {
+      showPopup({
+        title: 'Erreur',
+        message: 'Blessure non trouvée',
+        type: 'error',
+        buttons: [{ text: 'OK', onPress: () => router.back() }],
+      });
+      return;
+    }
+
     try {
       // Vérifier si Mode Créateur actif
       const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
@@ -116,6 +130,8 @@ export default function InjuryDetailScreen() {
   };
 
   const handleMarkHealed = async () => {
+    if (isProcessing) return;
+
     showPopup({
       title: 'Marquer comme gueri ?',
       message: 'Cette blessure sera archivee.',
@@ -125,6 +141,8 @@ export default function InjuryDetailScreen() {
         {
           text: 'Confirmer',
           onPress: async () => {
+            if (isProcessing) return;
+            setIsProcessing(true);
             try {
               await markInjuryAsHealed(injuryId);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -135,6 +153,8 @@ export default function InjuryDetailScreen() {
                 message: 'Impossible de marquer comme gueri',
                 type: 'error',
               });
+            } finally {
+              setIsProcessing(false);
             }
           },
         },
@@ -143,6 +163,8 @@ export default function InjuryDetailScreen() {
   };
 
   const handleDelete = async () => {
+    if (isDeleting) return;
+
     showPopup({
       title: 'Supprimer la blessure ?',
       message: 'Cette action est irreversible.',
@@ -153,6 +175,8 @@ export default function InjuryDetailScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
+            if (isDeleting) return;
+            setIsDeleting(true);
             try {
               await deleteInjury(injuryId);
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -163,6 +187,8 @@ export default function InjuryDetailScreen() {
                 message: 'Impossible de supprimer',
                 type: 'error',
               });
+            } finally {
+              setIsDeleting(false);
             }
           },
         },
@@ -349,6 +375,7 @@ export default function InjuryDetailScreen() {
             placeholderTextColor={colors.textMuted}
             value={evaNote}
             onChangeText={setEvaNote}
+            maxLength={200}
           />
           {newEva !== injury.eva_score && (
             <TouchableOpacity

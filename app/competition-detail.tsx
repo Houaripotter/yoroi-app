@@ -46,19 +46,30 @@ import logger from '@/lib/security/logger';
 export default function CompetitionDetailScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
-  const params = useLocalSearchParams();
-  const competitionId = params.id as string;
+  const params = useLocalSearchParams<{ id?: string }>();
+  const competitionId = params.id ?? '';
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [combats, setCombats] = useState<Combat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     loadCompetitionData();
   }, [competitionId]);
 
   const loadCompetitionData = async () => {
+    // Validation du paramètre
+    if (!competitionId || isNaN(parseInt(competitionId))) {
+      showPopup('Erreur', 'Compétition non trouvée', [
+        { text: 'OK', style: 'primary', onPress: () => router.back() }
+      ]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [comp, fights] = await Promise.all([
         getCompetitionById(parseInt(competitionId)),
@@ -78,6 +89,8 @@ export default function CompetitionDetailScreen() {
   };
 
   const handleDelete = () => {
+    if (isDeleting) return;
+
     showPopup(
       'Supprimer la compétition',
       'Êtes-vous sûr de vouloir supprimer cette compétition ? Cette action est irréversible.',
@@ -87,6 +100,8 @@ export default function CompetitionDetailScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
+            if (isDeleting) return;
+            setIsDeleting(true);
             try {
               await deleteCompetition(parseInt(competitionId));
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -96,6 +111,8 @@ export default function CompetitionDetailScreen() {
               showPopup('Erreur', 'Impossible de supprimer la compétition', [
                 { text: 'OK', style: 'primary' }
               ]);
+            } finally {
+              setIsDeleting(false);
             }
           },
         },
@@ -104,13 +121,19 @@ export default function CompetitionDetailScreen() {
   };
 
   const handleAddFight = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push(`/add-combat?competitionId=${competitionId}`);
+    setTimeout(() => setIsNavigating(false), 1000);
   };
 
   const handleEdit = () => {
+    if (isNavigating) return;
+    setIsNavigating(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push(`/edit-competition?id=${competitionId}`);
+    setTimeout(() => setIsNavigating(false), 1000);
   };
 
   if (loading || !competition) {

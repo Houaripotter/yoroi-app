@@ -83,6 +83,8 @@ export default function CombatDetailScreen() {
   };
 
   const handleDelete = () => {
+    if (isDeleting) return;
+
     showPopup(
       'Supprimer le combat',
       'Es-tu sur de vouloir supprimer ce combat ? Cette action est irreversible.',
@@ -92,6 +94,8 @@ export default function CombatDetailScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
+            if (isDeleting) return;
+            setIsDeleting(true);
             try {
               await deleteCombat(parseInt(combatId));
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -99,6 +103,8 @@ export default function CombatDetailScreen() {
             } catch (error) {
               logger.error('Error deleting combat:', error);
               showPopup('Erreur', 'Impossible de supprimer le combat', [{ text: 'OK', style: 'primary' }]);
+            } finally {
+              setIsDeleting(false);
             }
           },
         },

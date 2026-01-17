@@ -3,7 +3,7 @@
 // Export CSV, JSON, Rapports
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -81,6 +81,16 @@ export default function ExportDataScreen() {
   const [exporting, setExporting] = useState(false);
   const [exportedFormat, setExportedFormat] = useState<ExportFormat | null>(null);
 
+  // Ref pour le timeout (cleanup)
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
+
   const handleExport = async (format: ExportFormat) => {
     setExporting(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -103,7 +113,7 @@ export default function ExportDataScreen() {
       if (success) {
         setExportedFormat(format);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setTimeout(() => setExportedFormat(null), 3000);
+        resetTimeoutRef.current = setTimeout(() => setExportedFormat(null), 3000);
       }
     } catch (error) {
       logger.error('Erreur export:', error);

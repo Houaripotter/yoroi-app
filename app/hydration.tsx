@@ -129,16 +129,19 @@ export default function HydrationScreen() {
 
       // Charger les paramètres de notifications
       const notifSettings = notificationService.getSettings();
-      setNotificationsEnabled(notifSettings.hydration.enabled && notifSettings.hydration.useSlots);
-      setMorningTime(notifSettings.hydration.slots.morning.time);
-      setMorningAmount(notifSettings.hydration.slots.morning.amount.toString());
-      setMorningEnabled(notifSettings.hydration.slots.morning.enabled);
-      setAfternoonTime(notifSettings.hydration.slots.afternoon.time);
-      setAfternoonAmount(notifSettings.hydration.slots.afternoon.amount.toString());
-      setAfternoonEnabled(notifSettings.hydration.slots.afternoon.enabled);
-      setEveningTime(notifSettings.hydration.slots.evening.time);
-      setEveningAmount(notifSettings.hydration.slots.evening.amount.toString());
-      setEveningEnabled(notifSettings.hydration.slots.evening.enabled);
+      const hydrationSettings = notifSettings?.hydration;
+      const slots = hydrationSettings?.slots;
+
+      setNotificationsEnabled(hydrationSettings?.enabled === true && hydrationSettings?.useSlots === true);
+      setMorningTime(slots?.morning?.time ?? '09:00');
+      setMorningAmount((slots?.morning?.amount ?? 750).toString());
+      setMorningEnabled(slots?.morning?.enabled ?? true);
+      setAfternoonTime(slots?.afternoon?.time ?? '14:00');
+      setAfternoonAmount((slots?.afternoon?.amount ?? 750).toString());
+      setAfternoonEnabled(slots?.afternoon?.enabled ?? true);
+      setEveningTime(slots?.evening?.time ?? '19:00');
+      setEveningAmount((slots?.evening?.amount ?? 750).toString());
+      setEveningEnabled(slots?.evening?.enabled ?? true);
     } catch (error) {
       logger.error('Erreur chargement hydratation:', error);
     }

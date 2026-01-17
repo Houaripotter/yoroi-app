@@ -509,6 +509,7 @@ export default function OnboardingScreen() {
                 placeholder="Ton prénom ou pseudo"
                 placeholderTextColor={colors.textMuted}
                 autoFocus
+                maxLength={50}
               />
             </View>
           )}
@@ -602,6 +603,7 @@ export default function OnboardingScreen() {
                     placeholder="175"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="number-pad"
+                    maxLength={3}
                   />
                 </View>
                 <View style={styles.inputGroup}>
@@ -613,6 +615,7 @@ export default function OnboardingScreen() {
                     placeholder="75"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="decimal-pad"
+                    maxLength={6}
                   />
                 </View>
               </View>

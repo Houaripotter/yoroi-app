@@ -461,12 +461,36 @@ export default function ProfileScreen() {
 
   const handleChangePhoto = () => {
     showPopup(
-      'Photo de profil',
-      'Comment veux-tu ajouter ta photo ?',
+      t('profile.profilePhoto'),
+      t('profile.howToAddPhoto'),
       [
-        { text: 'Choisir dans la galerie', style: 'primary', onPress: () => pickProfilePhoto(false) },
-        { text: 'Prendre une photo', style: 'default', onPress: () => takeProfilePhoto(false) },
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('profile.chooseFromGallery'), style: 'primary', onPress: () => showCropOptionForGallery() },
+        { text: t('profile.takePhoto'), style: 'default', onPress: () => showCropOptionForCamera() },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]
+    );
+  };
+
+  const showCropOptionForGallery = () => {
+    showPopup(
+      t('profile.photoFormat'),
+      t('profile.chooseCropOption'),
+      [
+        { text: t('profile.fullPhoto'), style: 'primary', onPress: () => pickProfilePhoto(false) },
+        { text: t('profile.circleCrop'), style: 'default', onPress: () => pickProfilePhoto(true) },
+        { text: t('common.cancel'), style: 'cancel' },
+      ]
+    );
+  };
+
+  const showCropOptionForCamera = () => {
+    showPopup(
+      t('profile.photoFormat'),
+      t('profile.chooseCropOption'),
+      [
+        { text: t('profile.fullPhoto'), style: 'primary', onPress: () => takeProfilePhoto(false) },
+        { text: t('profile.circleCrop'), style: 'default', onPress: () => takeProfilePhoto(true) },
+        { text: t('common.cancel'), style: 'cancel' },
       ]
     );
   };
@@ -544,6 +568,7 @@ export default function ProfileScreen() {
                 placeholder="Ton nom"
                 placeholderTextColor={COLORS.textMuted}
                 textAlign="center"
+                maxLength={50}
               />
             ) : (
               <Text style={[styles.profileName, { color: colors.textPrimary, marginTop: 0, marginBottom: 16 }]}>
@@ -676,6 +701,7 @@ export default function ProfileScreen() {
                     placeholder="175"
                     placeholderTextColor={COLORS.textMuted}
                     keyboardType="number-pad"
+                    maxLength={3}
                   />
                 </View>
                 <View style={styles.inputGroup}>
@@ -687,6 +713,7 @@ export default function ProfileScreen() {
                     placeholder="15/06/1995"
                     placeholderTextColor={COLORS.textMuted}
                     keyboardType="default"
+                    maxLength={10}
                   />
                   {calculatedAge && (
                     <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
@@ -706,6 +733,7 @@ export default function ProfileScreen() {
                     placeholder="85.0"
                     placeholderTextColor={COLORS.textMuted}
                     keyboardType="decimal-pad"
+                    maxLength={6}
                   />
                 </View>
                 <View style={styles.inputGroup}>
@@ -717,6 +745,7 @@ export default function ProfileScreen() {
                     placeholder="75.0"
                     placeholderTextColor={COLORS.textMuted}
                     keyboardType="decimal-pad"
+                    maxLength={6}
                   />
                 </View>
               </View>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,18 @@ export default function IdeasScreen() {
   const [isSending, setIsSending] = useState(false);
   const [sent, setSent] = useState(false);
 
+  // Refs pour les timeouts (cleanup)
+  const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup des timeouts au démontage
+  useEffect(() => {
+    return () => {
+      if (sendTimeoutRef.current) clearTimeout(sendTimeoutRef.current);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
+
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -70,12 +82,12 @@ export default function IdeasScreen() {
     setIsSending(true);
 
     // Simulate sending (in real app, would send to backend)
-    setTimeout(() => {
+    sendTimeoutRef.current = setTimeout(() => {
       setIsSending(false);
       setSent(true);
 
       // Reset after showing success
-      setTimeout(() => {
+      resetTimeoutRef.current = setTimeout(() => {
         setSent(false);
         setIdeaText('');
         setCategory('feature');
