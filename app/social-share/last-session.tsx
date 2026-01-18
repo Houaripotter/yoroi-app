@@ -14,6 +14,7 @@ import {
   Dimensions,
   ScrollView,
   Image,
+  TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -27,6 +28,9 @@ import {
   Calendar,
   MapPin,
   Trophy,
+  Moon,
+  Sun,
+  MapPinned,
 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
@@ -39,7 +43,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training } from '@/lib/database';
-import { getSportName, getSportIcon, getSportColor } from '@/lib/sports';
+import { getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
@@ -56,13 +60,21 @@ interface SessionCardProps {
   training: Training;
   backgroundImage?: string;
   backgroundType: 'photo' | 'black' | 'white';
+  customLocation?: string;
 }
 
 const SessionCard = React.forwardRef<View, SessionCardProps>(
-  ({ training, backgroundImage, backgroundType }, ref) => {
+  ({ training, backgroundImage, backgroundType, customLocation }, ref) => {
     const sportName = getSportName(training.sport);
     const sportIcon = getSportIcon(training.sport);
     const sportColor = getSportColor(training.sport);
+
+    // Déterminer le lieu à afficher
+    const displayLocation = customLocation || (training.is_outdoor ? 'Plein air' : 'Salle');
+
+    // Logo du club si disponible
+    const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
+    const hasClubLogo = !!clubLogoSource;
 
     const formattedDate = new Date(training.date).toLocaleDateString('fr-FR', {
       weekday: 'long',
@@ -95,9 +107,17 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
             </Text>
           </View>
 
-          {/* ICÔNE SPORT */}
-          <View style={[styles.sportIconContainer, { backgroundColor: sportColor + '30' }]}>
-            <MaterialCommunityIcons name={sportIcon as any} size={48} color={sportColor} />
+          {/* ICÔNE SPORT ou LOGO CLUB */}
+          <View style={[styles.sportIconContainer, { backgroundColor: hasClubLogo ? 'transparent' : sportColor + '30' }]}>
+            {hasClubLogo ? (
+              <Image
+                source={clubLogoSource}
+                style={styles.clubLogo}
+                resizeMode="contain"
+              />
+            ) : (
+              <MaterialCommunityIcons name={sportIcon as any} size={48} color={sportColor} />
+            )}
           </View>
 
           {/* NOM DU SPORT */}
@@ -137,8 +157,8 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={[styles.statDivider, { backgroundColor: statsRowBorder }]} />
             <View style={styles.statItem}>
               <MapPin size={16} color={goldColor} />
-              <Text style={[styles.statValue, { color: textPrimary }]}>
-                {training.is_outdoor ? 'Plein air' : 'Salle'}
+              <Text style={[styles.statValue, { color: textPrimary }]} numberOfLines={1}>
+                {displayLocation}
               </Text>
               <Text style={[styles.statLabel, { color: textSecondary }]}>LIEU</Text>
             </View>
@@ -229,6 +249,8 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
   const cardRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const photoSectionRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
@@ -236,6 +258,7 @@ export default function LastSessionScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [lastTraining, setLastTraining] = useState<Training | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [customLocation, setCustomLocation] = useState<string>('');
 
   // Load last training
   useEffect(() => {
@@ -428,6 +451,7 @@ export default function LastSessionScreen() {
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -439,6 +463,7 @@ export default function LastSessionScreen() {
               training={lastTraining}
               backgroundImage={backgroundImage}
               backgroundType={backgroundType}
+              customLocation={customLocation}
             />
           </View>
 
@@ -446,35 +471,80 @@ export default function LastSessionScreen() {
           <View style={styles.styleSection}>
             <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Style de fond</Text>
             <View style={styles.styleRow}>
-              {([
-                { key: 'black', label: 'Sombre', icon: '🌙' },
-                { key: 'white', label: 'Clair', icon: '☀️' },
-                { key: 'photo', label: 'Photo', icon: '📷' },
-              ] as const).map(({ key, label, icon }) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[
-                    styles.styleBtn,
-                    {
-                      backgroundColor: backgroundType === key ? colors.accent : colors.backgroundCard,
-                      borderColor: backgroundType === key ? colors.accent : colors.border,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setBackgroundType(key);
-                    if (key !== 'photo') setBackgroundImage(undefined);
-                  }}
-                >
-                  <Text style={styles.styleBtnIcon}>{icon}</Text>
-                  <Text style={[
-                    styles.styleBtnText,
-                    { color: backgroundType === key ? colors.textOnAccent : colors.textPrimary }
-                  ]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {/* Sombre */}
+              <TouchableOpacity
+                style={[
+                  styles.styleBtn,
+                  {
+                    backgroundColor: backgroundType === 'black' ? colors.accent : colors.backgroundCard,
+                    borderColor: backgroundType === 'black' ? colors.accent : colors.border,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBackgroundType('black');
+                  setBackgroundImage(undefined);
+                }}
+              >
+                <Moon size={18} color={backgroundType === 'black' ? '#FFFFFF' : colors.textPrimary} />
+                <Text style={[
+                  styles.styleBtnText,
+                  { color: backgroundType === 'black' ? colors.textOnAccent : colors.textPrimary }
+                ]}>
+                  Sombre
+                </Text>
+              </TouchableOpacity>
+
+              {/* Clair */}
+              <TouchableOpacity
+                style={[
+                  styles.styleBtn,
+                  {
+                    backgroundColor: backgroundType === 'white' ? colors.accent : colors.backgroundCard,
+                    borderColor: backgroundType === 'white' ? colors.accent : colors.border,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBackgroundType('white');
+                  setBackgroundImage(undefined);
+                }}
+              >
+                <Sun size={18} color={backgroundType === 'white' ? '#FFFFFF' : colors.textPrimary} />
+                <Text style={[
+                  styles.styleBtnText,
+                  { color: backgroundType === 'white' ? colors.textOnAccent : colors.textPrimary }
+                ]}>
+                  Clair
+                </Text>
+              </TouchableOpacity>
+
+              {/* Photo */}
+              <TouchableOpacity
+                style={[
+                  styles.styleBtn,
+                  {
+                    backgroundColor: backgroundType === 'photo' ? colors.accent : colors.backgroundCard,
+                    borderColor: backgroundType === 'photo' ? colors.accent : colors.border,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setBackgroundType('photo');
+                  // Scroll vers les boutons photo
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollTo({ y: 500, animated: true });
+                  }, 100);
+                }}
+              >
+                <Camera size={18} color={backgroundType === 'photo' ? '#FFFFFF' : colors.textPrimary} />
+                <Text style={[
+                  styles.styleBtnText,
+                  { color: backgroundType === 'photo' ? colors.textOnAccent : colors.textPrimary }
+                ]}>
+                  Photo
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -497,6 +567,31 @@ export default function LastSessionScreen() {
               </TouchableOpacity>
             </View>
           )}
+
+          {/* Location Input */}
+          <View style={styles.locationSection}>
+            <View style={styles.locationHeader}>
+              <MapPinned size={18} color={colors.accent} />
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>
+                Lieu (optionnel)
+              </Text>
+            </View>
+            <TextInput
+              style={[
+                styles.locationInput,
+                {
+                  backgroundColor: colors.backgroundCard,
+                  borderColor: colors.border,
+                  color: colors.textPrimary,
+                }
+              ]}
+              value={customLocation}
+              onChangeText={setCustomLocation}
+              placeholder="Ex: Paris, Salle de sport XYZ..."
+              placeholderTextColor={colors.textMuted}
+              maxLength={50}
+            />
+          </View>
 
           {/* Action Buttons */}
           <View style={styles.actionSection}>
@@ -675,7 +770,12 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  clubLogo: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
   },
   sportName: {
     fontSize: 28,
@@ -789,6 +889,25 @@ const styles = StyleSheet.create({
   photoBtnText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Location Section
+  locationSection: {
+    marginBottom: 16,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  locationInput: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   // Action Buttons

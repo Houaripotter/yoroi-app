@@ -1,6 +1,6 @@
 // ============================================
-// YOROI - MODAL DE PROMPT PARTAGE
-// Apparaît après un entraînement pour inciter au partage
+// YOROI - MODAL DE PROMPT PARTAGE (Version simplifiée)
+// Popup simple qui demande si l'utilisateur veut partager
 // ============================================
 
 import React from 'react';
@@ -13,13 +13,12 @@ import {
   Dimensions,
   Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Share2, X, Sparkles } from 'lucide-react-native';
+import { Share2, X, Camera, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SharePromptModalProps {
   visible: boolean;
@@ -55,108 +54,83 @@ export const SharePromptModal: React.FC<SharePromptModalProps> = ({
       statusBarTranslucent
     >
       <View style={styles.backdrop}>
-        <BlurView intensity={isDark ? 60 : 80} style={StyleSheet.absoluteFill} tint={isDark ? 'dark' : 'light'} />
+        <BlurView intensity={isDark ? 40 : 20} style={StyleSheet.absoluteFill} tint={isDark ? 'dark' : 'light'} />
 
         <View style={styles.container}>
-          {/* Close Button */}
-          <TouchableOpacity
-            style={[styles.closeButton, { backgroundColor: colors.backgroundCard }]}
-            onPress={handleSkip}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <X size={20} color={colors.textMuted} strokeWidth={2} />
-          </TouchableOpacity>
-
           {/* Modal Card */}
-          <View style={[styles.modalCard, { backgroundColor: colors.backgroundCard }]}>
-            {/* Icon Hero */}
-            <LinearGradient
-              colors={['#8B5CF6', '#A78BFA']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.iconContainer}
-            >
-              <Sparkles size={48} color="#FFFFFF" strokeWidth={2.5} />
-            </LinearGradient>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            {/* Gold accent bar */}
+            <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
 
-            {/* Title */}
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Fais-toi remarquer ! 🔥
-            </Text>
+            {/* Content */}
+            <View style={styles.content}>
+              {/* Logo */}
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('@/assets/images/logo2010.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
 
-            {/* Subtitle */}
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Partage ta séance de <Text style={{ fontWeight: '700', color: colors.accent }}>{sportName}</Text> et
-              deviens la star de ta communauté !
-            </Text>
-
-            {/* Preview Image */}
-            <View style={[styles.previewContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <LinearGradient
-                colors={['#8B5CF6', '#A78BFA']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.previewGradient}
-              >
-                <View style={styles.previewContent}>
-                  <Text style={styles.previewTitle}>J'AI RÉALISÉ</Text>
-                  <View style={styles.previewPhotoPlaceholder}>
-                    <Text style={styles.previewPhotoText}>TA PHOTO ICI</Text>
-                  </View>
-                  <Text style={styles.previewSport}>{sportName}</Text>
-                  <Text style={styles.previewLogo}>YOROI</Text>
+              {/* Title avec check */}
+              <View style={styles.titleRow}>
+                <View style={[styles.checkCircle, { backgroundColor: '#10B981' }]}>
+                  <Check size={16} color="#FFFFFF" strokeWidth={3} />
                 </View>
-              </LinearGradient>
-            </View>
-
-            {/* Features */}
-            <View style={styles.features}>
-              <View style={styles.featureItem}>
-                <View style={[styles.featureDot, { backgroundColor: '#10B981' }]} />
-                <Text style={[styles.featureText, { color: colors.textSecondary }]}>
-                  Mets ta photo en avant
+                <Text style={[styles.title, { color: colors.textPrimary }]}>
+                  Seance enregistree !
                 </Text>
               </View>
-              <View style={styles.featureItem}>
-                <View style={[styles.featureDot, { backgroundColor: '#F59E0B' }]} />
-                <Text style={[styles.featureText, { color: colors.textSecondary }]}>
-                  Design premium Yoroi
-                </Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={[styles.featureDot, { backgroundColor: '#8B5CF6' }]} />
-                <Text style={[styles.featureText, { color: colors.textSecondary }]}>
-                  Parfait pour Instagram & TikTok
-                </Text>
-              </View>
-            </View>
 
-            {/* Actions */}
-            <TouchableOpacity
-              style={styles.shareButton}
-              onPress={handleShare}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={['#8B5CF6', '#A78BFA']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.shareButtonGradient}
-              >
-                <Share2 size={22} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.shareButtonText}>Partager ma séance</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkip}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>
-                Peut-être plus tard
+              {/* Sport name */}
+              <Text style={[styles.sportText, { color: colors.accent }]}>
+                {sportName}
               </Text>
-            </TouchableOpacity>
+
+              {/* Message */}
+              <Text style={[styles.message, { color: colors.textSecondary }]}>
+                Partage ta seance sur Instagram et TikTok avec une carte stylée !
+              </Text>
+
+              {/* Features mini */}
+              <View style={styles.features}>
+                <View style={styles.featureItem}>
+                  <Camera size={16} color={colors.accent} />
+                  <Text style={[styles.featureText, { color: colors.textMuted }]}>
+                    Ajoute ta photo
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Share2 size={16} color={colors.accent} />
+                  <Text style={[styles.featureText, { color: colors.textMuted }]}>
+                    Design story 9:16
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity
+                style={[styles.shareButton, { backgroundColor: colors.accent }]}
+                onPress={handleShare}
+                activeOpacity={0.85}
+              >
+                <Share2 size={20} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.shareButtonText}>Créer ma carte</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.skipButton, { backgroundColor: colors.backgroundElevated }]}
+                onPress={handleSkip}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>
+                  Plus tard
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -172,171 +146,110 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   container: {
-    width: SCREEN_WIDTH * 0.9,
-    maxWidth: 400,
-    position: 'relative',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: -12,
-    right: -12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    width: SCREEN_WIDTH - 48,
+    maxWidth: 340,
   },
   modalCard: {
     borderRadius: 24,
-    padding: 28,
-    alignItems: 'center',
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowRadius: 20,
+    elevation: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
-    paddingHorizontal: 8,
-  },
-  previewContainer: {
+  accentBar: {
+    height: 4,
     width: '100%',
-    aspectRatio: 9 / 16,
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 16,
+    alignItems: 'center',
+  },
+  logoContainer: {
+    width: 64,
+    height: 64,
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 24,
-    borderWidth: 1,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 8,
   },
-  previewGradient: {
-    flex: 1,
+  logo: {
+    width: '100%',
+    height: '100%',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  checkCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
   },
-  previewContent: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  previewTitle: {
-    fontSize: 16,
+  title: {
+    fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 2,
   },
-  previewPhotoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
-  previewPhotoText: {
-    fontSize: 10,
+  sportText: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
+    marginBottom: 12,
   },
-  previewSport: {
+  message: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  previewLogo: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 2,
-    marginTop: 8,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   features: {
-    width: '100%',
-    gap: 12,
-    marginBottom: 24,
+    flexDirection: 'row',
+    gap: 20,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  featureDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    gap: 6,
   },
   featureText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    flex: 1,
+  },
+  buttonsContainer: {
+    padding: 16,
+    paddingTop: 8,
+    gap: 10,
   },
   shareButton: {
-    width: '100%',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-    shadowColor: '#8B5CF6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  shareButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
+    borderRadius: 14,
     gap: 10,
   },
   shareButtonText: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
   },
   skipButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
   },
   skipButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
 });
