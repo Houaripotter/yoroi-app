@@ -54,6 +54,18 @@
     "yearlyCard": "Anual",
     "shareYourProgress": "Compartilhe seu progresso"
   },
+  "rating": {
+    "greeting": "Olá Campeão!",
+    "messageWeight": "Você acabou de registrar seu peso, ótimo por manter a constância!",
+    "messageSession": "Ótimo treino! Você faz parte dos guerreiros que superam seus limites!",
+    "messageGeneral": "Obrigado por usar o Yoroi todos os dias!",
+    "humbleMessage": "Desculpe interromper... Sei que seu tempo é precioso.\n\nMas se o Yoroi te ajuda no seu progresso, uma pequena avaliação na Store me ajudaria muito a fazer crescer nossa família de guerreiros e tornar o app visível para outros atletas como você.",
+    "familyGrowing": "Cada avaliação ajuda a família Yoroi a crescer!",
+    "rateButton": "Avaliar o app!",
+    "suggestionButton": "Tenho uma ideia / problema",
+    "laterButton": "Depois, estou com pressa",
+    "thankYou": "Obrigado de coração!"
+  },
   "home": {
     "title": "Início",
     "greeting": "Olá",
@@ -348,6 +360,9 @@
     "neck": "Pescoço",
     "noData": "Sem dados",
     "scrollHint": "Deslize para ver todos os dados",
+    "tapToEnlarge": "Toque para ampliar",
+    "dates": "Datas",
+    "values": "Valores",
     "bmiUnderweight": "ABAIXO DO PESO",
     "bmiNormal": "NORMAL",
     "bmiOverweight": "SOBREPESO",

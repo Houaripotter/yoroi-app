@@ -41,6 +41,7 @@ import {
   Globe,
   X,
   Trash2,
+  Sun,
 } from 'lucide-react-native';
 
 // Import events catalog data
@@ -63,6 +64,8 @@ import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { RatingPopup } from '@/components/RatingPopup';
+import ratingService from '@/lib/ratingService';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -138,6 +141,9 @@ export default function PlanningScreen() {
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Rating popup state
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
 
   // Vérifier si c'est la première visite
   useEffect(() => {
@@ -529,25 +535,48 @@ export default function PlanningScreen() {
     return selectedDate ? getWorkoutsForDate(selectedDate) : [];
   }, [selectedDate, getWorkoutsForDate]);
 
-  // Monthly stats by club
+  // Stats des entraînements en plein air
+  const outdoorStats = useMemo(() => {
+    const outdoorWorkouts = workouts.filter(w => w.is_outdoor);
+    const outdoorThisMonth = outdoorWorkouts.filter(w => isSameMonth(new Date(w.date), new Date())).length;
+    return { total: outdoorWorkouts.length, thisMonth: outdoorThisMonth };
+  }, [workouts]);
+
+  // Monthly stats by club (including outdoor workouts)
   const monthlyClubStats = useMemo(() => {
-    const stats: Record<number, { count: number; club: Club }> = {};
+    const stats: Record<number | string, { count: number; club: Club | { id: string; name: string; sport: string; color: string; isOutdoor: true } }> = {};
+    let outdoorCount = 0;
 
     workouts.forEach(w => {
-      if (isSameMonth(new Date(w.date), currentMonth) && w.club_id) {
-        const club = clubs.find(c => c.id === w.club_id);
-        if (club) {
-          if (!stats[w.club_id]) {
-            stats[w.club_id] = { count: 0, club };
+      if (isSameMonth(new Date(w.date), currentMonth)) {
+        // Comptabiliser les entraînements en plein air
+        if (w.is_outdoor) {
+          outdoorCount++;
+        }
+        // Comptabiliser par club
+        if (w.club_id) {
+          const club = clubs.find(c => c.id === w.club_id);
+          if (club) {
+            if (!stats[w.club_id]) {
+              stats[w.club_id] = { count: 0, club };
+            }
+            stats[w.club_id].count++;
           }
-          stats[w.club_id].count++;
         }
       }
     });
 
+    // Ajouter les stats "Plein air" si > 0
+    if (outdoorCount > 0) {
+      stats['outdoor'] = {
+        count: outdoorCount,
+        club: { id: 'outdoor', name: 'Plein air', sport: 'outdoor', color: '#22C55E', isOutdoor: true }
+      };
+    }
+
     return Object.values(stats)
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+      .slice(0, 5); // Augmenté à 5 pour inclure outdoor
   }, [workouts, currentMonth, clubs]);
 
   // Handler: clic sur un jour du calendrier
@@ -557,11 +586,13 @@ export default function PlanningScreen() {
     setShowDayModal(true);
   };
 
-  // Handler: ouvrir le modal d'ajout
+  // Handler: ouvrir le flow d'ajout (même que le bouton +)
   const handleOpenAddModal = () => {
     setShowDayModal(false);
+    // Naviguer vers add-training avec la date sélectionnée
+    const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
     setTimeout(() => {
-      setShowAddModal(true);
+      router.push(`/add-training?date=${dateStr}`);
     }, 300);
   };
 
@@ -615,6 +646,15 @@ export default function PlanningScreen() {
 
       // Navigate to training journal to show the victory modal
       router.push('/training-journal');
+
+      // Vérifier si on doit afficher le popup de notation (après un délai pour ne pas interrompre)
+      const ratingResult = await ratingService.recordPositiveAction('session');
+      if (ratingResult.shouldShowPopup) {
+        // Afficher après un délai pour laisser l'utilisateur apprécier la victory modal
+        setTimeout(() => {
+          setShowRatingPopup(true);
+        }, 3000);
+      }
 
     } catch (error) {
       console.error('❌ Erreur ajout seance:', error);
@@ -685,6 +725,17 @@ export default function PlanningScreen() {
     const nextDate = getNextDateForDayOfWeek(dayIndex);
     setSelectedDate(nextDate);
     setShowAddModal(true);
+  };
+
+  // Handlers pour le popup de notation
+  const handleRatingClose = async () => {
+    await ratingService.onPopupDismissed();
+    setShowRatingPopup(false);
+  };
+
+  const handleRated = async () => {
+    await ratingService.onRated();
+    setShowRatingPopup(false);
   };
 
   // Gérer le clic sur un onglet
@@ -850,14 +901,17 @@ export default function PlanningScreen() {
                   contentContainerStyle={styles.monthlyStatsScroll}
                 >
                   {monthlyClubStats.map(({ count, club }) => {
-                    const display = getClubDisplay(club);
+                    const isOutdoor = 'isOutdoor' in club && club.isOutdoor;
+                    const display = isOutdoor ? null : getClubDisplay(club as Club);
                     return (
                       <View key={club.id} style={styles.monthlyStatItem}>
-                        <View style={[styles.monthlyStatIcon, { backgroundColor: display.type === 'color' ? `${display.color}20` : colors.backgroundElevated }]}>
-                          {display.type === 'image' ? (
+                        <View style={[styles.monthlyStatIcon, { backgroundColor: isOutdoor ? '#22C55E20' : (display?.type === 'color' ? `${display.color}20` : colors.backgroundElevated) }]}>
+                          {isOutdoor ? (
+                            <Sun size={24} color="#22C55E" strokeWidth={2} />
+                          ) : display?.type === 'image' ? (
                             <Image source={display.source} style={styles.clubLogoSmall} />
                           ) : (
-                            <View style={[styles.clubColorDot, { backgroundColor: display.color }]} />
+                            <View style={[styles.clubColorDot, { backgroundColor: display?.color || colors.accent }]} />
                           )}
                         </View>
                         <Text style={[styles.monthlyStatCount, { color: club.color || colors.accent }]}>x{count}</Text>
@@ -1328,7 +1382,30 @@ export default function PlanningScreen() {
           >
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('planning.clubs')}</Text>
 
-            {clubs.length === 0 ? (
+            {/* Carte Plein Air - affichée si entraînements outdoor */}
+            {outdoorStats.total > 0 && (
+              <View style={[styles.outdoorCard, { backgroundColor: '#22C55E15', borderColor: '#22C55E40' }]}>
+                <View style={styles.outdoorCardContent}>
+                  <View style={[styles.outdoorIconBg, { backgroundColor: '#22C55E30' }]}>
+                    <Sun size={32} color="#22C55E" strokeWidth={2} />
+                  </View>
+                  <View style={styles.outdoorInfo}>
+                    <Text style={[styles.outdoorTitle, { color: '#22C55E' }]}>Plein air</Text>
+                    <Text style={[styles.outdoorSubtitle, { color: colors.textSecondary }]}>Entraînements en extérieur</Text>
+                  </View>
+                  <View style={styles.outdoorStats}>
+                    <Text style={[styles.outdoorStatValue, { color: '#22C55E' }]}>{outdoorStats.thisMonth}</Text>
+                    <Text style={[styles.outdoorStatLabel, { color: colors.textMuted }]}>ce mois</Text>
+                  </View>
+                </View>
+                <View style={[styles.outdoorTotal, { borderTopColor: '#22C55E20' }]}>
+                  <Text style={[styles.outdoorTotalLabel, { color: colors.textMuted }]}>Total entraînements plein air</Text>
+                  <Text style={[styles.outdoorTotalValue, { color: '#22C55E' }]}>{outdoorStats.total}</Text>
+                </View>
+              </View>
+            )}
+
+            {clubs.length === 0 && outdoorStats.total === 0 ? (
               <EmptyState
                 type="clubs"
                 onAction={() => {
@@ -1337,7 +1414,7 @@ export default function PlanningScreen() {
                   setShowAddClubModal(true);
                 }}
               />
-            ) : (
+            ) : clubs.length > 0 ? (
               <View style={styles.clubsGrid}>
                 {clubs.map((club) => {
                   const display = getClubDisplay(club);
@@ -1405,7 +1482,7 @@ export default function PlanningScreen() {
                   );
                 })}
               </View>
-            )}
+            ) : null}
 
             {/* Total Stats */}
             {clubs.length > 0 && (
@@ -1856,6 +1933,14 @@ export default function PlanningScreen() {
         />
       )}
 
+      {/* Rating Popup */}
+      <RatingPopup
+        visible={showRatingPopup}
+        onClose={handleRatingClose}
+        onRated={handleRated}
+        actionType="session"
+      />
+
       <PopupComponent />
     </View>
   );
@@ -2217,6 +2302,62 @@ const styles = StyleSheet.create({
     marginTop: 0,
     textTransform: 'uppercase',
     letterSpacing: 3,
+  },
+
+  // OUTDOOR CARD
+  outdoorCard: {
+    borderRadius: RADIUS.xl,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+  },
+  outdoorCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  outdoorIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outdoorInfo: {
+    flex: 1,
+  },
+  outdoorTitle: {
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    marginBottom: 2,
+  },
+  outdoorSubtitle: {
+    fontSize: TYPOGRAPHY.size.xs,
+  },
+  outdoorStats: {
+    alignItems: 'center',
+  },
+  outdoorStatValue: {
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontWeight: TYPOGRAPHY.weight.bold,
+  },
+  outdoorStatLabel: {
+    fontSize: TYPOGRAPHY.size.xs,
+  },
+  outdoorTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+  },
+  outdoorTotalLabel: {
+    fontSize: TYPOGRAPHY.size.xs,
+  },
+  outdoorTotalValue: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
 
   // CLUBS GRID

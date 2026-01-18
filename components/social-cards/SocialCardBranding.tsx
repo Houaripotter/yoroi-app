@@ -51,7 +51,15 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
 
       {/* Brand Block - Compact */}
       <View style={styles.footerBrandBlock}>
-        <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
+        {/* Logo + YOROI sur la même ligne */}
+        <View style={styles.footerLogoRow}>
+          <Image
+            source={require('@/assets/images/logo2010.png')}
+            style={styles.footerLogo}
+            resizeMode="contain"
+          />
+          <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
+        </View>
         <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
 
         {/* App Store Badge */}
@@ -162,6 +170,15 @@ const styles = StyleSheet.create({
   footerBrandBlock: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  footerLogoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  footerLogo: {
+    width: 28,
+    height: 28,
   },
   footerBrandName: {
     fontSize: 14,

@@ -52,8 +52,8 @@ class SoundManager {
       gong: require('../assets/sounds/gong.mp3'),
       beep: require('../assets/sounds/beep.mp3'),
       tick: require('../assets/sounds/beep.mp3'), // Utilise beep pour le tick (countdown)
-      victory: require('../assets/sounds/victory.mp3'),
-      levelup: require('../assets/sounds/level_up.mp3'),
+      victory: require('../assets/sounds/gong.mp3'), // Fallback au gong
+      levelup: require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
     };
 
     for (const [key, file] of Object.entries(soundFiles)) {

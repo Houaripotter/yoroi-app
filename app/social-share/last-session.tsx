@@ -88,8 +88,7 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 5],
+        allowsEditing: false,
         quality: 0.9,
       });
 
@@ -113,8 +112,7 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [4, 5],
+        allowsEditing: false,
         quality: 0.9,
       });
 

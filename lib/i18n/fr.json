@@ -56,6 +56,18 @@
     "shareButton": "Partager",
     "yourStats": "Tes stats"
   },
+  "rating": {
+    "greeting": "Salut Champion !",
+    "messageWeight": "Tu viens d'enregistrer ton poids, c'est super de rester régulier !",
+    "messageSession": "Bravo pour cette séance ! Tu fais partie des warriors qui se dépassent !",
+    "messageGeneral": "Merci d'utiliser Yoroi au quotidien !",
+    "humbleMessage": "Excuse-moi de t'interrompre... Je sais que ton temps est précieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait énormément à faire grandir notre famille de warriors et à rendre l'app visible pour d'autres sportifs comme toi.",
+    "familyGrowing": "Chaque note aide la famille Yoroi à grandir !",
+    "rateButton": "Je note l'app !",
+    "suggestionButton": "J'ai une idée / un problème",
+    "laterButton": "Plus tard, je suis pressé",
+    "thankYou": "Merci du fond du cœur !"
+  },
   "home": {
     "title": "Accueil",
     "greeting": "Bonjour",
@@ -332,6 +344,9 @@
     "trendStable": "Stable",
     "noData": "Aucune donnée",
     "scrollHint": "Glisse pour voir toutes les données",
+    "tapToEnlarge": "Appuyez pour agrandir",
+    "dates": "Dates",
+    "values": "Valeurs",
     "bmi": "IMC",
     "bmiDescription": "Indice de Masse Corporelle",
     "bmiTitle": "INDICE DE MASSE CORPORELLE",

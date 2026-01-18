@@ -54,6 +54,18 @@
     "yearlyCard": "年报",
     "shareYourProgress": "分享你的进步"
   },
+  "rating": {
+    "greeting": "嗨，冠军！",
+    "messageWeight": "你刚刚记录了体重，保持规律真棒！",
+    "messageSession": "训练很棒！你是突破极限的勇士之一！",
+    "messageGeneral": "感谢你每天使用 Yoroi！",
+    "humbleMessage": "抱歉打扰你... 我知道你的时间很宝贵。\n\n但如果 Yoroi 对你的进步有帮助，在应用商店给一个小评价会帮助我壮大我们的勇士家族，让更多像你这样的运动员发现这个应用。",
+    "familyGrowing": "每一个评价都帮助 Yoroi 家族成长！",
+    "rateButton": "给应用评分！",
+    "suggestionButton": "我有想法/问题",
+    "laterButton": "稍后，我很赶时间",
+    "thankYou": "衷心感谢！"
+  },
   "home": {
     "title": "首页",
     "greeting": "你好",
@@ -348,6 +360,9 @@
     "neck": "颈围",
     "noData": "暂无数据",
     "scrollHint": "滑动查看所有数据",
+    "tapToEnlarge": "点击放大",
+    "dates": "日期",
+    "values": "数值",
     "bmiUnderweight": "偏瘦",
     "bmiNormal": "正常",
     "bmiOverweight": "超重",

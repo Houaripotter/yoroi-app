@@ -133,6 +133,10 @@ export const initDatabase = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -430,6 +434,7 @@ export interface Training {
   technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
   exercises?: Exercise[]; // For musculation workouts
   technique_rating?: number | null; // 1-5 stars rating
+  is_outdoor?: boolean; // true si entraînement en plein air
   created_at?: string;
   // Joined fields
   club_name?: string;
@@ -654,11 +659,12 @@ export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
-     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null]
+     data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
+     data.is_outdoor ? 1 : 0]
   );
   return result.lastInsertRowId;
 };
@@ -676,7 +682,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
        LEFT JOIN clubs c ON t.club_id = c.id
        ORDER BY t.date DESC, t.start_time ASC`;
 
-  const results = await database.getAllAsync<Training & { exercises?: string }>(query);
+  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(query);
   return results.map(r => {
     let exercises;
     if (r.exercises) {
@@ -686,7 +692,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
         exercises = undefined;
       }
     }
-    return { ...r, exercises };
+    return { ...r, exercises, is_outdoor: r.is_outdoor === 1 };
   });
 };
 

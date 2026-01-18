@@ -95,19 +95,19 @@ interface Slide {
   highlights?: Highlight[];
 }
 
-// Couleurs forcées en mode sombre pour l'onboarding (fond noir, texte blanc)
+// Couleurs forcées en mode CLAIR pour l'onboarding (thème Classic)
 // Cela assure une expérience cohérente pour tous les nouveaux utilisateurs
 const ONBOARDING_COLORS = {
-  background: '#0A0A0A',
-  backgroundCard: '#151515',
-  backgroundElevated: '#1F1F1F',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8B8B8',
-  textMuted: '#808080',
-  accent: '#FFFFFF',
-  accentText: '#FFFFFF',
-  border: '#2A2A2A',
-  textOnGold: '#000000',
+  background: '#F7F7F7',
+  backgroundCard: '#FFFFFF',
+  backgroundElevated: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#555555',
+  textMuted: '#888888',
+  accent: '#1A1A1A',
+  accentText: '#1A1A1A',
+  border: '#E0E0E0',
+  textOnGold: '#FFFFFF',
 };
 
 export default function OnboardingScreen() {
@@ -164,12 +164,12 @@ export default function OnboardingScreen() {
       id: 'gamification',
       icon: <Medal size={64} color="#FFD700" />,
       title: 'Systeme de Grades',
-      description: 'Evolue de Ashigaru a Shogun a travers 5 grades de guerrier, collectionne 61 badges, personnalise ton avatar. Gagne de l\'XP et suis ta progression !',
+      description: 'Evolue de Ashigaru a Shogun a travers 5 grades de guerrier, collectionne 61 badges, personnalise ton avatar parmi 15 thèmes uniques. Gagne de l\'XP et suis ta progression !',
       color: '#FFD700',
       highlights: [
         { icon: <Award size={14} color="#FFD700" />, text: '5 grades de guerrier samourai' },
         { icon: <Star size={14} color="#FFD700" />, text: '61 badges a collectionner' },
-        { icon: <Target size={14} color="#FFD700" />, text: 'Avatars personnalisables' },
+        { icon: <Target size={14} color="#FFD700" />, text: '15 thèmes & avatars personnalisables' },
       ],
     },
     {
@@ -681,7 +681,7 @@ export default function OnboardingScreen() {
                     maximumDate={new Date()}
                     minimumDate={new Date(1920, 0, 1)}
                     textColor={colors.textPrimary}
-                    themeVariant="dark"
+                    themeVariant="light"
                   />
                 </View>
               )}

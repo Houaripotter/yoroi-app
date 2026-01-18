@@ -45,6 +45,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function YearCounterV2Screen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [format] = useState<'stories' | 'square'>('stories');
@@ -83,8 +84,7 @@ export default function YearCounterV2Screen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 5],
+        allowsEditing: false,
         quality: 0.9,
       });
 
@@ -108,8 +108,7 @@ export default function YearCounterV2Screen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [4, 5],
+        allowsEditing: false,
         quality: 0.9,
       });
 
@@ -268,6 +267,7 @@ export default function YearCounterV2Screen() {
 
         {/* Scrollable Content */}
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -304,6 +304,12 @@ export default function YearCounterV2Screen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setSelectedTemplate(key);
+                  // Si on sélectionne Photo et pas d'image, scroll vers le bas pour montrer les options
+                  if (key === 'photo' && !backgroundImage) {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                  }
                 }}
               >
                 <Text style={[

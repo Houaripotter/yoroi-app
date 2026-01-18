@@ -113,8 +113,8 @@ export const Celebration: React.FC<CelebrationProps> = ({
     try {
       // Charger et jouer le son selon le type
       const soundFile = config.sound === 'victory'
-        ? require('@/assets/sounds/victory.mp3')
-        : require('@/assets/sounds/level_up.mp3');
+        ? require('@/assets/sounds/gong.mp3')
+        : require('@/assets/sounds/pokemon-level-up-made-with-Voicemod.mp3');
 
       const { sound: audioSound } = await Audio.Sound.createAsync(soundFile);
       setSound(audioSound);

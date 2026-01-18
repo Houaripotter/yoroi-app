@@ -410,65 +410,101 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Fond qui couvre les onglets quand on scrolle */}
         <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
-        {/* STATS COMPACT ROW - Gradient Cards */}
+        {/* STATS COMPACT ROW - Gradient Cards avec navigation */}
         <View style={styles.statsRow}>
-        <LinearGradient
-          colors={['#3B82F6', '#2563EB']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statCardGradient}
+        {/* Pas - navigation vers stats santé */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(tabs)/stats?tab=sante');
+          }}
+          activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="walk" size={12} color="#FFFFFF" />
-          <AnimatedCounter
-            value={steps}
-            style={styles.statValueWhite}
-            duration={800}
-          />
-          <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#3B82F6', '#2563EB']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statCardGradient}
+          >
+            <MaterialCommunityIcons name="walk" size={12} color="#FFFFFF" />
+            <AnimatedCounter
+              value={steps}
+              style={styles.statValueWhite}
+              duration={800}
+            />
+            <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={['#F97316', '#EA580C']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statCardGradient}
+        {/* Série - navigation vers records */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/records');
+          }}
+          activeOpacity={0.8}
         >
-          <Ionicons name="flame" size={12} color="#FFFFFF" />
-          <AnimatedCounter
-            value={streak}
-            style={styles.statValueWhite}
-            duration={800}
-          />
-          <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#F97316', '#EA580C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statCardGradient}
+          >
+            <Ionicons name="flame" size={12} color="#FFFFFF" />
+            <AnimatedCounter
+              value={streak}
+              style={styles.statValueWhite}
+              duration={800}
+            />
+            <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={['#8B5CF6', '#7C3AED']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statCardGradient}
+        {/* Niveau - navigation vers gamification */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/gamification');
+          }}
+          activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="lightning-bolt" size={12} color="#FFFFFF" />
-          <AnimatedCounter
-            value={level}
-            style={styles.statValueWhite}
-            duration={800}
-          />
-          <Text style={styles.statLabelWhite}>{t('home.levelLabel')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#8B5CF6', '#7C3AED']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statCardGradient}
+          >
+            <MaterialCommunityIcons name="lightning-bolt" size={12} color="#FFFFFF" />
+            <AnimatedCounter
+              value={level}
+              style={styles.statValueWhite}
+              duration={800}
+            />
+            <Text style={styles.statLabelWhite}>{t('home.levelLabel')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        <LinearGradient
-          colors={[colors.accent, `${colors.accent}DD`]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statCardGradient}
+        {/* Rang - navigation vers gamification */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/gamification');
+          }}
+          activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="trophy" size={12} color={colors.textOnAccent} />
-          <Text style={[styles.statValueWhite, { fontSize: 11, color: colors.textOnAccent }]} numberOfLines={1}>
-            {rankName}
-          </Text>
-          <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={[colors.accent, `${colors.accent}DD`]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.statCardGradient}
+          >
+            <MaterialCommunityIcons name="trophy" size={12} color={colors.textOnAccent} />
+            <Text style={[styles.statValueWhite, { fontSize: 11, color: colors.textOnAccent }]} numberOfLines={1}>
+              {rankName}
+            </Text>
+            <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
@@ -540,9 +576,17 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           </View>
         </View>
 
-        {/* Composition corporelle - Données réelles uniquement */}
+        {/* Composition corporelle - Chaque élément cliquable */}
         <View style={[styles.bodyComposition, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-          <View style={styles.compositionItem}>
+          {/* Muscle - navigation vers composition */}
+          <TouchableOpacity
+            style={styles.compositionItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/stats?tab=composition');
+            }}
+            activeOpacity={0.7}
+          >
             <Dumbbell size={16} color="#EF4444" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
@@ -555,11 +599,19 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   : '--%'}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.compositionDivider} />
 
-          <View style={styles.compositionItem}>
+          {/* Graisse - navigation vers composition */}
+          <TouchableOpacity
+            style={styles.compositionItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/stats?tab=composition');
+            }}
+            activeOpacity={0.7}
+          >
             <Apple size={16} color="#F59E0B" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
@@ -572,11 +624,19 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 {bodyComposition?.bodyFatPercent != null ? `${bodyComposition.bodyFatPercent.toFixed(0)}%` : '--%'}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.compositionDivider} />
 
-          <View style={styles.compositionItem}>
+          {/* Eau - navigation vers composition */}
+          <TouchableOpacity
+            style={styles.compositionItem}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/stats?tab=composition');
+            }}
+            activeOpacity={0.7}
+          >
             <Droplet size={16} color="#3B82F6" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
@@ -589,11 +649,18 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 {bodyComposition?.waterPercent != null ? `${bodyComposition.waterPercent.toFixed(0)}%` : '--%'}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
         </TouchableOpacity>
 
-        {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST */}
+        {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST - Cliquable vers stats poids */}
+        <TouchableOpacity
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(tabs)/stats?tab=poids');
+          }}
+          activeOpacity={0.9}
+        >
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -698,6 +765,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             );
           }}
         />
+        </TouchableOpacity>
 
         {/* Prédictions */}
         <TouchableOpacity
@@ -1034,35 +1102,39 @@ const styles = StyleSheet.create({
   // Stats Row - Gradient Cards (compact moderne)
   statsRow: {
     flexDirection: 'row',
-    gap: 4,
-    marginBottom: 12,
+    gap: 6,
+    marginBottom: 14,
     zIndex: 200,
+    paddingHorizontal: 2,
   },
   statCardGradient: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: IS_VERY_SMALL_SCREEN ? 2 : 3,
+    justifyContent: 'center',
+    paddingVertical: IS_SMALL_SCREEN ? 8 : 10,
+    paddingHorizontal: IS_VERY_SMALL_SCREEN ? 6 : 8,
     borderRadius: 12,
-    gap: 1,
+    gap: 2,
+    minHeight: 55,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statValueWhite: {
-    fontSize: IS_SMALL_SCREEN ? 14 : 16,
+    fontSize: IS_SMALL_SCREEN ? 15 : 17,
     fontWeight: '800',
     letterSpacing: -0.5,
     color: '#FFFFFF',
   },
   statLabelWhite: {
-    fontSize: IS_SMALL_SCREEN ? 8 : 9,
+    fontSize: IS_SMALL_SCREEN ? 9 : 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     color: 'rgba(255, 255, 255, 0.95)',
+    marginTop: 1,
   },
 
   // Weight Card Premium

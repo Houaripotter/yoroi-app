@@ -554,15 +554,15 @@ export default function ChronoScreen() {
               return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
             }
 
-            // REPOS logic
+            // REPOS logic (beep pour musculation, pas gong)
             if (mode === 'repos') {
-              playGong();
+              playBeep();
               successHaptic();
               setReposCount(c => c + 1);
               return { ...prev, isRunning: false, phase: 'idle', timeRemaining: 0 };
             }
 
-            // CUSTOM logic
+            // CUSTOM logic (beep pour transitions, gong réservé au combat)
             if (mode === 'custom') {
               if (prev.phase === 'work') {
                 if (prev.currentRound >= prev.totalRounds) {
@@ -574,7 +574,7 @@ export default function ChronoScreen() {
                   playBeep();
                   return { ...prev, phase: 'rest', timeRemaining: prev.restDuration };
                 } else {
-                  playGong();
+                  playBeep();
                   return {
                     ...prev,
                     phase: 'work',
@@ -583,7 +583,7 @@ export default function ChronoScreen() {
                   };
                 }
               } else {
-                playGong();
+                playBeep();
                 return {
                   ...prev,
                   phase: 'work',

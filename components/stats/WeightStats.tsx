@@ -15,9 +15,9 @@ const { width } = Dimensions.get('window');
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
 const CHART_WIDTH = width - CONTAINER_PADDING * 2;
 const CHART_HEIGHT = scale(240);
-const PADDING_LEFT = scale(45);
+const PADDING_LEFT = scale(55); // Augmenté pour éviter le chevauchement avec les labels Y
 const PADDING_RIGHT = scale(20);
-const PADDING_TOP = scale(20);
+const PADDING_TOP = scale(30); // Augmenté pour les badges de valeurs
 const PADDING_BOTTOM = scale(40);
 
 // Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
@@ -299,7 +299,17 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
       </View>
 
       {/* Graphique en ligne moderne */}
-      <View style={[styles.chartCard, { backgroundColor: colors.backgroundElevated }]}>
+      <TouchableOpacity
+        style={[styles.chartCard, { backgroundColor: colors.backgroundElevated }]}
+        activeOpacity={0.8}
+        onPress={() => chartData.length > 0 && setSelectedStat({
+          key: 'chart',
+          label: 'Évolution du poids',
+          color: colors.accent,
+          unit: 'kg',
+          icon: <WeightIcon size={18} color={colors.accent} />,
+        })}
+      >
         <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
           Évolution du poids
         </Text>
@@ -532,15 +542,30 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
               if (chartData.length <= 7) return true;
               const step = Math.max(1, Math.floor(chartData.length / 7));
               return index % step === 0 || index === chartData.length - 1;
-            }).map((point, index) => (
-              <View key={index} style={[styles.valueLabel, { left: point.x - 24, top: point.y - 36 }]}>
-                <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
-                  <Text style={styles.valueBadgeText}>
-                    {point.weight.toFixed(1)} kg
-                  </Text>
+            }).map((point, idx) => {
+              // Calculer la position X pour éviter le chevauchement avec l'axe Y
+              const labelWidth = 50; // Largeur du badge
+              let leftPos = point.x - labelWidth / 2;
+
+              // S'assurer que le badge ne dépasse pas sur l'axe Y
+              if (leftPos < PADDING_LEFT - 5) {
+                leftPos = PADDING_LEFT - 5;
+              }
+              // S'assurer que le badge ne dépasse pas à droite
+              if (leftPos + labelWidth > CHART_WIDTH - 5) {
+                leftPos = CHART_WIDTH - labelWidth - 5;
+              }
+
+              return (
+                <View key={idx} style={[styles.valueLabel, { left: leftPos, top: point.y - 36 }]}>
+                  <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
+                    <Text style={styles.valueBadgeText}>
+                      {point.weight.toFixed(1)} kg
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
 
             {/* Label de l'objectif */}
             {stats.end > 0 && goalWeight && (
@@ -576,6 +601,14 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
           </View>
         )}
 
+        {/* Bouton agrandir */}
+        {chartData.length > 0 && (
+          <View style={styles.enlargeButton}>
+            <Maximize2 size={16} color={colors.accent} />
+            <Text style={[styles.enlargeText, { color: colors.accent }]}>Appuyez pour agrandir</Text>
+          </View>
+        )}
+
         {/* Légende du graphique */}
         {chartData.length > 0 && (
           <View style={[styles.chartLegend, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}>
@@ -591,7 +624,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
             )}
           </View>
         )}
-      </View>
+      </TouchableOpacity>
 
       {/* Historique */}
       <View style={[styles.historyCard, { backgroundColor: colors.backgroundElevated }]}>
@@ -951,6 +984,22 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
+    fontWeight: '600',
+  },
+  enlargeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderRadius: 10,
+    alignSelf: 'center',
+  },
+  enlargeText: {
+    fontSize: 13,
     fontWeight: '600',
   },
 });

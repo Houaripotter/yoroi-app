@@ -55,6 +55,8 @@ import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { RatingPopup } from '@/components/RatingPopup';
+import ratingService from '@/lib/ratingService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -125,6 +127,9 @@ export default function AddScreen() {
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Rating popup state
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
 
   // Vérifier si c'est la première visite
   useEffect(() => {
@@ -433,9 +438,32 @@ export default function AddScreen() {
     );
   };
 
-  // Fonction pour fermer la modal
-  const handleCloseSuccessModal = () => {
+  // Fonction pour fermer la modal et vérifier si on doit afficher le popup de notation
+  const handleCloseSuccessModal = async () => {
     setShowSuccessModal(false);
+
+    // Vérifier si on doit afficher le popup de notation
+    const ratingResult = await ratingService.recordPositiveAction('weight');
+    if (ratingResult.shouldShowPopup) {
+      // Petit délai pour une meilleure UX
+      setTimeout(() => {
+        setShowRatingPopup(true);
+      }, 500);
+    } else {
+      router.back();
+    }
+  };
+
+  // Handlers pour le popup de notation
+  const handleRatingClose = async () => {
+    await ratingService.onPopupDismissed();
+    setShowRatingPopup(false);
+    router.back();
+  };
+
+  const handleRated = async () => {
+    await ratingService.onRated();
+    setShowRatingPopup(false);
     router.back();
   };
 
@@ -1047,6 +1075,14 @@ export default function AddScreen() {
           onLater={handleLaterTutorial}
         />
       )}
+
+      {/* Rating Popup */}
+      <RatingPopup
+        visible={showRatingPopup}
+        onClose={handleRatingClose}
+        onRated={handleRated}
+        actionType="weight"
+      />
 
       <PopupComponent />
     </KeyboardAvoidingView>

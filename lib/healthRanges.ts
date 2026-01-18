@@ -26,6 +26,17 @@ export type HealthRangeTranslationKey =
 export interface MetricRangeWithTranslation extends MetricRange {
   translationKey: HealthRangeTranslationKey;
   genderSpecific?: boolean;
+  // BMR-specific values for translation interpolation
+  bmrValues?: {
+    bmrValue: number;
+    weight: number;
+    height: number;
+    age: number;
+    sedentary: number;
+    lightlyActive: number;
+    active: number;
+    veryActive: number;
+  };
 }
 
 // ============================================
@@ -66,12 +77,14 @@ Suis la TENDANCE sur 4-8 semaines plutot que les variations quotidiennes.`,
   ],
 };
 
-export const BODY_FAT_RANGES_FEMALE: MetricRange = {
+export const BODY_FAT_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 10,
   max: 45,
   unit: '%',
   source: 'Gallagher D et al. Am J Clin Nutr 2000 - PMID: 10966886',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10966886/',
+  translationKey: 'bodyFat',
+  genderSpecific: true,
   explanation: `Le pourcentage de masse grasse mesure la proportion de graisse par rapport au poids total.
 
 CLASSIFICATION (Gallagher et al. 2000):
@@ -90,19 +103,21 @@ PREUVES SCIENTIFIQUES:
 CONSEIL:
 Une perte de 0.5-1% par mois est un rythme sain et durable.`,
   zones: [
-    { label: 'Athlète', start: 10, end: 20, color: '#22C55E', status: 'optimal' },
-    { label: 'Forme', start: 21, end: 24, color: '#EAB308', status: 'good' },
-    { label: 'Moyen', start: 25, end: 31, color: '#F97316', status: 'moderate' },
-    { label: 'Élevé', start: 32, end: 45, color: '#EF4444', status: 'attention' },
+    { label: 'athlete', start: 10, end: 20, color: '#22C55E', status: 'optimal' },
+    { label: 'fit', start: 21, end: 24, color: '#EAB308', status: 'good' },
+    { label: 'average', start: 25, end: 31, color: '#F97316', status: 'moderate' },
+    { label: 'high', start: 32, end: 45, color: '#EF4444', status: 'attention' },
   ],
 };
 
-export const MUSCLE_MASS_RANGES_MALE: MetricRange = {
+export const MUSCLE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   min: 30,
   max: 60,
   unit: '%',
   source: 'Janssen I et al. J Appl Physiol 2000 - PMID: 10846039',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
+  translationKey: 'muscleMass',
+  genderSpecific: true,
   explanation: `La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000, etude IRM sur 468 sujets):
@@ -123,19 +138,21 @@ La musculation est le traitement n°1 valide scientifiquement.
 RECOMMANDATIONS (ACSM):
 2-3 seances de musculation/semaine, tous les groupes musculaires.`,
   zones: [
-    { label: 'Faible', start: 30, end: 38, color: '#EF4444', status: 'attention' },
-    { label: 'Normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
-    { label: 'Bon', start: 45, end: 52, color: '#EAB308', status: 'good' },
-    { label: 'Excellent', start: 53, end: 60, color: '#22C55E', status: 'optimal' },
+    { label: 'low', start: 30, end: 38, color: '#EF4444', status: 'attention' },
+    { label: 'normal', start: 39, end: 44, color: '#F97316', status: 'moderate' },
+    { label: 'good', start: 45, end: 52, color: '#EAB308', status: 'good' },
+    { label: 'excellent', start: 53, end: 60, color: '#22C55E', status: 'optimal' },
   ],
 };
 
-export const MUSCLE_MASS_RANGES_FEMALE: MetricRange = {
+export const MUSCLE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 25,
   max: 55,
   unit: '%',
   source: 'Janssen I et al. J Appl Physiol 2000 - PMID: 10846039',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/10846039/',
+  translationKey: 'muscleMass',
+  genderSpecific: true,
   explanation: `La masse musculaire squelettique (SMM) represente les muscles volontaires de ton corps.
 
 CLASSIFICATION (Janssen et al. 2000):
@@ -155,19 +172,20 @@ PREUVES SCIENTIFIQUES:
 RECOMMANDATIONS (ACSM):
 2-3 seances de musculation/semaine. Les charges lourdes sont sures et efficaces.`,
   zones: [
-    { label: 'Faible', start: 25, end: 33, color: '#EF4444', status: 'attention' },
-    { label: 'Normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
-    { label: 'Bon', start: 40, end: 46, color: '#EAB308', status: 'good' },
-    { label: 'Excellent', start: 47, end: 55, color: '#22C55E', status: 'optimal' },
+    { label: 'low', start: 25, end: 33, color: '#EF4444', status: 'attention' },
+    { label: 'normal', start: 34, end: 39, color: '#F97316', status: 'moderate' },
+    { label: 'good', start: 40, end: 46, color: '#EAB308', status: 'good' },
+    { label: 'excellent', start: 47, end: 55, color: '#22C55E', status: 'optimal' },
   ],
 };
 
-export const WATER_PERCENTAGE_RANGES: MetricRange = {
+export const WATER_PERCENTAGE_RANGES: MetricRangeWithTranslation = {
   min: 40,
   max: 70,
   unit: '%',
   source: 'Watson PE et al. Am J Clin Nutr 1980 - PMID: 6986753',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/6986753/',
+  translationKey: 'waterPercentage',
   explanation: `L'eau corporelle totale (TBW) represente environ 60% du poids chez l'homme adulte et 50-55% chez la femme.
 
 CLASSIFICATION (Watson et al. 1980):
@@ -193,19 +211,20 @@ BESOINS QUOTIDIENS (IOM 2004):
 CONSEIL:
 Surveille la couleur de l'urine: jaune pale = bien hydrate.`,
   zones: [
-    { label: 'Déshydraté', start: 40, end: 49, color: '#EF4444', status: 'danger' },
-    { label: 'Sous-hydraté', start: 50, end: 54, color: '#F97316', status: 'moderate' },
-    { label: 'Normal', start: 55, end: 60, color: '#EAB308', status: 'good' },
-    { label: 'Optimal', start: 61, end: 70, color: '#22C55E', status: 'optimal' },
+    { label: 'danger', start: 40, end: 49, color: '#EF4444', status: 'danger' },
+    { label: 'low', start: 50, end: 54, color: '#F97316', status: 'moderate' },
+    { label: 'normal', start: 55, end: 60, color: '#EAB308', status: 'good' },
+    { label: 'optimal', start: 61, end: 70, color: '#22C55E', status: 'optimal' },
   ],
 };
 
-export const VISCERAL_FAT_RANGES: MetricRange = {
+export const VISCERAL_FAT_RANGES: MetricRangeWithTranslation = {
   min: 1,
   max: 20,
   unit: '/20',
   source: 'Despres JP et al. Obesity Reviews 2008 - PMID: 18331423',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/18331423/',
+  translationKey: 'visceralFat',
   explanation: `La graisse viscerale est la graisse profonde qui entoure les organes (foie, intestins, coeur).
 
 CLASSIFICATION SCIENTIFIQUE:
@@ -227,9 +246,9 @@ CE QUI FONCTIONNE (meta-analyses):
 MESURE:
 L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais pas exacte.`,
   zones: [
-    { label: 'Optimal', start: 1, end: 9, color: '#22C55E', status: 'optimal' },
-    { label: 'Élevé', start: 10, end: 14, color: '#F97316', status: 'moderate' },
-    { label: 'Très élevé', start: 15, end: 20, color: '#EF4444', status: 'danger' },
+    { label: 'optimal', start: 1, end: 9, color: '#22C55E', status: 'optimal' },
+    { label: 'elevated', start: 10, end: 14, color: '#F97316', status: 'moderate' },
+    { label: 'veryHigh', start: 15, end: 20, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -237,12 +256,13 @@ L'IRM reste la reference. L'impedancemetrie donne une estimation correlee mais p
 // VITALITÉ & RÉCUPÉRATION
 // ============================================
 
-export const HRV_RANGES: MetricRange = {
+export const HRV_RANGES: MetricRangeWithTranslation = {
   min: 10,
   max: 100,
   unit: 'ms',
   source: 'Task Force ESC/NASPE, Circulation 1996 - PMID: 8598068',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/8598068/',
+  translationKey: 'hrv',
   explanation: `La VFC (HRV) mesure les variations entre chaque battement cardiaque en millisecondes.
 
 CLASSIFICATION (RMSSD, valeurs moyennes):
@@ -273,19 +293,20 @@ AMELIORATION:
 MESURE:
 Matin au reveil, memes conditions, pendant 1-5 min.`,
   zones: [
-    { label: 'Fatigué', start: 10, end: 29, color: '#EF4444', status: 'attention' },
-    { label: 'Normal', start: 30, end: 49, color: '#F97316', status: 'moderate' },
-    { label: 'Bon', start: 50, end: 69, color: '#EAB308', status: 'good' },
-    { label: 'Excellent', start: 70, end: 100, color: '#22C55E', status: 'optimal' },
+    { label: 'poor', start: 10, end: 29, color: '#EF4444', status: 'attention' },
+    { label: 'normal', start: 30, end: 49, color: '#F97316', status: 'moderate' },
+    { label: 'good', start: 50, end: 69, color: '#EAB308', status: 'good' },
+    { label: 'excellent', start: 70, end: 100, color: '#22C55E', status: 'optimal' },
   ],
 };
 
-export const RESTING_HEART_RATE_RANGES: MetricRange = {
+export const RESTING_HEART_RATE_RANGES: MetricRangeWithTranslation = {
   min: 40,
   max: 100,
   unit: 'bpm',
   source: 'Fox K et al. Eur Heart J 2007 - PMID: 17303589',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/17303589/',
+  translationKey: 'restingHeartRate',
   explanation: `La frequence cardiaque au repos est un predicteur independant de mortalite cardiovasculaire.
 
 CLASSIFICATION (Fox et al. 2007, meta-analyse 46 etudes):
@@ -308,19 +329,20 @@ Stress, cafeine, deshydratation, fievre, manque de sommeil
 MESURE:
 Matin au reveil, avant de te lever, pendant 1 minute.`,
   zones: [
-    { label: 'Athlète', start: 40, end: 60, color: '#22C55E', status: 'optimal' },
-    { label: 'Excellent', start: 61, end: 70, color: '#EAB308', status: 'good' },
-    { label: 'Normal', start: 71, end: 80, color: '#F97316', status: 'moderate' },
-    { label: 'Élevé', start: 81, end: 100, color: '#EF4444', status: 'attention' },
+    { label: 'athlete', start: 40, end: 60, color: '#22C55E', status: 'optimal' },
+    { label: 'excellent', start: 61, end: 70, color: '#EAB308', status: 'good' },
+    { label: 'normal', start: 71, end: 80, color: '#F97316', status: 'moderate' },
+    { label: 'high', start: 81, end: 100, color: '#EF4444', status: 'attention' },
   ],
 };
 
-export const SLEEP_DURATION_RANGES: MetricRange = {
+export const SLEEP_DURATION_RANGES: MetricRangeWithTranslation = {
   min: 4,
   max: 11,
   unit: 'h',
   source: 'Cappuccio FP et al. Sleep 2010 - PMID: 20469800',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/20469800/',
+  translationKey: 'sleepDuration',
   explanation: `La duree de sommeil optimale pour la sante.
 
 CLASSIFICATION (Cappuccio et al. 2010, meta-analyse 16 etudes):
@@ -345,19 +367,20 @@ HYGIENE DU SOMMEIL:
 - Chambre 18-20 degres C
 - Eviter cafeine apres 14h`,
   zones: [
-    { label: 'Insuffisant', start: 4, end: 6, color: '#EF4444', status: 'danger' },
-    { label: 'Court', start: 6.1, end: 6.9, color: '#F97316', status: 'moderate' },
-    { label: 'Optimal', start: 7, end: 9, color: '#22C55E', status: 'optimal' },
-    { label: 'Long', start: 9.1, end: 11, color: '#F97316', status: 'moderate' },
+    { label: 'danger', start: 4, end: 6, color: '#EF4444', status: 'danger' },
+    { label: 'low', start: 6.1, end: 6.9, color: '#F97316', status: 'moderate' },
+    { label: 'optimal', start: 7, end: 9, color: '#22C55E', status: 'optimal' },
+    { label: 'high', start: 9.1, end: 11, color: '#F97316', status: 'moderate' },
   ],
 };
 
-export const RECOVERY_SCORE_RANGES: MetricRange = {
+export const RECOVERY_SCORE_RANGES: MetricRangeWithTranslation = {
   min: 0,
   max: 100,
   unit: '%',
   source: 'Plews DJ et al. Int J Sports Physiol Perform 2013 - PMID: 23628627',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/23628627/',
+  translationKey: 'recoveryScore',
   explanation: `Le score de recuperation estime ta capacite a performer et t'entrainer.
 
 CLASSIFICATION:
@@ -379,9 +402,9 @@ INTERPRETATION:
 CONSEIL:
 Adapte l'intensite de ton entrainement a ton score de recuperation.`,
   zones: [
-    { label: 'Rouge', start: 0, end: 33, color: '#EF4444', status: 'danger' },
-    { label: 'Jaune', start: 34, end: 66, color: '#EAB308', status: 'moderate' },
-    { label: 'Vert', start: 67, end: 100, color: '#22C55E', status: 'optimal' },
+    { label: 'danger', start: 0, end: 33, color: '#EF4444', status: 'danger' },
+    { label: 'moderate', start: 34, end: 66, color: '#EAB308', status: 'moderate' },
+    { label: 'optimal', start: 67, end: 100, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -389,12 +412,13 @@ Adapte l'intensite de ton entrainement a ton score de recuperation.`,
 // POIDS & IMC
 // ============================================
 
-export const BMI_RANGES: MetricRange = {
+export const BMI_RANGES: MetricRangeWithTranslation = {
   min: 15,
   max: 35,
   unit: '',
   source: 'Prospective Studies Collaboration, Lancet 2009 - PMID: 19299006',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/19299006/',
+  translationKey: 'bmi',
   explanation: `L'Indice de Masse Corporelle (IMC) = Poids (kg) / Taille au carre (m2)
 
 CLASSIFICATION (Prospective Studies Collaboration 2009):
@@ -415,10 +439,10 @@ LIMITES RECONNUES:
 CONSEIL:
 Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une evaluation complete.`,
   zones: [
-    { label: 'Sous-poids', start: 15, end: 18.49, color: '#F97316', status: 'attention' },
-    { label: 'Normal', start: 18.5, end: 24.99, color: '#22C55E', status: 'optimal' },
-    { label: 'Surpoids', start: 25, end: 29.99, color: '#EAB308', status: 'moderate' },
-    { label: 'Obésité', start: 30, end: 35, color: '#EF4444', status: 'danger' },
+    { label: 'underweight', start: 15, end: 18.49, color: '#F97316', status: 'attention' },
+    { label: 'normal', start: 18.5, end: 24.99, color: '#22C55E', status: 'optimal' },
+    { label: 'overweight', start: 25, end: 29.99, color: '#EAB308', status: 'moderate' },
+    { label: 'obese', start: 30, end: 35, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -426,12 +450,14 @@ Complete avec tour de taille (WHtR) et pourcentage de masse grasse pour une eval
 // MENSURATIONS
 // ============================================
 
-export const WAIST_CIRCUMFERENCE_RANGES_MALE: MetricRange = {
+export const WAIST_CIRCUMFERENCE_RANGES_MALE: MetricRangeWithTranslation = {
   min: 60,
   max: 120,
   unit: 'cm',
   source: 'Ashwell M et al. Obes Rev 2012 - PMID: 22106927',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
+  translationKey: 'waistCircumference',
+  genderSpecific: true,
   explanation: `Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
 
 ATTENTION: Les seuils absolus (90cm, 102cm) sont des reperes GENERAUX.
@@ -455,18 +481,20 @@ Le WHtR predit MIEUX le risque cardiometabolique que l'IMC ou le tour de taille 
 MESURE:
 Au niveau du nombril, debout, apres expiration normale.`,
   zones: [
-    { label: 'Optimal', start: 60, end: 89, color: '#22C55E', status: 'optimal' },
-    { label: 'Attention', start: 90, end: 101, color: '#EAB308', status: 'moderate' },
-    { label: 'Risque élevé', start: 102, end: 120, color: '#EF4444', status: 'danger' },
+    { label: 'optimal', start: 60, end: 89, color: '#22C55E', status: 'optimal' },
+    { label: 'attention', start: 90, end: 101, color: '#EAB308', status: 'moderate' },
+    { label: 'danger', start: 102, end: 120, color: '#EF4444', status: 'danger' },
   ],
 };
 
-export const WAIST_CIRCUMFERENCE_RANGES_FEMALE: MetricRange = {
+export const WAIST_CIRCUMFERENCE_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 55,
   max: 110,
   unit: 'cm',
   source: 'Ashwell M et al. Obes Rev 2012 - PMID: 22106927',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/22106927/',
+  translationKey: 'waistCircumference',
+  genderSpecific: true,
   explanation: `Le tour de taille mesure la graisse abdominale, facteur de risque cardiovasculaire.
 
 ATTENTION: Les seuils absolus (80cm, 88cm) sont des reperes GENERAUX.
@@ -489,9 +517,9 @@ Le WHtR est un meilleur predicteur du risque cardiometabolique que l'IMC ou le t
 MESURE:
 Au niveau du nombril, debout, apres expiration normale.`,
   zones: [
-    { label: 'Optimal', start: 55, end: 79, color: '#22C55E', status: 'optimal' },
-    { label: 'Attention', start: 80, end: 87, color: '#EAB308', status: 'moderate' },
-    { label: 'Risque élevé', start: 88, end: 110, color: '#EF4444', status: 'danger' },
+    { label: 'optimal', start: 55, end: 79, color: '#22C55E', status: 'optimal' },
+    { label: 'attention', start: 80, end: 87, color: '#EAB308', status: 'moderate' },
+    { label: 'danger', start: 88, end: 110, color: '#EF4444', status: 'danger' },
   ],
 };
 
@@ -499,12 +527,14 @@ Au niveau du nombril, debout, apres expiration normale.`,
 // MASSE OSSEUSE
 // ============================================
 
-export const BONE_MASS_RANGES_MALE: MetricRange = {
+export const BONE_MASS_RANGES_MALE: MetricRangeWithTranslation = {
   min: 2.0,
   max: 4.5,
   unit: 'kg',
   source: 'Kanis JA et al. Lancet 2002 - PMID: 12049882',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
+  translationKey: 'boneMass',
+  genderSpecific: true,
   explanation: `La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
@@ -530,18 +560,20 @@ INTERVENTIONS VALIDEES:
 LIMITES:
 L'impedancemetrie estime la masse, pas la densite. DEXA = reference.`,
   zones: [
-    { label: 'Faible', start: 2.0, end: 2.8, color: '#EF4444', status: 'danger' },
-    { label: 'Normal', start: 2.9, end: 3.2, color: '#EAB308', status: 'moderate' },
-    { label: 'Bon', start: 3.3, end: 4.5, color: '#22C55E', status: 'optimal' },
+    { label: 'low', start: 2.0, end: 2.8, color: '#EF4444', status: 'danger' },
+    { label: 'normal', start: 2.9, end: 3.2, color: '#EAB308', status: 'moderate' },
+    { label: 'good', start: 3.3, end: 4.5, color: '#22C55E', status: 'optimal' },
   ],
 };
 
-export const BONE_MASS_RANGES_FEMALE: MetricRange = {
+export const BONE_MASS_RANGES_FEMALE: MetricRangeWithTranslation = {
   min: 1.5,
   max: 3.5,
   unit: 'kg',
   source: 'Kanis JA et al. Lancet 2002 - PMID: 12049882',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/12049882/',
+  translationKey: 'boneMass',
+  genderSpecific: true,
   explanation: `La masse osseuse represente le poids mineral de ton squelette.
 
 CLASSIFICATION (proportionnelle au poids corporel):
@@ -567,9 +599,9 @@ PREVENTION:
 CONSEIL:
 Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`,
   zones: [
-    { label: 'Faible', start: 1.5, end: 2.2, color: '#EF4444', status: 'danger' },
-    { label: 'Normal', start: 2.3, end: 2.5, color: '#EAB308', status: 'moderate' },
-    { label: 'Bon', start: 2.6, end: 3.5, color: '#22C55E', status: 'optimal' },
+    { label: 'low', start: 1.5, end: 2.2, color: '#EF4444', status: 'danger' },
+    { label: 'normal', start: 2.3, end: 2.5, color: '#EAB308', status: 'moderate' },
+    { label: 'good', start: 2.6, end: 3.5, color: '#22C55E', status: 'optimal' },
   ],
 };
 
@@ -577,7 +609,7 @@ Construis ta "banque osseuse" avant 30 ans. Apres, l'objectif est de MAINTENIR.`
 // BMR (Metabolisme de base)
 // ============================================
 
-export const getBMRRange = (weight: number, height: number, age: number, gender: 'male' | 'female'): MetricRange => {
+export const getBMRRange = (weight: number, height: number, age: number, gender: 'male' | 'female'): MetricRangeWithTranslation => {
   // Formule Mifflin-St Jeor
   const idealBMR = gender === 'male'
     ? 10 * weight + 6.25 * height - 5 * age + 5
@@ -592,6 +624,18 @@ export const getBMRRange = (weight: number, height: number, age: number, gender:
     unit: 'kcal',
     source: 'Mifflin MD et al. Am J Clin Nutr 1990 - PMID: 2305711',
     sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
+    translationKey: 'bmr',
+    // BMR values for translation interpolation
+    bmrValues: {
+      bmrValue: Math.round(idealBMR),
+      weight,
+      height,
+      age,
+      sedentary: Math.round(idealBMR * 1.2),
+      lightlyActive: Math.round(idealBMR * 1.375),
+      active: Math.round(idealBMR * 1.55),
+      veryActive: Math.round(idealBMR * 1.725),
+    },
     explanation: `Le metabolisme de base (BMR) = energie brulee au repos complet pendant 24h.
 
 TON BMR ESTIME: environ ${Math.round(idealBMR)} kcal/jour
@@ -614,9 +658,9 @@ FACTEURS D'INFLUENCE:
 CONSEIL:
 Augmente ton BMR via la masse musculaire!`,
     zones: [
-      { label: 'Faible', start: min, end: Math.floor(idealBMR * 0.85), color: '#F97316', status: 'moderate' },
-      { label: 'Normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#22C55E', status: 'optimal' },
-      { label: 'Eleve', start: Math.floor(idealBMR * 1.15) + 1, end: max, color: '#EAB308', status: 'good' },
+      { label: 'low', start: min, end: Math.floor(idealBMR * 0.85), color: '#F97316', status: 'moderate' },
+      { label: 'normal', start: Math.floor(idealBMR * 0.85) + 1, end: Math.floor(idealBMR * 1.15), color: '#22C55E', status: 'optimal' },
+      { label: 'high', start: Math.floor(idealBMR * 1.15) + 1, end: max, color: '#EAB308', status: 'good' },
     ],
   };
 };
@@ -625,12 +669,13 @@ Augmente ton BMR via la masse musculaire!`,
 // ENTRAINEMENT
 // ============================================
 
-export const INTENSITY_RANGES: MetricRange = {
+export const INTENSITY_RANGES: MetricRangeWithTranslation = {
   min: 0,
   max: 100,
   unit: '%',
   source: 'Banister EW, Med Sci Sports Exerc 1991 - PMID: 2017016',
   sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/2017016/',
+  translationKey: 'intensity',
   explanation: `L'intensite d'entrainement mesure l'effort relatif par rapport a ta capacite maximale.
 
 CLASSIFICATION (Banister TRIMP model):
@@ -646,10 +691,10 @@ PREUVES SCIENTIFIQUES:
 CONSEIL:
 La majorite de tes entrainements devraient etre en zone facile (conversation possible).`,
   zones: [
-    { label: 'Léger', start: 0, end: 50, color: '#EAB308', status: 'good' },
-    { label: 'Modéré', start: 51, end: 70, color: '#22C55E', status: 'optimal' },
-    { label: 'Intense', start: 71, end: 85, color: '#F97316', status: 'moderate' },
-    { label: 'Maximal', start: 86, end: 100, color: '#EF4444', status: 'attention' },
+    { label: 'low', start: 0, end: 50, color: '#EAB308', status: 'good' },
+    { label: 'moderate', start: 51, end: 70, color: '#22C55E', status: 'optimal' },
+    { label: 'high', start: 71, end: 85, color: '#F97316', status: 'moderate' },
+    { label: 'veryHigh', start: 86, end: 100, color: '#EF4444', status: 'attention' },
   ],
 };
 
@@ -660,26 +705,28 @@ La majorite de tes entrainements devraient etre en zone facile (conversation pos
 /**
  * Obtenir le range approprié selon le genre
  */
-export const getBodyFatRange = (gender: 'male' | 'female'): MetricRange => {
+export const getBodyFatRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
   return gender === 'male' ? BODY_FAT_RANGES_MALE : BODY_FAT_RANGES_FEMALE;
 };
 
-export const getMuscleMassRange = (gender: 'male' | 'female'): MetricRange => {
+export const getMuscleMassRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
   return gender === 'male' ? MUSCLE_MASS_RANGES_MALE : MUSCLE_MASS_RANGES_FEMALE;
 };
 
-export const getWaistCircumferenceRange = (gender: 'male' | 'female'): MetricRange => {
+export const getWaistCircumferenceRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
   return gender === 'male' ? WAIST_CIRCUMFERENCE_RANGES_MALE : WAIST_CIRCUMFERENCE_RANGES_FEMALE;
 };
 
-export const getBoneMassRange = (gender: 'male' | 'female'): MetricRange => {
+export const getBoneMassRange = (gender: 'male' | 'female'): MetricRangeWithTranslation => {
   return gender === 'male' ? BONE_MASS_RANGES_MALE : BONE_MASS_RANGES_FEMALE;
 };
 
 /**
  * Calculer le statut d'une métrique
+ * The label returned is a translation key (e.g., 'athlete', 'optimal', 'danger')
+ * Components should use t(`healthRanges.zones.${label}`) to get the localized text
  */
-export const getMetricStatus = (value: number, range: MetricRange): {
+export const getMetricStatus = (value: number, range: MetricRange | MetricRangeWithTranslation): {
   status: 'optimal' | 'good' | 'moderate' | 'attention' | 'danger';
   color: string;
   label: string;
@@ -689,7 +736,7 @@ export const getMetricStatus = (value: number, range: MetricRange): {
     return {
       status: 'moderate',
       color: '#94A3B8',
-      label: 'Inconnu',
+      label: 'unknown',
     };
   }
   return {
@@ -697,4 +744,32 @@ export const getMetricStatus = (value: number, range: MetricRange): {
     color: zone.color,
     label: zone.label,
   };
+};
+
+/**
+ * Helper to get the localized explanation for a metric
+ * Usage: t(`healthRanges.${range.translationKey}.explanation`, range.bmrValues)
+ * For gender-specific metrics: t(`healthRanges.${range.translationKey}.explanation${gender === 'male' ? 'Male' : 'Female'}`)
+ */
+export const getExplanationKey = (range: MetricRangeWithTranslation, gender?: 'male' | 'female'): string => {
+  if (range.genderSpecific && gender) {
+    return `healthRanges.${range.translationKey}.explanation${gender === 'male' ? 'Male' : 'Female'}`;
+  }
+  return `healthRanges.${range.translationKey}.explanation`;
+};
+
+/**
+ * Helper to get the localized title for a metric
+ * Usage: t(getTitleKey(range))
+ */
+export const getTitleKey = (range: MetricRangeWithTranslation): string => {
+  return `healthRanges.${range.translationKey}.title`;
+};
+
+/**
+ * Helper to get the localized zone label
+ * Usage: t(getZoneLabelKey(zone.label))
+ */
+export const getZoneLabelKey = (label: string): string => {
+  return `healthRanges.zones.${label}`;
 };
