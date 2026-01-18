@@ -620,11 +620,12 @@ export default function AddTrainingScreen() {
     });
   };
 
-  const handleShareModalShare = () => {
+  const handleShareModalShare = async () => {
     setShowShareModal(false);
-    // Navigate to last-session sharing screen
-    // Le review popup sera montré dans last-session.tsx après partage
-    router.push('/social-share/last-session');
+    // Marquer qu'on doit demander la review au retour
+    await AsyncStorage.setItem('@yoroi_pending_review', 'true');
+    // Navigate to last-session sharing screen puis retourner à l'accueil
+    router.replace('/social-share/last-session');
   };
 
   const handleShareModalSkip = async () => {
@@ -1086,7 +1087,7 @@ export default function AddTrainingScreen() {
                   { backgroundColor: colors.card, borderColor: colors.border },
                   isOutdoor && { borderColor: '#22C55E', backgroundColor: '#22C55E15' },
                 ]}
-                onPress={() => { setIsOutdoor(true); setSelectedClub(null); }}
+                onPress={() => setIsOutdoor(true)}
               >
                 <View style={[styles.locationTypeIcon, { backgroundColor: isOutdoor ? '#22C55E30' : colors.backgroundElevated }]}>
                   <Sun size={28} color={isOutdoor ? '#22C55E' : colors.textSecondary} strokeWidth={2} />
@@ -1097,10 +1098,9 @@ export default function AddTrainingScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* CLUBS - Seulement si "En salle" est sélectionné */}
-            {!isOutdoor && (
-              <>
-                <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Club</Text>
+            {/* CLUBS - Toujours visible (certains clubs ont des séances en plein air) */}
+            <>
+              <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Club (optionnel)</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -1204,8 +1204,7 @@ export default function AddTrainingScreen() {
                     </Text>
                   </TouchableOpacity>
                 </ScrollView>
-              </>
-            )}
+            </>
           </>
         )}
 

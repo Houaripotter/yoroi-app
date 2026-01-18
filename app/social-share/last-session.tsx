@@ -49,6 +49,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 import { shouldAskForReview } from '@/lib/reviewService';
 import { useReviewModal } from '@/components/ReviewModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
@@ -359,6 +360,9 @@ export default function LastSessionScreen() {
           dialogTitle: 'Partager ma séance',
         });
 
+        // Nettoyer le flag pending review
+        await AsyncStorage.removeItem('@yoroi_pending_review');
+
         // Après partage, vérifier si on doit demander une review (avec délai)
         setTimeout(async () => {
           const shouldShowReview = await shouldAskForReview();
@@ -396,7 +400,23 @@ export default function LastSessionScreen() {
 
       await MediaLibrary.saveToLibraryAsync(uri);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+
+      // Nettoyer le flag pending review
+      await AsyncStorage.removeItem('@yoroi_pending_review');
+
+      // Après sauvegarde, vérifier si on doit demander une review
+      const shouldShowReview = await shouldAskForReview();
+      if (shouldShowReview) {
+        showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{
+          text: 'OK',
+          style: 'primary',
+          onPress: () => {
+            setTimeout(() => showReviewModal(), 500);
+          }
+        }]);
+      } else {
+        showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+      }
     } catch (error) {
       logger.error('Error saving:', error);
       showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
@@ -542,10 +562,10 @@ export default function LastSessionScreen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setBackgroundType('photo');
-                  // Scroll vers les boutons photo
+                  // Scroll vers les boutons photo (en bas)
                   setTimeout(() => {
-                    scrollViewRef.current?.scrollTo({ y: 500, animated: true });
-                  }, 100);
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 150);
                 }}
               >
                 <Camera size={18} color={backgroundType === 'photo' ? '#FFFFFF' : colors.textPrimary} />

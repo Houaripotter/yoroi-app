@@ -393,6 +393,8 @@ class HealthConnectService {
   }
 
   private async getIOSSteps(): Promise<HealthData['steps'] | null> {
+    // Limites de validation pour éviter les valeurs impossibles
+    const MAX_STEPS_PER_DAY = 100000; // Maximum réaliste: 100k pas/jour (ultra-marathon)
 
     try {
       const today = new Date();
@@ -406,9 +408,31 @@ class HealthConnectService {
       });
 
       if (samples && samples.length > 0) {
-        const totalSteps = samples.reduce((sum: number, s: any) => sum + s.quantity, 0);
+        // Dédupliquer les échantillons par période temporelle pour éviter les doublons
+        // (iPhone + Apple Watch peuvent rapporter les mêmes pas)
+        const processedPeriods = new Set<string>();
+        let totalSteps = 0;
+
+        samples.forEach((s: any) => {
+          // Créer une clé unique basée sur la période
+          const periodKey = `${s.startDate}_${s.endDate}`;
+
+          // Si on n'a pas déjà traité cette période
+          if (!processedPeriods.has(periodKey)) {
+            // Valider que la valeur est raisonnable pour un seul échantillon
+            const sampleSteps = Math.min(s.quantity, MAX_STEPS_PER_DAY);
+            if (sampleSteps > 0 && sampleSteps < MAX_STEPS_PER_DAY) {
+              totalSteps += sampleSteps;
+              processedPeriods.add(periodKey);
+            }
+          }
+        });
+
+        // Appliquer le cap final
+        const validatedSteps = Math.min(totalSteps, MAX_STEPS_PER_DAY);
+
         return {
-          count: Math.round(totalSteps),
+          count: Math.round(validatedSteps),
           date: today.toISOString(),
         };
       }
@@ -424,6 +448,9 @@ class HealthConnectService {
   }
 
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
+    // Limites de validation pour éviter les valeurs impossibles
+    const MAX_SLEEP_MINUTES = 840; // Maximum: 14 heures (840 minutes) - très long mais possible
+    const MAX_SAMPLE_DURATION = 720; // Un échantillon ne peut pas dépasser 12h
 
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -442,11 +469,34 @@ class HealthConnectService {
         let deepMinutes = 0;
         let inBedMinutes = 0;
 
-        const startTime = samples[0].startDate;
-        const endTime = samples[samples.length - 1].endDate;
+        // Trier les échantillons par date de début
+        const sortedSamples = [...samples].sort((a: any, b: any) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+        );
 
-        samples.forEach((s: any) => {
+        const startTime = sortedSamples[0].startDate;
+        const endTime = sortedSamples[sortedSamples.length - 1].endDate;
+
+        // Utiliser un Set pour éviter les doublons de périodes
+        const processedPeriods = new Set<string>();
+
+        sortedSamples.forEach((s: any) => {
+          // Créer une clé unique pour cette période
+          const periodKey = `${s.startDate}_${s.endDate}_${s.value}`;
+
+          // Éviter les doublons
+          if (processedPeriods.has(periodKey)) {
+            return;
+          }
+          processedPeriods.add(periodKey);
+
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+
+          // Ignorer les échantillons avec des durées impossibles
+          if (duration <= 0 || duration > MAX_SAMPLE_DURATION) {
+            return;
+          }
+
           totalMinutes += duration;
 
           // Phases de sommeil (Apple Watch uniquement)
@@ -472,21 +522,30 @@ class HealthConnectService {
           }
         });
 
+        // Appliquer le cap maximum pour le total
+        const validatedTotal = Math.min(totalMinutes, MAX_SLEEP_MINUTES);
+
+        // Si le total est 0 ou invalide, ne pas retourner de données
+        if (validatedTotal <= 0) {
+          return null;
+        }
+
         const result: HealthData['sleep'] = {
           startTime: new Date(startTime).toISOString(),
           endTime: new Date(endTime).toISOString(),
-          duration: Math.round(totalMinutes),
-          quality: this.getSleepQuality(totalMinutes),
+          duration: Math.round(validatedTotal),
+          quality: this.getSleepQuality(validatedTotal),
         };
 
         // Ajouter les phases si disponibles (Apple Watch)
         if (remMinutes > 0 || coreMinutes > 0 || deepMinutes > 0) {
+          // Valider aussi les phases individuelles
           result.phases = {
-            awake: Math.round(awakeMinutes),
-            rem: Math.round(remMinutes),
-            core: Math.round(coreMinutes),
-            deep: Math.round(deepMinutes),
-            inBed: Math.round(inBedMinutes),
+            awake: Math.round(Math.min(awakeMinutes, MAX_SLEEP_MINUTES)),
+            rem: Math.round(Math.min(remMinutes, MAX_SLEEP_MINUTES)),
+            core: Math.round(Math.min(coreMinutes, MAX_SLEEP_MINUTES)),
+            deep: Math.round(Math.min(deepMinutes, MAX_SLEEP_MINUTES)),
+            inBed: Math.round(Math.min(inBedMinutes, MAX_SLEEP_MINUTES)),
           };
         }
 
@@ -1151,6 +1210,9 @@ class HealthConnectService {
   }>> {
     if (DEMO_MODE) return DemoData.getDemoSleepHistory(days);
 
+    const MAX_SLEEP_MINUTES = 840; // Maximum: 14 heures par nuit
+    const MAX_SAMPLE_DURATION = 720; // Un échantillon ne peut pas dépasser 12h
+
     try {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
@@ -1170,16 +1232,29 @@ class HealthConnectService {
           core: number;
           awake: number;
           total: number;
+          periods: Set<string>;
         }} = {};
 
         samples.forEach((s: any) => {
           // Utiliser la date de fin pour grouper (matin)
           const date = new Date(s.endDate).toISOString().split('T')[0];
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+          const periodKey = `${s.startDate}_${s.endDate}_${s.value}`;
+
+          // Ignorer les durées impossibles
+          if (duration <= 0 || duration > MAX_SAMPLE_DURATION) {
+            return;
+          }
 
           if (!sleepByDate[date]) {
-            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0 };
+            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0, periods: new Set() };
           }
+
+          // Éviter les doublons
+          if (sleepByDate[date].periods.has(periodKey)) {
+            return;
+          }
+          sleepByDate[date].periods.add(periodKey);
 
           sleepByDate[date].total += duration;
 
@@ -1201,11 +1276,12 @@ class HealthConnectService {
 
         return Object.keys(sleepByDate).map(date => ({
           date,
-          deep: Math.round(sleepByDate[date].deep),
-          rem: Math.round(sleepByDate[date].rem),
-          core: Math.round(sleepByDate[date].core),
-          awake: Math.round(sleepByDate[date].awake),
-          total: Math.round(sleepByDate[date].total),
+          // Appliquer les caps maximum
+          deep: Math.round(Math.min(sleepByDate[date].deep, MAX_SLEEP_MINUTES)),
+          rem: Math.round(Math.min(sleepByDate[date].rem, MAX_SLEEP_MINUTES)),
+          core: Math.round(Math.min(sleepByDate[date].core, MAX_SLEEP_MINUTES)),
+          awake: Math.round(Math.min(sleepByDate[date].awake, MAX_SLEEP_MINUTES)),
+          total: Math.round(Math.min(sleepByDate[date].total, MAX_SLEEP_MINUTES)),
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
@@ -1298,6 +1374,8 @@ class HealthConnectService {
   async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
     if (DEMO_MODE) return DemoData.getDemoStepsHistory(days);
 
+    const MAX_STEPS_PER_DAY = 100000; // Maximum réaliste
+
     try {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
@@ -1309,20 +1387,28 @@ class HealthConnectService {
       });
 
       if (samples && samples.length > 0) {
-        // Grouper par jour
-        const stepsByDate: { [key: string]: number } = {};
+        // Grouper par jour avec déduplication
+        const stepsByDate: { [key: string]: { total: number; periods: Set<string> } } = {};
 
         samples.forEach((s: any) => {
           const date = new Date(s.startDate).toISOString().split('T')[0];
+          const periodKey = `${s.startDate}_${s.endDate}`;
+
           if (!stepsByDate[date]) {
-            stepsByDate[date] = 0;
+            stepsByDate[date] = { total: 0, periods: new Set() };
           }
-          stepsByDate[date] += s.quantity;
+
+          // Éviter les doublons de périodes
+          if (!stepsByDate[date].periods.has(periodKey)) {
+            stepsByDate[date].periods.add(periodKey);
+            stepsByDate[date].total += s.quantity;
+          }
         });
 
         return Object.keys(stepsByDate).map(date => ({
           date,
-          value: Math.round(stepsByDate[date]),
+          // Appliquer le cap maximum par jour
+          value: Math.round(Math.min(stepsByDate[date].total, MAX_STEPS_PER_DAY)),
         })).sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
