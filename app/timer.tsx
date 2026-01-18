@@ -355,8 +355,12 @@ export default function TimerScreen() {
       }
       setTimeRemaining(initialTime);
 
-      // Jouer le gong de debut
-      await soundManager.playGong();
+      // Jouer le son de debut - gong pour combat, beep pour le reste
+      if (mode === 'combat') {
+        await soundManager.playGong();
+      } else {
+        await soundManager.playBeep();
+      }
     }
 
     // Garder l'ecran allume pendant le timer
@@ -587,7 +591,7 @@ export default function TimerScreen() {
         if (emomCurrentMinute < emomDuration) {
           setEmomCurrentMinute(m => m + 1);
           setTimeRemaining(60);
-          await soundManager.playGong();
+          await soundManager.playBeep(); // Beep pour EMOM
         } else {
           setTimerState('finished');
           await soundManager.playVictory();
@@ -616,7 +620,7 @@ export default function TimerScreen() {
 
             // Vérifier le time cap
             if (newTime >= forTimeCap) {
-              soundManager.playGong();
+              soundManager.playBeep(); // Beep pour FOR TIME
               triggerHaptic('heavy');
               Vibration.vibrate([0, 500, 200, 500]);
               setTimerState('finished');
@@ -644,11 +648,11 @@ export default function TimerScreen() {
           }
 
           if (prev <= 1) {
-            // Temps ecoule - beep pour muscu, gong pour les autres
-            if (mode === 'musculation') {
-              soundManager.playBeep();
-            } else {
+            // Temps ecoule - gong UNIQUEMENT pour combat, beep pour tout le reste
+            if (mode === 'combat') {
               soundManager.playGong();
+            } else {
+              soundManager.playBeep();
             }
             triggerHaptic('heavy');
             Vibration.vibrate([0, 500, 200, 500]);

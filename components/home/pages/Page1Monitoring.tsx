@@ -657,7 +657,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             style={styles.statCardGradient}
           >
             <MaterialCommunityIcons name="trophy" size={10} color={colors.textOnAccent} />
-            <Text style={[styles.statValueWhite, { fontSize: IS_SMALL_SCREEN ? 10 : 11, color: colors.textOnAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+            <Text style={[styles.statValueWhite, { color: colors.textOnAccent }]} numberOfLines={1} ellipsizeMode="tail">
               {rankName}
             </Text>
             <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
