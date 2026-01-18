@@ -1,46 +1,47 @@
 // ============================================
-// YOROI WATCH - Vue principale avec onglets
+// YOROI WATCH - Vue principale
+// Navigation entre toutes les vues
 // ============================================
 
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var healthKit = HealthKitService.shared
+    @StateObject private var healthManager = HealthManager.shared
     @State private var selectedTab = 0
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Onglet 1: Dashboard (Poids + Série)
+            // 1. Dashboard (Poids, BPM, SpO2, PAS, SOMMEIL)
             DashboardView()
                 .tag(0)
 
-            // Onglet 2: Hydratation
-            HydrationView()
+            // 2. Types d'activité
+            ActivityTypeView()
                 .tag(1)
 
-            // Onglet 3: Sommeil
-            SleepView()
+            // 3. Timer de repos
+            TimerView()
                 .tag(2)
 
-            // Onglet 4: Charge d'entraînement
-            TrainingLoadView()
+            // 4. Hydratation
+            HydrationView()
                 .tag(3)
 
-            // Onglet 5: Timer d'entraînement
-            TimerView()
+            // 5. Poids
+            WeightView()
                 .tag(4)
 
-            // Onglet 6: Records / Carnet
+            // 6. Carnet / Records
             RecordsView()
                 .tag(5)
 
-            // Onglet 7: Stats rapides
-            QuickStatsView()
+            // 7. Historique
+            HistoryView()
                 .tag(6)
         }
         .tabViewStyle(.verticalPage)
         .onAppear {
-            healthKit.requestAuthorization()
+            healthManager.requestAuthorization()
         }
     }
 }

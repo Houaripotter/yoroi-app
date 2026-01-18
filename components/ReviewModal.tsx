@@ -19,7 +19,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import * as Haptics from 'expo-haptics';
 import * as StoreReview from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Star } from 'lucide-react-native';
+import { Star, Check, Clock } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -33,6 +33,7 @@ interface ReviewModalProps {
 export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
 
+  // Option 1: Laisser un avis - ouvre le store review et marque comme fait
   const handleReview = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onClose();
@@ -45,6 +46,18 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
     }
   };
 
+  // Option 2: C'est deja fait - marque comme fait, ne demandera plus
+  const handleAlreadyDone = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
+    } catch (error) {
+      logger.info('Mark review done error:', error);
+    }
+    onClose();
+  };
+
+  // Option 3: Plus tard - ferme simplement, redemandera plus tard
   const handleLater = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
@@ -103,6 +116,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
             {/* Boutons */}
             <View style={styles.buttonsContainer}>
+              {/* Bouton principal: Laisser un avis */}
               <TouchableOpacity
                 style={[styles.buttonPrimary, { backgroundColor: colors.accent }]}
                 onPress={handleReview}
@@ -112,12 +126,26 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
                 <Text style={styles.buttonPrimaryText}>Laisser un avis</Text>
               </TouchableOpacity>
 
+              {/* Bouton secondaire: C'est deja fait */}
               <TouchableOpacity
                 style={[styles.buttonSecondary, { backgroundColor: colors.backgroundElevated }]}
+                onPress={handleAlreadyDone}
+                activeOpacity={0.8}
+              >
+                <Check size={16} color={colors.textSecondary} strokeWidth={2.5} />
+                <Text style={[styles.buttonSecondaryText, { color: colors.textSecondary }]}>
+                  C'est deja fait
+                </Text>
+              </TouchableOpacity>
+
+              {/* Bouton tertiaire: Plus tard */}
+              <TouchableOpacity
+                style={styles.buttonTertiary}
                 onPress={handleLater}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.buttonSecondaryText, { color: colors.textSecondary }]}>
+                <Clock size={14} color={colors.textMuted} />
+                <Text style={[styles.buttonTertiaryText, { color: colors.textMuted }]}>
                   Plus tard
                 </Text>
               </TouchableOpacity>
@@ -242,14 +270,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   buttonSecondary: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 12,
+    gap: 8,
   },
   buttonSecondaryText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  buttonTertiary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 6,
+  },
+  buttonTertiaryText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
 

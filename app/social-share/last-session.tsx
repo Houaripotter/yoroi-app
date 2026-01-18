@@ -47,6 +47,8 @@ import { getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
+import { shouldAskForReview } from '@/lib/reviewService';
+import { useReviewModal } from '@/components/ReviewModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
@@ -252,6 +254,7 @@ export default function LastSessionScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const photoSectionRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { showReviewModal, ReviewModalComponent } = useReviewModal();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('black');
@@ -355,6 +358,14 @@ export default function LastSessionScreen() {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma séance',
         });
+
+        // Après partage, vérifier si on doit demander une review (avec délai)
+        setTimeout(async () => {
+          const shouldShowReview = await shouldAskForReview();
+          if (shouldShowReview) {
+            showReviewModal();
+          }
+        }, 1000);
       }
     } catch (error) {
       logger.error('Error sharing:', error);
@@ -624,6 +635,7 @@ export default function LastSessionScreen() {
         </ScrollView>
       </View>
       <PopupComponent />
+      <ReviewModalComponent />
     </ScreenWrapper>
   );
 }

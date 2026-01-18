@@ -623,17 +623,32 @@ export default function AddTrainingScreen() {
   const handleShareModalShare = () => {
     setShowShareModal(false);
     // Navigate to last-session sharing screen
+    // Le review popup sera montré dans last-session.tsx après partage
     router.push('/social-share/last-session');
   };
 
-  const handleShareModalSkip = () => {
+  const handleShareModalSkip = async () => {
     setShowShareModal(false);
-    // Show success message and go back
+    // Show success message
     const sportNames = selectedSports.map(s => getSportName(s)).join(' + ');
     showPopup(
       'Entrainement ajoute',
       `${sportNames} enregistre !`,
-      [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
+      [{
+        text: 'OK',
+        style: 'primary',
+        onPress: async () => {
+          // Vérifier si on doit demander une review (après un délai)
+          setTimeout(async () => {
+            const shouldShowReview = await shouldAskForReview();
+            if (shouldShowReview) {
+              showReviewModal();
+            } else {
+              router.back();
+            }
+          }, 500);
+        }
+      }]
     );
   };
 
@@ -741,12 +756,8 @@ export default function AddTrainingScreen() {
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);
       }
 
-      // Trigger review apres une action positive
+      // Trigger review apres une action positive (on incrementera apres le partage)
       await incrementReviewTrigger();
-      const shouldShowReview = await shouldAskForReview();
-      if (shouldShowReview) {
-        showReviewModal();
-      }
 
       // Verifier les badges debloques
       await checkBadges();
