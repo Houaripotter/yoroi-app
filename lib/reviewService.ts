@@ -1,17 +1,16 @@
 import * as StoreReview from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
 import logger from '@/lib/security/logger';
 
 // ============================================
-// SYSTÈME DE NOTATION APP STORE
+// SYSTEME DE NOTATION APP STORE
 // ============================================
 
 const REVIEW_ASKED_KEY = 'yoroi_review_asked';
 const REVIEW_COUNT_KEY = 'yoroi_review_count';
 
 /**
- * Incrémente le compteur d'actions positives
+ * Incremente le compteur d'actions positives
  */
 export const incrementReviewTrigger = async (): Promise<void> => {
   try {
@@ -24,50 +23,55 @@ export const incrementReviewTrigger = async (): Promise<void> => {
 };
 
 /**
- * Demande une note après plusieurs actions positives
+ * Verifie si on doit demander une note (sans afficher de popup)
+ * Retourne true si les conditions sont remplies
  */
-export const askForReview = async (): Promise<void> => {
+export const shouldAskForReview = async (): Promise<boolean> => {
   try {
-    // Vérifier si on a déjà demandé
+    // Verifier si on a deja demande
     const hasAsked = await AsyncStorage.getItem(REVIEW_ASKED_KEY);
-    if (hasAsked === 'true') return;
+    if (hasAsked === 'true') return false;
 
-    // Vérifier le nombre d'actions positives
+    // Verifier le nombre d'actions positives
     const count = await AsyncStorage.getItem(REVIEW_COUNT_KEY);
     const triggerCount = parseInt(count || '0', 10);
 
-    // Demander après 7 actions positives
-    if (triggerCount < 7) return;
+    // Demander apres 7 actions positives
+    if (triggerCount < 7) return false;
 
-    // Vérifier si le store review est disponible
+    // Verifier si le store review est disponible
     const isAvailable = await StoreReview.isAvailableAsync();
-    if (!isAvailable) return;
+    if (!isAvailable) return false;
 
-    Alert.alert(
-      "Tu progresses bien Champion !",
-      "Si Yoroi t'aide dans ta conquête, donne-nous de la force avec une note\n\nÇa nous aide énormément à grandir !",
-      [
-        { text: "Plus tard", style: "cancel" },
-        {
-          text: "Donner de la force",
-          onPress: async () => {
-            try {
-              await StoreReview.requestReview();
-              await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
-            } catch (e) {
-              logger.info('Store review error:', e);
-            }
-          }
-        },
-      ]
-    );
+    return true;
   } catch (error) {
-    logger.info('Review error:', error);
+    logger.info('Review check error:', error);
+    return false;
   }
 };
 
 /**
- * Réinitialiser le compteur (pour tests)
+ * Marque la review comme demandee
+ */
+export const markReviewAsked = async (): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
+  } catch (error) {
+    logger.info('Mark review error:', error);
+  }
+};
+
+/**
+ * Demande une note directement (pour usage interne)
+ * Utilise le ReviewModal pour un meilleur UX
+ */
+export const askForReview = async (): Promise<boolean> => {
+  const should = await shouldAskForReview();
+  return should;
+};
+
+/**
+ * Reinitialiser le compteur (pour tests)
  */
 export const resetReviewTrigger = async (): Promise<void> => {
   try {
@@ -79,7 +83,7 @@ export const resetReviewTrigger = async (): Promise<void> => {
 };
 
 /**
- * Vérifier si on peut demander une review
+ * Verifier si on peut demander une review
  */
 export const canAskForReview = async (): Promise<boolean> => {
   try {

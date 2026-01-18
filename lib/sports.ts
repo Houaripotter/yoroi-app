@@ -49,7 +49,7 @@ export const SPORTS: Sport[] = [
     id: 'karate',
     name: 'Karate',
     icon: 'karate',
-    color: '#F7FAFC',
+    color: '#E53935',
     category: 'combat_striking',
   },
   {

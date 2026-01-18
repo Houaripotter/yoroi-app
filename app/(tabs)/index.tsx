@@ -62,6 +62,7 @@ import {
   Share2,
   List,
   Building2,
+  Cloud,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -1445,6 +1446,15 @@ export default function HomeScreen() {
           onLater={handleLaterTutorial}
         />
       )}
+
+      {/* Bouton flottant de sauvegarde */}
+      <TouchableOpacity
+        style={[styles.backupFab, { backgroundColor: colors.accent }]}
+        onPress={() => router.push('/backup')}
+        activeOpacity={0.85}
+      >
+        <Cloud size={20} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -2661,5 +2671,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+
+  // Bouton flottant de sauvegarde
+  backupFab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

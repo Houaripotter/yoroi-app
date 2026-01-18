@@ -37,6 +37,12 @@ import {
   setCitationNotifSettings,
   CitationNotifSettings
 } from '@/lib/citations';
+import {
+  getHealthTipSettings,
+  saveHealthTipSettings,
+  HealthTipSettings
+} from '@/lib/eveningHealthTipsService';
+import { Moon } from 'lucide-react-native';
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -45,6 +51,7 @@ export default function NotificationsScreen() {
 
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [citationSettings, setCitationSettings] = useState<CitationNotifSettings | null>(null);
+  const [healthTipSettings, setHealthTipSettings] = useState<HealthTipSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +64,9 @@ export default function NotificationsScreen() {
 
     const citationSett = await getCitationNotifSettings();
     setCitationSettings(citationSett);
+
+    const healthSett = await getHealthTipSettings();
+    setHealthTipSettings(healthSett);
 
     setIsLoading(false);
   };
@@ -89,6 +99,16 @@ export default function NotificationsScreen() {
     await setCitationNotifSettings(newSettings);
   };
 
+  const updateHealthTipSetting = async (key: keyof HealthTipSettings, value: any) => {
+    if (!healthTipSettings) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const newSettings = { ...healthTipSettings, [key]: value };
+    setHealthTipSettings(newSettings);
+    await saveHealthTipSettings(newSettings);
+  };
+
   const testNotification = async (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -119,7 +139,7 @@ export default function NotificationsScreen() {
     showPopup('Notification envoyée', 'Tu devrais la recevoir dans quelques secondes.', [{ text: 'OK', style: 'primary' }]);
   };
 
-  if (isLoading || !settings || !citationSettings) {
+  if (isLoading || !settings || !citationSettings || !healthTipSettings) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
         <Text style={{ color: colors.textMuted, textAlign: 'center', marginTop: 50 }}>
@@ -366,6 +386,30 @@ export default function NotificationsScreen() {
                   value={settings.weighing.enabled}
                   onValueChange={(v) => updateSetting('weighing.enabled', v)}
                   trackColor={{ false: colors.border, true: '#10B981' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <View style={[styles.iconBg, { backgroundColor: '#6366F115' }]}>
+                    <Moon size={18} color="#6366F1" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>
+                      Dormir moins bête
+                    </Text>
+                    <Text style={[styles.rowSubtitle, { color: colors.textMuted }]}>
+                      {healthTipSettings.time} • Conseils santé du soir
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={healthTipSettings.enabled}
+                  onValueChange={(v) => updateHealthTipSetting('enabled', v)}
+                  trackColor={{ false: colors.border, true: '#6366F1' }}
                   thumbColor="#FFFFFF"
                 />
               </View>

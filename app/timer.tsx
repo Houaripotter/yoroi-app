@@ -1474,17 +1474,59 @@ export default function TimerScreen() {
             </Svg>
 
             <View style={styles.timeDisplay}>
-              <Text style={[
-                styles.timeText,
-                { color: statusColor },
-                isRoninMode && {
-                  fontSize: RONIN_THEME.timer.fontSize,
-                  fontWeight: RONIN_THEME.timer.fontWeight as any,
-                  color: RONIN_THEME.timer.color,
-                }
-              ]}>
-                {formatTime(timeRemaining)}
-              </Text>
+              {/* Boutons play/stop inline avec le temps */}
+              <View style={styles.inlineControls}>
+                {/* Bouton Stop/Reset à gauche */}
+                {timerState !== 'idle' && (
+                  <TouchableOpacity
+                    style={[styles.inlineControlBtn, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
+                    onPress={resetTimer}
+                  >
+                    <Square size={22} color="#EF4444" fill="#EF4444" />
+                  </TouchableOpacity>
+                )}
+                {timerState === 'idle' && <View style={styles.inlineControlPlaceholder} />}
+
+                {/* Temps au centre */}
+                <Text style={[
+                  styles.timeText,
+                  { color: statusColor },
+                  isRoninMode && {
+                    fontSize: RONIN_THEME.timer.fontSize,
+                    fontWeight: RONIN_THEME.timer.fontWeight as any,
+                    color: RONIN_THEME.timer.color,
+                  }
+                ]}>
+                  {formatTime(timeRemaining)}
+                </Text>
+
+                {/* Bouton Play/Pause à droite */}
+                {timerState === 'idle' && (
+                  <TouchableOpacity
+                    style={[styles.inlineControlBtn, { backgroundColor: `${colors.accent}25` }]}
+                    onPress={startTimer}
+                  >
+                    <Play size={22} color={colors.accent} fill={colors.accent} />
+                  </TouchableOpacity>
+                )}
+                {timerState === 'running' && (
+                  <TouchableOpacity
+                    style={[styles.inlineControlBtn, { backgroundColor: 'rgba(251, 191, 36, 0.15)' }]}
+                    onPress={pauseTimer}
+                  >
+                    <Pause size={22} color="#FBBF24" fill="#FBBF24" />
+                  </TouchableOpacity>
+                )}
+                {timerState === 'paused' && (
+                  <TouchableOpacity
+                    style={[styles.inlineControlBtn, { backgroundColor: `${colors.accent}25` }]}
+                    onPress={resumeTimer}
+                  >
+                    <Play size={22} color={colors.accent} fill={colors.accent} />
+                  </TouchableOpacity>
+                )}
+                {timerState === 'finished' && <View style={styles.inlineControlPlaceholder} />}
+              </View>
               {/* Format fraction pour le mode combat */}
               {mode === 'combat' ? (
                 <View style={styles.fractionDisplay}>
@@ -1821,6 +1863,23 @@ const styles = StyleSheet.create({
   },
   timeDisplay: {
     alignItems: 'center',
+  },
+  inlineControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  inlineControlBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inlineControlPlaceholder: {
+    width: 48,
+    height: 48,
   },
   timeText: {
     fontSize: 96,

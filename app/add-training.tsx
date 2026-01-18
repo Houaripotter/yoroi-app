@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -46,10 +46,11 @@ const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
 const RADIUS = { sm: 8, md: 12 };
 const SPACING = { sm: 8, md: 12, lg: IS_SMALL_SCREEN ? 12 : 16, xl: IS_SMALL_SCREEN ? 16 : 20 }; // Adaptive spacing
 const FONT_SIZE = { xs: 12, sm: 13, md: 14, lg: 16, xl: 18, xxl: 20, display: 28 };
-import { successHaptic, errorHaptic } from '@/lib/haptics';
+import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
 import { backupReminderService } from '@/lib/backupReminderService';
 import { playWorkoutCompleteSound } from '@/lib/soundManager';
-import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
+import { incrementReviewTrigger, shouldAskForReview } from '@/lib/reviewService';
+import { useReviewModal } from '@/components/ReviewModal';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
@@ -400,9 +401,11 @@ export default function AddTrainingScreen() {
   const router = useRouter();
   const { checkBadges } = useBadges();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { showReviewModal, ReviewModalComponent } = useReviewModal();
   const params = useLocalSearchParams<{ date?: string }>();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const scrollViewRef = useRef<any>(null);
 
   // Catégories dépliées (par défaut aucune)
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -419,6 +422,7 @@ export default function AddTrainingScreen() {
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
   const [customDescription, setCustomDescription] = useState(''); // Description personnalisée
+  const [customSportName, setCustomSportName] = useState(''); // Nom personnalisé pour "Autre" sport
   const [selectedClub, setSelectedClub] = useState<Club | null>(null);
   const [isOutdoor, setIsOutdoor] = useState(false);
 
@@ -513,6 +517,10 @@ export default function AddTrainingScreen() {
           delete newEntries[sportId];
           return newEntries;
         });
+        // Reset custom sport name si on retire "autre"
+        if (sportId === 'autre') {
+          setCustomSportName('');
+        }
         return newSports;
       } else {
         // Ajouter le sport (max 3)
@@ -520,6 +528,10 @@ export default function AddTrainingScreen() {
         // FERMER TOUTES LES CATÉGORIES et cacher la section quand on sélectionne un sport
         setExpandedCategories([]);
         setShowAddSportSection(false);
+        // Scroller vers le haut pour voir le sport sélectionné
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+        }, 100);
         return [...prev, sportId];
       }
     });
@@ -625,42 +637,14 @@ export default function AddTrainingScreen() {
     );
   };
 
-  // Quick Save pour l'enregistrement rapide (prend sport et durée directement)
-  const handleQuickSave = async (quickSport: string, quickDuration: number) => {
-    setIsSubmitting(true);
-
-    try {
-      await addTraining({
-        club_id: undefined,
-        sport: quickSport,
-        date: format(new Date(), 'yyyy-MM-dd'),
-        duration_minutes: quickDuration,
-        start_time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        notes: undefined,
-        muscles: undefined,
-        exercises: undefined,
-        technique_rating: null,
-      });
-
-      await saveLastSportAndDuration(quickSport, quickDuration);
-      successHaptic();
-      playWorkoutCompleteSound();
-      await incrementReviewTrigger();
-      await askForReview();
-      await checkBadges();
-
-      showPopup(
-        'Entrainement ajoute',
-        `${getSportName(quickSport)} • ${quickDuration} min`,
-        [{ text: 'OK', style: 'primary', onPress: () => router.back() }]
-      );
-    } catch (error) {
-      logger.error('Erreur quick save:', error);
-      errorHaptic();
-      showPopup('Erreur', "Impossible d'enregistrer l'entrainement");
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Quick Fill pour pré-remplir le formulaire avec la dernière séance
+  const handleQuickFill = (quickSport: string, quickDuration: number) => {
+    // Pré-sélectionner le sport
+    setSelectedSports([quickSport]);
+    // Pré-remplir la durée
+    setDuration(quickDuration);
+    // Petit feedback haptic
+    lightHaptic();
   };
 
   const handleSave = async () => {
@@ -707,7 +691,14 @@ export default function AddTrainingScreen() {
       }
 
       // Pour chaque sport sélectionné, créer une entrée (ou une seule avec sports combinés)
-      const sportsString = selectedSports.join(',');
+      // Remplacer 'autre' par le nom personnalisé si défini
+      const finalSports = selectedSports.map(sportId => {
+        if (sportId === 'autre' && customSportName.trim()) {
+          return customSportName.trim();
+        }
+        return sportId;
+      });
+      const sportsString = finalSports.join(',');
 
       await addTraining({
         club_id: selectedClub?.id,
@@ -750,9 +741,12 @@ export default function AddTrainingScreen() {
         logger.warn('Export Apple Health échoué (non bloquant):', healthError);
       }
 
-      // Trigger review après une action positive
+      // Trigger review apres une action positive
       await incrementReviewTrigger();
-      await askForReview();
+      const shouldShowReview = await shouldAskForReview();
+      if (shouldShowReview) {
+        showReviewModal();
+      }
 
       // Verifier les badges debloques
       await checkBadges();
@@ -790,6 +784,7 @@ export default function AddTrainingScreen() {
     <ScreenWrapper noPadding>
       <Header title="Nouvel Entrainement" showClose />
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -802,7 +797,7 @@ export default function AddTrainingScreen() {
         {lastSport && selectedSports.length === 0 && (
           <TouchableOpacity
             style={[styles.quickAddButton, { backgroundColor: colors.gold + '15', borderColor: colors.gold }]}
-            onPress={() => handleQuickSave(lastSport, lastDuration)}
+            onPress={() => handleQuickFill(lastSport, lastDuration)}
             disabled={isSubmitting}
           >
             <View style={[styles.quickAddIcon, { backgroundColor: colors.gold }]}>
@@ -1022,12 +1017,29 @@ export default function AddTrainingScreen() {
                     onPress={() => toggleSport(sportId)}
                   >
                     <MaterialCommunityIcons name={sport.icon as any} size={20} color={colors.textOnGold} />
-                    <Text style={[styles.selectedSportChipText, { color: colors.textOnGold }]}>{sport.name}</Text>
+                    <Text style={[styles.selectedSportChipText, { color: colors.textOnGold }]}>
+                      {sportId === 'autre' && customSportName ? customSportName : sport.name}
+                    </Text>
                     <X size={16} color={colors.textOnGold} />
                   </TouchableOpacity>
                 );
               })}
             </View>
+
+            {/* Champ de saisie pour nom personnalisé quand "Autre" est sélectionné */}
+            {selectedSports.includes('autre') && (
+              <View style={[styles.customSportInputContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <MaterialCommunityIcons name="pencil" size={20} color={colors.accent} />
+                <TextInput
+                  style={[styles.customSportInput, { color: colors.textPrimary }]}
+                  placeholder="Nom du sport..."
+                  placeholderTextColor={colors.textMuted}
+                  value={customSportName}
+                  onChangeText={setCustomSportName}
+                  autoCapitalize="words"
+                />
+              </View>
+            )}
           </View>
         )}
 
@@ -1618,6 +1630,7 @@ export default function AddTrainingScreen() {
       />
 
       <PopupComponent />
+      <ReviewModalComponent />
     </ScreenWrapper>
   );
 }
@@ -1744,6 +1757,21 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: FONT_SIZE.sm,
     fontWeight: '700',
+  },
+  customSportInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    marginTop: SPACING.sm,
+  },
+  customSportInput: {
+    flex: 1,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '600',
+    paddingVertical: SPACING.xs,
   },
 
   // SPORT OPTIONS SECTION (Qu'as-tu fait?)

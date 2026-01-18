@@ -20,7 +20,7 @@ export const SPORT_ICONS: Record<string, SportIconConfig> = {
   'boxe_thai': { icon: '', color: '#FF6F00' },
   'muay_thai': { icon: '', color: '#FF6F00' },
   'kickboxing': { icon: '', color: '#FF6F00' },
-  'karate': { icon: '', color: '#9C27B0' },
+  'karate': { icon: '🥋', color: '#9C27B0' },
   'taekwondo': { icon: '', color: '#00BCD4' },
   
   // Fitness
