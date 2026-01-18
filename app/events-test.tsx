@@ -7,6 +7,16 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import eventsData from '@/src/data/events.json';
 
+interface EventItem {
+  id: string;
+  title: string;
+  registration_link: string;
+  date_start: string;
+  location: { city: string; country: string };
+  sport_tag: string;
+  category: string;
+}
+
 export default function EventsTestScreen() {
   return (
     <View style={{ flex: 1, padding: 16 }}>
@@ -15,8 +25,8 @@ export default function EventsTestScreen() {
       </Text>
 
       <FlatList
-        data={eventsData.slice(0, 20)} // Show first 20 events only
-        keyExtractor={item => item.id}
+        data={(eventsData as EventItem[]).slice(0, 20)} // Show first 20 events only
+        keyExtractor={(item: EventItem) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => safeOpenURL(item.registration_link)}

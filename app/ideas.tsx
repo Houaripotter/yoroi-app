@@ -55,8 +55,8 @@ export default function IdeasScreen() {
   const [sent, setSent] = useState(false);
 
   // Refs pour les timeouts (cleanup)
-  const sendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup des timeouts au démontage
   useEffect(() => {

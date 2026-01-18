@@ -15,9 +15,9 @@ const { width } = Dimensions.get('window');
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
 const CHART_WIDTH = width - CONTAINER_PADDING * 2;
 const CHART_HEIGHT = scale(240);
-const PADDING_LEFT = scale(55); // Augmenté pour éviter le chevauchement avec les labels Y
-const PADDING_RIGHT = scale(20);
-const PADDING_TOP = scale(30); // Augmenté pour les badges de valeurs
+const PADDING_LEFT = scale(70); // Largement augmenté pour éviter le chevauchement avec les labels Y
+const PADDING_RIGHT = scale(25);
+const PADDING_TOP = scale(40); // Augmenté pour les badges de valeurs
 const PADDING_BOTTOM = scale(40);
 
 // Largeur des cartes statistiques - 2 colonnes sur iPhone, 4 colonnes sur iPad
@@ -544,20 +544,20 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
               return index % step === 0 || index === chartData.length - 1;
             }).map((point, idx) => {
               // Calculer la position X pour éviter le chevauchement avec l'axe Y
-              const labelWidth = 50; // Largeur du badge
+              const labelWidth = 60; // Largeur du badge augmentée
               let leftPos = point.x - labelWidth / 2;
 
-              // S'assurer que le badge ne dépasse pas sur l'axe Y
-              if (leftPos < PADDING_LEFT - 5) {
-                leftPos = PADDING_LEFT - 5;
+              // S'assurer que le badge ne dépasse pas sur l'axe Y (avec marge de sécurité)
+              if (leftPos < PADDING_LEFT + 5) {
+                leftPos = PADDING_LEFT + 5;
               }
               // S'assurer que le badge ne dépasse pas à droite
-              if (leftPos + labelWidth > CHART_WIDTH - 5) {
-                leftPos = CHART_WIDTH - labelWidth - 5;
+              if (leftPos + labelWidth > CHART_WIDTH - 10) {
+                leftPos = CHART_WIDTH - labelWidth - 10;
               }
 
               return (
-                <View key={idx} style={[styles.valueLabel, { left: leftPos, top: point.y - 36 }]}>
+                <View key={idx} style={[styles.valueLabel, { left: leftPos, top: point.y - 40 }]}>
                   <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
                     <Text style={styles.valueBadgeText}>
                       {point.weight.toFixed(1)} kg
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   },
   valueLabel: {
     position: 'absolute',
-    width: 40,
+    width: 60,
     alignItems: 'center',
   },
   valueLabelText: {

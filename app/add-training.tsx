@@ -48,7 +48,7 @@ const SPACING = { sm: 8, md: 12, lg: IS_SMALL_SCREEN ? 12 : 16, xl: IS_SMALL_SCR
 const FONT_SIZE = { xs: 12, sm: 13, md: 14, lg: 16, xl: 18, xxl: 20, display: 28 };
 import { successHaptic, errorHaptic } from '@/lib/haptics';
 import { backupReminderService } from '@/lib/backupReminderService';
-import { playSuccessSound } from '@/lib/soundManager';
+import { playWorkoutCompleteSound } from '@/lib/soundManager';
 import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -644,7 +644,7 @@ export default function AddTrainingScreen() {
 
       await saveLastSportAndDuration(quickSport, quickDuration);
       successHaptic();
-      playSuccessSound();
+      playWorkoutCompleteSound();
       await incrementReviewTrigger();
       await askForReview();
       await checkBadges();
@@ -726,7 +726,7 @@ export default function AddTrainingScreen() {
       await saveLastSportAndDuration(selectedSports[0], duration);
 
       successHaptic();
-      playSuccessSound();
+      playWorkoutCompleteSound();
 
       // 🔄 SYNC VERS APPLE HEALTH
       try {
@@ -863,8 +863,11 @@ export default function AddTrainingScreen() {
             fitness: 'Musculation & Fitness',
             combat_grappling: 'Combat (Grappling)',
             combat_striking: 'Combat (Pieds-Poings)',
+            danse: 'Danse',
             collectif: 'Sports Collectifs',
             raquettes: 'Raquettes',
+            glisse: 'Sports de Glisse',
+            nature: 'Sports Nature',
             autre: 'Autres',
           };
 
@@ -873,8 +876,11 @@ export default function AddTrainingScreen() {
             fitness: 'dumbbell',
             combat_grappling: 'kabaddi',
             combat_striking: 'boxing-glove',
+            danse: 'dance-ballroom',
             collectif: 'soccer',
             raquettes: 'tennis',
+            glisse: 'snowboard',
+            nature: 'hiking',
             autre: 'dots-horizontal',
           };
 
@@ -883,13 +889,16 @@ export default function AddTrainingScreen() {
             fitness: '#8B5CF6',
             combat_grappling: '#3B82F6',
             combat_striking: '#EF4444',
+            danse: '#EC4899',
             collectif: '#F59E0B',
             raquettes: '#06B6D4',
+            glisse: '#0EA5E9',
+            nature: '#22C55E',
             autre: '#6B7280',
           };
 
-          // NOUVEL ORDRE : Cardio > Musculation > Combat > reste
-          const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'collectif', 'raquettes', 'autre'];
+          // NOUVEL ORDRE : Cardio > Musculation > Combat > Danse > reste
+          const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
 
           return categories.map((category) => {
             const sportsInCategory = SPORTS.filter(s => s.category === category);
@@ -1162,7 +1171,7 @@ export default function AddTrainingScreen() {
                       styles.clubCard,
                       { backgroundColor: colors.card, borderColor: colors.border, borderStyle: 'dashed' },
                     ]}
-                    onPress={() => router.push('/add-club')}
+                    onPress={() => router.push('/add-club' as any)}
                   >
                     <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
                       <Plus size={24} color={colors.accent} strokeWidth={2} />

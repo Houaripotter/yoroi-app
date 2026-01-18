@@ -58,7 +58,7 @@ import { getCarnetStats, getSkills, getBenchmarks, Skill, Benchmark } from '@/li
 import { DayDetailModal } from '@/components/calendar';
 import { getClubLogoSource } from '@/lib/sports';
 import { PartnerDetailModal, Partner } from '@/components/PartnerDetailModal';
-import { TimetableView, EnhancedCalendarView, EnhancedAddSessionModal, AddClubModal } from '@/components/planning';
+import { TimetableView, EnhancedCalendarView, AddClubModal } from '@/components/planning';
 import { EmptyState } from '@/components/planning/EmptyState';
 import { getAllGoalsProgress, GoalProgress } from '@/lib/trainingGoalsService';
 import { triggerVictoryModal, createCalendarVictoryData } from '@/lib/victoryTrigger';
@@ -129,7 +129,6 @@ export default function PlanningScreen() {
 
   // Modals state
   const [showDayModal, setShowDayModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showProgrammeEditModal, setShowProgrammeEditModal] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState(false);
@@ -596,73 +595,6 @@ export default function PlanningScreen() {
     }, 300);
   };
 
-  // Handler: sauvegarder une nouvelle seance
-  const handleSaveSession = async (session: Omit<Training, 'id' | 'created_at'>) => {
-    try {
-      await addTraining(session);
-
-      // Petit délai pour s'assurer que la DB est à jour
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      await loadData();
-
-      // Incrémenter le trigger pour rafraîchir le TimetableView
-      setRefreshTrigger(prev => prev + 1);
-
-      // Fermer le modal
-      setShowAddModal(false);
-
-      // TASK 4: Trigger Victory Modal after saving
-      // Map sport to category type
-      const sportToCategoryMap: Record<string, 'combat' | 'force' | 'running' | 'trail' | 'hyrox' | 'other'> = {
-        jjb: 'combat',
-        mma: 'combat',
-        boxe: 'combat',
-        muay_thai: 'combat',
-        judo: 'combat',
-        lutte: 'combat',
-        karate: 'combat',
-        musculation: 'force',
-        crossfit: 'force',
-        running: 'running',
-        trail: 'trail',
-        hyrox: 'hyrox',
-      };
-
-      const club = clubs.find(c => c.id === session.club_id);
-      const sessionName = club?.name || session.sport || 'Entraînement';
-      const category = sportToCategoryMap[session.sport] || 'other';
-
-      const victoryData = createCalendarVictoryData(
-        sessionName,
-        category,
-        {
-          duration: session.duration || 60,
-          performance: session.duration ? `${session.duration} min` : undefined,
-        }
-      );
-
-      await triggerVictoryModal(victoryData);
-
-      // Navigate to training journal to show the victory modal
-      router.push('/training-journal');
-
-      // Vérifier si on doit afficher le popup de notation (après un délai pour ne pas interrompre)
-      const ratingResult = await ratingService.recordPositiveAction('session');
-      if (ratingResult.shouldShowPopup) {
-        // Afficher après un délai pour laisser l'utilisateur apprécier la victory modal
-        setTimeout(() => {
-          setShowRatingPopup(true);
-        }, 3000);
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur ajout seance:', error);
-      showPopup('Erreur', "Impossible d'ajouter la seance");
-      throw error;
-    }
-  };
-
   // Handler: supprimer une seance
   const handleDeleteSession = async (id: number) => {
     try {
@@ -723,8 +655,9 @@ export default function PlanningScreen() {
     // Calculer la prochaine date pour ce jour de la semaine
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
     const nextDate = getNextDateForDayOfWeek(dayIndex);
-    setSelectedDate(nextDate);
-    setShowAddModal(true);
+    // Naviguer vers add-training avec la date (même interface que le bouton +)
+    const dateStr = format(nextDate, 'yyyy-MM-dd');
+    router.push(`/add-training?date=${dateStr}`);
   };
 
   // Handlers pour le popup de notation
@@ -1888,14 +1821,6 @@ export default function PlanningScreen() {
         onClose={() => setShowDayModal(false)}
         onAddPress={handleOpenAddModal}
         onDeleteSession={handleDeleteSession}
-      />
-
-      <EnhancedAddSessionModal
-        visible={showAddModal}
-        date={selectedDate}
-        clubs={clubs}
-        onClose={() => setShowAddModal(false)}
-        onSave={handleSaveSession}
       />
 
       {/* Modal détail partenaire (Club/Coach) */}

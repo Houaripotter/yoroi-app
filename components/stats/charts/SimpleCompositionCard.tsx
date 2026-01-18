@@ -35,9 +35,9 @@ export const SimpleCompositionCard: React.FC<SimpleCompositionCardProps> = ({
   const { colors, isDark } = useTheme();
 
   const data: CompositionData[] = [
-    { label: fatLabel, value: fatPercent, color: '#F59E0B', icon: 'fat' },
-    { label: muscleLabel, value: musclePercent, color: '#10B981', icon: 'muscle' },
-    { label: waterLabel, value: waterPercent, color: '#06B6D4', icon: 'water' },
+    { label: fatLabel, value: fatPercent, color: '#F59E0B', icon: 'fat' as const },
+    { label: muscleLabel, value: musclePercent, color: '#10B981', icon: 'muscle' as const },
+    { label: waterLabel, value: waterPercent, color: '#06B6D4', icon: 'water' as const },
   ].filter(d => d.value > 0);
 
   const getIcon = (type: string, color: string) => {

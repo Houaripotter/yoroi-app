@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     borderWidth: 2,
     borderColor: '#D4AF37',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent', // Pas de fond blanc pour les logos
   },
   clubBubbleLogoPlaceholder: {
     width: 50,

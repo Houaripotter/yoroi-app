@@ -30,26 +30,26 @@ export default function VitaliteTab() {
 
       // Récupérer les VRAIES données uniquement
       const sleepStats = await getSleepStats();
-      const hydrationHistory = await getHydrationHistory();
+      const hydrationHistory = await getHydrationHistory(30);
       const readiness = await calculateReadinessScore(7);
 
       // Ne créer des données que si on a des vraies données
       const vitalityHistory: VitalityData[] = [];
 
       // Utiliser l'historique réel de sommeil si disponible
-      if (sleepStats.history && sleepStats.history.length > 0) {
-        for (const entry of sleepStats.history.slice(-30)) {
+      if (sleepStats.weeklyData && sleepStats.weeklyData.length > 0) {
+        for (const entry of sleepStats.weeklyData.slice(-30)) {
           const dateStr = entry.date;
 
           // Chercher l'hydratation pour cette date
-          const hydrationEntry = hydrationHistory?.find((h: any) => h.date === dateStr);
+          const hydrationEntry = hydrationHistory?.find((h) => h.date === dateStr);
 
           vitalityHistory.push({
             date: dateStr,
             vitalityScore: readiness.score,
-            sleepHours: entry.hours || 0,
-            hydrationMl: hydrationEntry?.total || 0,
-            sleepDebt: sleepStats.debt || 0,
+            sleepHours: (entry.duration || 0) / 60, // duration est en minutes
+            hydrationMl: hydrationEntry?.totalAmount || 0,
+            sleepDebt: sleepStats.sleepDebt || 0,
           });
         }
       }

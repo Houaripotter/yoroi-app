@@ -10,11 +10,12 @@ let soundCache: { [key: string]: Audio.Sound } = {};
 
 // Mapping statique des fichiers sons (requis par React Native bundler)
 const SOUND_FILES: { [key: string]: any } = {
-  // Les fichiers seront ajoutés plus tard dans assets/sounds/
-  // 'taiko_drum': require('../assets/sounds/taiko_drum.mp3'),
-  // 'gong': require('../assets/sounds/gong.mp3'),
-  // 'success': require('../assets/sounds/success.mp3'),
-  // 'click': require('../assets/sounds/click.mp3'),
+  'pokemon_badge': require('../assets/sounds/pokemon-heartgold-&-soulsilver-ost-fanfare-(badge-get)-made-with-Voicemod.mp3'),
+  'pokemon_level_up': require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
+  'pokemon_recovery': require('../assets/sounds/pokemon-recovery-made-with-Voicemod.mp3'),
+  'sonic_ring': require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'),
+  'beep': require('../assets/sounds/beep.mp3'),
+  'gong': require('../assets/sounds/gong.mp3'),
 };
 
 /**
@@ -66,7 +67,7 @@ const loadSound = async (soundName: string): Promise<Audio.Sound | null> => {
 /**
  * Joue un son
  */
-export const playSound = async (soundName: 'taiko_drum' | 'gong' | 'success' | 'click', volume: number = 0.7) => {
+export const playSound = async (soundName: 'pokemon_badge' | 'pokemon_level_up' | 'pokemon_recovery' | 'sonic_ring' | 'beep' | 'gong', volume: number = 0.7) => {
   try {
     const sound = await loadSound(soundName);
     if (!sound) {
@@ -86,31 +87,38 @@ export const playSound = async (soundName: 'taiko_drum' | 'gong' | 'success' | '
 };
 
 /**
- * Joue le son de validation d'une séance
+ * Joue le son de validation d'une séance (Pokemon Badge!)
  */
 export const playWorkoutCompleteSound = async () => {
-  await playSound('taiko_drum', 0.8);
+  await playSound('pokemon_badge', 0.8);
 };
 
 /**
  * Joue le son de passage de niveau
  */
 export const playLevelUpSound = async () => {
-  await playSound('gong', 0.9);
+  await playSound('pokemon_level_up', 0.9);
 };
 
 /**
  * Joue le son de succès (enregistrement mesure, etc.)
  */
 export const playSuccessSound = async () => {
-  await playSound('success', 0.6);
+  await playSound('sonic_ring', 0.6);
 };
 
 /**
- * Joue un petit son de clic/tap
+ * Joue le son du gong
  */
-export const playClickSound = async () => {
-  await playSound('click', 0.4);
+export const playGongSound = async () => {
+  await playSound('gong', 0.7);
+};
+
+/**
+ * Joue un petit son de bip
+ */
+export const playBeepSound = async () => {
+  await playSound('beep', 0.5);
 };
 
 /**
@@ -135,10 +143,11 @@ export const prepareSounds = async () => {
   try {
     await initSoundManager();
     // Précharger les sons en arrière-plan
-    loadSound('taiko_drum').catch(() => {});
+    loadSound('pokemon_badge').catch(() => {});
+    loadSound('pokemon_level_up').catch(() => {});
+    loadSound('sonic_ring').catch(() => {});
     loadSound('gong').catch(() => {});
-    loadSound('success').catch(() => {});
-    loadSound('click').catch(() => {});
+    loadSound('beep').catch(() => {});
   } catch (error) {
     logger.error('❌ Erreur préparation sons:', error);
   }

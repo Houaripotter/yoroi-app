@@ -44,7 +44,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/design';
 import { addWeight } from '@/lib/database';
-import { format } from 'date-fns';
+import { format, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 import { NumericInput } from '@/components/NumericInput';
 import { WeightInput, WeightInputHandle } from '@/components/WeightInput';

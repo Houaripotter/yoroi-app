@@ -13,6 +13,7 @@ import {
   Dimensions,
   ScrollView,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -275,9 +276,15 @@ export default function LastSessionScreen() {
           >
             {selectedTemplate === 'photo' && backgroundImage ? (
               <View style={styles.cardInner}>
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]}>
-                  <View style={[StyleSheet.absoluteFill, { opacity: 0.6, backgroundColor: '#000' }]} />
-                </View>
+                {/* Image de fond */}
+                <Image
+                  source={{ uri: backgroundImage }}
+                  style={StyleSheet.absoluteFill}
+                  resizeMode="cover"
+                />
+                {/* Overlay sombre */}
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} />
+                {/* Contenu */}
                 <View style={styles.cardContent}>
                   <Text style={[styles.cardLabel, { color: '#FFFFFF99' }]}>SÉANCE TERMINÉE</Text>
                   <Text style={[styles.cardSport, { color: '#FFFFFF' }]}>{sportName}</Text>
@@ -285,8 +292,22 @@ export default function LastSessionScreen() {
                     {lastTraining.duration_minutes} min
                   </Text>
                   <Text style={[styles.cardDate, { color: '#FFFFFF99' }]}>{formattedDate}</Text>
-                  <View style={styles.cardBranding}>
-                    <Text style={[styles.brandingText, { color: '#FFFFFF66' }]}>@yoroiapp</Text>
+                  {/* Footer branding */}
+                  <View style={styles.photoFooter}>
+                    <Image
+                      source={require('@/assets/images/logo2010.png')}
+                      style={styles.footerLogo}
+                      resizeMode="contain"
+                    />
+                    <View style={styles.footerTextBlock}>
+                      <Text style={styles.footerBrand}>YOROI</Text>
+                      <Text style={styles.footerTagline}>Suivi du poids & sport</Text>
+                    </View>
+                    <Image
+                      source={require('@/assets/images/appstore.png')}
+                      style={styles.footerAppStore}
+                      resizeMode="contain"
+                    />
                   </View>
                 </View>
               </View>
@@ -683,5 +704,45 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
+  },
+
+  // Photo Footer Branding
+  photoFooter: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 12,
+    padding: 10,
+  },
+  footerLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+  },
+  footerTextBlock: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  footerBrand: {
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  footerTagline: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 8,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  footerAppStore: {
+    width: 70,
+    height: 24,
   },
 });

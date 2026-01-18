@@ -856,7 +856,7 @@ export const themes: Record<string, Theme> = {
     }, false),
   },
 
-  // 🏆 GOLD - Or Luxueux
+  // 🏆 GOLD - Or Brillant FLUO
   gold_dark: {
     id: 'gold_dark',
     colorId: 'gold',
@@ -865,21 +865,21 @@ export const themes: Record<string, Theme> = {
     icon: '🏆',
     kanji: '金',
     colors: createThemeColors({
-      background: '#0D0A05',
-      backgroundCard: '#1A1408',
-      backgroundElevated: '#251E0D',
-      backgroundLight: '#302712',
-      accent: '#D4AF37',
-      accentDark: '#B8960C',
-      accentLight: '#F0C850',
+      background: '#0A0A0A',
+      backgroundCard: '#151510',
+      backgroundElevated: '#1F1F18',
+      backgroundLight: '#2A2A20',
+      accent: '#FFD700',           // OR PUR BRILLANT
+      accentDark: '#FFCC00',
+      accentLight: '#FFE44D',      // Or clair lumineux
       textPrimary: '#FFFFFF',
-      textSecondary: '#E0D5B8',
-      textMuted: '#A89B70',
+      textSecondary: '#F0E8D0',
+      textMuted: '#B8A870',
       textOnAccent: '#000000',
-      border: '#3D3415',
-      borderLight: '#4D4320',
-      glow: 'rgba(212, 175, 55, 0.4)',
-      glowStrong: 'rgba(212, 175, 55, 0.6)',
+      border: '#3D3820',
+      borderLight: '#4D4828',
+      glow: 'rgba(255, 215, 0, 0.5)',
+      glowStrong: 'rgba(255, 215, 0, 0.75)',
     }, true),
   },
 
@@ -891,21 +891,21 @@ export const themes: Record<string, Theme> = {
     icon: '',
     kanji: '金',
     colors: createThemeColors({
-      background: '#FFFDF5',
+      background: '#FFFDF8',
       backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFF8E8',
-      backgroundLight: '#FFF3D8',
-      accent: '#B8960C',
-      accentDark: '#9A7B00',
-      accentLight: '#D4AF37',
-      textPrimary: '#1A1408',
-      textSecondary: '#3D3415',
-      textMuted: '#5D5430',
+      backgroundElevated: '#FFFAED',
+      backgroundLight: '#FFF5D8',
+      accent: '#FFD700',           // OR PUR BRILLANT
+      accentDark: '#E6C200',
+      accentLight: '#FFE44D',
+      textPrimary: '#1A1505',
+      textSecondary: '#3D3515',
+      textMuted: '#5D5025',
       textOnAccent: '#000000',
-      border: '#E8E0C8',
-      borderLight: '#F0EAD8',
-      glow: 'rgba(184, 150, 12, 0.15)',
-      glowStrong: 'rgba(184, 150, 12, 0.25)',
+      border: '#F0E8C8',
+      borderLight: '#F8F0D8',
+      glow: 'rgba(255, 215, 0, 0.3)',
+      glowStrong: 'rgba(255, 215, 0, 0.5)',
     }, false),
   },
 
@@ -962,7 +962,7 @@ export const themes: Record<string, Theme> = {
     }, false),
   },
 
-  // 🌅 SUNSET - Coucher de Soleil
+  // 🌅 SUNSET - Rouge-Orangé Flamboyant (différent de Blaze)
   sunset_dark: {
     id: 'sunset_dark',
     colorId: 'sunset',
@@ -971,21 +971,21 @@ export const themes: Record<string, Theme> = {
     icon: '🌅',
     kanji: '夕',
     colors: createThemeColors({
-      background: '#100805',
-      backgroundCard: '#1A0D08',
-      backgroundElevated: '#25140D',
-      backgroundLight: '#301A12',
-      accent: '#FF6B35',
-      accentDark: '#E85520',
-      accentLight: '#FF8B5A',
+      background: '#0A0A0A',
+      backgroundCard: '#1A1210',
+      backgroundElevated: '#251815',
+      backgroundLight: '#301F1A',
+      accent: '#FF4500',           // ORANGERED - Plus rouge que Blaze
+      accentDark: '#E63E00',
+      accentLight: '#FF6A33',
       textPrimary: '#FFFFFF',
-      textSecondary: '#F0D0C0',
-      textMuted: '#B08878',
+      textSecondary: '#F0D8D0',
+      textMuted: '#B09088',
       textOnAccent: '#FFFFFF',
-      border: '#402418',
-      borderLight: '#503020',
-      glow: 'rgba(255, 107, 53, 0.4)',
-      glowStrong: 'rgba(255, 107, 53, 0.6)',
+      border: '#402520',
+      borderLight: '#503228',
+      glow: 'rgba(255, 69, 0, 0.5)',
+      glowStrong: 'rgba(255, 69, 0, 0.75)',
     }, true),
   },
 
@@ -997,21 +997,21 @@ export const themes: Record<string, Theme> = {
     icon: '',
     kanji: '夕',
     colors: createThemeColors({
-      background: '#FFFAF5',
+      background: '#FFFAF8',
       backgroundCard: '#FFFFFF',
-      backgroundElevated: '#FFF0E8',
-      backgroundLight: '#FFE8D8',
-      accent: '#E85520',
-      accentDark: '#D04515',
-      accentLight: '#FF6B35',
+      backgroundElevated: '#FFF2ED',
+      backgroundLight: '#FFE8E0',
+      accent: '#FF4500',           // ORANGERED - Plus rouge que Blaze
+      accentDark: '#E63E00',
+      accentLight: '#FF6A33',
       textPrimary: '#1A0D08',
       textSecondary: '#402418',
       textMuted: '#604030',
       textOnAccent: '#FFFFFF',
-      border: '#F0D8C8',
-      borderLight: '#F8E8DC',
-      glow: 'rgba(232, 85, 32, 0.15)',
-      glowStrong: 'rgba(232, 85, 32, 0.25)',
+      border: '#F0D8D0',
+      borderLight: '#F8E8E0',
+      glow: 'rgba(255, 69, 0, 0.2)',
+      glowStrong: 'rgba(255, 69, 0, 0.35)',
     }, false),
   },
 
@@ -1086,9 +1086,9 @@ export const themeColors: { id: ThemeColor; name: string; icon: string; kanji: s
   { id: 'ocean', name: 'Ocean', icon: '', kanji: '海', color: '#00D4FF' },
   // 5 Nouveaux thèmes
   { id: 'indigo', name: 'Indigo', icon: '', kanji: '藍', color: '#6366F1' },   // Bleu-violet profond
-  { id: 'gold', name: 'Gold', icon: '', kanji: '金', color: '#D4AF37' },       // Or luxueux
+  { id: 'gold', name: 'Gold', icon: '', kanji: '金', color: '#FFD700' },       // Or pur brillant
   { id: 'emerald', name: 'Emerald', icon: '', kanji: '翠', color: '#10B981' }, // Émeraude profond
-  { id: 'sunset', name: 'Sunset', icon: '', kanji: '夕', color: '#FF6B35' },   // Coucher de soleil
+  { id: 'sunset', name: 'Sunset', icon: '', kanji: '夕', color: '#FF4500' },   // Rouge-orangé flamboyant
   { id: 'lavender', name: 'Lavender', icon: '', kanji: '紫', color: '#A78BFA' }, // Lavande douce
 ];
 

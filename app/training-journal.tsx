@@ -992,7 +992,7 @@ export default function TrainingJournalScreen() {
         {/* Right: Date + Actions (Share + Add) */}
         <View style={styles.compactCardRight}>
           <Text style={[styles.compactCardDate, { color: colors.textMuted }]}>
-            {last ? getRelativeDate(last.date) : ''}
+            {last ? getRelativeDate(last.date, t) : ''}
           </Text>
           <View style={styles.compactCardActions}>
             {/* TASK 2: Share button for re-sharing past sessions */}
@@ -1091,7 +1091,7 @@ export default function TrainingJournalScreen() {
             </Text>
             <View style={styles.benchmarkDateRow}>
               <Text style={[styles.benchmarkDate, { color: colors.textMuted }]}>
-                {getRelativeDate(last.date)}
+                {getRelativeDate(last.date, t)}
               </Text>
               {pr && last.value === pr.value && (
                 <View style={[styles.prBadge, { backgroundColor: benchmark.color + '20' }]}>

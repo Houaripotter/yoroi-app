@@ -85,7 +85,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     const chartHeight = compact ? 140 : height;
     const paddingTop = compact ? 40 : 55; // Plus d'espace pour les valeurs au-dessus des points
     const paddingBottom = 45; // Plus d'espace pour les dates
-    const paddingLeft = 55; // Augmenté pour éviter le chevauchement avec les valeurs Y
+    const paddingLeft = 75; // AUGMENTE ENCORE pour eviter chevauchement Y-axis et valeurs points
     const paddingRight = 30; // Augmenté pour les dernières valeurs
     const graphHeight = chartHeight - paddingTop - paddingBottom;
     const graphWidth = chartWidth - paddingLeft - paddingRight;
@@ -169,7 +169,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     const chartHeight = SCREEN_HEIGHT * 0.6;
     const paddingTop = 60;
     const paddingBottom = 60;
-    const paddingLeft = 60;
+    const paddingLeft = 80; // Plus d'espace pour eviter chevauchement
     const paddingRight = 30;
     const graphHeight = chartHeight - paddingTop - paddingBottom;
     const graphWidth = chartWidth - paddingLeft - paddingRight;
@@ -223,6 +223,8 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
       paddingBottom,
       paddingLeft,
       graphHeight,
+      yMin,
+      yMax,
     };
   }, [data, dateLocale]);
 

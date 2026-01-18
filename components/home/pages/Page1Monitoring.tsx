@@ -657,7 +657,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             style={styles.statCardGradient}
           >
             <MaterialCommunityIcons name="trophy" size={10} color={colors.textOnAccent} />
-            <Text style={[styles.statValueWhite, { fontSize: 9, color: colors.textOnAccent }]} numberOfLines={1}>
+            <Text style={[styles.statValueWhite, { fontSize: IS_SMALL_SCREEN ? 10 : 11, color: colors.textOnAccent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               {rankName}
             </Text>
             <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
@@ -727,10 +727,19 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           {/* Reste à droite */}
           <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: '#F59E0B' }]}>{t('home.remaining')}</Text>
-            <Text style={[styles.metricTopValue, { color: '#F59E0B' }]}>
-              {Math.abs(weightDiff).toFixed(1)} kg
-            </Text>
+            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#10B981' : '#F59E0B' }]}>{t('home.remaining')}</Text>
+            {Math.abs(weightDiff) <= 0.1 ? (
+              // Objectif atteint - Célébration!
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Sparkles size={14} color="#10B981" strokeWidth={2.5} />
+                <Text style={[styles.metricTopValue, { color: '#10B981' }]}>0 kg</Text>
+                <Sparkles size={14} color="#F59E0B" strokeWidth={2.5} />
+              </View>
+            ) : (
+              <Text style={[styles.metricTopValue, { color: '#F59E0B' }]}>
+                {Math.abs(weightDiff).toFixed(1)} kg
+              </Text>
+            )}
           </View>
         </View>
 

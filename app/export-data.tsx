@@ -82,7 +82,7 @@ export default function ExportDataScreen() {
   const [exportedFormat, setExportedFormat] = useState<ExportFormat | null>(null);
 
   // Ref pour le timeout (cleanup)
-  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup du timeout au démontage
   useEffect(() => {

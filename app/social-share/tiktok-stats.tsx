@@ -201,7 +201,8 @@ export default function TikTokStatsScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false,
+        allowsEditing: true, // Permet de recadrer/zoomer
+        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
         quality: 0.9,
       });
 
@@ -224,7 +225,8 @@ export default function TikTokStatsScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: false,
+        allowsEditing: true, // Permet de recadrer/zoomer
+        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
         quality: 0.9,
       });
 

@@ -74,16 +74,21 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
   const plusButtonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accentDark || colors.accent);
   const plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
 
-  // Style special pour le bouton en mode clair (ombre pour visibilite sur fond clair)
-  const plusButtonShadow = isLightMode ? {
+  // Style special pour le bouton selon le mode
+  const plusButtonStyle = isLightMode ? {
+    // Mode clair: bouton blanc avec ombre et bordure foncee
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
-  } : {};
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.12)',
+  } : {
+    // Mode sombre: bordure blanche semi-transparente
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
+  };
 
   // Position animée du creux
   const notchPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
@@ -262,7 +267,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
               colors={[plusButtonBgColor, plusButtonBgColorDark]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.buttonGradient, plusButtonShadow]}
+              style={[styles.buttonGradient, plusButtonStyle]}
             >
               <View style={styles.shineEffect} />
               <Plus size={28} color={plusIconColor} strokeWidth={3.5} />
@@ -421,8 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.25)',
+    // Note: borderWidth et borderColor sont overrides par plusButtonShadow en mode clair
   },
   shineEffect: {
     position: 'absolute',

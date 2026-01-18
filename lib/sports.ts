@@ -85,8 +85,8 @@ export const SPORTS: Sport[] = [
   {
     id: 'judo',
     name: 'Judo',
-    icon: 'human-greeting-variant',
-    color: '#F7FAFC',
+    icon: 'kabaddi', // Grappling/prise au sol
+    color: '#1E40AF',
     category: 'combat_grappling',
   },
   {

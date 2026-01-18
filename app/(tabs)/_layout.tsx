@@ -55,10 +55,20 @@ const triggerHaptic = () => {
 // BOUTON BUZZER CENTRAL - DESIGN BRILLANT
 // ============================================
 function CentralBuzzerButton() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Couleurs du bouton selon le mode
+  // Mode clair: bouton BLANC avec + NOIR
+  // Mode sombre: bouton coloré (accent) avec + blanc
+  const isLightMode = !isDark;
+  const buttonBgColor = isLightMode ? '#FFFFFF' : colors.accent;
+  const buttonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accent + 'DD');
+  const plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
+  const pulseColor = isLightMode ? 'rgba(0,0,0,0.08)' : `${colors.accent}20`;
+  const pulseBorderColor = isLightMode ? 'rgba(0,0,0,0.15)' : `${colors.accent}40`;
 
   // Animation pulse continue pour l'anneau externe
   const startPulse = () => {
@@ -114,8 +124,8 @@ function CentralBuzzerButton() {
           styles.pulseRing,
           {
             transform: [{ scale: pulseAnim }],
-            backgroundColor: `${colors.accent}20`,
-            borderColor: `${colors.accent}40`,
+            backgroundColor: pulseColor,
+            borderColor: pulseBorderColor,
           },
         ]}
       />
@@ -135,18 +145,29 @@ function CentralBuzzerButton() {
           style={styles.buzzerTouchable}
         >
           <LinearGradient
-            colors={[colors.accent, colors.accent + 'DD', colors.accent]}
+            colors={[buttonBgColor, buttonBgColorDark, buttonBgColor]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.buzzerGradient}
+            style={[
+              styles.buzzerGradient,
+              isLightMode && {
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 8,
+                borderWidth: 2,
+                borderColor: 'rgba(0,0,0,0.1)',
+              }
+            ]}
           >
             {/* Effet de brillance en haut */}
-            <View style={styles.shineEffect} />
+            <View style={[styles.shineEffect, isLightMode && { backgroundColor: 'rgba(255,255,255,0.6)' }]} />
 
             {/* Icône + */}
             <Plus
               size={28}
-              color={colors.textOnAccent}
+              color={plusIconColor}
               strokeWidth={3.5}
             />
           </LinearGradient>

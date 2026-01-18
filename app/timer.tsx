@@ -599,7 +599,7 @@ export default function TimerScreen() {
         // Pour muscu, skip termine juste le repos
         setTimerState('finished');
         setTimeRemaining(0);
-        await soundManager.playGong();
+        await soundManager.playBeep(); // Beep pour muscu
         break;
     }
   };
@@ -644,8 +644,12 @@ export default function TimerScreen() {
           }
 
           if (prev <= 1) {
-            // Temps ecoule
-            soundManager.playGong();
+            // Temps ecoule - beep pour muscu, gong pour les autres
+            if (mode === 'musculation') {
+              soundManager.playBeep();
+            } else {
+              soundManager.playGong();
+            }
             triggerHaptic('heavy');
             Vibration.vibrate([0, 500, 200, 500]);
 
