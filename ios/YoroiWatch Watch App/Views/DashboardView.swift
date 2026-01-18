@@ -10,31 +10,7 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
-                // Logo YOROI avec avatar
-                HStack(spacing: 8) {
-                    // Avatar/Logo rond
-                    ZStack {
-                        Circle()
-                            .fill(Color.black)
-                            .frame(width: 35, height: 35)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
-
-                        // Image du samourai
-                        Image(systemName: "figure.martial.arts")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white)
-                    }
-
-                    Text("YOROI")
-                        .font(.system(size: 18, weight: .black))
-                        .foregroundColor(.white)
-                }
-                .padding(.top, 4)
-
+            VStack(spacing: 8) {
                 // Grille de stats 2x2
                 LazyVGrid(columns: [
                     GridItem(.flexible(), spacing: 6),
@@ -73,47 +49,42 @@ struct DashboardView: View {
                     )
                 }
                 .padding(.horizontal, 8)
+                .padding(.top, 8)
 
-                // Ligne avec flamme (série) et hydratation
+                // Ligne avec flamme (série), entraînements et hydratation
                 HStack(spacing: 6) {
                     // Série/Streak
-                    HStack(spacing: 6) {
-                        ZStack {
-                            Circle()
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 3)
-                                .frame(width: 30, height: 30)
-
-                            Circle()
-                                .trim(from: 0, to: 0.7)
-                                .stroke(Color.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                .frame(width: 30, height: 30)
-                                .rotationEffect(.degrees(-90))
-
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(.orange)
-                        }
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.orange)
 
                         Text("\(healthManager.streak)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 8)
                     .background(Color.gray.opacity(0.15))
-                    .cornerRadius(12)
+                    .cornerRadius(10)
 
-                    // Points/Pagination
+                    // Nombre d'entraînements
                     HStack(spacing: 4) {
-                        ForEach(0..<5, id: \.self) { i in
-                            Circle()
-                                .fill(i == 0 ? Color.white : Color.gray.opacity(0.5))
-                                .frame(width: 6, height: 6)
-                        }
+                        Image(systemName: "dumbbell.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(.green)
+
+                        Text("\(healthManager.workoutHistory.count)")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Color.gray.opacity(0.15))
+                    .cornerRadius(10)
 
                     // Hydratation
-                    HStack(spacing: 6) {
+                    HStack(spacing: 4) {
                         Image(systemName: "drop.fill")
                             .font(.system(size: 14))
                             .foregroundColor(.cyan)
@@ -122,10 +93,10 @@ struct DashboardView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 8)
                     .background(Color.gray.opacity(0.15))
-                    .cornerRadius(12)
+                    .cornerRadius(10)
                 }
                 .padding(.horizontal, 8)
             }

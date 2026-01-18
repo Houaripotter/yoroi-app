@@ -44,14 +44,6 @@ struct ActivityTypeView: View {
                 }
                 .padding(.horizontal, 8)
 
-                // Pagination
-                HStack(spacing: 6) {
-                    Circle().fill(Color.white).frame(width: 6, height: 6)
-                    ForEach(0..<4, id: \.self) { _ in
-                        Circle().fill(Color.gray.opacity(0.5)).frame(width: 6, height: 6)
-                    }
-                }
-                .padding(.top, 8)
             }
         }
         .background(Color.black)

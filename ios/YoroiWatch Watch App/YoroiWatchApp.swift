@@ -6,12 +6,20 @@
 //
 
 import SwiftUI
+import WidgetKit
 
 @main
-struct YoroiWatch_Watch_AppApp: App {
+struct YoroiWatchApp: App {
+    @StateObject private var healthManager = HealthManager.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
+    }
+
+    init() {
+        // Rafraîchir les complications au lancement
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }

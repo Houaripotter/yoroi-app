@@ -42,15 +42,6 @@ struct RecordsView: View {
                 .cornerRadius(16)
                 .padding(.horizontal, 8)
 
-                // Pagination
-                HStack(spacing: 6) {
-                    ForEach(0..<5, id: \.self) { i in
-                        Circle()
-                            .fill(i == 3 ? Color.white : Color.gray.opacity(0.5))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-                .padding(.top, 8)
             }
         }
         .background(Color.black)

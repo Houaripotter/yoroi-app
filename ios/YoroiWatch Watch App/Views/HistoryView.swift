@@ -26,15 +26,6 @@ struct HistoryView: View {
                     SessionCard(session: session)
                 }
 
-                // Pagination
-                HStack(spacing: 6) {
-                    ForEach(0..<5, id: \.self) { i in
-                        Circle()
-                            .fill(i == 4 ? Color.white : Color.gray.opacity(0.5))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-                .padding(.top, 8)
             }
             .padding(.horizontal, 8)
         }

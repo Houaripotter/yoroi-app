@@ -1,6 +1,6 @@
 // ============================================
-// YOROI WATCH - Vue principale
-// Navigation entre toutes les vues
+// YOROI WATCH - Navigation principale
+// Swipe horizontal entre les pages principales
 // ============================================
 
 import SwiftUI
@@ -11,35 +11,35 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // 1. Dashboard (Poids, BPM, SpO2, PAS, SOMMEIL)
+            // Page 1: Dashboard (stats santé)
             DashboardView()
                 .tag(0)
 
-            // 2. Types d'activité
-            ActivityTypeView()
+            // Page 2: Timer de repos
+            TimerView()
                 .tag(1)
 
-            // 3. Timer de repos
-            TimerView()
+            // Page 3: Hydratation
+            HydrationView()
                 .tag(2)
 
-            // 4. Hydratation
-            HydrationView()
+            // Page 4: Poids
+            WeightView()
                 .tag(3)
 
-            // 5. Poids
-            WeightView()
+            // Page 5: Entraînements
+            WorkoutView()
                 .tag(4)
 
-            // 6. Carnet / Records
+            // Page 6: Records
             RecordsView()
                 .tag(5)
 
-            // 7. Historique
+            // Page 7: Historique
             HistoryView()
                 .tag(6)
         }
-        .tabViewStyle(.verticalPage)
+        .tabViewStyle(.carousel)
         .onAppear {
             healthManager.requestAuthorization()
         }
