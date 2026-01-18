@@ -338,7 +338,7 @@ export const WeightProgressCard = forwardRef<View, WeightProgressCardProps>(
           <ImageBackground
             source={{ uri: backgroundImage }}
             style={styles.backgroundImage}
-            resizeMode="cover"
+            resizeMode="contain"
           >
             {content}
           </ImageBackground>

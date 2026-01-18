@@ -192,7 +192,7 @@ export const TikTokStatsCard = forwardRef<View, TikTokStatsCardProps>(
       );
     }
 
-    // Version avec photo
+    // Version avec photo - remplit tout le cadre
     if (hasPhoto) {
       return (
         <View
@@ -203,7 +203,7 @@ export const TikTokStatsCard = forwardRef<View, TikTokStatsCardProps>(
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
           <LinearGradient
             colors={[

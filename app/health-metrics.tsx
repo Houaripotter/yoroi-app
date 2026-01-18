@@ -1264,7 +1264,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   connectButtonText: {
-    color: '#000',
     fontSize: 18,
     fontWeight: '700',
   },

@@ -144,7 +144,11 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
           const weightStatus = userGoal ? getWeightStatus(item.value, previousValue) : null;
           const evolutionStatus = showEvolution ? getEvolutionStatus(item.value, previousValue) : null;
           const statusColor = status?.color || weightStatus?.color || evolutionStatus?.color || color;
-          const statusLabel = status?.label || weightStatus?.label || evolutionStatus?.label || '';
+          const rawStatusLabel = status?.label || weightStatus?.label || evolutionStatus?.label || '';
+          // Traduire le label s'il s'agit d'une clé de zone de santé
+          const statusLabel = rawStatusLabel && !rawStatusLabel.includes(' ')
+            ? t(`healthRanges.zones.${rawStatusLabel}`)
+            : rawStatusLabel;
 
           return (
             <View

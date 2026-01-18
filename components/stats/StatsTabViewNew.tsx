@@ -21,13 +21,14 @@ import { ScrollProvider } from '@/lib/ScrollContext';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Page definitions - titles are set dynamically in component
+// Santé en premier car c'est l'indicateur principal de santé
 const PAGE_DEFS = [
+  { id: 'sante', titleKey: 'stats.health', icon: Heart, component: VitalitePage },
   { id: 'poids', titleKey: 'stats.weight', icon: Scale, component: PoidsPage },
   { id: 'composition', titleKey: 'stats.composition', icon: Activity, component: CompositionPage },
   { id: 'mensurations', titleKey: 'stats.measurements', icon: Ruler, component: MensurationsPage },
   { id: 'discipline', titleKey: 'stats.discipline', icon: Flame, component: DisciplinePage },
   { id: 'performance', titleKey: 'stats.performance', icon: Award, component: PerformancePage },
-  { id: 'vitalite', titleKey: 'stats.vitality', icon: Heart, component: VitalitePage },
 ];
 
 interface StatsTabViewNewProps {

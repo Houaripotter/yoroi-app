@@ -10,7 +10,7 @@ let soundCache: { [key: string]: Audio.Sound } = {};
 
 // Mapping statique des fichiers sons (requis par React Native bundler)
 const SOUND_FILES: { [key: string]: any } = {
-  'pokemon_badge': require('../assets/sounds/pokemon-heartgold-&-soulsilver-ost-fanfare-(badge-get)-made-with-Voicemod.mp3'),
+  'pokemon_badge': require('../assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3'),
   'pokemon_level_up': require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
   'pokemon_recovery': require('../assets/sounds/pokemon-recovery-made-with-Voicemod.mp3'),
   'sonic_ring': require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'),

@@ -53,7 +53,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
-const CARD_HEIGHT = CARD_WIDTH * (16 / 9);
+const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);  // Portrait 9:16
+const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16); // Paysage 16:9
 
 // ============================================
 // COMPOSANT CARTE SÉANCE (format story)
@@ -64,11 +65,13 @@ interface SessionCardProps {
   backgroundImage?: string;
   backgroundType: 'photo' | 'black' | 'white';
   customLocation?: string;
+  isLandscape?: boolean;  // true si image paysage
 }
 
 const SessionCard = React.forwardRef<View, SessionCardProps>(
-  ({ training, backgroundImage, backgroundType, customLocation }, ref) => {
+  ({ training, backgroundImage, backgroundType, customLocation, isLandscape = false }, ref) => {
     const sportName = getSportName(training.sport);
+    const cardHeight = isLandscape ? CARD_HEIGHT_LANDSCAPE : CARD_HEIGHT_PORTRAIT;
     const sportIcon = getSportIcon(training.sport);
     const sportColor = getSportColor(training.sport);
 
@@ -182,12 +185,12 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
       </View>
     );
 
-    // Fond avec photo
+    // Fond avec photo - remplit tout le cadre
     if (backgroundImage) {
       return (
         <View
           ref={ref}
-          style={[styles.card, { backgroundColor: '#000000' }]}
+          style={[styles.card, { backgroundColor: '#000000', height: CARD_HEIGHT_PORTRAIT }]}
           collapsable={false}
         >
           <Image
@@ -196,17 +199,12 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
             resizeMode="contain"
           />
           <LinearGradient
-            colors={[
-              'rgba(0,0,0,0.7)',
-              'rgba(0,0,0,0.4)',
-              'rgba(0,0,0,0)',
-              'rgba(0,0,0,0)',
-              'rgba(0,0,0,0)',
-              'rgba(0,0,0,0.5)',
-              'rgba(0,0,0,0.85)',
-              'rgba(0,0,0,0.95)',
-            ]}
-            locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
+            colors={
+              isLandscape
+                ? ['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']
+                : ['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.95)']
+            }
+            locations={isLandscape ? [0, 0.3, 0.7, 1] : [0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
             style={StyleSheet.absoluteFill}
           />
           {content}
@@ -219,7 +217,7 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
       return (
         <View
           ref={ref}
-          style={[styles.card, { backgroundColor: '#FFFFFF' }]}
+          style={[styles.card, { backgroundColor: '#FFFFFF', height: cardHeight }]}
           collapsable={false}
         >
           {content}
@@ -231,7 +229,7 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
     return (
       <View
         ref={ref}
-        style={[styles.card]}
+        style={[styles.card, { height: cardHeight }]}
         collapsable={false}
       >
         <LinearGradient
@@ -259,6 +257,7 @@ export default function LastSessionScreen() {
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('black');
+  const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [lastTraining, setLastTraining] = useState<Training | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -297,15 +296,18 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [9, 16],
+        allowsEditing: false,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setBackgroundType('photo');
+        // Détecter si l'image est en paysage (largeur > hauteur)
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -322,15 +324,18 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [9, 16],
+        allowsEditing: false,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setBackgroundType('photo');
+        // Détecter si l'image est en paysage (largeur > hauteur)
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -495,6 +500,7 @@ export default function LastSessionScreen() {
               backgroundImage={backgroundImage}
               backgroundType={backgroundType}
               customLocation={customLocation}
+              isLandscape={isLandscapeImage}
             />
           </View>
 
@@ -747,7 +753,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    height: CARD_HEIGHT,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000',

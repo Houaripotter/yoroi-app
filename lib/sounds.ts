@@ -58,7 +58,7 @@ class SoundManager {
       wizz: require('../assets/sounds/wizz-made-with-Voicemod.mp3'), // MSN notification
       sonicring: require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'), // XP/badge gain
       mariowin: require('../assets/sounds/super-mario-64-soundtrack-slider-made-with-Voicemod.mp3'), // Victoire
-      badgefanfare: require('../assets/sounds/pokemon-heartgold-&-soulsilver-ost-fanfare-(badge-get)-made-with-Voicemod.mp3'), // Badge unlock
+      badgefanfare: require('../assets/sounds/pokemon-heartgold-soulsilver-ost-fanfare-badge-get-made-with-Voicemod.mp3'), // Badge unlock
     };
 
     for (const [key, file] of Object.entries(soundFiles)) {

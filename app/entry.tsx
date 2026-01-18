@@ -423,7 +423,7 @@ export default function EntryScreen() {
                   <Save size={20} color={weight ? '#000' : COLORS.textMuted} />
                   <Text style={[
                     styles.saveButtonText,
-                    !weight && { color: COLORS.textMuted }
+                    { color: weight ? COLORS.textOnPrimary : COLORS.textMuted }
                   ]}>
                     {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
                   </Text>
@@ -675,7 +675,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: TYPOGRAPHY.size.lg,
     fontWeight: TYPOGRAPHY.weight.bold,
-    color: '#000',
   },
 
   // Tip

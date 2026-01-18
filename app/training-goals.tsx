@@ -439,8 +439,8 @@ export default function TrainingGoalsScreen() {
                       onPress={handleAddGoal}
                       style={[styles.confirmButton, { backgroundColor: colors.accent }]}
                     >
-                      <Check size={20} color="#000" />
-                      <Text style={styles.confirmText}>Ajouter</Text>
+                      <Check size={20} color={colors.textOnAccent} />
+                      <Text style={[styles.confirmText, { color: colors.textOnAccent }]}>Ajouter</Text>
                     </TouchableOpacity>
                   </View>
                 </>
@@ -779,7 +779,6 @@ const styles = StyleSheet.create({
   confirmText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#000',
   },
   selectorTitle: {
     fontSize: 16,

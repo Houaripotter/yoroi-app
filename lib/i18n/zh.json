@@ -1573,7 +1573,8 @@
       "underweight": "体重过轻",
       "healthy": "健康",
       "attention": "注意",
-      "danger": "危险"
+      "danger": "危险",
+      "unknown": "未知"
     },
     "bodyFat": {
       "title": "体脂率",

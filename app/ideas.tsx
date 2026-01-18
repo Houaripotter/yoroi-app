@@ -209,7 +209,7 @@ export default function IdeasScreen() {
             ) : (
               <>
                 <Send size={20} color="#FFF" />
-                <Text style={styles.sendBtnText}>
+                <Text style={[styles.sendBtnText, { color: sent ? '#FFF' : colors.textOnAccent }]}>
                   {isSending ? 'Envoi...' : 'Envoyer mon idée'}
                 </Text>
               </>
@@ -357,7 +357,6 @@ const styles = StyleSheet.create({
   sendBtnText: {
     fontSize: FONT.size.lg,
     fontWeight: '700',
-    color: '#FFF',
   },
   alternativeButtons: {
     marginTop: SPACING.md,

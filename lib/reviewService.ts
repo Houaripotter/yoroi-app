@@ -36,8 +36,8 @@ export const shouldAskForReview = async (): Promise<boolean> => {
     const count = await AsyncStorage.getItem(REVIEW_COUNT_KEY);
     const triggerCount = parseInt(count || '0', 10);
 
-    // Demander apres 7 actions positives
-    if (triggerCount < 7) return false;
+    // Demander apres 1 action positive (avant c'était 7)
+    if (triggerCount < 1) return false;
 
     // Verifier si le store review est disponible
     const isAvailable = await StoreReview.isAvailableAsync();
@@ -93,7 +93,7 @@ export const canAskForReview = async (): Promise<boolean> => {
     const count = await AsyncStorage.getItem(REVIEW_COUNT_KEY);
     const triggerCount = parseInt(count || '0', 10);
 
-    return triggerCount >= 7;
+    return triggerCount >= 1;
   } catch (error) {
     return false;
   }

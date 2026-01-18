@@ -224,7 +224,7 @@ export const FighterCardV2 = forwardRef<View, FighterCardV2Props>(
           <ImageBackground
             source={{ uri: backgroundImage }}
             style={styles.backgroundImage}
-            resizeMode="cover"
+            resizeMode="contain"
           >
             {content}
           </ImageBackground>

@@ -1496,7 +1496,11 @@
       "light": "Leicht",
       "moderate": "Moderat",
       "intense": "Intensiv",
-      "maximal": "Maximal"
+      "maximal": "Maximal",
+      "poor": "Schlecht",
+      "danger": "Gefahr",
+      "elevated": "Erhöht",
+      "unknown": "Unbekannt"
     },
     "bodyFat": {
       "title": "Körperfett",

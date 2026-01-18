@@ -1515,7 +1515,11 @@
       "light": "Light",
       "moderate": "Moderate",
       "intense": "Intense",
-      "maximal": "Maximal"
+      "maximal": "Maximal",
+      "poor": "Poor",
+      "danger": "Danger",
+      "elevated": "Elevated",
+      "unknown": "Unknown"
     },
     "bodyFat": {
       "title": "Body fat",

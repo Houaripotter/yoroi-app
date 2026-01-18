@@ -1496,7 +1496,11 @@
       "light": "Ligero",
       "moderate": "Moderado",
       "intense": "Intenso",
-      "maximal": "Máximo"
+      "maximal": "Máximo",
+      "poor": "Bajo",
+      "danger": "Peligro",
+      "elevated": "Elevado",
+      "unknown": "Desconocido"
     },
     "bodyFat": {
       "title": "Grasa corporal",

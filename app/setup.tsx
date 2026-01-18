@@ -19,15 +19,33 @@ import {
   Swords,
   Star,
 } from 'lucide-react-native';
-import { useTheme } from '@/lib/ThemeContext';
 import { saveUserSettings, getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
+// Couleurs forcées en mode sombre pour le setup (cohérent avec mode-selection)
+const SETUP_COLORS = {
+  background: '#0A0A0A',
+  backgroundCard: '#151515',
+  backgroundElevated: '#1F1F1F',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#B8B8B8',
+  textMuted: '#808080',
+  accent: '#FFFFFF',
+  accentText: '#FFFFFF',
+  textOnGold: '#000000',  // Noir sur fond blanc
+  border: '#2A2A2A',
+};
+
 export default function SetupScreen() {
-  const { colors } = useTheme();
+  // Utiliser les couleurs forcées sombres pour cohérence
+  const colors = SETUP_COLORS;
+
+  // 🔒 PROTECTION ANTI-SPAM : Hook pour empêcher les double-clics
+  const { isProcessing: isSaving, executeOnce } = usePreventDoubleClick({ delay: 800 });
 
   // L'écran ne demande plus que l'objectif (prénom et genre déjà collectés dans onboarding)
   const [goal, setGoal] = useState<Goal | null>(null);
@@ -56,22 +74,24 @@ export default function SetupScreen() {
   };
 
   const handleComplete = async () => {
-    try {
-      // Sauvegarder uniquement l'objectif (le reste est déjà sauvegardé)
-      await saveUserSettings({
-        ...existingProfile,
-        goal: goal ?? undefined,
-        onboardingCompleted: true,
-      });
+    await executeOnce(async () => {
+      try {
+        // Sauvegarder uniquement l'objectif (le reste est déjà sauvegardé)
+        await saveUserSettings({
+          ...existingProfile,
+          goal: goal ?? undefined,
+          onboardingCompleted: true,
+        });
 
-      // Marquer l'onboarding comme terminé
-      await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
+        // Marquer l'onboarding comme terminé
+        await AsyncStorage.setItem('yoroi_onboarding_done', 'true');
 
-      // Rediriger vers l'app
-      router.replace('/(tabs)');
-    } catch (error) {
-      logger.error('Erreur sauvegarde:', error);
-    }
+        // Rediriger vers l'app
+        router.replace('/(tabs)');
+      } catch (error) {
+        logger.error('Erreur sauvegarde:', error);
+      }
+    });
   };
 
   const canContinue = () => {
@@ -124,9 +144,10 @@ export default function SetupScreen() {
           <TouchableOpacity
             style={[styles.continueButton, { backgroundColor: colors.accent }]}
             onPress={handleComplete}
+            disabled={isSaving}
           >
             <Text style={[styles.continueText, { color: colors.textOnGold }]}>
-              C'est parti !
+              {isSaving ? 'Chargement...' : "C'est parti !"}
             </Text>
             <ChevronRight size={22} color={colors.textOnGold} />
           </TouchableOpacity>
@@ -260,13 +281,13 @@ export default function SetupScreen() {
             },
           ]}
           onPress={handleGoalSelected}
-          disabled={!canContinue()}
+          disabled={!canContinue() || isSaving}
         >
           <Text style={[
             styles.continueText,
             { color: canContinue() ? colors.textOnGold : colors.textMuted },
           ]}>
-            Commencer
+            {isSaving ? 'Chargement...' : 'Commencer'}
           </Text>
           <ChevronRight
             size={22}

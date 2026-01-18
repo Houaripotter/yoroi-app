@@ -1497,7 +1497,11 @@
       "light": "Leve",
       "moderate": "Moderado",
       "intense": "Intenso",
-      "maximal": "Máximo"
+      "maximal": "Máximo",
+      "poor": "Fraco",
+      "danger": "Perigo",
+      "elevated": "Elevado",
+      "unknown": "Desconhecido"
     },
     "bodyFat": {
       "title": "Gordura corporal",

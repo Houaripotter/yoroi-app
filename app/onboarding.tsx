@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -103,9 +104,9 @@ const ONBOARDING_COLORS = {
   backgroundElevated: '#FFFFFF',
   textPrimary: '#1A1A1A',
   textSecondary: '#555555',
-  textMuted: '#888888',
+  textMuted: '#666666',
   accent: '#1A1A1A',
-  accentText: '#1A1A1A',
+  accentText: '#FFFFFF',  // Blanc pour contraster sur fond accent noir
   border: '#E0E0E0',
   textOnGold: '#FFFFFF',
 };
@@ -118,7 +119,7 @@ export default function OnboardingScreen() {
   const colors = ONBOARDING_COLORS;
 
   // Couleur du texte du bouton (noir sur blanc)
-  const buttonTextColor = '#000000';
+  const buttonTextColor = '#FFFFFF';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -474,7 +475,7 @@ export default function OnboardingScreen() {
   // Écran de configuration du profil
   if (showSetup) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Logo en haut */}
         <View style={styles.logoContainer}>
           <Image
@@ -755,12 +756,12 @@ export default function OnboardingScreen() {
         </View>
 
         <PopupComponent />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Logo en haut */}
       <View style={styles.logoContainer}>
         <Image
@@ -831,7 +832,7 @@ export default function OnboardingScreen() {
       </View>
 
       <PopupComponent />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -843,7 +844,7 @@ const styles = StyleSheet.create({
   // Logo
   logoContainer: {
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 10,
     paddingBottom: 20,
   },
   logo: {

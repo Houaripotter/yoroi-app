@@ -630,27 +630,15 @@ export default function AddTrainingScreen() {
 
   const handleShareModalSkip = async () => {
     setShowShareModal(false);
-    // Show success message
-    const sportNames = selectedSports.map(s => getSportName(s)).join(' + ');
-    showPopup(
-      'Entrainement ajoute',
-      `${sportNames} enregistre !`,
-      [{
-        text: 'OK',
-        style: 'primary',
-        onPress: async () => {
-          // Vérifier si on doit demander une review (après un délai)
-          setTimeout(async () => {
-            const shouldShowReview = await shouldAskForReview();
-            if (shouldShowReview) {
-              showReviewModal();
-            } else {
-              router.back();
-            }
-          }, 500);
-        }
-      }]
-    );
+    // Directement afficher la review modal après fermeture
+    setTimeout(async () => {
+      const shouldShowReview = await shouldAskForReview();
+      if (shouldShowReview) {
+        showReviewModal();
+      } else {
+        router.back();
+      }
+    }, 500);
   };
 
   // Quick Fill pour pré-remplir le formulaire avec la dernière séance
@@ -774,8 +762,20 @@ export default function AddTrainingScreen() {
         });
         router.back();
       } else {
-        // Afficher le modal de partage au lieu du popup de succès
-        setShowShareModal(true);
+        // D'abord afficher "Enregistrement validé", puis le modal de partage
+        const sportNames = selectedSports.map(s => getSportName(s)).join(' + ');
+        showPopup(
+          'Enregistrement valide',
+          `${sportNames} enregistre avec succes !`,
+          [{
+            text: 'OK',
+            style: 'primary',
+            onPress: () => {
+              // Afficher le modal de partage
+              setShowShareModal(true);
+            }
+          }]
+        );
       }
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);

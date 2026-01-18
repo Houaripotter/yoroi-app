@@ -345,28 +345,6 @@ class HealthConnectService {
     }
   }
 
-  async disconnect(): Promise<void> {
-    this.syncStatus.isConnected = false;
-    this.syncStatus.permissions = {
-      weight: false,
-      steps: false,
-      sleep: false,
-      hydration: false,
-      heartRate: false,
-      heartRateVariability: false,
-      restingHeartRate: false,
-      calories: false,
-      distance: false,
-      vo2Max: false,
-      oxygenSaturation: false,
-      respiratoryRate: false,
-      bodyTemperature: false,
-      bodyComposition: false,
-      workouts: false,
-    };
-    await this.saveSyncStatus();
-  }
-
   private async getIOSWeight(): Promise<HealthData['weight'] | null> {
 
     try {
@@ -393,9 +371,6 @@ class HealthConnectService {
   }
 
   private async getIOSSteps(): Promise<HealthData['steps'] | null> {
-    // Limites de validation pour éviter les valeurs impossibles
-    const MAX_STEPS_PER_DAY = 100000; // Maximum réaliste: 100k pas/jour (ultra-marathon)
-
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -408,36 +383,17 @@ class HealthConnectService {
       });
 
       if (samples && samples.length > 0) {
-        // Dédupliquer les échantillons par période temporelle pour éviter les doublons
-        // (iPhone + Apple Watch peuvent rapporter les mêmes pas)
-        const processedPeriods = new Set<string>();
-        let totalSteps = 0;
+        // Additionner tous les échantillons - prendre les données brutes d'Apple Santé
+        const totalSteps = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
 
-        samples.forEach((s: any) => {
-          // Créer une clé unique basée sur la période
-          const periodKey = `${s.startDate}_${s.endDate}`;
-
-          // Si on n'a pas déjà traité cette période
-          if (!processedPeriods.has(periodKey)) {
-            // Valider que la valeur est raisonnable pour un seul échantillon
-            const sampleSteps = Math.min(s.quantity, MAX_STEPS_PER_DAY);
-            if (sampleSteps > 0 && sampleSteps < MAX_STEPS_PER_DAY) {
-              totalSteps += sampleSteps;
-              processedPeriods.add(periodKey);
-            }
-          }
-        });
-
-        // Appliquer le cap final
-        const validatedSteps = Math.min(totalSteps, MAX_STEPS_PER_DAY);
-
-        return {
-          count: Math.round(validatedSteps),
-          date: today.toISOString(),
-        };
+        if (totalSteps > 0) {
+          return {
+            count: Math.round(totalSteps),
+            date: today.toISOString(),
+          };
+        }
       }
     } catch (error: any) {
-      // Ne logger qu'une info pour les erreurs de permissions
       if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5')) {
         logger.info('Permissions Apple Health pas encore accordées pour les pas');
       } else {
@@ -448,17 +404,13 @@ class HealthConnectService {
   }
 
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
-    // Limites de validation pour éviter les valeurs impossibles
-    const MAX_SLEEP_MINUTES = 840; // Maximum: 14 heures (840 minutes) - très long mais possible
-    const MAX_SAMPLE_DURATION = 720; // Un échantillon ne peut pas dépasser 12h
-
     try {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: yesterday.getTime(),
         to: new Date().getTime(),
-        limit: 100, // Limiter pour eviter surcharge memoire
+        limit: 100,
       });
 
       if (samples && samples.length > 0) {
@@ -477,82 +429,58 @@ class HealthConnectService {
         const startTime = sortedSamples[0].startDate;
         const endTime = sortedSamples[sortedSamples.length - 1].endDate;
 
-        // Utiliser un Set pour éviter les doublons de périodes
-        const processedPeriods = new Set<string>();
-
         sortedSamples.forEach((s: any) => {
-          // Créer une clé unique pour cette période
-          const periodKey = `${s.startDate}_${s.endDate}_${s.value}`;
-
-          // Éviter les doublons
-          if (processedPeriods.has(periodKey)) {
-            return;
-          }
-          processedPeriods.add(periodKey);
-
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
+          if (duration <= 0) return;
 
-          // Ignorer les échantillons avec des durées impossibles
-          if (duration <= 0 || duration > MAX_SAMPLE_DURATION) {
-            return;
-          }
-
-          totalMinutes += duration;
-
-          // Phases de sommeil (Apple Watch uniquement)
-          // HKCategoryValueSleepAnalysis values:
-          // 0 = InBed, 1 = Asleep, 2 = Awake
-          // 3 = AsleepCore, 4 = AsleepDeep, 5 = AsleepREM
+          // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
           switch (s.value) {
             case 0:
               inBedMinutes += duration;
+              break;
+            case 1:
+              totalMinutes += duration;
               break;
             case 2:
               awakeMinutes += duration;
               break;
             case 3:
               coreMinutes += duration;
+              totalMinutes += duration;
               break;
             case 4:
               deepMinutes += duration;
+              totalMinutes += duration;
               break;
             case 5:
               remMinutes += duration;
+              totalMinutes += duration;
               break;
           }
         });
 
-        // Appliquer le cap maximum pour le total
-        const validatedTotal = Math.min(totalMinutes, MAX_SLEEP_MINUTES);
-
-        // Si le total est 0 ou invalide, ne pas retourner de données
-        if (validatedTotal <= 0) {
-          return null;
-        }
+        if (totalMinutes <= 0) return null;
 
         const result: HealthData['sleep'] = {
           startTime: new Date(startTime).toISOString(),
           endTime: new Date(endTime).toISOString(),
-          duration: Math.round(validatedTotal),
-          quality: this.getSleepQuality(validatedTotal),
+          duration: Math.round(totalMinutes),
+          quality: this.getSleepQuality(totalMinutes),
         };
 
-        // Ajouter les phases si disponibles (Apple Watch)
         if (remMinutes > 0 || coreMinutes > 0 || deepMinutes > 0) {
-          // Valider aussi les phases individuelles
           result.phases = {
-            awake: Math.round(Math.min(awakeMinutes, MAX_SLEEP_MINUTES)),
-            rem: Math.round(Math.min(remMinutes, MAX_SLEEP_MINUTES)),
-            core: Math.round(Math.min(coreMinutes, MAX_SLEEP_MINUTES)),
-            deep: Math.round(Math.min(deepMinutes, MAX_SLEEP_MINUTES)),
-            inBed: Math.round(Math.min(inBedMinutes, MAX_SLEEP_MINUTES)),
+            awake: Math.round(awakeMinutes),
+            rem: Math.round(remMinutes),
+            core: Math.round(coreMinutes),
+            deep: Math.round(deepMinutes),
+            inBed: Math.round(inBedMinutes),
           };
         }
 
         return result;
       }
     } catch (error: any) {
-      // Ne logger qu'une info pour les erreurs de permissions
       if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5') || error?.message?.includes('Value is undefined')) {
         logger.info('Permissions Apple Health pas encore accordées pour le sommeil');
       } else {
@@ -1207,11 +1135,9 @@ class HealthConnectService {
     core: number;
     awake: number;
     total: number;
+    duration?: number;
   }>> {
     if (DEMO_MODE) return DemoData.getDemoSleepHistory(days);
-
-    const MAX_SLEEP_MINUTES = 840; // Maximum: 14 heures par nuit
-    const MAX_SAMPLE_DURATION = 720; // Un échantillon ne peut pas dépasser 12h
 
     try {
       const fromDate = new Date();
@@ -1221,68 +1147,43 @@ class HealthConnectService {
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: fromDate.getTime(),
         to: new Date().getTime(),
-        limit: 500, // Limiter pour eviter surcharge memoire sur historique long
+        limit: 500,
       });
 
       if (samples && samples.length > 0) {
-        // Grouper par date (considerer le sommeil de la nuit precedente)
-        const sleepByDate: { [key: string]: {
-          deep: number;
-          rem: number;
-          core: number;
-          awake: number;
-          total: number;
-          periods: Set<string>;
-        }} = {};
+        // Grouper par date - prendre les données brutes d'Apple Santé
+        const sleepByDate: { [key: string]: { deep: number; rem: number; core: number; awake: number; total: number } } = {};
 
         samples.forEach((s: any) => {
-          // Utiliser la date de fin pour grouper (matin)
           const date = new Date(s.endDate).toISOString().split('T')[0];
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
-          const periodKey = `${s.startDate}_${s.endDate}_${s.value}`;
-
-          // Ignorer les durées impossibles
-          if (duration <= 0 || duration > MAX_SAMPLE_DURATION) {
-            return;
-          }
+          if (duration <= 0) return;
 
           if (!sleepByDate[date]) {
-            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0, periods: new Set() };
+            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0 };
           }
-
-          // Éviter les doublons
-          if (sleepByDate[date].periods.has(periodKey)) {
-            return;
-          }
-          sleepByDate[date].periods.add(periodKey);
-
-          sleepByDate[date].total += duration;
 
           switch (s.value) {
-            case 2:
-              sleepByDate[date].awake += duration;
-              break;
-            case 3:
-              sleepByDate[date].core += duration;
-              break;
-            case 4:
-              sleepByDate[date].deep += duration;
-              break;
-            case 5:
-              sleepByDate[date].rem += duration;
-              break;
+            case 1: sleepByDate[date].total += duration; break;
+            case 2: sleepByDate[date].awake += duration; break;
+            case 3: sleepByDate[date].core += duration; sleepByDate[date].total += duration; break;
+            case 4: sleepByDate[date].deep += duration; sleepByDate[date].total += duration; break;
+            case 5: sleepByDate[date].rem += duration; sleepByDate[date].total += duration; break;
           }
         });
 
-        return Object.keys(sleepByDate).map(date => ({
-          date,
-          // Appliquer les caps maximum
-          deep: Math.round(Math.min(sleepByDate[date].deep, MAX_SLEEP_MINUTES)),
-          rem: Math.round(Math.min(sleepByDate[date].rem, MAX_SLEEP_MINUTES)),
-          core: Math.round(Math.min(sleepByDate[date].core, MAX_SLEEP_MINUTES)),
-          awake: Math.round(Math.min(sleepByDate[date].awake, MAX_SLEEP_MINUTES)),
-          total: Math.round(Math.min(sleepByDate[date].total, MAX_SLEEP_MINUTES)),
-        })).sort((a, b) => a.date.localeCompare(b.date));
+        return Object.keys(sleepByDate)
+          .filter(date => sleepByDate[date].total > 0)
+          .map(date => ({
+            date,
+            deep: Math.round(sleepByDate[date].deep),
+            rem: Math.round(sleepByDate[date].rem),
+            core: Math.round(sleepByDate[date].core),
+            awake: Math.round(sleepByDate[date].awake),
+            total: Math.round(sleepByDate[date].total),
+            duration: Math.round(sleepByDate[date].total),
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
       logger.error('Erreur lecture historique sommeil:', error);
@@ -1374,8 +1275,6 @@ class HealthConnectService {
   async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
     if (DEMO_MODE) return DemoData.getDemoStepsHistory(days);
 
-    const MAX_STEPS_PER_DAY = 100000; // Maximum réaliste
-
     try {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
@@ -1387,29 +1286,19 @@ class HealthConnectService {
       });
 
       if (samples && samples.length > 0) {
-        // Grouper par jour avec déduplication
-        const stepsByDate: { [key: string]: { total: number; periods: Set<string> } } = {};
+        // Grouper par jour - prendre les données brutes d'Apple Santé
+        const stepsByDate: { [key: string]: number } = {};
 
         samples.forEach((s: any) => {
           const date = new Date(s.startDate).toISOString().split('T')[0];
-          const periodKey = `${s.startDate}_${s.endDate}`;
-
-          if (!stepsByDate[date]) {
-            stepsByDate[date] = { total: 0, periods: new Set() };
-          }
-
-          // Éviter les doublons de périodes
-          if (!stepsByDate[date].periods.has(periodKey)) {
-            stepsByDate[date].periods.add(periodKey);
-            stepsByDate[date].total += s.quantity;
-          }
+          if (!stepsByDate[date]) stepsByDate[date] = 0;
+          stepsByDate[date] += s.quantity || 0;
         });
 
-        return Object.keys(stepsByDate).map(date => ({
-          date,
-          // Appliquer le cap maximum par jour
-          value: Math.round(Math.min(stepsByDate[date].total, MAX_STEPS_PER_DAY)),
-        })).sort((a, b) => a.date.localeCompare(b.date));
+        return Object.keys(stepsByDate)
+          .filter(date => stepsByDate[date] > 0)
+          .map(date => ({ date, value: Math.round(stepsByDate[date]) }))
+          .sort((a, b) => a.date.localeCompare(b.date));
       }
     } catch (error) {
       logger.error('Erreur lecture historique pas:', error);
@@ -1563,12 +1452,17 @@ class HealthConnectService {
 
       const hkActivityType = activityTypeMap[workout.activityType] || 'HKWorkoutActivityTypeOther';
 
-      await HealthKit.saveWorkoutSample(hkActivityType, {
-        start: workout.startDate,
-        end: workout.endDate,
-        distance: workout.distance ? workout.distance * 1000 : undefined, // Convertir km -> mètres
-        totalEnergyBurned: workout.calories,
-      });
+      // saveWorkoutSample(activityType, startTimestamp, endTimestamp, energyBurned?, distance?, metadata?)
+      const startTime = new Date(workout.startDate).getTime();
+      const endTime = new Date(workout.endDate).getTime();
+
+      await HealthKit.saveWorkoutSample(
+        hkActivityType,
+        Number(startTime),
+        Number(endTime),
+        Number(workout.calories || 0),
+        workout.distance ? Number(workout.distance * 1000) : undefined // Convertir km → mètres
+      );
 
       logger.info('Workout enregistré dans Apple Health:', workout.activityType);
       return true;
@@ -1641,6 +1535,60 @@ class HealthConnectService {
     if (minutes < 360) return 'fair';
     if (minutes < 480) return 'good';
     return 'excellent';
+  }
+
+  /**
+   * Nettoyer toutes les données en cache
+   * Utile quand l'utilisateur se déconnecte ou pour résoudre des problèmes
+   */
+  async clearCache(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.LAST_STEPS,
+        STORAGE_KEYS.LAST_SLEEP,
+        STORAGE_KEYS.LAST_WEIGHT,
+        STORAGE_KEYS.LAST_HYDRATION,
+      ]);
+      logger.info('Cache santé nettoyé');
+    } catch (error) {
+      logger.error('Erreur nettoyage cache:', error);
+    }
+  }
+
+  /**
+   * Réinitialiser complètement la connexion et le cache
+   */
+  async disconnect(): Promise<void> {
+    try {
+      await this.clearCache();
+      await AsyncStorage.removeItem(STORAGE_KEYS.SYNC_STATUS);
+      this.syncStatus = {
+        lastSync: null,
+        isConnected: false,
+        provider: 'apple_health',
+        permissions: {
+          weight: false,
+          steps: false,
+          sleep: false,
+          hydration: false,
+          heartRate: false,
+          heartRateVariability: false,
+          restingHeartRate: false,
+          calories: false,
+          distance: false,
+          vo2Max: false,
+          oxygenSaturation: false,
+          respiratoryRate: false,
+          bodyTemperature: false,
+          bodyComposition: false,
+          workouts: false,
+        },
+      };
+      this.isInitialized = false;
+      logger.info('Déconnexion Apple Health complète');
+    } catch (error) {
+      logger.error('Erreur déconnexion:', error);
+    }
   }
 }
 

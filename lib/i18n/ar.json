@@ -1573,7 +1573,8 @@
       "underweight": "نقص الوزن",
       "healthy": "صحي",
       "attention": "انتباه",
-      "danger": "خطر"
+      "danger": "خطر",
+      "unknown": "غير معروف"
     },
     "bodyFat": {
       "title": "نسبة الدهون",

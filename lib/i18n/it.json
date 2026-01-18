@@ -1496,7 +1496,11 @@
       "light": "Leggero",
       "moderate": "Moderato",
       "intense": "Intenso",
-      "maximal": "Massimale"
+      "maximal": "Massimale",
+      "poor": "Scarso",
+      "danger": "Pericolo",
+      "elevated": "Elevato",
+      "unknown": "Sconosciuto"
     },
     "bodyFat": {
       "title": "Massa grassa",

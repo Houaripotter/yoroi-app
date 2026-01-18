@@ -53,7 +53,7 @@ export default function AvatarDisplay({
   refreshTrigger = 0,
   disableAnimation = false,
 }: AvatarDisplayProps) {
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [imagePath, setImagePath] = useState<any>(null);
 
@@ -89,22 +89,33 @@ export default function AvatarDisplay({
 
   // Rendu
   const renderContent = () => {
+    // Style minimaliste : contour fin et fond blanc pour unifier l'image
+    const containerStyle = [
+      styles.container,
+      dimensions,
+      {
+        borderWidth: 1,
+        borderColor: isDark ? '#FFFFFF' : '#000000',
+        backgroundColor: '#FFFFFF', // Fond blanc forcé pour fusionner avec l'image
+      }
+    ];
+
     if (isLoading) {
       return (
-        <View style={[styles.container, dimensions]}>
-          <ActivityIndicator size="large" color={isDark ? '#FFFFFF' : '#000000'} />
+        <View style={containerStyle}>
+          <ActivityIndicator size="small" color="#000000" />
         </View>
       );
     }
 
     if (!imagePath) {
       return (
-        <View style={[styles.container, dimensions]} />
+        <View style={containerStyle} />
       );
     }
 
     return (
-      <View style={[styles.container, dimensions]}>
+      <View style={containerStyle}>
         <Image
           source={imagePath}
           style={[styles.image, dimensions]}
