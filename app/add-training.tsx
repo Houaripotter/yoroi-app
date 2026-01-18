@@ -28,6 +28,7 @@ import {
   Star,
   Zap,
   Sun,
+  Building2,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -975,7 +976,7 @@ export default function AddTrainingScreen() {
                           </Text>
                           {isSelected && (
                             <View style={[styles.sportGridCheck, { backgroundColor: colors.gold }]}>
-                              <Check size={12} color="#FFFFFF" strokeWidth={3} />
+                              <Check size={12} color={colors.textOnGold} strokeWidth={3} />
                             </View>
                           )}
                         </TouchableOpacity>
@@ -1011,9 +1012,9 @@ export default function AddTrainingScreen() {
                     style={[styles.selectedSportChip, { backgroundColor: colors.gold, borderColor: colors.gold }]}
                     onPress={() => toggleSport(sportId)}
                   >
-                    <MaterialCommunityIcons name={sport.icon as any} size={20} color="#FFFFFF" />
-                    <Text style={styles.selectedSportChipText}>{sport.name}</Text>
-                    <X size={16} color="#FFFFFF" />
+                    <MaterialCommunityIcons name={sport.icon as any} size={20} color={colors.textOnGold} />
+                    <Text style={[styles.selectedSportChipText, { color: colors.textOnGold }]}>{sport.name}</Text>
+                    <X size={16} color={colors.textOnGold} />
                   </TouchableOpacity>
                 );
               })}
@@ -1022,117 +1023,157 @@ export default function AddTrainingScreen() {
         )}
 
         {/* ═══════════════════════════════════════════ */}
-        {/* RESTE DU FORMULAIRE - Seulement si sport sélectionné */}
+        {/* LIEU D'ENTRAÎNEMENT - Seulement si sport sélectionné */}
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            {/* LIEU D'ENTRAÎNEMENT */}
+            {/* TYPE DE LIEU : En salle ou Plein air */}
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Lieu</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.clubsScroll}
-              contentContainerStyle={styles.clubsScrollContent}
-            >
-              {/* Option Libre */}
+            <View style={styles.locationTypeRow}>
+              {/* Option En salle */}
               <TouchableOpacity
                 style={[
-                  styles.clubCard,
+                  styles.locationTypeCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
-                  !selectedClub && !isOutdoor && { borderColor: colors.accent, backgroundColor: colors.accent + '15' },
+                  !isOutdoor && { borderColor: colors.accent, backgroundColor: colors.accent + '15' },
                 ]}
-                onPress={() => { setSelectedClub(null); setIsOutdoor(false); }}
+                onPress={() => setIsOutdoor(false)}
               >
-                <View style={[styles.clubCardIcon, { backgroundColor: !selectedClub && !isOutdoor ? colors.accent + '20' : colors.cardHover }]}>
-                  <Home size={24} color={!selectedClub && !isOutdoor ? (isDark ? colors.accent : '#000000') : colors.textSecondary} strokeWidth={2} />
+                <View style={[styles.locationTypeIcon, { backgroundColor: !isOutdoor ? colors.accent + '20' : colors.backgroundElevated }]}>
+                  <Building2 size={28} color={!isOutdoor ? colors.accent : colors.textSecondary} strokeWidth={2} />
                 </View>
-                <Text style={[styles.clubCardName, { color: !selectedClub && !isOutdoor ? (isDark ? colors.accent : '#000000') : colors.textSecondary, fontWeight: !selectedClub && !isOutdoor ? '700' : '500' }]}>
-                  Libre
+                <Text style={[styles.locationTypeLabel, { color: !isOutdoor ? colors.accent : colors.textSecondary, fontWeight: !isOutdoor ? '700' : '500' }]}>
+                  En salle
                 </Text>
               </TouchableOpacity>
 
               {/* Option Plein Air */}
               <TouchableOpacity
                 style={[
-                  styles.clubCard,
+                  styles.locationTypeCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
-                  isOutdoor && { borderColor: '#22C55E', backgroundColor: '#22C55E' + '15' },
+                  isOutdoor && { borderColor: '#22C55E', backgroundColor: '#22C55E15' },
                 ]}
-                onPress={() => { setSelectedClub(null); setIsOutdoor(true); }}
+                onPress={() => { setIsOutdoor(true); setSelectedClub(null); }}
               >
-                <View style={[styles.clubCardIcon, { backgroundColor: isOutdoor ? '#22C55E' + '30' : colors.cardHover }]}>
-                  <Sun size={24} color={isOutdoor ? '#22C55E' : colors.textSecondary} strokeWidth={2} />
+                <View style={[styles.locationTypeIcon, { backgroundColor: isOutdoor ? '#22C55E30' : colors.backgroundElevated }]}>
+                  <Sun size={28} color={isOutdoor ? '#22C55E' : colors.textSecondary} strokeWidth={2} />
                 </View>
-                <Text style={[styles.clubCardName, { color: isOutdoor ? '#22C55E' : colors.textSecondary, fontWeight: isOutdoor ? '700' : '500' }]}>
+                <Text style={[styles.locationTypeLabel, { color: isOutdoor ? '#22C55E' : colors.textSecondary, fontWeight: isOutdoor ? '700' : '500' }]}>
                   Plein air
                 </Text>
               </TouchableOpacity>
+            </View>
 
-              {/* Clubs enregistrés - triés par pertinence (clubs du sport sélectionné en premier) */}
-              {[...clubs]
-                .sort((a, b) => {
-                  // Priorité aux clubs qui correspondent au sport sélectionné
-                  const aMatches = selectedSports.includes(a.sport || '');
-                  const bMatches = selectedSports.includes(b.sport || '');
-                  if (aMatches && !bMatches) return -1;
-                  if (!aMatches && bMatches) return 1;
-                  return 0;
-                })
-                .map((club) => {
-                const isMatchingSport = selectedSports.includes(club.sport || '');
-                return (
-                <TouchableOpacity
-                  key={club.id}
-                  style={[
-                    styles.clubCard,
-                    {
-                      backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : isMatchingSport ? colors.accent + '10' : colors.card,
-                      borderColor: selectedClub?.id === club.id ? colors.gold : isMatchingSport ? colors.accent + '50' : 'transparent',
-                      borderWidth: selectedClub?.id === club.id ? 2 : isMatchingSport ? 1 : 0,
-                      opacity: isMatchingSport ? 1 : 0.6,
-                    },
-                  ]}
-                  onPress={() => { setSelectedClub(club); setIsOutdoor(false); }}
+            {/* CLUBS - Seulement si "En salle" est sélectionné */}
+            {!isOutdoor && (
+              <>
+                <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Club</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.clubsScroll}
+                  contentContainerStyle={styles.clubsScrollContent}
                 >
-                  {(() => {
-                    const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
-                    if (logoSource) {
-                      return (
-                        <Image
-                          source={logoSource}
-                          style={styles.clubCardLogo}
-                          resizeMode="cover"
-                        />
-                      );
-                    }
-                    return (
-                      <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.cardHover }]}>
-                        <MaterialCommunityIcons
-                          name={getSportIcon(club.sport || 'autre') as any}
-                          size={24}
-                          color="#FFFFFF"
-                        />
-                      </View>
-                    );
-                  })()}
-                  <Text
+                  {/* Option Sans club */}
+                  <TouchableOpacity
                     style={[
-                      styles.clubCardName,
-                      { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
+                      styles.clubCard,
+                      { backgroundColor: colors.card, borderColor: colors.border },
+                      !selectedClub && { borderColor: colors.textMuted, borderStyle: 'dashed' },
                     ]}
-                    numberOfLines={1}
+                    onPress={() => setSelectedClub(null)}
                   >
-                    {club.name}
-                  </Text>
-                  {isMatchingSport && (
-                    <View style={[styles.matchingBadge, { backgroundColor: colors.accent }]}>
-                      <Check size={10} color="#FFFFFF" strokeWidth={3} />
+                    <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
+                      <Home size={24} color={!selectedClub ? colors.textPrimary : colors.textSecondary} strokeWidth={2} />
                     </View>
-                  )}
-                </TouchableOpacity>
-              );
-              })}
-            </ScrollView>
+                    <Text style={[styles.clubCardName, { color: !selectedClub ? colors.textPrimary : colors.textSecondary, fontWeight: !selectedClub ? '700' : '500' }]}>
+                      Sans club
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Clubs enregistrés - triés par pertinence */}
+                  {[...clubs]
+                    .sort((a, b) => {
+                      const aMatches = selectedSports.includes(a.sport || '');
+                      const bMatches = selectedSports.includes(b.sport || '');
+                      if (aMatches && !bMatches) return -1;
+                      if (!aMatches && bMatches) return 1;
+                      return 0;
+                    })
+                    .map((club) => {
+                    const isMatchingSport = selectedSports.includes(club.sport || '');
+                    return (
+                    <TouchableOpacity
+                      key={club.id}
+                      style={[
+                        styles.clubCard,
+                        {
+                          backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : isMatchingSport ? colors.accent + '10' : colors.card,
+                          borderColor: selectedClub?.id === club.id ? colors.gold : isMatchingSport ? colors.accent + '40' : colors.border,
+                          borderWidth: selectedClub?.id === club.id ? 2 : 1,
+                          opacity: isMatchingSport ? 1 : 0.6,
+                        },
+                      ]}
+                      onPress={() => setSelectedClub(club)}
+                    >
+                      {(() => {
+                        const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
+                        if (logoSource) {
+                          return (
+                            <Image
+                              source={logoSource}
+                              style={styles.clubCardLogo}
+                              resizeMode="cover"
+                            />
+                          );
+                        }
+                        return (
+                          <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.backgroundElevated }]}>
+                            <MaterialCommunityIcons
+                              name={getSportIcon(club.sport || 'autre') as any}
+                              size={24}
+                              color="#FFFFFF"
+                            />
+                          </View>
+                        );
+                      })()}
+                      <Text
+                        style={[
+                          styles.clubCardName,
+                          { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {club.name}
+                      </Text>
+                      {isMatchingSport && (
+                        <View style={[styles.matchingBadge, { backgroundColor: colors.accent }]}>
+                          <Check size={10} color={colors.textOnAccent} strokeWidth={3} />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                  })}
+
+                  {/* Bouton Créer un club */}
+                  <TouchableOpacity
+                    style={[
+                      styles.clubCard,
+                      { backgroundColor: colors.card, borderColor: colors.border, borderStyle: 'dashed' },
+                    ]}
+                    onPress={() => router.push('/add-club')}
+                  >
+                    <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
+                      <Plus size={24} color={colors.accent} strokeWidth={2} />
+                    </View>
+                    <Text style={[styles.clubCardName, { color: colors.accent }]}>
+                      Créer
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </>
+            )}
           </>
         )}
 
@@ -1371,7 +1412,7 @@ export default function AddTrainingScreen() {
                 setDuration(60);
               }
             }}
-            placeholder="Ex: 75"
+            placeholder="00"
             placeholderTextColor={colors.textMuted}
             keyboardType="number-pad"
             maxLength={3}
@@ -1909,6 +1950,40 @@ const styles = StyleSheet.create({
   },
   sportNameActive: {
     // Colors applied inline
+  },
+
+  // LIEU - Type de lieu (En salle / Plein air)
+  locationTypeRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  locationTypeCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+  },
+  locationTypeIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  locationTypeLabel: {
+    fontSize: FONT_SIZE.md,
+    textAlign: 'center',
+  },
+  clubSectionTitle: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: SPACING.sm,
   },
 
   // CLUBS - Nouveau design horizontal

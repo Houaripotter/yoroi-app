@@ -414,10 +414,11 @@ export default function ChronoScreen() {
   };
 
   const startTimer = useCallback(() => {
-    if (mode === 'repos') {
-      playBeep();
+    // Son de démarrage: gong pour combat, beep pour les autres modes
+    if (mode === 'combat') {
+      playGong();
     } else {
-      playWhistle();
+      playBeep();
     }
     warned10secRef.current = false;
     lastMinuteRef.current = 0;
@@ -1099,12 +1100,36 @@ export default function ChronoScreen() {
           )}
 
           <Text style={styles.phaseText}>{getPhaseText()}</Text>
-          <Text style={[
-            styles.timeText,
-            timer.timeRemaining <= 10 && timer.isRunning && styles.timeTextWarning,
-          ]}>
-            {formatTime(timer.timeRemaining)}
-          </Text>
+
+          {/* Timer avec boutons Play/Pause intégrés */}
+          <View style={styles.timerRow}>
+            <TouchableOpacity
+              style={styles.inlineControlButton}
+              onPress={timer.isRunning ? pauseTimer : startTimer}
+              activeOpacity={0.7}
+            >
+              {timer.isRunning ? (
+                <Pause size={36} color="#FFFFFF" />
+              ) : (
+                <Play size={36} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
+
+            <Text style={[
+              styles.timeText,
+              timer.timeRemaining <= 10 && timer.isRunning && styles.timeTextWarning,
+            ]}>
+              {formatTime(timer.timeRemaining)}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.inlineControlButton}
+              onPress={resetTimer}
+              activeOpacity={0.7}
+            >
+              <RotateCcw size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
 
           {/* AMRAP +1 Button */}
           {mode === 'amrap' && timer.isRunning && (
@@ -1510,11 +1535,25 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     letterSpacing: 2,
   },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 10,
+  },
+  inlineControlButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   timeText: {
     fontSize: 72,
     fontWeight: '900',
     color: '#FFFFFF',
-    marginBottom: 20,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     letterSpacing: 2,
   },

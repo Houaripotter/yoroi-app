@@ -36,6 +36,9 @@ const MockHealthKit = {
   getWeightSamples: () => Promise.resolve([]),
   getStepCount: () => Promise.resolve({ quantity: 0 }),
   getActiveEnergyBurned: () => Promise.resolve({ quantity: 0 }),
+  // Workout methods
+  saveWorkoutSample: () => Promise.resolve(undefined),
+  queryWorkoutSamples: () => Promise.resolve([]),
 };
 
 // Exporter le module réel ou le mock

@@ -17,18 +17,11 @@ export interface ActionGridItem {
   order: number;
 }
 
-// Configuration par défaut - Organisée par thème (3 par ligne)
+// Configuration par défaut - Organisée par thème logique (3 par ligne)
 export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
-  // LIGNE 1 - BLESSURES, TIMER, CARNET
-  {
-    id: 'infirmerie',
-    label: 'Infirmerie',
-    description: 'Suivi de vos blessures',
-    icon: 'Plus',
-    color: '#DC2626',
-    route: '/infirmary',
-    order: 0,
-  },
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 1 - ENTRAÎNEMENT
+  // ═══════════════════════════════════════════════════════════
   {
     id: 'timer',
     label: 'Timer',
@@ -36,7 +29,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Timer',
     color: '#4ECDC4',
     route: '/timer',
-    order: 1,
+    order: 0,
   },
   {
     id: 'carnet',
@@ -45,26 +38,37 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'BookOpen',
     color: '#F97316',
     route: '/training-journal',
+    order: 1,
+  },
+  {
+    id: 'competiteur',
+    label: 'Compète',
+    description: 'Espace compétitions',
+    icon: 'Trophy',
+    color: '#EF4444',
+    route: '/competitor-space',
     order: 2,
   },
 
-  // LIGNE 2 - CALCULS & SANTÉ
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 2 - SANTÉ & CORPS
+  // ═══════════════════════════════════════════════════════════
   {
-    id: 'calculateurs',
-    label: 'Calculs',
-    description: 'Outils de calcul sportif',
-    icon: 'Calculator',
-    color: '#F59E0B',
-    route: '/calculators',
+    id: 'health',
+    label: 'Apple Health',
+    description: 'Sync données santé',
+    icon: 'Heart',
+    color: '#EC4899',
+    route: '/health-connect',
     order: 3,
   },
   {
-    id: 'jeune',
-    label: 'Jeûne',
-    description: 'Suivi jeûne intermittent',
-    icon: 'Clock',
-    color: '#A855F7',
-    route: '/fasting',
+    id: 'infirmerie',
+    label: 'Infirmerie',
+    description: 'Suivi de vos blessures',
+    icon: 'Plus',
+    color: '#DC2626',
+    route: '/infirmary',
     order: 4,
   },
   {
@@ -77,15 +81,26 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     order: 5,
   },
 
-  // LIGNE 3 - SANTÉ & GAMIFICATION
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 3 - CALCULS & OUTILS
+  // ═══════════════════════════════════════════════════════════
   {
-    id: 'health',
-    label: 'Apple Health',
-    description: 'Sync données santé',
-    icon: 'Heart',
-    color: '#EC4899',
-    route: '/health-connect',
+    id: 'calculateurs',
+    label: 'Calculs',
+    description: 'Outils de calcul sportif',
+    icon: 'Calculator',
+    color: '#F59E0B',
+    route: '/calculators',
     order: 6,
+  },
+  {
+    id: 'jeune',
+    label: 'Jeûne',
+    description: 'Suivi jeûne intermittent',
+    icon: 'Clock',
+    color: '#A855F7',
+    route: '/fasting',
+    order: 7,
   },
   {
     id: 'savoir',
@@ -94,8 +109,12 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'BookMarked',
     color: '#8B5CF6',
     route: '/savoir',
-    order: 7,
+    order: 8,
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 4 - GAMIFICATION & SOCIAL
+  // ═══════════════════════════════════════════════════════════
   {
     id: 'dojo',
     label: 'Mon Dojo',
@@ -103,27 +122,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Sparkles',
     color: '#FBBF24',
     route: '/gamification',
-    order: 8,
-  },
-
-  // LIGNE 4 - NOTIFS & SOCIAL
-  {
-    id: 'notifications',
-    label: 'Notifs',
-    description: 'Rappels et alertes',
-    icon: 'Bell',
-    color: '#F59E0B',
-    route: '/notifications',
     order: 9,
-  },
-  {
-    id: 'partager',
-    label: 'Partager',
-    description: 'Partage tes résultats',
-    icon: 'Share2',
-    color: '#EC4899',
-    route: '/share-hub',
-    order: 10,
   },
   {
     id: 'clubs',
@@ -132,19 +131,21 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Users',
     color: '#818CF8',
     route: '/partners',
+    order: 10,
+  },
+  {
+    id: 'partager',
+    label: 'Partager',
+    description: 'Partage tes résultats',
+    icon: 'Share2',
+    color: '#EC4899',
+    route: '/share-hub',
     order: 11,
   },
 
-  // LIGNE 5 - COMPÉTITIONS & PERSONNALISATION
-  {
-    id: 'competiteur',
-    label: 'Compète',
-    description: 'Espace compétitions',
-    icon: 'Trophy',
-    color: '#EF4444',
-    route: '/competitor-space',
-    order: 12,
-  },
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 5 - PERSONNALISATION
+  // ═══════════════════════════════════════════════════════════
   {
     id: 'profil',
     label: 'Profil',
@@ -152,7 +153,7 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'User',
     color: '#60A5FA',
     route: '/profile',
-    order: 13,
+    order: 12,
   },
   {
     id: 'themes',
@@ -161,10 +162,8 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Palette',
     color: '#A78BFA',
     route: '/appearance',
-    order: 14,
+    order: 13,
   },
-
-  // LIGNE 6 - PHOTOS
   {
     id: 'photos',
     label: 'Photos',
@@ -172,6 +171,19 @@ export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
     icon: 'Camera',
     color: '#F472B6',
     route: '/photos',
+    order: 14,
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // LIGNE 6 - NOTIFICATIONS
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: 'notifications',
+    label: 'Notifs',
+    description: 'Rappels et alertes',
+    icon: 'Bell',
+    color: '#F59E0B',
+    route: '/notifications',
     order: 15,
   },
 ];

@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -243,9 +245,9 @@ export default function LastSessionScreen() {
 
   return (
     <ScreenWrapper>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View style={styles.header}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header fixe */}
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
             <X size={24} color={colors.textPrimary} />
           </TouchableOpacity>
@@ -257,6 +259,12 @@ export default function LastSessionScreen() {
           </View>
           <View style={{ width: 40 }} />
         </View>
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
 
         {/* Card Preview */}
         <View style={styles.cardContainer}>
@@ -412,7 +420,11 @@ export default function LastSessionScreen() {
         <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
           <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
         </TouchableOpacity>
-      </View>
+
+        {/* Bottom padding for safe area */}
+        <View style={styles.bottomSpacer} />
+        </ScrollView>
+      </SafeAreaView>
       <PopupComponent />
     </ScreenWrapper>
   );
@@ -425,6 +437,15 @@ export default function LastSessionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  bottomSpacer: {
+    height: 40,
   },
   loadingContainer: {
     flex: 1,

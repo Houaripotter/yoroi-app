@@ -51,6 +51,160 @@ interface Page1MonitoringProps {
   refreshTrigger?: number;
 }
 
+// ============================================
+// COMPOSANT BARRE DE PROGRESSION POIDS (Simple avec couleurs)
+// ============================================
+interface WeightProgressProps {
+  currentWeight: number;
+  targetWeight: number;
+  startWeight: number;
+  userGoal: 'lose' | 'maintain' | 'gain';
+  isDark: boolean;
+  colors: any;
+}
+
+const WeightProgressWithCharacter: React.FC<WeightProgressProps> = ({
+  currentWeight,
+  targetWeight,
+  startWeight,
+  userGoal,
+  isDark,
+  colors,
+}) => {
+  // Calcul du pourcentage de progression
+  const calculateProgress = () => {
+    if (targetWeight <= 0 || startWeight <= 0) return 50;
+
+    if (userGoal === 'lose') {
+      const totalToLose = startWeight - targetWeight;
+      if (totalToLose <= 0) return 100;
+      const lost = startWeight - currentWeight;
+      return Math.min(100, Math.max(0, (lost / totalToLose) * 100));
+    } else if (userGoal === 'gain') {
+      const totalToGain = targetWeight - startWeight;
+      if (totalToGain <= 0) return 100;
+      const gained = currentWeight - startWeight;
+      return Math.min(100, Math.max(0, (gained / totalToGain) * 100));
+    }
+    return 50;
+  };
+
+  const progress = calculateProgress();
+
+  // Couleur selon la progression (rouge -> orange -> jaune -> vert)
+  const getProgressColor = (percent: number) => {
+    if (percent < 25) return '#EF4444'; // Rouge - loin
+    if (percent < 50) return '#F97316'; // Orange - commence
+    if (percent < 75) return '#EAB308'; // Jaune - se rapproche
+    return '#10B981'; // Vert - proche/atteint
+  };
+
+  const progressColor = getProgressColor(progress);
+
+  return (
+    <View style={progressStyles.container}>
+      {/* Barre de progression */}
+      <View style={[progressStyles.track, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
+        {/* Fond dégradé complet */}
+        <LinearGradient
+          colors={['#EF4444', '#F97316', '#EAB308', '#10B981']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={progressStyles.gradientBackground}
+        />
+        {/* Masque pour cacher la partie non atteinte */}
+        <View
+          style={[
+            progressStyles.mask,
+            {
+              left: `${Math.min(100, Math.max(5, progress))}%`,
+              backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
+            }
+          ]}
+        />
+        {/* Indicateur de position */}
+        <View
+          style={[
+            progressStyles.indicator,
+            {
+              left: `${Math.min(95, Math.max(2, progress))}%`,
+              backgroundColor: progressColor,
+            }
+          ]}
+        />
+      </View>
+
+      {/* Labels */}
+      <View style={progressStyles.labels}>
+        <Text style={[progressStyles.label, { color: colors.textMuted }]}>
+          {startWeight.toFixed(1)} kg
+        </Text>
+        <Text style={[progressStyles.progressText, { color: progressColor }]}>
+          {progress.toFixed(0)}%
+        </Text>
+        <Text style={[progressStyles.label, { color: '#10B981' }]}>
+          {targetWeight > 0 ? targetWeight.toFixed(1) : currentWeight.toFixed(1)} kg
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const progressStyles = StyleSheet.create({
+  container: {
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  track: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  gradientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  mask: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    opacity: 0.85,
+  },
+  indicator: {
+    position: 'absolute',
+    top: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: -6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  labels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  label: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  progressText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+});
+
 const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   userName = 'Athlète',
   profilePhoto,
@@ -412,11 +566,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* STATS COMPACT ROW - Gradient Cards avec navigation */}
         <View style={styles.statsRow}>
-        {/* Pas - navigation vers stats santé */}
+        {/* Pas - navigation vers vitalité */}
         <TouchableOpacity
+          style={styles.statCardTouchable}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/(tabs)/stats?tab=sante');
+            router.push('/vitality-detail');
           }}
           activeOpacity={0.8}
         >
@@ -426,7 +581,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.statCardGradient}
           >
-            <MaterialCommunityIcons name="walk" size={12} color="#FFFFFF" />
+            <MaterialCommunityIcons name="walk" size={10} color="#FFFFFF" />
             <AnimatedCounter
               value={steps}
               style={styles.statValueWhite}
@@ -438,6 +593,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* Série - navigation vers records */}
         <TouchableOpacity
+          style={styles.statCardTouchable}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push('/records');
@@ -450,7 +606,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.statCardGradient}
           >
-            <Ionicons name="flame" size={12} color="#FFFFFF" />
+            <Ionicons name="flame" size={10} color="#FFFFFF" />
             <AnimatedCounter
               value={streak}
               style={styles.statValueWhite}
@@ -462,6 +618,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* Niveau - navigation vers gamification */}
         <TouchableOpacity
+          style={styles.statCardTouchable}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push('/gamification');
@@ -474,7 +631,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.statCardGradient}
           >
-            <MaterialCommunityIcons name="lightning-bolt" size={12} color="#FFFFFF" />
+            <MaterialCommunityIcons name="lightning-bolt" size={10} color="#FFFFFF" />
             <AnimatedCounter
               value={level}
               style={styles.statValueWhite}
@@ -486,6 +643,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* Rang - navigation vers gamification */}
         <TouchableOpacity
+          style={styles.statCardTouchable}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push('/gamification');
@@ -498,8 +656,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.statCardGradient}
           >
-            <MaterialCommunityIcons name="trophy" size={12} color={colors.textOnAccent} />
-            <Text style={[styles.statValueWhite, { fontSize: 11, color: colors.textOnAccent }]} numberOfLines={1}>
+            <MaterialCommunityIcons name="trophy" size={10} color={colors.textOnAccent} />
+            <Text style={[styles.statValueWhite, { fontSize: 9, color: colors.textOnAccent }]} numberOfLines={1}>
               {rankName}
             </Text>
             <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
@@ -576,6 +734,18 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           </View>
         </View>
 
+        {/* Barre de progression du poids avec personnage animé */}
+        {currentWeight > 0 && (
+          <WeightProgressWithCharacter
+            currentWeight={currentWeight}
+            targetWeight={targetWeight}
+            startWeight={weightHistory.length > 0 ? weightHistory[0] : currentWeight}
+            userGoal={userGoal}
+            isDark={isDark}
+            colors={colors}
+          />
+        )}
+
         {/* Composition corporelle - Chaque élément cliquable */}
         <View style={[styles.bodyComposition, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
           {/* Muscle - navigation vers composition */}
@@ -587,7 +757,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <Dumbbell size={16} color="#EF4444" strokeWidth={2.5} />
+            <Dumbbell size={14} color="#EF4444" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
@@ -612,7 +782,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <Apple size={16} color="#F59E0B" strokeWidth={2.5} />
+            <Apple size={14} color="#F59E0B" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
@@ -637,7 +807,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             }}
             activeOpacity={0.7}
           >
-            <Droplet size={16} color="#3B82F6" strokeWidth={2.5} />
+            <Droplet size={14} color="#3B82F6" strokeWidth={2.5} />
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
@@ -1107,34 +1277,36 @@ const styles = StyleSheet.create({
     zIndex: 200,
     paddingHorizontal: 2,
   },
-  statCardGradient: {
+  statCardTouchable: {
     flex: 1,
+  },
+  statCardGradient: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: IS_SMALL_SCREEN ? 8 : 10,
-    paddingHorizontal: IS_VERY_SMALL_SCREEN ? 6 : 8,
-    borderRadius: 12,
-    gap: 2,
-    minHeight: 55,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    gap: 1,
+    minHeight: 38,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   statValueWhite: {
-    fontSize: IS_SMALL_SCREEN ? 15 : 17,
+    fontSize: IS_SMALL_SCREEN ? 12 : 14,
     fontWeight: '800',
     letterSpacing: -0.5,
     color: '#FFFFFF',
   },
   statLabelWhite: {
-    fontSize: IS_SMALL_SCREEN ? 9 : 10,
+    fontSize: 8,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
     color: 'rgba(255, 255, 255, 0.95)',
-    marginTop: 1,
+    marginTop: 0,
   },
 
   // Weight Card Premium
@@ -1331,50 +1503,74 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(139, 92, 246, 0.2)',
   },
 
-  // Composition corporelle
+  // Composition corporelle - COMPACT
   bodyComposition: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingVertical: IS_SMALL_SCREEN ? 16 : 20, // Plus compact sur petits écrans
-    paddingHorizontal: IS_SMALL_SCREEN ? 8 : 16,
-    borderRadius: 18,
-    marginBottom: 16,
+    paddingVertical: IS_SMALL_SCREEN ? 10 : 12,
+    paddingHorizontal: IS_SMALL_SCREEN ? 6 : 12,
+    borderRadius: 14,
+    marginBottom: 12,
   },
   compositionItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   compositionDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    marginBottom: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: 2,
   },
   compositionInfo: {
     alignItems: 'center',
-    gap: 4,
+    gap: 2,
   },
   compositionLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   compositionValue: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   compositionPercent: {
-    fontSize: 15,
+    fontSize: 11,
     fontWeight: '800',
   },
   compositionDivider: {
     width: 1,
-    height: 52,
+    height: 36,
     backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  // Barre de progression poids
+  weightProgressBar: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  weightProgressTrack: {
+    height: 6,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  weightProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  weightProgressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  weightProgressLabel: {
+    fontSize: 9,
+    fontWeight: '600',
   },
 
   // Vitals - Pleine largeur

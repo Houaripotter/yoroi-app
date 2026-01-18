@@ -120,7 +120,7 @@ export const SharePromptModal: React.FC<SharePromptModalProps> = ({
               <View style={styles.featureItem}>
                 <View style={[styles.featureDot, { backgroundColor: '#F59E0B' }]} />
                 <Text style={[styles.featureText, { color: colors.textSecondary }]}>
-                  Style Strava viral
+                  Design premium Yoroi
                 </Text>
               </View>
               <View style={styles.featureItem}>

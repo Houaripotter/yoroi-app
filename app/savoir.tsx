@@ -324,6 +324,32 @@ const scienceData: ScienceCard[] = [
       sourceUrl: "https://onlinelibrary.wiley.com/doi/abs/10.1002/ejsp.674"
     }
   },
+  {
+    id: '20',
+    title: "Dormir Moins Bête : Le Sommeil Profond",
+    icon: "bed-clock",
+    category: "Récupération",
+    content: {
+      what: "Le sommeil profond (stades N3) est la phase où ton corps se répare physiquement. C'est pendant cette phase que l'hormone de croissance est sécrétée (80% de la production quotidienne).",
+      why: "Walker (2017) a démontré que le sommeil profond consolide la mémoire procédurale (mouvements techniques). Sans lui, tu oublies 40% de ce que tu as appris. Il nettoie aussi les toxines cérébrales (système glymphatique).",
+      how: "Évite l'alcool (réduit le sommeil profond de 20-40%). Fais du sport mais pas tard (augmente le sommeil profond de 75%). Maintiens une routine horaire. La température idéale est 18-19°C.",
+      sourceName: "Livre : Matthew Walker - Why We Sleep (2017)",
+      sourceUrl: "https://www.sleepdiplomat.com/"
+    }
+  },
+  {
+    id: '21',
+    title: "Dormir Moins Bête : Le REM et la Performance",
+    icon: "brain",
+    category: "Récupération",
+    content: {
+      what: "Le sommeil REM (paradoxal) est la phase des rêves. C'est là que ton cerveau intègre les stratégies et résout les problèmes complexes.",
+      why: "Une étude de Harvard montre que les athlètes privés de REM perdent 30% de leur capacité à prendre des décisions tactiques. Le REM représente 25% d'une nuit normale - chaque cycle de 90 min en contient plus en fin de nuit.",
+      how: "Dors 7-9h pour avoir suffisamment de REM (les cycles tardifs en contiennent plus). La mélatonine naturelle aide - pas les somnifères qui suppriment le REM.",
+      sourceName: "Étude : Mah et al. (2011) - Sleep",
+      sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/21731144/"
+    }
+  },
 ];
 
 const protocolData: ProtocolCard[] = [

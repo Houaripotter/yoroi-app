@@ -14,6 +14,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import * as ImagePicker from 'expo-image-picker';
@@ -450,7 +451,11 @@ export default function VictoryShareModal({
         </View>
 
         {/* TASK 1: Share Card Preview - Always visible (removed "Immortalise" screen) */}
-        <>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
             <View style={styles.cardContainer}>
               <ViewShot
                 ref={viewShotRef}
@@ -541,12 +546,12 @@ export default function VictoryShareModal({
                     </Text>
                   </View>
 
-                  {/* Footer - Simplified and fits in card */}
+                  {/* Footer - Compact horizontal layout */}
                   <View style={styles.footerContainer}>
                     {/* Gradient - adapts to template (NO black for light mode!) */}
                     {selectedTemplate !== 'light' && (
                       <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
+                        colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.85)']}
                         style={styles.footerGradient}
                       />
                     )}
@@ -557,30 +562,31 @@ export default function VictoryShareModal({
                         selectedTemplate === 'light' && { backgroundColor: 'rgba(0,0,0,0.15)' }
                       ]} />
 
-                      {/* Brand Block */}
-                      <View style={styles.footerBrandBlock}>
-                        <Text style={[
-                          styles.footerBrandName,
-                          selectedTemplate === 'light' && { color: '#1a1a1a' }
-                        ]}>YOROI</Text>
-                        <Text style={[
-                          styles.footerTagline,
-                          selectedTemplate === 'light' && { color: '#1a1a1a' }
-                        ]}>L'APP DES WARRIORS</Text>
+                      {/* NEW: Horizontal Footer Layout */}
+                      <View style={styles.footerRow}>
+                        {/* LEFT: Logo (Large) */}
+                        <View style={styles.footerLeft}>
+                          <Image
+                            source={require('@/assets/images/logo2010.png')}
+                            style={styles.footerLogoBig}
+                            resizeMode="contain"
+                          />
+                        </View>
 
-                        {/* Instagram & App Store */}
-                        <View style={styles.footerSocialRow}>
-                          <View style={styles.footerSocialItem}>
-                            <Image
-                              source={require('@/assets/images/instagram.png')}
-                              style={styles.footerSocialIcon}
-                              resizeMode="contain"
-                            />
-                            <Text style={[
-                              styles.footerSocialText,
-                              selectedTemplate === 'light' && { color: 'rgba(0,0,0,0.6)' }
-                            ]}>@yoroiapp</Text>
-                          </View>
+                        {/* CENTER: YOROI + Tagline */}
+                        <View style={styles.footerCenter}>
+                          <Text style={[
+                            styles.footerBrandName,
+                            selectedTemplate === 'light' && { color: '#1a1a1a' }
+                          ]}>YOROI</Text>
+                          <Text style={[
+                            styles.footerTagline,
+                            selectedTemplate === 'light' && { color: 'rgba(0,0,0,0.6)' }
+                          ]}>Suivi du poids & sport</Text>
+                        </View>
+
+                        {/* RIGHT: App Store */}
+                        <View style={styles.footerRight}>
                           <Image
                             source={require('@/assets/images/appstore.png')}
                             style={styles.footerAppStoreIcon}
@@ -698,7 +704,7 @@ export default function VictoryShareModal({
             <TouchableOpacity style={styles.skipBtn} onPress={onClose}>
               <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
             </TouchableOpacity>
-        </>
+        </ScrollView>
         <PopupComponent />
       </View>
     </Modal>
@@ -781,6 +787,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
@@ -935,7 +947,7 @@ const styles = StyleSheet.create({
   },
   statsOverlay: {
     position: 'absolute',
-    bottom: 100, // Space for PRO footer with separator
+    bottom: 75, // Space for compact footer
     left: 0,
     right: 0,
     padding: 20,
@@ -1045,24 +1057,23 @@ const styles = StyleSheet.create({
   },
 
   // ============================================
-  // TASK 1: PRO Footer Styles with Assets
+  // COMPACT FOOTER - Horizontal Layout
   // ============================================
   footerContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 95,
+    height: 70, // Plus compact
   },
   footerGradient: {
     ...StyleSheet.absoluteFillObject,
   },
   proFooter: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   footerSeparator: {
     width: '100%',
@@ -1071,48 +1082,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 1,
   },
-  footerBrandBlock: {
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  footerLeft: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  footerLogoBig: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+  },
+  footerBrandName: {
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  footerTagline: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 9,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  footerCenter: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  footerBrandName: {
-    color: '#D4AF37', // Gold
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: 6,
-    textAlign: 'center',
-  },
-  footerTagline: {
-    color: '#D4AF37', // Gold
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginTop: 1,
-    textAlign: 'center',
-  },
-  footerSocialRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    marginTop: 8,
-  },
-  footerSocialItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  footerSocialIcon: {
-    width: 16,
-    height: 16,
+  footerRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   footerAppStoreIcon: {
-    width: 80,
-    height: 24,
-  },
-  footerSocialText: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 11,
-    fontWeight: '600',
+    width: 70,
+    height: 22,
   },
 
   // ============================================

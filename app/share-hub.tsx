@@ -22,6 +22,7 @@ import {
   Share2,
   Camera,
   Lightbulb,
+  Sparkles,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -72,6 +73,16 @@ const SHARE_TEMPLATES: ShareTemplate[] = [
     icon: TrendingUp,
     route: '/social-share/monthly-recap-v2',
     gradient: ['#3B82F6', '#60A5FA'],
+  },
+  {
+    id: 'tiktok-stats',
+    title: 'TikTok, Insta...',
+    subtitle: 'Stats pour tes réseaux',
+    description: 'Fond transparent parfait pour superposer sur tes vidéos et stories. Choisis tes stats !',
+    icon: Sparkles,
+    route: '/social-share/tiktok-stats',
+    gradient: ['#EC4899', '#F472B6'],
+    badge: 'NOUVEAU',
   },
 ];
 

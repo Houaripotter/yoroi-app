@@ -139,7 +139,15 @@ export const Page2ActionGrid: React.FC = () => {
                 >
                   <View style={[styles.gridItem, { backgroundColor: colors.backgroundCard }]}>
                     <View style={[styles.iconCircle, { backgroundColor: `${item.color}15` }]}>
-                      <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
+                      {item.id === 'infirmerie' ? (
+                        // Croix rouge plus grande pour l'infirmerie
+                        <View style={styles.redCross}>
+                          <View style={[styles.crossVertical, { backgroundColor: item.color }]} />
+                          <View style={[styles.crossHorizontal, { backgroundColor: item.color }]} />
+                        </View>
+                      ) : (
+                        <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
+                      )}
                     </View>
                     <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={2}>
                       {label}
@@ -220,6 +228,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 2,
+  },
+  // Croix rouge pour l'infirmerie
+  redCross: {
+    width: 28,
+    height: 28,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVertical: {
+    position: 'absolute',
+    width: 10,
+    height: 28,
+    borderRadius: 2,
+  },
+  crossHorizontal: {
+    position: 'absolute',
+    width: 28,
+    height: 10,
+    borderRadius: 2,
   },
   label: {
     fontSize: 14,

@@ -11,7 +11,7 @@ export interface Sport {
   name: string;
   icon: string; // Nom de l'icône MaterialCommunityIcons (ex: 'karate', 'boxing-glove')
   color: string;
-  category: 'combat_striking' | 'combat_grappling' | 'fitness' | 'cardio' | 'collectif' | 'raquettes' | 'autre';
+  category: 'combat_striking' | 'combat_grappling' | 'fitness' | 'cardio' | 'collectif' | 'raquettes' | 'danse' | 'glisse' | 'nature' | 'autre';
   muscles?: string[];
 }
 
@@ -77,7 +77,7 @@ export const SPORTS: Sport[] = [
   // === SPORTS DE COMBAT - GRAPPLING ===
   {
     id: 'jjb',
-    name: 'JJB',
+    name: 'Jiu Jitsu Brésilien',
     icon: 'human-handsdown', // Grappling/Combat au sol
     color: '#EF4444',
     category: 'combat_grappling',
@@ -282,34 +282,115 @@ export const SPORTS: Sport[] = [
     category: 'raquettes',
   },
 
-  // === AUTRE / ACTIVITES DIVERSES ===
-  {
-    id: 'escalade',
-    name: 'Escalade',
-    icon: 'hiking',
-    color: '#78716C',
-    category: 'autre',
-  },
+  // === DANSE ===
   {
     id: 'danse',
-    name: 'Danse',
+    name: 'Danse classique',
     icon: 'dance-ballroom',
     color: '#EC4899',
-    category: 'autre',
+    category: 'danse',
   },
   {
     id: 'hip_hop',
     name: 'Hip Hop / Street Dance',
     icon: 'human-handsup',
     color: '#8B5CF6',
-    category: 'autre',
+    category: 'danse',
   },
   {
     id: 'zumba',
     name: 'Zumba',
     icon: 'dance-pole',
     color: '#F472B6',
-    category: 'autre',
+    category: 'danse',
+  },
+  {
+    id: 'salsa',
+    name: 'Salsa / Bachata',
+    icon: 'dance-ballroom',
+    color: '#F97316',
+    category: 'danse',
+  },
+  {
+    id: 'pole_dance',
+    name: 'Pole Dance',
+    icon: 'dance-pole',
+    color: '#A855F7',
+    category: 'danse',
+  },
+
+  // === SPORTS DE GLISSE ===
+  {
+    id: 'ski',
+    name: 'Ski / Snowboard',
+    icon: 'ski',
+    color: '#0EA5E9',
+    category: 'glisse',
+  },
+  {
+    id: 'surf',
+    name: 'Surf',
+    icon: 'surfing',
+    color: '#06B6D4',
+    category: 'glisse',
+  },
+  {
+    id: 'patinage',
+    name: 'Patinage',
+    icon: 'skate',
+    color: '#3B82F6',
+    category: 'glisse',
+  },
+  {
+    id: 'skateboard',
+    name: 'Skateboard',
+    icon: 'skateboard',
+    color: '#F59E0B',
+    category: 'glisse',
+  },
+  {
+    id: 'roller',
+    name: 'Roller',
+    icon: 'roller-skate',
+    color: '#10B981',
+    category: 'glisse',
+  },
+  {
+    id: 'wakeboard',
+    name: 'Wakeboard / Kitesurf',
+    icon: 'surfing',
+    color: '#0891B2',
+    category: 'glisse',
+  },
+
+  // === SPORTS NATURE / PLEIN AIR ===
+  {
+    id: 'escalade',
+    name: 'Escalade',
+    icon: 'hiking',
+    color: '#78716C',
+    category: 'nature',
+  },
+  {
+    id: 'equitation',
+    name: 'Équitation',
+    icon: 'horse',
+    color: '#92400E',
+    category: 'nature',
+  },
+  {
+    id: 'golf',
+    name: 'Golf',
+    icon: 'golf',
+    color: '#22C55E',
+    category: 'nature',
+  },
+  {
+    id: 'parkour',
+    name: 'Parkour / Freerun',
+    icon: 'run-fast',
+    color: '#6366F1',
+    category: 'nature',
   },
   {
     id: 'trail',
@@ -319,6 +400,38 @@ export const SPORTS: Sport[] = [
     category: 'cardio',
   },
   {
+    id: 'randonnee',
+    name: 'Randonnée',
+    icon: 'hiking',
+    color: '#84CC16',
+    category: 'nature',
+  },
+  {
+    id: 'vtt',
+    name: 'VTT',
+    icon: 'bike',
+    color: '#78716C',
+    category: 'nature',
+  },
+
+  // === CARDIO (ajouts) ===
+  {
+    id: 'aquabike',
+    name: 'Aquabike / Aquagym',
+    icon: 'swim',
+    color: '#0891B2',
+    category: 'cardio',
+  },
+  {
+    id: 'spinning',
+    name: 'Spinning / RPM',
+    icon: 'bike',
+    color: '#DC2626',
+    category: 'cardio',
+  },
+
+  // === FITNESS (ajouts) ===
+  {
     id: 'hyrox',
     name: 'Hyrox',
     icon: 'weight-lifter',
@@ -326,61 +439,28 @@ export const SPORTS: Sport[] = [
     category: 'fitness',
   },
   {
-    id: 'equitation',
-    name: 'Equitation',
-    icon: 'horse',
-    color: '#92400E',
-    category: 'autre',
+    id: 'body_pump',
+    name: 'Body Pump / LIA',
+    icon: 'dumbbell',
+    color: '#7C3AED',
+    category: 'fitness',
   },
   {
-    id: 'ski',
-    name: 'Ski / Snowboard',
-    icon: 'ski',
-    color: '#0EA5E9',
-    category: 'autre',
+    id: 'functional_training',
+    name: 'Functional Training',
+    icon: 'weight-lifter',
+    color: '#0D9488',
+    category: 'fitness',
   },
   {
     id: 'gymnastique',
     name: 'Gymnastique',
     icon: 'gymnastics',
     color: '#EC4899',
-    category: 'autre',
+    category: 'fitness',
   },
-  {
-    id: 'surf',
-    name: 'Surf / Sports nautiques',
-    icon: 'surfing',
-    color: '#06B6D4',
-    category: 'autre',
-  },
-  {
-    id: 'golf',
-    name: 'Golf',
-    icon: 'golf',
-    color: '#22C55E',
-    category: 'autre',
-  },
-  {
-    id: 'patinage',
-    name: 'Patinage',
-    icon: 'skate',
-    color: '#3B82F6',
-    category: 'autre',
-  },
-  {
-    id: 'skateboard',
-    name: 'Skateboard',
-    icon: 'skateboard',
-    color: '#F59E0B',
-    category: 'autre',
-  },
-  {
-    id: 'parkour',
-    name: 'Parkour',
-    icon: 'run-fast',
-    color: '#6366F1',
-    category: 'autre',
-  },
+
+  // === COMBAT (ajouts) ===
   {
     id: 'boxe_thai',
     name: 'Boxe Thaï',
@@ -404,38 +484,40 @@ export const SPORTS: Sport[] = [
   },
   {
     id: 'self_defense',
-    name: 'Self Defense',
+    name: 'Self Défense',
     icon: 'shield-account',
     color: '#374151',
     category: 'combat_striking',
   },
+
+  // === AUTRE ===
   {
-    id: 'aquabike',
-    name: 'Aquabike / Aquagym',
-    icon: 'swim',
-    color: '#0891B2',
-    category: 'cardio',
+    id: 'petanque',
+    name: 'Pétanque',
+    icon: 'circle-multiple',
+    color: '#78716C',
+    category: 'autre',
   },
   {
-    id: 'spinning',
-    name: 'Spinning / RPM',
-    icon: 'bike',
+    id: 'billard',
+    name: 'Billard',
+    icon: 'billiards',
+    color: '#15803D',
+    category: 'autre',
+  },
+  {
+    id: 'bowling',
+    name: 'Bowling',
+    icon: 'bowling',
     color: '#DC2626',
-    category: 'cardio',
+    category: 'autre',
   },
   {
-    id: 'body_pump',
-    name: 'Body Pump / LIA',
-    icon: 'dumbbell',
-    color: '#7C3AED',
-    category: 'fitness',
-  },
-  {
-    id: 'functional_training',
-    name: 'Functional Training',
-    icon: 'weight-lifter',
-    color: '#0D9488',
-    category: 'fitness',
+    id: 'flechettes',
+    name: 'Fléchettes',
+    icon: 'bullseye-arrow',
+    color: '#EF4444',
+    category: 'autre',
   },
   {
     id: 'autre',
@@ -457,17 +539,23 @@ export const SPORTS_BY_CATEGORY = {
   cardio: SPORTS.filter(s => s.category === 'cardio'),
   collectif: SPORTS.filter(s => s.category === 'collectif'),
   raquettes: SPORTS.filter(s => s.category === 'raquettes'),
+  danse: SPORTS.filter(s => s.category === 'danse'),
+  glisse: SPORTS.filter(s => s.category === 'glisse'),
+  nature: SPORTS.filter(s => s.category === 'nature'),
   autre: SPORTS.filter(s => s.category === 'autre'),
 };
 
 // Labels français pour les catégories
 export const CATEGORY_LABELS: Record<string, string> = {
-  combat_striking: 'Sports de Combat - Striking',
-  combat_grappling: 'Sports de Combat - Grappling',
-  fitness: 'Fitness & Musculation',
+  combat_striking: 'Combat (Pieds-Poings)',
+  combat_grappling: 'Combat (Grappling)',
+  fitness: 'Musculation & Fitness',
   cardio: 'Cardio',
   collectif: 'Sports Collectifs',
-  raquettes: 'Sports de Raquette',
+  raquettes: 'Raquettes',
+  danse: 'Danse',
+  glisse: 'Sports de Glisse',
+  nature: 'Plein Air & Nature',
   autre: 'Autres',
 };
 

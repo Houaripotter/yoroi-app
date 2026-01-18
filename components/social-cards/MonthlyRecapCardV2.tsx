@@ -17,6 +17,7 @@ export interface MonthlyRecapCardV2Props {
   stats: MonthStats;
   format: 'stories' | 'square';
   backgroundImage?: string;
+  backgroundType?: 'photo' | 'black' | 'white';
   username?: string;
   weeklyGoal?: number; // Objectif hebdo (ex: 4 séances/semaine)
 }
@@ -65,7 +66,7 @@ const getSportDisplayName = (sportId: string): string => {
 };
 
 export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
-  ({ stats, format, backgroundImage, weeklyGoal = 4 }, ref) => {
+  ({ stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4 }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
@@ -73,50 +74,54 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
     const monthlyGoal = weeklyGoal * 4;
     const progressPercent = Math.min((stats.totalTrainings / monthlyGoal) * 100, 100);
 
+    // Déterminer les couleurs selon le type de fond
+    const isLightBackground = backgroundType === 'white';
+    const hasPhoto = !!backgroundImage;
+    const brandingVariant = isLightBackground ? 'light' : 'dark';
+
+    // Couleurs dynamiques
+    const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
+    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
+    const textMuted = isLightBackground ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+    const goldColor = '#D4AF37';
+    const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+    const statsRowBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+    const dividerColor = isLightBackground ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
+    const progressBarBgColor = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
+    const clubBubbleBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(212, 175, 55, 0.2)';
+    const clubBubbleBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(212, 175, 55, 0.5)';
+
     const content = (
-      <>
-        <LinearGradient
-          colors={[
-            'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
-            'rgba(0,0,0,0.4)',     // 15% - Transition
-            'rgba(0,0,0,0)',       // 30% - Transparent
-            'rgba(0,0,0,0)',       // 50% - Transparent (centre - photo bien visible)
-            'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
-            'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
-            'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
-          ]}
-          locations={[0, 0.15, 0.3, 0.5, 0.65, 0.85, 1]}
-          style={styles.overlay}
-        >
-          {/* HAUT: Titre mois (minimaliste) */}
-          <View style={styles.topContent}>
+      <View style={styles.contentContainer}>
+        {/* HAUT: Titre mois (minimaliste) */}
+        <View style={styles.topContent}>
           {/* TITRE MOIS */}
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <Calendar size={20} color="#D4AF37" />
-              <Text style={styles.titleText}>{stats.monthName.toUpperCase()} {stats.year}</Text>
+              <Calendar size={20} color={goldColor} />
+              <Text style={[styles.titleText, { color: goldColor }]}>{stats.monthName.toUpperCase()} {stats.year}</Text>
             </View>
           </View>
 
           {/* COMPTEUR PRINCIPAL */}
           <View style={styles.counterSection}>
-            <Text style={styles.counterNumber}>{stats.totalTrainings}</Text>
-            <Text style={styles.counterLabel}>ENTRAÎNEMENTS</Text>
+            <Text style={[styles.counterNumber, { color: textPrimary }]}>{stats.totalTrainings}</Text>
+            <Text style={[styles.counterLabel, { color: goldColor }]}>ENTRAÎNEMENTS</Text>
           </View>
-          </View>
+        </View>
 
-          {/* CENTRE: VIDE pour voir la photo! */}
-          <View style={styles.centerSpace} />
+        {/* CENTRE: VIDE pour voir la photo! */}
+        <View style={styles.centerSpace} />
 
-          {/* BAS: Barre + Clubs + Stats + Logo */}
-          <View style={styles.bottomContent}>
+        {/* BAS: Barre + Clubs + Stats + Logo */}
+        <View style={styles.bottomContent}>
           {/* BARRE DE PROGRESSION */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>Objectif {monthlyGoal} séances</Text>
-              <Text style={styles.progressPercent}>{Math.round(progressPercent)}%</Text>
+              <Text style={[styles.progressLabel, { color: textSecondary }]}>Objectif {monthlyGoal} séances</Text>
+              <Text style={[styles.progressPercent, { color: goldColor }]}>{Math.round(progressPercent)}%</Text>
             </View>
-            <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarBg, { backgroundColor: progressBarBgColor }]}>
               <LinearGradient
                 colors={['#D4AF37', '#F4E5B0', '#D4AF37']}
                 start={{ x: 0, y: 0 }}
@@ -124,7 +129,7 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
                 style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
               />
             </View>
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: textSecondary }]}>
               {stats.totalTrainings}/{monthlyGoal} séances
             </Text>
           </View>
@@ -143,15 +148,15 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
                   {club.clubLogo ? (
                     <Image source={{ uri: club.clubLogo }} style={styles.clubBubbleLogo} resizeMode="cover" />
                   ) : (
-                    <View style={styles.clubBubbleLogoPlaceholder}>
-                      <Text style={styles.clubBubbleInitial}>{club.clubName.charAt(0)}</Text>
+                    <View style={[styles.clubBubbleLogoPlaceholder, { backgroundColor: clubBubbleBg, borderColor: clubBubbleBorder }]}>
+                      <Text style={[styles.clubBubbleInitial, { color: goldColor }]}>{club.clubName.charAt(0)}</Text>
                     </View>
                   )}
 
                   {/* Nom du club */}
-                  <Text style={styles.clubBubbleName} numberOfLines={2}>{club.clubName}</Text>
+                  <Text style={[styles.clubBubbleName, { color: textPrimary }]} numberOfLines={2}>{club.clubName}</Text>
                   {/* Sport */}
-                  <Text style={styles.clubBubbleSport} numberOfLines={1}>
+                  <Text style={[styles.clubBubbleSport, { color: goldColor }]} numberOfLines={1}>
                     {club.sport ? getSportDisplayName(club.sport) : getSportName(club.clubName)}
                   </Text>
                 </View>
@@ -160,56 +165,94 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
           )}
 
           {/* STATS SECONDAIRES */}
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
               <Flame size={14} color="#FF6B00" />
-              <Text style={styles.statValue}>{stats.totalTrainings}</Text>
-              <Text style={styles.statLabel}>ENTRAÎNEMENTS</Text>
+              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.totalTrainings}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>ENTRAÎNEMENTS</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <Trophy size={16} color="#D4AF37" />
-              <Text style={styles.statValue}>S{stats.bestWeek?.weekNumber || '-'}</Text>
-              <Text style={styles.statLabel}>BEST WEEK</Text>
+              <Trophy size={16} color={goldColor} />
+              <Text style={[styles.statValue, { color: textPrimary }]}>S{stats.bestWeek?.weekNumber || '-'}</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>BEST WEEK</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
             <View style={styles.statItem}>
-              <BarChart2 size={16} color="#D4AF37" />
-              <Text style={styles.statValue}>{Math.round((stats.activeDays / 30) * 100)}%</Text>
-              <Text style={styles.statLabel}>DU MOIS</Text>
+              <BarChart2 size={16} color={goldColor} />
+              <Text style={[styles.statValue, { color: textPrimary }]}>{Math.round((stats.activeDays / 30) * 100)}%</Text>
+              <Text style={[styles.statLabel, { color: textMuted }]}>DU MOIS</Text>
             </View>
           </View>
 
-          {/* FOOTER - YOROI (uniquement en bas maintenant) */}
-          <SocialCardFooter variant="dark" />
-          </View>
-        </LinearGradient>
-      </>
+          {/* FOOTER - YOROI */}
+          <SocialCardFooter variant={brandingVariant} />
+        </View>
+      </View>
     );
 
+    // Fond avec photo - Gradient SEULEMENT en bas pour les infos
+    if (backgroundImage) {
+      return (
+        <View
+          ref={ref}
+          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
+          collapsable={false}
+        >
+          {/* Photo en contain pour voir toute l'image */}
+          <Image
+            source={{ uri: backgroundImage }}
+            style={styles.backgroundImageContain}
+            resizeMode="contain"
+          />
+          {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
+          <LinearGradient
+            colors={[
+              'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
+              'rgba(0,0,0,0.4)',     // 15% - Transition
+              'rgba(0,0,0,0)',       // 30% - Transparent
+              'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
+              'rgba(0,0,0,0)',       // 55% - Transparent
+              'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
+              'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
+              'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
+            ]}
+            locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          {content}
+        </View>
+      );
+    }
+
+    // Fond blanc
+    if (isLightBackground) {
+      return (
+        <View
+          ref={ref}
+          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#FFFFFF' }]}
+          collapsable={false}
+        >
+          <SocialCardWatermark show={true} variant="light" />
+          {content}
+        </View>
+      );
+    }
+
+    // Fond noir (défaut)
     return (
       <View
         ref={ref}
         style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
         collapsable={false}
       >
-        {backgroundImage ? (
-          <ImageBackground
-            source={{ uri: backgroundImage }}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-          >
-            {content}
-          </ImageBackground>
-        ) : (
-          <LinearGradient
-            colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
-            style={styles.defaultBackground}
-          >
-            <SocialCardWatermark show={!backgroundImage} />
-            {content}
-          </LinearGradient>
-        )}
+        <LinearGradient
+          colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
+          style={styles.defaultBackground}
+        >
+          <SocialCardWatermark show={true} variant="dark" />
+          {content}
+        </LinearGradient>
       </View>
     );
   }
@@ -230,10 +273,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  backgroundImageContain: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
   defaultBackground: {
     flex: 1,
   },
   overlay: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  contentContainer: {
     flex: 1,
     justifyContent: 'space-between',
   },

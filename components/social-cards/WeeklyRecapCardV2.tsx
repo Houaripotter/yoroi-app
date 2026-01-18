@@ -200,31 +200,31 @@ export const WeeklyRecapCardV2 = forwardRef<View, WeeklyRecapCardV2Props>(
       return (
         <View
           ref={ref}
-          style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
+          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
           collapsable={false}
         >
-          <ImageBackground
+          {/* Photo en contain pour voir toute l'image */}
+          <Image
             source={{ uri: backgroundImage }}
-            style={styles.backgroundImage}
-            resizeMode="cover"
-          >
-            {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
-            <LinearGradient
-              colors={[
-                'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
-                'rgba(0,0,0,0.4)',     // 15% - Transition
-                'rgba(0,0,0,0)',       // 30% - Transparent
-                'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
-                'rgba(0,0,0,0)',       // 55% - Transparent
-                'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
-                'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
-                'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
-              ]}
-              locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-            {content}
-          </ImageBackground>
+            style={styles.backgroundImageContain}
+            resizeMode="contain"
+          />
+          {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
+          <LinearGradient
+            colors={[
+              'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
+              'rgba(0,0,0,0.4)',     // 15% - Transition
+              'rgba(0,0,0,0)',       // 30% - Transparent
+              'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
+              'rgba(0,0,0,0)',       // 55% - Transparent
+              'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
+              'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
+              'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
+            ]}
+            locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          {content}
         </View>
       );
     }
@@ -272,6 +272,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   backgroundImage: {
+    width: '100%',
+    height: '100%',
+  },
+  backgroundImageContain: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
   },

@@ -66,20 +66,23 @@ interface TabBarProps extends BottomTabBarProps {}
 export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) {
   const { colors, themeColor, isDark } = useTheme();
 
-  // Pour le theme classic en mode light, on inverse les couleurs du bouton +
-  // L'utilisateur veut un bouton blanc avec "+" noir (pas noir avec "+" blanc)
-  const isClassicLight = themeColor === 'classic' && !isDark;
-  const plusButtonBgColor = isClassicLight ? '#FFFFFF' : colors.accent;
-  const plusButtonBgColorDark = isClassicLight ? '#EEEEEE' : (colors.accentDark || colors.accent);
-  const plusIconColor = isClassicLight ? '#000000' : colors.textOnAccent;
+  // Couleurs du bouton + selon le mode
+  // Mode clair: bouton blanc/clair avec + noir
+  // Mode sombre: bouton coloré (accent) avec + blanc
+  const isLightMode = !isDark;
+  const plusButtonBgColor = isLightMode ? '#FFFFFF' : colors.accent;
+  const plusButtonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accentDark || colors.accent);
+  const plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
 
-  // Style special pour le bouton en mode classic light (ombre pour visibilite)
-  const plusButtonShadow = isClassicLight ? {
+  // Style special pour le bouton en mode clair (ombre pour visibilite sur fond clair)
+  const plusButtonShadow = isLightMode ? {
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 10,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
   } : {};
 
   // Position animée du creux
@@ -232,8 +235,8 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
             styles.pulseRing,
             {
               transform: [{ scale: pulseAnim }],
-              backgroundColor: isClassicLight ? 'rgba(0,0,0,0.08)' : `${colors.accent}15`,
-              borderColor: isClassicLight ? 'rgba(0,0,0,0.15)' : `${colors.accent}30`,
+              backgroundColor: isLightMode ? 'rgba(0,0,0,0.08)' : `${colors.accent}15`,
+              borderColor: isLightMode ? 'rgba(0,0,0,0.15)' : `${colors.accent}30`,
             },
           ]}
         />

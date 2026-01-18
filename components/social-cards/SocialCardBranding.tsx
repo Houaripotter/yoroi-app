@@ -33,8 +33,7 @@ export const SocialCardTopBanner: React.FC<{ variant?: 'dark' | 'light' }> = ({
 };
 
 // ============================================
-// FOOTER PRO - Design compact
-// Trait doré + YOROI + Suivi du poids & sport + App Store
+// FOOTER PRO - Design avec Logo grand à gauche, App Store à droite
 // ============================================
 export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
   variant = 'dark'
@@ -49,23 +48,25 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
       {/* Ligne de séparation dorée */}
       <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
 
-      {/* Brand Block - Compact */}
-      <View style={styles.footerBrandBlock}>
-        {/* Logo + YOROI sur la même ligne */}
-        <View style={styles.footerLogoRow}>
-          <Image
-            source={require('@/assets/images/logo2010.png')}
-            style={styles.footerLogo}
-            resizeMode="contain"
-          />
-          <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
-        </View>
-        <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
+      {/* Layout horizontal: Logo | Texte | App Store */}
+      <View style={styles.footerRow}>
+        {/* Logo grand à gauche */}
+        <Image
+          source={require('@/assets/images/logo2010.png')}
+          style={styles.footerLogoBig}
+          resizeMode="contain"
+        />
 
-        {/* App Store Badge */}
+        {/* Texte au centre */}
+        <View style={styles.footerTextBlock}>
+          <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
+          <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
+        </View>
+
+        {/* App Store Badge à droite */}
         <Image
           source={require('@/assets/images/appstore.png')}
-          style={styles.footerAppStoreBadge}
+          style={styles.footerAppStoreBadgeSide}
           resizeMode="contain"
         />
       </View>
@@ -155,48 +156,48 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
 
-  // Footer Pro - Très compact
+  // Footer Pro - Layout horizontal
   footer: {
     paddingHorizontal: 16,
-    paddingVertical: 4,
-    alignItems: 'center',
+    paddingVertical: 6,
   },
   footerSeparator: {
     width: '100%',
     height: 1,
     borderRadius: 1,
-    marginBottom: 4,
+    marginBottom: 6,
   },
-  footerBrandBlock: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerLogoRow: {
+  footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
   },
-  footerLogo: {
-    width: 28,
-    height: 28,
+  footerLogoBig: {
+    width: 48,
+    height: 48,
+  },
+  footerTextBlock: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   footerBrandName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 3,
+    letterSpacing: 4,
     textAlign: 'center',
   },
   footerTagline: {
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: '600',
     letterSpacing: 0.5,
-    marginTop: 0,
+    marginTop: 2,
     textAlign: 'center',
   },
-  footerAppStoreBadge: {
-    width: 70,
-    height: 22,
-    marginTop: 4,
+  footerAppStoreBadgeSide: {
+    width: 80,
+    height: 48,
   },
 
   // Footer Compact

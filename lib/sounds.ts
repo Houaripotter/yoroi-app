@@ -6,7 +6,7 @@
 import { Audio } from 'expo-av';
 import logger from '@/lib/security/logger';
 
-type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup';
+type SoundType = 'gong' | 'beep' | 'tick' | 'victory' | 'levelup' | 'wizz' | 'sonicring' | 'mariowin' | 'badgefanfare';
 
 class SoundManager {
   private sounds: Map<SoundType, Audio.Sound> = new Map();
@@ -54,6 +54,11 @@ class SoundManager {
       tick: require('../assets/sounds/beep.mp3'), // Utilise beep pour le tick (countdown)
       victory: require('../assets/sounds/gong.mp3'), // Fallback au gong
       levelup: require('../assets/sounds/pokemon-level-up-made-with-Voicemod.mp3'),
+      // Nouveaux sons
+      wizz: require('../assets/sounds/wizz-made-with-Voicemod.mp3'), // MSN notification
+      sonicring: require('../assets/sounds/sonic-ring-sound-effect-made-with-Voicemod.mp3'), // XP/badge gain
+      mariowin: require('../assets/sounds/super-mario-64-soundtrack-slider-made-with-Voicemod.mp3'), // Victoire
+      badgefanfare: require('../assets/sounds/pokemon-heartgold-&-soulsilver-ost-fanfare-(badge-get)-made-with-Voicemod.mp3'), // Badge unlock
     };
 
     for (const [key, file] of Object.entries(soundFiles)) {
@@ -129,6 +134,34 @@ class SoundManager {
    */
   async playLevelUp(): Promise<void> {
     await this.play('levelup');
+  }
+
+  /**
+   * Joue le son MSN Wizz (notification importante)
+   */
+  async playWizz(): Promise<void> {
+    await this.play('wizz');
+  }
+
+  /**
+   * Joue le son Sonic Ring (gain XP/badge)
+   */
+  async playSonicRing(): Promise<void> {
+    await this.play('sonicring');
+  }
+
+  /**
+   * Joue le son Mario victoire (accomplissement)
+   */
+  async playMarioWin(): Promise<void> {
+    await this.play('mariowin');
+  }
+
+  /**
+   * Joue la fanfare de badge Pokemon (déverrouillage badge)
+   */
+  async playBadgeFanfare(): Promise<void> {
+    await this.play('badgefanfare');
   }
 
   /**

@@ -1,32 +1,40 @@
 // ============================================
-// YOROI - MONTHLY RECAP V2
+// YOROI - MONTHLY RECAP V2 (Design VictoryShareModal)
 // ============================================
-// Carte de partage avec photo en fond comme un filtre Instagram
+// Design identique au WeeklyRecapV2 avec Photo/Sombre/Clair
 
 import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import { captureRef } from 'react-native-view-shot';
+import {
+  X,
+  Share2,
+  Download,
+  Camera,
+  Image as ImageIcon,
+  Calendar,
+} from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
-import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon } from 'lucide-react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Haptics from 'expo-haptics';
+
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { MonthlyRecapCardV2 } from '@/components/social-cards/MonthlyRecapCardV2';
 import { useMonthStats } from '@/lib/social-cards/useMonthStats';
-import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ============================================
 // COMPOSANT PRINCIPAL
@@ -37,221 +45,186 @@ export default function MonthlyRecapV2Screen() {
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [format, setFormat] = useState<'stories' | 'square'>('stories');
-  const [isSaving, setIsSaving] = useState(false);
-  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
+  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [isLoading, setIsLoading] = useState(false);
 
   // Charger les stats du mois actuel
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth(); // 0-11
-  const { stats, isLoading, error } = useMonthStats(currentYear, currentMonth);
+  const { stats, isLoading: statsLoading, error } = useMonthStats(currentYear, currentMonth);
 
-  // Charger le username
-  React.useEffect(() => {
-    loadUsername();
-  }, []);
+  // ============================================
+  // PHOTO PICKER
+  // ============================================
 
-  const loadUsername = async () => {
-    try {
-      const settings = await getUserSettings();
-      setUsername(settings.username);
-    } catch (err) {
-      logger.error('Erreur chargement username:', err);
-    }
-  };
-
-  // Prendre une photo avec la caméra
   const takePhoto = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à la caméra', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
-        quality: 1,
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
+        setSelectedTemplate('photo');
       }
-    } catch (err) {
-      logger.error('Erreur prise de photo:', err);
+    } catch (error) {
+      logger.error('Erreur photo:', error);
       showPopup('Erreur', 'Impossible de prendre la photo', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
-  // Choisir une photo depuis la galerie
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie', [{ text: 'OK', style: 'primary' }]);
+        showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
-        quality: 1,
+        quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(result.assets[0].uri);
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
+        setSelectedTemplate('photo');
       }
-    } catch (err) {
-      logger.error('Erreur sélection photo:', err);
-      showPopup('Erreur', 'Impossible de sélectionner la photo', [{ text: 'OK', style: 'primary' }]);
+    } catch (error) {
+      logger.error('Erreur galerie:', error);
+      showPopup('Erreur', 'Impossible de choisir l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
-  // Supprimer la photo de fond
-  const removePhoto = () => {
-    setBackgroundImage(undefined);
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
+  // ============================================
+  // SHARE & SAVE
+  // ============================================
 
-  // Sauvegarder la carte en image
-  const saveCard = async () => {
-    try {
-      setIsSaving(true);
-
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      const uri = await captureRef(cardRef.current, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-
-      // Demander permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
-      // Sauvegarder dans la galerie
-      await MediaLibrary.saveToLibraryAsync(uri);
-
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-
-      showPopup('Sauvegardé', 'Ton Récap Mensuel est dans ta galerie.', [{ text: 'OK', style: 'primary' }]);
-    } catch (err) {
-      logger.error('Erreur sauvegarde:', err);
-      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Partager la carte
   const shareCard = async () => {
+    if (!cardRef.current) return;
+
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     try {
-      if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-
-      if (!cardRef.current) {
-        showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
-        return;
-      }
-
       const uri = await captureRef(cardRef.current, {
         format: 'png',
         quality: 1,
-        result: 'tmpfile',
       });
 
-      // Vérifier si le partage est disponible
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'image/png',
-          dialogTitle: 'Partager mon Récap Mensuel Yoroi',
+          dialogTitle: 'Partager mon récap mensuel',
         });
-      } else {
-        showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
-    } catch (err) {
-      logger.error('Erreur partage:', err);
+    } catch (error) {
+      logger.error('Error sharing:', error);
       showPopup('Erreur', 'Impossible de partager la carte', [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // État de chargement
-  if (isLoading) {
+  const saveToGallery = async () => {
+    if (!cardRef.current) return;
+
+    setIsLoading(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const uri = await captureRef(cardRef.current, {
+        format: 'png',
+        quality: 1,
+      });
+
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
+    } catch (error) {
+      logger.error('Error saving:', error);
+      showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get background type for card component
+  const getBackgroundType = (): 'photo' | 'black' | 'white' => {
+    if (selectedTemplate === 'photo' && backgroundImage) return 'photo';
+    if (selectedTemplate === 'light') return 'white';
+    return 'black';
+  };
+
+  // ============================================
+  // RENDER
+  // ============================================
+
+  if (statsLoading) {
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-            Calcul de tes stats...
+            Chargement des stats...
           </Text>
         </View>
       </ScreenWrapper>
     );
   }
 
-  // Erreur
   if (error || !stats) {
     return (
       <ScreenWrapper>
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: colors.textPrimary }]}>
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             {error || 'Impossible de charger les statistiques'}
           </Text>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.card }]}
+            style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.back()}
           >
-            <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Retour</Text>
+            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>Retour</Text>
           </TouchableOpacity>
         </View>
       </ScreenWrapper>
     );
   }
 
-  // Pas de données
   if (stats.activeDays === 0) {
     return (
       <ScreenWrapper>
         <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconContainer} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
             Aucune donnée pour {stats.monthName} {stats.year}
           </Text>
-          <Text style={[styles.emptyMessage, { color: colors.textSecondary }]}>
-            Commence à tracker tes entraînements pour générer ton Récap Mensuel !
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            Commence à t'entraîner pour générer ta carte !
           </Text>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.accent }]}
+            style={[styles.addButton, { backgroundColor: colors.accent }]}
             onPress={() => router.push('/add-training')}
           >
-            <Text style={[styles.buttonText, { color: colors.background }]}>
-              Ajouter un entraînement
-            </Text>
+            <Text style={[styles.addButtonText, { color: colors.textOnGold }]}>Ajouter un entraînement</Text>
           </TouchableOpacity>
         </View>
       </ScreenWrapper>
@@ -260,107 +233,138 @@ export default function MonthlyRecapV2Screen() {
 
   return (
     <ScreenWrapper>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={() => router.back()}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            RÉCAP MENSUEL
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            {stats.activeDays} jours actifs en {stats.monthName}
-          </Text>
-        </View>
-
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Toolbar compact */}
-        <View style={[styles.toolbar, { backgroundColor: colors.card }]}>
-          {/* Photo buttons */}
-          <View style={styles.toolbarSection}>
-            <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.accent }]}
-              onPress={takePhoto}
-            >
-              <Camera size={16} color={colors.textOnGold} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toolbarButton, { backgroundColor: colors.backgroundElevated || colors.card, borderWidth: 1, borderColor: colors.border }]}
-              onPress={pickImage}
-            >
-              <ImageIcon size={16} color={colors.textPrimary} />
-            </TouchableOpacity>
-            {backgroundImage && (
-              <TouchableOpacity
-                style={[styles.toolbarButtonText, { backgroundColor: '#EF444420' }]}
-                onPress={removePhoto}
-              >
-                <Text style={[styles.removeText, { color: '#EF4444' }]}>Retirer</Text>
-              </TouchableOpacity>
-            )}
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <X size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Calendar size={20} color={colors.accent} />
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+              Récap Mensuel
+            </Text>
           </View>
-
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Carte Monthly Recap */}
+        {/* Card Preview */}
         <View style={styles.cardContainer}>
           <MonthlyRecapCardV2
             ref={cardRef}
             stats={stats}
             format={format}
-            backgroundImage={backgroundImage}
+            backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
+            backgroundType={getBackgroundType()}
             username="yoroiapp"
           />
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionsContainer}>
+        {/* Template Selector */}
+        <View style={styles.templateRow}>
+          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+          {([
+            { key: 'photo', label: 'Photo' },
+            { key: 'dark', label: 'Sombre' },
+            { key: 'light', label: 'Clair' },
+          ] as const).map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={[
+                styles.templateBtn,
+                {
+                  backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
+                  borderColor: selectedTemplate === key ? colors.accent : colors.border,
+                }
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedTemplate(key);
+              }}
+            >
+              <Text style={[
+                styles.templateBtnText,
+                { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
+              ]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
+        {selectedTemplate === 'photo' && !backgroundImage && (
+          <View style={styles.photoPickerContainer}>
+            <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
+              Ajoute ta photo
+            </Text>
+            <View style={styles.photoPickerButtons}>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
+                onPress={takePhoto}
+              >
+                <Camera size={20} color={colors.textOnAccent} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
+                onPress={pickImage}
+              >
+                <ImageIcon size={20} color={colors.textPrimary} />
+                <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        {selectedTemplate === 'photo' && backgroundImage && (
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={pickImage}
+            >
+              <ImageIcon size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={takePhoto}
+            >
+              <Camera size={18} color={colors.textPrimary} />
+              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Share Actions */}
+        <View style={styles.shareActions}>
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.card }]}
-            onPress={saveCard}
-            disabled={isSaving}
+            style={[styles.shareBtn, { backgroundColor: colors.accent }]}
+            onPress={shareCard}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Share2 size={20} color="#FFFFFF" />
+                <Text style={styles.shareBtnText}>Partager</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+            onPress={saveToGallery}
+            disabled={isLoading}
           >
             <Download size={20} color={colors.textPrimary} />
-            <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>
-              Sauvegarder
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.gold || colors.accent }]}
-            onPress={shareCard}
-          >
-            <Share2 size={20} color={colors.textOnGold} />
-            <Text style={[styles.actionButtonText, { color: colors.textOnGold }]}>
-              Partager
-            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Tips */}
-        <View style={[styles.tipCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.tipTitle, { color: colors.gold || colors.accent }]}>
-            Astuce
-          </Text>
-          <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Fais une photo de ton calendrier d'entraînement, de ton tableau de progression ou simplement de toi après une séance ! Ton calendrier du mois s'affichera par-dessus avec style.
-          </Text>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {/* Close Button */}
+        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+        </TouchableOpacity>
+      </View>
       <PopupComponent />
     </ScreenWrapper>
   );
@@ -371,187 +375,187 @@ export default function MonthlyRecapV2Screen() {
 // ============================================
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 16,
   },
   loadingText: {
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    gap: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    paddingHorizontal: 40,
     gap: 16,
-  },
-  emptyIconContainer: {
-    width: 64,
-    height: 64,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
   },
-  emptyMessage: {
+  emptyText: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  addButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  addButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  closeBtn: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-
-  // Toolbar compact
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  toolbarSection: {
+  headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  toolbarButton: {
-    width: 42,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolbarButtonText: {
-    paddingHorizontal: 12,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  removeText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-  // Format Selector
-  formatSelector: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 10,
-  },
-  formatButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-  },
-  formatButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
 
   // Card
   cardContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
 
-  // Actions
-  actionsContainer: {
+  // Template Selector
+  templateRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    marginBottom: 12,
   },
-  actionButton: {
+  templateLabel: {
+    fontSize: 13,
+    marginRight: 8,
+  },
+  templateBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  templateBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Photo Picker (when no photo selected)
+  photoPickerContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  photoPickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  photoPickerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  photoPickerBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
+    gap: 8,
   },
-  actionButtonText: {
+  photoPickerBtnText: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },
 
-  // Button
-  button: {
-    paddingVertical: 14,
+  // Photo Actions (when photo exists)
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    marginBottom: 12,
+    justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 15,
-    fontWeight: '700',
+  photoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  photoBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 
-  // Tips
-  tipCard: {
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 16,
+  // Share Actions
+  shareActions: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 24,
+    marginBottom: 12,
   },
-  tipTitle: {
-    fontSize: 14,
+  shareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    gap: 8,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '700',
-    marginBottom: 6,
   },
-  tipText: {
-    fontSize: 13,
-    lineHeight: 18,
+  saveBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  skipBtn: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 14,
   },
 });

@@ -676,7 +676,8 @@ export default function MoreScreen() {
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
     'f5903f51e341a783e69ffc2d9b335048716f5f040a782a2e1e1e14f8767e8c23', // Hash du code principal
-    '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // Hash du code secondaire
+    '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // Hash du code secondaire (1234)
+    'b1ab1e892617f210425f658cf1d361b5489028c8771b56d845fe1c62c1fbc8b0', // Hash du code 2022
   ];
 
   // Vérifie si le code est valide via hash
