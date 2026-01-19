@@ -426,14 +426,19 @@ export default function ProfileScreen() {
     }
   };
 
-  const pickProfilePhoto = async (withEditing: boolean = false) => {
+  const pickProfilePhoto = async (withEditing: boolean = true) => {
     try {
+      logger.info('[Profile] Demande ouverture galerie...');
+
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      logger.info('[Profile] Permission galerie:', status);
+
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
         return;
       }
 
+      logger.info('[Profile] Ouverture galerie...');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: withEditing,
@@ -442,8 +447,11 @@ export default function ProfileScreen() {
         selectionLimit: 1,
       });
 
+      logger.info('[Profile] Résultat galerie:', result.canceled);
+
       if (!result.canceled && result.assets && result.assets[0]) {
         const photoUri = result.assets[0].uri;
+        logger.info('[Profile] Photo sélectionnée:', photoUri);
         setProfilePhoto(photoUri);
         const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
 
@@ -483,23 +491,29 @@ export default function ProfileScreen() {
 
   const handleChangePhoto = () => {
     showPopup(
-      t('profile.profilePhoto'),
-      t('profile.howToAddPhoto'),
+      t('profile.profilePhoto') || 'Photo de profil',
+      t('profile.howToAddPhoto') || 'Choisis comment ajouter ta photo',
       [
         {
           text: '📸 ' + (t('profile.takePhoto') || 'Prendre une photo'),
           style: 'primary',
-          onPress: () => {
+          onPress: async () => {
             // Fermer le popup actuel et ouvrir la caméra
-            setTimeout(() => takeProfilePhoto(true), 100);
+            logger.info('[Profile] Bouton caméra pressé');
+            setTimeout(() => {
+              takeProfilePhoto(true);
+            }, 300);
           }
         },
         {
           text: '🖼️ ' + (t('profile.chooseFromGallery') || 'Choisir depuis la galerie'),
           style: 'default',
-          onPress: () => {
+          onPress: async () => {
             // Fermer le popup actuel et ouvrir la galerie
-            setTimeout(() => pickProfilePhoto(true), 100);
+            logger.info('[Profile] Bouton galerie pressé');
+            setTimeout(() => {
+              pickProfilePhoto(true);
+            }, 300);
           }
         },
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
