@@ -498,22 +498,22 @@ export default function ProfileScreen() {
           text: '📸 ' + (t('profile.takePhoto') || 'Prendre une photo'),
           style: 'primary',
           onPress: async () => {
-            // Fermer le popup actuel et ouvrir la caméra
+            // Attendre que le popup modal soit complètement fermé avant d'ouvrir la caméra
             logger.info('[Profile] Bouton caméra pressé');
             setTimeout(() => {
               takeProfilePhoto(true);
-            }, 300);
+            }, 500);
           }
         },
         {
           text: '🖼️ ' + (t('profile.chooseFromGallery') || 'Choisir depuis la galerie'),
           style: 'default',
           onPress: async () => {
-            // Fermer le popup actuel et ouvrir la galerie
+            // Attendre que le popup modal soit complètement fermé avant d'ouvrir la galerie
             logger.info('[Profile] Bouton galerie pressé');
             setTimeout(() => {
               pickProfilePhoto(true);
-            }, 300);
+            }, 500);
           }
         },
         { text: t('common.cancel') || 'Annuler', style: 'cancel' },
