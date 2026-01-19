@@ -85,7 +85,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     const chartHeight = compact ? 140 : height;
     const paddingTop = compact ? 40 : 55; // Plus d'espace pour les valeurs au-dessus des points
     const paddingBottom = 45; // Plus d'espace pour les dates
-    const paddingLeft = 75; // AUGMENTE ENCORE pour eviter chevauchement Y-axis et valeurs points
+    const paddingLeft = 90; // AUGMENTE ENCORE pour eviter chevauchement Y-axis et valeurs points
     const paddingRight = 30; // Augmenté pour les dernières valeurs
     const graphHeight = chartHeight - paddingTop - paddingBottom;
     const graphWidth = chartWidth - paddingLeft - paddingRight;
@@ -169,7 +169,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
     const chartHeight = SCREEN_HEIGHT * 0.6;
     const paddingTop = 60;
     const paddingBottom = 60;
-    const paddingLeft = 80; // Plus d'espace pour eviter chevauchement
+    const paddingLeft = 95; // Plus d'espace pour eviter chevauchement
     const paddingRight = 30;
     const graphHeight = chartHeight - paddingTop - paddingBottom;
     const graphWidth = chartWidth - paddingLeft - paddingRight;
@@ -273,7 +273,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
         {chartInfo.yLabels.map((label, i) => (
           <SvgText
             key={`ylabel-${i}`}
-            x={chartInfo.paddingLeft - 10}
+            x={chartInfo.paddingLeft - 20}
             y={label.y + 4}
             fill={complementaryColors.yAxisColor}
             fontSize={fontSize.yAxis}
@@ -360,19 +360,19 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   return (
     <View style={styles.container}>
       {/* Graphique principal - cliquable pour agrandir */}
-      <Pressable onPress={() => setIsFullscreen(true)}>
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          showsHorizontalScrollIndicator={true}
-          contentContainerStyle={styles.scrollContent}
-          bounces={false}
-          decelerationRate="fast"
-          style={styles.scrollView}
-        >
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        showsHorizontalScrollIndicator={true}
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+        decelerationRate="fast"
+        style={styles.scrollView}
+      >
+        <Pressable onPress={() => setIsFullscreen(true)}>
           {renderChart(chartData, false)}
-        </ScrollView>
-      </Pressable>
+        </Pressable>
+      </ScrollView>
 
       {/* Indicateur de scroll + tap pour agrandir */}
       {!compact && (
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   scrollContent: {
-    paddingRight: 15,
+    paddingHorizontal: 20,
   },
   emptyContainer: {
     borderRadius: 16,
