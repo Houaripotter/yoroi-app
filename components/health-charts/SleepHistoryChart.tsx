@@ -98,8 +98,9 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
       <View style={styles.chartContainer}>
         <BarChart
           data={chartData}
-          barWidth={Math.min(40, (SCREEN_WIDTH - SPACING.lg * 4 - 60) / data.length)}
-          spacing={8}
+          barWidth={32}
+          spacing={24}
+          initialSpacing={16}
           roundedTop
           roundedBottom
           hideRules
@@ -110,6 +111,7 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
           noOfSections={4}
           maxValue={10}
           height={180}
+          scrollable
         />
       </View>
 

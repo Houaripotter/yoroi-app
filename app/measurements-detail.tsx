@@ -205,15 +205,17 @@ export default function MeasurementsDetailScreen() {
                 Évolution en centimètres
               </Text>
             </View>
-            <SmoothLineChart
-              data={getMeasurementData('waist')}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color={MEASUREMENT_COLORS.waist}
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={getMeasurementData('waist')}
+                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('waist').length * 50)}
+                height={200}
+                color={MEASUREMENT_COLORS.waist}
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           </View>
         )}
 
@@ -231,15 +233,17 @@ export default function MeasurementsDetailScreen() {
                 Évolution en centimètres
               </Text>
             </View>
-            <SmoothLineChart
-              data={getMeasurementData('chest')}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color={MEASUREMENT_COLORS.chest}
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={getMeasurementData('chest')}
+                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('chest').length * 50)}
+                height={200}
+                color={MEASUREMENT_COLORS.chest}
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           </View>
         )}
 
@@ -257,15 +261,17 @@ export default function MeasurementsDetailScreen() {
                 Évolution en centimètres
               </Text>
             </View>
-            <SmoothLineChart
-              data={getMeasurementData('arms')}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color={MEASUREMENT_COLORS.arms}
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={getMeasurementData('arms')}
+                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('arms').length * 50)}
+                height={200}
+                color={MEASUREMENT_COLORS.arms}
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           </View>
         )}
 
@@ -283,15 +289,17 @@ export default function MeasurementsDetailScreen() {
                 Évolution en centimètres
               </Text>
             </View>
-            <SmoothLineChart
-              data={getMeasurementData('thighs')}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color={MEASUREMENT_COLORS.thighs}
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={getMeasurementData('thighs')}
+                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('thighs').length * 50)}
+                height={200}
+                color={MEASUREMENT_COLORS.thighs}
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           </View>
         )}
 
@@ -309,15 +317,17 @@ export default function MeasurementsDetailScreen() {
                 Évolution en centimètres
               </Text>
             </View>
-            <SmoothLineChart
-              data={getMeasurementData('hips')}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color={MEASUREMENT_COLORS.hips}
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={getMeasurementData('hips')}
+                width={Math.max(SCREEN_WIDTH - 72, getMeasurementData('hips').length * 50)}
+                height={200}
+                color={MEASUREMENT_COLORS.hips}
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           </View>
         )}
 

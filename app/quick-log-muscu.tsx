@@ -446,45 +446,47 @@ export default function QuickLogMuscuScreen() {
                   Progression sur 30 jours
                 </Text>
               </View>
-              <LineChart
-                data={{
-                  labels: [],
-                  datasets: [
-                    {
-                      data: progressHistory
-                        .reverse()
-                        .slice(-10)
-                        .map((log) => log.weight || 0),
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <LineChart
+                  data={{
+                    labels: [],
+                    datasets: [
+                      {
+                        data: progressHistory
+                          .reverse()
+                          .slice(-10)
+                          .map((log) => log.weight || 0),
+                      },
+                    ],
+                  }}
+                  width={Math.max(SCREEN_WIDTH - 64, progressHistory.length * 40)}
+                  height={120}
+                  chartConfig={{
+                    backgroundColor: colors.backgroundCard,
+                    backgroundGradientFrom: colors.backgroundCard,
+                    backgroundGradientTo: colors.backgroundCard,
+                    decimalPlaces: 1,
+                    color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
+                    labelColor: (opacity = 1) => colors.textMuted,
+                    style: {
+                      borderRadius: 12,
                     },
-                  ],
-                }}
-                width={SCREEN_WIDTH - 64}
-                height={120}
-                chartConfig={{
-                  backgroundColor: colors.backgroundCard,
-                  backgroundGradientFrom: colors.backgroundCard,
-                  backgroundGradientTo: colors.backgroundCard,
-                  decimalPlaces: 1,
-                  color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
-                  labelColor: (opacity = 1) => colors.textMuted,
-                  style: {
+                    propsForDots: {
+                      r: '4',
+                      strokeWidth: '2',
+                      stroke: colors.accent,
+                    },
+                  }}
+                  bezier
+                  style={{
+                    marginVertical: 8,
                     borderRadius: 12,
-                  },
-                  propsForDots: {
-                    r: '4',
-                    strokeWidth: '2',
-                    stroke: colors.accent,
-                  },
-                }}
-                bezier
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 12,
-                }}
-                withInnerLines={false}
-                withOuterLines={false}
-                withVerticalLabels={false}
-              />
+                  }}
+                  withInnerLines={false}
+                  withOuterLines={false}
+                  withVerticalLabels={false}
+                />
+              </ScrollView>
             </View>
           )}
         </View>

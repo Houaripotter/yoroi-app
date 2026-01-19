@@ -8,9 +8,10 @@
 
 import Foundation
 import WatchConnectivity
+import React
 
 @objc(WatchConnectivityBridge)
-class WatchConnectivityBridge: RCTEventEmitter {
+public class WatchConnectivityBridge: RCTEventEmitter {
 
     // MARK: - Singleton
     static let shared = WatchConnectivityBridge()

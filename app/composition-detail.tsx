@@ -304,16 +304,19 @@ export default function CompositionDetailScreen() {
           style={styles.chartContainer}
         >
           {chartData.length > 0 ? (
-            <SmoothLineChart
-              data={chartData}
-              height={CHART_HEIGHT}
-              color={activeMetric.color}
-              showGradient={true}
-              showDots={true}
-              curved={true}
-              thickness={2.5}
-              rulesColor={colors.border}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={chartData}
+                width={Math.max(SCREEN_WIDTH - 32, chartData.length * 50)}
+                height={CHART_HEIGHT}
+                color={activeMetric.color}
+                showGradient={true}
+                showDots={true}
+                curved={true}
+                thickness={2.5}
+                rulesColor={colors.border}
+              />
+            </ScrollView>
           ) : (
             <View style={styles.noDataContainer}>
               <Text style={styles.noDataText}>Aucune donnée disponible</Text>

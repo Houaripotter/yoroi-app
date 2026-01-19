@@ -15,7 +15,6 @@ import { scale, isIPad } from '@/constants/responsive';
 const { width } = Dimensions.get('window');
 // iPhone garde 16, iPad utilise scale(8)
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
-const CHART_WIDTH = width - CONTAINER_PADDING * 2;
 const CHART_HEIGHT = scale(200);
 const PADDING_LEFT = scale(35);
 const PADDING_RIGHT = scale(20);
@@ -148,9 +147,14 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
 
   const { thisWeekCount, thisMonthCount, thisYearCount, weekTopClubs, monthTopClubs, yearTopClubs } = getGlobalStats();
 
+  // Dynamic Chart Width
+  const FIXED_CHART_WIDTH = width - CONTAINER_PADDING * 2;
+  const ITEM_WIDTH = 60;
+  const chartWidth = Math.max(FIXED_CHART_WIDTH, weeklyData.length * ITEM_WIDTH);
+
   // Préparer les points pour le graphique
   const chartData = weeklyData.map((entry, index) => {
-    const x = PADDING_LEFT + ((CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(weeklyData.length - 1, 1);
+    const x = PADDING_LEFT + ((chartWidth - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(weeklyData.length - 1, 1);
     const y = CHART_HEIGHT - PADDING_BOTTOM - ((entry.count / maxCount) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM));
 
     return { ...entry, x, y };
@@ -347,150 +351,200 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
           </View>
         ) : (
           <View style={styles.chart}>
-            <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-              <Defs>
-                <LinearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={colors.accent} stopOpacity="0.4" />
-                  <Stop offset="0.5" stopColor={colors.accent} stopOpacity="0.2" />
-                  <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
-                </LinearGradient>
-              </Defs>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View>
+                <Svg width={chartWidth} height={CHART_HEIGHT}>
+                  <Defs>
+                    <LinearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={colors.accent} stopOpacity="0.4" />
+                      <Stop offset="0.5" stopColor={colors.accent} stopOpacity="0.2" />
+                      <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
+                    </LinearGradient>
+                  </Defs>
 
-              {/* Fond clair en mode sombre pour améliorer la visibilité */}
-              {isDark && (
-                <Rect
-                  x={PADDING_LEFT - 5}
-                  y={PADDING_TOP - 5}
-                  width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT + 10}
-                  height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
-                  rx={8}
-                  ry={8}
-                  fill="rgba(255, 255, 255, 0.06)"
-                />
-              )}
+                  {/* Fond clair en mode sombre pour améliorer la visibilité */}
+                  {isDark && (
+                    <Rect
+                      x={PADDING_LEFT - 5}
+                      y={PADDING_TOP - 5}
+                      width={chartWidth - PADDING_LEFT - PADDING_RIGHT + 10}
+                      height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
+                      rx={8}
+                      ry={8}
+                      fill="rgba(255, 255, 255, 0.06)"
+                    />
+                  )}
 
-              {/* Zones d'intensité d'entraînement (en fond) */}
-              {(() => {
-                // Définir les zones d'entraînement recommandées
-                const optimalMin = 3; // Minimum recommandé: 3 entraînements/semaine
-                const optimalMax = 5; // Maximum recommandé: 5 entraînements/semaine
-                const max = maxCount;
+                  {/* Zones d'intensité d'entraînement (en fond) */}
+                  {(() => {
+                    // Définir les zones d'entraînement recommandées
+                    const optimalMin = 3; // Minimum recommandé: 3 entraînements/semaine
+                    const optimalMax = 5; // Maximum recommandé: 5 entraînements/semaine
+                    const max = maxCount;
 
-                const getYPosition = (count: number) => {
-                  return PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * (1 - count / max));
-                };
+                    const getYPosition = (count: number) => {
+                      return PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * (1 - count / max));
+                    };
 
-                const yOptimalMax = getYPosition(optimalMax);
-                const yOptimalMin = getYPosition(optimalMin);
-                const yTop = PADDING_TOP;
-                const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
+                    const yOptimalMax = getYPosition(optimalMax);
+                    const yOptimalMin = getYPosition(optimalMin);
+                    const yTop = PADDING_TOP;
+                    const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
 
-                return (
-                  <>
-                    {/* Zone excellente (>5 entraînements) */}
-                    {optimalMax < max && (
+                    return (
+                      <>
+                        {/* Zone excellente (>5 entraînements) */}
+                        {optimalMax < max && (
+                          <Rect
+                            x={PADDING_LEFT}
+                            y={yTop}
+                            width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                            height={Math.max(0, yOptimalMax - yTop)}
+                            fill="#3B82F6"
+                            opacity={0.08}
+                          />
+                        )}
+
+                        {/* Zone optimale (3-5 entraînements) */}
+                        <Rect
+                          x={PADDING_LEFT}
+                          y={Math.max(yTop, yOptimalMax)}
+                          width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                          height={Math.max(0, Math.min(yBottom, yOptimalMin) - Math.max(yTop, yOptimalMax))}
+                          fill="#10B981"
+                          opacity={0.12}
+                        />
+
+                        {/* Zone faible (<3 entraînements) */}
+                        <Rect
+                          x={PADDING_LEFT}
+                          y={Math.max(yTop, yOptimalMin)}
+                          width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                          height={Math.max(0, yBottom - Math.max(yTop, yOptimalMin))}
+                          fill="#F59E0B"
+                          opacity={0.08}
+                        />
+                      </>
+                    );
+                  })()}
+
+                  {/* Lignes de grille horizontales */}
+                  {[0, 1, 2, 3, 4].map((i) => {
+                    const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
+                    return (
                       <Rect
+                        key={i}
                         x={PADDING_LEFT}
-                        y={yTop}
-                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                        height={Math.max(0, yOptimalMax - yTop)}
-                        fill="#3B82F6"
-                        opacity={0.08}
+                        y={y}
+                        width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                        height={1}
+                        fill={colors.border}
+                        opacity={0.3}
                       />
-                    )}
+                    );
+                  })}
 
-                    {/* Zone optimale (3-5 entraînements) */}
-                    <Rect
-                      x={PADDING_LEFT}
-                      y={Math.max(yTop, yOptimalMax)}
-                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                      height={Math.max(0, Math.min(yBottom, yOptimalMin) - Math.max(yTop, yOptimalMax))}
-                      fill="#10B981"
-                      opacity={0.12}
-                    />
-
-                    {/* Zone faible (<3 entraînements) */}
-                    <Rect
-                      x={PADDING_LEFT}
-                      y={Math.max(yTop, yOptimalMin)}
-                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                      height={Math.max(0, yBottom - Math.max(yTop, yOptimalMin))}
-                      fill="#F59E0B"
-                      opacity={0.08}
-                    />
-                  </>
-                );
-              })()}
-
-              {/* Lignes de grille horizontales */}
-              {[0, 1, 2, 3, 4].map((i) => {
-                const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
-                return (
-                  <Rect
-                    key={i}
-                    x={PADDING_LEFT}
-                    y={y}
-                    width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                    height={1}
-                    fill={colors.border}
-                    opacity={0.3}
+                  {/* Zone sous la courbe avec gradient */}
+                  <Path
+                    d={createAreaPath()}
+                    fill="url(#activityGradient)"
                   />
-                );
-              })}
 
-              {/* Zone sous la courbe avec gradient */}
-              <Path
-                d={createAreaPath()}
-                fill="url(#activityGradient)"
-              />
-
-              {/* Ligne de tendance */}
-              <Path
-                d={createPath()}
-                stroke={colors.accent}
-                strokeWidth={4}
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-
-              {/* Points sur la courbe */}
-              {chartData.map((point, index) => (
-                <React.Fragment key={index}>
-                  {/* Cercle extérieur blanc */}
-                  <Circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={8}
-                    fill="#FFFFFF"
-                    opacity={0.95}
+                  {/* Ligne de tendance */}
+                  <Path
+                    d={createPath()}
+                    stroke={colors.accent}
+                    strokeWidth={4}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                  {/* Cercle intérieur avec couleur d'accent */}
-                  <Circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={5}
-                    fill={colors.accent}
-                    onPress={() => {
-                      setSelectedPoint({
-                        index,
-                        count: point.count,
-                        weekStart: point.weekStart,
-                        weekEnd: point.weekEnd,
-                        x: point.x,
-                        y: point.y,
-                      });
 
-                      setTimeout(() => {
-                        setSelectedPoint(null);
-                      }, 3000);
-                    }}
-                  />
-                </React.Fragment>
-              ))}
-            </Svg>
+                  {/* Points sur la courbe */}
+                  {chartData.map((point, index) => (
+                    <React.Fragment key={index}>
+                      {/* Cercle extérieur blanc */}
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={8}
+                        fill="#FFFFFF"
+                        opacity={0.95}
+                      />
+                      {/* Cercle intérieur avec couleur d'accent */}
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={5}
+                        fill={colors.accent}
+                        onPress={() => {
+                          setSelectedPoint({
+                            index,
+                            count: point.count,
+                            weekStart: point.weekStart,
+                            weekEnd: point.weekEnd,
+                            x: point.x,
+                            y: point.y,
+                          });
 
-            {/* Labels Y (nombre d'entraînements) */}
+                          setTimeout(() => {
+                            setSelectedPoint(null);
+                          }, 3000);
+                        }}
+                      />
+                    </React.Fragment>
+                  ))}
+                </Svg>
+
+                {/* Labels X (dates de semaines) */}
+                <View style={[styles.xLabelsContainer, { width: chartWidth }]}>
+                  {chartData.map((point, index) => (
+                    <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
+                      <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
+                        {format(point.weekStart, 'd MMM', { locale: fr })}
+                      </Text>
+                      <Text style={[styles.xLabelSub, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
+                        S{format(point.weekStart, 'ww', { locale: fr })}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {/* Valeurs au-dessus des points */}
+                {chartData.map((point, index) => (
+                  <View key={index} style={[styles.valueLabel, { left: point.x - 15, top: point.y - 28 }]}>
+                    <Text style={[styles.valueLabelText, { color: isDark ? colors.accent : colors.textPrimary }]}>
+                      {point.count}
+                    </Text>
+                  </View>
+                ))}
+
+                {/* Tooltip */}
+                {selectedPoint && (
+                  <View
+                    style={[
+                      styles.tooltip,
+                      {
+                        left: selectedPoint.x - 60,
+                        top: selectedPoint.y - 85,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
+                      <Text style={styles.tooltipValue}>
+                        {selectedPoint.count} {selectedPoint.count > 1 ? 'entraînements' : 'entraînement'}
+                      </Text>
+                      <Text style={styles.tooltipDate}>
+                        {format(selectedPoint.weekStart, 'd MMM', { locale: fr })} - {format(selectedPoint.weekEnd, 'd MMM', { locale: fr })}
+                      </Text>
+                    </View>
+                    <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Labels Y (nombre d'entraînements) - Fixed position outside ScrollView */}
             <View style={styles.yLabelsContainer}>
               {[maxCount, Math.floor(maxCount * 0.75), Math.floor(maxCount * 0.5), Math.floor(maxCount * 0.25), 0].map((value, index) => (
                 <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
@@ -498,52 +552,6 @@ export const ActivityStats: React.FC<ActivityStatsProps> = ({ data }) => {
                 </Text>
               ))}
             </View>
-
-            {/* Labels X (dates de semaines) */}
-            <View style={styles.xLabelsContainer}>
-              {chartData.map((point, index) => (
-                <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                  <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
-                    {format(point.weekStart, 'd MMM', { locale: fr })}
-                  </Text>
-                  <Text style={[styles.xLabelSub, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
-                    S{format(point.weekStart, 'ww', { locale: fr })}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Valeurs au-dessus des points */}
-            {chartData.map((point, index) => (
-              <View key={index} style={[styles.valueLabel, { left: point.x - 15, top: point.y - 28 }]}>
-                <Text style={[styles.valueLabelText, { color: isDark ? colors.accent : colors.textPrimary }]}>
-                  {point.count}
-                </Text>
-              </View>
-            ))}
-
-            {/* Tooltip */}
-            {selectedPoint && (
-              <View
-                style={[
-                  styles.tooltip,
-                  {
-                    left: selectedPoint.x - 60,
-                    top: selectedPoint.y - 85,
-                  },
-                ]}
-              >
-                <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
-                  <Text style={styles.tooltipValue}>
-                    {selectedPoint.count} {selectedPoint.count > 1 ? 'entraînements' : 'entraînement'}
-                  </Text>
-                  <Text style={styles.tooltipDate}>
-                    {format(selectedPoint.weekStart, 'd MMM', { locale: fr })} - {format(selectedPoint.weekEnd, 'd MMM', { locale: fr })}
-                  </Text>
-                </View>
-                <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
-              </View>
-            )}
           </View>
         )}
       </TouchableOpacity>

@@ -11,10 +11,8 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		3ED2D43AB21FD818ED5E03CE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
 		498511F0B061E3AE8C25AE87 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AAAD64A3063ADB127BA85437 /* libPods-Yoroi.a */; };
-		5A4FEF97B9E1CD1264B36DF9 /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */; };
 		84E5E72A594D6616984C503F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */; };
 		97493F412F1D10E400CC3C63 /* YoroiWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B64A9174D61CA6826A1941F4 /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CB2E1F97A908BAB7451766D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -72,19 +70,15 @@
 		AAAD64A3063ADB127BA85437 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
 		D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Yoroi/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
-		F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			explicitFileTypes = {
 			};
 			explicitFolders = (
@@ -94,8 +88,6 @@
 		};
 		97493F522F1D10E500CC3C63 /* YoroiWatch Watch AppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			explicitFileTypes = {
 			};
 			explicitFolders = (
@@ -105,8 +97,6 @@
 		};
 		97493F5C2F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			explicitFileTypes = {
 			};
 			explicitFolders = (
@@ -159,8 +149,6 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */,
-				F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */,
-				BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */,
 			);
 			name = Yoroi;
 			sourceTree = "<group>";
@@ -590,8 +578,6 @@
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				84E5E72A594D6616984C503F /* ExpoModulesProvider.swift in Sources */,
-				B64A9174D61CA6826A1941F4 /* WatchConnectivityBridge.swift in Sources */,
-				5A4FEF97B9E1CD1264B36DF9 /* WatchConnectivityBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -665,7 +651,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -673,7 +659,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi;
-				PRODUCT_NAME = Yoroi;
+				PRODUCT_NAME = "Yoroi";
 				SWIFT_OBJC_BRIDGING_HEADER = "Yoroi/Yoroi-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -698,7 +684,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -706,7 +692,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi;
-				PRODUCT_NAME = Yoroi;
+				PRODUCT_NAME = "Yoroi";
 				SWIFT_OBJC_BRIDGING_HEADER = "Yoroi/Yoroi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -847,7 +833,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = "YoroiWatch Watch App/YoroiWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
@@ -864,7 +850,7 @@
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -880,7 +866,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Debug;
@@ -901,7 +887,7 @@
 				CODE_SIGN_ENTITLEMENTS = "YoroiWatch Watch App/YoroiWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_PREVIEWS = YES;
@@ -918,7 +904,7 @@
 					"@executable_path/Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watchkitapp;
@@ -932,7 +918,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
 			name = Release;
@@ -949,14 +935,14 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				INFOPLIST_KEY_CFBundleDisplayName = YoroiWatch;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -967,6 +953,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -983,14 +970,14 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = LTMAN6D7GZ;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				INFOPLIST_KEY_CFBundleDisplayName = YoroiWatch;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.watch;
@@ -999,6 +986,7 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -1036,7 +1024,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YoroiWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YoroiWatch Watch App";
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
@@ -1075,7 +1063,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YoroiWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/YoroiWatch Watch App";
 				WATCHOS_DEPLOYMENT_TARGET = 10.0;
 			};
@@ -1114,7 +1102,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = "YoroiWatch Watch App";
 				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};
@@ -1152,7 +1140,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = "YoroiWatch Watch App";
 				WATCHOS_DEPLOYMENT_TARGET = 9.0;
 			};

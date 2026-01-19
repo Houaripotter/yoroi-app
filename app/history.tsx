@@ -680,10 +680,10 @@ export default function HistoryScreen() {
                       data={compositionChartData}
                       width={screenWidth - 110}
                       height={200}
-                      barWidth={Math.max(20, (screenWidth - 150) / compositionChartData.length)}
-                      spacing={Math.max(10, (screenWidth - 150) / compositionChartData.length / 3)}
-                      initialSpacing={15}
-                      endSpacing={15}
+                      barWidth={32}
+                      spacing={24}
+                      initialSpacing={16}
+                      endSpacing={16}
                       isAnimated
                       animationDuration={800}
                       rulesColor="rgba(255,255,255,0.2)"
@@ -697,6 +697,7 @@ export default function HistoryScreen() {
                       showGradient={false}
                       roundedTop
                       roundedBottom
+                      scrollable
                     />
                   </View>
                 ) : (
@@ -751,9 +752,9 @@ export default function HistoryScreen() {
                       hideDataPoints={false}
                       dataPointsColor={MEASUREMENT_METRICS.find(m => m.key === selectedMeasurement)?.color || '#2563EB'}
                       dataPointsRadius={4}
-                      spacing={Math.max(35, (screenWidth - 120) / Math.max(measurementChartData.length, 2))}
-                      initialSpacing={15}
-                      endSpacing={15}
+                      spacing={50}
+                      initialSpacing={20}
+                      endSpacing={20}
                       isAnimated
                       animationDuration={800}
                       rulesColor={themeColors.border}
@@ -770,6 +771,7 @@ export default function HistoryScreen() {
                       startOpacity={0.6}
                       endOpacity={0.1}
                       curved
+                      scrollable
                     />
                   ) : (
                     <View style={styles.emptyChartContainer}>
@@ -818,9 +820,9 @@ export default function HistoryScreen() {
                               hideDataPoints={index > 0}
                               dataPointsColor={item.metric.color}
                               dataPointsRadius={4}
-                              spacing={Math.max(35, (screenWidth - 120) / Math.max(maxDataLength, 2))}
-                              initialSpacing={15}
-                              endSpacing={15}
+                              spacing={50}
+                              initialSpacing={20}
+                              endSpacing={20}
                               isAnimated
                               animationDuration={800}
                               rulesColor={index === 0 ? themeColors.border : "transparent"}
@@ -839,6 +841,7 @@ export default function HistoryScreen() {
                                 pointerStripColor: item.metric.color,
                                 pointerStripWidth: 1,
                               }}
+                              scrollable
                             />
                           </View>
                         );

@@ -103,8 +103,9 @@ export function CaloriesHistoryChart({ data, colors, onPress }: CaloriesHistoryC
       <View style={styles.chartContainer}>
         <BarChart
           data={chartData}
-          barWidth={Math.min(40, (SCREEN_WIDTH - SPACING.lg * 4 - 60) / data.length)}
-          spacing={8}
+          barWidth={32}
+          spacing={24}
+          initialSpacing={16}
           roundedTop
           roundedBottom
           hideRules
@@ -115,6 +116,7 @@ export function CaloriesHistoryChart({ data, colors, onPress }: CaloriesHistoryC
           noOfSections={4}
           maxValue={Math.ceil(maxValue / 500) * 500}
           height={180}
+          scrollable
         />
       </View>
 

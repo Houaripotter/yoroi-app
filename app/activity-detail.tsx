@@ -209,15 +209,17 @@ export default function ActivityDetailScreen() {
             </Text>
           </View>
           {volumeData.length > 0 ? (
-            <SmoothLineChart
-              data={volumeData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#10B981"
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={volumeData}
+                width={Math.max(SCREEN_WIDTH - 72, volumeData.length * 50)}
+                height={200}
+                color="#10B981"
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -241,15 +243,17 @@ export default function ActivityDetailScreen() {
             </Text>
           </View>
           {frequencyData.length > 0 ? (
-            <SmoothLineChart
-              data={frequencyData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#F59E0B"
-              showGrid
-              showDots
-              animated
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={frequencyData}
+                width={Math.max(SCREEN_WIDTH - 72, frequencyData.length * 50)}
+                height={200}
+                color="#F59E0B"
+                showGrid
+                showDots
+                animated
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -273,16 +277,18 @@ export default function ActivityDetailScreen() {
             </Text>
           </View>
           {intensityData.length > 0 ? (
-            <SmoothLineChart
-              data={intensityData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#EF4444"
-              showGrid
-              showDots
-              animated
-              maxValue={10}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={intensityData}
+                width={Math.max(SCREEN_WIDTH - 72, intensityData.length * 50)}
+                height={200}
+                color="#EF4444"
+                showGrid
+                showDots
+                animated
+                maxValue={10}
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>

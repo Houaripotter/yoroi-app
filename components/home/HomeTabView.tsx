@@ -282,6 +282,9 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
             onAddWeight={onAddWeight}
             refreshTrigger={refreshTrigger}
             onAddWater={onAddWater}
+            bodyFat={bodyFat}
+            muscleMass={muscleMass}
+            waterPercentage={waterPercentage}
           />
         );
       case 'tools':

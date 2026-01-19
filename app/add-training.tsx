@@ -763,20 +763,8 @@ export default function AddTrainingScreen() {
         });
         router.back();
       } else {
-        // D'abord afficher "Enregistrement validé", puis le modal de partage
-        const sportNames = selectedSports.map(s => getSportName(s)).join(' + ');
-        showPopup(
-          'Enregistrement valide',
-          `${sportNames} enregistre avec succes !`,
-          [{
-            text: 'OK',
-            style: 'primary',
-            onPress: () => {
-              // Afficher le modal de partage
-              setShowShareModal(true);
-            }
-          }]
-        );
+        // Afficher directement le modal de partage qui confirme aussi l'enregistrement
+        setShowShareModal(true);
       }
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -1403,8 +1391,8 @@ export default function AddTrainingScreen() {
 
         {/* DURÉE ESTIMÉE */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Duree (minutes)</Text>
-        <View style={styles.durationContainer}>
-          {[30, 45, 60, 90, 120].map((d) => (
+        <View style={[styles.durationContainer, { flexWrap: 'wrap' }]}>
+          {[30, 45, 60, 90].map((d) => (
             <TouchableOpacity
               key={d}
               style={[
@@ -1425,31 +1413,50 @@ export default function AddTrainingScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
 
-        {/* DURÉE PERSONNALISÉE */}
-        <View style={styles.customDurationContainer}>
-          <Text style={[styles.customDurationLabel, { color: colors.textMuted }]}>ou ta duree :</Text>
-          <TextInput
+          {/* CHAMP LIBRE INTÉGRÉ */}
+          <View
             style={[
-              styles.customDurationInput,
-              { color: colors.textPrimary, backgroundColor: colors.card, borderColor: colors.border }
+              styles.durationItem,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                paddingVertical: 0,
+                paddingHorizontal: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                minWidth: 80,
+                justifyContent: 'center'
+              },
+              (![30, 45, 60, 90].includes(duration)) && { borderColor: colors.accent, backgroundColor: colors.accent + '10' }
             ]}
-            value={duration && ![30, 45, 60, 90, 120].includes(duration) ? duration.toString() : ''}
-            onChangeText={(text) => {
-              const num = parseInt(text);
-              if (!isNaN(num) && num > 0 && num <= 480) {
-                setDuration(num);
-              } else if (text === '') {
-                setDuration(60);
-              }
-            }}
-            placeholder="00"
-            placeholderTextColor={colors.textMuted}
-            keyboardType="number-pad"
-            maxLength={3}
-          />
-          <Text style={[styles.customDurationUnit, { color: colors.textMuted }]}>min</Text>
+          >
+            <TextInput
+              style={[
+                styles.durationText,
+                {
+                  color: (![30, 45, 60, 90].includes(duration)) ? colors.accent : colors.textPrimary,
+                  fontWeight: '600',
+                  textAlign: 'right',
+                  minWidth: 30,
+                  paddingVertical: 12,
+                  height: '100%'
+                }
+              ]}
+              value={(![30, 45, 60, 90].includes(duration)) ? duration.toString() : ''}
+              placeholder="..."
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              maxLength={3}
+              onChangeText={(text) => {
+                const num = parseInt(text);
+                if (!isNaN(num) && num > 0) {
+                  setDuration(num);
+                }
+              }}
+            />
+            <Text style={[styles.durationText, { color: colors.textMuted, fontSize: 13, marginLeft: 4, fontWeight: '400' }]}>min</Text>
+          </View>
         </View>
 
         <Text style={[styles.endTimeText, { color: colors.textMuted }]}>
@@ -1458,96 +1465,9 @@ export default function AddTrainingScreen() {
           </>
         )}
 
-        {/* MUSCLES (si musculation) */}
-        {showMuscles && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Muscles travailles</Text>
-            <View style={styles.musclesContainer}>
-              {MUSCLES.map((muscle) => (
-                <TouchableOpacity
-                  key={muscle.id}
-                  style={[
-                    styles.muscleItem,
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                    selectedMuscles.includes(muscle.id) && { borderColor: colors.gold, backgroundColor: colors.goldMuted },
-                  ]}
-                  onPress={() => toggleMuscle(muscle.id)}
-                >
-                  {selectedMuscles.includes(muscle.id) && (
-                    <Check size={14} color={colors.gold} />
-                  )}
-                  <Text
-                    style={[
-                      styles.muscleName,
-                      { color: colors.textSecondary },
-                      selectedMuscles.includes(muscle.id) && { color: colors.gold },
-                    ]}
-                  >
-                    {muscle.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
-        )}
-
-        {/* EXERCICES (si musculation) */}
-        {showMuscles && (
-          <>
-            <View style={styles.exercisesHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>Exercices</Text>
-              <TouchableOpacity
-                style={[styles.addExerciseButton, { backgroundColor: colors.gold }]}
-                onPress={() => setShowExerciseModal(true)}
-              >
-                <Plus size={16} color="#FFF" strokeWidth={3} />
-                <Text style={styles.addExerciseText}>Ajouter</Text>
-              </TouchableOpacity>
-            </View>
-
-            {exercises.length > 0 && (
-              <View style={styles.exercisesList}>
-                {exercises.map((exercise, index) => (
-                  <View
-                    key={index}
-                    style={[styles.exerciseItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  >
-                    <View style={styles.exerciseInfo}>
-                      <Text style={[styles.exerciseName, { color: colors.textPrimary }]}>
-                        {exercise.name}
-                      </Text>
-                      <Text style={[styles.exerciseDetails, { color: colors.textMuted }]}>
-                        {exercise.sets} séries × {exercise.reps} reps @ {exercise.weight}kg
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => setExercises(prev => prev.filter((_, i) => i !== index))}
-                      style={styles.removeExerciseButton}
-                    >
-                      <X size={18} color={colors.textMuted} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-
-        {/* NOTES - Seulement si sport sélectionné */}
+        {/* NOTE TECHNIQUE - Seulement si sport sélectionné */}
         {selectedSports.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notes (optionnel)</Text>
-            <TextInput
-              style={[styles.notesInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.textPrimary }]}
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="Comment s'est passe l'entrainement ?"
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={3}
-            />
-
-            {/* NOTE TECHNIQUE */}
             <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
               <View style={styles.techniqueSectionHeader}>
                 <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>Note ta technique</Text>

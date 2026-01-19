@@ -13,7 +13,6 @@ import { getHistoryDays, scale, scaleModerate, isIPad } from '@/constants/respon
 const { width } = Dimensions.get('window');
 // iPhone garde le padding original de 16, iPad utilise scale(8)
 const CONTAINER_PADDING = isIPad() ? scale(8) : 16;
-const CHART_WIDTH = width - CONTAINER_PADDING * 2;
 const CHART_HEIGHT = scale(240);
 const PADDING_LEFT = scale(70); // Largement augmenté pour éviter le chevauchement avec les labels Y
 const PADDING_RIGHT = scale(25);
@@ -73,6 +72,11 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
   const filteredData = getFilteredData();
 
+  // Dynamic Chart Width
+  const FIXED_CHART_WIDTH = width - CONTAINER_PADDING * 2;
+  const ITEM_WIDTH = 40;
+  const chartWidth = Math.max(FIXED_CHART_WIDTH, filteredData.length * ITEM_WIDTH);
+
   // Calculer les stats
   const getStats = () => {
     if (filteredData.length === 0) {
@@ -94,7 +98,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
 
   // Préparer les points pour le graphique
   const chartData = filteredData.map((entry, index) => {
-    const x = PADDING_LEFT + ((CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(filteredData.length - 1, 1);
+    const x = PADDING_LEFT + ((chartWidth - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(filteredData.length - 1, 1);
 
     // Calculer Y avec une marge de 5% en haut et en bas
     const range = stats.max - stats.min;
@@ -349,170 +353,252 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
           </View>
         ) : (
           <View style={styles.chart}>
-            <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-              <Defs>
-                <LinearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={colors.accent} stopOpacity="0.4" />
-                  <Stop offset="0.5" stopColor={colors.accent} stopOpacity="0.2" />
-                  <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
-                </LinearGradient>
-              </Defs>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View>
+                <Svg width={chartWidth} height={CHART_HEIGHT}>
+                  <Defs>
+                    <LinearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                      <Stop offset="0" stopColor={colors.accent} stopOpacity="0.4" />
+                      <Stop offset="0.5" stopColor={colors.accent} stopOpacity="0.2" />
+                      <Stop offset="1" stopColor={colors.accent} stopOpacity="0.02" />
+                    </LinearGradient>
+                  </Defs>
 
-              {/* Fond clair en mode sombre pour améliorer la visibilité du graphique */}
-              {isDark && (
-                <Rect
-                  x={PADDING_LEFT - 5}
-                  y={PADDING_TOP - 5}
-                  width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT + 10}
-                  height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
-                  rx={8}
-                  ry={8}
-                  fill="rgba(255, 255, 255, 0.06)"
-                />
-              )}
-
-              {/* Zones de poids colorées (en fond) */}
-              {(() => {
-                const range = stats.max - stats.min;
-                const paddedMin = stats.min - range * 0.05;
-                const paddedMax = stats.max + range * 0.05;
-                const paddedRange = paddedMax - paddedMin || 1;
-
-                // Calculer les positions Y des zones autour de l'objectif
-                const goal = goalWeight ?? stats.end;
-                const zoneOptimalMin = goal - 2; // -2kg de l'objectif
-                const zoneOptimalMax = goal + 2; // +2kg de l'objectif
-
-                const getYPosition = (weight: number) => {
-                  return CHART_HEIGHT - PADDING_BOTTOM - ((weight - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
-                };
-
-                const yOptimalMin = getYPosition(zoneOptimalMax);
-                const yOptimalMax = getYPosition(zoneOptimalMin);
-                const yTop = PADDING_TOP;
-                const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
-
-                return (
-                  <>
-                    {/* Zone au-dessus de l'optimal (surpoids potentiel) */}
-                    {yOptimalMin > yTop && (
-                      <Rect
-                        x={PADDING_LEFT}
-                        y={yTop}
-                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                        height={Math.max(0, yOptimalMin - yTop)}
-                        fill="#F59E0B"
-                        opacity={0.08}
-                      />
-                    )}
-
-                    {/* Zone optimale (±2kg de l'objectif) */}
+                  {/* Fond clair en mode sombre pour améliorer la visibilité du graphique */}
+                  {isDark && (
                     <Rect
-                      x={PADDING_LEFT}
-                      y={Math.max(yTop, yOptimalMin)}
-                      width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                      height={Math.max(0, Math.min(yBottom, yOptimalMax) - Math.max(yTop, yOptimalMin))}
-                      fill="#10B981"
-                      opacity={0.12}
+                      x={PADDING_LEFT - 5}
+                      y={PADDING_TOP - 5}
+                      width={chartWidth - PADDING_LEFT - PADDING_RIGHT + 10}
+                      height={CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM + 10}
+                      rx={8}
+                      ry={8}
+                      fill="rgba(255, 255, 255, 0.06)"
                     />
+                  )}
 
-                    {/* Zone en-dessous de l'optimal */}
-                    {yOptimalMax < yBottom && (
+                  {/* Zones de poids colorées (en fond) */}
+                  {(() => {
+                    const range = stats.max - stats.min;
+                    const paddedMin = stats.min - range * 0.05;
+                    const paddedMax = stats.max + range * 0.05;
+                    const paddedRange = paddedMax - paddedMin || 1;
+
+                    // Calculer les positions Y des zones autour de l'objectif
+                    const goal = goalWeight ?? stats.end;
+                    const zoneOptimalMin = goal - 2; // -2kg de l'objectif
+                    const zoneOptimalMax = goal + 2; // +2kg de l'objectif
+
+                    const getYPosition = (weight: number) => {
+                      return CHART_HEIGHT - PADDING_BOTTOM - ((weight - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
+                    };
+
+                    const yOptimalMin = getYPosition(zoneOptimalMax);
+                    const yOptimalMax = getYPosition(zoneOptimalMin);
+                    const yTop = PADDING_TOP;
+                    const yBottom = CHART_HEIGHT - PADDING_BOTTOM;
+
+                    return (
+                      <>
+                        {/* Zone au-dessus de l'optimal (surpoids potentiel) */}
+                        {yOptimalMin > yTop && (
+                          <Rect
+                            x={PADDING_LEFT}
+                            y={yTop}
+                            width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                            height={Math.max(0, yOptimalMin - yTop)}
+                            fill="#F59E0B"
+                            opacity={0.08}
+                          />
+                        )}
+
+                        {/* Zone optimale (±2kg de l'objectif) */}
+                        <Rect
+                          x={PADDING_LEFT}
+                          y={Math.max(yTop, yOptimalMin)}
+                          width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                          height={Math.max(0, Math.min(yBottom, yOptimalMax) - Math.max(yTop, yOptimalMin))}
+                          fill="#10B981"
+                          opacity={0.12}
+                        />
+
+                        {/* Zone en-dessous de l'optimal */}
+                        {yOptimalMax < yBottom && (
+                          <Rect
+                            x={PADDING_LEFT}
+                            y={Math.max(yTop, yOptimalMax)}
+                            width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                            height={Math.max(0, yBottom - Math.max(yTop, yOptimalMax))}
+                            fill="#F59E0B"
+                            opacity={0.08}
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {/* Lignes de grille horizontales */}
+                  {[0, 1, 2, 3, 4].map((i) => {
+                    const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
+                    return (
                       <Rect
+                        key={i}
                         x={PADDING_LEFT}
-                        y={Math.max(yTop, yOptimalMax)}
-                        width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                        height={Math.max(0, yBottom - Math.max(yTop, yOptimalMax))}
-                        fill="#F59E0B"
-                        opacity={0.08}
+                        y={y}
+                        width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                        height={1}
+                        fill={colors.border}
+                        opacity={0.3}
                       />
-                    )}
-                  </>
-                );
-              })()}
+                    );
+                  })}
 
-              {/* Lignes de grille horizontales */}
-              {[0, 1, 2, 3, 4].map((i) => {
-                const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
-                return (
-                  <Rect
-                    key={i}
-                    x={PADDING_LEFT}
-                    y={y}
-                    width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                    height={1}
-                    fill={colors.border}
-                    opacity={0.3}
-                  />
-                );
-              })}
+                  {/* Ligne d'objectif en pointillé */}
+                  {stats.end > 0 && (
+                    <>
+                      <Path
+                        d={`M ${PADDING_LEFT} ${goalLineY} L ${chartWidth - PADDING_RIGHT} ${goalLineY}`}
+                        stroke="#3B82F6"
+                        strokeWidth={2}
+                        strokeDasharray="6 4"
+                        fill="none"
+                        opacity={0.7}
+                      />
+                    </>
+                  )}
 
-              {/* Ligne d'objectif en pointillé */}
-              {stats.end > 0 && (
-                <>
+                  {/* Zone sous la courbe avec gradient */}
                   <Path
-                    d={`M ${PADDING_LEFT} ${goalLineY} L ${CHART_WIDTH - PADDING_RIGHT} ${goalLineY}`}
-                    stroke="#3B82F6"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
+                    d={createAreaPath()}
+                    fill="url(#lineGradient)"
+                  />
+
+                  {/* Ligne de tendance */}
+                  <Path
+                    d={createPath()}
+                    stroke={colors.accent}
+                    strokeWidth={4}
                     fill="none"
-                    opacity={0.7}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                </>
-              )}
 
-              {/* Zone sous la courbe avec gradient */}
-              <Path
-                d={createAreaPath()}
-                fill="url(#lineGradient)"
-              />
+                  {/* Points sur la courbe - Design moderne */}
+                  {chartData.map((point, index) => (
+                    <React.Fragment key={index}>
+                      {/* Cercle extérieur avec ombre */}
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={8}
+                        fill="#FFFFFF"
+                        opacity={0.95}
+                      />
+                      {/* Cercle intérieur avec couleur d'accent */}
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={5}
+                        fill={colors.accent}
+                        onPress={() => {
+                          setSelectedPoint({
+                            index,
+                            weight: point.weight,
+                            date: point.date,
+                            x: point.x,
+                            y: point.y,
+                          });
 
-              {/* Ligne de tendance */}
-              <Path
-                d={createPath()}
-                stroke={colors.accent}
-                strokeWidth={4}
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+                          setTimeout(() => {
+                            setSelectedPoint(null);
+                          }, 3000);
+                        }}
+                      />
+                    </React.Fragment>
+                  ))}
+                </Svg>
 
-              {/* Points sur la courbe - Design moderne */}
-              {chartData.map((point, index) => (
-                <React.Fragment key={index}>
-                  {/* Cercle extérieur avec ombre */}
-                  <Circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={8}
-                    fill="#FFFFFF"
-                    opacity={0.95}
-                  />
-                  {/* Cercle intérieur avec couleur d'accent */}
-                  <Circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={5}
-                    fill={colors.accent}
-                    onPress={() => {
-                      setSelectedPoint({
-                        index,
-                        weight: point.weight,
-                        date: point.date,
-                        x: point.x,
-                        y: point.y,
-                      });
+                {/* Labels X (dates) */}
+                <View style={[styles.xLabelsContainer, { width: chartWidth }]}>
+                  {chartData.filter((_, index) => {
+                    // Afficher max 5 dates
+                    const step = Math.max(1, Math.floor(chartData.length / 5));
+                    return index % step === 0 || index === chartData.length - 1;
+                  }).map((point, index) => (
+                    <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
+                      <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
+                        {format(parseISO(point.date), 'd MMM', { locale: fr })}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
 
-                      setTimeout(() => {
-                        setSelectedPoint(null);
-                      }, 3000);
-                    }}
-                  />
-                </React.Fragment>
-              ))}
-            </Svg>
+                {/* Valeurs au-dessus des points - Design amélioré */}
+                {chartData.filter((_, index) => {
+                  // Afficher tous les points si moins de 7, sinon espacer intelligemment
+                  if (chartData.length <= 7) return true;
+                  const step = Math.max(1, Math.floor(chartData.length / 7));
+                  return index % step === 0 || index === chartData.length - 1;
+                }).map((point, idx) => {
+                  // Calculer la position X pour éviter le chevauchement avec l'axe Y
+                  const labelWidth = 60; // Largeur du badge augmentée
+                  let leftPos = point.x - labelWidth / 2;
 
-            {/* Labels Y */}
+                  // S'assurer que le badge ne dépasse pas sur l'axe Y (avec marge de sécurité)
+                  if (leftPos < PADDING_LEFT + 5) {
+                    leftPos = PADDING_LEFT + 5;
+                  }
+                  // S'assurer que le badge ne dépasse pas à droite
+                  if (leftPos + labelWidth > chartWidth - 10) {
+                    leftPos = chartWidth - labelWidth - 10;
+                  }
+
+                  return (
+                    <View key={idx} style={[styles.valueLabel, { left: leftPos, top: point.y - 40 }]}>
+                      <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
+                        <Text style={styles.valueBadgeText}>
+                          {point.weight.toFixed(1)} kg
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Label de l'objectif */}
+                {stats.end > 0 && goalWeight && (
+                  <View style={[styles.goalLabel, { left: chartWidth - PADDING_RIGHT - 50, top: goalLineY - 12 }]}>
+                    <Text style={[styles.goalLabelText, { color: '#3B82F6' }]}>
+                      Obj: {goalWeight.toFixed(1)}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Tooltip */}
+                {selectedPoint && (
+                  <View
+                    style={[
+                      styles.tooltip,
+                      {
+                        left: selectedPoint.x - 60,
+                        top: selectedPoint.y - 80,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
+                      <Text style={styles.tooltipValue}>
+                        {selectedPoint.weight.toFixed(1)} kg
+                      </Text>
+                      <Text style={styles.tooltipDate}>
+                        {format(parseISO(selectedPoint.date), 'd MMMM yyyy', { locale: fr })}
+                      </Text>
+                    </View>
+                    <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* Labels Y - Fixed position outside ScrollView */}
             <View style={styles.yLabelsContainer}>
               {yLabels.map((label, index) => (
                 <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
@@ -520,84 +606,6 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
                 </Text>
               ))}
             </View>
-
-            {/* Labels X (dates) */}
-            <View style={styles.xLabelsContainer}>
-              {chartData.filter((_, index) => {
-                // Afficher max 5 dates
-                const step = Math.max(1, Math.floor(chartData.length / 5));
-                return index % step === 0 || index === chartData.length - 1;
-              }).map((point, index) => (
-                <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                  <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
-                    {format(parseISO(point.date), 'd MMM', { locale: fr })}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Valeurs au-dessus des points - Design amélioré */}
-            {chartData.filter((_, index) => {
-              // Afficher tous les points si moins de 7, sinon espacer intelligemment
-              if (chartData.length <= 7) return true;
-              const step = Math.max(1, Math.floor(chartData.length / 7));
-              return index % step === 0 || index === chartData.length - 1;
-            }).map((point, idx) => {
-              // Calculer la position X pour éviter le chevauchement avec l'axe Y
-              const labelWidth = 60; // Largeur du badge augmentée
-              let leftPos = point.x - labelWidth / 2;
-
-              // S'assurer que le badge ne dépasse pas sur l'axe Y (avec marge de sécurité)
-              if (leftPos < PADDING_LEFT + 5) {
-                leftPos = PADDING_LEFT + 5;
-              }
-              // S'assurer que le badge ne dépasse pas à droite
-              if (leftPos + labelWidth > CHART_WIDTH - 10) {
-                leftPos = CHART_WIDTH - labelWidth - 10;
-              }
-
-              return (
-                <View key={idx} style={[styles.valueLabel, { left: leftPos, top: point.y - 40 }]}>
-                  <View style={[styles.valueBadge, { backgroundColor: colors.accent }]}>
-                    <Text style={styles.valueBadgeText}>
-                      {point.weight.toFixed(1)} kg
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-
-            {/* Label de l'objectif */}
-            {stats.end > 0 && goalWeight && (
-              <View style={[styles.goalLabel, { left: CHART_WIDTH - PADDING_RIGHT - 50, top: goalLineY - 12 }]}>
-                <Text style={[styles.goalLabelText, { color: '#3B82F6' }]}>
-                  Obj: {goalWeight.toFixed(1)}
-                </Text>
-              </View>
-            )}
-
-            {/* Tooltip */}
-            {selectedPoint && (
-              <View
-                style={[
-                  styles.tooltip,
-                  {
-                    left: selectedPoint.x - 60,
-                    top: selectedPoint.y - 80,
-                  },
-                ]}
-              >
-                <View style={[styles.tooltipContent, { backgroundColor: '#1F2937', shadowColor: '#000' }]}>
-                  <Text style={styles.tooltipValue}>
-                    {selectedPoint.weight.toFixed(1)} kg
-                  </Text>
-                  <Text style={styles.tooltipDate}>
-                    {format(parseISO(selectedPoint.date), 'd MMMM yyyy', { locale: fr })}
-                  </Text>
-                </View>
-                <View style={[styles.tooltipArrow, { borderTopColor: '#1F2937' }]} />
-              </View>
-            )}
           </View>
         )}
 
@@ -817,7 +825,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
+    // right: 0, // Removed for dynamic width
     height: PADDING_BOTTOM,
   },
   xLabelWrapper: {

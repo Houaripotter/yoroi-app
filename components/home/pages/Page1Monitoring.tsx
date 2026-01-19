@@ -46,6 +46,10 @@ interface Page1MonitoringProps {
   sleepDebt?: number;
   sleepGoal?: number;
   workloadStatus?: 'none' | 'light' | 'moderate' | 'intense';
+  bodyFat?: number;
+  muscleMass?: number;
+  waterPercentage?: number;
+  userGoal?: 'lose' | 'maintain' | 'gain';
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
   refreshTrigger?: number;
@@ -224,13 +228,17 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   sleepDebt = 0,
   sleepGoal = 8,
   workloadStatus = 'none',
+  bodyFat,
+  muscleMass,
+  waterPercentage,
+  userGoal: propUserGoal,
   onAddWeight,
   onAddWater,
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
-  const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
+  const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -286,6 +294,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
   // Load user's goal from settings
   useEffect(() => {
+    if (propUserGoal) {
+      setUserGoal(propUserGoal);
+      return;
+    }
     const loadGoal = async () => {
       try {
         const settings = await getUserSettings();
@@ -770,11 +782,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.muscle')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {bodyComposition?.muscleMass ? `${bodyComposition.muscleMass.toFixed(1)} kg` : '--'}
+                {(muscleMass ?? bodyComposition?.muscleMass) ? `${(muscleMass ?? bodyComposition?.muscleMass ?? 0).toFixed(1)} kg` : '--'}
               </Text>
               <Text style={[styles.compositionPercent, { color: '#EF4444' }]}>
-                {bodyComposition?.muscleMass && currentWeight > 0
-                  ? `${((bodyComposition.muscleMass / currentWeight) * 100).toFixed(0)}%`
+                {(muscleMass ?? bodyComposition?.muscleMass) && currentWeight > 0
+                  ? `${(((muscleMass ?? bodyComposition?.muscleMass ?? 0) / currentWeight) * 100).toFixed(0)}%`
                   : '--%'}
               </Text>
             </View>
@@ -795,12 +807,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.fat')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {bodyComposition?.bodyFatPercent != null && currentWeight > 0
-                  ? `${((bodyComposition.bodyFatPercent / 100) * currentWeight).toFixed(1)} kg`
+                {(bodyFat ?? bodyComposition?.bodyFatPercent) != null && currentWeight > 0
+                  ? `${(((bodyFat ?? bodyComposition?.bodyFatPercent ?? 0) / 100) * currentWeight).toFixed(1)} kg`
                   : '--'}
               </Text>
               <Text style={[styles.compositionPercent, { color: '#F59E0B' }]}>
-                {bodyComposition?.bodyFatPercent != null ? `${bodyComposition.bodyFatPercent.toFixed(0)}%` : '--%'}
+                {(bodyFat ?? bodyComposition?.bodyFatPercent) != null ? `${(bodyFat ?? bodyComposition?.bodyFatPercent ?? 0).toFixed(0)}%` : '--%'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -820,12 +832,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.compositionInfo}>
               <Text style={[styles.compositionLabel, { color: colors.textMuted }]}>{t('home.water')}</Text>
               <Text style={[styles.compositionValue, { color: colors.textPrimary }]}>
-                {bodyComposition?.waterPercent != null && currentWeight > 0
-                  ? `${((bodyComposition.waterPercent / 100) * currentWeight).toFixed(1)} kg`
+                {(waterPercentage ?? bodyComposition?.waterPercent) != null && currentWeight > 0
+                  ? `${(((waterPercentage ?? bodyComposition?.waterPercent ?? 0) / 100) * currentWeight).toFixed(1)} kg`
                   : '--'}
               </Text>
               <Text style={[styles.compositionPercent, { color: '#3B82F6' }]}>
-                {bodyComposition?.waterPercent != null ? `${bodyComposition.waterPercent.toFixed(0)}%` : '--%'}
+                {(waterPercentage ?? bodyComposition?.waterPercent) != null ? `${(waterPercentage ?? bodyComposition?.waterPercent ?? 0).toFixed(0)}%` : '--%'}
               </Text>
             </View>
           </TouchableOpacity>

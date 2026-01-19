@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { SPACING, RADIUS } from '@/constants/design';
 import { TrendingUp, TrendingDown, Maximize2 } from 'lucide-react-native';
@@ -110,16 +110,19 @@ export function TrendLineChart({ title, data, color, unit, colors, goal, onPress
 
       {/* Chart */}
       <View style={styles.chartContainer}>
-        <SmoothLineChart
-          data={chartData}
-          height={data.length <= 7 ? 180 : 160}
-          color={color}
-          showGradient={true}
-          showDots={data.length <= 14}
-          curved={true}
-          thickness={data.length <= 7 ? 3 : 2}
-          goalValue={goal}
-        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <SmoothLineChart
+            data={chartData}
+            width={Math.max(Dimensions.get('window').width - SPACING.lg * 2, data.length * 50)}
+            height={data.length <= 7 ? 180 : 160}
+            color={color}
+            showGradient={true}
+            showDots={data.length <= 14}
+            curved={true}
+            thickness={data.length <= 7 ? 3 : 2}
+            goalValue={goal}
+          />
+        </ScrollView>
       </View>
 
       {/* Stats Footer */}

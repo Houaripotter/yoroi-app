@@ -70,10 +70,15 @@ interface SessionCardProps {
 
 const SessionCard = React.forwardRef<View, SessionCardProps>(
   ({ training, backgroundImage, backgroundType, customLocation, isLandscape = false }, ref) => {
-    const sportName = getSportName(training.sport);
+    const sportName = training.sport.includes(',') 
+      ? training.sport.split(',').map(s => getSportName(s)).join(' + ') 
+      : getSportName(training.sport);
+
     const cardHeight = isLandscape ? CARD_HEIGHT_LANDSCAPE : CARD_HEIGHT_PORTRAIT;
-    const sportIcon = getSportIcon(training.sport);
-    const sportColor = getSportColor(training.sport);
+    // Si multisport, prendre l'icone du premier
+    const primarySport = training.sport.split(',')[0];
+    const sportIcon = getSportIcon(primarySport);
+    const sportColor = getSportColor(primarySport);
 
     // Déterminer le lieu à afficher
     const displayLocation = customLocation || (training.is_outdoor ? 'Plein air' : 'Salle');
@@ -185,7 +190,7 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
       </View>
     );
 
-    // Fond avec photo - remplit tout le cadre
+    // Fond avec photo - remplit tout le cadre avec effet flou + image entière
     if (backgroundImage) {
       return (
         <View
@@ -193,11 +198,21 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
           style={[styles.card, { backgroundColor: '#000000', height: CARD_HEIGHT_PORTRAIT }]}
           collapsable={false}
         >
+          {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
+          <Image
+            source={{ uri: backgroundImage }}
+            style={[StyleSheet.absoluteFill, { opacity: 0.6 }]}
+            blurRadius={20}
+            resizeMode="cover"
+          />
+          
+          {/* 2. Image principale entière (Non coupée) */}
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImageContain}
             resizeMode="contain"
           />
+          
           <LinearGradient
             colors={
               isLandscape

@@ -19,6 +19,7 @@ const DEMO_MODE = false;
 
 // Apple HealthKit (iOS) - Safe wrapper with Expo Go fallback
 import HealthKit, { isHealthKitAvailable, isRunningInExpoGo } from './healthKit.wrapper';
+import { WorkoutActivityType } from '@kingstinct/react-native-healthkit';
 
 // ============================================
 // TYPES
@@ -1473,41 +1474,76 @@ class HealthConnectService {
   }): Promise<boolean> {
 
     try {
-      // Mapper les types d'activités Yoroi vers HealthKit
-      const activityTypeMap: { [key: string]: string } = {
-        'Running': 'HKWorkoutActivityTypeRunning',
-        'Course': 'HKWorkoutActivityTypeRunning',
-        'Trail': 'HKWorkoutActivityTypeRunning',
-        'Cycling': 'HKWorkoutActivityTypeCycling',
-        'Vélo': 'HKWorkoutActivityTypeCycling',
-        'Swimming': 'HKWorkoutActivityTypeSwimming',
-        'Natation': 'HKWorkoutActivityTypeSwimming',
-        'Musculation': 'HKWorkoutActivityTypeTraditionalStrengthTraining',
-        'CrossFit': 'HKWorkoutActivityTypeCrosstraining',
-        'Yoga': 'HKWorkoutActivityTypeYoga',
-        'Boxing': 'HKWorkoutActivityTypeBoxing',
-        'Boxe': 'HKWorkoutActivityTypeBoxing',
-        'MMA': 'HKWorkoutActivityTypeMixedMetabolicCardioTraining',
-        'JJB': 'HKWorkoutActivityTypeMartialArts',
-        'Judo': 'HKWorkoutActivityTypeMartialArts',
-        'Karate': 'HKWorkoutActivityTypeMartialArts',
-        'Karaté': 'HKWorkoutActivityTypeMartialArts',
-        'Muay Thai': 'HKWorkoutActivityTypeKickboxing',
+      // Mapper les types d'activités Yoroi vers HealthKit Enum (WorkoutActivityType)
+      const activityTypeMap: { [key: string]: WorkoutActivityType } = {
+        'Running': WorkoutActivityType.running,
+        'Course': WorkoutActivityType.running,
+        'Trail': WorkoutActivityType.running,
+        'Cycling': WorkoutActivityType.cycling,
+        'Vélo': WorkoutActivityType.cycling,
+        'Swimming': WorkoutActivityType.swimming,
+        'Natation': WorkoutActivityType.swimming,
+        'Musculation': WorkoutActivityType.traditionalStrengthTraining,
+        'CrossFit': WorkoutActivityType.crossTraining,
+        'Yoga': WorkoutActivityType.yoga,
+        'Boxing': WorkoutActivityType.boxing,
+        'Boxe': WorkoutActivityType.boxing,
+        'MMA': WorkoutActivityType.mixedCardio, // MixedMetabolicCardioTraining maps to mixedCardio or mixedMetabolicCardioTraining (30)
+        'JJB': WorkoutActivityType.martialArts,
+        'Judo': WorkoutActivityType.martialArts,
+        'Karate': WorkoutActivityType.martialArts,
+        'Karaté': WorkoutActivityType.martialArts,
+        'Muay Thai': WorkoutActivityType.kickboxing,
       };
 
-      const hkActivityType = activityTypeMap[workout.activityType] || 'HKWorkoutActivityTypeOther';
+      // Fallback sur 'Other' (3000) si non trouvé
+      const hkActivityType = activityTypeMap[workout.activityType] || WorkoutActivityType.other;
 
-      // saveWorkoutSample(activityType, startTimestamp, endTimestamp, energyBurned?, distance?, metadata?)
-      const startTime = new Date(workout.startDate).getTime();
-      const endTime = new Date(workout.endDate).getTime();
+      // Nouvelle signature: saveWorkoutSample(type, quantities, start, end, totals, metadata)
+      // quantities: [] car on sauvegarde juste le résumé
+      // totals: { distance (meters), energyBurned (kcal) }
+      
+      const totals: { distance?: number; energyBurned?: number } = {};
+      
+      if (workout.distance) {
+        totals.distance = workout.distance * 1000; // Convertir km -> mètres
+      }
+      
+      if (workout.calories) {
+        totals.energyBurned = workout.calories;
+      }
 
-      await HealthKit.saveWorkoutSample(
-        hkActivityType,
-        Number(startTime),
-        Number(endTime),
-        Number(workout.calories || 0),
-        workout.distance ? Number(workout.distance * 1000) : undefined // Convertir km → mètres
-      );
+      try {
+          await HealthKit.saveWorkoutSample(
+            hkActivityType,
+            [], // Empty quantities samples
+            new Date(workout.startDate),
+            new Date(workout.endDate),
+            totals,
+            {} // Metadata
+          );
+      } catch (saveError: any) {
+          // Si l'erreur est "Authorization is not determined" (Code 5), on tente de redemander la permission
+          if (saveError?.message?.includes('Authorization is not determined') || saveError?.code === 5 || saveError?.message?.includes('Code=5')) {
+              logger.warn('Permission inconnue pour Workout, tentative de demande...');
+              await HealthKit.requestAuthorization({
+                  toRead: ['HKWorkoutTypeIdentifier'],
+                  toShare: ['HKWorkoutTypeIdentifier']
+              });
+              
+              // On réessaie une fois
+              await HealthKit.saveWorkoutSample(
+                hkActivityType,
+                [], 
+                new Date(workout.startDate),
+                new Date(workout.endDate),
+                totals,
+                {} 
+              );
+          } else {
+              throw saveError;
+          }
+      }
 
       logger.info('Workout enregistré dans Apple Health:', workout.activityType);
       return true;

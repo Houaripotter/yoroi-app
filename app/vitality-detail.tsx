@@ -227,16 +227,18 @@ export default function VitalityDetailScreen() {
             </Text>
           </View>
           {vitalityScoreData.length > 0 ? (
-            <SmoothLineChart
-              data={vitalityScoreData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#10B981"
-              showGrid
-              showDots
-              animated
-              maxValue={100}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={vitalityScoreData}
+                width={Math.max(SCREEN_WIDTH - 72, vitalityScoreData.length * 50)}
+                height={200}
+                color="#10B981"
+                showGrid
+                showDots
+                animated
+                maxValue={100}
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -260,16 +262,18 @@ export default function VitalityDetailScreen() {
             </Text>
           </View>
           {sleepData.length > 0 ? (
-            <SmoothLineChart
-              data={sleepData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#8B5CF6"
-              showGrid
-              showDots
-              animated
-              maxValue={12}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={sleepData}
+                width={Math.max(SCREEN_WIDTH - 72, sleepData.length * 50)}
+                height={200}
+                color="#8B5CF6"
+                showGrid
+                showDots
+                animated
+                maxValue={12}
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -293,16 +297,18 @@ export default function VitalityDetailScreen() {
             </Text>
           </View>
           {hydrationData.length > 0 ? (
-            <SmoothLineChart
-              data={hydrationData}
-              width={SCREEN_WIDTH - 72}
-              height={200}
-              color="#3B82F6"
-              showGrid
-              showDots
-              animated
-              maxValue={4}
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <SmoothLineChart
+                data={hydrationData}
+                width={Math.max(SCREEN_WIDTH - 72, hydrationData.length * 50)}
+                height={200}
+                color="#3B82F6"
+                showGrid
+                showDots
+                animated
+                maxValue={4}
+              />
+            </ScrollView>
           ) : (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>

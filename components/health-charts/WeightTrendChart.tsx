@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, ScrollView } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { SPACING, RADIUS } from '@/constants/design';
 import { Target, TrendingDown, TrendingUp, Maximize2 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CHART_WIDTH = SCREEN_WIDTH - SPACING.lg * 4;
 const CHART_HEIGHT = 200;
 const PADDING_LEFT = 45;
 const PADDING_RIGHT = 20;
@@ -44,6 +43,11 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
     );
   }
 
+  // Define dynamic width
+  const FIXED_CHART_WIDTH = SCREEN_WIDTH - SPACING.lg * 4;
+  const ITEM_WIDTH = 40; // Width per data point
+  const chartWidth = Math.max(FIXED_CHART_WIDTH, data.length * ITEM_WIDTH);
+
   // Calculer statistiques
   const values = data.map(d => d.value);
   const current = values[values.length - 1];
@@ -61,7 +65,7 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
   const paddedRange = paddedMax - paddedMin || 1;
 
   const chartData = data.map((entry, index) => {
-    const x = PADDING_LEFT + ((CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(data.length - 1, 1);
+    const x = PADDING_LEFT + ((chartWidth - PADDING_LEFT - PADDING_RIGHT) * index) / Math.max(data.length - 1, 1);
     const y = CHART_HEIGHT - PADDING_BOTTOM - ((entry.value - paddedMin) / paddedRange) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM);
     return { ...entry, x, y };
   });
@@ -164,69 +168,91 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
 
       {/* Chart */}
       <View style={styles.chartContainer}>
-        <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-          <Defs>
-            <LinearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={colors.success} stopOpacity="0.4" />
-              <Stop offset="0.5" stopColor={colors.success} stopOpacity="0.2" />
-              <Stop offset="1" stopColor={colors.success} stopOpacity="0.02" />
-            </LinearGradient>
-          </Defs>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            <Svg width={chartWidth} height={CHART_HEIGHT}>
+              <Defs>
+                <LinearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={colors.success} stopOpacity="0.4" />
+                  <Stop offset="0.5" stopColor={colors.success} stopOpacity="0.2" />
+                  <Stop offset="1" stopColor={colors.success} stopOpacity="0.02" />
+                </LinearGradient>
+              </Defs>
 
-          {/* Lignes de grille horizontales */}
-          {[0, 1, 2, 3, 4].map((i) => {
-            const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
-            return (
-              <Rect
-                key={i}
-                x={PADDING_LEFT}
-                y={y}
-                width={CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT}
-                height={1}
-                fill={colors.glassBorder}
-                opacity={0.3}
+              {/* Lignes de grille horizontales */}
+              {[0, 1, 2, 3, 4].map((i) => {
+                const y = PADDING_TOP + ((CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM) * i) / 4;
+                return (
+                  <Rect
+                    key={i}
+                    x={PADDING_LEFT}
+                    y={y}
+                    width={chartWidth - PADDING_LEFT - PADDING_RIGHT}
+                    height={1}
+                    fill={colors.glassBorder}
+                    opacity={0.3}
+                  />
+                );
+              })}
+
+              {/* Ligne d'objectif en pointillé */}
+              {goal && goalLineY && (
+                <Path
+                  d={`M ${PADDING_LEFT} ${goalLineY} L ${chartWidth - PADDING_RIGHT} ${goalLineY}`}
+                  stroke={colors.gold || '#F59E0B'}
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  fill="none"
+                  opacity={0.7}
+                />
+              )}
+
+              {/* Zone sous la courbe avec gradient */}
+              <Path
+                d={createAreaPath()}
+                fill="url(#weightGradient)"
               />
-            );
-          })}
 
-          {/* Ligne d'objectif en pointillé */}
-          {goal && goalLineY && (
-            <Path
-              d={`M ${PADDING_LEFT} ${goalLineY} L ${CHART_WIDTH - PADDING_RIGHT} ${goalLineY}`}
-              stroke={colors.gold || '#F59E0B'}
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              fill="none"
-              opacity={0.7}
-            />
-          )}
+              {/* Ligne de tendance */}
+              <Path
+                d={createPath()}
+                stroke={colors.success}
+                strokeWidth={3}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
-          {/* Zone sous la courbe avec gradient */}
-          <Path
-            d={createAreaPath()}
-            fill="url(#weightGradient)"
-          />
+              {/* Points sur la courbe */}
+              {chartData.length <= 30 && chartData.map((point, index) => (
+                <React.Fragment key={index}>
+                  <Circle cx={point.x} cy={point.y} r={6} fill="#FFFFFF" opacity={0.95} />
+                  <Circle cx={point.x} cy={point.y} r={4} fill={colors.success} />
+                </React.Fragment>
+              ))}
+            </Svg>
 
-          {/* Ligne de tendance */}
-          <Path
-            d={createPath()}
-            stroke={colors.success}
-            strokeWidth={3}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+            {/* Labels X (dates) */}
+            <View style={[styles.xLabelsContainer, { width: chartWidth }]}>
+              {chartData.filter((_, index) => {
+                const step = Math.max(1, Math.floor(chartData.length / 5));
+                return index % step === 0 || index === chartData.length - 1;
+              }).map((point, index) => {
+                const date = new Date(point.date);
+                const day = date.getDate();
+                const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+                const label = data.length <= 10 ? `${day} ${months[date.getMonth()]}` : `${day}`;
+                return (
+                  <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
+                    <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>{label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        </ScrollView>
 
-          {/* Points sur la courbe */}
-          {chartData.length <= 30 && chartData.map((point, index) => (
-            <React.Fragment key={index}>
-              <Circle cx={point.x} cy={point.y} r={6} fill="#FFFFFF" opacity={0.95} />
-              <Circle cx={point.x} cy={point.y} r={4} fill={colors.success} />
-            </React.Fragment>
-          ))}
-        </Svg>
-
-        {/* Labels Y */}
+        {/* Labels Y - Fixed Position outside ScrollView */}
         <View style={styles.yLabelsContainer}>
           {yLabels.map((label, index) => (
             <Text key={index} style={[styles.yLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>
@@ -234,25 +260,7 @@ export function WeightTrendChart({ data, goal, colors, period, onPress }: Weight
             </Text>
           ))}
         </View>
-
-        {/* Labels X (dates) */}
-        <View style={styles.xLabelsContainer}>
-          {chartData.filter((_, index) => {
-            const step = Math.max(1, Math.floor(chartData.length / 5));
-            return index % step === 0 || index === chartData.length - 1;
-          }).map((point, index) => {
-            const date = new Date(point.date);
-            const day = date.getDate();
-            const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-            const label = data.length <= 10 ? `${day} ${months[date.getMonth()]}` : `${day}`;
-            return (
-              <View key={index} style={[styles.xLabelWrapper, { left: point.x - 30 }]}>
-                <Text style={[styles.xLabel, { color: isDark ? '#FFFFFF' : colors.textMuted }]}>{label}</Text>
-              </View>
-            );
-          })}
-        </View>
-
+        
         {/* Note: L'objectif est deja affiche dans l'entete, pas besoin de label sur le graphique */}
       </View>
 
@@ -332,6 +340,9 @@ const styles = StyleSheet.create({
     top: PADDING_TOP,
     height: CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM,
     justifyContent: 'space-between',
+    // Removed width/background to allow transparent overlay if needed, 
+    // but typically Y labels need background if they cover content.
+    // Assuming transparent for now as data starts at PADDING_LEFT.
   },
   yLabel: {
     fontSize: 11,
@@ -341,7 +352,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
+    // right: 0, // Removed right:0 because we set width manually
     height: PADDING_BOTTOM,
   },
   xLabelWrapper: {
