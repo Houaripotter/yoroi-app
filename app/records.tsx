@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import {
   Trophy,
   Scale,
@@ -194,6 +194,42 @@ export default function RecordsScreen() {
             {t('screens.records.calculating')}
           </Text>
         </View>
+      </ScreenWrapper>
+    );
+  }
+
+  // Empty state: aucune donnée
+  if (!records || (
+    !records.lowestWeight &&
+    !records.longestStreak &&
+    records.totalWorkouts === 0
+  )) {
+    return (
+      <ScreenWrapper noPadding>
+        <Header title={t('screens.records.title')} showBack />
+
+        <ScrollView contentContainerStyle={styles.emptyContainer}>
+          <View style={styles.emptyContent}>
+            <Trophy size={80} color={colors.textMuted} />
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+              Pas encore de records
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+              Ajoute des pesées et des entraînements pour débloquer
+              tes records personnels et voir ta progression !
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.emptyButton, { backgroundColor: colors.accent }]}
+              onPress={() => router.push('/(tabs)')}
+            >
+              <Scale size={20} color={colors.textOnAccent || '#FFFFFF'} />
+              <Text style={[styles.emptyButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
+                Ajouter ma première pesée
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </ScreenWrapper>
     );
   }
@@ -473,6 +509,43 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+
+  // Empty state
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyContent: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  emptyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 
   // Header

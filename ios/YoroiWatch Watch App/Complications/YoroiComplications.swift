@@ -28,18 +28,55 @@ struct YoroiProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<YoroiEntry>) -> Void) {
         let healthManager = HealthManager.shared
         let currentDate = Date()
+        let calendar = Calendar.current
 
-        let entry = YoroiEntry(
+        // CORRECTION: Créer plusieurs entrées au lieu d'une seule
+        // pour éviter les rafraîchissements inutiles
+        var entries: [YoroiEntry] = []
+
+        // Entrée actuelle
+        let currentEntry = YoroiEntry(
             date: currentDate,
             hydration: healthManager.waterIntake,
             streak: healthManager.streak,
             steps: healthManager.steps
         )
+        entries.append(currentEntry)
 
-        // Rafraîchir toutes les 15 minutes
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: currentDate)!
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        // OPTIMISATION: Créer des entrées futures pour limiter les rafraîchissements
+        // Rafraîchir seulement aux moments clés de la journée
+        let keyMoments = [
+            (8, 0),  // Matin
+            (12, 0), // Midi
+            (18, 0), // Soir
+            (22, 0), // Nuit
+        ]
+
+        for (hour, minute) in keyMoments {
+            if let futureDate = calendar.nextDate(
+                after: currentDate,
+                matching: DateComponents(hour: hour, minute: minute),
+                matchingPolicy: .nextTime
+            ) {
+                let futureEntry = YoroiEntry(
+                    date: futureDate,
+                    hydration: healthManager.waterIntake,
+                    streak: healthManager.streak,
+                    steps: healthManager.steps
+                )
+                entries.append(futureEntry)
+            }
+        }
+
+        // CORRECTION: Utiliser .atEnd au lieu de .after
+        // Cela laisse watchOS décider du meilleur moment pour rafraîchir
+        // au lieu de forcer un refresh toutes les 15 minutes
+        let timeline = Timeline(entries: entries, policy: .atEnd)
         completion(timeline)
+
+        // Note: Pour un refresh sur événement (changement de données),
+        // utiliser WidgetCenter.shared.reloadAllTimelines() depuis HealthManager
+        // lors d'un changement significatif de données
     }
 }
 

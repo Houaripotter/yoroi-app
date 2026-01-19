@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
 import { BadgeProvider } from '@/lib/BadgeContext';
 import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
+// import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import DevCodeModal from '@/components/DevCodeModal';
 import { NotificationApologyModal } from '@/components/NotificationApologyModal';
 import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';

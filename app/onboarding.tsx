@@ -53,6 +53,8 @@ import { saveProfile } from '@/lib/database';
 import { saveUserSettings } from '@/lib/storage';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
+import { validators } from '@/lib/security/validators';
 
 // Fonction pour determiner si une couleur est claire
 const isLightColor = (hexColor: string): boolean => {
@@ -114,6 +116,9 @@ const ONBOARDING_COLORS = {
 export default function OnboardingScreen() {
   const { colors: themeColors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
+
+  // 🔒 PROTECTION ANTI-SPAM : Hook pour empêcher les double-clics
+  const { isProcessing: isSavingProfile, executeOnce: saveProfileOnce } = usePreventDoubleClick({ delay: 1000 });
 
   // Utiliser les couleurs forcées sombres pour l'onboarding
   const colors = ONBOARDING_COLORS;
@@ -299,32 +304,80 @@ export default function OnboardingScreen() {
   };
 
   const handleSaveProfile = async () => {
-    try {
-      // Sauvegarder dans SQLite
-      await saveProfile({
-        name: userName.trim() || 'Champion',
-        height_cm: heightCm ? parseInt(heightCm) : undefined,
-        target_weight: targetWeight ? parseFloat(targetWeight) : undefined,
-        start_date: format(new Date(), 'yyyy-MM-dd'),
-        avatar_gender: gender || 'homme',
-        profile_photo: profilePhoto,
-        birth_date: birthDate ? format(birthDate, 'yyyy-MM-dd') : undefined,
-      });
+    await saveProfileOnce(async () => {
+      try {
+        // 🔒 VALIDATION DU NOM
+        if (userName.trim()) {
+          const nameValidation = validators.username(userName.trim());
+          if (!nameValidation.valid) {
+            showPopup(
+              'Nom invalide',
+              nameValidation.error || 'Le nom doit contenir entre 2 et 50 caractères'
+            );
+            return;
+          }
+        }
 
-      // IMPORTANT: Aussi sauvegarder dans AsyncStorage pour que index.tsx sache que l'onboarding est termine
-      await saveUserSettings({
-        username: userName.trim() || 'Champion',
-        gender: gender === 'femme' ? 'female' : 'male',
-        height: heightCm ? parseInt(heightCm) : undefined,
-        targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
-        onboardingCompleted: true,
-      });
+        // 🔒 VALIDATION DE LA TAILLE
+        if (heightCm) {
+          const height = parseInt(heightCm);
+          if (isNaN(height)) {
+            showPopup('Taille invalide', 'Veuillez entrer un nombre valide');
+            return;
+          }
+          const heightValidation = validators.height(height);
+          if (!heightValidation.valid) {
+            showPopup(
+              'Taille invalide',
+              heightValidation.error || 'La taille doit être entre 100 et 250 cm'
+            );
+            return;
+          }
+        }
 
-      router.replace('/mode-selection');
-    } catch (error) {
-      console.error('Erreur sauvegarde profil:', error);
-      router.replace('/mode-selection');
-    }
+        // 🔒 VALIDATION DU POIDS OBJECTIF
+        if (targetWeight) {
+          const weight = parseFloat(targetWeight);
+          if (isNaN(weight)) {
+            showPopup('Poids invalide', 'Veuillez entrer un nombre valide');
+            return;
+          }
+          const weightValidation = validators.weight(weight);
+          if (!weightValidation.valid) {
+            showPopup(
+              'Poids invalide',
+              weightValidation.error || 'Le poids doit être entre 30 et 250 kg'
+            );
+            return;
+          }
+        }
+
+        // Sauvegarder dans SQLite (données validées)
+        await saveProfile({
+          name: userName.trim() || 'Champion',
+          height_cm: heightCm ? parseInt(heightCm) : undefined,
+          target_weight: targetWeight ? parseFloat(targetWeight) : undefined,
+          start_date: format(new Date(), 'yyyy-MM-dd'),
+          avatar_gender: gender || 'homme',
+          profile_photo: profilePhoto,
+          birth_date: birthDate ? format(birthDate, 'yyyy-MM-dd') : undefined,
+        });
+
+        // IMPORTANT: Aussi sauvegarder dans AsyncStorage pour que index.tsx sache que l'onboarding est termine
+        await saveUserSettings({
+          username: userName.trim() || 'Champion',
+          gender: gender === 'femme' ? 'female' : 'male',
+          height: heightCm ? parseInt(heightCm) : undefined,
+          targetWeight: targetWeight ? parseFloat(targetWeight) : undefined,
+          onboardingCompleted: true,
+        });
+
+        router.replace('/mode-selection');
+      } catch (error) {
+        console.error('Erreur sauvegarde profil:', error);
+        router.replace('/mode-selection');
+      }
+    });
   };
 
   const nextSetupStep = () => {
@@ -741,9 +794,10 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             style={[styles.button, { backgroundColor: colors.accent }]}
             onPress={nextSetupStep}
+            disabled={isSavingProfile}
           >
             <Text style={[styles.buttonText, { color: buttonTextColor }]}>
-              {setupStep === 4 ? "C'est parti !" : 'Continuer'}
+              {isSavingProfile ? 'Chargement...' : (setupStep === 4 ? "C'est parti !" : 'Continuer')}
             </Text>
             <ChevronRight size={22} color={buttonTextColor} />
           </TouchableOpacity>
@@ -811,9 +865,10 @@ export default function OnboardingScreen() {
         <TouchableOpacity
           style={[styles.button, { backgroundColor: colors.accent }]}
           onPress={goToNext}
+          disabled={isSavingProfile}
         >
           <Text style={[styles.buttonText, { color: buttonTextColor }]}>
-            {currentIndex === slides.length - 1 ? "C'est parti !" : 'Continuer'}
+            {isSavingProfile ? 'Chargement...' : (currentIndex === slides.length - 1 ? "C'est parti !" : 'Continuer')}
           </Text>
           <ChevronRight size={22} color={buttonTextColor} />
         </TouchableOpacity>

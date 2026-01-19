@@ -503,7 +503,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Photo + Greeting + Avatar Row */}
         <View style={styles.heroTop}>
           <TouchableOpacity
-            style={[styles.profilePhotoLarge, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+            style={[styles.profilePhotoLarge, { backgroundColor: colors.backgroundCard, borderColor: isDark ? '#FFFFFF' : '#000000' }]}
             onPress={() => router.push('/profile')}
           >
             {profilePhoto ? (
@@ -832,119 +832,136 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         </View>
         </TouchableOpacity>
 
-        {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST - Cliquable vers stats poids */}
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push('/(tabs)/stats?tab=poids');
-          }}
-          activeOpacity={0.9}
-        >
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.simpleChart}
-          contentContainerStyle={styles.simpleChartContent}
-          data={weightHistory.slice(-30)}
-          scrollEnabled={true}
-          nestedScrollEnabled={true}
-          keyExtractor={(item, index) => `weight-${index}`}
-          renderItem={({ item: weight, index }) => {
-            const array = weightHistory.slice(-30);
-            const maxWeight = Math.max(...array);
-            const minWeight = Math.min(...array);
-            const range = maxWeight - minWeight || 1;
-            const heightPercent = ((weight - minWeight) / range) * 100;
+        {/* OPTIMISATION: Mémoriser les calculs de poids pour éviter recalcul à chaque render */}
+        {useMemo(() => {
+          const last30Weights = weightHistory.slice(-30);
+          const weights = last30Weights;
+          const maxWeightValue = Math.max(...weights);
+          const minWeightValue = Math.min(...weights);
+          const weightRange = (maxWeightValue - minWeightValue) || 1;
 
-            // Calculer la date réelle
-            const today = new Date();
-            const daysAgo = array.length - 1 - index;
-            const date = new Date(today);
-            date.setDate(date.getDate() - daysAgo);
-            const dayOfMonth = date.getDate();
-            const monthLabel = monthNames[date.getMonth()];
+          return (
+            <>
+              {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST - Cliquable vers stats poids */}
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/(tabs)/stats?tab=poids');
+                }}
+                activeOpacity={0.9}
+              >
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.simpleChart}
+                  contentContainerStyle={styles.simpleChartContent}
+                  data={last30Weights}
+                  scrollEnabled={true}
+                  nestedScrollEnabled={true}
+                  keyExtractor={(item, index) => `weight-${index}`}
+                  getItemLayout={(data, index) => ({
+                    length: 22,
+                    offset: 22 * index,
+                    index,
+                  })}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={15}
+                  windowSize={5}
+                  renderItem={({ item: weight, index }) => {
+                    const heightPercent = ((weight - minWeightValue) / weightRange) * 100;
 
-            // Calculer la variation
-            const previousWeight = index > 0 ? array[index - 1] : null;
-            const diff = previousWeight ? weight - previousWeight : 0;
-            const isGain = diff > 0.05;
-            const isLoss = diff < -0.05;
-            const isStable = !isGain && !isLoss;
+                    // Calculer la date réelle
+                    const today = new Date();
+                    const daysAgo = last30Weights.length - 1 - index;
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - daysAgo);
+                    const dayOfMonth = date.getDate();
+                    const monthLabel = monthNames[date.getMonth()];
 
-            // LOGIQUE COULEUR INTELLIGENTE
-            let arrowColor = colors.textMuted;
-            let arrowIcon = '→';
+                    // Calculer la variation
+                    const previousWeight = index > 0 ? last30Weights[index - 1] : null;
+                    const diff = previousWeight ? weight - previousWeight : 0;
+                    const isGain = diff > 0.05;
+                    const isLoss = diff < -0.05;
+                    const isStable = !isGain && !isLoss;
 
-            if (userGoal === 'lose') {
-              if (isLoss) {
-                arrowColor = '#10B981';
-                arrowIcon = '↘';
-              } else if (isGain) {
-                arrowColor = '#EF4444';
-                arrowIcon = '↗';
-              } else {
-                arrowColor = '#F59E0B';
-                arrowIcon = '→';
-              }
-            } else if (userGoal === 'gain') {
-              if (isGain) {
-                arrowColor = '#10B981';
-                arrowIcon = '↗';
-              } else if (isLoss) {
-                arrowColor = '#EF4444';
-                arrowIcon = '↘';
-              } else {
-                arrowColor = '#F59E0B';
-                arrowIcon = '→';
-              }
-            } else {
-              if (isStable) {
-                arrowColor = '#10B981';
-                arrowIcon = '→';
-              } else {
-                arrowColor = '#F59E0B';
-                arrowIcon = isGain ? '↗' : '↘';
-              }
-            }
+                    // LOGIQUE COULEUR INTELLIGENTE
+                    let arrowColor = colors.textMuted;
+                    let arrowIcon = '→';
 
-            return (
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                <View style={styles.simpleChartBar}>
-                  <Text style={[styles.simpleChartWeight, { color: colors.textPrimary }]}>
-                    {weight.toFixed(1)}
-                  </Text>
-                  <View style={styles.simpleChartBarBg}>
-                    <LinearGradient
-                      colors={[colors.accent, colors.accent + 'DD', colors.accent + 'BB']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 0, y: 1 }}
-                      style={[
-                        styles.simpleChartBarFill,
-                        { height: `${Math.max(heightPercent, 10)}%` }
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.simpleChartDate, { color: colors.textPrimary }]}>
-                    {dayOfMonth}
-                  </Text>
-                  <Text style={[styles.simpleChartMonth, { color: colors.textMuted }]}>
-                    {monthLabel}
-                  </Text>
-                </View>
+                    if (userGoal === 'lose') {
+                      if (isLoss) {
+                        arrowColor = '#10B981';
+                        arrowIcon = '↘';
+                      } else if (isGain) {
+                        arrowColor = '#EF4444';
+                        arrowIcon = '↗';
+                      } else {
+                        arrowColor = '#F59E0B';
+                        arrowIcon = '→';
+                      }
+                    } else if (userGoal === 'gain') {
+                      if (isGain) {
+                        arrowColor = '#10B981';
+                        arrowIcon = '↗';
+                      } else if (isLoss) {
+                        arrowColor = '#EF4444';
+                        arrowIcon = '↘';
+                      } else {
+                        arrowColor = '#F59E0B';
+                        arrowIcon = '→';
+                      }
+                    } else {
+                      if (isStable) {
+                        arrowColor = '#10B981';
+                        arrowIcon = '→';
+                      } else {
+                        arrowColor = '#F59E0B';
+                        arrowIcon = isGain ? '↗' : '↘';
+                      }
+                    }
 
-                {/* Indicateur de variation */}
-                {index < array.length - 1 && (
-                  <View style={styles.simpleChartConnector}>
-                    <View style={[styles.simpleChartArrow, { backgroundColor: arrowColor }]}>
-                      <Text style={styles.simpleChartArrowIcon}>{arrowIcon}</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            );
-          }}
-        />
-        </TouchableOpacity>
+                    return (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                        <View style={styles.simpleChartBar}>
+                          <Text style={[styles.simpleChartWeight, { color: colors.textPrimary }]}>
+                            {weight.toFixed(1)}
+                          </Text>
+                          <View style={styles.simpleChartBarBg}>
+                            <LinearGradient
+                              colors={[colors.accent, colors.accent + 'DD', colors.accent + 'BB']}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 0, y: 1 }}
+                              style={[
+                                styles.simpleChartBarFill,
+                                { height: `${Math.max(heightPercent, 10)}%` }
+                              ]}
+                            />
+                          </View>
+                          <Text style={[styles.simpleChartDate, { color: colors.textPrimary }]}>
+                            {dayOfMonth}
+                          </Text>
+                          <Text style={[styles.simpleChartMonth, { color: colors.textMuted }]}>
+                            {monthLabel}
+                          </Text>
+                        </View>
+
+                        {/* Indicateur de variation */}
+                        {index < last30Weights.length - 1 && (
+                          <View style={styles.simpleChartConnector}>
+                            <View style={[styles.simpleChartArrow, { backgroundColor: arrowColor }]}>
+                              <Text style={styles.simpleChartArrowIcon}>{arrowIcon}</Text>
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  }}
+                />
+              </TouchableOpacity>
+            </>
+          );
+        }, [weightHistory, colors, userGoal])}
 
         {/* Prédictions */}
         <TouchableOpacity
@@ -1222,7 +1239,7 @@ const styles = StyleSheet.create({
   },
   // Hero Header - Agrandi
   heroHeader: {
-    marginTop: -25,
+    marginTop: -45,
     marginBottom: 10,
     marginHorizontal: -CARD_PADDING,
     paddingHorizontal: 0,
@@ -1233,29 +1250,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: 0,
-    marginBottom: 0,
   },
   avatarLarge: {
-    width: IS_SMALL_SCREEN ? 100 : 120, // Plus petit sur petits écrans
-    height: IS_SMALL_SCREEN ? 100 : 120,
-    marginTop: -45,
-    marginRight: 10, // Augmenté pour respirer du bord
+    width: 105,
+    height: 105,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -5,
   },
   profilePhotoLarge: {
-    width: IS_SMALL_SCREEN ? 75 : 85, // Agrandi
-    height: IS_SMALL_SCREEN ? 75 : 85,
-    borderRadius: IS_SMALL_SCREEN ? 37.5 : 42.5,
+    width: 105,
+    height: 105,
+    borderRadius: 52.5,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 3,
+    borderWidth: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    marginTop: -35,
-    marginLeft: 10, // Augmenté pour respirer du bord
+    marginLeft: 10,
+    marginTop: -5,
   },
   profilePhotoImage: {
     width: '100%',
@@ -1265,7 +1283,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 35,
+    marginTop: 65,
   },
   greetingLarge: {
     fontSize: 13,

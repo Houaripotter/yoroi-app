@@ -1,8 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Activity } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+
+// OPTIMISATION: Créer animated component pour SVG Circle
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const CIRCLE_SIZE = 100;
 const CIRCLE_RADIUS = CIRCLE_SIZE / 2 - 7;
@@ -16,7 +19,7 @@ interface ChargeCardProps {
   onPress?: () => void;
 }
 
-export const ChargeCard: React.FC<ChargeCardProps> = ({
+const ChargeCardComponent: React.FC<ChargeCardProps> = ({
   totalLoad,
   maxLoad = 2000,
   riskLevel,
@@ -28,11 +31,10 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
   const glowAnim = useRef(new Animated.Value(0)).current;
   const circleScaleAnim = useRef(new Animated.Value(0.8)).current;
   const fadeInAnim = useRef(new Animated.Value(0)).current;
-  const [animatedProgress, setAnimatedProgress] = useState(0);
 
   useEffect(() => {
     const progress = Math.min(100, (totalLoad / maxLoad) * 100);
-    
+
     // Animation d'entrée (fade + scale du cercle)
     Animated.parallel([
       Animated.spring(circleScaleAnim, {
@@ -48,22 +50,18 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-    
-    // Animation de remplissage avec spring effect
+
+    // OPTIMISATION: Animation de remplissage sans listener
+    // Utiliser interpolate au lieu de setState pour éviter re-renders
     Animated.spring(progressAnim, {
       toValue: progress / 100,
       tension: 30,
       friction: 8,
-      useNativeDriver: false,
+      useNativeDriver: false, // Requis pour SVG strokeDashoffset
     }).start();
 
-    // Listener pour mettre à jour le state
-    const listener = progressAnim.addListener(({ value }) => {
-      setAnimatedProgress(value);
-    });
-
     // Animation de glow (pulsation douce avec easing)
-    Animated.loop(
+    const glowLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
@@ -78,10 +76,11 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    glowLoop.start();
 
     return () => {
-      progressAnim.removeListener(listener);
+      glowLoop.stop();
     };
   }, [totalLoad, maxLoad]);
 
@@ -103,7 +102,11 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
 
   const { start, end } = getColors();
 
-  const strokeDashoffset = CIRCUMFERENCE - (animatedProgress * CIRCUMFERENCE);
+  // OPTIMISATION: Interpoler strokeDashoffset directement sans setState
+  const strokeDashoffset = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CIRCUMFERENCE, 0],
+  });
 
   const glowOpacity = glowAnim.interpolate({
     inputRange: [0, 1],
@@ -171,8 +174,8 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
             strokeWidth="5"
           />
 
-          {/* Cercle de progression animé */}
-          <Circle
+          {/* Cercle de progression animé - OPTIMISÉ avec AnimatedCircle */}
+          <AnimatedCircle
             cx={CIRCLE_CENTER}
             cy={CIRCLE_CENTER}
             r={CIRCLE_RADIUS}
@@ -212,6 +215,13 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
     </View>
   );
 };
+
+// OPTIMISATION: Mémoriser le composant pour éviter re-renders inutiles
+export const ChargeCard = memo(ChargeCardComponent, (prevProps, nextProps) => {
+  return prevProps.totalLoad === nextProps.totalLoad &&
+         prevProps.maxLoad === nextProps.maxLoad &&
+         prevProps.riskLevel === nextProps.riskLevel;
+});
 
 const styles = StyleSheet.create({
   container: {

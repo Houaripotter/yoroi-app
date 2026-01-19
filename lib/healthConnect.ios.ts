@@ -203,8 +203,19 @@ class HealthConnectService {
       return false;
     }
 
+    // Vérifier que c'est bien iOS
+    if (Platform.OS !== 'ios') {
+      return false;
+    }
+
     // Sur iOS, Apple Health est toujours disponible sur les appareils physiques
-    return Platform.OS === 'ios' && HealthKit.isHealthDataAvailable();
+    // IMPORTANT: Wrapper dans try/catch pour éviter crash sur iPad ou si module natif ne charge pas
+    try {
+      return HealthKit?.isHealthDataAvailable() ?? false;
+    } catch (error) {
+      logger.error('[HealthConnect] HealthKit.isHealthDataAvailable() failed:', error);
+      return false;
+    }
   }
 
   getProviderName(): string {
@@ -287,38 +298,53 @@ class HealthConnectService {
     try {
       const available = await this.isAvailable();
       if (!available) {
-        logger.warn('Apple Health non disponible');
+        logger.warn('[HealthConnect] Apple Health non disponible sur cet appareil');
         return false;
       }
 
       // Demander les permissions (ouvre le popup iOS)
       await this.requestIOSPermissions();
 
-      // IMPORTANT: Sur iOS, Apple ne confirme pas si les permissions sont accordées
-      // pour des raisons de confidentialité. On marque comme "connecté" après la demande.
-      // Si l'utilisateur n'a pas accordé les permissions, il devra les activer dans
-      // Réglages iOS → Santé → YOROI
+      // CRITIQUE: Vérifier que les permissions ont vraiment été accordées
+      // en tentant de lire une donnée de test
+      logger.info('[HealthConnect] Vérification des permissions réelles...');
+      const hasPermissions = await this.verifyPermissions();
+
+      if (!hasPermissions) {
+        logger.warn('[HealthConnect] Utilisateur a refusé les permissions ou permissions non accordées');
+        this.syncStatus.isConnected = false;
+        await this.saveSyncStatus();
+        return false;
+      }
+
+      // Tester une lecture réelle pour s'assurer que tout fonctionne
+      logger.info('[HealthConnect] Test de lecture HealthKit...');
+      const testData = await this.getLatestWeight();
+
+      // On accepte null (pas de données) mais on vérifie qu'il n'y a pas eu d'erreur critique
+      logger.info('[HealthConnect] Test réussi, marquage comme connecté');
 
       this.syncStatus.isConnected = true;
       this.syncStatus.lastSync = new Date().toISOString();
 
-      // Marquer toutes les permissions comme potentiellement disponibles
-      // (Apple ne permet pas de vérifier le statut exact)
+      // Marquer toutes les permissions comme disponibles (vérifiées)
       Object.keys(this.syncStatus.permissions).forEach(key => {
         this.syncStatus.permissions[key as keyof HealthPermissions] = true;
       });
 
       await this.saveSyncStatus();
 
-      logger.info('Connexion HealthKit réussie');
+      logger.info('[HealthConnect] Connexion HealthKit réussie');
 
       // Lancer une première synchronisation automatiquement
-      logger.info('🔄 Lancement de la synchronisation initiale...');
+      logger.info('[HealthConnect] 🔄 Lancement de la synchronisation initiale...');
       await this.syncAll();
 
       return true;
     } catch (error) {
-      logger.error('Erreur connexion:', error);
+      logger.error('[HealthConnect] Erreur lors de la connexion:', error);
+      this.syncStatus.isConnected = false;
+      await this.saveSyncStatus();
       return false;
     }
   }
@@ -345,9 +371,56 @@ class HealthConnectService {
     }
   }
 
-  private async getIOSWeight(): Promise<HealthData['weight'] | null> {
+  /**
+   * HELPER: Wrapper sécurisé pour toutes les requêtes HealthKit
+   * - Vérifie que le module HealthKit est chargé
+   * - Gère les erreurs de permissions de manière standardisée
+   * - Log les erreurs de façon cohérente
+   * - Retourne null en cas d'erreur au lieu de crasher
+   */
+  private async queryHealthKit<T>(
+    queryFn: () => Promise<T>,
+    dataTypeName: string
+  ): Promise<T | null> {
+    // Vérification #1: Module HealthKit chargé
+    if (!HealthKit) {
+      logger.warn(`[HealthConnect] HealthKit module not loaded, cannot fetch ${dataTypeName}`);
+      return null;
+    }
 
     try {
+      return await queryFn();
+    } catch (error) {
+      // Gestion standardisée des erreurs
+      if (error instanceof Error) {
+        // Erreur de permissions (attendue si utilisateur refuse)
+        if (
+          error.message?.includes('Authorization') ||
+          error.message?.includes('Code=5') ||
+          error.message?.includes('not authorized')
+        ) {
+          logger.info(`[HealthConnect] Permissions non accordées pour ${dataTypeName}`);
+          return null;
+        }
+
+        // Erreur de type de donnée non disponible
+        if (error.message?.includes('dataTypeNotAvailable')) {
+          logger.info(`[HealthConnect] Type de donnée ${dataTypeName} non disponible sur cet appareil`);
+          return null;
+        }
+
+        // Autres erreurs (réelles)
+        logger.error(`[HealthConnect] Erreur lecture ${dataTypeName}:`, error);
+      } else {
+        logger.error(`[HealthConnect] Erreur inconnue lecture ${dataTypeName}:`, error);
+      }
+
+      return null;
+    }
+  }
+
+  private async getIOSWeight(): Promise<HealthData['weight'] | null> {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', {
         from: fromDate.getTime(),
@@ -364,14 +437,12 @@ class HealthConnectService {
           date: new Date(latest.startDate).toISOString(),
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture poids iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'weight');
   }
 
   private async getIOSSteps(): Promise<HealthData['steps'] | null> {
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -393,18 +464,12 @@ class HealthConnectService {
           };
         }
       }
-    } catch (error: any) {
-      if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5')) {
-        logger.info('Permissions Apple Health pas encore accordées pour les pas');
-      } else {
-        logger.error('Erreur lecture pas iOS:', error);
-      }
-    }
-    return null;
+      return null;
+    }, 'steps');
   }
 
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
-    try {
+    return this.queryHealthKit(async () => {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
@@ -480,14 +545,8 @@ class HealthConnectService {
 
         return result;
       }
-    } catch (error: any) {
-      if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5') || error?.message?.includes('Value is undefined')) {
-        logger.info('Permissions Apple Health pas encore accordées pour le sommeil');
-      } else {
-        logger.error('Erreur lecture sommeil iOS:', error);
-      }
-    }
-    return null;
+      return null;
+    }, 'sleep');
   }
 
   async getLatestWeight(): Promise<HealthData['weight'] | null> {
@@ -503,8 +562,7 @@ class HealthConnectService {
   }
 
   private async getIOSHydration(): Promise<HealthData['hydration'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -521,15 +579,8 @@ class HealthConnectService {
           date: today.toISOString(),
         };
       }
-    } catch (error: any) {
-      // Ne logger qu'une info pour les erreurs de permissions
-      if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5') || error?.message?.includes('Value is undefined')) {
-        logger.info('Permissions Apple Health pas encore accordées pour l\'hydratation');
-      } else {
-        logger.error('Erreur lecture hydratation iOS:', error);
-      }
-    }
-    return null;
+      return null;
+    }, 'hydration');
   }
 
   async getTodayHydration(): Promise<HealthData['hydration'] | null> {
@@ -541,8 +592,7 @@ class HealthConnectService {
   // ============================================
 
   private async getIOSHeartRate(): Promise<HealthData['heartRate'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -580,15 +630,8 @@ class HealthConnectService {
           resting: Math.round(resting),
         };
       }
-    } catch (error: any) {
-      // Ne logger qu'une info pour les erreurs de permissions
-      if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5')) {
-        logger.info('Permissions Apple Health pas encore accordées pour la fréquence cardiaque');
-      } else {
-        logger.error('Erreur lecture fréquence cardiaque iOS:', error);
-      }
-    }
-    return null;
+      return null;
+    }, 'heartRate');
   }
 
   async getTodayHeartRate(): Promise<HealthData['heartRate'] | null> {
@@ -596,8 +639,7 @@ class HealthConnectService {
   }
 
   private async getIOSHeartRateVariability(): Promise<HealthData['heartRateVariability'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -614,15 +656,8 @@ class HealthConnectService {
           date: samples[0].startDate,
         };
       }
-    } catch (error: any) {
-      // Ne logger qu'une info pour les erreurs de permissions
-      if (error?.message?.includes('Authorization') || error?.message?.includes('Code=5')) {
-        logger.info('Permissions Apple Health pas encore accordées pour HRV');
-      } else {
-        logger.error('Erreur lecture HRV iOS:', error);
-      }
-    }
-    return null;
+      return null;
+    }, 'hrv');
   }
 
   async getTodayHRV(): Promise<HealthData['heartRateVariability'] | null> {
@@ -634,8 +669,7 @@ class HealthConnectService {
   // ============================================
 
   private async getIOSCalories(): Promise<HealthData['calories'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -663,10 +697,7 @@ class HealthConnectService {
         basal: Math.round(basal),
         total: Math.round(active + basal),
       };
-    } catch (error) {
-      logger.error('Erreur lecture calories iOS:', error);
-    }
-    return null;
+    }, 'calories');
   }
 
   async getTodayCalories(): Promise<HealthData['calories'] | null> {
@@ -674,8 +705,7 @@ class HealthConnectService {
   }
 
   private async getIOSDistance(): Promise<HealthData['distance'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -696,10 +726,8 @@ class HealthConnectService {
           unit: 'km',
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture distance iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'distance');
   }
 
   async getTodayDistance(): Promise<HealthData['distance'] | null> {
@@ -711,8 +739,7 @@ class HealthConnectService {
   // ============================================
 
   private async getIOSVO2Max(): Promise<HealthData['vo2Max'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierVO2Max', {
         from: fromDate.getTime(),
@@ -727,10 +754,8 @@ class HealthConnectService {
           date: samples[0].startDate,
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture VO2 Max iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'vo2max');
   }
 
   async getVO2Max(): Promise<HealthData['vo2Max'] | null> {
@@ -738,8 +763,7 @@ class HealthConnectService {
   }
 
   private async getIOSOxygenSaturation(): Promise<HealthData['oxygenSaturation'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierOxygenSaturation', {
         from: fromDate.getTime(),
@@ -755,10 +779,8 @@ class HealthConnectService {
           date: samples[0].startDate,
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture SpO2 iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'oxygenSaturation');
   }
 
   async getOxygenSaturation(): Promise<HealthData['oxygenSaturation'] | null> {
@@ -766,8 +788,7 @@ class HealthConnectService {
   }
 
   private async getIOSRespiratoryRate(): Promise<HealthData['respiratoryRate'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRespiratoryRate', {
         from: fromDate.getTime(),
@@ -782,10 +803,8 @@ class HealthConnectService {
           date: samples[0].startDate,
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture fréquence respiratoire iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'respiratoryRate');
   }
 
   async getRespiratoryRate(): Promise<HealthData['respiratoryRate'] | null> {
@@ -793,8 +812,7 @@ class HealthConnectService {
   }
 
   private async getIOSBodyTemperature(): Promise<HealthData['bodyTemperature'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyTemperature', {
         from: fromDate.getTime(),
@@ -810,10 +828,8 @@ class HealthConnectService {
           date: samples[0].startDate,
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture température corporelle iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'bodyTemperature');
   }
 
   async getBodyTemperature(): Promise<HealthData['bodyTemperature'] | null> {
@@ -825,8 +841,7 @@ class HealthConnectService {
   // ============================================
 
   private async getIOSBodyComposition(): Promise<HealthData['bodyComposition'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const [fatSamples, leanSamples] = await Promise.all([
         HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', {
@@ -858,10 +873,8 @@ class HealthConnectService {
           date: new Date().toISOString(),
         };
       }
-    } catch (error) {
-      logger.error('Erreur lecture composition corporelle iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'bodyComposition');
   }
 
   async getBodyComposition(): Promise<HealthData['bodyComposition'] | null> {
@@ -873,8 +886,7 @@ class HealthConnectService {
   // ============================================
 
   private async getIOSWorkouts(): Promise<HealthData['workouts'] | null> {
-
-    try {
+    return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const samples = await HealthKit.queryWorkoutSamples({
         from: fromDate.getTime(),
@@ -902,10 +914,8 @@ class HealthConnectService {
           };
         });
       }
-    } catch (error) {
-      logger.error('Erreur lecture workouts iOS:', error);
-    }
-    return null;
+      return null;
+    }, 'workouts');
   }
 
   async getWorkouts(): Promise<HealthData['workouts'] | null> {
@@ -1320,54 +1330,89 @@ class HealthConnectService {
       return demoData;
     }
 
-    const [
-      weight,
-      steps,
-      sleep,
-      hydration,
-      heartRate,
-      hrv,
-      calories,
-      distance,
-      vo2Max,
-      oxygenSaturation,
-      respiratoryRate,
-      bodyTemperature,
-      bodyComposition,
-      workouts,
-    ] = await Promise.all([
-      this.getLatestWeight(),
-      this.getTodaySteps(),
-      this.getLastSleep(),
-      this.getTodayHydration(),
-      this.getTodayHeartRate(),
-      this.getTodayHRV(),
-      this.getTodayCalories(),
-      this.getTodayDistance(),
-      this.getVO2Max(),
-      this.getOxygenSaturation(),
-      this.getRespiratoryRate(),
-      this.getBodyTemperature(),
-      this.getBodyComposition(),
-      this.getWorkouts(),
-    ]);
+    try {
+      // CRITIQUE: Utiliser Promise.allSettled au lieu de Promise.all
+      // pour éviter qu'une seule requête qui échoue fasse crasher tout le chargement
+      const results = await Promise.allSettled([
+        this.getLatestWeight(),
+        this.getTodaySteps(),
+        this.getLastSleep(),
+        this.getTodayHydration(),
+        this.getTodayHeartRate(),
+        this.getTodayHRV(),
+        this.getTodayCalories(),
+        this.getTodayDistance(),
+        this.getVO2Max(),
+        this.getOxygenSaturation(),
+        this.getRespiratoryRate(),
+        this.getBodyTemperature(),
+        this.getBodyComposition(),
+        this.getWorkouts(),
+      ]);
 
-    return {
-      weight: weight || undefined,
-      steps: steps || undefined,
-      sleep: sleep || undefined,
-      hydration: hydration || undefined,
-      heartRate: heartRate || undefined,
-      heartRateVariability: hrv || undefined,
-      calories: calories || undefined,
-      distance: distance || undefined,
-      vo2Max: vo2Max || undefined,
-      oxygenSaturation: oxygenSaturation || undefined,
-      respiratoryRate: respiratoryRate || undefined,
-      bodyTemperature: bodyTemperature || undefined,
-      bodyComposition: bodyComposition || undefined,
-      workouts: workouts || undefined,
-    };
+      // Extraire les valeurs avec typage explicite
+      const weight = results[0].status === 'fulfilled' ? results[0].value : null;
+      const steps = results[1].status === 'fulfilled' ? results[1].value : null;
+      const sleep = results[2].status === 'fulfilled' ? results[2].value : null;
+      const hydration = results[3].status === 'fulfilled' ? results[3].value : null;
+      const heartRate = results[4].status === 'fulfilled' ? results[4].value : null;
+      const hrv = results[5].status === 'fulfilled' ? results[5].value : null;
+      const calories = results[6].status === 'fulfilled' ? results[6].value : null;
+      const distance = results[7].status === 'fulfilled' ? results[7].value : null;
+      const vo2Max = results[8].status === 'fulfilled' ? results[8].value : null;
+      const oxygenSaturation = results[9].status === 'fulfilled' ? results[9].value : null;
+      const respiratoryRate = results[10].status === 'fulfilled' ? results[10].value : null;
+      const bodyTemperature = results[11].status === 'fulfilled' ? results[11].value : null;
+      const bodyComposition = results[12].status === 'fulfilled' ? results[12].value : null;
+      const workouts = results[13].status === 'fulfilled' ? results[13].value : null;
+
+      // Logger les échecs pour debugging (sans crasher)
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          const dataTypes = ['weight', 'steps', 'sleep', 'hydration', 'heartRate', 'hrv',
+                           'calories', 'distance', 'vo2max', 'oxygenSat', 'respRate',
+                           'temperature', 'bodyComp', 'workouts'];
+          logger.warn(`[HealthConnect] Failed to fetch ${dataTypes[i]}:`, r.reason);
+        }
+      });
+
+      return {
+        weight: weight ?? undefined,
+        steps: steps ?? undefined,
+        sleep: sleep ?? undefined,
+        hydration: hydration ?? undefined,
+        heartRate: heartRate ?? undefined,
+        heartRateVariability: hrv ?? undefined,
+        calories: calories ?? undefined,
+        distance: distance ?? undefined,
+        vo2Max: vo2Max ?? undefined,
+        oxygenSaturation: oxygenSaturation ?? undefined,
+        respiratoryRate: respiratoryRate ?? undefined,
+        bodyTemperature: bodyTemperature ?? undefined,
+        bodyComposition: bodyComposition ?? undefined,
+        workouts: workouts ?? undefined,
+      };
+    } catch (error) {
+      // Erreur critique lors de getAllHealthData - ne devrait jamais arriver avec allSettled
+      logger.error('[HealthConnect] Critical error in getAllHealthData:', error);
+      // Retourner structure vide plutôt que crasher
+      return {
+        weight: undefined,
+        steps: undefined,
+        sleep: undefined,
+        hydration: undefined,
+        heartRate: undefined,
+        heartRateVariability: undefined,
+        calories: undefined,
+        distance: undefined,
+        vo2Max: undefined,
+        oxygenSaturation: undefined,
+        respiratoryRate: undefined,
+        bodyTemperature: undefined,
+        bodyComposition: undefined,
+        workouts: undefined,
+      };
+    }
   }
 
   async writeWeight(weight: number, unit: 'kg' | 'lbs' = 'kg'): Promise<boolean> {

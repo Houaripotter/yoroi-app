@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 120, height: 120 },
+  sm: { width: 105, height: 105 }, // Ajusté pour correspondre exactement à la photo de profil (105px)
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
@@ -90,13 +90,18 @@ export default function AvatarDisplay({
   // Rendu
   const renderContent = () => {
     // Style minimaliste : contour fin et fond blanc pour unifier l'image
+    // MODIFICATION: Cercle parfait si les dimensions sont carrées (sm), sinon borderRadius standard
+    const isSquare = dimensions.width === dimensions.height;
+    const borderRadius = isSquare ? dimensions.width / 2 : 16;
+    
     const containerStyle = [
       styles.container,
       dimensions,
       {
-        borderWidth: 1,
+        borderWidth: 2, // Bordure un peu plus visible pour le cercle
         borderColor: isDark ? '#FFFFFF' : '#000000',
-        backgroundColor: '#FFFFFF', // Fond blanc forcé pour fusionner avec l'image
+        backgroundColor: '#FFFFFF', // Fond TOUJOURS blanc pour éviter de voir du noir à travers l'avatar
+        borderRadius: borderRadius,
       }
     ];
 
@@ -118,7 +123,8 @@ export default function AvatarDisplay({
       <View style={containerStyle}>
         <Image
           source={imagePath}
-          style={[styles.image, dimensions]}
+          // Taille réduite à 85% pour voir l'avatar en entier dans le cercle sans couper
+          style={{ width: '85%', height: '85%' }} 
           resizeMode="contain"
         />
       </View>

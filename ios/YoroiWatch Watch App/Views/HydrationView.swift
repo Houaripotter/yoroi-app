@@ -8,6 +8,7 @@ import SwiftUI
 struct HydrationView: View {
     @StateObject private var healthManager = HealthManager.shared
     @State private var waveOffset: CGFloat = 0
+    @State private var isAnimating: Bool = false
 
     private let goal: Double = 3000 // mL
 
@@ -51,8 +52,31 @@ struct HydrationView: View {
                     .clipShape(WaterBottleShape())
             }
             .onAppear {
+                // Ne lancer l'animation que si pas en mode économie d'énergie
+                guard !ProcessInfo.processInfo.isLowPowerModeEnabled else { return }
+
+                isAnimating = true
                 withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
                     waveOffset = .pi * 2
+                }
+            }
+            // CORRECTION MEMORY LEAK: Arrêter l'animation quand la vue disparaît
+            .onDisappear {
+                isAnimating = false
+                waveOffset = 0
+            }
+            // Observer le mode économie d'énergie
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name.NSProcessInfoPowerStateDidChange)) { _ in
+                if ProcessInfo.processInfo.isLowPowerModeEnabled {
+                    // Arrêter l'animation
+                    isAnimating = false
+                    waveOffset = 0
+                } else if !isAnimating {
+                    // Relancer l'animation si pas active
+                    isAnimating = true
+                    withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                        waveOffset = .pi * 2
+                    }
                 }
             }
 
@@ -73,33 +97,36 @@ struct HydrationView: View {
                 // Retirer
                 Button(action: { healthManager.removeWater(250) }) {
                     Text("-")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
+                        // CORRECTION: Augmenté de 44x44 à 50x50 (minimum recommandé + marge)
+                        .frame(width: 50, height: 50)
                         .background(Color.red.opacity(0.8))
-                        .cornerRadius(10)
+                        .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
 
                 // +250
                 Button(action: { healthManager.addWater(250) }) {
                     Text("+250")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.black)
-                        .frame(width: 60, height: 44)
+                        // CORRECTION: Augmenté hauteur de 44 à 50
+                        .frame(width: 60, height: 50)
                         .background(Color.cyan)
-                        .cornerRadius(10)
+                        .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
 
                 // +500
                 Button(action: { healthManager.addWater(500) }) {
                     Text("+500")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.black)
-                        .frame(width: 60, height: 44)
+                        // CORRECTION: Augmenté hauteur de 44 à 50
+                        .frame(width: 60, height: 50)
                         .background(Color.cyan)
-                        .cornerRadius(10)
+                        .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
             }

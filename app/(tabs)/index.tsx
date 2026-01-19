@@ -714,16 +714,7 @@ export default function HomeScreen() {
         return (
           <View key={sectionId}>
             <View style={styles.header}>
-              <TouchableOpacity onPress={() => router.push('/avatar-selection')} activeOpacity={0.8}>
-                <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
-              </TouchableOpacity>
-              <View style={styles.headerText}>
-                <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
-                <View style={styles.userNameRow}>
-                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
-                  <ViewModeSwitch mode={mode} onToggle={toggleMode} />
-                </View>
-              </View>
+              {/* Photo de profil (Gauche) */}
               <TouchableOpacity
                 style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
                 onPress={() => router.push('/profile')}
@@ -738,6 +729,24 @@ export default function HomeScreen() {
                 ) : (
                   <Ionicons name="person" size={24} color={colors.textSecondary} />
                 )}
+              </TouchableOpacity>
+
+              {/* Texte (Centre) */}
+              <View style={styles.headerText}>
+                <Text style={[styles.greeting, { color: colors.textMuted }]}>{getGreeting()}</Text>
+                <View style={styles.userNameRow}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{profile?.name || 'Champion'}</Text>
+                  <ViewModeSwitch mode={mode} onToggle={toggleMode} />
+                </View>
+              </View>
+
+              {/* Avatar (Droite) */}
+              <TouchableOpacity 
+                style={styles.avatarContainerRight} 
+                onPress={() => router.push('/avatar-selection')} 
+                activeOpacity={0.8}
+              >
+                <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
               </TouchableOpacity>
             </View>
 
@@ -762,19 +771,19 @@ export default function HomeScreen() {
                     </View>
                   </Animated.View>
 
-                  {/* Bulle de pensée (fond BLANC) */}
+                  {/* Bulle de pensée (fond caméléon) */}
                   <View style={[styles.speechBubble, {
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
                     shadowColor: isDark ? colors.accent : '#000',
-                    borderColor: `${colors.accent}30`,
+                    borderColor: isDark ? colors.border : `${colors.accent}30`,
                   }]}>
                     {/* Petite queue de bulle */}
                     <View style={[styles.bubbleTail, {
-                      backgroundColor: '#FFFFFF',
-                      borderColor: `${colors.accent}30`,
+                      backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                      borderColor: isDark ? colors.border : `${colors.accent}30`,
                     }]} />
 
-                    <Text style={styles.quoteTextBubble}>
+                    <Text style={[styles.quoteTextBubble, { color: isDark ? colors.textPrimary : '#1A1A1A' }]}>
                       "{dailyQuote.text}"
                     </Text>
 
@@ -1448,13 +1457,13 @@ export default function HomeScreen() {
       )}
 
       {/* Bouton flottant de sauvegarde */}
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={[styles.backupFab, { backgroundColor: colors.accent }]}
         onPress={() => router.push('/backup')}
         activeOpacity={0.85}
       >
         <Cloud size={20} color="#FFFFFF" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
@@ -1479,13 +1488,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    marginLeft: 12,
   },
   profilePhotoImage: {
     width: 80,
     height: 80,
   },
-  headerText: { flex: 1, marginLeft: 12 },
+  avatarContainerRight: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerText: { flex: 1, marginHorizontal: 12 },
   greeting: { fontSize: 14, fontWeight: '600' },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },

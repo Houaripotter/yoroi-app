@@ -12,14 +12,9 @@ import { useTheme } from '@/lib/ThemeContext';
 // ============================================
 // WELLNESS CARDS - NOUVEAU DESIGN SYSTEM
 // ============================================
-// Types de cartes:
-// 1. ColoredStatCard - Cartes stats colorées (Calories, Weight)
-// 2. ChartCard - Cartes pour graphiques (bleu clair)
-// 3. WhiteCard - Cartes blanches simples
-// 4. ExerciseCard - Cartes exercices avec image
 
 // ============================================
-// COULEURS DU DESIGN
+// COULEURS DU DESIGN (Static + Dynamic Helpers)
 // ============================================
 export const WELLNESS_COLORS = {
   // Fond global
@@ -53,6 +48,15 @@ export const WELLNESS_COLORS = {
   tabBar: '#1A1A2E',
 };
 
+const getDynamicColors = (isDark: boolean, colors: any) => ({
+  background: isDark ? colors.background : '#E5EBF0',
+  container: isDark ? colors.backgroundCard : '#FFFFFF',
+  textPrimary: isDark ? colors.textPrimary : '#1A1A2E',
+  textSecondary: isDark ? colors.textSecondary : '#6B7280',
+  iconCircleGray: isDark ? colors.backgroundElevated : '#F3F4F6',
+  iconCircleBlue: isDark ? `${colors.accent}20` : '#E0F2F7',
+});
+
 // ============================================
 // ICON CIRCLE
 // ============================================
@@ -69,19 +73,22 @@ export const IconCircle: React.FC<IconCircleProps> = ({
   size = 45,
   iconColor,
 }) => {
+  const { isDark, colors } = useTheme();
+  const dynamicColors = getDynamicColors(isDark, colors);
+
   const bgColors = {
-    blue: WELLNESS_COLORS.iconCircleBlue,
+    blue: dynamicColors.iconCircleBlue,
     orange: WELLNESS_COLORS.iconCircleOrange,
     green: WELLNESS_COLORS.iconCircleGreen,
-    gray: WELLNESS_COLORS.iconCircleGray,
-    white: 'rgba(255, 255, 255, 0.3)',
+    gray: dynamicColors.iconCircleGray,
+    white: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
   };
 
   const defaultIconColors = {
-    blue: WELLNESS_COLORS.dark,
+    blue: isDark ? colors.accent : WELLNESS_COLORS.dark,
     orange: WELLNESS_COLORS.dark,
     green: WELLNESS_COLORS.dark,
-    gray: WELLNESS_COLORS.dark,
+    gray: dynamicColors.textPrimary,
     white: '#FFFFFF',
   };
 
@@ -128,17 +135,19 @@ export const ColoredStatCard: React.FC<ColoredStatCardProps> = ({
   onPress,
   style,
 }) => {
+  const { isDark, colors } = useTheme();
+
   const bgColors = {
     orange: WELLNESS_COLORS.orange,
     green: WELLNESS_COLORS.green,
-    blue: WELLNESS_COLORS.cyan,
+    blue: isDark ? colors.accent : WELLNESS_COLORS.cyan,
     yellow: WELLNESS_COLORS.yellow,
   };
 
   const textColors = {
     orange: '#FFFFFF',
-    green: WELLNESS_COLORS.dark,
-    blue: WELLNESS_COLORS.dark,
+    green: '#1A1A2E',
+    blue: '#1A1A2E',
     yellow: '#FFFFFF',
   };
 
@@ -212,14 +221,16 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   style,
   onPress,
 }) => {
-  const { colors } = useTheme();
-  const chartBackground = colors.backgroundCard || '#0A0A0A';
+  const { colors, isDark } = useTheme();
+  // En mode dark, on utilise backgroundCard, sinon on garde le style par défaut (souvent écrasé par le parent ou transparent)
+  const chartBackground = isDark ? colors.backgroundCard : (colors.backgroundCard || '#FFFFFF');
+  const titleColor = isDark ? colors.textPrimary : WELLNESS_COLORS.dark;
 
   const content = (
     <View style={[styles.chartCard, { backgroundColor: chartBackground }, style]}>
       {(title || headerLeft || headerRight) && (
         <View style={styles.chartCardHeader}>
-          {headerLeft || (title && <Text style={styles.chartCardTitle}>{title}</Text>)}
+          {headerLeft || (title && <Text style={[styles.chartCardTitle, { color: titleColor }]}>{title}</Text>)}
           {headerRight}
         </View>
       )}
@@ -254,8 +265,11 @@ export const WhiteCard: React.FC<WhiteCardProps> = ({
   onPress,
   noPadding = false,
 }) => {
+  const { isDark, colors } = useTheme();
+  const bg = isDark ? colors.backgroundCard : '#FFFFFF';
+
   const content = (
-    <View style={[styles.whiteCard, noPadding && { padding: 0 }, style]}>
+    <View style={[styles.whiteCard, { backgroundColor: bg }, noPadding && { padding: 0 }, style]}>
       {children}
     </View>
   );
@@ -297,28 +311,36 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onToggle,
   style,
 }) => {
+  const { isDark, colors } = useTheme();
   const isMain = variant === 'main';
+  const dynamicColors = getDynamicColors(isDark, colors);
+
+  // Styles dynamiques
+  const mainBg = isDark ? colors.backgroundElevated : WELLNESS_COLORS.iconCircleGray;
+  const smallBg = isDark ? `${colors.accent}20` : WELLNESS_COLORS.cyan;
+  const titleColor = dynamicColors.textPrimary;
+  const subtitleColor = dynamicColors.textSecondary;
 
   return (
     <TouchableOpacity
       style={[
-        isMain ? styles.exerciseCardMain : styles.exerciseCardSmall,
+        isMain ? [styles.exerciseCardMain, { backgroundColor: mainBg }] : [styles.exerciseCardSmall, { backgroundColor: smallBg }],
         style,
       ]}
       activeOpacity={0.8}
       onPress={onPress}
     >
       <View style={styles.exerciseContent}>
-        <Text style={[styles.exerciseTitle, !isMain && styles.exerciseTitleSmall]}>
+        <Text style={[styles.exerciseTitle, !isMain && styles.exerciseTitleSmall, { color: titleColor }]}>
           {title}
         </Text>
         {subtitle && (
-          <Text style={[styles.exerciseSubtitle, !isMain && styles.exerciseSubtitleSmall]}>
+          <Text style={[styles.exerciseSubtitle, !isMain && styles.exerciseSubtitleSmall, { color: subtitleColor }]}>
             {subtitle}
           </Text>
         )}
         {duration && isMain && (
-          <Text style={styles.exerciseDuration}>{duration}</Text>
+          <Text style={[styles.exerciseDuration, { color: titleColor }]}>{duration}</Text>
         )}
       </View>
 
@@ -328,11 +350,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           styles.checkButton,
           completed && styles.checkButtonCompleted,
           !isMain && styles.checkButtonSmall,
+          { backgroundColor: completed ? WELLNESS_COLORS.green : (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)') }
         ]}
         onPress={onToggle}
         activeOpacity={0.7}
       >
-        <Text style={styles.checkIcon}>{completed ? '✓' : ''}</Text>
+        <Text style={[styles.checkIcon, { color: completed ? '#1A1A2E' : titleColor }]}>{completed ? '✓' : ''}</Text>
       </TouchableOpacity>
 
       {/* Emoji */}
@@ -359,11 +382,14 @@ export const WaterProgressCard: React.FC<WaterProgressCardProps> = ({
   onPress,
   style,
 }) => {
+  const { isDark, colors } = useTheme();
   const filledBars = Math.round((currentLiters / targetLiters) * 8);
+  const cardBg = isDark ? colors.accent : WELLNESS_COLORS.cyan;
+  const textColor = '#1A1A2E'; // Toujours sombre sur cyan/accent clair
 
   return (
     <TouchableOpacity
-      style={[styles.waterCard, style]}
+      style={[styles.waterCard, { backgroundColor: cardBg }, style]}
       activeOpacity={0.8}
       onPress={onPress}
     >
@@ -372,13 +398,13 @@ export const WaterProgressCard: React.FC<WaterProgressCardProps> = ({
         <View style={styles.waterIconCircle}>
           <Text style={styles.waterIcon}>💧</Text>
         </View>
-        <Text style={styles.waterValue}>{currentLiters.toFixed(1)}l</Text>
+        <Text style={[styles.waterValue, { color: textColor }]}>{currentLiters.toFixed(1)}l</Text>
       </View>
 
       {/* Content */}
       <View style={styles.waterContent}>
-        <Text style={styles.waterTitle}>Water</Text>
-        <Text style={styles.waterSubtitle}>Need to drink {targetLiters}l p/d</Text>
+        <Text style={[styles.waterTitle, { color: textColor }]}>Water</Text>
+        <Text style={[styles.waterSubtitle, { color: textColor }]}>Need to drink {targetLiters}l p/d</Text>
 
         {/* Progress bars */}
         <View style={styles.waterProgressContainer}>
@@ -413,12 +439,15 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   rightElement,
   style,
-}) => (
-  <View style={[styles.sectionHeader, style]}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {rightElement}
-  </View>
-);
+}) => {
+  const { isDark, colors } = useTheme();
+  return (
+    <View style={[styles.sectionHeader, style]}>
+      <Text style={[styles.sectionTitle, { color: isDark ? colors.textPrimary : WELLNESS_COLORS.dark }]}>{title}</Text>
+      {rightElement}
+    </View>
+  );
+};
 
 // ============================================
 // STYLES

@@ -10,7 +10,7 @@ interface CompactObjectiveSwitchProps {
 }
 
 const CompactObjectiveSwitch: React.FC<CompactObjectiveSwitchProps> = ({ onToggle }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [isOn, setIsOn] = useState(false);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [eventType, setEventType] = useState<string>('');
@@ -84,7 +84,7 @@ const CompactObjectiveSwitch: React.FC<CompactObjectiveSwitchProps> = ({ onToggl
           style={[
             styles.toggleThumb,
             {
-              backgroundColor: '#FFFFFF',
+              backgroundColor: isDark ? colors.textPrimary : '#FFFFFF',
               transform: [{ translateX: isOn ? 18 : 2 }],
             }
           ]}

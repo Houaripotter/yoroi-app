@@ -86,9 +86,17 @@ export default function InjuryDetailScreen() {
     }
 
     try {
-      // Vérifier si Mode Créateur actif
-      const creatorMode = await AsyncStorage.getItem('@yoroi_creator_mode');
-      setCreatorModeActive(creatorMode === 'true');
+      // 🔒 PROTECTION : Vérifier si Mode Créateur actif - AVEC GESTION D'ERREUR
+      let creatorMode = false;
+      try {
+        const mode = await AsyncStorage.getItem('@yoroi_creator_mode');
+        creatorMode = mode === 'true';
+      } catch (storageError) {
+        // Si AsyncStorage est inaccessible, logger mais continuer quand même
+        logger.error('[InjuryDetail] Erreur lecture AsyncStorage:', storageError);
+        creatorMode = false; // Mode safe par défaut
+      }
+      setCreatorModeActive(creatorMode);
 
       const injuryData = await getInjuryById(injuryId);
       if (injuryData) {
@@ -240,10 +248,24 @@ export default function InjuryDetailScreen() {
 
   const daysSince = getDaysSinceInjury(injury.date);
   const recommendation = getInjuryRecommendation(injury.eva_score, daysSince);
-  const trend =
-    evaHistory.length >= 2
-      ? evaHistory[evaHistory.length - 1].eva_score - evaHistory[evaHistory.length - 2].eva_score
-      : 0;
+
+  // 🔒 PROTECTION : Calcul sécurisé de la tendance EVA
+  const trend = (() => {
+    // Sécurité : vérifier qu'on a au moins 2 éléments dans l'historique
+    if (!evaHistory || evaHistory.length < 2) {
+      return 0;
+    }
+
+    const lastEva = evaHistory[evaHistory.length - 1];
+    const previousEva = evaHistory[evaHistory.length - 2];
+
+    // Double vérification que les objets existent
+    if (!lastEva || !previousEva) {
+      return 0;
+    }
+
+    return lastEva.eva_score - previousEva.eva_score;
+  })();
 
   return (
     <ScreenWrapper>
@@ -375,7 +397,9 @@ export default function InjuryDetailScreen() {
             placeholderTextColor={colors.textMuted}
             value={evaNote}
             onChangeText={setEvaNote}
-            maxLength={200}
+            maxLength={1000}
+            multiline
+            numberOfLines={3}
           />
           {newEva !== injury.eva_score && (
             <TouchableOpacity

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { UserClub } from '@/lib/storage';
+import { useTheme } from '@/lib/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.95;
@@ -24,6 +25,8 @@ export const FightCard: React.FC<FightCardProps> = ({
   userClubs,
   avatarUri,
 }) => {
+  const { isDark, colors } = useTheme();
+
   const weightChangeText = weightChange > 0 
     ? `+${weightChange.toFixed(1)}kg` 
     : weightChange < 0 
@@ -113,23 +116,23 @@ export const FightCard: React.FC<FightCardProps> = ({
             {displayClubs.map((club) => {
               const defaultLogo = getDefaultLogoForType(club.type);
               return (
-                <View key={club.id} style={styles.clubLogoWrapper}>
+                <View key={club.id} style={[styles.clubLogoWrapper, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
                   <View style={styles.clubLogoContainer}>
                     {club.logoUri ? (
                       <Image 
                         source={{ uri: club.logoUri }} 
-                        style={styles.clubLogo}
+                        style={[styles.clubLogo, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
                         resizeMode="cover"
                       />
                     ) : defaultLogo ? (
                       <Image 
                         source={defaultLogo} 
-                        style={styles.clubLogo}
+                        style={[styles.clubLogo, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}
                         resizeMode="cover"
                       />
                     ) : (
-                      <View style={styles.clubLogoPlaceholder}>
-                        <Text style={styles.clubLogoPlaceholderText}>
+                      <View style={[styles.clubLogoPlaceholder, { backgroundColor: isDark ? colors.backgroundElevated : '#F3F4F6' }]}>
+                        <Text style={[styles.clubLogoPlaceholderText, { color: isDark ? colors.textPrimary : '#2b32b2' }]}>
                           {club.name.charAt(0).toUpperCase()}
                         </Text>
                       </View>

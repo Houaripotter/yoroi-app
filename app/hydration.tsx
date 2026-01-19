@@ -37,6 +37,7 @@ import * as Haptics from 'expo-haptics';
 import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 
 const { width: screenWidth } = Dimensions.get('window');
 const HYDRATION_KEY = '@yoroi_hydration_today';
@@ -54,6 +55,7 @@ export default function HydrationScreen() {
   const insets = useSafeAreaInsets();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { t } = useI18n();
+  const { syncHydration, isWatchAvailable } = useWatch();
 
   const [currentAmount, setCurrentAmount] = useState(0);
   const [goal, setGoal] = useState(2.5);
@@ -151,13 +153,20 @@ export default function HydrationScreen() {
     try {
       const today = new Date().toDateString();
       await AsyncStorage.setItem(HYDRATION_KEY, JSON.stringify({ date: today, amount }));
-      
+
       // Mettre à jour l'historique
       const todayISO = new Date().toISOString().split('T')[0];
       const newHistory = history.filter(d => d.date !== todayISO);
       newHistory.unshift({ date: todayISO, amount, goal });
       setHistory(newHistory.slice(0, 30)); // Garder 30 jours
       await AsyncStorage.setItem(HYDRATION_HISTORY_KEY, JSON.stringify(newHistory.slice(0, 30)));
+
+      // 🔄 Sync avec Apple Watch si disponible
+      if (isWatchAvailable) {
+        const waterIntakeMl = Math.round(amount * 1000); // Convertir litres en millilitres
+        await syncHydration(waterIntakeMl);
+        logger.info(`✅ Hydratation synchronisée avec Watch: ${waterIntakeMl}ml`);
+      }
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
     }

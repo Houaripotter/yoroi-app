@@ -33,12 +33,13 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
 import {
-  healthConnect, 
-  getProviderIcon, 
+  healthConnect,
+  getProviderIcon,
   getConnectionInstructions,
   HealthPermissions,
   SyncStatus,
 } from '@/lib/healthConnect';
+// import { WatchStatusIndicator } from '@/components/WatchStatusIndicator';
 
 export default function HealthConnectScreen() {
   const insets = useSafeAreaInsets();
@@ -213,6 +214,9 @@ export default function HealthConnectScreen() {
             </View>
           )}
         </View>
+
+        {/* Apple Watch Status */}
+        {/* <WatchStatusIndicator /> */}
 
         {/* Connection Button */}
         {!isConnected ? (

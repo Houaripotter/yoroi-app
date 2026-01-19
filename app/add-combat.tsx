@@ -121,7 +121,23 @@ export default function AddCombatScreen() {
       router.back();
     } catch (error) {
       logger.error('Error saving combat:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder le combat', [{ text: 'OK', style: 'primary' }]);
+
+      // Messages d'erreur contextuels selon le type d'erreur
+      let userMessage = 'Impossible de sauvegarder le combat.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('UNIQUE constraint')) {
+          userMessage = 'Ce combat existe déjà. Choisis une autre date ou modifie les détails.';
+        } else if (error.message.includes('NOT NULL constraint')) {
+          userMessage = 'Tous les champs obligatoires doivent être remplis (date, résultat).';
+        } else if (error.message.includes('storage') || error.message.includes('quota')) {
+          userMessage = 'Stockage plein. Libère de l\'espace sur ton téléphone et réessaye.';
+        } else {
+          userMessage = 'Impossible de sauvegarder. Vérifie que tous les champs sont bien remplis et réessaye.';
+        }
+      }
+
+      showPopup('Erreur de sauvegarde', userMessage, [{ text: 'OK', style: 'primary' }]);
       setIsSaving(false);
     }
   };

@@ -4,12 +4,16 @@
 // ============================================
 
 import SwiftUI
+import WatchKit
 
 struct TimerView: View {
     @State private var selectedDuration: Int = 90 // secondes
     @State private var remainingTime: Int = 90
     @State private var isRunning = false
     @State private var timer: Timer?
+
+    // NOUVEAU: Détection mode économie d'énergie
+    @State private var isLowPowerMode: Bool = ProcessInfo.processInfo.isLowPowerModeEnabled
 
     let durations = [30, 60, 90, 120, 180] // 30s, 1m, 1:30, 2m, 3m
 
@@ -71,6 +75,19 @@ struct TimerView: View {
             .padding(.bottom, 8)
         }
         .background(Color.black)
+        // CORRECTION MEMORY LEAK: Arrêter le timer quand la vue disparaît
+        .onDisappear {
+            stopTimer()
+        }
+        // Observer le mode économie d'énergie
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name.NSProcessInfoPowerStateDidChange)) { _ in
+            isLowPowerMode = ProcessInfo.processInfo.isLowPowerModeEnabled
+
+            // Si mode économie activé, arrêter le timer
+            if isLowPowerMode && isRunning {
+                stopTimer()
+            }
+        }
     }
 
     private func formatTime(_ seconds: Int) -> String {
@@ -129,10 +146,12 @@ struct DurationButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 11, weight: .semibold))
+                // CORRECTION: Augmenté de 11pt à 14pt pour meilleure lisibilité
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(isSelected ? .black : .gray)
                 .multilineTextAlignment(.center)
-                .frame(width: 36, height: 36)
+                // CORRECTION: Augmenté de 36x36 à 44x44 (minimum recommandé)
+                .frame(width: 44, height: 44)
                 .background(isSelected ? Color.yellow : Color.gray.opacity(0.2))
                 .cornerRadius(8)
         }

@@ -76,7 +76,7 @@ export const MotivationPopup: React.FC = () => {
             style={[styles.button, { backgroundColor: colors.accent }]}
             onPress={handleClose}
           >
-            <Text style={styles.buttonText}>C'est parti !</Text>
+            <Text style={[styles.buttonText, { color: colors.textOnAccent }]}>C'est parti !</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   buttonText: {
-    color: '#FFF',
     fontSize: 17,
     fontWeight: '700',
   },

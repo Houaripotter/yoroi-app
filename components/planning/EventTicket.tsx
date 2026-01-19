@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Calendar, MapPin, Bell } from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
 
 type SportType = 'JJB' | 'MMA' | 'Boxe' | 'MuayThai' | 'Foot' | 'Basket' | 'Hand' | 'Running' | 'Padel' | 'Kickboxing' | 'Judo' | 'Lutte';
 
@@ -24,6 +25,7 @@ interface EventTicketProps {
 }
 
 const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPress }) => {
+  const { isDark, colors: themeColors } = useTheme();
 
   // Couleurs selon le sport
   const getSportColor = () => {
@@ -71,11 +73,11 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
     if (['Foot', 'Basket', 'Hand'].includes(event.sport) && event.myTeam && event.opponent) {
       return (
         <View style={styles.vsContainer}>
-          <Text style={[styles.teamName, { color: colors.dark }]} numberOfLines={1}>{event.myTeam}</Text>
+          <Text style={[styles.teamName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>{event.myTeam}</Text>
           <View style={[styles.vsBadge, { backgroundColor: colors.primary }]}>
             <Text style={styles.vsText}>VS</Text>
           </View>
-          <Text style={[styles.teamName, { color: colors.dark }]} numberOfLines={1}>{event.opponent}</Text>
+          <Text style={[styles.teamName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>{event.opponent}</Text>
         </View>
       );
     }
@@ -84,10 +86,10 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
     if (event.sport === 'Running' && event.distance) {
       return (
         <View style={styles.runningContainer}>
-          <Text style={[styles.eventName, { color: colors.dark }]} numberOfLines={1}>
+          <Text style={[styles.eventName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>
             {event.name}
           </Text>
-          <View style={[styles.distanceBadge, { backgroundColor: colors.light }]}>
+          <View style={[styles.distanceBadge, { backgroundColor: isDark ? `${colors.primary}20` : colors.light }]}>
             <Text style={[styles.distanceText, { color: colors.primary }]}>
               {event.distance}
             </Text>
@@ -99,11 +101,11 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
     // Sports de combat (JJB, MMA, Boxe, MuayThai)
     return (
       <View style={styles.combatContainer}>
-        <Text style={[styles.eventName, { color: colors.dark }]} numberOfLines={1}>
+        <Text style={[styles.eventName, { color: isDark ? themeColors.textPrimary : colors.dark }]} numberOfLines={1}>
           {event.name}
         </Text>
         {event.category && (
-          <View style={[styles.categoryBadge, { backgroundColor: colors.light }]}>
+          <View style={[styles.categoryBadge, { backgroundColor: isDark ? `${colors.primary}20` : colors.light }]}>
             <Text style={[styles.categoryText, { color: colors.primary }]}>
               {event.category}
             </Text>
@@ -125,7 +127,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
 
   return (
     <TouchableOpacity
-      style={styles.ticketContainer}
+      style={[styles.ticketContainer, { backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF' }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -136,10 +138,10 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
       </View>
 
       {/* Séparation dentelée */}
-      <View style={styles.ticketSeparator}>
-        <View style={[styles.semicircle, styles.semicircleTop, { backgroundColor: '#F9FAFB' }]} />
+      <View style={[styles.ticketSeparator, { backgroundColor: isDark ? themeColors.backgroundCard : '#FFFFFF' }]}>
+        <View style={[styles.semicircle, styles.semicircleTop, { backgroundColor: isDark ? themeColors.background : '#F9FAFB' }]} />
         <View style={styles.dashedLine} />
-        <View style={[styles.semicircle, styles.semicircleBottom, { backgroundColor: '#F9FAFB' }]} />
+        <View style={[styles.semicircle, styles.semicircleBottom, { backgroundColor: isDark ? themeColors.background : '#F9FAFB' }]} />
       </View>
 
       {/* Partie droite - Contenu */}
@@ -150,7 +152,7 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
             {event.logoUrl && (
               <Image source={{ uri: event.logoUrl }} style={styles.federationLogo} />
             )}
-            <Text style={styles.federationName}>{event.federation}</Text>
+            <Text style={[styles.federationName, { color: themeColors.textSecondary }]}>{event.federation}</Text>
           </View>
         )}
 
@@ -160,19 +162,19 @@ const EventTicket: React.FC<EventTicketProps> = ({ event, onPress, onReminderPre
         {/* Date et lieu */}
         <View style={styles.detailsRow}>
           <View style={styles.detailItem}>
-            <Calendar size={14} color="#6B7280" />
-            <Text style={styles.detailText}>{event.date}</Text>
+            <Calendar size={14} color={themeColors.textMuted} />
+            <Text style={[styles.detailText, { color: themeColors.textMuted }]}>{event.date}</Text>
           </View>
           <View style={styles.detailItem}>
-            <MapPin size={14} color="#6B7280" />
-            <Text style={styles.detailText} numberOfLines={1}>{event.location}</Text>
+            <MapPin size={14} color={themeColors.textMuted} />
+            <Text style={[styles.detailText, { color: themeColors.textMuted }]} numberOfLines={1}>{event.location}</Text>
           </View>
         </View>
 
         {/* Footer avec J-XX et rappel */}
         <View style={styles.ticketFooter}>
           <TouchableOpacity
-            style={[styles.reminderButton, { backgroundColor: colors.light }]}
+            style={[styles.reminderButton, { backgroundColor: isDark ? `${colors.primary}20` : colors.light }]}
             onPress={(e) => {
               e.stopPropagation();
               onReminderPress?.();

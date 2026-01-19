@@ -17,6 +17,7 @@ import { getUserSettings } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
+import { useTheme } from '@/lib/ThemeContext';
 
 type Gender = 'male' | 'female';
 type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active';
@@ -43,6 +44,7 @@ interface MacroResult {
 
 export default function CalculatorScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [gender, setGender] = useState<Gender>('male');
   const [age, setAge] = useState<string>('');
   const [weight, setWeight] = useState<string>('');
@@ -146,22 +148,23 @@ export default function CalculatorScreen() {
       >
 
         <ScrollView
-          style={styles.scrollView}
+          style={[styles.scrollView, { backgroundColor: colors.background }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* Input Section */}
           <View style={styles.inputSection}>
             {/* Données Biométriques */}
-            <View style={styles.dataGroup}>
-              <Text style={styles.dataGroupTitle}>DONNÉES BIOMÉTRIQUES</Text>
+            <View style={[styles.dataGroup, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Text style={[styles.dataGroupTitle, { color: colors.textMuted }]}>DONNÉES BIOMÉTRIQUES</Text>
               
               {/* Gender Selector */}
               <View style={styles.genderContainer}>
                 <TouchableOpacity
                   style={[
                     styles.genderButton,
-                    gender === 'male' && styles.genderButtonActive,
+                    { backgroundColor: colors.backgroundElevated, borderColor: colors.border },
+                    gender === 'male' && { backgroundColor: colors.accent, borderColor: colors.accent },
                   ]}
                   onPress={() => setGender('male')}
                   activeOpacity={0.7}
@@ -169,7 +172,8 @@ export default function CalculatorScreen() {
                   <Text
                     style={[
                       styles.genderButtonText,
-                      gender === 'male' && styles.genderButtonTextActive,
+                      { color: colors.textSecondary },
+                      gender === 'male' && { color: colors.textOnAccent, fontWeight: '800' },
                     ]}
                   >
                     Homme
@@ -178,7 +182,8 @@ export default function CalculatorScreen() {
                 <TouchableOpacity
                   style={[
                     styles.genderButton,
-                    gender === 'female' && styles.genderButtonActive,
+                    { backgroundColor: colors.backgroundElevated, borderColor: colors.border },
+                    gender === 'female' && { backgroundColor: colors.accent, borderColor: colors.accent },
                   ]}
                   onPress={() => setGender('female')}
                   activeOpacity={0.7}
@@ -186,7 +191,8 @@ export default function CalculatorScreen() {
                   <Text
                     style={[
                       styles.genderButtonText,
-                      gender === 'female' && styles.genderButtonTextActive,
+                      { color: colors.textSecondary },
+                      gender === 'female' && { color: colors.textOnAccent, fontWeight: '800' },
                     ]}
                   >
                     Femme
@@ -196,54 +202,55 @@ export default function CalculatorScreen() {
 
               {/* Age Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Âge</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Âge</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                   value={age}
                   onChangeText={setAge}
                   placeholder="Ex: 28"
                   keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
               {/* Weight Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Poids (kg)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Poids (kg)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                   value={weight}
                   onChangeText={setWeight}
                   placeholder="Ex: 85"
                   keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
 
               {/* Height Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Taille (cm)</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Taille (cm)</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                   value={height}
                   onChangeText={setHeight}
                   placeholder="Ex: 180"
                   keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                 />
               </View>
             </View>
 
             {/* Facteur d'Activité */}
-            <View style={styles.dataGroup}>
-              <Text style={styles.dataGroupTitle}>FACTEUR D'ACTIVITÉ</Text>
+            <View style={[styles.dataGroup, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+              <Text style={[styles.dataGroupTitle, { color: colors.textMuted }]}>FACTEUR D'ACTIVITÉ</Text>
               <View style={styles.activityContainer}>
                 {ACTIVITY_LEVELS.map((activity) => (
                   <TouchableOpacity
                     key={activity.key}
                     style={[
                       styles.activityButton,
-                      activityLevel === activity.key && styles.activityButtonActive,
+                      { backgroundColor: colors.backgroundElevated, borderColor: colors.border },
+                      activityLevel === activity.key && { backgroundColor: colors.accent, borderColor: colors.accent },
                     ]}
                     onPress={() => setActivityLevel(activity.key)}
                     activeOpacity={0.7}
@@ -251,7 +258,8 @@ export default function CalculatorScreen() {
                     <Text
                       style={[
                         styles.activityButtonText,
-                        activityLevel === activity.key && styles.activityButtonTextActive,
+                        { color: colors.textPrimary },
+                        activityLevel === activity.key && { color: colors.textOnAccent },
                       ]}
                     >
                       {activity.label}
@@ -259,7 +267,8 @@ export default function CalculatorScreen() {
                     <Text
                       style={[
                         styles.activityMultiplier,
-                        activityLevel === activity.key && styles.activityMultiplierActive,
+                        { color: colors.textMuted },
+                        activityLevel === activity.key && { color: colors.textOnAccent, opacity: 0.8 },
                       ]}
                     >
                       (x{activity.multiplier})
@@ -276,9 +285,9 @@ export default function CalculatorScreen() {
               disabled={!canCalculate}
               activeOpacity={0.7}
             >
-              <View style={styles.calculateButtonContent}>
-                <Calculator size={20} color="#1F2937" strokeWidth={2.5} />
-                <Text style={styles.calculateButtonText}>CALCULER</Text>
+              <View style={[styles.calculateButtonContent, { backgroundColor: colors.accent }]}>
+                <Calculator size={20} color={colors.textOnAccent} strokeWidth={2.5} />
+                <Text style={[styles.calculateButtonText, { color: colors.textOnAccent }]}>CALCULER</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -286,18 +295,18 @@ export default function CalculatorScreen() {
           {/* Results Section */}
           {results && (
             <View style={styles.resultsSection}>
-              <Text style={styles.sectionTitle}>Mission Brief</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Mission Brief</Text>
               
               {/* BMR & TDEE Info */}
-              <View style={styles.infoCard}>
+              <View style={[styles.infoCard, { backgroundColor: colors.backgroundCard }]}>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>BMR (Métabolisme de base)</Text>
-                  <Text style={styles.infoValue}>{results.bmr} kcal</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>BMR (Métabolisme de base)</Text>
+                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{results.bmr} kcal</Text>
                 </View>
-                <View style={styles.infoDivider} />
+                <View style={[styles.infoDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>TDEE (Maintien)</Text>
-                  <Text style={styles.infoValue}>{results.tdee} kcal</Text>
+                  <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>TDEE (Maintien)</Text>
+                  <Text style={[styles.infoValue, { color: colors.textPrimary }]}>{results.tdee} kcal</Text>
                 </View>
               </View>
 
@@ -407,9 +416,9 @@ export default function CalculatorScreen() {
               </View>
 
               {/* Référentiel Scientifique */}
-              <View style={styles.referenceBox}>
-                <Text style={styles.referenceTitle}>📚 Référentiel Scientifique</Text>
-                <Text style={styles.referenceText}>
+              <View style={[styles.referenceBox, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                <Text style={[styles.referenceTitle, { color: colors.textPrimary }]}>📚 Référentiel Scientifique</Text>
+                <Text style={[styles.referenceText, { color: colors.textSecondary }]}>
                   Calcul du BMR basé sur l'équation de Mifflin-St Jeor (1990), reconnue comme la plus fiable par l'ADA (American Dietetic Association). Les recommandations en macronutriments suivent les standards de l'ISSN (International Society of Sports Nutrition) pour la préservation de la masse maigre.
                 </Text>
               </View>
@@ -424,7 +433,6 @@ export default function CalculatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
   },
   header: {
     flexDirection: 'row',
@@ -432,9 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     width: 40,
@@ -445,7 +451,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1F2937',
     letterSpacing: -0.5,
   },
   scrollView: {
@@ -459,10 +464,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   dataGroup: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     padding: 20,
     marginBottom: 20,
     shadowColor: '#000',
@@ -474,7 +477,6 @@ const styles = StyleSheet.create({
   dataGroupTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
     marginBottom: 16,
@@ -482,7 +484,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1F2937',
     marginBottom: 16,
     letterSpacing: -0.3,
   },
@@ -495,23 +496,18 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#F9FAFB',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
   },
   genderButtonActive: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#2563EB',
+    // Styles dynamic
   },
   genderButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#64748B',
   },
   genderButtonTextActive: {
-    color: '#2563EB',
     fontWeight: '800',
   },
   inputGroup: {
@@ -520,18 +516,14 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1F2937',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 16,
     padding: 16,
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   activityContainer: {
     gap: 12,
@@ -539,30 +531,25 @@ const styles = StyleSheet.create({
   activityButton: {
     padding: 16,
     borderRadius: 16,
-    backgroundColor: '#F9FAFB',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
   },
   activityButtonActive: {
-    borderColor: '#2563EB',
-    backgroundColor: '#EFF6FF',
+    // Dynamic
   },
   activityButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1F2937',
     marginBottom: 4,
   },
   activityButtonTextActive: {
-    color: '#2563EB',
+    // Dynamic
   },
   activityMultiplier: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
   },
   activityMultiplierActive: {
-    color: '#2563EB',
+    // Dynamic
   },
   calculateButton: {
     marginTop: 8,
@@ -583,19 +570,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 16,
-    backgroundColor: '#2563EB',
   },
   calculateButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   resultsSection: {
     marginTop: 8,
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
@@ -613,18 +597,15 @@ const styles = StyleSheet.create({
   },
   infoDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
     marginVertical: 8,
   },
   infoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748B',
   },
   infoValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1F2937',
   },
   goalCard: {
     borderRadius: 24,
@@ -701,12 +682,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   referenceBox: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 18,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -716,14 +695,12 @@ const styles = StyleSheet.create({
   referenceTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#1F2937',
     marginBottom: 10,
     letterSpacing: 0.3,
   },
   referenceText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
     lineHeight: 18,
     letterSpacing: 0.1,
   },

@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { getCompetitions, Competition } from '@/lib/database';
 import { differenceInDays, parseISO } from 'date-fns';
 import logger from '@/lib/security/logger';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface NextEvent {
   id: number;
@@ -16,6 +17,7 @@ interface NextEvent {
 }
 
 const ObjectiveSwitch = () => {
+  const { colors, isDark } = useTheme();
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [toggleAnim] = useState(new Animated.Value(0));
 
@@ -79,7 +81,7 @@ const ObjectiveSwitch = () => {
   if (!nextEvent) {
     return (
       <TouchableOpacity
-        style={styles.containerOff}
+        style={[styles.containerOff, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
         onPress={() => {
           if (Platform.OS !== 'web') {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -88,21 +90,21 @@ const ObjectiveSwitch = () => {
         }}
         activeOpacity={0.7}
       >
-        <View style={styles.iconContainerOff}>
-          <Target size={22} color="#9CA3AF" />
+        <View style={[styles.iconContainerOff, { backgroundColor: isDark ? colors.background : '#F3F4F6' }]}>
+          <Target size={22} color={colors.textMuted} />
         </View>
         <View style={styles.content}>
-          <Text style={styles.labelOff}>Objectif</Text>
-          <Text style={styles.subtitleOff}>Définir un objectif ?</Text>
+          <Text style={[styles.labelOff, { color: colors.textMuted }]}>Objectif</Text>
+          <Text style={[styles.subtitleOff, { color: colors.textSecondary }]}>Définir un objectif ?</Text>
         </View>
 
         {/* Toggle switch visuel OFF */}
-        <View style={styles.toggleTrackOff}>
+        <View style={[styles.toggleTrackOff, { backgroundColor: isDark ? colors.background : '#E5E7EB' }]}>
           <Animated.View
             style={[
               styles.toggleThumb,
               {
-                backgroundColor: '#9CA3AF',
+                backgroundColor: colors.textMuted,
                 transform: [{
                   translateX: toggleAnim.interpolate({
                     inputRange: [0, 1],
@@ -118,11 +120,17 @@ const ObjectiveSwitch = () => {
   }
 
   // ÉTAT ON - Événement programmé
-  const colors = getUrgencyColor(nextEvent.daysLeft);
+  const urgencyColors = getUrgencyColor(nextEvent.daysLeft);
 
   return (
     <TouchableOpacity
-      style={[styles.containerOn, { borderColor: colors.light, backgroundColor: colors.bg }]}
+      style={[
+        styles.containerOn, 
+        { 
+          borderColor: isDark ? urgencyColors.primary : urgencyColors.light, 
+          backgroundColor: isDark ? colors.backgroundCard : urgencyColors.bg 
+        }
+      ]}
       onPress={() => {
         if (Platform.OS !== 'web') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -141,18 +149,18 @@ const ObjectiveSwitch = () => {
           }],
         }}
       >
-        <View style={[styles.iconContainerOn, { backgroundColor: colors.light }]}>
-          <Trophy size={22} color={colors.primary} />
+        <View style={[styles.iconContainerOn, { backgroundColor: isDark ? `${urgencyColors.primary}30` : urgencyColors.light }]}>
+          <Trophy size={22} color={urgencyColors.primary} />
         </View>
       </Animated.View>
 
       <View style={styles.content}>
-        <Text style={styles.labelOn} numberOfLines={1}>{nextEvent.name}</Text>
-        <Text style={styles.subtitleOn}>{nextEvent.sport}</Text>
+        <Text style={[styles.labelOn, { color: colors.textPrimary }]} numberOfLines={1}>{nextEvent.name}</Text>
+        <Text style={[styles.subtitleOn, { color: colors.textSecondary }]}>{nextEvent.sport}</Text>
       </View>
 
       {/* Toggle switch visuel ON */}
-      <View style={[styles.toggleTrackOn, { backgroundColor: colors.primary }]}>
+      <View style={[styles.toggleTrackOn, { backgroundColor: urgencyColors.primary }]}>
         <Animated.View
           style={[
             styles.toggleThumb,
@@ -169,7 +177,7 @@ const ObjectiveSwitch = () => {
         />
       </View>
 
-      <View style={[styles.daysLeftBadge, { backgroundColor: colors.primary }]}>
+      <View style={[styles.daysLeftBadge, { backgroundColor: urgencyColors.primary }]}>
         <Text style={[styles.daysLeftText, { color: '#FFFFFF' }]}>
           J-{nextEvent.daysLeft}
         </Text>

@@ -63,7 +63,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = ({
       case 'cancel':
         return { backgroundColor: colors.backgroundElevated, textColor: colors.textPrimary };
       case 'primary':
-        return { backgroundColor: colors.accent, textColor: '#FFFFFF' };
+        return { backgroundColor: colors.accent, textColor: colors.textOnAccent };
       default:
         return { backgroundColor: colors.backgroundElevated, textColor: colors.textPrimary };
     }

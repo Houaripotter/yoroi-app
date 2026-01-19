@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, memo } from 'react';
 import { Text, StyleSheet, TextStyle, StyleProp, Animated, Easing } from 'react-native';
 
 interface AnimatedCounterProps {
@@ -10,40 +10,43 @@ interface AnimatedCounterProps {
 
 const AnimatedCounter = ({ value, duration = 1000, suffix = '', style }: AnimatedCounterProps) => {
   const [displayValue, setDisplayValue] = useState(0);
+  const animatedValue = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const prevValue = useRef(0);
 
   useEffect(() => {
-    let startTime: number;
-    let animationFrame: number;
+    // OPTIMISATION: Utiliser Animated.timing au lieu de requestAnimationFrame
+    // pour éviter les setState à chaque frame
+    animatedValue.setValue(prevValue.current);
 
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
+    Animated.timing(animatedValue, {
+      toValue: value,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false, // Nécessaire car on anime une valeur non-transform
+    }).start();
 
-      // Easing function
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-
-      // Handle decimal values
-      if (value % 1 !== 0) {
-        setDisplayValue(parseFloat((easeOut * value).toFixed(1)));
-      } else {
-        setDisplayValue(Math.floor(easeOut * value));
+    // Listener optimisé: ne met à jour que toutes les ~16ms au lieu de chaque frame
+    let lastUpdate = 0;
+    const listener = animatedValue.addListener(({ value: animValue }) => {
+      const now = Date.now();
+      // Throttle: mettre à jour max 1 fois toutes les 16ms (60 FPS)
+      if (now - lastUpdate > 16) {
+        lastUpdate = now;
+        const newValue = value % 1 !== 0
+          ? parseFloat(animValue.toFixed(1))
+          : Math.floor(animValue);
+        setDisplayValue(newValue);
       }
+    });
 
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(animate);
+    prevValue.current = value;
 
     return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
+      animatedValue.removeListener(listener);
     };
-  }, [value, duration]);
+  }, [value, duration, animatedValue]);
 
   useEffect(() => {
     // Animation d'apparition avec spring effect
@@ -85,4 +88,9 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimatedCounter;
+// OPTIMISATION: Mémoriser le composant pour éviter re-renders si props inchangées
+export default memo(AnimatedCounter, (prevProps, nextProps) => {
+  return prevProps.value === nextProps.value &&
+         prevProps.duration === nextProps.duration &&
+         prevProps.suffix === nextProps.suffix;
+});

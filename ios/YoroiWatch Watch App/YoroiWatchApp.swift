@@ -19,7 +19,12 @@ struct YoroiWatchApp: App {
     }
 
     init() {
-        // Rafraîchir les complications au lancement
-        WidgetCenter.shared.reloadAllTimelines()
+        // CORRECTION: Retirer reload automatique au launch
+        // Les complications se rafraîchissent déjà automatiquement via leur timeline
+        // Ce reload inutile consomme de la batterie
+        // WidgetCenter.shared.reloadAllTimelines()
+
+        // Pour forcer un reload, le faire seulement quand les données changent
+        // via WatchConnectivityManager ou HealthManager
     }
 }

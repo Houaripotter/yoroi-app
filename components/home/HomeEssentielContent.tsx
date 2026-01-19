@@ -233,15 +233,19 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
               </View>
             </Animated.View>
 
-            {/* Bulle de pensée (fond BLANC) */}
+            {/* Bulle de pensée (fond caméléon) */}
             <View style={[styles.speechBubble, {
-              backgroundColor: '#FFFFFF',
-              shadowColor: isDark ? '#8B5CF6' : '#000',
+              backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+              shadowColor: isDark ? colors.accent : '#000',
+              borderColor: isDark ? colors.border : 'rgba(139, 92, 246, 0.2)',
             }]}>
               {/* Petite queue de bulle */}
-              <View style={[styles.bubbleTail, { backgroundColor: '#FFFFFF' }]} />
+              <View style={[styles.bubbleTail, { 
+                backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                borderColor: isDark ? colors.border : 'rgba(139, 92, 246, 0.2)',
+              }]} />
 
-              <Text style={styles.quoteTextBubble}>
+              <Text style={[styles.quoteTextBubble, { color: isDark ? colors.textPrimary : '#1A1A1A' }]}>
                 "{dailyQuote}"
               </Text>
 

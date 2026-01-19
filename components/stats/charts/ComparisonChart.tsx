@@ -53,7 +53,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
       </View>
 
       {/* Graphique avec superposition */}
-      <View style={[styles.chartContainer, { height }]}>
+      <View style={[styles.chartContainer, { height, backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
         {/* Grille de fond (optionnel) */}
         {showGrid && (
           <View style={styles.grid}>
@@ -103,7 +103,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
           const max = Math.max(...values);
 
           return (
-            <View key={index} style={styles.statRow}>
+            <View key={index} style={[styles.statRow, { backgroundColor: colors.backgroundElevated }]}>
               <View style={[styles.statDot, { backgroundColor: serie.color }]} />
               <View style={styles.statValues}>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>

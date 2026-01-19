@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   insightCard: {
     flexDirection: 'row',
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF', // This is overridden inline but good to keep clean if possible, though inline override is safer for now without changing logic
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',

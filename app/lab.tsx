@@ -22,7 +22,7 @@ import { ScientificCredibilityBadge } from '@/components/lab/ScientificCredibili
 type TabType = 'ARTICLES' | 'PROTOCOLES';
 
 export default function LabScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('ARTICLES');
   const [selectedArticle, setSelectedArticle] = useState<LabArticle | null>(null);
@@ -30,7 +30,11 @@ export default function LabScreen() {
   const renderArticleCard = (article: LabArticle) => (
     <TouchableOpacity
       key={article.id}
-      style={[styles.card, { borderLeftColor: article.categoryColor }]}
+      style={[styles.card, { 
+        borderLeftColor: article.categoryColor,
+        backgroundColor: colors.backgroundCard,
+        borderColor: colors.border
+      }]}
       onPress={() => setSelectedArticle(article)}
       activeOpacity={0.7}
     >
@@ -39,11 +43,11 @@ export default function LabScreen() {
         <View style={[styles.categoryBadge, { backgroundColor: article.categoryColor }]}>
           <Text style={styles.categoryText}>{article.category}</Text>
         </View>
-        <Text style={styles.readTime}>{article.readTime} MIN</Text>
+        <Text style={[styles.readTime, { color: colors.textMuted }]}>{article.readTime} MIN</Text>
       </View>
 
       {/* Titre */}
-      <Text style={styles.cardTitle}>{article.title}</Text>
+      <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{article.title}</Text>
 
       {/* Footer */}
       <View style={styles.cardFooter}>
@@ -65,17 +69,17 @@ export default function LabScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setSelectedArticle(null)}
       >
-        <SafeAreaView style={styles.modalContainer} edges={['top']}>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]} edges={['top']}>
           {/* Header Modal */}
-          <View style={styles.modalHeader}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setSelectedArticle(null)}
               activeOpacity={0.7}
             >
-              <X size={24} color="#64748B" strokeWidth={2} />
+              <X size={24} color={colors.textSecondary} strokeWidth={2} />
             </TouchableOpacity>
-            <Text style={styles.modalHeaderTitle}>ARTICLE SCIENTIFIQUE</Text>
+            <Text style={[styles.modalHeaderTitle, { color: colors.textSecondary }]}>ARTICLE SCIENTIFIQUE</Text>
             <View style={{ width: 40 }} />
           </View>
 
@@ -90,32 +94,32 @@ export default function LabScreen() {
               >
                 <Text style={styles.categoryText}>{selectedArticle.category}</Text>
               </View>
-              <Text style={styles.readTime}>{selectedArticle.readTime} MIN DE LECTURE</Text>
+              <Text style={[styles.readTime, { color: colors.textMuted }]}>{selectedArticle.readTime} MIN DE LECTURE</Text>
             </View>
 
             {/* Titre */}
-            <Text style={styles.modalTitle}>{selectedArticle.title}</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{selectedArticle.title}</Text>
 
             {/* Sections QUOI / POURQUOI / COMMENT */}
             <View style={styles.contentSection}>
               <Text style={styles.sectionLabel}>QUOI ?</Text>
-              <Text style={styles.sectionText}>{selectedArticle.content.what}</Text>
+              <Text style={[styles.sectionText, { color: colors.textPrimary }]}>{selectedArticle.content.what}</Text>
             </View>
 
             <View style={styles.contentSection}>
               <Text style={styles.sectionLabel}>POURQUOI ?</Text>
-              <Text style={styles.sectionText}>{selectedArticle.content.why}</Text>
+              <Text style={[styles.sectionText, { color: colors.textPrimary }]}>{selectedArticle.content.why}</Text>
             </View>
 
             <View style={styles.contentSection}>
               <Text style={styles.sectionLabel}>COMMENT ?</Text>
-              <Text style={styles.sectionText}>{selectedArticle.content.how}</Text>
+              <Text style={[styles.sectionText, { color: colors.textPrimary }]}>{selectedArticle.content.how}</Text>
             </View>
 
             {/* Action Links */}
             {selectedArticle.actionLinks.length > 0 && (
-              <View style={styles.actionLinksSection}>
-                <Text style={styles.actionLinksTitle}>PASSER À L'ACTION</Text>
+              <View style={[styles.actionLinksSection, { borderTopColor: colors.border }]}>
+                <Text style={[styles.actionLinksTitle, { color: colors.textSecondary }]}>PASSER À L'ACTION</Text>
                 {selectedArticle.actionLinks.map((link, index) => (
                   <ActionLink
                     key={index}
@@ -128,24 +132,24 @@ export default function LabScreen() {
             )}
 
             {/* Références scientifiques */}
-            <View style={styles.referencesSection}>
-              <Text style={styles.referencesTitle}>RÉFÉRENCES SCIENTIFIQUES</Text>
+            <View style={[styles.referencesSection, { borderTopColor: colors.border }]}>
+              <Text style={[styles.referencesTitle, { color: colors.textSecondary }]}>RÉFÉRENCES SCIENTIFIQUES</Text>
               {selectedArticle.references.map((ref) => (
                 <View key={ref.id} style={styles.referenceItem}>
-                  <Text style={styles.referenceText}>
+                  <Text style={[styles.referenceText, { color: colors.textSecondary }]}>
                     [{ref.id}] {ref.author} ({ref.year}). {ref.title}. <Text style={styles.referenceJournal}>{ref.journal}</Text>
                     {ref.volume && ` ${ref.volume}`}
                     {ref.pages && `: ${ref.pages}`}.
                   </Text>
                   {ref.doi && (
                     <View style={styles.doiRow}>
-                      <Text style={styles.doiLabel}>DOI:</Text>
+                      <Text style={[styles.doiLabel, { color: colors.textMuted }]}>DOI:</Text>
                       <Text style={styles.doiLink}>{ref.doi}</Text>
                     </View>
                   )}
                   {ref.pubmedId && (
                     <View style={styles.doiRow}>
-                      <Text style={styles.doiLabel}>PubMed ID:</Text>
+                      <Text style={[styles.doiLabel, { color: colors.textMuted }]}>PubMed ID:</Text>
                       <Text style={styles.doiLink}>{ref.pubmedId}</Text>
                       <ExternalLink size={12} color="#3B82F6" />
                     </View>
@@ -166,14 +170,14 @@ export default function LabScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-          <ChevronLeft size={24} color={colors.text} strokeWidth={2} />
+          <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>LABO</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>LABO</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { borderBottomColor: colors.border, backgroundColor: colors.backgroundCard }]}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'ARTICLES' && styles.tabActive]}
           onPress={() => setActiveTab('ARTICLES')}
@@ -182,12 +186,12 @@ export default function LabScreen() {
           <Text
             style={[
               styles.tabText,
-              activeTab === 'ARTICLES' && styles.tabTextActive,
+              { color: activeTab === 'ARTICLES' ? colors.textPrimary : colors.textMuted },
             ]}
           >
             ARTICLES
           </Text>
-          {activeTab === 'ARTICLES' && <View style={styles.tabIndicator} />}
+          {activeTab === 'ARTICLES' && <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} />}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -198,12 +202,12 @@ export default function LabScreen() {
           <Text
             style={[
               styles.tabText,
-              activeTab === 'PROTOCOLES' && styles.tabTextActive,
+              { color: activeTab === 'PROTOCOLES' ? colors.textPrimary : colors.textMuted },
             ]}
           >
             PROTOCOLES
           </Text>
-          {activeTab === 'PROTOCOLES' && <View style={styles.tabIndicator} />}
+          {activeTab === 'PROTOCOLES' && <View style={[styles.tabIndicator, { backgroundColor: colors.accent }]} />}
         </TouchableOpacity>
       </View>
 
@@ -267,8 +271,6 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
   },
   tab: {
     flex: 1,
@@ -282,11 +284,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#94A3B8',
     letterSpacing: 0.5,
   },
   tabTextActive: {
-    color: '#1E293B',
+    // Dynamic color handled in render
   },
   tabIndicator: {
     position: 'absolute',
@@ -294,7 +295,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#3B82F6',
   },
   scrollView: {
     flex: 1,
@@ -305,9 +305,7 @@ const styles = StyleSheet.create({
 
   // Article Card
   card: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderLeftWidth: 4,
     borderRadius: 8,
     padding: 16,
@@ -333,13 +331,11 @@ const styles = StyleSheet.create({
   readTime: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94A3B8',
     letterSpacing: 0.3,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
     lineHeight: 22,
     marginBottom: 12,
   },
@@ -357,7 +353,6 @@ const styles = StyleSheet.create({
   // Modal
   modalContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -366,7 +361,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   closeButton: {
     width: 40,
@@ -377,7 +371,6 @@ const styles = StyleSheet.create({
   modalHeaderTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#64748B',
     letterSpacing: 0.5,
   },
   modalScroll: {
@@ -394,7 +387,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1E293B',
     lineHeight: 32,
     paddingHorizontal: 20,
     marginBottom: 24,
@@ -413,7 +405,6 @@ const styles = StyleSheet.create({
   },
   sectionText: {
     fontSize: 15,
-    color: '#1E293B',
     lineHeight: 24,
   },
   actionLinksSection: {
@@ -421,12 +412,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
   },
   actionLinksTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
     letterSpacing: 0.5,
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -435,12 +424,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
   },
   referencesTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#64748B',
     letterSpacing: 0.5,
     marginBottom: 16,
     textTransform: 'uppercase',
@@ -450,7 +437,6 @@ const styles = StyleSheet.create({
   },
   referenceText: {
     fontSize: 12,
-    color: '#475569',
     lineHeight: 18,
   },
   referenceJournal: {
@@ -465,7 +451,6 @@ const styles = StyleSheet.create({
   doiLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
   },
   doiLink: {
     fontSize: 11,

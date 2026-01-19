@@ -19,8 +19,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.houari.yoroi",
       "infoPlist": {
-        "NSHealthShareUsageDescription": "YOROI synchronise vos données de santé (poids, sommeil, pas, fréquence cardiaque) pour un suivi complet de votre progression.",
-        "NSHealthUpdateUsageDescription": "YOROI enregistre vos données d'entraînement et vos pesées dans Apple Santé.",
+        "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
+        "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil dans Apple Santé pour synchroniser automatiquement vos progrès entre tous vos appareils Apple (iPhone, iPad, Apple Watch).",
         "NSCalendarsUsageDescription": "YOROI utilise votre calendrier pour planifier vos entraînements.",
         "NSRemindersUsageDescription": "YOROI utilise les rappels pour vos notifications d'entraînement.",
         "NSPhotoLibraryUsageDescription": "YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.",
@@ -56,8 +56,8 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "YOROI synchronise vos données de santé pour un suivi complet.",
-          "NSHealthUpdateUsageDescription": "YOROI enregistre vos données dans Apple Santé.",
+          "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
+          "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil dans Apple Santé pour synchroniser automatiquement vos progrès entre tous vos appareils Apple (iPhone, iPad, Apple Watch).",
           "background": true
         }
       ],

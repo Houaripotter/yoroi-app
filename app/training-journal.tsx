@@ -2851,12 +2851,27 @@ export default function TrainingJournalScreen() {
             <View style={styles.compactCardsList}>
               {filteredBenchmarks.map(renderCompactBenchmarkCard)}
               {filteredBenchmarks.length === 0 && searchQuery.trim() === '' && (
-                <View style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <TrendingUp size={24} color={colors.textMuted} />
-                  <Text style={[styles.emptyCompactText, { color: colors.textMuted }]}>
-                    Ajoute ton premier suivi
+                <TouchableOpacity
+                  style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setShowAddBenchmarkModal(true);
+                  }}
+                >
+                  <TrendingUp size={32} color={colors.textMuted} />
+                  <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
+                    Aucun record pour l'instant
                   </Text>
-                </View>
+                  <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
+                    Enregistre tes records personnels pour suivre ta progression
+                  </Text>
+                  <View style={[styles.emptyActionButton, { backgroundColor: colors.accent, marginTop: 12 }]}>
+                    <Plus size={18} color={colors.textOnAccent || '#FFFFFF'} strokeWidth={2.5} />
+                    <Text style={{ color: colors.textOnAccent || '#FFFFFF', fontWeight: '600', marginLeft: 6 }}>
+                      Ajouter mon premier record
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               )}
               {/* Create custom item when search has no results */}
               {filteredBenchmarks.length === 0 && searchQuery.trim() !== '' && (
@@ -2939,13 +2954,27 @@ export default function TrainingJournalScreen() {
             <View style={styles.skillsList}>
               {filteredSkills.map(renderSkillCard)}
               {filteredSkills.length === 0 && searchQuery.trim() === '' && (
-                <View style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <Target size={40} color={colors.textMuted} />
-                  <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary }]}>Aucune technique</Text>
-                  <Text style={[styles.emptySkillsText, { color: colors.textMuted }]}>
-                    Ajoute les techniques que tu veux maîtriser
+                <TouchableOpacity
+                  style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setShowAddSkillModal(true);
+                  }}
+                >
+                  <Target size={48} color={colors.textMuted} />
+                  <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
+                    Aucune technique pour l'instant
                   </Text>
-                </View>
+                  <Text style={[styles.emptySkillsText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
+                    Ajoute les techniques que tu veux maîtriser et suivre
+                  </Text>
+                  <View style={[styles.emptyActionButton, { backgroundColor: '#8B5CF6', marginTop: 12 }]}>
+                    <Plus size={18} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600', marginLeft: 6 }}>
+                      Ajouter ma première technique
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               )}
               {/* TASK 2: Create custom skill when search has no results */}
               {filteredSkills.length === 0 && searchQuery.trim() !== '' && (
@@ -4283,17 +4312,25 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   emptyCompactCard: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 32,
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    gap: 10,
+    gap: 4,
   },
   emptyCompactText: {
     fontSize: 13,
+  },
+  emptyActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 4,
   },
   createCompactCard: {
     flexDirection: 'row',

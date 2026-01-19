@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
+import logger from './security/logger';
 // ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
 
 // ============================================
@@ -359,7 +360,11 @@ const getData = async <T>(key: string): Promise<T[]> => {
     const data = await AsyncStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error(`❌ Erreur lecture ${key}:`, error);
+    // Erreur critique - logging multiple pour visibilité
+    console.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
+    logger.error(`Erreur AsyncStorage.getItem (${key}):`, error);
+
+    // L'app continue avec données vides, mais l'erreur est tracée
     return [];
   }
 };
@@ -369,7 +374,19 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
     await AsyncStorage.setItem(key, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error(`❌ Erreur sauvegarde ${key}:`, error);
+    // Erreur critique - logging multiple pour visibilité
+    console.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde ${key}:`, error);
+    logger.error(`Erreur AsyncStorage.setItem (${key}):`, error);
+
+    // Détection erreur de quota (stockage plein)
+    if (error instanceof Error && (
+      error.message.includes('QuotaExceededError') ||
+      error.message.includes('quota') ||
+      error.message.includes('storage')
+    )) {
+      console.warn('🔴 STOCKAGE PLEIN - Les données ne peuvent pas être sauvegardées');
+    }
+
     return false;
   }
 };

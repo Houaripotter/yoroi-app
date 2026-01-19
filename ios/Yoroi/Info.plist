@@ -62,9 +62,9 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Allow $(PRODUCT_NAME) to access your Face ID biometric data.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>YOROI synchronise vos données de santé pour un suivi complet.</string>
+	<string>YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>YOROI enregistre vos données dans Apple Santé.</string>
+	<string>YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil dans Apple Santé pour synchroniser automatiquement vos progrès entre tous vos appareils Apple (iPhone, iPad, Apple Watch).</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Allow $(PRODUCT_NAME) to save photos</string>
 	<key>NSPhotoLibraryUsageDescription</key>

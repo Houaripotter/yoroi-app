@@ -3,7 +3,7 @@
 // Version simplifiée sans drag & drop
 // ============================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
@@ -95,15 +95,67 @@ export const Page2ActionGrid: React.FC = () => {
     setGridItems(items);
   };
 
-  const handleItemPress = (item: ActionGridItem) => {
+  // OPTIMISATION: Mémoriser le handler avec useCallback
+  const handleItemPress = useCallback((item: ActionGridItem) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(item.route as any);
-  };
+  }, []);
 
-  const rows: ActionGridItem[][] = [];
-  for (let i = 0; i < gridItems.length; i += COLUMNS) {
-    rows.push(gridItems.slice(i, i + COLUMNS));
-  }
+  // OPTIMISATION: Mémoriser le calcul des lignes
+  const rows = useMemo(() => {
+    const result: ActionGridItem[][] = [];
+    for (let i = 0; i < gridItems.length; i += COLUMNS) {
+      result.push(gridItems.slice(i, i + COLUMNS));
+    }
+    return result;
+  }, [gridItems]);
+
+  // OPTIMISATION: Mémoriser renderItem avec useCallback
+  const renderRow = useCallback(({ item: row }: { item: ActionGridItem[] }) => (
+    <View style={styles.row}>
+      {row.map((item) => {
+        const Icon = getIconComponent(item.icon);
+        const translationKeys = TOOL_TRANSLATION_KEYS[item.id];
+        const label = translationKeys ? t(translationKeys.label) : item.label;
+        const description = translationKeys ? t(translationKeys.description) : item.description;
+        return (
+          <TouchableOpacity
+            key={item.id}
+            onPress={() => handleItemPress(item)}
+            style={styles.gridItemWrapper}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.gridItem, { backgroundColor: colors.backgroundCard }]}>
+              <View style={[styles.iconCircle, { backgroundColor: `${item.color}15` }]}>
+                {item.id === 'infirmerie' ? (
+                  // Croix rouge plus grande pour l'infirmerie
+                  <View style={styles.redCross}>
+                    <View style={[styles.crossVertical, { backgroundColor: item.color }]} />
+                    <View style={[styles.crossHorizontal, { backgroundColor: item.color }]} />
+                  </View>
+                ) : (
+                  <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
+                )}
+              </View>
+              <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={2}>
+                {label}
+              </Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
+                {description}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+      {row.length < COLUMNS &&
+        Array.from({ length: COLUMNS - row.length }).map((_, i) => (
+          <View key={`empty-${i}`} style={{ width: cardWidth }} />
+        ))}
+    </View>
+  ), [colors.backgroundCard, colors.textPrimary, colors.textSecondary, t, handleItemPress]);
+
+  // OPTIMISATION: Calculer la hauteur d'une ligne pour getItemLayout
+  const rowHeight = (cardWidth / 0.85) + GRID_GAP; // aspectRatio 0.85 + gap
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -113,6 +165,15 @@ export const Page2ActionGrid: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
+        // OPTIMISATION: FlatList performance
+        getItemLayout={(data, index) => ({
+          length: rowHeight,
+          offset: rowHeight * index,
+          index,
+        })}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={4}
+        windowSize={5}
         ListHeaderComponent={
           <View style={styles.headerRow}>
             <View>
@@ -123,48 +184,7 @@ export const Page2ActionGrid: React.FC = () => {
             </View>
           </View>
         }
-        renderItem={({ item: row }) => (
-          <View style={styles.row}>
-            {row.map((item) => {
-              const Icon = getIconComponent(item.icon);
-              const translationKeys = TOOL_TRANSLATION_KEYS[item.id];
-              const label = translationKeys ? t(translationKeys.label) : item.label;
-              const description = translationKeys ? t(translationKeys.description) : item.description;
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  onPress={() => handleItemPress(item)}
-                  style={styles.gridItemWrapper}
-                  activeOpacity={0.85}
-                >
-                  <View style={[styles.gridItem, { backgroundColor: colors.backgroundCard }]}>
-                    <View style={[styles.iconCircle, { backgroundColor: `${item.color}15` }]}>
-                      {item.id === 'infirmerie' ? (
-                        // Croix rouge plus grande pour l'infirmerie
-                        <View style={styles.redCross}>
-                          <View style={[styles.crossVertical, { backgroundColor: item.color }]} />
-                          <View style={[styles.crossHorizontal, { backgroundColor: item.color }]} />
-                        </View>
-                      ) : (
-                        <Icon size={ICON_SIZE} color={item.color} strokeWidth={2.5} />
-                      )}
-                    </View>
-                    <Text style={[styles.label, { color: colors.textPrimary }]} numberOfLines={2}>
-                      {label}
-                    </Text>
-                    <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-                      {description}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-            {row.length < COLUMNS &&
-              Array.from({ length: COLUMNS - row.length }).map((_, i) => (
-                <View key={`empty-${i}`} style={{ width: cardWidth }} />
-              ))}
-          </View>
-        )}
+        renderItem={renderRow}
       />
     </View>
   );

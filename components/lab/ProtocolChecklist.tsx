@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Check } from 'lucide-react-native';
 import { ProtocolReference } from '@/data/labProtocols';
 import logger from '@/lib/security/logger';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ProtocolChecklistProps {
   protocolId: string;
@@ -20,6 +21,7 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
   items,
   references,
 }) => {
+  const { isDark, colors } = useTheme();
   const [checkedItems, setCheckedItems] = useState<boolean[]>(new Array(items.length).fill(false));
 
   // Charger la progression depuis AsyncStorage
@@ -69,17 +71,21 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
   const progressPercentage = (completedCount / items.length) * 100;
 
   return (
-    <View style={[styles.container, { borderLeftColor: categoryColor }]}>
+    <View style={[styles.container, {
+      borderLeftColor: categoryColor,
+      backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+      borderColor: isDark ? colors.border : '#E2E8F0',
+    }]}>
       {/* Header avec titre et progression */}
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.progress}>
+        <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#1E293B' }]}>{title}</Text>
+        <Text style={[styles.progress, { color: isDark ? colors.textMuted : '#64748B' }]}>
           {completedCount}/{items.length} COMPLÉTÉ
         </Text>
       </View>
 
       {/* Barre de progression */}
-      <View style={styles.progressBarContainer}>
+      <View style={[styles.progressBarContainer, { backgroundColor: isDark ? colors.backgroundElevated : '#F1F5F9' }]}>
         <View
           style={[
             styles.progressBarFill,
@@ -101,6 +107,10 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
             <View
               style={[
                 styles.checkbox,
+                {
+                  backgroundColor: isDark ? colors.background : '#FFFFFF',
+                  borderColor: isDark ? colors.border : '#CBD5E1',
+                },
                 checkedItems[index] && {
                   backgroundColor: categoryColor,
                   borderColor: categoryColor,
@@ -115,13 +125,16 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
               <Text
                 style={[
                   styles.itemText,
-                  checkedItems[index] && styles.itemTextCompleted,
+                  { color: isDark ? colors.textSecondary : '#1E293B' },
+                  checkedItems[index] && [styles.itemTextCompleted, { color: isDark ? colors.textMuted : '#94A3B8' }],
                 ]}
               >
                 {item.text}
               </Text>
               {item.source && (
-                <Text style={styles.itemSource}>Source: {item.source}</Text>
+                <Text style={[styles.itemSource, { color: isDark ? colors.textMuted : '#94A3B8' }]}>
+                  Source: {item.source}
+                </Text>
               )}
             </View>
           </TouchableOpacity>
@@ -131,21 +144,28 @@ export const ProtocolChecklist: React.FC<ProtocolChecklistProps> = ({
       {/* Bouton Reset */}
       {completedCount > 0 && (
         <TouchableOpacity
-          style={styles.resetButton}
+          style={[styles.resetButton, {
+            backgroundColor: isDark ? colors.backgroundElevated : '#F8FAFC',
+            borderColor: isDark ? colors.border : '#E2E8F0',
+          }]}
           onPress={resetProgress}
           activeOpacity={0.7}
         >
-          <Text style={styles.resetButtonText}>RÉINITIALISER LA PROGRESSION</Text>
+          <Text style={[styles.resetButtonText, { color: isDark ? colors.textSecondary : '#64748B' }]}>
+            RÉINITIALISER LA PROGRESSION
+          </Text>
         </TouchableOpacity>
       )}
 
       {/* Section Références */}
       {references.length > 0 && (
-        <View style={styles.referencesContainer}>
-          <Text style={styles.referencesTitle}>RÉFÉRENCES SCIENTIFIQUES</Text>
+        <View style={[styles.referencesContainer, { borderTopColor: isDark ? colors.border : '#E2E8F0' }]}>
+          <Text style={[styles.referencesTitle, { color: isDark ? colors.textMuted : '#64748B' }]}>
+            RÉFÉRENCES SCIENTIFIQUES
+          </Text>
           {references.map((ref, index) => (
             <View key={index} style={styles.referenceItem}>
-              <Text style={styles.referenceText}>
+              <Text style={[styles.referenceText, { color: isDark ? colors.textMuted : '#64748B' }]}>
                 [{index + 1}] {ref.author} ({ref.year}). {ref.journal}.
               </Text>
               {ref.doi && (

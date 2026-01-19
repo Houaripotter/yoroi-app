@@ -19,6 +19,7 @@ import { getUserBodyStatus, saveUserBodyStatus } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { useI18n } from '@/lib/I18nContext';
+import { useTheme } from '@/lib/ThemeContext';
 import logger from '@/lib/security/logger';
 
 type BodyZoneStatus = 'ok' | 'warning' | 'injury';
@@ -48,6 +49,7 @@ const BODY_ZONES: Array<{ key: BodyZone; icon: string }> = [
 export default function BodyStatusScreen() {
   const router = useRouter();
   const { t } = useI18n();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [bodyStatus, setBodyStatus] = useState<BodyStatusData>({});
 
@@ -167,13 +169,13 @@ export default function BodyStatusScreen() {
       <Header title={t('screens.bodyStatus.title')} showBack />
 
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.headerCard}>
+        <View style={[styles.headerCard, { backgroundColor: colors.backgroundCard }]}>
           <Activity size={22} color="#0EA5E9" strokeWidth={2.5} />
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {t('screens.bodyStatus.subtitle')}
           </Text>
         </View>
@@ -183,6 +185,17 @@ export default function BodyStatusScreen() {
             const zoneStatus = bodyStatus[zone.key];
             const statusColor = getStatusColor(zoneStatus?.status);
 
+            // Gestion spéciale des couleurs de fond des cartes en mode sombre
+            // On veut garder la teinte mais adaptée
+            let cardBgColor = colors.backgroundCard;
+            if (zoneStatus?.status === 'injury') {
+              cardBgColor = isDark ? '#450a0a' : '#FEF2F2'; // Rouge très sombre ou très clair
+            } else if (zoneStatus?.status === 'warning') {
+              cardBgColor = isDark ? '#451a03' : '#FFFBEB'; // Orange très sombre ou très clair
+            } else {
+              cardBgColor = isDark ? colors.backgroundCard : '#F0FDF4'; // Vert très clair ou défaut sombre
+            }
+
             return (
               <TouchableOpacity
                 key={zone.key}
@@ -191,11 +204,7 @@ export default function BodyStatusScreen() {
                   {
                     borderColor: statusColor,
                     borderWidth: zoneStatus ? 2.5 : 1.5,
-                    backgroundColor: zoneStatus?.status === 'injury'
-                      ? '#FEF2F2'
-                      : zoneStatus?.status === 'warning'
-                      ? '#FFFBEB'
-                      : '#F0FDF4',
+                    backgroundColor: cardBgColor,
                   },
                 ]}
                 onPress={() => handleZonePress(zone.key)}
@@ -204,7 +213,7 @@ export default function BodyStatusScreen() {
                 <View style={[styles.zoneIconContainer, { backgroundColor: statusColor + '20' }]}>
                   <Text style={styles.zoneIcon}>{zone.icon}</Text>
                 </View>
-                <Text style={styles.zoneLabel}>{getZoneLabel(zone.key)}</Text>
+                <Text style={[styles.zoneLabel, { color: colors.textPrimary }]}>{getZoneLabel(zone.key)}</Text>
                 {zoneStatus ? (
                   <View style={styles.zoneStatusContainer}>
                     <View style={[styles.statusIconWrapper, { backgroundColor: statusColor + '20' }]}>
@@ -217,13 +226,13 @@ export default function BodyStatusScreen() {
                       <Text style={styles.zonePainText}>{t('screens.bodyStatus.painLevel')}: {zoneStatus.pain}/10</Text>
                     )}
                     {zoneStatus.note && (
-                      <Text style={styles.zoneNoteText} numberOfLines={1}>
+                      <Text style={[styles.zoneNoteText, { color: colors.textSecondary }]} numberOfLines={1}>
                         📝 {zoneStatus.note}
                       </Text>
                     )}
                   </View>
                 ) : (
-                  <Text style={styles.zoneEmptyText}>{t('screens.bodyStatus.tapToSet')}</Text>
+                  <Text style={[styles.zoneEmptyText, { color: colors.textMuted }]}>{t('screens.bodyStatus.tapToSet')}</Text>
                 )}
               </TouchableOpacity>
             );
@@ -242,13 +251,13 @@ export default function BodyStatusScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 {selectedZone ? getZoneLabel(selectedZone) : ''}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X size={24} color="#1F2937" strokeWidth={2.5} />
+                <X size={24} color={colors.textMuted} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
@@ -263,46 +272,55 @@ export default function BodyStatusScreen() {
                 style={[
                   styles.statusOption,
                   selectedStatus === 'ok' && styles.statusOptionSelected,
-                  { borderColor: selectedStatus === 'ok' ? '#10B981' : '#E5E7EB' },
+                  { 
+                    borderColor: selectedStatus === 'ok' ? '#10B981' : colors.border,
+                    backgroundColor: selectedStatus === 'ok' ? (isDark ? '#064e3b' : '#F0F9FF') : colors.backgroundElevated
+                  },
                 ]}
                 onPress={() => setSelectedStatus('ok')}
                 activeOpacity={0.7}
               >
                 <CheckCircle size={32} color="#10B981" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusOk')}</Text>
+                <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.statusOk')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.statusOption,
                   selectedStatus === 'warning' && styles.statusOptionSelected,
-                  { borderColor: selectedStatus === 'warning' ? '#F59E0B' : '#E5E7EB' },
+                  { 
+                    borderColor: selectedStatus === 'warning' ? '#F59E0B' : colors.border,
+                    backgroundColor: selectedStatus === 'warning' ? (isDark ? '#451a03' : '#FFFBEB') : colors.backgroundElevated
+                  },
                 ]}
                 onPress={() => setSelectedStatus('warning')}
                 activeOpacity={0.7}
               >
                 <AlertTriangle size={32} color="#F59E0B" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusWarning')}</Text>
+                <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.statusWarning')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
                   styles.statusOption,
                   selectedStatus === 'injury' && styles.statusOptionSelected,
-                  { borderColor: selectedStatus === 'injury' ? '#EF4444' : '#E5E7EB' },
+                  { 
+                    borderColor: selectedStatus === 'injury' ? '#EF4444' : colors.border,
+                    backgroundColor: selectedStatus === 'injury' ? (isDark ? '#450a0a' : '#FEF2F2') : colors.backgroundElevated
+                  },
                 ]}
                 onPress={() => setSelectedStatus('injury')}
                 activeOpacity={0.7}
               >
                 <Activity size={32} color="#EF4444" strokeWidth={2.5} />
-                <Text style={styles.statusOptionLabel}>{t('screens.bodyStatus.statusInjury')}</Text>
+                <Text style={[styles.statusOptionLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.statusInjury')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Niveau de douleur (si warning) */}
             {selectedStatus === 'warning' && (
               <View style={styles.painSection}>
-                <Text style={styles.painLabel}>{t('screens.bodyStatus.painLevelLabel')}</Text>
+                <Text style={[styles.painLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.painLevelLabel')}</Text>
                 <View style={styles.painSliderContainer}>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
                     <TouchableOpacity
@@ -310,7 +328,7 @@ export default function BodyStatusScreen() {
                       style={[
                         styles.painLevelButton,
                         painLevel === level && styles.painLevelButtonActive,
-                        { backgroundColor: painLevel === level ? '#F59E0B' : '#F3F4F6' },
+                        { backgroundColor: painLevel === level ? '#F59E0B' : colors.backgroundElevated },
                       ]}
                       onPress={() => setPainLevel(level)}
                       activeOpacity={0.7}
@@ -318,7 +336,7 @@ export default function BodyStatusScreen() {
                       <Text
                         style={[
                           styles.painLevelText,
-                          { color: painLevel === level ? '#FFFFFF' : '#1F2937' },
+                          { color: painLevel === level ? '#FFFFFF' : colors.textPrimary },
                         ]}
                       >
                         {level}
@@ -332,11 +350,15 @@ export default function BodyStatusScreen() {
             {/* Note médicale (si injury) */}
             {selectedStatus === 'injury' && (
               <View style={styles.noteSection}>
-                <Text style={styles.noteLabel}>{t('screens.bodyStatus.medicalNoteLabel')}</Text>
+                <Text style={[styles.noteLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.medicalNoteLabel')}</Text>
                 <TextInput
-                  style={styles.noteInput}
+                  style={[styles.noteInput, { 
+                    backgroundColor: colors.backgroundElevated, 
+                    color: colors.textPrimary, 
+                    borderColor: colors.border 
+                  }]}
                   placeholder={t('screens.bodyStatus.medicalNotePlaceholder')}
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={medicalNote}
                   onChangeText={setMedicalNote}
                   multiline
@@ -348,7 +370,7 @@ export default function BodyStatusScreen() {
               <View style={styles.modalActions}>
                 {bodyStatus[selectedZone || ''] && (
                   <TouchableOpacity
-                    style={styles.removeButton}
+                    style={[styles.removeButton, { backgroundColor: colors.backgroundElevated }]}
                     onPress={handleRemoveStatus}
                     activeOpacity={0.7}
                   >
@@ -356,11 +378,11 @@ export default function BodyStatusScreen() {
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
-                  style={styles.saveButton}
+                  style={[styles.saveButton, { backgroundColor: colors.accent }]}
                   onPress={handleSaveStatus}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+                  <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>{t('common.save')}</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -375,7 +397,6 @@ export default function BodyStatusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
   },
   header: {
     flexDirection: 'row',
@@ -383,9 +404,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   backButton: {
     width: 40,
@@ -396,7 +415,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1F2937',
     letterSpacing: -0.5,
   },
   scrollView: {
@@ -410,7 +428,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
@@ -424,7 +441,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '700',
-    color: '#64748B',
     letterSpacing: -0.2,
   },
   zonesGrid: {
@@ -434,7 +450,6 @@ const styles = StyleSheet.create({
   },
   zoneCard: {
     width: '47%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
     alignItems: 'center',
@@ -458,7 +473,6 @@ const styles = StyleSheet.create({
   zoneLabel: {
     fontSize: 17,
     fontWeight: '900',
-    color: '#1F2937',
     marginBottom: 12,
     letterSpacing: -0.3,
   },
@@ -490,14 +504,12 @@ const styles = StyleSheet.create({
   zoneNoteText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
     marginTop: 4,
     textAlign: 'center',
   },
   zoneEmptyText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
     fontStyle: 'italic',
   },
   modalOverlay: {
@@ -506,7 +518,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 20,
@@ -522,7 +533,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1F2937',
   },
   statusOptions: {
     gap: 12,
@@ -535,15 +545,13 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     borderWidth: 2,
-    backgroundColor: '#F9FAFB',
   },
   statusOptionSelected: {
-    backgroundColor: '#F0F9FF',
+    // Style handled dynamically
   },
   statusOptionLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1F2937',
   },
   painSection: {
     marginBottom: 24,
@@ -551,7 +559,6 @@ const styles = StyleSheet.create({
   painLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1F2937',
     marginBottom: 12,
   },
   painSliderContainer: {
@@ -583,17 +590,13 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1F2937',
     marginBottom: 8,
   },
   noteInput: {
-    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 12,
     fontSize: 14,
-    color: '#1F2937',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -605,7 +608,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -618,7 +620,6 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingVertical: 14,
     borderRadius: 16,
-    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#2563EB',
@@ -630,6 +631,5 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

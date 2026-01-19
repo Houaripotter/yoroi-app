@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -1612,7 +1613,11 @@ export default function AddTrainingScreen() {
               disabled={isSubmitting || selectedSports.length === 0}
             >
               <View style={styles.saveButtonContent}>
-                <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color={colors.textOnAccent || '#FFFFFF'} />
+                ) : (
+                  <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
+                )}
                 <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
                   {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
                 </Text>
@@ -1781,7 +1786,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FONT_SIZE.md,
     fontWeight: '600',
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.sm,
   },
 
   // SPORT OPTIONS SECTION (Qu'as-tu fait?)

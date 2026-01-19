@@ -1674,8 +1674,8 @@ export default function TimerScreen() {
               style={[styles.mainBtn, { backgroundColor: colors.accent }]}
               onPress={startTimer}
             >
-              <Play size={28} color="#FFF" fill="#FFF" />
-              <Text style={styles.mainBtnText}>
+              <Play size={28} color={colors.textOnGold} fill={colors.textOnGold} />
+              <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>
                 {mode === 'musculation' ? 'SERIE TERMINEE' : 'DEMARRER'}
               </Text>
             </TouchableOpacity>
@@ -1734,13 +1734,13 @@ export default function TimerScreen() {
             >
               {mode === 'musculation' ? (
                 <>
-                  <Play size={28} color="#FFF" fill="#FFF" />
-                  <Text style={styles.mainBtnText}>PROCHAINE SERIE</Text>
+                  <Play size={28} color={colors.textOnGold} fill={colors.textOnGold} />
+                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>PROCHAINE SERIE</Text>
                 </>
               ) : (
                 <>
-                  <RotateCcw size={24} color="#FFF" />
-                  <Text style={styles.mainBtnText}>RECOMMENCER</Text>
+                  <RotateCcw size={24} color={colors.textOnGold} />
+                  <Text style={[styles.mainBtnText, { color: colors.textOnGold }]}>RECOMMENCER</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -2243,7 +2243,6 @@ const styles = StyleSheet.create({
   mainBtnText: {
     fontSize: FONT.size.lg,
     fontWeight: '700',
-    color: '#FFF',
   },
   runningControls: {
     flexDirection: 'row',

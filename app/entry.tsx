@@ -42,6 +42,7 @@ import { incrementReviewTrigger, askForReview } from '@/lib/reviewService';
 import { useBadges } from '@/lib/BadgeContext';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
 import logger from '@/lib/security/logger';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -100,6 +101,7 @@ export default function EntryScreen() {
   const insets = useSafeAreaInsets();
   const { checkBadges } = useBadges();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { syncWeight, isWatchAvailable } = useWatch();
 
   // States
   const [date, setDate] = useState(new Date());
@@ -202,6 +204,12 @@ export default function EntryScreen() {
       };
 
       await addMeasurement(weightData);
+
+      // 🔄 Sync avec Apple Watch si disponible
+      if (isWatchAvailable) {
+        await syncWeight(weightValue);
+        logger.info(`✅ Poids synchronisé avec Watch: ${weightValue} kg`);
+      }
 
       try {
         const allWeights = await getAllMeasurements();

@@ -103,7 +103,23 @@ export default function AddCompetitionScreen() {
       router.back();
     } catch (error) {
       logger.error('Error saving competition:', error);
-      showPopup('Erreur', 'Impossible de sauvegarder la competition', [{ text: 'OK', style: 'primary' }]);
+
+      // Messages d'erreur contextuels selon le type d'erreur
+      let userMessage = 'Impossible de sauvegarder la compétition.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('UNIQUE constraint')) {
+          userMessage = 'Cette compétition existe déjà. Choisis un autre nom ou modifie la date.';
+        } else if (error.message.includes('NOT NULL constraint')) {
+          userMessage = 'Tous les champs obligatoires doivent être remplis (nom, date, sport).';
+        } else if (error.message.includes('storage') || error.message.includes('quota')) {
+          userMessage = 'Stockage plein. Libère de l\'espace sur ton téléphone et réessaye.';
+        } else {
+          userMessage = 'Impossible de sauvegarder. Vérifie que tous les champs sont bien remplis et réessaye.';
+        }
+      }
+
+      showPopup('Erreur de sauvegarde', userMessage, [{ text: 'OK', style: 'primary' }]);
       setIsSaving(false);
     }
   };

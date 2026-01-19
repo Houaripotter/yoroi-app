@@ -10,6 +10,7 @@ import {
 import { X, BookOpen, Heart, Moon, Footprints, ChevronRight, Sparkles, ExternalLink, Droplet } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { safeOpenURL } from '@/lib/security/validators';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface TipsScreenProps {
   visible: boolean;
@@ -100,6 +101,7 @@ const TIPS: Tip[] = [
 ];
 
 export function TipsScreen({ visible, onClose }: TipsScreenProps) {
+  const { isDark, colors } = useTheme();
   const [selectedTip, setSelectedTip] = useState<Tip | null>(null);
 
   const TipCard = ({ tip }: { tip: Tip }) => (
@@ -130,14 +132,14 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: isDark ? colors.background : '#E8EDF2' }]}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color="#2D3436" strokeWidth={2.5} />
+          <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+            <X size={24} color={isDark ? colors.textPrimary : '#2D3436'} strokeWidth={2.5} />
           </TouchableOpacity>
-          <Text style={styles.title}>Zone Astuces</Text>
-          <View style={styles.headerIcon}>
+          <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#2D3436' }]}>Zone Astuces</Text>
+          <View style={[styles.headerIcon, { backgroundColor: isDark ? colors.backgroundElevated : '#E8F8F5' }]}>
             <BookOpen size={24} color="#4ECDC4" strokeWidth={2.5} />
           </View>
         </View>
@@ -148,9 +150,9 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
           showsVerticalScrollIndicator={false}
         >
           {/* Intro */}
-          <View style={styles.introCard}>
+          <View style={[styles.introCard, { backgroundColor: isDark ? colors.backgroundCard : '#FFF9E6' }]}>
             <Sparkles size={24} color="#F1C40F" />
-            <Text style={styles.introText}>
+            <Text style={[styles.introText, { color: isDark ? colors.textPrimary : '#8B6914' }]}>
               Savoir, c'est pouvoir. Découvre les techniques validées par la science pour optimiser ta transformation.
             </Text>
           </View>
@@ -169,7 +171,7 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
             presentationStyle="pageSheet"
             onRequestClose={() => setSelectedTip(null)}
           >
-            <View style={styles.detailContainer}>
+            <View style={[styles.detailContainer, { backgroundColor: isDark ? colors.background : '#E8EDF2' }]}>
               <LinearGradient
                 colors={selectedTip.gradient}
                 style={styles.detailHeader}
@@ -191,24 +193,24 @@ export function TipsScreen({ visible, onClose }: TipsScreenProps) {
                 style={styles.detailScroll}
                 contentContainerStyle={styles.detailContent}
               >
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>📖 C'est quoi ?</Text>
-                  <Text style={styles.detailText}>{selectedTip.content.intro}</Text>
+                <View style={[styles.detailSection, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+                  <Text style={[styles.detailSectionTitle, { color: isDark ? colors.textPrimary : '#2D3436' }]}>📖 C'est quoi ?</Text>
+                  <Text style={[styles.detailText, { color: isDark ? colors.textSecondary : '#636E72' }]}>{selectedTip.content.intro}</Text>
                 </View>
 
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>🔬 Pourquoi ça marche ?</Text>
-                  <Text style={styles.detailText}>{selectedTip.content.science}</Text>
+                <View style={[styles.detailSection, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+                  <Text style={[styles.detailSectionTitle, { color: isDark ? colors.textPrimary : '#2D3436' }]}>🔬 Pourquoi ça marche ?</Text>
+                  <Text style={[styles.detailText, { color: isDark ? colors.textSecondary : '#636E72' }]}>{selectedTip.content.science}</Text>
                 </View>
 
-                <View style={styles.detailSection}>
-                  <Text style={styles.detailSectionTitle}>En pratique</Text>
-                  <Text style={styles.detailText}>{selectedTip.content.practice}</Text>
+                <View style={[styles.detailSection, { backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF' }]}>
+                  <Text style={[styles.detailSectionTitle, { color: isDark ? colors.textPrimary : '#2D3436' }]}>En pratique</Text>
+                  <Text style={[styles.detailText, { color: isDark ? colors.textSecondary : '#636E72' }]}>{selectedTip.content.practice}</Text>
                 </View>
 
                 {selectedTip.content.source && (
                   <TouchableOpacity
-                    style={styles.sourceContainer}
+                    style={[styles.sourceContainer, { backgroundColor: isDark ? colors.backgroundElevated : '#F0F4F8' }]}
                     onPress={() => {
                       if (selectedTip.content.sourceUrl) {
                         safeOpenURL(selectedTip.content.sourceUrl);

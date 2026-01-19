@@ -1,12 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { FlaskConical, GraduationCap, FileCheck } from 'lucide-react-native';
+import { useTheme } from '@/lib/ThemeContext';
 
 export const ScientificCredibilityBadge: React.FC = () => {
+  const { isDark, colors } = useTheme();
   const sources = ['PubMed', 'Cochrane', 'ACSM', 'WHO', 'ISSN', 'NSCA', 'BJSM'];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {
+      backgroundColor: isDark ? colors.backgroundCard : '#F8FAFC',
+      borderColor: isDark ? colors.border : '#E2E8F0',
+    }]}>
       {/* Header avec icônes */}
       <View style={styles.header}>
         <View style={styles.iconsRow}>
@@ -14,30 +19,39 @@ export const ScientificCredibilityBadge: React.FC = () => {
           <GraduationCap size={18} color="#3B82F6" strokeWidth={2} />
           <FileCheck size={18} color="#3B82F6" strokeWidth={2} />
         </View>
-        <Text style={styles.title}>CRÉDIBILITÉ SCIENTIFIQUE</Text>
+        <Text style={[styles.title, { color: isDark ? colors.textPrimary : '#1E293B' }]}>
+          CRÉDIBILITÉ SCIENTIFIQUE
+        </Text>
       </View>
 
       {/* Description */}
-      <Text style={styles.description}>
+      <Text style={[styles.description, { color: isDark ? colors.textSecondary : '#64748B' }]}>
         Tous les contenus du LABO sont basés exclusivement sur des études
         peer-reviewed publiées dans des revues scientifiques reconnues.
       </Text>
 
       {/* Sources acceptées */}
-      <View style={styles.sourcesContainer}>
-        <Text style={styles.sourcesLabel}>SOURCES ACCEPTÉES</Text>
+      <View style={[styles.sourcesContainer, { borderTopColor: isDark ? colors.border : '#E2E8F0' }]}>
+        <Text style={[styles.sourcesLabel, { color: isDark ? colors.textMuted : '#64748B' }]}>
+          SOURCES ACCEPTÉES
+        </Text>
         <View style={styles.sourcesList}>
           {sources.map((source, index) => (
-            <View key={source} style={styles.sourceBadge}>
-              <Text style={styles.sourceText}>{source}</Text>
+            <View key={source} style={[styles.sourceBadge, {
+              backgroundColor: isDark ? colors.backgroundElevated : '#FFFFFF',
+              borderColor: isDark ? colors.border : '#CBD5E1',
+            }]}>
+              <Text style={[styles.sourceText, { color: isDark ? colors.textSecondary : '#475569' }]}>
+                {source}
+              </Text>
             </View>
           ))}
         </View>
       </View>
 
       {/* Footer note */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
+      <View style={[styles.footer, { borderTopColor: isDark ? colors.border : '#E2E8F0' }]}>
+        <Text style={[styles.footerText, { color: isDark ? colors.textMuted : '#94A3B8' }]}>
           Aucun blog, YouTube, ou opinion personnelle. Uniquement des faits vérifiés.
         </Text>
       </View>
