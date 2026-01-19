@@ -66,7 +66,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
           {currentZone && (
             <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
               <Text style={[styles.statusText, { color: statusColor }]}>
-                {currentZone.label}
+                {t(`healthRanges.zones.${currentZone.label}`) || currentZone.label}
               </Text>
             </View>
           )}

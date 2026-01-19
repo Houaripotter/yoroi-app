@@ -74,7 +74,7 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
           <View style={[styles.statusBadge, { backgroundColor: statusColor + '15' }]}>
             {getTrendIcon()}
             <Text style={[styles.statusText, { color: statusColor }]}>
-              {currentZone.label}
+              {t(`healthRanges.zones.${currentZone.label}`) || currentZone.label}
             </Text>
           </View>
         )}
