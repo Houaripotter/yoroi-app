@@ -57,65 +57,13 @@ export interface TikTokStatsCardProps {
   backgroundImage?: string;
   backgroundType?: 'transparent' | 'gradient' | 'photo';
   showBranding?: boolean;
+  isLandscape?: boolean;
 }
 
-// Configuration des stats affichables
-const STAT_CONFIG: Record<StatType, {
-  label: string;
-  icon: React.ComponentType<any>;
-  iconColor: string;
-  format: (value: any) => string;
-}> = {
-  totalTrainings: {
-    label: 'Total',
-    icon: Flame,
-    iconColor: '#FF6B00',
-    format: (v) => v?.toString() || '0',
-  },
-  weekTrainings: {
-    label: 'Semaine',
-    icon: Calendar,
-    iconColor: '#3B82F6',
-    format: (v) => v?.toString() || '0',
-  },
-  monthTrainings: {
-    label: 'Ce mois',
-    icon: Calendar,
-    iconColor: '#8B5CF6',
-    format: (v) => v?.toString() || '0',
-  },
-  yearTrainings: {
-    label: 'Annee',
-    icon: TrendingUp,
-    iconColor: '#22C55E',
-    format: (v) => v?.toString() || '0',
-  },
-  bestWeek: {
-    label: 'Record',
-    icon: Trophy,
-    iconColor: '#D4AF37',
-    format: (v) => `${v || 0}/sem`,
-  },
-  totalMinutes: {
-    label: 'Temps',
-    icon: Clock,
-    iconColor: '#06B6D4',
-    format: (v) => {
-      const hours = Math.floor((v || 0) / 60);
-      const mins = (v || 0) % 60;
-      return hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
-    },
-  },
-  rank: {
-    label: 'Rang',
-    icon: Award,
-    iconColor: '#D4AF37',
-    format: (v) => v || 'Debutant',
-  },
-};
+// ... reste du code ...
 
 export const TikTokStatsCard = forwardRef<View, TikTokStatsCardProps>(
-  ({ stats, selectedStats, format, backgroundImage, backgroundType = 'transparent', showBranding = true }, ref) => {
+  ({ stats, selectedStats, format, backgroundImage, backgroundType = 'transparent', showBranding = true, isLandscape = false }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
@@ -192,7 +140,7 @@ export const TikTokStatsCard = forwardRef<View, TikTokStatsCardProps>(
       );
     }
 
-    // Version avec photo - remplit tout le cadre
+    // Version avec photo - remplit tout le cadre avec effet flou + image entière intelligente
     if (hasPhoto) {
       return (
         <View
@@ -200,11 +148,21 @@ export const TikTokStatsCard = forwardRef<View, TikTokStatsCardProps>(
           style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
           collapsable={false}
         >
+          {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
+          <Image
+            source={{ uri: backgroundImage }}
+            style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
+            blurRadius={15}
+            resizeMode="cover"
+          />
+          
+          {/* 2. Image principale entière (Non coupée) */}
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImage}
-            resizeMode="contain"
+            resizeMode={isLandscape ? "contain" : "cover"}
           />
+          
           <LinearGradient
             colors={[
               'rgba(0,0,0,0.3)',

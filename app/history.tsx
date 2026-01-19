@@ -697,7 +697,6 @@ export default function HistoryScreen() {
                       showGradient={false}
                       roundedTop
                       roundedBottom
-                      scrollable
                     />
                   </View>
                 ) : (
@@ -771,7 +770,6 @@ export default function HistoryScreen() {
                       startOpacity={0.6}
                       endOpacity={0.1}
                       curved
-                      scrollable
                     />
                   ) : (
                     <View style={styles.emptyChartContainer}>
@@ -841,7 +839,6 @@ export default function HistoryScreen() {
                                 pointerStripColor: item.metric.color,
                                 pointerStripWidth: 1,
                               }}
-                              scrollable
                             />
                           </View>
                         );

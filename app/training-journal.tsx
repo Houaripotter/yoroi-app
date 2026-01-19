@@ -28,6 +28,7 @@ import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   ChevronLeft,
+  ChevronRight,
   Plus,
   X,
   Trash2,
@@ -233,6 +234,11 @@ export default function TrainingJournalScreen() {
   // Tab state for Records/Techniques
   const [activeTab, setActiveTab] = useState<'records' | 'techniques'>('records');
 
+  // New selection states for records (Mirroring Watch app)
+  const [isMusclePickerVisible, setIsMusclePickerVisible] = useState(false);
+  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
+  const [isExercisePickerVisible, setIsExercisePickerVisible] = useState(false);
+
   // Date picker state for new entry
   const [entryDate, setEntryDate] = useState<'today' | 'yesterday' | 'custom'>('today');
   const [customDate, setCustomDate] = useState(new Date());
@@ -384,23 +390,24 @@ export default function TrainingJournalScreen() {
 
   // Load data
   const loadData = useCallback(async () => {
-    setIsLoading(true);
     try {
-      const [benchmarksData, skillsData, statsData] = await Promise.all([
+      const [fetchedBenchmarks, fetchedSkills] = await Promise.all([
         getBenchmarks(),
         getSkills(),
-        getCarnetStats(),
       ]);
-      setBenchmarks(benchmarksData);
-      setSkills(skillsData);
-      setStats(statsData);
-      await loadTrashData(); // Charger aussi la corbeille
+      
+      // If no benchmarks, offer to initialize common ones
+      if (fetchedBenchmarks.length === 0) {
+        // We could call a helper here to create the 'Big 3' + Poids de Corps
+      }
+
+      setBenchmarks(fetchedBenchmarks);
+      setSkills(fetchedSkills);
     } catch (error) {
       console.error('Error loading data:', error);
-    } finally {
-      setIsLoading(false);
     }
-  }, [loadTrashData]);
+  }, []);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -421,17 +428,18 @@ export default function TrainingJournalScreen() {
     return true;
   };
 
-  // Filter benchmarks: ONLY show ones WITH entries (filtered by global filter)
-  const filteredBenchmarks = benchmarks.filter(b => {
-    // MUST have at least one entry to be displayed
-    const hasEntries = b.entries && b.entries.length > 0;
-    if (!hasEntries) return false;
-
-    const matchesGlobal = matchesGlobalFilter(b.category, null);
-    const matchesSearch = searchQuery.trim() === '' ||
-      b.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesGlobal && matchesSearch;
-  });
+  // Group benchmarks by category for the display
+  const groupedBenchmarks = useMemo(() => {
+    const groups: Record<string, Benchmark[]> = {};
+    
+    filteredBenchmarks.forEach(b => {
+      const catLabel = BENCHMARK_CATEGORIES[b.category]?.label || 'AUTRE';
+      if (!groups[catLabel]) groups[catLabel] = [];
+      groups[catLabel].push(b);
+    });
+    
+    return groups;
+  }, [filteredBenchmarks]);
 
   // Filter skills (by global filter, status AND search query)
   const filteredSkills = skills.filter(s => {
@@ -456,6 +464,24 @@ export default function TrainingJournalScreen() {
   // ============================================
   // HANDLERS
   // ============================================
+
+  const handleQuickAddRecord = async (exerciseName: string, category: BenchmarkCategory, unit: BenchmarkUnit) => {
+    try {
+      // 1. Find if benchmark exists or create it
+      let targetBenchmark = benchmarks.find(b => b.name === exerciseName);
+      if (!targetBenchmark) {
+        targetBenchmark = await createBenchmark(exerciseName, category, unit);
+      }
+      
+      if (targetBenchmark) {
+        setSelectedBenchmark(targetBenchmark);
+        setIsExercisePickerVisible(false);
+        setIsEntryModalVisible(true);
+      }
+    } catch (error) {
+      console.error('Error in quick add:', error);
+    }
+  };
 
   const handleAddBenchmark = async () => {
     if (isSubmitting) return; // Anti-spam protection
@@ -2420,7 +2446,7 @@ export default function TrainingJournalScreen() {
             style={[styles.fabMenuItem, { backgroundColor: '#EF4444' }]}
             onPress={() => {
               setShowFabMenu(false);
-              setShowAddBenchmarkModal(true);
+              setIsMusclePickerVisible(true);
             }}
           >
             <Dumbbell size={22} color="#FFFFFF" />
@@ -2833,7 +2859,7 @@ export default function TrainingJournalScreen() {
 
         {/* SECTION: MES RECORDS */}
         {activeTab === 'records' && (
-          <>
+          <View>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
                 <Dumbbell size={20} color="#EF4444" />
@@ -2841,64 +2867,45 @@ export default function TrainingJournalScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#EF444420' }]}
-                onPress={() => setShowAddBenchmarkModal(true)}
+                onPress={() => setIsMusclePickerVisible(true)}
               >
                 <Plus size={16} color="#EF4444" strokeWidth={3} />
               </TouchableOpacity>
             </View>
 
-            {/* Benchmarks - COMPACT VERTICAL LIST (filtered by global filter) */}
-            <View style={styles.compactCardsList}>
-              {filteredBenchmarks.map(renderCompactBenchmarkCard)}
-              {filteredBenchmarks.length === 0 && searchQuery.trim() === '' && (
-                <TouchableOpacity
-                  style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setShowAddBenchmarkModal(true);
-                  }}
-                >
-                  <TrendingUp size={32} color={colors.textMuted} />
-                  <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
-                    Aucun record pour l'instant
+            {filteredBenchmarks.length === 0 ? (
+              <TouchableOpacity
+                style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setIsMusclePickerVisible(true);
+                }}
+              >
+                <TrendingUp size={32} color={colors.textMuted} />
+                <Text style={[styles.emptyCompactText, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
+                  Aucun record pour l'instant
+                </Text>
+                <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
+                  Enregistre tes records personnels pour suivre ta progression
+                </Text>
+                <View style={[styles.emptyActionButton, { backgroundColor: colors.accent, marginTop: 12 }]}>
+                  <Plus size={18} color={colors.textOnAccent || '#FFFFFF'} strokeWidth={2.5} />
+                  <Text style={{ color: colors.textOnAccent || '#FFFFFF', fontWeight: '600', marginLeft: 6 }}>
+                    Ajouter mon premier record
                   </Text>
-                  <Text style={[styles.emptyCompactText, { color: colors.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                    Enregistre tes records personnels pour suivre ta progression
-                  </Text>
-                  <View style={[styles.emptyActionButton, { backgroundColor: colors.accent, marginTop: 12 }]}>
-                    <Plus size={18} color={colors.textOnAccent || '#FFFFFF'} strokeWidth={2.5} />
-                    <Text style={{ color: colors.textOnAccent || '#FFFFFF', fontWeight: '600', marginLeft: 6 }}>
-                      Ajouter mon premier record
-                    </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              Object.keys(groupedBenchmarks).map((categoryName) => (
+                <View key={categoryName} style={{ marginBottom: 20 }}>
+                  <Text style={[styles.categoryHeader, { color: colors.textMuted }]}>{categoryName}</Text>
+                  <View style={styles.compactCardsList}>
+                    {groupedBenchmarks[categoryName].map(renderCompactBenchmarkCard)}
                   </View>
-                </TouchableOpacity>
-              )}
-              {/* Create custom item when search has no results */}
-              {filteredBenchmarks.length === 0 && searchQuery.trim() !== '' && (
-                <TouchableOpacity
-                  style={[styles.createCompactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: '#EF4444' }]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setNewBenchmarkName(searchQuery.trim());
-                    setSearchQuery('');
-                    setShowAddBenchmarkModal(true);
-                  }}
-                >
-                  <View style={[styles.compactCardIcon, { backgroundColor: '#EF444415' }]}>
-                    <Plus size={18} color="#EF4444" strokeWidth={2.5} />
-                  </View>
-                  <View style={styles.compactCardContent}>
-                    <Text style={[styles.compactCardName, { color: colors.textPrimary }]}>
-                      Créer "{searchQuery.trim()}"
-                    </Text>
-                    <Text style={[styles.compactCardValue, { color: colors.textMuted }]}>
-                      Nouveau suivi
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-            </View>
-          </>
+                </View>
+              ))
+            )}
+          </View>
         )}
 
         {/* SECTION: MES TECHNIQUES */}
@@ -3063,6 +3070,101 @@ export default function TrainingJournalScreen() {
           <Text style={styles.toastText}>{toastMessage}</Text>
         </Animated.View>
       )}
+
+      {/* MUSCLE PICKER MODAL */}
+      <Modal
+        visible={isMusclePickerVisible}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background, height: '70%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>GROUPE MUSCULAIRE</Text>
+              <TouchableOpacity onPress={() => setIsMusclePickerVisible(false)}>
+                <X size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+              {
+                [
+                  { name: 'PECTORAUX', icon: 'dumbbell', color: '#EF4444' },
+                  { name: 'DOS', icon: 'anchor', color: '#3B82F6' },
+                  { name: 'JAMBES', icon: 'footprints', color: '#10B981' },
+                  { name: 'ÉPAULES', icon: 'target', color: '#F59E0B' },
+                  { name: 'BRAS', icon: 'zap', color: '#EC4899' },
+                  { name: 'ABDOS', icon: 'shield', color: '#8B5CF6' },
+                  { name: 'CARDIO', icon: 'timer', color: '#06B6D4' },
+                ].map((muscle) => (
+                  <TouchableOpacity
+                    key={muscle.name}
+                    style={[styles.muscleItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => {
+                      setSelectedMuscleGroup(muscle.name);
+                      setIsMusclePickerVisible(false);
+                      setIsExercisePickerVisible(true);
+                    }}
+                  >
+                    <View style={[styles.muscleIcon, { backgroundColor: muscle.color + '20' }]}>
+                      <Dumbbell size={20} color={muscle.color} />
+                    </View>
+                    <Text style={[styles.muscleText, { color: colors.textPrimary }]}>{muscle.name}</Text>
+                    <ChevronRight size={20} color={colors.textMuted} />
+                  </TouchableOpacity>
+                ))
+              }
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* EXERCISE PICKER MODAL */}
+      <Modal
+        visible={isExercisePickerVisible}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background, height: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{selectedMuscleGroup}</Text>
+              <TouchableOpacity onPress={() => setIsExercisePickerVisible(false)}>
+                <X size={24} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+              {(() => {
+                const exercises: Record<string, string[]> = {
+                  'PECTORAUX': ['Développé couché', 'Haltères incliné', 'Écartés', 'Dips (Pecs)', 'Pompes'],
+                  'DOS': ['Tractions', 'Rowing barre', 'Tirage poitrine', 'Deadlift', 'Rowing haltère'],
+                  'JAMBES': ['Squat', 'Presse à cuisses', 'Fentes', 'Leg Extension', 'Leg Curl'],
+                  'ÉPAULES': ['Développé militaire', 'Élévations latérales', 'Oiseau', 'Arnold Press'],
+                  'BRAS': ['Curl barre', 'Curl haltères', 'Extensions poulie', 'Barre au front'],
+                  'ABDOS': ['Crunch', 'Gainage', 'Relevé de jambes', 'Roulette'],
+                  'CARDIO': ['5km Running', '10km Running', 'Fractionné', 'Vélo', 'Rameur'],
+                };
+                
+                const list = selectedMuscleGroup ? (exercises[selectedMuscleGroup] || []) : [];
+                const category = selectedMuscleGroup === 'CARDIO' ? 'running' : 'force';
+                const unit = selectedMuscleGroup === 'CARDIO' ? 'time' : 'kg';
+                
+                return list.map((ex) => (
+                  <TouchableOpacity
+                    key={ex}
+                    style={[styles.exerciseItem, { backgroundColor: colors.backgroundCard }]}
+                    onPress={() => handleQuickAddRecord(ex, category, unit)}
+                  >
+                    <Text style={[styles.exerciseText, { color: colors.textPrimary }]}>{ex}</Text>
+                    <Plus size={20} color={colors.accent} />
+                  </TouchableOpacity>
+                ));
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       <PopupComponent />
     </View>
@@ -4431,6 +4533,49 @@ const styles = StyleSheet.create({
   },
   metsLabel: {
     fontSize: 11,
+    fontWeight: '600',
+  },
+  categoryHeader: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 10,
+    marginTop: 5,
+    textTransform: 'uppercase',
+  },
+  // New Picker Styles
+  muscleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 10,
+    marginHorizontal: 16,
+  },
+  muscleIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  muscleText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 18,
+    borderRadius: 12,
+    marginBottom: 8,
+    marginHorizontal: 16,
+  },
+  exerciseText: {
+    fontSize: 15,
     fontWeight: '600',
   },
 });

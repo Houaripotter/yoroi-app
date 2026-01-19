@@ -20,6 +20,7 @@ export interface YearCounterCardV2Props {
   backgroundType?: 'photo' | 'black' | 'white';
   username?: string;
   weeklyGoal?: number;
+  isLandscape?: boolean;
 }
 
 // Noms des sports
@@ -39,7 +40,7 @@ const getSportName = (clubName: string): string => {
 };
 
 export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
-  ({ stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4 }, ref) => {
+  ({ stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4, isLandscape = false }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
@@ -156,7 +157,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
       </View>
     );
 
-    // Fond avec photo - Utilise contain pour montrer toute la photo (même paysage)
+    // Fond avec photo - remplit tout le cadre avec effet flou + image entière intelligente
     if (backgroundImage) {
       return (
         <View
@@ -164,25 +165,32 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
           style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
           collapsable={false}
         >
-          {/* Photo en contain pour voir toute l'image */}
+          {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
+          <Image
+            source={{ uri: backgroundImage }}
+            style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
+            blurRadius={15}
+            resizeMode="cover"
+          />
+          
+          {/* 2. Image principale entière (Non coupée) */}
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImageContain}
-            resizeMode="contain"
+            resizeMode={isLandscape ? "contain" : "cover"}
           />
-          {/* Gradient: assombrit en haut (titre) et en bas (infos), transparent au centre (photo visible) */}
+          
           <LinearGradient
             colors={[
               'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
               'rgba(0,0,0,0.4)',     // 15% - Transition
               'rgba(0,0,0,0)',       // 30% - Transparent
-              'rgba(0,0,0,0)',       // 45% - Transparent (centre - photo bien visible)
-              'rgba(0,0,0,0)',       // 55% - Transparent
+              'rgba(0,0,0,0)',       // 45% - Transparent
               'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
               'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
               'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
             ]}
-            locations={[0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
+            locations={[0, 0.15, 0.3, 0.5, 0.65, 0.85, 1]}
             style={StyleSheet.absoluteFill}
           />
           {content}

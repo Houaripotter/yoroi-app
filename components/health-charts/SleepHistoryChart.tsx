@@ -111,7 +111,6 @@ export function SleepHistoryChart({ data, colors, onPress }: SleepHistoryChartPr
           noOfSections={4}
           maxValue={10}
           height={180}
-          scrollable
         />
       </View>
 

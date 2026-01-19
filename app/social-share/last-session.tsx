@@ -16,7 +16,7 @@ import {
   Image,
   TextInput,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   X,
   Share2,
@@ -43,7 +43,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { getTrainings, Training } from '@/lib/database';
-import { getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
+import { SPORTS, getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
@@ -55,6 +55,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
 const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);  // Portrait 9:16
 const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16); // Paysage 16:9
+const GOLD_COLOR = '#D4AF37';
 
 // ============================================
 // COMPOSANT CARTE SÉANCE (format story)
@@ -70,18 +71,46 @@ interface SessionCardProps {
 
 const SessionCard = React.forwardRef<View, SessionCardProps>(
   ({ training, backgroundImage, backgroundType, customLocation, isLandscape = false }, ref) => {
+    // Gestion robuste du nom du sport
+    const getDisplayName = (s: string) => {
+      if (!s) return 'Entraînement';
+      // Utilisation d'une recherche plus simple pour éviter les erreurs de référence
+      const sportList = require('@/lib/sports').SPORTS;
+      const found = sportList.find((sp: any) => sp.id === s.toLowerCase());
+      if (found) return found.name;
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    };
+
     const sportName = training.sport.includes(',') 
-      ? training.sport.split(',').map(s => getSportName(s)).join(' + ') 
-      : getSportName(training.sport);
+      ? training.sport.split(',').map(s => getDisplayName(s.trim())).join(' + ') 
+      : getDisplayName(training.sport);
 
     const cardHeight = isLandscape ? CARD_HEIGHT_LANDSCAPE : CARD_HEIGHT_PORTRAIT;
+    
     // Si multisport, prendre l'icone du premier
-    const primarySport = training.sport.split(',')[0];
-    const sportIcon = getSportIcon(primarySport);
-    const sportColor = getSportColor(primarySport);
+    const primarySportId = training.sport.split(',')[0].trim().toLowerCase();
+    const sportList = require('@/lib/sports').SPORTS;
+    const primarySport = sportList.find((s: any) => s.id === primarySportId);
+    
+    const sportIcon = primarySport?.icon || 'trophy';
+    const sportColor = primarySport?.color || GOLD_COLOR;
 
     // Déterminer le lieu à afficher
     const displayLocation = customLocation || (training.is_outdoor ? 'Plein air' : 'Salle');
+
+    // CALCULER L'ALLURE (PACE) pour les sports de distance
+    const calculatePace = () => {
+      if (!training.distance || !training.duration_minutes) return null;
+      const totalSeconds = training.duration_minutes * 60;
+      const secondsPerKm = totalSeconds / training.distance;
+      const minutes = Math.floor(secondsPerKm / 60);
+      const seconds = Math.round(secondsPerKm % 60);
+      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    };
+
+    const pace = calculatePace();
+    const hasDistance = !!training.distance;
+    const hasRounds = !!training.rounds;
 
     // Logo du club si disponible
     const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
@@ -100,7 +129,6 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
     // Couleurs dynamiques
     const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
     const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
-    const goldColor = '#D4AF37';
     const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
     const statsRowBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
 
@@ -110,8 +138,8 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
         <View style={styles.topContent}>
           <View style={styles.titleSection}>
             <View style={styles.titleRow}>
-              <Trophy size={14} color={goldColor} />
-              <Text style={[styles.titleText, { color: goldColor }]}>SÉANCE TERMINÉE</Text>
+              <Trophy size={14} color={GOLD_COLOR} />
+              <Text style={[styles.titleText, { color: GOLD_COLOR }]}>SÉANCE TERMINÉE</Text>
             </View>
             <Text style={[styles.titleDateText, { color: textSecondary }]}>
               {formattedDate.toUpperCase()}
@@ -119,7 +147,14 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
           </View>
 
           {/* ICÔNE SPORT ou LOGO CLUB */}
-          <View style={[styles.sportIconContainer, { backgroundColor: hasClubLogo ? 'transparent' : sportColor + '30' }]}>
+          <View style={[
+            styles.sportIconContainer, 
+            { 
+              backgroundColor: '#FFFFFF', 
+              borderWidth: 3, 
+              borderColor: hasClubLogo ? GOLD_COLOR : sportColor 
+            }
+          ]}>
             {hasClubLogo ? (
               <Image
                 source={clubLogoSource}
@@ -127,12 +162,14 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
                 resizeMode="contain"
               />
             ) : (
-              <MaterialCommunityIcons name={sportIcon as any} size={48} color={sportColor} />
+              <MaterialCommunityIcons name={sportIcon as any} size={42} color={sportColor} />
             )}
           </View>
 
           {/* NOM DU SPORT */}
-          <Text style={[styles.sportName, { color: textPrimary }]}>{sportName}</Text>
+          <Text style={[styles.sportName, { color: textPrimary, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: {width: 0, height: 1}, textShadowRadius: 4 }]}>
+            {sportName}
+          </Text>
         </View>
 
         {/* CENTRE: Espace pour l'avatar/photo */}
@@ -140,57 +177,78 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
 
         {/* BAS: Stats + Footer */}
         <View style={styles.bottomContent}>
-          {/* DURÉE PRINCIPALE */}
-          <View style={styles.durationSection}>
-            <Text style={[styles.durationNumber, { color: goldColor }]}>
-              {training.duration_minutes || 60}
-            </Text>
-            <Text style={[styles.durationLabel, { color: textSecondary }]}>MINUTES</Text>
+          {/* STATS PRINCIPALES (STYLE STRAVA / ATHLETE) */}
+          <View style={styles.proStatsGrid}>
+            {/* COLONNE 1: DISTANCE ou ROUNDS ou DURÉE */}
+            <View style={styles.proStatBlock}>
+              <Text style={[styles.proStatValue, { color: GOLD_COLOR }]}>
+                {hasDistance 
+                  ? training.distance?.toFixed(2) 
+                  : (hasRounds ? training.rounds : training.duration_minutes)}
+              </Text>
+              <Text style={[styles.proStatLabel, { color: textSecondary }]}>
+                {hasDistance ? 'KILOMÈTRES' : (hasRounds ? 'ROUNDS' : 'MINUTES')}
+              </Text>
+            </View>
+
+            {/* COLONNE 2: ALLURE ou DURÉE ROUND ou CALORIES */}
+            <View style={styles.proStatBlock}>
+              <Text style={[styles.proStatValue, { color: '#FFFFFF' }]}>
+                {pace 
+                  ? pace 
+                  : (hasRounds ? `${training.round_duration}m` : (training.calories || '---'))}
+              </Text>
+              <Text style={[styles.proStatLabel, { color: textSecondary }]}>
+                {pace ? 'ALLURE (/KM)' : (hasRounds ? 'TEMPS/RD' : 'CALORIES')}
+              </Text>
+            </View>
+
+            {/* COLONNE 3: DURÉE ou INTENSITÉ (RPE) */}
+            <View style={styles.proStatBlock}>
+              <Text style={[styles.proStatValue, { color: '#FFFFFF' }]}>
+                {hasDistance 
+                  ? training.duration_minutes 
+                  : (training.intensity ? `${training.intensity}/10` : (training.technique_rating ? `${training.technique_rating}/5` : '---'))}
+              </Text>
+              <Text style={[styles.proStatLabel, { color: textSecondary }]}>
+                {hasDistance ? 'DURÉE (MIN)' : (training.intensity ? 'INTENSITÉ' : 'TECHNIQUE')}
+              </Text>
+            </View>
           </View>
 
-          {/* INFOS SUPPLÉMENTAIRES */}
+          {/* INFOS SECONDAIRES */}
           <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
-              <Clock size={16} color={goldColor} />
+              <Clock size={14} color={GOLD_COLOR} />
               <Text style={[styles.statValue, { color: textPrimary }]}>
                 {training.start_time || '--:--'}
               </Text>
-              <Text style={[styles.statLabel, { color: textSecondary }]}>HEURE</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: statsRowBorder }]} />
             <View style={styles.statItem}>
-              <Calendar size={16} color={goldColor} />
+              <Calendar size={14} color={GOLD_COLOR} />
               <Text style={[styles.statValue, { color: textPrimary }]}>
                 {new Date(training.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
               </Text>
-              <Text style={[styles.statLabel, { color: textSecondary }]}>DATE</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: statsRowBorder }]} />
             <View style={styles.statItem}>
-              <MapPin size={16} color={goldColor} />
+              <MapPin size={14} color={GOLD_COLOR} />
               <Text style={[styles.statValue, { color: textPrimary }]} numberOfLines={1}>
                 {displayLocation}
               </Text>
-              <Text style={[styles.statLabel, { color: textSecondary }]}>LIEU</Text>
             </View>
           </View>
+        </View>
 
-          {/* Notes si disponibles */}
-          {training.notes && (
-            <View style={styles.notesContainer}>
-              <Text style={[styles.notesText, { color: textSecondary }]} numberOfLines={2}>
-                "{training.notes}"
-              </Text>
-            </View>
-          )}
-
-          {/* FOOTER */}
+        {/* FOOTER */}
+        <View style={{ paddingBottom: 10 }}>
           <SocialCardFooter variant={brandingVariant} />
         </View>
       </View>
     );
 
-    // Fond avec photo - remplit tout le cadre avec effet flou + image entière
+    // Fond avec photo - remplit tout le cadre avec effet flou + image entière intelligente
     if (backgroundImage) {
       return (
         <View
@@ -201,25 +259,21 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
           {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
           <Image
             source={{ uri: backgroundImage }}
-            style={[StyleSheet.absoluteFill, { opacity: 0.6 }]}
-            blurRadius={20}
+            style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
+            blurRadius={15}
             resizeMode="cover"
           />
           
-          {/* 2. Image principale entière (Non coupée) */}
+          {/* 2. Image principale - On change le mode selon l'orientation */}
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImageContain}
-            resizeMode="contain"
+            resizeMode={isLandscape ? "contain" : "cover"}
           />
           
           <LinearGradient
-            colors={
-              isLandscape
-                ? ['rgba(0,0,0,0.6)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']
-                : ['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0.95)']
-            }
-            locations={isLandscape ? [0, 0.3, 0.7, 1] : [0, 0.15, 0.3, 0.45, 0.55, 0.65, 0.85, 1]}
+            colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.8)']}
+            locations={[0, 0.2, 0.7, 1]}
             style={StyleSheet.absoluteFill}
           />
           {content}
@@ -264,6 +318,7 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
 
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
+  const params = useLocalSearchParams<{ id?: string }>();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const photoSectionRef = useRef<View>(null);
@@ -284,10 +339,18 @@ export default function LastSessionScreen() {
       try {
         const trainings = await getTrainings();
         if (trainings.length > 0) {
-          const sorted = trainings.sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-          setLastTraining(sorted[0]);
+          // Si un ID est passé en paramètre, on cherche cet ID spécifique
+          if (params.id) {
+            const specific = trainings.find(t => t.id === parseInt(params.id!));
+            if (specific) {
+              setLastTraining(specific);
+              setIsLoadingData(false);
+              return;
+            }
+          }
+          
+          // Sinon fallback sur le premier (déjà trié par ID DESC dans la DB)
+          setLastTraining(trainings[0]);
         }
       } catch (error) {
         logger.error('Error loading last training:', error);
@@ -296,7 +359,7 @@ export default function LastSessionScreen() {
       }
     };
     loadLastTraining();
-  }, []);
+  }, [params.id]);
 
   // ============================================
   // PHOTO PICKER
@@ -311,7 +374,7 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false,
+        allowsEditing: true,
         quality: 0.9,
       });
 
@@ -339,7 +402,7 @@ export default function LastSessionScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: false,
+        allowsEditing: true,
         quality: 0.9,
       });
 
@@ -836,11 +899,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   centerSpace: {
-    flex: 1,
-    minHeight: 40,
+    flex: 3, // Augmenté pour pousser le contenu vers le bas
+    minHeight: 60,
   },
   bottomContent: {
-    gap: 16,
+    gap: 12, // Légèrement réduit pour être plus compact en bas
     paddingBottom: 0,
   },
   durationSection: {
@@ -856,6 +919,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 4,
     marginTop: -8,
+  },
+  proStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  proStatBlock: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  proStatValue: {
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  proStatLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginTop: 2,
   },
   statsRow: {
     flexDirection: 'row',

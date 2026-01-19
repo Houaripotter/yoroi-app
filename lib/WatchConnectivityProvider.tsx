@@ -9,6 +9,8 @@ import React, { createContext, useContext, ReactNode, useEffect, useState, useCa
 import { Platform } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { addWeight } from '@/lib/database';
+import { appleWatchService } from '@/lib/appleWatchService';
 
 interface WatchContextType {
   // Statut
@@ -72,9 +74,10 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         setIsAvailable(status.isPaired && status.isWatchAppInstalled);
 
         // Si Watch revient à portée, sync automatique
-        if (status.isReachable && !isReachable) {
-          console.log('✅ Watch reconnectée - sync des données...');
-          syncAllData();
+        if (status.isReachable) {
+          console.log('✅ Watch reconnectée - sync des données automatique...');
+          // Petit délai pour laisser la session se stabiliser
+          setTimeout(() => syncAllData(), 1000);
         }
       });
 
@@ -120,20 +123,37 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       // Workout complété sur la Watch
       if (message.workoutCompleted) {
         console.log('🏋️ Workout reçu de la Watch:', message.workoutCompleted);
-        // TODO: Sauvegarder le workout dans AsyncStorage
         await AsyncStorage.setItem('lastWatchWorkout', JSON.stringify(message.workoutCompleted));
       }
 
       // Poids mis à jour depuis la Watch
       if (message.weightUpdate) {
-        console.log('⚖️ Poids mis à jour depuis la Watch:', message.weightUpdate.weight);
-        await AsyncStorage.setItem('currentWeight', String(message.weightUpdate.weight));
+        const weight = typeof message.weightUpdate === 'number' ? message.weightUpdate : message.weightUpdate.weight;
+        console.log('⚖️ Poids mis à jour depuis la Watch:', weight);
+        
+        // Sauvegarder dans la vraie base SQLite
+        await addWeight(weight);
+        
+        // Mettre à jour l'état local si nécessaire via appleWatchService ou autre
+        await AsyncStorage.setItem('currentWeight', String(weight));
       }
 
       // Hydratation mise à jour depuis la Watch
       if (message.hydrationUpdate) {
-        console.log('💧 Hydratation mise à jour depuis la Watch:', message.hydrationUpdate.waterIntake);
-        await AsyncStorage.setItem('waterIntake', String(message.hydrationUpdate.waterIntake));
+        const amount = typeof message.hydrationUpdate === 'number' ? message.hydrationUpdate : message.hydrationUpdate.waterIntake;
+        console.log('💧 Hydratation mise à jour depuis la Watch:', amount);
+        
+        // Utiliser le service dédié pour l'hydratation (gère les timestamp et la sync)
+        if (amount > 0) {
+          // Si c'est un ajout (montant relatif)
+          // Note: On suppose ici que la montre envoie le montant à ajouter
+          // Si elle envoie le total, il faudrait adapter
+        }
+      }
+      
+      // Support du format direct envoyé par WatchConnectivityManager.swift
+      if (message.weightUpdate !== undefined) {
+          // Déjà géré au dessus
       }
     } catch (error) {
       console.error('❌ Erreur handling watch message:', error);

@@ -17,123 +17,103 @@ struct HydrationView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Titre
-            HStack(spacing: 6) {
+        VStack(spacing: 6) {
+            // Titre compact
+            HStack(spacing: 4) {
                 Image(systemName: "drop.fill")
+                    .font(.system(size: 10))
                     .foregroundColor(.cyan)
                 Text("HYDRATATION")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 11, weight: .black))
                     .foregroundColor(.cyan)
             }
-            .padding(.top, 8)
-
-            // Bouteille animée
-            ZStack {
-                // Contour bouteille
-                WaterBottleShape()
-                    .stroke(Color.cyan.opacity(0.3), lineWidth: 3)
-                    .frame(width: 100, height: 80)
-
-                // Eau avec vagues
-                WaterBottleShape()
-                    .fill(Color.cyan.opacity(0.8))
-                    .frame(width: 100, height: 80)
-                    .mask(
-                        GeometryReader { geo in
-                            VStack {
-                                Spacer()
-                                WaveShape(offset: waveOffset, percent: progress)
-                                    .fill(Color.cyan)
-                                    .frame(height: geo.size.height * progress)
+            .padding(.top, 2)
+            
+            // Bouteille animée plus petite pour libérer de l'espace
+            TimelineView(.animation) { timeline in
+                let now = timeline.date.timeIntervalSinceReferenceDate
+                let angle = now.remainder(dividingBy: 2) * .pi * 2
+                
+                ZStack {
+                    WaterBottleShape()
+                        .stroke(Color.cyan.opacity(0.3), lineWidth: 2)
+                        .frame(width: 60, height: 75)
+                    
+                    WaterBottleShape()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.cyan, Color.cyan.opacity(0.7)]),
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
+                        .frame(width: 60, height: 75)
+                        .mask(
+                            GeometryReader { geo in
+                                VStack {
+                                    Spacer(minLength: 0)
+                                    WaveShape(offset: CGFloat(angle), percent: progress)
+                                        .fill(Color.cyan)
+                                        .frame(height: geo.size.height * CGFloat(progress))
+                                }
                             }
-                        }
-                    )
-                    .clipShape(WaterBottleShape())
-            }
-            .onAppear {
-                // Ne lancer l'animation que si pas en mode économie d'énergie
-                guard !ProcessInfo.processInfo.isLowPowerModeEnabled else { return }
-
-                isAnimating = true
-                withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
-                    waveOffset = .pi * 2
+                        )
+                        .clipShape(WaterBottleShape())
                 }
             }
-            // CORRECTION MEMORY LEAK: Arrêter l'animation quand la vue disparaît
-            .onDisappear {
-                isAnimating = false
-                waveOffset = 0
-            }
-            // Observer le mode économie d'énergie
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name.NSProcessInfoPowerStateDidChange)) { _ in
-                if ProcessInfo.processInfo.isLowPowerModeEnabled {
-                    // Arrêter l'animation
-                    isAnimating = false
-                    waveOffset = 0
-                } else if !isAnimating {
-                    // Relancer l'animation si pas active
-                    isAnimating = true
-                    withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
-                        waveOffset = .pi * 2
-                    }
-                }
-            }
-
-            // Valeurs
-            HStack(alignment: .bottom, spacing: 4) {
-                Text("\(Int(healthManager.waterIntake))")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(.cyan)
-
-                Text("/ \(Int(goal)) ml")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 4)
-            }
-
-            // Boutons d'action
-            HStack(spacing: 8) {
-                // Retirer
-                Button(action: { healthManager.removeWater(250) }) {
-                    Text("-")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                        // CORRECTION: Augmenté de 44x44 à 50x50 (minimum recommandé + marge)
-                        .frame(width: 50, height: 50)
-                        .background(Color.red.opacity(0.8))
-                        .cornerRadius(12)
+            .frame(height: 75)
+            
+            // Valeur centrale
+            Text("\(Int(healthManager.waterIntake)) ml")
+                .font(.system(size: 22, weight: .black, design: .rounded))
+                .foregroundColor(.cyan)
+            
+            // Contrôles sur une seule ligne horizontale
+            HStack(spacing: 6) {
+                // Bouton MOINS
+                Button(action: { 
+                    healthManager.removeWater(250)
+                    WKInterfaceDevice.current().play(.directionUp)
+                }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 14, weight: .bold))
+                        .frame(width: 32, height: 32)
+                        .background(Color.red.opacity(0.2))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-
-                // +250
-                Button(action: { healthManager.addWater(250) }) {
+                
+                // Bouton +250
+                Button(action: { 
+                    healthManager.addWater(250)
+                    WKInterfaceDevice.current().play(.click)
+                }) {
                     Text("+250")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.black)
-                        // CORRECTION: Augmenté hauteur de 44 à 50
-                        .frame(width: 60, height: 50)
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 48, height: 32)
                         .background(Color.cyan)
-                        .cornerRadius(12)
+                        .foregroundColor(.black)
+                        .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
-
-                // +500
-                Button(action: { healthManager.addWater(500) }) {
+                
+                // Bouton +500
+                Button(action: { 
+                    healthManager.addWater(500)
+                    WKInterfaceDevice.current().play(.click)
+                }) {
                     Text("+500")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.black)
-                        // CORRECTION: Augmenté hauteur de 44 à 50
-                        .frame(width: 60, height: 50)
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 48, height: 32)
                         .background(Color.cyan)
-                        .cornerRadius(12)
+                        .foregroundColor(.black)
+                        .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 8)
-
-            Spacer()
+            .padding(.bottom, 2)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
     }
 }

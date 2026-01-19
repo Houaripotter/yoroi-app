@@ -495,7 +495,7 @@ export default function VictoryShareModal({
                       <Text style={[
                         styles.topBannerText,
                         selectedTemplate === 'light' && { color: '#1a1a1a' }
-                      ]}>YOROI</Text>
+                      ]}>Yoroi</Text>
                     </View>
                     <View style={[
                       styles.topBannerLine,
@@ -573,12 +573,12 @@ export default function VictoryShareModal({
                           />
                         </View>
 
-                        {/* CENTER: YOROI + Tagline */}
+                        {/* CENTER: Yoroi + Tagline */}
                         <View style={styles.footerCenter}>
                           <Text style={[
                             styles.footerBrandName,
                             selectedTemplate === 'light' && { color: '#1a1a1a' }
-                          ]}>YOROI</Text>
+                          ]}>Yoroi</Text>
                           <Text style={[
                             styles.footerTagline,
                             selectedTemplate === 'light' && { color: 'rgba(0,0,0,0.6)' }

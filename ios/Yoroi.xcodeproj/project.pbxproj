@@ -77,33 +77,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "YoroiWatch Watch App";
-			sourceTree = "<group>";
-		};
-		97493F522F1D10E500CC3C63 /* YoroiWatch Watch AppTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "YoroiWatch Watch AppTests";
-			sourceTree = "<group>";
-		};
-		97493F5C2F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "YoroiWatch Watch AppUITests";
-			sourceTree = "<group>";
-		};
+		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,8 +166,6 @@
 				13B07FAE1A68108700A75B9A /* Yoroi */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */,
-				97493F522F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
-				97493F5C2F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				169A522525B0F3110718B655 /* Pods */,
@@ -309,9 +281,6 @@
 			dependencies = (
 				97493F512F1D10E500CC3C63 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				97493F522F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
-			);
 			name = "YoroiWatch Watch AppTests";
 			productName = "YoroiWatch Watch AppTests";
 			productReference = 97493F4F2F1D10E500CC3C63 /* YoroiWatch Watch AppTests.xctest */;
@@ -329,9 +298,6 @@
 			);
 			dependencies = (
 				97493F5B2F1D10E500CC3C63 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				97493F5C2F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
 			);
 			name = "YoroiWatch Watch AppUITests";
 			productName = "YoroiWatch Watch AppUITests";
@@ -659,7 +625,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi;
-				PRODUCT_NAME = "Yoroi";
+				PRODUCT_NAME = Yoroi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Yoroi/Yoroi-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -692,7 +658,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi;
-				PRODUCT_NAME = "Yoroi";
+				PRODUCT_NAME = Yoroi;
 				SWIFT_OBJC_BRIDGING_HEADER = "Yoroi/Yoroi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -840,7 +806,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = YOROI;
+				INFOPLIST_KEY_CFBundleDisplayName = Yoroi;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "YOROI utilise vos données de santé pour afficher votre poids, sommeil, fréquence cardiaque et activité physique.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "YOROI enregistre vos pesées, votre consommation d'eau et vos entraînements dans Apple Santé.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -894,7 +860,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = YOROI;
+				INFOPLIST_KEY_CFBundleDisplayName = Yoroi;
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "YOROI utilise vos données de santé pour afficher votre poids, sommeil, fréquence cardiaque et activité physique.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "YOROI enregistre vos pesées, votre consommation d'eau et vos entraînements dans Apple Santé.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";

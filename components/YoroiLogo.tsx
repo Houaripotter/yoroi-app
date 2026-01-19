@@ -115,7 +115,7 @@ export const YoroiLogo: React.FC<YoroiLogoProps> = ({
             },
           ]}
         >
-          YOROI
+          Yoroi
         </Text>
       )}
     </View>

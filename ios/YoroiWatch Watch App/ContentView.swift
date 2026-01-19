@@ -11,35 +11,35 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Page 1: Dashboard (stats santé)
+            // 1. Dashboard (Vue d'ensemble + Poids)
             DashboardView()
                 .tag(0)
 
-            // Page 2: Timer de repos
+            // 2. Timer (Repos / Combat / Tabata)
             TimerView()
                 .tag(1)
 
-            // Page 3: Hydratation
-            HydrationView()
+            // 3. Carnet d'entraînement (Records et ajouts)
+            RecordsView()
                 .tag(2)
 
-            // Page 4: Poids
+            // 4. Poids de corps
             WeightView()
                 .tag(3)
 
-            // Page 5: Entraînements
+            // 5. Séance en direct (Workout)
             WorkoutView()
                 .tag(4)
 
-            // Page 6: Records
-            RecordsView()
+            // 6. Hydratation
+            HydrationView()
                 .tag(5)
 
-            // Page 7: Historique
-            HistoryView()
+            // 7. Réglages
+            SettingsView()
                 .tag(6)
         }
-        .tabViewStyle(.carousel)
+        .tabViewStyle(.page)
         .onAppear {
             healthManager.requestAuthorization()
         }

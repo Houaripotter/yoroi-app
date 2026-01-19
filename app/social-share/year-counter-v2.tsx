@@ -50,26 +50,15 @@ export default function YearCounterV2Screen() {
 
   const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [backgroundType, setBackgroundType] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState<string | undefined>(undefined);
 
   const currentYear = new Date().getFullYear();
   const { stats, isLoading: statsLoading, error } = useYearStats(currentYear);
 
-  // Charger le username
-  useEffect(() => {
-    loadUsername();
-  }, []);
-
-  const loadUsername = async () => {
-    try {
-      const settings = await getUserSettings();
-      setUsername(settings.username);
-    } catch (err) {
-      logger.error('Erreur chargement username:', err);
-    }
-  };
+  // ... (reste du code) ...
 
   // ============================================
   // PHOTO PICKER
@@ -84,15 +73,18 @@ export default function YearCounterV2Screen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -109,15 +101,18 @@ export default function YearCounterV2Screen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -279,9 +274,10 @@ export default function YearCounterV2Screen() {
             <YearCounterCardV2
               ref={cardRef}
               stats={stats}
-              format={format}
+              format="stories"
               backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
               backgroundType={getBackgroundType()}
+              isLandscape={isLandscapeImage}
               username="yoroiapp"
             />
           </View>

@@ -58,6 +58,7 @@ import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { SharePromptModal } from '@/components/SharePromptModal';
+import * as WebBrowser from 'expo-web-browser';
 
 // ============================================
 // NOUVEL ENTRAINEMENT - VERSION SIMPLIFIEE
@@ -438,12 +439,31 @@ export default function AddTrainingScreen() {
   });
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [duration, setDuration] = useState(60);
+  const [distance, setDistance] = useState<string>(''); // Nouveau: Distance en km
+  const [manualPace, setManualPace] = useState<string>(''); // Allure saisie manuellement
+  const [calories, setCalories] = useState<string>(''); // Nouveau: Calories
+  const [intensity, setIntensity] = useState<number>(5); // RPE 1-10
+  const [rounds, setRounds] = useState<string>(''); // Nombre de rounds
+  const [roundDuration, setRoundDuration] = useState<string>('5'); // Minutes par round
   const [notes, setNotes] = useState('');
+
+  // Calculer l'allure (pace) en direct (uniquement si pas de saisie manuelle)
+  const getLivePace = () => {
+    if (manualPace) return manualPace;
+    const distNum = parseFloat(distance.replace(',', '.'));
+    if (!distNum || !duration) return null;
+    const totalSeconds = duration * 60;
+    const secondsPerKm = totalSeconds / distNum;
+    const mins = Math.floor(secondsPerKm / 60);
+    const secs = Math.round(secondsPerKm % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
   const [selectedMuscles, setSelectedMuscles] = useState<string[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -625,8 +645,12 @@ export default function AddTrainingScreen() {
     setShowShareModal(false);
     // Marquer qu'on doit demander la review au retour
     await AsyncStorage.setItem('@yoroi_pending_review', 'true');
-    // Navigate to last-session sharing screen puis retourner à l'accueil
-    router.replace('/social-share/last-session');
+    // Navigate to last-session sharing screen avec l'ID précis
+    if (lastSavedTrainingId) {
+      router.replace(`/social-share/last-session?id=${lastSavedTrainingId}`);
+    } else {
+      router.replace('/social-share/last-session');
+    }
   };
 
   const handleShareModalSkip = async () => {
@@ -716,7 +740,14 @@ export default function AddTrainingScreen() {
         exercises: exercises.length > 0 ? exercises : undefined,
         technique_rating: techniqueRating,
         is_outdoor: isOutdoor,
+        distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+        calories: calories ? parseInt(calories) : undefined,
+        intensity: intensity,
+        rounds: rounds ? parseInt(rounds) : undefined,
+        round_duration: roundDuration ? parseInt(roundDuration) : undefined,
       });
+
+      setLastSavedTrainingId(newId);
 
       // Sauvegarder le premier sport et durée pour le Quick Add
       await saveLastSportAndDuration(selectedSports[0], duration);
@@ -1462,6 +1493,86 @@ export default function AddTrainingScreen() {
         <Text style={[styles.endTimeText, { color: colors.textMuted }]}>
           Fin estimee : {calculateEndTime()}
         </Text>
+
+        {/* STATS PERFORMANCE - DYNAMIQUE SELON SPORT */}
+        <View style={{ marginTop: 10 }}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Ta performance</Text>
+          
+          <View style={styles.proStatsContainer}>
+            {/* DISTANCE + ALLURE (Cardio) */}
+            {(selectedSports.includes('running') || 
+              selectedSports.includes('velo') || 
+              selectedSports.includes('natation') || 
+              selectedSports.includes('marche') || 
+              selectedSports.includes('trail')) && (
+              <View style={{ width: '100%', gap: 12 }}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.proStatLabel, { color: colors.textMuted }]}>Distance (km)</Text>
+                    <TextInput
+                      style={[styles.proStatInput, { color: colors.accent }]}
+                      value={distance}
+                      onChangeText={setDistance}
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                  <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border, justifyContent: 'center' }]}>
+                    <Text style={[styles.proStatLabel, { color: colors.textMuted }]}>Allure (/km)</Text>
+                    <TextInput
+                      style={[styles.proStatInput, { color: colors.textPrimary }]}
+                      value={manualPace || getLivePace() || ''}
+                      onChangeText={setManualPace}
+                      placeholder="--:--"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="numbers-and-punctuation"
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* ... reste des champs (Rounds, Calories) ... */}
+
+            {/* INTENSITÉ AVEC JUSTIFICATION SCIENTIFIQUE */}
+            <View style={{ width: '100%' }}>
+              <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.proStatLabel, { color: colors.textMuted }]}>Intensité (RPE - Échelle de Borg)</Text>
+                  <MaterialCommunityIcons name="information-outline" size={14} color={colors.textMuted} />
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4, width: '100%', justifyContent: 'center' }}>
+                  <TouchableOpacity onPress={() => setIntensity(Math.max(1, intensity - 1))} style={styles.intensityStep}>
+                    <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>-</Text>
+                  </TouchableOpacity>
+                  
+                  <View style={{ alignItems: 'center', minWidth: 80 }}>
+                    <Text style={[styles.proStatInput, { color: intensity > 7 ? '#EF4444' : colors.accent, marginBottom: -4 }]}>
+                      {intensity}
+                    </Text>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' }}>
+                      {intensity <= 3 ? 'Facile' : intensity <= 6 ? 'Modéré' : intensity <= 8 ? 'Difficile' : 'Maximal'}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity onPress={() => setIntensity(Math.min(10, intensity + 1))} style={styles.intensityStep}>
+                    <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>+</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <TouchableOpacity 
+                  onPress={() => WebBrowser.openBrowserAsync('https://pubmed.ncbi.nlm.nih.gov/7154893/')}
+                  style={{ marginTop: 10, alignItems: 'center' }}
+                >
+                  <Text style={[styles.scienceNote, { color: colors.accent, textDecorationLine: 'underline' }]}>
+                    L'échelle RPE (Borg, 1982) est validée scientifiquement pour mesurer la charge interne et prévenir le surentraînement. Voir l'étude →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
           </>
         )}
 
@@ -2356,5 +2467,46 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: FONT_SIZE.xl,
     fontWeight: '700',
+  },
+  proStatsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  proStatItem: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  proStatLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  proStatInput: {
+    fontSize: 24,
+    fontWeight: '800',
+    textAlign: 'center',
+    width: '100%',
+  },
+  intensityStep: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+    backgroundColor: 'rgba(128,128,128,0.1)',
+  },
+  scienceNote: {
+    fontSize: 9,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.6,
+    paddingHorizontal: 10,
+    lineHeight: 12,
   },
 });

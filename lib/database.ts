@@ -133,6 +133,26 @@ export const initDatabase = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN distance REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN calories INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN intensity INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN rounds INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN round_duration INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -432,6 +452,11 @@ export interface Training {
   notes?: string;
   muscles?: string; // JSON array of muscle groups
   technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
+  distance?: number; // Distance en km
+  calories?: number; // Calories brûlées
+  intensity?: number; // RPE 1-10
+  rounds?: number; // Nombre de rounds
+  round_duration?: number; // Durée d'un round en minutes
   exercises?: Exercise[]; // For musculation workouts
   technique_rating?: number | null; // 1-5 stars rating
   is_outdoor?: boolean; // true si entraînement en plein air
@@ -612,10 +637,10 @@ export const addWeight = async (data: Weight): Promise<number> => {
 export const getWeights = async (days?: number): Promise<Weight[]> => {
   const database = await openDatabase();
   const query = days
-    ? `SELECT * FROM weights WHERE date >= date('now', '-${days} days') ORDER BY date DESC`
+    ? `SELECT * FROM weights WHERE date >= date('now', ?) ORDER BY date DESC`
     : `SELECT * FROM weights ORDER BY date DESC`;
 
-  return await database.getAllAsync<Weight>(query);
+  return await database.getAllAsync<Weight>(query, days ? [`-${days} days`] : []);
 };
 
 export const getLatestWeight = async (): Promise<Weight | null> => {
@@ -659,12 +684,13 @@ export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
-     data.is_outdoor ? 1 : 0]
+     data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null, 
+     data.intensity || null, data.rounds || null, data.round_duration || null]
   );
   return result.lastInsertRowId;
 };
@@ -675,14 +701,14 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
     ? `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
-       WHERE t.date >= date('now', '-${days} days')
+       WHERE t.date >= date('now', ?)
        ORDER BY t.date DESC, t.start_time ASC`
     : `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
        ORDER BY t.date DESC, t.start_time ASC`;
 
-  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(query);
+  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(query, days ? [`-${days} days`] : []);
   return results.map(r => {
     let exercises;
     if (r.exercises) {
@@ -810,10 +836,10 @@ export const addMeasurementRecord = async (data: Measurement): Promise<number> =
 export const getMeasurements = async (days?: number): Promise<Measurement[]> => {
   const database = await openDatabase();
   const query = days
-    ? `SELECT * FROM measurements WHERE date >= date('now', '-${days} days') ORDER BY date DESC`
+    ? `SELECT * FROM measurements WHERE date >= date('now', ?) ORDER BY date DESC`
     : `SELECT * FROM measurements ORDER BY date DESC`;
 
-  return await database.getAllAsync<Measurement>(query);
+  return await database.getAllAsync<Measurement>(query, days ? [`-${days} days`] : []);
 };
 
 export const getLatestMeasurement = async (): Promise<Measurement | null> => {

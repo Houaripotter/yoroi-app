@@ -4,6 +4,7 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
 import logger from './security/logger';
+import secureStorage from './security/secureStorage';
 // ThemeName supprimé - utilise maintenant string pour compatibilité avec le nouveau système de thèmes
 
 // ============================================
@@ -624,8 +625,8 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
 
 export const getUserSettings = async (): Promise<UserSettings> => {
   try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
-    return data ? JSON.parse(data) : {
+    const data = await secureStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
+    return data || {
       weight_unit: 'kg',
       measurement_unit: 'cm',
       theme: 'classic',
@@ -644,8 +645,7 @@ export const saveUserSettings = async (settings: Partial<UserSettings>): Promise
   try {
     const currentSettings = await getUserSettings();
     const newSettings = { ...currentSettings, ...settings };
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(newSettings));
-    return true;
+    return await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, newSettings);
   } catch (error) {
     console.error('❌ Erreur sauvegarde paramètres:', error);
     return false;

@@ -66,16 +66,23 @@ interface TabBarProps extends BottomTabBarProps {}
 export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) {
   const { colors, themeColor, isDark } = useTheme();
 
-  // Couleurs du bouton + selon le mode
-  // Mode clair: bouton blanc/clair avec + noir
-  // Mode sombre: bouton coloré (accent) avec + blanc
+  // Couleurs du bouton + selon le mode et le thème
+  // SI THEME CLASSIC: Bouton NOIR avec + BLANC (selon demande utilisateur)
+  const isClassicTheme = themeColor === 'classic';
   const isLightMode = !isDark;
-  const plusButtonBgColor = isLightMode ? '#FFFFFF' : colors.accent;
-  const plusButtonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accentDark || colors.accent);
-  const plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
+  
+  let plusButtonBgColor = isLightMode ? '#FFFFFF' : colors.accent;
+  let plusButtonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accentDark || colors.accent);
+  let plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
+
+  if (isClassicTheme) {
+    plusButtonBgColor = '#000000';
+    plusButtonBgColorDark = '#1A1A1A';
+    plusIconColor = '#FFFFFF';
+  }
 
   // Style special pour le bouton selon le mode
-  const plusButtonStyle = isLightMode ? {
+  let plusButtonStyle: any = isLightMode ? {
     // Mode clair: bouton blanc avec ombre et bordure foncee
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
@@ -89,6 +96,14 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.25)',
   };
+
+  if (isClassicTheme) {
+    plusButtonStyle = {
+      ...plusButtonStyle,
+      borderWidth: 2,
+      borderColor: 'rgba(255,255,255,0.35)',
+    };
+  }
 
   // Position animée du creux
   const notchPosition = useRef(new Animated.Value(SCREEN_WIDTH / 2)).current;
@@ -269,7 +284,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
               end={{ x: 1, y: 1 }}
               style={[styles.buttonGradient, plusButtonStyle]}
             >
-              <View style={styles.shineEffect} />
+              {!isClassicTheme && <View style={styles.shineEffect} />}
               <Plus size={28} color={plusIconColor} strokeWidth={3.5} />
             </LinearGradient>
           </TouchableOpacity>

@@ -86,6 +86,7 @@ export default function TikTokStatsScreen() {
   const [selectedStats, setSelectedStats] = useState<StatType[]>(['totalTrainings', 'monthTrainings', 'bestWeek', 'rank']);
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [backgroundType, setBackgroundType] = useState<'transparent' | 'gradient' | 'photo'>('transparent');
+  const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [format] = useState<'stories' | 'square'>('stories');
@@ -201,15 +202,18 @@ export default function TikTokStatsScreen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setBackgroundType('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -225,15 +229,18 @@ export default function TikTokStatsScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setBackgroundType('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -348,6 +355,7 @@ export default function TikTokStatsScreen() {
               format={format}
               backgroundImage={backgroundImage}
               backgroundType={backgroundType}
+              isLandscape={isLandscapeImage}
             />
           </View>
 

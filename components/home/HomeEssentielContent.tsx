@@ -207,6 +207,11 @@ export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
         </View>
       </View>
 
+      {/* OUTILS RAPIDES - Carnet, Blessures, Objectifs */}
+      <View style={{ paddingHorizontal: 16 }}>
+        <QuickToolsRow />
+      </View>
+
       {/* QUÊTES JOURNALIÈRES - Points XP */}
       <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
         <QuestsCard />

@@ -45,9 +45,9 @@ export default function WeeklyRecapV2Screen() {
   const cardRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('dark');
+  const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const { stats, isLoading: statsLoading } = useWeekStats();
@@ -65,15 +65,18 @@ export default function WeeklyRecapV2Screen() {
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -90,15 +93,18 @@ export default function WeeklyRecapV2Screen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true, // Permet de recadrer/zoomer
-        aspect: format === 'stories' ? [9, 16] : [1, 1], // Ratio selon format
+        allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setBackgroundImage(result.assets[0].uri);
+        setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
+        // Détecter si l'image est en paysage
+        const isLandscape = (asset.width || 0) > (asset.height || 0);
+        setIsLandscapeImage(isLandscape);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -233,9 +239,10 @@ export default function WeeklyRecapV2Screen() {
           <WeeklyRecapCardV2
             ref={cardRef}
             stats={stats}
-            format={format}
+            format="stories"
             backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
             backgroundType={getBackgroundType()}
+            isLandscape={isLandscapeImage}
             username="yoroiapp"
           />
         </View>

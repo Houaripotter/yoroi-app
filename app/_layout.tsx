@@ -10,8 +10,6 @@ import { I18nProvider } from '@/lib/I18nContext';
 import { DevModeProvider } from '@/lib/DevModeContext';
 import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import DevCodeModal from '@/components/DevCodeModal';
-import { NotificationApologyModal } from '@/components/NotificationApologyModal';
-import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
 import { notificationService } from '@/lib/notificationService';
@@ -19,7 +17,6 @@ import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
-import { shouldShowChangelog, markChangelogAsRead } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // PRODUCTION: Désactiver tous les console.log
@@ -49,24 +46,6 @@ const LOADING_COLORS = {
 
 function RootLayoutContent() {
   const { isDark, colors } = useTheme();
-  const [showChangelog, setShowChangelog] = useState(false);
-
-  // Vérifier si on doit afficher le changelog
-  useEffect(() => {
-    const checkChangelog = async () => {
-      const shouldShow = await shouldShowChangelog();
-      if (shouldShow) {
-        // Attendre 1 seconde après le chargement pour afficher
-        setTimeout(() => setShowChangelog(true), 1000);
-      }
-    };
-    checkChangelog();
-  }, []);
-
-  const handleCloseChangelog = async () => {
-    await markChangelogAsRead();
-    setShowChangelog(false);
-  };
 
   // 🔒 SÉCURITÉ: Sauvegarde automatique quand l'app passe en background
   useEffect(() => {
@@ -105,7 +84,6 @@ function RootLayoutContent() {
         {/* Écrans standard */}
         <Stack.Screen name="profile" options={{ presentation: 'card' }} />
         <Stack.Screen name="photos" options={{ presentation: 'card' }} />
-        <Stack.Screen name="settings" options={{ presentation: 'card' }} />
         <Stack.Screen name="appearance" options={{ presentation: 'card' }} />
         <Stack.Screen name="timer" options={{ presentation: 'card' }} />
         <Stack.Screen name="calculators" options={{ presentation: 'card' }} />
@@ -114,10 +92,8 @@ function RootLayoutContent() {
         <Stack.Screen name="nutrition-plan" options={{ presentation: 'card' }} />
         <Stack.Screen name="share-hub" options={{ presentation: 'card' }} />
         <Stack.Screen name="partners" options={{ presentation: 'card' }} />
-        <Stack.Screen name="health-connect" options={{ presentation: 'card' }} />
         <Stack.Screen name="clubs" options={{ presentation: 'card' }} />
         <Stack.Screen name="help-tutorials" options={{ presentation: 'card' }} />
-        <Stack.Screen name="add-training" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="add-measurement" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="entry" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="savoir" options={{ presentation: 'card' }} />
@@ -150,10 +126,6 @@ function RootLayoutContent() {
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.background} />
       <DevCodeModal />
-      <NotificationApologyModal />
-      {showChangelog && (
-        <UpdateChangelogModal visible={true} onClose={handleCloseChangelog} />
-      )}
     </View>
   );
 }

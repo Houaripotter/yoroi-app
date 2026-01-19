@@ -145,12 +145,12 @@ export default function OnboardingScreen() {
     {
       id: 'welcome',
       icon: <Image source={require('../assets/images/logo2010.png')} style={{ width: 100, height: 100, borderRadius: 24 }} resizeMode="contain" />,
-      title: 'Bienvenue dans la team YOROI',
-      description: 'YOROI fonctionne 100% HORS LIGNE. Desert, foret, mer, montagne sans reseau ? Pas de probleme. Tes donnees restent sur TON telephone. Pas de compte, pas de cloud, pas de tracking.',
+      title: 'Bienvenue dans la team Yoroi',
+      description: 'Désolé pour les notifications récentes, tout est rentré dans l\'ordre ! 🙏 Yoroi fonctionne 100% HORS LIGNE. Tes données restent sur TON téléphone. Pas de compte, pas de cloud, pas de tracking.',
       color: colors.accent,
       highlights: [
-        { icon: <Target size={14} color={colors.accentText} />, text: '100% hors ligne - Meme sans reseau' },
-        { icon: <Timer size={14} color={colors.accentText} />, text: '100% confidentiel - Donnees privees' },
+        { icon: <Target size={14} color={colors.accentText} />, text: '100% hors ligne - Même sans réseau' },
+        { icon: <Timer size={14} color={colors.accentText} />, text: '100% confidentiel - Données privées' },
         { icon: <Medal size={14} color={colors.accentText} />, text: 'Pas de compte - Pas de cloud' },
       ],
     },
@@ -158,46 +158,46 @@ export default function OnboardingScreen() {
       id: 'stats',
       icon: <BarChart3 size={64} color="#4ECDC4" />,
       title: '6 Onglets de Stats',
-      description: 'Poids, composition, mensurations, discipline, performance, vitalite. Graphiques detailles, predictions IA, synchronisation Apple Health. Tout au meme endroit !',
+      description: 'Poids, composition, mensurations, discipline, performance, vitalité. Graphiques détaillés, prédictions IA, synchronisation Apple Health. Tout au même endroit !',
       color: '#4ECDC4',
       highlights: [
         { icon: <Scale size={14} color="#4ECDC4" />, text: 'Poids + Graisse + Muscle + Eau' },
         { icon: <Ruler size={14} color="#4ECDC4" />, text: 'Mensurations & tour de taille' },
-        { icon: <Zap size={14} color="#4ECDC4" />, text: 'Sommeil, hydratation, energie' },
+        { icon: <Zap size={14} color="#4ECDC4" />, text: 'Sommeil, hydratation, énergie' },
       ],
     },
     {
       id: 'gamification',
       icon: <Medal size={64} color="#FFD700" />,
-      title: 'Systeme de Grades',
-      description: 'Evolue de Ashigaru a Shogun a travers 5 grades de guerrier, collectionne 61 badges, personnalise ton avatar parmi 15 thèmes uniques. Gagne de l\'XP et suis ta progression !',
+      title: 'Système de Grades',
+      description: 'Évolue de Ashigaru à Shogun à travers 5 grades de guerrier, collectionne 61 badges, personnalise ton avatar parmi 15 thèmes uniques. Gagne de l\'XP et suis ta progression !',
       color: '#FFD700',
       highlights: [
-        { icon: <Award size={14} color="#FFD700" />, text: '5 grades de guerrier samourai' },
-        { icon: <Star size={14} color="#FFD700" />, text: '61 badges a collectionner' },
+        { icon: <Award size={14} color="#FFD700" />, text: '5 grades de guerrier samouraï' },
+        { icon: <Star size={14} color="#FFD700" />, text: '61 badges à collectionner' },
         { icon: <Target size={14} color="#FFD700" />, text: '15 thèmes & avatars personnalisables' },
       ],
     },
     {
       id: 'competition',
       icon: <Swords size={64} color="#FF6B35" />,
-      title: 'Mode Competiteur',
-      description: 'Competitions JJB, Judo, Boxe, MMA, Lutte, HYROX, Trail, Marathon... Categories officielles, mode Cut, palmares, compte a rebours. Prepare-toi comme un pro !',
+      title: 'Mode Compétiteur',
+      description: 'Compétitions JJB, Judo, Boxe, MMA, Lutte, HYROX, Trail, Marathon... Catégories officielles, mode Cut, palmarès, compte à rebours. Prépare-toi comme un pro !',
       color: '#FF6B35',
       highlights: [
         { icon: <Trophy size={14} color="#FF6B35" />, text: 'JJB, Boxe, Judo, MMA, Lutte' },
         { icon: <Dumbbell size={14} color="#FF6B35" />, text: 'HYROX, Trail, Marathon' },
-        { icon: <Target size={14} color="#FF6B35" />, text: 'Categories & Mode Cut' },
+        { icon: <Target size={14} color="#FF6B35" />, text: 'Catégories & Mode Cut' },
       ],
     },
     {
       id: 'planning',
       icon: <CalendarDays size={64} color="#F97316" />,
       title: 'Planning & Carnet',
-      description: 'Calendrier interactif, emploi du temps multi-sports, carnet d\'entrainement avec tes records persos et techniques. Planifie tes seances, suis ta progression !',
+      description: 'Calendrier interactif, emploi du temps multi-sports, carnet d\'entraînement avec tes records persos et techniques. Planifie tes séances, suis ta progression !',
       color: '#F97316',
       highlights: [
-        { icon: <CalendarDays size={14} color="#F97316" />, text: 'Calendrier & seances' },
+        { icon: <CalendarDays size={14} color="#F97316" />, text: 'Calendrier & séances' },
         { icon: <TrendingUp size={14} color="#F97316" />, text: 'Records & techniques' },
         { icon: <Target size={14} color="#F97316" />, text: 'Objectifs & progression' },
       ],
@@ -206,47 +206,47 @@ export default function OnboardingScreen() {
       id: 'tools',
       icon: <Timer size={64} color="#8B5CF6" />,
       title: 'Outils Pro',
-      description: 'Timer multi-modes (Muscu, Combat, HIIT, Tabata, AMRAP, EMOM), calculateurs avances (IMC, IMG, TDEE, macros), jeune intermittent (16/8, 20/4, OMAD, personnalise).',
+      description: 'Timer multi-modes (Muscu, Combat, HIIT, Tabata, AMRAP, EMOM), calculateurs avancés (IMC, IMG, TDEE, macros), jeûne intermittent (16/8, 20/4, OMAD, personnalisé).',
       color: '#8B5CF6',
       highlights: [
         { icon: <Timer size={14} color="#8B5CF6" />, text: 'Timer pro avec sons & vibes' },
         { icon: <Target size={14} color="#8B5CF6" />, text: 'Calculateurs IMC, IMG, TDEE' },
-        { icon: <Clock size={14} color="#8B5CF6" />, text: 'Jeune 16/8, 20/4, OMAD' },
+        { icon: <Clock size={14} color="#8B5CF6" />, text: 'Jeûne 16/8, 20/4, OMAD' },
       ],
     },
     {
       id: 'transformation',
       icon: <Camera size={64} color="#EC4899" />,
       title: 'Partage Tes Victoires',
-      description: 'Photos avant/apres avec slider, 6 cartes stylees pour Instagram/reseaux sociaux, graphiques, predictions, comparaisons. Immortalise ta transformation !',
+      description: 'Photos avant/après avec slider, 6 cartes stylées pour Instagram/réseaux sociaux, graphiques, prédictions, comparaisons. Immortalise ta transformation !',
       color: '#EC4899',
       highlights: [
-        { icon: <Camera size={14} color="#EC4899" />, text: 'Photos avant/apres' },
-        { icon: <LineChart size={14} color="#EC4899" />, text: 'Graphiques & predictions IA' },
-        { icon: <Star size={14} color="#EC4899" />, text: '6 cartes pour les reseaux' },
+        { icon: <Camera size={14} color="#EC4899" />, text: 'Photos avant/après' },
+        { icon: <LineChart size={14} color="#EC4899" />, text: 'Graphiques & prédictions IA' },
+        { icon: <Star size={14} color="#EC4899" />, text: '6 cartes pour les réseaux' },
       ],
     },
     {
       id: 'health',
       icon: <HeartHandshake size={64} color="#10B981" />,
-      title: 'Synchronisation Sante',
-      description: 'Synchronise avec Apple Health : pas, sommeil, frequence cardiaque, calories, distance. Suivi automatique, donnees en temps reel. Tout se connecte !',
+      title: 'Synchronisation Santé',
+      description: 'Synchronise avec Apple Health : pas, sommeil, fréquence cardiaque, calories, distance. Suivi automatique, données en temps réel. Tout se connecte !',
       color: '#10B981',
       highlights: [
         { icon: <Target size={14} color="#10B981" />, text: 'Apple Health / HealthKit' },
         { icon: <Zap size={14} color="#10B981" />, text: 'Synchronisation automatique' },
-        { icon: <LineChart size={14} color="#10B981" />, text: 'Donnees en temps reel' },
+        { icon: <LineChart size={14} color="#10B981" />, text: 'Données en temps réel' },
       ],
     },
     {
       id: 'family',
       icon: <HeartHandshake size={64} color="#D4AF37" />,
-      title: 'Vie Privee Garantie',
-      description: 'Pas de compte. Pas de cloud. Pas de serveur. Pas de tracking. Tes donnees ne quittent JAMAIS ton telephone. YOROI est 100% gratuit, 100% confidentiel. Made in France.',
+      title: 'Vie Privée Garantie',
+      description: 'Pas de compte. Pas de cloud. Pas de serveur. Pas de tracking. Tes données ne quittent JAMAIS ton téléphone. Yoroi est 100% gratuit, 100% confidentiel. Made in France.',
       color: '#D4AF37',
       highlights: [
-        { icon: <Target size={14} color="#D4AF37" />, text: 'Zero tracking - Zero cloud' },
-        { icon: <Star size={14} color="#D4AF37" />, text: 'Donnees 100% locales & privees' },
+        { icon: <Target size={14} color="#D4AF37" />, text: 'Zéro tracking - Zéro cloud' },
+        { icon: <Star size={14} color="#D4AF37" />, text: 'Données 100% locales & privées' },
         { icon: <HeartHandshake size={14} color="#D4AF37" />, text: 'Gratuit - Made in France' },
       ],
     },
@@ -537,7 +537,7 @@ export default function OnboardingScreen() {
             resizeMode="contain"
           />
           <Text style={[styles.logoText, { color: colors.textPrimary }]}>
-            YOROI
+            Yoroi
           </Text>
         </View>
 
@@ -824,7 +824,7 @@ export default function OnboardingScreen() {
           resizeMode="contain"
         />
         <Text style={[styles.logoText, { color: colors.textPrimary }]}>
-          YOROI
+          Yoroi
         </Text>
       </View>
 
@@ -899,8 +899,8 @@ const styles = StyleSheet.create({
   // Logo
   logoContainer: {
     alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingTop: 0,
+    paddingBottom: 10,
   },
   logo: {
     width: 60,
@@ -918,9 +918,9 @@ const styles = StyleSheet.create({
   slide: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: 32,
-    paddingTop: 40,
+    paddingTop: 10,
   },
   iconContainer: {
     width: 130,
@@ -928,8 +928,8 @@ const styles = StyleSheet.create({
     borderRadius: 65,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
-    marginTop: 20,
+    marginBottom: 20,
+    marginTop: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
@@ -1015,7 +1015,7 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     paddingHorizontal: 24,
-    paddingBottom: 50,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 40,
     alignItems: 'center',
   },
   button: {

@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Page definitions - titles are set dynamically in component
 // Santé en premier car c'est l'indicateur principal de santé
 const PAGE_DEFS = [
-  { id: 'dashboard', titleKey: 'stats.overview', icon: LayoutDashboard, component: DashboardPage },
+  { id: 'dashboard', titleKey: 'Résumé', icon: LayoutDashboard, component: DashboardPage },
   { id: 'sante', titleKey: 'stats.health', icon: Heart, component: VitalitePage },
   { id: 'poids', titleKey: 'stats.weight', icon: Scale, component: PoidsPage },
   { id: 'composition', titleKey: 'stats.composition', icon: Activity, component: CompositionPage },
@@ -44,7 +44,7 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
   // Create pages with translated titles
   const PAGES = PAGE_DEFS.map(page => ({
     ...page,
-    title: t(page.titleKey),
+    title: page.titleKey.includes('.') ? t(page.titleKey) : page.titleKey,
   }));
   const scrollViewRef = useRef<ScrollView>(null);
   const tabScrollRef = useRef<ScrollView>(null);

@@ -21,36 +21,6 @@ struct WorkoutData: Codable, Identifiable {
     }
 }
 
-// Données de poids
-struct WeightEntry: Codable, Identifiable {
-    let id: UUID
-    let weight: Double
-    let date: Date
-
-    init(id: UUID = UUID(), weight: Double, date: Date = Date()) {
-        self.id = id
-        self.weight = weight
-        self.date = date
-    }
-}
-
-// Stats utilisateur
-struct UserStats: Codable {
-    var currentWeight: Double
-    var targetWeight: Double?
-    var streak: Int
-    var totalSessions: Int
-    var totalMinutes: Int
-
-    init(currentWeight: Double = 0, targetWeight: Double? = nil, streak: Int = 0, totalSessions: Int = 0, totalMinutes: Int = 0) {
-        self.currentWeight = currentWeight
-        self.targetWeight = targetWeight
-        self.streak = streak
-        self.totalSessions = totalSessions
-        self.totalMinutes = totalMinutes
-    }
-}
-
 // Sports disponibles
 enum Sport: String, CaseIterable, Codable {
     case jjb = "JJB"

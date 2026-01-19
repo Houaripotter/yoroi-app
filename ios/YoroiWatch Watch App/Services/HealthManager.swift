@@ -18,15 +18,15 @@ class HealthManager: ObservableObject {
     private let queryQueue = DispatchQueue(label: "com.yoroi.healthmanager", attributes: .concurrent)
 
     // Données publiées
-    @Published var heartRate: Double = 72
-    @Published var spO2: Int = 98
-    @Published var steps: Int = 3600
-    @Published var sleepHours: Double = 7.5
-    @Published var waterIntake: Double = 1000
-    @Published var activeCalories: Double = 450
-    @Published var streak: Int = 12
-    @Published var currentWeight: Double = 78.0
-    @Published var targetWeight: Double = 77.0
+    @Published var heartRate: Double = 0
+    @Published var spO2: Int = 0
+    @Published var steps: Int = 0
+    @Published var sleepHours: Double = 0
+    @Published var waterIntake: Double = 0
+    @Published var activeCalories: Double = 0
+    @Published var streak: Int = 0
+    @Published var currentWeight: Double = 0
+    @Published var targetWeight: Double = 0
 
     // NOUVEAU: Error handling UI
     @Published var healthKitError: String?
@@ -53,11 +53,6 @@ class HealthManager: ObservableObject {
 
         // Charger les données persistées
         loadPersistedData()
-
-        // Charger données mock si pas de données
-        if weightHistory.isEmpty {
-            loadMockData()
-        }
 
         // Observer le mode économie d'énergie
         NotificationCenter.default.addObserver(
@@ -118,7 +113,6 @@ class HealthManager: ObservableObject {
             DispatchQueue.main.async {
                 self.healthKitError = "HealthKit non disponible"
             }
-            print("HealthKit non disponible - utilisation des données mock")
             return
         }
 
@@ -139,17 +133,36 @@ class HealthManager: ObservableObject {
         ]
 
         healthStore.requestAuthorization(toShare: writeTypes, read: readTypes) { [weak self] success, error in
-            DispatchQueue.main.async {
-                if success {
-                    self?.healthKitError = nil
-                    self?.fetchAllData()
-                } else if let error = error {
-                    self?.healthKitError = "Permissions refusées: \(error.localizedDescription)"
-                    print("❌ Erreur HealthKit: \(error.localizedDescription)")
-                } else {
-                    self?.healthKitError = "Permissions refusées"
-                }
+            if success {
+                print("✅ HealthKit Autorisé")
+                self?.startObservingHealthChanges()
+                self?.fetchAllData()
+            } else if let error = error {
+                print("❌ Erreur HealthKit: \(error.localizedDescription)")
             }
+        }
+    }
+    
+    // Observer les changements en temps réel
+    private func startObservingHealthChanges() {
+        guard let healthStore = healthStore else { return }
+        
+        // Observer les pas
+        if let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) {
+            let query = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] _, completion, error in
+                self?.fetchSteps()
+                completion()
+            }
+            healthStore.execute(query)
+        }
+        
+        // Observer le rythme cardiaque
+        if let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+            let query = HKObserverQuery(sampleType: hrType, predicate: nil) { [weak self] _, completion, error in
+                self?.fetchHeartRate()
+                completion()
+            }
+            healthStore.execute(query)
         }
     }
 
@@ -173,11 +186,88 @@ class HealthManager: ObservableObject {
         fetchWeight()
         fetchWater()
         fetchSleep()
+        fetchCalories()
+        fetchSpO2()
+        fetchRecentWorkouts()
 
         // Marquer comme fini après 2 secondes
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.isLoadingData = false
         }
+    }
+
+    private func fetchCalories() {
+        guard let healthStore = healthStore,
+              let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
+
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, _ in
+            guard let sum = result?.sumQuantity() else {
+                self?.removeQuery(query)
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.activeCalories = sum.doubleValue(for: .kilocalorie())
+                self?.removeQuery(query)
+            }
+        }
+        addQuery(query)
+        healthStore.execute(query)
+    }
+
+    private func fetchSpO2() {
+        guard let healthStore = healthStore,
+              let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation) else { return }
+
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+            guard let sample = samples?.first as? HKQuantitySample else {
+                self?.removeQuery(query)
+                return
+            }
+
+            DispatchQueue.main.async {
+                let value = sample.quantity.doubleValue(for: .percent())
+                self?.spO2 = Int(value * 100)
+                self?.removeQuery(query)
+            }
+        }
+        addQuery(query)
+        healthStore.execute(query)
+    }
+
+    private func fetchRecentWorkouts() {
+        guard let healthStore = healthStore else { return }
+
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: .workoutType(), predicate: nil, limit: 5, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+            guard let workouts = samples as? [HKWorkout] else {
+                self?.removeQuery(query)
+                return
+            }
+
+            let sessions = workouts.map { workout -> WorkoutSession in
+                // Convertir HKWorkout en ton modèle WorkoutSession
+                // Note: On simplifie ici pour l'affichage de l'historique
+                return WorkoutSession(
+                    date: workout.startDate,
+                    exercises: [Exercise(name: workout.workoutActivityType.name, sets: [])]
+                )
+            }
+
+            DispatchQueue.main.async {
+                self?.workoutHistory = sessions
+                self?.removeQuery(query)
+            }
+        }
+        addQuery(query)
+        healthStore.execute(query)
     }
 
     private func fetchHeartRate() {
@@ -328,7 +418,13 @@ class HealthManager: ObservableObject {
 
     func saveWeight(_ weight: Double) {
         currentWeight = weight
+        
+        // 1. Sync avec iPhone via WatchConnectivity (Priorité immédiate)
+        WatchConnectivityManager.shared.sendToiPhone(weight, forKey: "weightUpdate") { success in
+            print(success ? "✅ Poids sync iPhone" : "⚠️ Poids mis en queue")
+        }
 
+        // 2. Sauvegarde HealthKit
         guard let healthStore = healthStore,
               let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return }
 
@@ -360,10 +456,49 @@ class HealthManager: ObservableObject {
         waterIntake = max(0, waterIntake - ml)
         savePersistedData()
     }
+    
+    // NOUVEAU: Ajouter un record depuis la vue Records
+    func addRecord(exercise: String, weight: Double, reps: Int) {
+        let newRecord = ExerciseRecord(
+            exercise: exercise,
+            weight: weight,
+            reps: reps,
+            date: Date()
+        )
+        records.insert(newRecord, at: 0)
+        savePersistedData()
+        
+        // Optionnel: On pourrait aussi sync vers l'iPhone ici
+        print("✅ Nouveau record ajouté: \(exercise)")
+    }
+
+    func resetAllData() {
+        let defaults = UserDefaults.standard
+        let dictionary = defaults.dictionaryRepresentation()
+        dictionary.keys.forEach { key in
+            defaults.removeObject(forKey: key)
+        }
+        
+        // Reset variables locales
+        heartRate = 0
+        spO2 = 0
+        steps = 0
+        sleepHours = 0
+        waterIntake = 0
+        activeCalories = 0
+        streak = 0
+        currentWeight = 0
+        targetWeight = 0
+        weightHistory = []
+        records = []
+        workoutHistory = []
+        
+        print("🗑️ TOUTES les données de la montre ont été effacées")
+    }
 
     // MARK: - Persistance Locale (UserDefaults)
 
-    private func savePersistedData() {
+    func savePersistedData() {
         let defaults = UserDefaults.standard
 
         // Sauvegarder les valeurs simples
@@ -408,7 +543,9 @@ class HealthManager: ObservableObject {
         // Charger l'historique de poids
         if let data = defaults.data(forKey: "weightHistory"),
            let decoded = try? JSONDecoder().decode([WeightEntry].self, from: data) {
-            weightHistory = decoded.map { ($0.date, $0.weight) }
+            weightHistory = decoded.map { (entry: WeightEntry) -> (date: Date, weight: Double) in
+                return (date: entry.date, weight: entry.weight)
+            }
         }
 
         // Charger les records
@@ -425,51 +562,22 @@ class HealthManager: ObservableObject {
 
         print("✅ Données chargées depuis UserDefaults")
     }
+}
 
-    // MARK: - Mock Data
-
-    private func loadMockData() {
-        // Historique poids mockné
-        let calendar = Calendar.current
-        weightHistory = (0..<7).map { i in
-            let date = calendar.date(byAdding: .day, value: -6 + i, to: Date())!
-            let weights = [78.5, 78.3, 78.1, 78.4, 78.0, 77.8, 77.6]
-            return (date: date, weight: weights[i])
+extension HKWorkoutActivityType {
+    var name: String {
+        switch self {
+        case .traditionalStrengthTraining: return "Musculation"
+        case .functionalStrengthTraining: return "CrossFit"
+        case .running: return "Running"
+        case .cycling: return "Vélo"
+        case .swimming: return "Natation"
+        case .boxing: return "Boxe"
+        case .martialArts: return "Arts Martiaux"
+        case .highIntensityIntervalTraining: return "HIIT"
+        case .yoga: return "Yoga"
+        default: return "Sport"
         }
-
-        // Records mockés
-        records = [
-            ExerciseRecord(exercise: "Développé couché", weight: 90, reps: 6, date: Date()),
-            ExerciseRecord(exercise: "Squat", weight: 110, reps: 6, date: Date()),
-            ExerciseRecord(exercise: "Soulevé de terre", weight: 130, reps: 3, date: calendar.date(byAdding: .day, value: -1, to: Date())!),
-        ]
-
-        // Historique séances
-        workoutHistory = [
-            WorkoutSession(
-                date: Date(),
-                exercises: [
-                    Exercise(name: "Développé couché", sets: [
-                        ExerciseSet(weight: 80, reps: 10, isRecord: false),
-                        ExerciseSet(weight: 85, reps: 8, isRecord: false),
-                        ExerciseSet(weight: 90, reps: 6, isRecord: true),
-                    ]),
-                    Exercise(name: "Squat", sets: [
-                        ExerciseSet(weight: 100, reps: 8, isRecord: false),
-                        ExerciseSet(weight: 110, reps: 6, isRecord: true),
-                    ]),
-                ]
-            ),
-            WorkoutSession(
-                date: calendar.date(byAdding: .day, value: -1, to: Date())!,
-                exercises: [
-                    Exercise(name: "Soulevé de terre", sets: [
-                        ExerciseSet(weight: 120, reps: 5, isRecord: false),
-                        ExerciseSet(weight: 130, reps: 3, isRecord: true),
-                    ]),
-                ]
-            ),
-        ]
     }
 }
 

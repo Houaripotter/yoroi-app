@@ -89,6 +89,7 @@
   "stats": {
     "title": "Statistiques",
     "overview": "Vue d'ensemble",
+    "dashboard": "Tableau de Bord",
     "progress": "Progression",
     "total": "Total",
     "average": "Moyenne",

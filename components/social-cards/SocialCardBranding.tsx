@@ -25,7 +25,7 @@ export const SocialCardTopBanner: React.FC<{ variant?: 'dark' | 'light' }> = ({
           style={styles.topBannerLogo}
           resizeMode="contain"
         />
-        <Text style={[styles.topBannerText, { color: textColor }]}>YOROI</Text>
+        <Text style={[styles.topBannerText, { color: textColor }]}>Yoroi</Text>
       </View>
       <View style={[styles.topBannerLine, { backgroundColor: lineColor }]} />
     </View>
@@ -59,7 +59,7 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
 
         {/* Texte au centre */}
         <View style={styles.footerTextBlock}>
-          <Text style={[styles.footerBrandName, { color: textColor }]}>YOROI</Text>
+          <Text style={[styles.footerBrandName, { color: textColor }]}>Yoroi</Text>
           <Text style={[styles.footerTagline, { color: textColor }]}>Suivi du poids & sport</Text>
         </View>
 
@@ -88,7 +88,7 @@ export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> =
   return (
     <View style={styles.footerCompact}>
       <View style={[styles.footerSeparator, { backgroundColor: separatorColor }]} />
-      <Text style={[styles.footerBrandNameCompact, { color: textColor }]}>YOROI</Text>
+      <Text style={[styles.footerBrandNameCompact, { color: textColor }]}>Yoroi</Text>
       <Text style={[styles.footerTaglineCompact, { color: textColor }]}>Suivi du poids & sport</Text>
       <Image
         source={require('@/assets/images/appstore.png')}

@@ -157,20 +157,31 @@ export const SmoothLineChart: React.FC<SmoothLineChartProps> = ({
             strokeLinejoin="round"
           />
 
-          {/* Dots */}
+          {/* Dots and Values */}
           {showDots && data.map((d, i) => {
             const x = (i / (data.length - 1)) * innerWidth;
             const y = innerHeight - ((d.value - minValue) / range) * innerHeight;
             return (
-              <Circle
-                key={i}
-                cx={x}
-                cy={y}
-                r={5}
-                fill={color}
-                stroke="#fff"
-                strokeWidth={2}
-              />
+              <G key={i}>
+                <Circle
+                  cx={x}
+                  cy={y}
+                  r={4}
+                  fill={color}
+                  stroke="#fff"
+                  strokeWidth={2}
+                />
+                <SvgText
+                  x={x}
+                  y={y - 10}
+                  fontSize={10}
+                  fontWeight="bold"
+                  fill={color}
+                  textAnchor="middle"
+                >
+                  {d.value.toFixed(1)}
+                </SvgText>
+              </G>
             );
           })}
 

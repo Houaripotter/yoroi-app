@@ -1,37 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { LineChart } from 'react-native-gifted-charts';
-import { Scale, Activity, Flame, Heart, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react-native';
-import { getWeights, getTrainings } from '@/lib/database';
+import {
+  Scale,
+  Activity,
+  Flame,
+  Heart,
+  Ruler,
+  TrendingUp,
+  Zap,
+  Moon,
+  Droplets,
+  Award,
+  Maximize2,
+  Trophy,
+  Target,
+  Bone,
+  Calendar,
+  Waves
+} from 'lucide-react-native';
+import { getWeights, getTrainings, getMeasurements } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
 import { calculateReadinessScore } from '@/lib/readinessService';
+import { getWeeklyLoadStats } from '@/lib/trainingLoadService';
+import { getMockWeights, getMockMeasurements, getMockTrainings } from '@/lib/mockDataService';
+import { getUserSettings } from '@/lib/storage';
+import { format, parseISO, subDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { StatsDetailModal } from '../StatsDetailModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_GAP = 12;
-const CARD_PADDING = 16;
-// 2 columns
-const CARD_WIDTH = (SCREEN_WIDTH - (CARD_PADDING * 2) - CARD_GAP) / 2;
+const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
 
-interface DashboardPageProps {
-  onNavigateToTab: (tabId: string) => void;
-}
-
-export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab }) => {
+export const DashboardPage: React.FC = () => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
-  
-  // Data States
-  const [weightData, setWeightData] = useState<{ value: number; label: string; date: string }[]>([]);
-  const [compositionData, setCompositionData] = useState<{ value: number; label: string; date: string }[]>([]);
-  const [disciplineData, setDisciplineData] = useState<{ value: number; label: string; date: string }[]>([]);
-  const [vitalityData, setVitalityData] = useState<{ value: number; label: string; date: string }[]>([]);
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
-  // Current Values
-  const [currentWeight, setCurrentWeight] = useState(0);
-  const [currentFat, setCurrentFat] = useState(0);
-  const [currentDiscipline, setCurrentDiscipline] = useState(0); // e.g. sessions this week
-  const [currentVitality, setCurrentVitality] = useState(0);
+  // Data States
+  const [allMetrics, setAllMetrics] = useState<any[]>([]);
 
   useEffect(() => {
     loadAllData();
@@ -40,49 +50,106 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
   const loadAllData = async () => {
     try {
       setLoading(true);
-      
-      // 1. Weights & Composition
-      const weights = await getWeights();
+      const settings = await getUserSettings();
+      const isScreenshotMode = settings.username === 'Thomas Silva';
+
+      let weights, trainings, measurements, sleep, readiness, loadStats;
+
+      if (isScreenshotMode) {
+        weights = getMockWeights(30);
+        trainings = getMockTrainings(30);
+        measurements = getMockMeasurements(60);
+        readiness = { score: 88 };
+        loadStats = { totalLoad: 1850 };
+        sleep = { 
+          weeklyData: Array.from({ length: 7 }, (_, i) => ({
+            date: subDays(new Date(), i).toISOString(),
+            duration: 460 + (Math.sin(i) * 40)
+          }))
+        };
+      } else {
+        [weights, trainings, measurements, sleep, readiness, loadStats] = await Promise.all([
+          getWeights(60),
+          getTrainings(60),
+          getMeasurements(90),
+          getSleepStats(),
+          calculateReadinessScore(7),
+          getWeeklyLoadStats()
+        ]);
+      }
+
+      const metricsList: any[] = [];
+
+      const prepareLineData = (data: any[], valueKey: string, color: string) => {
+        if (!data || data.length === 0) return [];
+        const filtered = data.filter(item => item[valueKey] != null);
+        return filtered.slice().reverse().map(item => {
+          const val = item[valueKey] || 0;
+          return {
+            value: val,
+            dataPointText: val.toFixed(1),
+            label: format(parseISO(item.date), 'd MMM', { locale: fr }).toUpperCase(),
+            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
+            dataPointColor: color,
+          };
+        });
+      };
+
+      // --- CORPS ---
       if (weights && weights.length > 0) {
-        // Take last 20 points for chart
-        const recentWeights = weights.slice(0, 20).reverse(); // database returns newest first usually? check PoidsTab
-        // Actually getWeights() usually returns newest first? 
-        // PoidsTab: const startWeight = data.length > 0 ? data[0].weight : undefined; -> data[0] is newest?
-        // Let's assume weights are sorted by date DESC (newest first).
-        
-        // Sort by date ASC for chart
-        const sortedWeights = [...weights].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        const last20 = sortedWeights.slice(-20);
+        const latest = weights[0];
+        metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: latest.weight.toFixed(1), data: prepareLineData(weights, 'weight', '#3B82F6') });
+        if (latest.muscle_percent) metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: latest.muscle_percent.toFixed(1), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
+        if (latest.fat_percent) metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: latest.fat_percent.toFixed(1), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
+        if (latest.water_percent) metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: latest.water_percent.toFixed(1), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
 
-        setWeightData(last20.map(w => ({ value: w.weight, label: '', date: w.date })));
-        setCompositionData(last20.map(w => ({ value: w.fat_percent || 0, label: '', date: w.date })));
-
-        setCurrentWeight(weights[0].weight);
-        setCurrentFat(weights[0].fat_percent || 0);
+        // --- COMPOSITION ---
+        if (latest.visceral_fat) metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: latest.visceral_fat, data: prepareLineData(weights, 'visceral_fat', '#F97316') });
+        if (latest.bone_mass) metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: latest.bone_mass.toFixed(1), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
+        if (latest.bmr) metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: latest.bmr, data: prepareLineData(weights, 'bmr', '#F59E0B') });
+        if (latest.metabolic_age) metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: latest.metabolic_age, data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
       }
 
-      // 2. Discipline (Trainings count per week? or just recent sessions intensity?)
-      // Let's use recent trainings intensity or duration as a proxy for "Discipline" chart
-      const trainings = await getTrainings(30); // last 30 days
-      if (trainings && trainings.length > 0) {
-         const sortedTrainings = [...trainings].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-         // Map to chart data (e.g. intensity or load)
-         // If multiple per day, we might need to aggregate, but for sparkline just showing individual sessions is okay
-         setDisciplineData(sortedTrainings.map(t => ({ value: t.intensity || 5, label: '', date: t.date })));
-         setCurrentDiscipline(trainings.length); // Count last 30 days
+      // --- MENSURATIONS ---
+      if (measurements && measurements.length > 0) {
+        const latestM = measurements[0];
+        const mKeys = [
+          { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
+          { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
+          { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
+        ];
+        mKeys.forEach(m => {
+          if (latestM[m.key as keyof typeof latestM]) {
+            metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: latestM[m.key as keyof typeof latestM], data: prepareLineData(measurements, m.key, '#F59E0B') });
+          }
+        });
       }
 
-      // 3. Vitality (Readiness Score)
-      const readiness = await calculateReadinessScore(7); // Last 7 days
-      // This returns a score. We might need history.
-      // Let's use sleep duration history as proxy for chart if readiness history is hard
-      const sleepStats = await getSleepStats();
-      if (sleepStats.weeklyData && sleepStats.weeklyData.length > 0) {
-          const sortedSleep = [...sleepStats.weeklyData].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          setVitalityData(sortedSleep.map(s => ({ value: (s.duration || 0) / 60, label: '', date: s.date })));
-          setCurrentVitality(readiness.score);
+      // --- DISCIPLINE ---
+      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings.length, data: [] });
+
+      // --- SANTÉ ---
+      if (sleep.weeklyData && sleep.weeklyData.length > 0) {
+        metricsList.push({
+          id: 'sleep',
+          metricKey: 'sleep',
+          theme: 'Santé',
+          title: 'Sommeil',
+          icon: <Moon size={16} color="#8B5CF6" />,
+          color: '#8B5CF6',
+          unit: 'h',
+          value: ((sleep.weeklyData[0].duration || 0) / 60).toFixed(1),
+          data: sleep.weeklyData.slice().reverse().map((s: any) => ({
+            value: (s.duration || 0) / 60,
+            dataPointText: ((s.duration || 0) / 60).toFixed(1),
+            label: format(parseISO(s.date), 'dd/MM'),
+            dataPointColor: '#8B5CF6',
+            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
+          }))
+        });
       }
 
+      setAllMetrics(metricsList);
     } catch (e) {
       console.error("Error loading dashboard data", e);
     } finally {
@@ -90,149 +157,137 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
     }
   };
 
-  const renderCard = (
-    title: string, 
-    value: string | number, 
-    unit: string, 
-    data: any[], 
-    color: string, 
-    icon: React.ReactNode, 
-    tabId: string,
-    isGoodWhenHigh: boolean = true
-  ) => {
-    // Determine trend
-    let trend: 'up' | 'down' | 'stable' = 'stable';
-    if (data.length >= 2) {
-      const last = data[data.length - 1].value;
-      const prev = data[data.length - 2].value;
-      if (last > prev) trend = 'up';
-      else if (last < prev) trend = 'down';
-    }
-    
-    // Determine trend color
-    // If isGoodWhenHigh (e.g. Muscle, Vitality): Up is Green, Down is Red
-    // If !isGoodWhenHigh (e.g. Weight, Fat): Up is Red, Down is Green
-    let trendColor = colors.textMuted;
-    if (trend === 'up') trendColor = isGoodWhenHigh ? '#10B981' : '#EF4444';
-    if (trend === 'down') trendColor = isGoodWhenHigh ? '#EF4444' : '#10B981';
+  const renderMiniCard = (metric: any) => {
+    const values = metric.data.map((d: any) => d.value);
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const range = maxValue - minValue;
+    // Zoom agressif : on commence juste en dessous du minimum
+    const yAxisOffset = values.length > 0 ? Math.floor(minValue - (range > 0 ? range * 0.5 : 1)) : 0;
 
     return (
       <TouchableOpacity
-        style={[styles.card, { backgroundColor: colors.backgroundCard }]}
+        key={metric.id}
+        style={[styles.miniCard, { backgroundColor: colors.backgroundCard }]}
+        onPress={() => setSelectedMetric(metric)}
         activeOpacity={0.7}
-        onPress={() => onNavigateToTab(tabId)}
       >
         <View style={styles.cardHeader}>
-          <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
-            {icon}
+          <View style={[styles.iconBox, { backgroundColor: metric.color + '15' }]}>
+            {metric.icon}
           </View>
-          <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>{title}</Text>
+          <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
         </View>
 
-        <View style={styles.valueContainer}>
-           <Text style={[styles.cardValue, { color: colors.textPrimary }]}>
-             {value} <Text style={{ fontSize: 14, color: colors.textMuted, fontWeight: '600' }}>{unit}</Text>
-           </Text>
-           {trend !== 'stable' && (
-             <View style={styles.trendContainer}>
-                {trend === 'up' ? <TrendingUp size={14} color={trendColor} /> : <TrendingDown size={14} color={trendColor} />}
-             </View>
-           )}
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
+        
+        <View style={styles.valueRow}>
+          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{metric.value}</Text>
+          <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
         </View>
 
-        <View style={styles.chartContainer}>
-           {data.length > 1 ? (
-             <LineChart
-                data={data}
-                height={50}
-                width={CARD_WIDTH - 32} // padding
-                hideRules
-                hideAxesAndRules
-                hideYAxisText
-                xAxisThickness={0}
-                xAxisLabelsHeight={0}
-                curved
-                thickness={2}
-                color={color}
-                startFillColor={color}
-                endFillColor={color}
-                startOpacity={0.15}
-                endOpacity={0.0}
-                areaChart
-                initialSpacing={0}
-             />
-           ) : (
-             <View style={styles.noDataChart}>
-               <Text style={{ fontSize: 10, color: colors.textMuted }}>Pas assez de données</Text>
-             </View>
-           )}
+        <View style={styles.miniChartWrapper}>
+          {metric.data && metric.data.length > 0 ? (
+            <LineChart
+              data={metric.data}
+              height={85}
+              width={COLUMN_WIDTH} 
+              initialSpacing={15}
+              spacing={80} // Espacement large pour garantir le scroll
+              hideRules
+              hideAxesAndRules
+              hideYAxisText
+              xAxisThickness={0}
+              xAxisLabelsHeight={22}
+              curved
+              thickness={3.5}
+              color={metric.color}
+              startFillColor={metric.color}
+              endFillColor={metric.color}
+              startOpacity={0.2}
+              endOpacity={0.01}
+              areaChart
+              yAxisOffset={yAxisOffset > 0 ? yAxisOffset : 0}
+              hideDataPoints={false}
+              dataPointsHeight={8}
+              dataPointsWidth={8}
+              dataPointsColor={metric.color}
+              showValuesAsDataPointsText
+              textFontSize={10}
+              textColor={isDark ? '#FFFFFF' : '#000000'}
+              textShiftY={-15}
+              scrollEnabled={true}
+              xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
+            />
+          ) : (
+            <View style={styles.noData}>
+              <Activity size={16} color={colors.textMuted} />
+              <Text style={{ fontSize: 10, color: colors.textMuted }}>Pas de données</Text>
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.expandHint}>
+          <Maximize2 size={12} color={colors.textMuted} />
         </View>
       </TouchableOpacity>
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
+
+  const themes = ['Corps', 'Composition', 'Mensures', 'Discipline', 'Santé'];
+
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Vue d'ensemble</Text>
-      
-      <View style={styles.grid}>
-         {/* Row 1 */}
-         <View style={styles.row}>
-            {renderCard(
-              "Poids", 
-              currentWeight.toFixed(1), 
-              "kg", 
-              weightData, 
-              "#3B82F6", 
-              <Scale size={16} color="#3B82F6" />, 
-              "poids",
-              false // weight loss usually good? assumes cutting
-            )}
-            {renderCard(
-              "Composition", 
-              currentFat.toFixed(1), 
-              "%", 
-              compositionData, 
-              "#EF4444", 
-              <Activity size={16} color="#EF4444" />, 
-              "composition",
-              false // fat loss good
-            )}
-         </View>
-
-         {/* Row 2 */}
-         <View style={styles.row}>
-            {renderCard(
-              "Discipline", 
-              currentDiscipline, 
-              "sess.", 
-              disciplineData, 
-              "#F59E0B", 
-              <Flame size={16} color="#F59E0B" />, 
-              "discipline",
-              true
-            )}
-            {renderCard(
-              "Vitalité", 
-              currentVitality, 
-              "/100", 
-              vitalityData, 
-              "#10B981", 
-              <Heart size={16} color="#10B981" />, 
-              "sante", // mapped to 'sante' (VitalitePage)
-              true
-            )}
-         </View>
+      <View style={styles.header}>
+        <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>Résumé</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Vision globale de ton évolution physique et performance</Text>
       </View>
-      
-      {/* Disclaimer or extra info */}
-      <Text style={[styles.hint, { color: colors.textMuted }]}>
-        Cliquez sur une carte pour voir les détails complets.
-      </Text>
+
+      {themes.map(theme => {
+        const themeMetrics = allMetrics.filter(m => m.theme === theme);
+        if (themeMetrics.length === 0) return null;
+
+        return (
+          <View key={theme} style={styles.themeSection}>
+            <Text style={[styles.themeTitle, { color: colors.textSecondary }]}>{theme}</Text>
+            <View style={styles.grid}>
+              {themeMetrics.map(renderMiniCard)}
+            </View>
+          </View>
+        );
+      })}
+
+      <View style={{ height: 120 }} />
+
+      {selectedMetric && (
+        <StatsDetailModal
+          visible={!!selectedMetric}
+          onClose={() => setSelectedMetric(null)}
+          title={selectedMetric.title}
+          subtitle={`Vision complète - ${selectedMetric.theme}`}
+          data={selectedMetric.data.map((d: any) => ({
+            value: d.value,
+            label: d.label,
+            date: d.date || undefined
+          }))}
+          color={selectedMetric.color}
+          unit={selectedMetric.unit}
+          icon={selectedMetric.icon}
+          metricKey={selectedMetric.metricKey}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -242,56 +297,88 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: CARD_PADDING,
-    paddingTop: 80, // Space for header
-    paddingBottom: 100,
+    padding: 16,
+    paddingTop: 0,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
     marginBottom: 20,
-    letterSpacing: -0.5,
+    marginTop: -10,
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  themeSection: {
+    marginBottom: 24,
+  },
+  themeTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+    marginLeft: 4,
+    opacity: 0.8,
   },
   grid: {
-    gap: CARD_GAP,
-  },
-  row: {
     flexDirection: 'row',
-    gap: CARD_GAP,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  card: {
-    width: CARD_WIDTH,
-    borderRadius: 20,
-    padding: 16,
+  miniCard: {
+    width: COLUMN_WIDTH,
+    borderRadius: 24,
+    padding: 14,
+    minHeight: 215,
+    justifyContent: 'space-between',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    height: 160,
-    justifyContent: 'space-between'
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: 'center',
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  themeLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   cardTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 2,
   },
-  valueContainer: {
+  valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
+    gap: 4,
     marginBottom: 4,
   },
   cardValue: {
@@ -299,26 +386,27 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  trendContainer: {
-    paddingBottom: 2,
+  cardUnit: {
+    fontSize: 11,
+    fontWeight: '700',
   },
-  chartContainer: {
-    height: 50,
-    overflow: 'hidden', // Clip chart
-    marginTop: 'auto',
-    marginHorizontal: -8, // slight bleed
+  miniChartWrapper: {
+    height: 120,
+    marginTop: 5,
+    marginLeft: -25,
+    marginBottom: -10,
   },
-  noDataChart: {
-    flex: 1,
-    alignItems: 'center',
+  noData: {
+    height: 80,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.02)',
-    borderRadius: 8,
+    alignItems: 'center',
+    gap: 6,
+    opacity: 0.5,
   },
-  hint: {
-    marginTop: 24,
-    textAlign: 'center',
-    fontSize: 12,
-    fontStyle: 'italic',
+  expandHint: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    opacity: 0.3,
   }
 });

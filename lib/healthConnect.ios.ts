@@ -19,7 +19,17 @@ const DEMO_MODE = false;
 
 // Apple HealthKit (iOS) - Safe wrapper with Expo Go fallback
 import HealthKit, { isHealthKitAvailable, isRunningInExpoGo } from './healthKit.wrapper';
-import { WorkoutActivityType } from '@kingstinct/react-native-healthkit';
+
+// CRITIQUE: Ne pas importer directement depuis kingstinct au top-level pour éviter NitroModules error dans Expo Go
+let WorkoutActivityType: any = {};
+if (!isRunningInExpoGo && isHealthKitAvailable) {
+  try {
+    const HK = require('@kingstinct/react-native-healthkit');
+    WorkoutActivityType = HK.WorkoutActivityType;
+  } catch (e) {
+    logger.warn('Failed to load WorkoutActivityType dynamically');
+  }
+}
 
 // ============================================
 // TYPES
@@ -1475,7 +1485,7 @@ class HealthConnectService {
 
     try {
       // Mapper les types d'activités Yoroi vers HealthKit Enum (WorkoutActivityType)
-      const activityTypeMap: { [key: string]: WorkoutActivityType } = {
+      const activityTypeMap: { [key: string]: any } = {
         'Running': WorkoutActivityType.running,
         'Course': WorkoutActivityType.running,
         'Trail': WorkoutActivityType.running,

@@ -20,68 +20,70 @@ struct WeightView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
-            // Titre
-            HStack(spacing: 6) {
-                Image(systemName: "scalemass.fill")
-                    .foregroundColor(.orange)
-                Text("POIDS")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.orange)
-            }
-            .padding(.top, 8)
+        ScrollView {
+            VStack(spacing: 8) {
+                // Titre
+                HStack(spacing: 6) {
+                    Image(systemName: "scalemass.fill")
+                        .foregroundColor(.orange)
+                    Text("POIDS")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.orange)
+                }
+                .padding(.top, 8)
 
-            // Valeur actuelle
-            HStack(alignment: .bottom) {
-                Text(String(format: "%.1f", healthManager.currentWeight))
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundColor(.white)
+                // Valeur actuelle
+                HStack(alignment: .bottom) {
+                    Text(String(format: "%.1f", healthManager.currentWeight))
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundColor(.white)
 
-                Text("kg")
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
-                    .padding(.bottom, 6)
+                    Text("kg")
+                        .font(.system(size: 18))
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 6)
 
-                Spacer()
+                    Spacer()
 
-                // Changement et objectif
-                VStack(alignment: .trailing, spacing: 2) {
-                    HStack(spacing: 2) {
-                        Image(systemName: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.system(size: 12))
-                        Text(String(format: "%+.1f", weightChange))
+                    // Changement et objectif
+                    VStack(alignment: .trailing, spacing: 2) {
+                        HStack(spacing: 2) {
+                            Image(systemName: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.system(size: 12))
+                            Text(String(format: "%+.1f", weightChange))
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(weightChange <= 0 ? .green : .red)
+
+                        Text("obj: \(String(format: "%.1f", healthManager.targetWeight))")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal, 8)
+
+                // Graphique
+                WeightChartView(data: healthManager.weightHistory)
+                    .frame(height: 60)
+                    .padding(.horizontal, 4)
+
+                // Bouton ajouter
+                Button(action: { showAddWeight = true }) {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Ajouter")
                             .font(.system(size: 14, weight: .semibold))
                     }
-                    .foregroundColor(weightChange <= 0 ? .green : .red)
-
-                    Text("obj: \(String(format: "%.1f", healthManager.targetWeight))")
-                        .font(.system(size: 10))
-                        .foregroundColor(.gray)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.orange)
+                    .cornerRadius(12)
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 8)
-
-            // Graphique
-            WeightChartView(data: healthManager.weightHistory)
-                .frame(height: 60)
-                .padding(.horizontal, 4)
-
-            // Bouton ajouter
-            Button(action: { showAddWeight = true }) {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("Ajouter")
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.orange)
-                .cornerRadius(12)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 8)
-            .padding(.bottom, 8)
         }
         .background(Color.black)
         .sheet(isPresented: $showAddWeight) {
@@ -171,50 +173,74 @@ struct WeightChartView: View {
 struct AddWeightView: View {
     @Binding var weight: Double
     let onSave: () -> Void
-
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
-        VStack(spacing: 16) {
-            Text("Nouveau poids")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.gray)
-
-            HStack {
-                Button(action: { weight -= 0.1 }) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.orange)
+        VStack(spacing: 10) {
+            Text("NOUVEAU POIDS")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.orange)
+            
+            Spacer()
+            
+            // Sélecteur central (Focus pour Digital Crown)
+            VStack(spacing: 0) {
+                Text(String(format: "%.1f", weight))
+                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .focusable(true)
+                    .digitalCrownRotation($weight, from: 30.0, through: 250.0, by: 0.1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
+                
+                Text("KILOGRAMMES")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            // Boutons de contrôle rapide
+            HStack(spacing: 20) {
+                Button(action: { 
+                    weight -= 1.0
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-
-                Text(String(format: "%.1f", weight))
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 80)
-
-                Button(action: { weight += 0.1 }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(.orange)
+                
+                Button(action: { 
+                    weight += 1.0
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
             }
-
-            Text("kg")
-                .font(.system(size: 14))
-                .foregroundColor(.gray)
-
-            Button(action: onSave) {
-                Text("Enregistrer")
-                    .font(.system(size: 14, weight: .semibold))
+            
+            Button(action: {
+                WKInterfaceDevice.current().play(.success)
+                onSave()
+                dismiss()
+            }) {
+                Text("CONFIRMER")
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Color.orange)
-                    .cornerRadius(10)
+                    .cornerRadius(12)
             }
             .buttonStyle(.plain)
-            .padding(.horizontal)
         }
+        .padding(.horizontal)
         .background(Color.black)
     }
 }

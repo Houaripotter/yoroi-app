@@ -295,7 +295,7 @@ export default function FighterCardScreen() {
                 style={styles.bannerGradient}
               >
                 <Swords size={16} color="#1a1a2e" />
-                <Text style={styles.bannerText}>TEAM YOROI</Text>
+                <Text style={styles.bannerText}>TEAM Yoroi</Text>
                 <Swords size={16} color="#1a1a2e" />
               </LinearGradient>
             </View>
@@ -438,7 +438,7 @@ export default function FighterCardScreen() {
                 <Text style={styles.footerText}>Membre depuis {stats.joinDate}</Text>
               </View>
               <View style={styles.footerDot} />
-              <Text style={styles.footerBrand}>YOROI</Text>
+              <Text style={styles.footerBrand}>Yoroi</Text>
             </View>
           </LinearGradient>
         </View>

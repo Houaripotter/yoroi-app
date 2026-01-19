@@ -116,7 +116,6 @@ export function CaloriesHistoryChart({ data, colors, onPress }: CaloriesHistoryC
           noOfSections={4}
           maxValue={Math.ceil(maxValue / 500) * 500}
           height={180}
-          scrollable
         />
       </View>
 

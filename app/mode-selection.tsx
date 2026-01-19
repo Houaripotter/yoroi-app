@@ -101,7 +101,7 @@ export default function ModeSelectionScreen() {
               style={styles.logoImage}
               resizeMode="contain"
             />
-            <Text style={[styles.logo, { color: colors.textPrimary }]}>YOROI</Text>
+            <Text style={[styles.logo, { color: colors.textPrimary }]}>Yoroi</Text>
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             {t('screens.modeSelection.title')}
