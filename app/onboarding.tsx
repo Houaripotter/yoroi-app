@@ -918,9 +918,9 @@ const styles = StyleSheet.create({
   slide: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 100,
+    justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingTop: 40,
   },
   iconContainer: {
     width: 130,
@@ -929,6 +929,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
