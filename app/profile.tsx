@@ -486,33 +486,23 @@ export default function ProfileScreen() {
       t('profile.profilePhoto'),
       t('profile.howToAddPhoto'),
       [
-        { text: t('profile.chooseFromGallery'), style: 'primary', onPress: () => showCropOptionForGallery() },
-        { text: t('profile.takePhoto'), style: 'default', onPress: () => showCropOptionForCamera() },
-        { text: t('common.cancel'), style: 'cancel' },
-      ]
-    );
-  };
-
-  const showCropOptionForGallery = () => {
-    showPopup(
-      t('profile.photoFormat'),
-      t('profile.chooseCropOption'),
-      [
-        { text: t('profile.fullPhoto'), style: 'primary', onPress: () => pickProfilePhoto(false) },
-        { text: t('profile.circleCrop'), style: 'default', onPress: () => pickProfilePhoto(true) },
-        { text: t('common.cancel'), style: 'cancel' },
-      ]
-    );
-  };
-
-  const showCropOptionForCamera = () => {
-    showPopup(
-      t('profile.photoFormat'),
-      t('profile.chooseCropOption'),
-      [
-        { text: t('profile.fullPhoto'), style: 'primary', onPress: () => takeProfilePhoto(false) },
-        { text: t('profile.circleCrop'), style: 'default', onPress: () => takeProfilePhoto(true) },
-        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: '📸 ' + (t('profile.takePhoto') || 'Prendre une photo'),
+          style: 'primary',
+          onPress: () => {
+            // Fermer le popup actuel et ouvrir la caméra
+            setTimeout(() => takeProfilePhoto(true), 100);
+          }
+        },
+        {
+          text: '🖼️ ' + (t('profile.chooseFromGallery') || 'Choisir depuis la galerie'),
+          style: 'default',
+          onPress: () => {
+            // Fermer le popup actuel et ouvrir la galerie
+            setTimeout(() => pickProfilePhoto(true), 100);
+          }
+        },
+        { text: t('common.cancel') || 'Annuler', style: 'cancel' },
       ]
     );
   };
