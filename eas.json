@@ -20,7 +20,9 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "credentialsSource": "remote"
+        "credentialsSource": "remote",
+        "scheme": "Yoroi",
+        "buildConfiguration": "Release"
       }
     }
   },
