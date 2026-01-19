@@ -22,24 +22,26 @@
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
-const LINKING_ERROR =
-  `Le module natif 'WatchConnectivityBridge' n'a pas pu être chargé.\n\n` +
-  `- Assurez-vous que l'app native est bien buildée (npx expo run:ios)\n` +
-  `- Vérifiez que WatchConnectivityBridge.swift et .m sont inclus dans Xcode\n` +
-  `- Faites un 'pod install' dans le dossier ios/`;
+// Vérifier si le module natif est disponible
+const isModuleAvailable = !!NativeModules.WatchConnectivityBridge;
 
-const WatchConnectivityModule = NativeModules.WatchConnectivityBridge
+const WatchConnectivityModule = isModuleAvailable
   ? NativeModules.WatchConnectivityBridge
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+  : {
+      // Module stub qui retourne des valeurs par défaut au lieu de crasher
+      isWatchAvailable: () => Promise.resolve(false),
+      isWatchReachable: () => Promise.resolve(false),
+      sendMessageToWatch: () => Promise.reject(new Error('Module not available')),
+      updateApplicationContext: () => Promise.reject(new Error('Module not available')),
+      transferUserInfo: () => Promise.reject(new Error('Module not available')),
+    };
 
-const watchEventEmitter = new NativeEventEmitter(WatchConnectivityModule);
+const watchEventEmitter = isModuleAvailable
+  ? new NativeEventEmitter(WatchConnectivityModule)
+  : {
+      addListener: () => ({ remove: () => {} }),
+      removeAllListeners: () => {},
+    } as any;
 
 // MARK: - Types
 
@@ -196,7 +198,7 @@ export const WatchConnectivity = {
    */
   onMessageReceived: (callback: (message: WatchMessage) => void) => {
     if (Platform.OS !== 'ios') return { remove: () => {} };
-    return watchEventEmitter.addListener('onWatchMessageReceived', (event) => {
+    return watchEventEmitter.addListener('onWatchMessageReceived', (event: any) => {
       // Si le message requiert une réponse, on peut le gérer ici
       callback(event.message || event);
     });
