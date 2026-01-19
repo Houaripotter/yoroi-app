@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { TrendingUp, TrendingDown, Minus, ExternalLink, ChevronRight } from 'lucide-react-native';
 
 export interface MetricZone {
@@ -40,6 +41,7 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
   onPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // Trouver la zone actuelle
   const currentZone = zones.find(zone => value >= zone.start && value <= zone.end);
@@ -141,7 +143,7 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
                   fontWeight: isActive ? '700' : '500',
                 }
               ]}>
-                {zone.label}
+                {t(`healthRanges.zones.${zone.label}`) || zone.label}
               </Text>
             </View>
           );

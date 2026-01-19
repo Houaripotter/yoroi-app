@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH - 32,
     maxWidth: 500,
-    minHeight: 560,
+    minHeight: 640,
     maxHeight: '90%',
     borderRadius: 24,
     borderWidth: 1,

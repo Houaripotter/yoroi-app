@@ -11,6 +11,7 @@ import {
   Animated,
   Image,
   Pressable,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -412,7 +413,16 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       logger.error('[Profile] Erreur prise de photo:', error);
-      showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
+      // Si erreur camera (simulateur), proposer galerie
+      if (error && error.toString().includes('Camera not available')) {
+        showPopup(
+          'Caméra non disponible',
+          'Utilise la galerie pour choisir une photo.',
+          [{ text: 'Galerie', style: 'primary', onPress: () => pickProfilePhoto(withEditing) }]
+        );
+      } else {
+        showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
+      }
     }
   };
 

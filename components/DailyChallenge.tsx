@@ -134,8 +134,8 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({
     if (onPress) {
       onPress();
     } else {
-      // Naviguer vers les quêtes
-      router.push('/profile');
+      // Naviguer vers les défis
+      router.push('/challenges');
     }
   };
 

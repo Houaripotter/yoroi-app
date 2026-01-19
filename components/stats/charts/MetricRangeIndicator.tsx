@@ -6,6 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Info, ExternalLink } from 'lucide-react-native';
 
@@ -37,6 +38,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
   onInfoPress,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
 
   // Calculer la position du curseur (0 à 1)
   const normalizedPosition = Math.max(0, Math.min(1, (value - range.min) / (range.max - range.min)));
@@ -122,7 +124,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
                 currentZone?.label === zone.label && styles.legendLabelActive,
               ]}
             >
-              {zone.label}
+              {t(`healthRanges.zones.${zone.label}`) || zone.label}
             </Text>
           ))}
         </View>
