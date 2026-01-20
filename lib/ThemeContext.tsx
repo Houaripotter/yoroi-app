@@ -64,7 +64,7 @@ interface ThemeContextType {
 }
 
 // Valeurs par défaut
-const defaultTheme = getTheme(defaultThemeColor, 'dark');
+const defaultTheme = getTheme(defaultThemeColor, 'dark') || themes.volt_dark;
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: defaultTheme,
@@ -91,7 +91,38 @@ const ThemeContext = createContext<ThemeContextType>({
   isLoaded: false,
 });
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    // Fallback de sécurité si le contexte est undefined (ne devrait pas arriver)
+    console.error('CRITICAL: useTheme() called but context is undefined. Using default fallback.');
+    return {
+      theme: defaultTheme,
+      colors: defaultTheme.colors,
+      themeColor: defaultThemeColor,
+      themeMode: defaultThemeMode,
+      actualMode: 'dark' as const,
+      mode: 'dark' as const,
+      isDark: true,
+      setThemeColor: async () => {},
+      setThemeMode: async () => {},
+      themeColors,
+      screenBackground: defaultTheme.colors.background,
+      containerBackground: defaultTheme.colors.backgroundCard,
+      glowShadow: {
+        shadowColor: defaultTheme.colors.accent,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 20,
+        elevation: 10,
+      },
+      gradients: GRADIENTS,
+      themeName: `${defaultThemeColor}_dark`,
+      isLoaded: true,
+    };
+  }
+  return context;
+};
 
 // Re-export types for convenience
 export type { ThemeColors, Theme, ThemeColor, ThemeMode } from '@/constants/themes';

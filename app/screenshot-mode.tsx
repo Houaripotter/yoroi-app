@@ -9,7 +9,7 @@ import { Stack } from 'expo-router';
 // ============================================
 
 const MOCK_DATA = {
-  userName: 'Thomas Silva',
+  userName: 'Germain Del Jarret',
   // Using a placeholder or null for photo to show default icon if URL not valid
   profilePhoto: null, 
   dailyQuote: "La douleur est temporaire, l'abandon est définitif.",

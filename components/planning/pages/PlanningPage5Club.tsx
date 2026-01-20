@@ -26,7 +26,7 @@ export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
     {
       id: '1',
       rank: 1,
-      name: 'Thomas Silva',
+      name: 'Germain Del Jarret',
       points: 2845,
       isCurrentUser: true,
     },

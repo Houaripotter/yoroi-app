@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   Switch,
+  Alert,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
@@ -483,7 +484,7 @@ const getSecurityItems = (t: TranslateFunction): MenuItem[] => [
 // ============================================
 // SECTION SUPPORT
 // ============================================
-const getSupportItems = (t: TranslateFunction, onScreenshotMode: () => void): MenuItem[] => [
+const getSupportItems = (t: TranslateFunction): MenuItem[] => [
   {
     id: 'help-tutorials',
     label: t('menu.helpAndTutorials'),
@@ -492,15 +493,6 @@ const getSupportItems = (t: TranslateFunction, onScreenshotMode: () => void): Me
     route: '/help-tutorials',
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
-  },
-  {
-    id: 'screenshot-mode',
-    label: 'Support Technique',
-    sublabel: 'Outils de diagnostic et démo',
-    Icon: Settings,
-    onPress: onScreenshotMode,
-    iconColor: '#D4AF37',
-    iconBg: '#D4AF3720',
   },
   {
     id: 'app-store',
@@ -599,10 +591,53 @@ export default function MoreScreen() {
   const HEALTH_ITEMS = getHealthItems(t);
   const BACKUP_ITEMS = getBackupItems(t);
   const SECURITY_ITEMS = getSecurityItems(t);
-  const SUPPORT_ITEMS = getSupportItems(t, handleScreenshotMode);
+  const SUPPORT_ITEMS = getSupportItems(t);
 
   // Recherche
   const [searchQuery, setSearchQuery] = useState('');
+
+  // ... (autres etats) ...
+
+  // Version Tap Logic
+  const handleVersionTap = () => {
+    const now = Date.now();
+    if (now - lastTapTime < 500) {
+      const newCount = versionTapCount + 1;
+      setVersionTapCount(newCount);
+      
+      if (newCount === 5) {
+        Haptics.notificationAsync(Haptics.ImpactFeedbackStyle.Success);
+        setVersionTapCount(0);
+        
+        // Demander le code secret
+        Alert.prompt(
+          'Accès Créateur',
+          'Entrez le code secret pour activer les outils de démonstration :',
+          [
+            { text: 'Annuler', style: 'cancel' },
+            {
+              text: 'Valider',
+              onPress: async (code) => {
+                if (code === '2022') {
+                  setCreatorModeActive(true);
+                  await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+                  await generateScreenshotDemoData();
+                  
+                  showPopup('Mode Activé', 'Mode Germain Del Jarret activé avec succès ! Les données ont été mises à jour.', [{ text: 'Génial', style: 'primary' }]);
+                } else {
+                  Alert.alert('Erreur', 'Code incorrect.');
+                }
+              }
+            }
+          ],
+          'plain-text'
+        );
+      }
+    } else {
+      setVersionTapCount(1);
+    }
+    setLastTapTime(now);
+  };
 
   // Mode Competiteur state
   const [userModeSetting, setUserModeSetting] = useState<UserMode>('loisir');
@@ -684,37 +719,6 @@ export default function MoreScreen() {
   const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
   const [shareButtonVisible, setShareButtonVisible] = useState(true); // Bouton partage flottant
 
-  // Activer le mode Germain Del Jarret (Screenshot)
-  const handleScreenshotMode = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    // Demander le code secret
-    Alert.prompt(
-      'Accès Restreint',
-      'Entrez le code de maintenance pour accéder aux outils de démo :',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Valider',
-          onPress: async (code) => {
-            if (code === '2022') {
-              try {
-                await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
-                await generateScreenshotDemoData();
-                showPopup('Succès', 'Mode Germain Del Jarret activé ! Redémarrez l\'app pour voir les changements.', [{ text: 'Génial', style: 'primary' }]);
-              } catch (err) {
-                logger.error('Erreur activation mode screenshot:', err);
-              }
-            } else {
-              Alert.alert('Erreur', 'Code incorrect.');
-            }
-          }
-        }
-      ],
-      'plain-text'
-    );
-  };
-
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
     'f5903f51e341a783e69ffc2d9b335048716f5f040a782a2e1e1e14f8767e8c23',
@@ -722,77 +726,10 @@ export default function MoreScreen() {
     'b1ab1e892617f210425f658cf1d361b5489028c8771b56d845fe1c62c1fbc8b0',
   ];
 
-  // Vérifie si le code est valide via hash
-  const verifySecretCode = async (code: string): Promise<boolean> => {
-    try {
-      const inputHash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        code
-      );
-      return SECRET_HASHES.includes(inputHash);
-    } catch {
-      return false;
-    }
-  };
-
-  const handleVersionTap = () => {
-    const now = Date.now();
-    // Reset si plus de 2 secondes entre les taps
-    if (now - lastTapTime > 2000) {
-      setVersionTapCount(1);
-      setLastTapTime(now);
-    } else {
-      setVersionTapCount(prev => {
-        const newCount = prev + 1;
-        // Après 7 taps rapides, ouvrir directement le modal
-        if (newCount >= 7) {
-          setShowCreatorInput(true);
-          setVersionTapCount(0);
-          return 0;
-        }
-        return newCount;
-      });
-      setLastTapTime(now);
-    }
-  };
-
-  const handleVersionLongPress = () => {
-    // Simplifié : long press ouvre aussi le modal directement
-    setShowCreatorInput(true);
-    setVersionTapCount(0);
-  };
-
-  const handleCreatorCodeSubmit = async () => {
-    // Vérifier le code via hash (jamais de comparaison en clair)
-    const isValidCode = await verifySecretCode(creatorCode);
-    if (isValidCode) {
-      setCreatorModeActive(true);
-      setShowCreatorInput(false);
-      setCreatorCode('');
-      setSecretGestureDone(0);
-      await AsyncStorage.setItem('@yoroi_creator_mode', 'true');
-      showPopup(t('menu.creatorMode'), t('menu.creatorModeActivated'), [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
-      router.push('/screenshot-mode');
-    } else {
-      showPopup(t('menu.incorrectCode'), t('menu.tryAgain'), [{ text: 'OK', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
-      setCreatorCode('');
-    }
-  };
-
-  const handleSecretGesture = () => {
-    setSecretGestureDone(prev => prev + 1);
-  };
-
-  const handleCloseCreatorModal = () => {
-    setShowCreatorInput(false);
-    setCreatorCode('');
-    setSecretGestureDone(0);
-  };
-
   // Charger l'état du mode créateur
   useEffect(() => {
     const loadCreatorMode = async () => {
-      const mode = await AsyncStorage.getItem('@yoroi_creator_mode');
+      const mode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
       setCreatorModeActive(mode === 'true');
     };
     loadCreatorMode();
@@ -1667,15 +1604,12 @@ export default function MoreScreen() {
             <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
           </View>
 
-          {/* Version - Secret tap zone */}
           <TouchableOpacity
             onPress={handleVersionTap}
-            onLongPress={handleVersionLongPress}
-            delayLongPress={800}
             activeOpacity={1}
           >
             <Text style={{
-              color: longPressActive ? colors.accent : colors.textMuted,
+              color: colors.textMuted,
               fontSize: 12,
               marginTop: 12,
               textAlign: 'center'
@@ -1684,36 +1618,25 @@ export default function MoreScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Mode Créateur activé - BOUTON VISIBLE */}
+          {/* Mode Créateur activé - BOUTON VISIBLE UNIQUEMENT QUAND ACTIF */}
           {creatorModeActive && (
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push('/screenshot-mode');
-              }}
-              style={{
-                marginTop: 16,
-                backgroundColor: '#8B5CF6',
-                paddingVertical: 14,
-                paddingHorizontal: 24,
-                borderRadius: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                shadowColor: '#8B5CF6',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 6,
-              }}
-              activeOpacity={0.8}
-            >
-              <Camera size={20} color="#FFFFFF" />
-              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
-                Mode Screenshot
-              </Text>
-            </TouchableOpacity>
+            <View style={{ marginTop: 16, gap: 10 }}>
+              <TouchableOpacity
+                onPress={async () => {
+                  await AsyncStorage.removeItem('@yoroi_screenshot_mode');
+                  setCreatorModeActive(false);
+                  showPopup('Mode Désactivé', 'Les données de démo ont été retirées.', [{ text: 'OK', style: 'primary' }]);
+                }}
+                style={{
+                  backgroundColor: '#EF4444',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Désactiver Mode Germain</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
