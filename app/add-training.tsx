@@ -10,7 +10,12 @@ import {
   Image,
   Animated,
   ActivityIndicator,
+  Modal,
+  Share,
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -30,6 +35,9 @@ import {
   Zap,
   Sun,
   Building2,
+  Cloud,
+  Heart,
+  Share2,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -463,6 +471,9 @@ export default function AddTrainingScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const shareViewRef = useRef<View>(null);
+  const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
 
   // Calculer heure de fin
@@ -641,6 +652,12 @@ export default function AddTrainingScreen() {
     });
   };
 
+  const handleFinish = async () => {
+    // Vérifier si on doit demander la notation (ou forcer pour cette feature)
+    // On affiche le modal Houari
+    setShowHouariRateModal(true);
+  };
+
   const handleShareModalShare = async () => {
     setShowShareModal(false);
     // Marquer qu'on doit demander la review au retour
@@ -655,15 +672,7 @@ export default function AddTrainingScreen() {
 
   const handleShareModalSkip = async () => {
     setShowShareModal(false);
-    // Directement afficher la review modal après fermeture
-    setTimeout(async () => {
-      const shouldShowReview = await shouldAskForReview();
-      if (shouldShowReview) {
-        showReviewModal();
-      } else {
-        router.back();
-      }
-    }, 500);
+    handleFinish();
   };
 
   // Quick Fill pour pré-remplir le formulaire avec la dernière séance
@@ -794,11 +803,12 @@ export default function AddTrainingScreen() {
           // Rediriger vers le menu Plus (export disponible)
           router.push('/(tabs)/more');
         });
-        router.back();
-      } else {
-        // Afficher directement le modal de partage qui confirme aussi l'enregistrement
-        setShowShareModal(true);
-      }
+        // router.back(); // On ne quitte plus, on laisse le flow continuer
+      } 
+      
+      // AFFICHER LE MODAL DE VALIDATION (Step 1)
+      setShowValidationModal(true);
+
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
       errorHaptic();
@@ -1676,6 +1686,238 @@ export default function AddTrainingScreen() {
         onShare={handleShareModalShare}
         sportName={selectedSports.map(s => getSportName(s)).join(' + ')}
       />
+
+      {/* MODAL 1: VALIDATION & PARTAGE RICH CARD */}
+      <Modal
+        visible={showValidationModal}
+        transparent
+        animationType="fade"
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          
+          {/* CARTE À PARTAGER (Capturée) */}
+          <View 
+            ref={shareViewRef}
+            collapsable={false}
+            style={{ 
+              backgroundColor: colors.card, 
+              borderRadius: 24, 
+              width: '100%', 
+              maxWidth: 340, 
+              overflow: 'hidden',
+              marginBottom: 20,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.3,
+              shadowRadius: 20,
+              elevation: 10,
+              borderWidth: 1,
+              borderColor: colors.border
+            }}
+          >
+            <LinearGradient
+              colors={isDark ? [colors.backgroundCard, '#1a1a2e'] : [colors.backgroundCard, '#f8f9fa']}
+              style={{ padding: 24, alignItems: 'center' }}
+            >
+              {/* Header */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Check size={18} color={colors.success} strokeWidth={3} />
+                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.success, letterSpacing: 1 }}>SÉANCE VALIDÉE</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: colors.textSecondary, fontWeight: '600', marginBottom: 24 }}>
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
+              </Text>
+
+              {/* Sport Icon */}
+              <View style={{ 
+                width: 80, 
+                height: 80, 
+                borderRadius: 40, 
+                backgroundColor: colors.background,
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                marginBottom: 16,
+                borderWidth: 3,
+                borderColor: colors.accent,
+                shadowColor: colors.accent,
+                shadowOpacity: 0.3,
+                shadowRadius: 10
+              }}>
+                <MaterialCommunityIcons 
+                  name={getSportIcon(selectedSports[0]) as any} 
+                  size={40} 
+                  color={colors.accent} 
+                />
+              </View>
+
+              {/* Sport Name */}
+              <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', marginBottom: 24 }}>
+                {selectedSports.map(s => getSportName(s)).join(' + ')}
+              </Text>
+
+              {/* Stats Grid */}
+              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, width: '100%', paddingTop: 20, borderTopWidth: 1, borderTopColor: colors.border }}>
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
+                    {duration}
+                  </Text>
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>MINUTES</Text>
+                </View>
+                
+                {(distance && parseFloat(distance) > 0) && (
+                  <>
+                    <View style={{ width: 1, height: '80%', backgroundColor: colors.border }} />
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
+                        {distance}
+                      </Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>KM</Text>
+                    </View>
+                  </>
+                )}
+
+                {(calories && parseInt(calories) > 0) && (
+                  <>
+                    <View style={{ width: 1, height: '80%', backgroundColor: colors.border }} />
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
+                        {calories}
+                      </Text>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>KCAL</Text>
+                    </View>
+                  </>
+                )}
+              </View>
+              
+              {/* Footer Brand */}
+              <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 }}>
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
+                <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textSecondary, letterSpacing: 2 }}>TEAM YOROI</Text>
+                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* ACTIONS */}
+          <View style={{ width: '100%', maxWidth: 340, gap: 12 }}>
+            <TouchableOpacity 
+              style={{ 
+                backgroundColor: colors.accent, 
+                paddingVertical: 16, 
+                borderRadius: 16, 
+                alignItems: 'center', 
+                flexDirection: 'row', 
+                justifyContent: 'center', 
+                gap: 10,
+                shadowColor: colors.accent,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 4
+              }}
+              onPress={async () => {
+                try {
+                  const uri = await captureRef(shareViewRef, {
+                    format: 'png',
+                    quality: 1,
+                  });
+                  if (await Sharing.isAvailableAsync()) {
+                    await Sharing.shareAsync(uri);
+                    // On peut fermer après, mais l'utilisateur veut peut-être voir
+                    // handleFinish();
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+            >
+              <Share2 size={20} color={colors.textOnAccent} strokeWidth={2.5} />
+              <Text style={{ color: colors.textOnAccent, fontWeight: '800', fontSize: 16 }}>PARTAGER</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ 
+                backgroundColor: colors.backgroundElevated, 
+                paddingVertical: 16, 
+                borderRadius: 16, 
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colors.border
+              }}
+              onPress={() => {
+                handleFinish();
+              }}
+            >
+              <Text style={{ color: colors.textPrimary, fontWeight: '700', fontSize: 16 }}>Terminer</Text>
+            </TouchableOpacity>
+          </View>
+
+        </View>
+      </Modal>
+
+      {/* MODAL 2: NOTATION HOUARI */}
+      <Modal
+        visible={showHouariRateModal}
+        transparent
+        animationType="slide"
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
+            
+            {/* Logo Yoroi (simulé par un cercle si pas d'image, ou l'icone de l'app si dispo) */}
+            <View style={{ marginBottom: 20, shadowColor: colors.accent, shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 10 } }}>
+              <Image 
+                source={require('@/assets/images/icon.png')} 
+                style={{ width: 100, height: 100, borderRadius: 24 }}
+                resizeMode="cover"
+              />
+            </View>
+
+            <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' }}>
+              La famille Yoroi ❤️
+            </Text>
+
+            <Text style={{ fontSize: 16, color: colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
+              "J'espère que tu kiffes l'expérience ! On est ensemble, c'est la même famille. Force à toi !"
+            </Text>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 32 }}>
+              <View style={{ height: 1, backgroundColor: colors.border, flex: 1 }} />
+              <Text style={{ marginHorizontal: 16, fontFamily: 'serif', fontStyle: 'italic', fontWeight: '700', color: colors.accent, fontSize: 18 }}>
+                Houari
+              </Text>
+              <View style={{ height: 1, backgroundColor: colors.border, flex: 1 }} />
+            </View>
+
+            <TouchableOpacity 
+              style={{ backgroundColor: colors.gold, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center', marginBottom: 16, shadowColor: colors.gold, shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
+              onPress={async () => {
+                const storeUrl = Platform.OS === 'ios' 
+                  ? 'https://apps.apple.com/app/id6757306612?action=write-review' 
+                  : 'market://details?id=com.houari.yoroi';
+                await WebBrowser.openBrowserAsync(storeUrl);
+                setShowHouariRateModal(false);
+                router.back();
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Star fill={colors.textOnGold} color={colors.textOnGold} size={20} />
+                <Text style={{ color: colors.textOnGold, fontWeight: '800', fontSize: 18 }}>Donner de la force</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ paddingVertical: 12 }}
+              onPress={() => {
+                setShowHouariRateModal(false);
+                router.back();
+              }}
+            >
+              <Text style={{ color: colors.textMuted, fontWeight: '600' }}>Plus tard</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <PopupComponent />
       <ReviewModalComponent />
