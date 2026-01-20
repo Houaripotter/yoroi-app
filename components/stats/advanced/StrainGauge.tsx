@@ -1,5 +1,5 @@
 // ============================================
-// STRAIN GAUGE - Style Whoop
+// STRAIN GAUGE - Style Yoroi
 // Jauge circulaire pour la charge d'entraînement (0-21)
 // ============================================
 
@@ -21,7 +21,7 @@ interface StrainGaugeProps {
   size?: number;
 }
 
-// Zones de strain Whoop
+// Zones de strain Yoroi
 const STRAIN_ZONES = [
   { min: 0, max: 9.9, label: 'Light', color: '#7BA1BB' },
   { min: 10, max: 13.9, label: 'Moderate', color: '#0093E7' },

@@ -14,12 +14,13 @@ import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
-import { StrainGauge } from '../whoop/StrainGauge';
+import { StrainGauge } from '../advanced/StrainGauge';
 import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
 import { Flame, Target, Calendar, Award, Timer } from 'lucide-react-native';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { StatsExplanation } from '../StatsExplanation';
 
 export const DisciplinePage: React.FC = () => {
   const { colors } = useTheme();
@@ -237,6 +238,12 @@ export const DisciplinePage: React.FC = () => {
         description={t('statsPages.discipline.description')}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
+      />
+
+      <StatsExplanation 
+        title="Discipline & Charge"
+        text="La Discipline mesure ta régularité (fréquence des séances). La Charge d'entraînement est calculée en multipliant la durée par l'intensité (RPE). Elle permet de suivre ton volume de travail global pour optimiser tes cycles de progression et éviter les blessures."
+        color="#8B5CF6"
       />
 
       {/* Graphique de tendance principal */}

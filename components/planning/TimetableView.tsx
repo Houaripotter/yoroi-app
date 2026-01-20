@@ -78,11 +78,11 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     if (manualRestSlots.includes(slotKey)) {
       // Retirer du repos
       setManualRestSlots(prev => prev.filter(s => s !== slotKey));
-      logger.info('🔆 Retirer repos pour', dayLabel, slotLabel);
+      logger.info(`🔆 Retirer repos pour ${dayLabel} ${slotLabel}`);
     } else {
       // Ajouter au repos
       setManualRestSlots(prev => [...prev, slotKey]);
-      logger.info('🌙 Marquer repos pour', dayLabel, slotLabel);
+      logger.info(`🌙 Marquer repos pour ${dayLabel} ${slotLabel}`);
       showPopup(
         'Repos',
         `${dayLabel} ${slotLabel.toLowerCase()} marqué en repos`,
@@ -277,9 +277,9 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                             }
                             return;
                           }
-                          logger.info('🖱️ Clic sur', day.label, slot.label, '- Séances:', sessions.length);
+                          logger.info(`🖱️ Clic sur ${day.label} ${slot.label} - Séances: ${sessions.length}`);
                           if (sessions.length > 0) {
-                            logger.info('Ouverture liste de', sessions.length, 'séances');
+                            logger.info(`Ouverture liste de ${sessions.length} séances`);
                             setShowAllSessions({
                               day: day.id,
                               dayLabel: day.label,

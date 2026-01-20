@@ -12,10 +12,10 @@ import {
 } from 'react-native';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import { Calendar, Dna } from 'lucide-react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { getAllMeasurements, Measurement, getAllWorkouts, getWorkoutsByMonth, getUserSettings, addWorkout, deleteWorkout, getUserClubs } from '@/lib/storage';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Workout, WorkoutType } from '@/types/workout';
@@ -701,9 +701,16 @@ export default function HistoryScreen() {
                   </View>
                 ) : (
                   <View style={styles.emptyChartContainer}>
-                    <Text style={[styles.emptyChartText, { color: themeColors.textSecondary }]}>
+                    <Text style={[styles.emptyChartText, { color: themeColors.textSecondary, marginBottom: 16 }]}>
                       Ajoutez au moins 2 mesures pour voir l'évolution
                     </Text>
+                    <TouchableOpacity
+                      style={[styles.emptyCTA, { backgroundColor: themeColors.gold }]}
+                      onPress={() => router.push('/add-measurement')}
+                    >
+                      <Plus size={18} color={themeColors.background} />
+                      <Text style={[styles.emptyCTAText, { color: themeColors.background }]}>Saisir une mesure</Text>
+                    </TouchableOpacity>
                   </View>
                 )}
               </View>
@@ -773,9 +780,16 @@ export default function HistoryScreen() {
                     />
                   ) : (
                     <View style={styles.emptyChartContainer}>
-                      <Text style={[styles.emptyChartText, { color: themeColors.textSecondary }]}>
+                      <Text style={[styles.emptyChartText, { color: themeColors.textSecondary, marginBottom: 16 }]}>
                         Ajoutez au moins 2 mesures pour voir l'évolution
                       </Text>
+                      <TouchableOpacity
+                        style={[styles.emptyCTA, { backgroundColor: themeColors.gold }]}
+                        onPress={() => router.push('/add-measurement')}
+                      >
+                        <Plus size={18} color={themeColors.background} />
+                        <Text style={[styles.emptyCTAText, { color: themeColors.background }]}>Saisir une mesure</Text>
+                      </TouchableOpacity>
                     </View>
                   )}
                 </View>
@@ -1036,6 +1050,18 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.lg,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  emptyCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.lg,
+  },
+  emptyCTAText: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '800',
   },
   mockDataNotice: {
     borderRadius: RADIUS.lg,

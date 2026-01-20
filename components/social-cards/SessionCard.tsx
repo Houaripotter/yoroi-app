@@ -1,14 +1,11 @@
 // ============================================
-// SESSION CARD COMPONENT - PREMIUM DESIGN
+// SESSION CARD COMPONENT - VERSION ULTRA PREMIUM V7
 // ============================================
-// Design style "Strava / UFC" avec bandes noires et lignes dorées
-// Photo entière (contain) et stats détaillées
-
 import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Trophy, Clock, Calendar, MapPin, Flame, Dumbbell, Zap, Timer } from 'lucide-react-native';
+import { Trophy, Clock, Calendar, MapPin, Flame, Dumbbell, Zap, Timer, Heart, Activity } from 'lucide-react-native';
 import { Training } from '@/lib/database';
 import { getClubLogoSource, getSportIcon, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
@@ -24,374 +21,235 @@ interface SessionCardProps {
   customLocation?: string;
   isLandscape?: boolean;
   width?: number;
-  yearlyCount?: number; 
-  yearlyObjective?: number;
-  monthlyCount?: number; // Nouveau
-  weeklyCount?: number; // Nouveau
+  // Toggles
+  showDate?: boolean;
   showYearlyCount?: boolean;
-  showMonthlyCount?: boolean; // Nouveau
-  showWeeklyCount?: boolean; // Nouveau
-  showExercises?: boolean; // Nouveau
+  showMonthlyCount?: boolean;
+  showWeeklyCount?: boolean;
+  showGoalProgress?: boolean;
+  showClub?: boolean;
+  showLieu?: boolean;
+  showExercises?: boolean;
+  showStats?: boolean;
+  // Valeurs
+  yearlyCount?: number;
+  monthlyCount?: number;
+  weeklyCount?: number;
+  yearlyObjective?: number;
 }
 
 export const SessionCard = React.forwardRef<View, SessionCardProps>(
   ({ 
-    training, backgroundImage, backgroundType = 'black', customLocation, isLandscape = false, width = DEFAULT_WIDTH, 
-    yearlyCount, yearlyObjective, monthlyCount, weeklyCount,
-    showYearlyCount = false, showMonthlyCount = false, showWeeklyCount = false, showExercises = true 
+    training, backgroundImage, backgroundType = 'black', customLocation, isLandscape = false, width = DEFAULT_WIDTH,
+    showDate = true, showYearlyCount = true, showMonthlyCount = true, showWeeklyCount = true, 
+    showGoalProgress = true, showClub = true, showLieu = true, showExercises = true, showStats = true,
+    yearlyCount = 0, monthlyCount = 0, weeklyCount = 0, yearlyObjective = 365
   }, ref) => {
     
     const CARD_HEIGHT = width * (16 / 9);
     const dateObj = training.date ? new Date(training.date) : new Date();
-    
-    // Stats Calculations
-    const calculatePace = () => {
-      if (!training.distance || !training.duration_minutes) return null;
-      const totalSeconds = training.duration_minutes * 60;
-      const secondsPerKm = totalSeconds / training.distance;
-      const minutes = Math.floor(secondsPerKm / 60);
-      const seconds = Math.round(secondsPerKm % 60);
-      return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    };
-
-    const pace = calculatePace();
-    const hasDistance = !!training.distance && training.distance > 0;
-    const hasRounds = !!training.rounds && training.rounds > 0;
     const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
     
     const formattedDate = dateObj.toLocaleDateString('fr-FR', {
-      weekday: 'short',
+      weekday: 'long',
       day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+      month: 'long'
     }).toUpperCase();
 
-    // Muscles & Exercices logic
-    const musclesList = training.muscles ? training.muscles.split(',').map(m => m.trim()) : [];
-    const exercisesList = training.exercises || [];
-    
-    // Header Info
     const sportId = training.sport?.split(',')[0].trim() || 'autre';
-    const sportNameStr = training.sport?.split(',').map(s => getSportName(s)).join(' + ') || 'ENTRAÎNEMENT';
+    const sportNameStr = training.sport?.split(',').map(s => getSportName(s)).join(' + ') || 'SÉANCE';
 
-    const renderDataOverlay = () => (
-      <View style={styles.overlayContainer}>
-        
-        {/* BANDEAU HAUT (NOIR) */}
+    // Calcul de la progression
+    const progressPercent = Math.min(100, (yearlyCount / yearlyObjective) * 100);
+
+    return (
+      <View ref={ref} style={[styles.card, { width, height: CARD_HEIGHT }]} collapsable={false}>
+        {/* FOND PHOTO (CONTAIN) */}
+        <View style={styles.imageBackgroundContainer}>
+          {backgroundImage ? (
+            <Image source={{ uri: backgroundImage }} style={styles.mainImage} resizeMode="contain" />
+          ) : (
+            <LinearGradient colors={['#0a0a0a', '#1a1a1a']} style={StyleSheet.absoluteFill} />
+          )}
+        </View>
+
+        {/* === BANDEAU HAUT (NOIR) === */}
         <View style={styles.topBar}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.dateText}>{formattedDate}</Text>
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.previewLabel}>APERÇU DE TA CARD</Text>
+          <View style={styles.headerRow}>
+            {/* GAUCHE: DATE & SPORT */}
+            <View style={styles.headerLeft}>
+              {showDate && <Text style={styles.dateText}>{formattedDate}</Text>}
+              <Text style={styles.sportTitleTop}>{sportNameStr.toUpperCase()}</Text>
+              
+              {/* CLUB LOGO SOUS LE SPORT SI EXISTE */}
+              {showClub && clubLogoSource && (
+                <View style={styles.clubLogoContainer}>
+                  <Image source={clubLogoSource} style={styles.clubLogoHeader} resizeMode="contain" />
+                </View>
+              )}
             </View>
-          </View>
-          
-          {/* Section des compteurs (Haut Droite) */}
-          <View style={styles.counterSectionTop}>
-            {showYearlyCount && yearlyCount !== undefined && (
-              <View style={styles.yearlyCounterBox}>
-                <Text style={styles.yearlyCounterValue}>{yearlyCount}</Text>
-                <Text style={styles.yearlyCounterLabel}>/AN</Text>
+
+            {/* DROITE: COMPTEURS GÉANTS & BARRE DE PROGRESSION */}
+            <View style={styles.headerRight}>
+              <View style={styles.megaCountersRow}>
+                {showMonthlyCount && (
+                  <View style={styles.megaCounter}>
+                    <Text style={[styles.megaCounterValue, { color: '#0ABAB5' }]}>{monthlyCount}</Text>
+                    <Text style={styles.megaCounterLabel}>MOIS</Text>
+                  </View>
+                )}
+                {showYearlyCount && (
+                  <View style={styles.megaCounter}>
+                    <Text style={[styles.megaCounterValue, { color: GOLD_COLOR }]}>{yearlyCount}</Text>
+                    <Text style={styles.megaCounterLabel}>ANNEE</Text>
+                  </View>
+                )}
               </View>
-            )}
-            
-            <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
-              {showMonthlyCount && monthlyCount !== undefined && (
-                <View style={[styles.yearlyCounterBox, { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'transparent' }]}>
-                  <Text style={[styles.yearlyCounterValue, { fontSize: 10 }]}>{monthlyCount}</Text>
-                  <Text style={[styles.yearlyCounterLabel, { fontSize: 7 }]}>/MOIS</Text>
-                </View>
-              )}
-              {showWeeklyCount && weeklyCount !== undefined && (
-                <View style={[styles.yearlyCounterBox, { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'transparent' }]}>
-                  <Text style={[styles.yearlyCounterValue, { fontSize: 10 }]}>{weeklyCount}</Text>
-                  <Text style={[styles.yearlyCounterLabel, { fontSize: 7 }]}>/SEMAINE</Text>
+
+              {/* BARRE DE PROGRESSION GÉANTE */}
+              {showGoalProgress && (
+                <View style={styles.megaProgressBarContainer}>
+                  <View style={styles.megaProgressBarBg}>
+                    <LinearGradient 
+                      colors={[GOLD_COLOR, '#F59E0B']} 
+                      start={{x:0, y:0}} end={{x:1, y:0}}
+                      style={[styles.megaProgressBarFill, { width: `${progressPercent}%` }]} 
+                    />
+                  </View>
+                  <Text style={styles.megaProgressText}>OBJECTIF: {yearlyCount}/{yearlyObjective}</Text>
                 </View>
               )}
             </View>
           </View>
         </View>
 
-        {/* LIGNE DORÉE PREMIUM HAUT (COURTE ET CENTRÉE) */}
+        {/* LIGNE DORÉE CENTRÉE */}
         <View style={styles.goldLineWrapper}>
-          <View style={styles.premiumGoldLineShort} />
+          <View style={styles.goldLineShort} />
         </View>
 
-        {/* ESPACE MILIEU (IMAGE) */}
+        {/* ESPACE MILIEU (POUR LA PHOTO) */}
         <View style={styles.imageSpace} />
 
-        {/* LIGNE DORÉE PREMIUM BAS (COURTE ET CENTRÉE) */}
+        {/* LIGNE DORÉE CENTRÉE */}
         <View style={styles.goldLineWrapper}>
-          <View style={styles.premiumGoldLineShort} />
+          <View style={styles.goldLineShort} />
         </View>
 
-        {/* BANDEAU BAS (NOIR) */}
+        {/* === BANDEAU BAS (NOIR) === */}
         <View style={styles.bottomBar}>
-          <View style={styles.statsContainer}>
-            {/* Colonne de gauche : Stats techniques & EXERCICES */}
-            <View style={styles.technicalColumn}>
-              
-              {/* Club & Lieu */}
-              <View style={[styles.techRow, { marginBottom: 4 }]}>
-                {clubLogoSource ? (
-                  <Image source={clubLogoSource} style={styles.clubLogoSmall} resizeMode="contain" />
-                ) : (
-                  <MaterialCommunityIcons name={getSportIcon(sportId) as any} size={16} color={GOLD_COLOR} />
-                )}
-                <Text style={[styles.techText, { color: GOLD_COLOR }]}>
-                  {training.club_name?.toUpperCase() || 'YOROI'} • {training.is_outdoor ? 'PLEIN AIR' : 'EN SALLE'}
-                </Text>
-              </View>
-
-              {/* Exercices effectués */}
-              {showExercises && exercisesList.length > 0 && (
-                <View style={styles.exercisesBox}>
-                  {exercisesList.slice(0, 3).map((ex, i) => (
-                    <Text key={i} style={styles.exerciseItemText} numberOfLines={1}>
-                      • {ex.name.toUpperCase()} {ex.sets ? `(${ex.sets.length}S)` : ''}
-                    </Text>
-                  ))}
+          <View style={styles.mainStatsRow}>
+            
+            {/* GAUCHE: EXERCICES (EN DORÉ) */}
+            <View style={styles.workedElementsColumn}>
+              {showExercises && (
+                <>
+                  <Text style={styles.exercisesTitle}>EXERCICES TRAVAILLÉS</Text>
+                  <View style={styles.exercisesList}>
+                    {training.exercises && training.exercises.length > 0 ? (
+                      training.exercises.slice(0, 6).map((ex, i) => (
+                        <Text key={i} style={styles.exerciseGoldText}>
+                          • {ex.name.toUpperCase()} {ex.sets ? `${ex.sets}x${ex.reps}` : ''}
+                        </Text>
+                      ))
+                    ) : (
+                      <Text style={styles.exerciseGoldText}>• {training.muscles?.toUpperCase().replace(/,/g, ' • ') || 'SÉANCE COMPLÈTE'}</Text>
+                    )}
+                  </View>
+                </>
+              )}
+              {showLieu && (
+                <View style={styles.lieuBadge}>
+                  <MapPin size={12} color={GOLD_COLOR} />
+                  <Text style={styles.lieuText}>{customLocation?.toUpperCase() || (training.is_outdoor ? 'PLEIN AIR' : 'EN SALLE')}</Text>
                 </View>
               )}
-
-              <View style={styles.techRow}>
-                <Timer size={12} color={GOLD_COLOR} />
-                <Text style={styles.techText}>{training.duration_minutes} MIN</Text>
-                {training.intensity && (
-                  <Text style={[styles.techText, { color: GOLD_COLOR }]}> • INT {training.intensity}/10</Text>
-                )}
-              </View>
-
-              <View style={styles.techRow}>
-                {(training.calories || 0) > 0 && (
-                  <Text style={styles.techText}>{training.calories} KCAL</Text>
-                )}
-                {training.technique_rating && (
-                  <Text style={[styles.techText, { color: GOLD_COLOR }]}> • TECH {training.technique_rating}/5</Text>
-                )}
-                {training.heart_rate && (
-                  <Text style={styles.techText}> • {training.heart_rate} BPM</Text>
-                )}
-              </View>
             </View>
 
-            {/* Chiffres Clés (Running / Cardio) */}
-            {(hasDistance || hasRounds) && (
-              <View style={styles.keyStats}>
-                {hasDistance && (
-                  <View style={styles.keyStatItem}>
-                    <Text style={styles.keyStatValue}>{Number(training.distance).toFixed(2)}</Text>
-                    <Text style={styles.keyStatLabel}>KM</Text>
+            {/* DROITE: STATS PERFORMANCE */}
+            {showStats && (
+              <View style={styles.machineStatsColumn}>
+                <View style={styles.statLine}>
+                  <Timer size={16} color={GOLD_COLOR} />
+                  <Text style={styles.statValueText}>{training.duration_minutes} MIN</Text>
+                </View>
+                {training.distance && (
+                  <View style={styles.statLine}>
+                    <Activity size={16} color={GOLD_COLOR} />
+                    <Text style={styles.statValueText}>{training.distance.toFixed(2)} KM</Text>
                   </View>
                 )}
-                {pace && (
-                  <View style={styles.keyStatItem}>
-                    <Text style={styles.keyStatValue}>{pace}</Text>
-                    <Text style={styles.keyStatLabel}>/KM</Text>
+                {training.calories && (
+                  <View style={styles.statLine}>
+                    <Zap size={16} color={GOLD_COLOR} />
+                    <Text style={styles.statValueText}>{training.calories} KCAL</Text>
+                  </View>
+                )}
+                {training.heart_rate && (
+                  <View style={styles.statLine}>
+                    <Heart size={16} color="#EF4444" fill="#EF4444" />
+                    <Text style={styles.statValueText}>{training.heart_rate} BPM</Text>
                   </View>
                 )}
               </View>
             )}
           </View>
 
-          {/* BRANDING FOOTER */}
-          <View style={styles.cardFooter}>
+          {/* FOOTER BRANDING */}
+          <View style={styles.brandingFooter}>
             <SocialCardFooter variant="dark" />
           </View>
         </View>
-      </View>
-    );
-
-    return (
-      <View
-        ref={ref}
-        style={[styles.card, { width, height: CARD_HEIGHT, backgroundColor: '#000000' }]}
-        collapsable={false}
-      >
-        {/* L'IMAGE DE FOND (CONTAIN) */}
-        {backgroundImage ? (
-          <Image
-            source={{ uri: backgroundImage }}
-            style={styles.mainImage}
-            resizeMode="contain"
-          />
-        ) : (
-          <LinearGradient
-            colors={['#0f0f1a', '#1a1a2e']}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
-
-        {/* OVERLAY AVEC INFOS ET BANDES NOIRES */}
-        {renderDataOverlay()}
       </View>
     );
   }
 );
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-  mainImage: {
-    position: 'absolute',
-    top: '15%', // Décalage pour laisser voir le haut noir
-    bottom: '25%', // Décalage pour laisser voir le bas noir
-    left: 0,
-    right: 0,
-    width: '100%',
-    height: '60%', // La photo occupe le centre
-  },
-  overlayContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  topBar: {
-    height: '15%',
-    backgroundColor: '#000000',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  headerLeft: {
-    flexDirection: 'column',
-    gap: 4,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  clubLogoSmall: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: GOLD_COLOR,
-  },
-  clubNameText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  counterSectionTop: {
-    alignItems: 'flex-end',
-  },
-  yearlyCounterBox: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
-  },
-  yearlyCounterValue: {
-    color: GOLD_COLOR,
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  yearlyCounterLabel: {
-    color: GOLD_COLOR,
-    fontSize: 8,
-    fontWeight: '700',
-    marginLeft: 2,
-    opacity: 0.8,
-  },
-  premiumGoldLine: {
-    height: 1.5,
-    backgroundColor: GOLD_COLOR,
-    width: '100%',
-    shadowColor: GOLD_COLOR,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  imageSpace: {
-    flex: 1,
-  },
-  bottomBar: {
-    height: '25%',
-    backgroundColor: '#000000',
-    padding: 16,
-    justifyContent: 'space-between',
-  },
-  exercisesBox: {
-    marginBottom: 8,
-    borderLeftWidth: 2,
-    borderLeftColor: GOLD_COLOR,
-    paddingLeft: 8,
-  },
-  exerciseItemText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  technicalColumn: {
-    flex: 1,
-    gap: 8,
-  },
-  techRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  techText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  dotSeparator: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 2,
-  },
-  keyStats: {
-    flexDirection: 'row',
-    gap: 20, // Plus d'espace
-    alignItems: 'flex-end',
-    flexWrap: 'wrap', // Permettre le wrap si trop large
-    justifyContent: 'flex-end',
-    maxWidth: '50%', // Limiter la largeur pour laisser de la place à la colonne technique
-  },
-  keyStatItem: {
-    alignItems: 'center',
-    minWidth: 45, // Largeur minimale pour éviter le tassement
-  },
-  keyStatValue: {
-    color: '#FFFFFF',
-    fontSize: 22, // Réduit légèrement
-    fontWeight: '900',
-  },
-  keyStatLabel: {
-    color: GOLD_COLOR,
-    fontSize: 8,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  cardFooter: {
-    paddingTop: 10,
-    borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.1)',
-  },
+  card: { borderRadius: 24, overflow: 'hidden', backgroundColor: '#000000' },
+  imageBackgroundContainer: { position: 'absolute', top: '22%', bottom: '35%', left: 0, right: 0, backgroundColor: '#000' },
+  mainImage: { width: '100%', height: '100%' },
+  
+  // TOP BAR
+  topBar: { height: '22%', backgroundColor: '#000000', paddingHorizontal: 20, paddingTop: 15 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerLeft: { flex: 1 },
+  dateText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '800', letterSpacing: 1, marginBottom: 4 },
+  sportTitleTop: { color: '#FFFFFF', fontSize: 20, fontWeight: '900', letterSpacing: 1 },
+  clubLogoContainer: { marginTop: 10 },
+  clubLogoHeader: { width: 80, height: 40, borderRadius: 8 },
+  
+  headerRight: { flex: 1, alignItems: 'flex-end' },
+  megaCountersRow: { flexDirection: 'row', gap: 15, marginBottom: 10 },
+  megaCounter: { alignItems: 'center' },
+  megaCounterValue: { fontSize: 32, fontWeight: '900', letterSpacing: -1 },
+  megaCounterLabel: { color: '#FFFFFF', fontSize: 8, fontWeight: '800', opacity: 0.6 },
+  
+  megaProgressBarContainer: { width: '100%', maxWidth: 140 },
+  megaProgressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' },
+  megaProgressBarFill: { height: '100%', borderRadius: 3 },
+  megaProgressText: { color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textAlign: 'right', marginTop: 4 },
+
+  // GOLD LINES
+  goldLineWrapper: { width: '100%', alignItems: 'center', zIndex: 10 },
+  goldLineShort: { height: 3, backgroundColor: GOLD_COLOR, width: 100, shadowColor: GOLD_COLOR, shadowOpacity: 1, shadowRadius: 8, elevation: 10 },
+
+  imageSpace: { flex: 1 },
+
+  // BOTTOM BAR
+  bottomBar: { height: '35%', backgroundColor: '#000000', padding: 20 },
+  mainStatsRow: { flexDirection: 'row', justifyContent: 'space-between', flex: 1 },
+  
+  workedElementsColumn: { flex: 1.3, gap: 10 },
+  exercisesTitle: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '900', letterSpacing: 1, marginBottom: 2 },
+  exercisesList: { gap: 5 },
+  exerciseGoldText: { color: GOLD_COLOR, fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  lieuBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  lieuText: { color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '800' },
+
+  machineStatsColumn: { flex: 0.7, alignItems: 'flex-end', gap: 8 },
+  statLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  statValueText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
+
+  brandingFooter: { marginTop: 15, paddingTop: 15, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.1)' },
 });

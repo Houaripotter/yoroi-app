@@ -157,6 +157,22 @@ export const initDatabase = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN pente REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN watts INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN cadence INTEGER;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -426,6 +442,7 @@ export interface Club {
   bio?: string;
   address?: string;
   links?: string; // JSON string of PartnerLink[]
+  sessions_per_week?: number; // Nouveau: objectif hebdo
   created_at?: string;
 }
 
@@ -454,8 +471,13 @@ export interface Training {
   technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
   distance?: number; // Distance en km
   calories?: number; // Calories brûlées
+  heart_rate?: number; // Rythme cardiaque moyen
   rounds?: number; // Nombre de rounds
   round_duration?: number; // Durée d'un round en minutes
+  pente?: number; // Inclinaison
+  resistance?: number; // Niveau de résistance
+  watts?: number; // Puissance
+  cadence?: number; // RPM
   exercises?: Exercise[]; // For musculation workouts
   technique_rating?: number | null; // 1-5 stars rating
   is_outdoor?: boolean; // true si entraînement en plein air
@@ -683,13 +705,14 @@ export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, resistance, watts, cadence)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null, 
-     data.intensity || null, data.rounds || null, data.round_duration || null]
+     data.intensity || null, data.rounds || null, data.round_duration || null,
+     data.pente || null, data.resistance || null, data.watts || null, data.cadence || null]
   );
   return result.lastInsertRowId;
 };
@@ -717,7 +740,15 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
         exercises = undefined;
       }
     }
-    return { ...r, exercises, is_outdoor: r.is_outdoor === 1 };
+    return { 
+      ...r, 
+      exercises, 
+      is_outdoor: r.is_outdoor === 1,
+      pente: r.pente,
+      resistance: r.resistance,
+      watts: r.watts,
+      cadence: r.cadence
+    };
   });
 };
 

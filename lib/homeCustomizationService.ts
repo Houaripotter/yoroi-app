@@ -180,7 +180,7 @@ const mergeWithDefaults = (saved: HomeSection[]): HomeSection[] => {
 // Sauvegarder la configuration
 export const saveHomeCustomization = async (sections: HomeSection[]): Promise<void> => {
   try {
-    logger.info('[HOME_SERVICE] Sauvegarde de', sections.length, 'sections');
+    logger.info(`[HOME_SERVICE] Sauvegarde de ${sections.length} sections`);
     logger.info('[HOME_SERVICE] Ordre:', sections.map(s => `${s.id}(${s.order})`).join(', '));
     await AsyncStorage.setItem(HOME_CUSTOMIZATION_KEY, JSON.stringify(sections));
     logger.info('[HOME_SERVICE] Sauvegarde AsyncStorage réussie');

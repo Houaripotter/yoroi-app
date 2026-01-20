@@ -364,36 +364,43 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
     const [hours, minutes] = settings.time.split(':').map(Number);
     const scheduledIds: string[] = [];
 
-    // Planifier pour les 7 prochains jours
-    for (let day = 0; day < 7; day++) {
-      const triggerDate = new Date();
-      triggerDate.setDate(triggerDate.getDate() + day);
-      triggerDate.setHours(hours, minutes, 0, 0);
+    // Mélanger les conseils pour en avoir 7 différents
+    const shuffledTips = [...HEALTH_TIPS].sort(() => 0.5 - Math.random());
+    const weekTips = shuffledTips.slice(0, 7);
 
-      // Ne pas planifier pour le passé
-      if (triggerDate <= new Date()) {
-        continue;
-      }
-
-      // Vérifier si c'est un jour activé
-      const dayOfWeek = triggerDate.getDay();
+    // Planifier pour les 7 prochains jours avec des déclencheurs récurrents
+    for (let i = 0; i < 7; i++) {
+      const dayIndex = i; // 0 = aujourd'hui, 1 = demain...
+      const date = new Date();
+      date.setDate(date.getDate() + dayIndex);
+      
+      const dayOfWeek = date.getDay(); // 0-6
+      
+      // Vérifier si ce jour de la semaine est activé
       if (!settings.days.includes(dayOfWeek)) {
         continue;
       }
 
-      const tip = await getRandomTip();
+      const tip = weekTips[i];
 
       const notifId = await Notifications.scheduleNotificationAsync({
         content: {
           title: `🌙 ${tip.title}`,
           body: tip.content,
-          data: { type: 'health_tip', category: tip.category },
+          data: { 
+            type: 'health_tip', 
+            category: tip.category,
+            url: '/ideas' // Rediriger vers la boîte à idées au clic
+          },
           sound: true,
           ...(Platform.OS === 'android' && { channelId: CHANNEL_ID }),
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: triggerDate,
+          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+          hour: hours,
+          minute: minutes,
+          weekday: dayOfWeek + 1, // Expo weekday est 1-7 (1=Dimanche)
+          repeats: true,
         },
       });
 
@@ -401,12 +408,33 @@ export const scheduleHealthTipNotifications = async (): Promise<boolean> => {
     }
 
     await AsyncStorage.setItem(SCHEDULED_KEY, JSON.stringify(scheduledIds));
-    logger.info(`[HealthTips] ${scheduledIds.length} notifications planifiées`);
+    logger.info(`[HealthTips] ${scheduledIds.length} notifications hebdomadaires planifiées`);
     return true;
   } catch (error) {
     logger.error('[HealthTips] Erreur planification:', error);
     return false;
   }
+};
+
+/**
+ * Configure l'écouteur de clic sur notification
+ */
+export const setupNotificationHandler = () => {
+  const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+    const data = response.notification.request.content.data;
+    if (data?.url === '/ideas') {
+      // On utilise un timeout pour s'assurer que le routeur est prêt
+      setTimeout(() => {
+        try {
+          const { router } = require('expo-router');
+          router.push('/ideas');
+        } catch (e) {
+          logger.error('[HealthTips] Erreur navigation notification:', e);
+        }
+      }, 500);
+    }
+  });
+  return subscription;
 };
 
 export const initHealthTipNotifications = async (): Promise<void> => {

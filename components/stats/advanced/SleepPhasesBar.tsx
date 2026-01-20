@@ -1,5 +1,5 @@
 // ============================================
-// SLEEP PHASES BAR - Style Whoop
+// SLEEP PHASES BAR - Style Yoroi
 // Barre horizontale avec phases de sommeil colorées
 // ============================================
 
@@ -17,7 +17,7 @@ interface SleepPhasesBarProps {
   height?: number;
 }
 
-// Couleurs Whoop pour les phases de sommeil
+// Couleurs Yoroi pour les phases de sommeil
 const PHASE_COLORS = {
   awake: '#FF0026',   // Rouge vif
   rem: '#00F19F',     // Teal/vert

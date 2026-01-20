@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - RADAR DE PERFORMANCE (Style Whoop/Garmin)
+// YOROI - RADAR DE PERFORMANCE (Analyse Athlète)
 // ============================================
 // Design moderne avec labels bien positionnés
 

@@ -31,6 +31,7 @@ import { getUserSettings } from '@/lib/storage';
 import { format, parseISO, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { StatsDetailModal } from '../StatsDetailModal';
+import { StatsExplanation } from '../StatsExplanation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COLUMN_WIDTH = (SCREEN_WIDTH - 44) / 2;
@@ -217,7 +218,6 @@ export const DashboardPage: React.FC = () => {
               textFontSize={10}
               textColor={isDark ? '#FFFFFF' : '#000000'}
               textShiftY={-15}
-              scrollEnabled={true}
               xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
               onPress={() => setSelectedMetric(metric)}
             />
@@ -256,6 +256,12 @@ export const DashboardPage: React.FC = () => {
         <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>Résumé</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>Vision globale de ton évolution physique et performance</Text>
       </View>
+
+      <StatsExplanation 
+        title="Comment lire tes stats ?"
+        text="Cette page regroupe les indicateurs clés de tes 5 piliers : Corps (poids), Composition (gras/muscle), Mensures (cm), Discipline (fréquence) et Santé (récupération). Clique sur une carte pour voir l'historique complet."
+        color={colors.accent}
+      />
 
       {themes.map(theme => {
         const themeMetrics = allMetrics.filter(m => m.theme === theme);

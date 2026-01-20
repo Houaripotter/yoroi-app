@@ -11,6 +11,7 @@ import { StatsHeader, Period } from '../StatsHeader';
 import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { Award, TrendingUp, Target, Zap } from 'lucide-react-native';
+import { StatsExplanation } from '../StatsExplanation';
 
 export const PerformancePage: React.FC = () => {
   const { colors } = useTheme();
@@ -32,6 +33,12 @@ export const PerformancePage: React.FC = () => {
         description={t('statsPages.performance.description')}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
+      />
+
+      <StatsExplanation 
+        title="Performance & Records"
+        text="La Performance suit l'évolution de tes capacités physiques (force, endurance, vitesse). Tes Records Personnels (PR) sont extraits de tes notes de séances. Le score de progression analyse si tu améliores tes charges ou tes chronos au fil des semaines."
+        color="#F59E0B"
       />
 
       <StatsSection

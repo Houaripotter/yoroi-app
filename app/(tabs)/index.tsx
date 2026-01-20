@@ -189,13 +189,23 @@ export default function HomeScreen() {
 
   // Tutoriel de découverte
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showWhatIsNew, setShowWhatIsNew] = useState(false);
 
-  // Vérifier si c'est la première visite
+  // Vérifier si c'est la première visite ou une mise à jour
   useEffect(() => {
     const checkFirstVisit = async () => {
+      // 1. Gérer le message de mise à jour (What's New)
+      const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
+      const currentVersion = '1.0.1'; // À mettre à jour à chaque build Store
+      
+      if (lastVersionSeen !== currentVersion) {
+        setShowWhatIsNew(true);
+        await AsyncStorage.setItem('@yoroi_last_version_seen', currentVersion);
+      }
+
+      // 2. Gérer le tutoriel home
       const visited = await hasVisitedPage('home');
-      if (!visited) {
-        // Attendre 1 seconde après le chargement des données
+      if (!visited && !showWhatIsNew) {
         setTimeout(() => setShowTutorial(true), 1000);
       }
     };
@@ -1452,7 +1462,63 @@ export default function HomeScreen() {
 
       {/* Tutoriel de découverte */}
       {showTutorial && (
-        <FeatureDiscoveryModal
+        {/* MESSAGE DE MISE À JOUR ET DISCLAIMER */}
+      <Modal visible={showWhatIsNew} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.card, width: '100%', maxWidth: 400, borderRadius: 32, padding: 24, borderWidth: 1, borderColor: colors.border }}>
+            <LinearGradient colors={[colors.accent, '#3DBDB5']} style={{ width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
+              <Zap size={32} color="#FFFFFF" />
+            </LinearGradient>
+            
+            <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, marginBottom: 12 }}>YOROI V1.0.1</Text>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 20, letterSpacing: 1 }}>GROSSE MISE À JOUR !</Text>
+            
+            <ScrollView style={{ maxHeight: 300, marginBottom: 20 }}>
+              <View style={{ gap: 16 }}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <Palette size={20} color={colors.accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Nouveau Design</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Refonte complète de l'interface pour une expérience plus fluide et immersive.</Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <Watch size={20} color={colors.accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Apple Watch</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Synchronisation améliorée de l'avatar, du poids et de l'eau en temps réel.</Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <Shield size={20} color={colors.accent} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Stabilité Santé</Text>
+                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Correction des erreurs de calcul et des doublons sur les pas et le sommeil.</Text>
+                  </View>
+                </View>
+                <View style={{ marginTop: 10, padding: 12, backgroundColor: colors.backgroundElevated, borderRadius: 12 }}>
+                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                    <AlertTriangle size={16} color={colors.gold} />
+                    <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 12 }}>DISCLAIMER</Text>
+                  </View>
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
+                    C'est un changement massif. Si vous trouvez des bugs, merci de me les signaler dans la Boîte à Idées ! Je corrigerai tout en 24h.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={{ backgroundColor: colors.accent, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center' }}
+              onPress={() => setShowWhatIsNew(false)}
+            >
+              <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18 }}>C'EST PARTI !</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <FeatureDiscoveryModal
           visible={true}
           tutorial={PAGE_TUTORIALS.home}
           onClose={handleCloseTutorial}

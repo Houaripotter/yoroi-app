@@ -754,7 +754,7 @@ export default function TrainingJournalScreen() {
         timeSeconds: isRunning && duration ? duration * 60 : undefined,
       });
 
-      // Show victory modal (Strava-style)
+      // Show victory modal (Style Yoroi)
       setShowVictoryModal(true);
 
       showToast(isPR ? 'Nouveau Record !' : 'Enregistrement sauvegardé');

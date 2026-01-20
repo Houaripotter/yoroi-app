@@ -1,6 +1,6 @@
 // ============================================
 // COMPARISON CHART - Graphiques superposés pour comparer 2-3 métriques
-// Style Whoop avec lignes de différentes couleurs
+// Analyse Yoroi avec lignes de différentes couleurs
 // ============================================
 
 import React from 'react';

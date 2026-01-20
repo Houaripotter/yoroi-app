@@ -65,6 +65,20 @@ export default function HealthConnectScreen() {
     setIsConnecting(true);
     
     try {
+      // Vérifier la disponibilité réelle (Simulateur, iPad, etc.)
+      const isAvailable = await healthConnect.isAvailable();
+      if (!isAvailable) {
+        showPopup(
+          'Non disponible',
+          Platform.OS === 'ios' 
+            ? 'Apple Santé n\'est pas disponible sur cet appareil (ex: Simulateur ou iPad ancien) ou le module n\'est pas chargé.'
+            : 'Health Connect n\'est pas disponible sur cet appareil.',
+          [{ text: 'J\'ai compris', style: 'primary' }]
+        );
+        setIsConnecting(false);
+        return;
+      }
+
       const success = await healthConnect.connect();
 
       if (success) {
@@ -366,6 +380,31 @@ export default function HealthConnectScreen() {
           Astuce : Pour une meilleure precision, utilise une balance connectee
           et porte ta montre pendant ton sommeil.
         </Text>
+
+        {/* Emergency Reset */}
+        <TouchableOpacity 
+          style={{ marginTop: 30, padding: 10, alignItems: 'center' }}
+          onPress={async () => {
+            Alert.alert(
+              'RÉINITIALISER SANTÉ',
+              'Si la popup Apple Santé ne s\'affiche pas, cela va forcer l\'app à oublier l\'ancienne connexion. Continuer ?',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                { 
+                  text: 'OUI, FORCER', 
+                  onPress: async () => {
+                    await AsyncStorage.removeItem('@yoroi_health_sync_status');
+                    handleConnect();
+                  }
+                }
+              ]
+            );
+          }}
+        >
+          <Text style={{ color: colors.textMuted, fontSize: 12, textDecorationLine: 'underline' }}>
+            Un problème de connexion ? Réinitialiser Apple Santé
+          </Text>
+        </TouchableOpacity>
 
         <View style={{ height: 40 }} />
       </ScrollView>

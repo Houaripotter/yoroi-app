@@ -231,7 +231,7 @@ const mergeWithDefaults = (saved: ActionGridItem[]): ActionGridItem[] => {
 // Sauvegarder l'ordre personnalisé
 export const saveActionGridOrder = async (items: ActionGridItem[]): Promise<void> => {
   try {
-    logger.info('[ACTION_GRID_SERVICE] Sauvegarde de', items.length, 'items');
+    logger.info(`[ACTION_GRID_SERVICE] Sauvegarde de ${items.length} items`);
     logger.info('[ACTION_GRID_SERVICE] Ordre:', items.map(i => `${i.id}(${i.order})`).join(', '));
     await AsyncStorage.setItem(ACTION_GRID_ORDER_KEY, JSON.stringify(items));
     logger.info('[ACTION_GRID_SERVICE] Sauvegarde AsyncStorage réussie');

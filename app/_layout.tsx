@@ -15,6 +15,7 @@ import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsSer
 import { notificationService } from '@/lib/notificationService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
+import { initHealthTipNotifications, setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
 
@@ -49,7 +50,10 @@ function RootLayoutContent() {
 
   // 🔒 SÉCURITÉ: Sauvegarde automatique quand l'app passe en background
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+    // Handler pour les clics sur notifications
+    const notifSubscription = setupNotificationHandler();
+
+    const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background' || nextAppState === 'inactive') {
         logger.info('📦 App going to background - auto-save triggered');
         try {
@@ -62,7 +66,10 @@ function RootLayoutContent() {
       }
     });
 
-    return () => subscription.remove();
+    return () => {
+      notifSubscription.remove();
+      appStateSubscription.remove();
+    };
   }, []);
 
   return (
@@ -161,6 +168,10 @@ export default function RootLayout() {
         // Initialiser les notifications de citations (replanifie si nécessaire)
         await initCitationNotifications();
         logger.info('Notifications citations initialisées');
+
+        // Initialiser les conseils santé du soir
+        await initHealthTipNotifications();
+        logger.info('Conseils santé initialisés');
 
       } catch (error) {
         logger.error('❌ Erreur initialisation', error);

@@ -28,10 +28,17 @@ class HealthManager: ObservableObject {
     @Published var streak: Int = 0
     @Published var currentWeight: Double = 0
     @Published var targetWeight: Double = 0
-
+    @Published var profilePhotoData: Data? = nil
+    @Published var avatarName: String = "samurai"
+    
     // NOUVEAU: Error handling UI
-    @Published var healthKitError: String?
+    @Published var healthKitError: String? = nil
     @Published var isLoadingData: Bool = false
+
+    // NOUVEAU: Données pour graphiques détaillés
+    @Published var stepsHistory: [(date: Date, value: Double)] = []
+    @Published var heartRateHistory: [(date: Date, value: Double)] = []
+    @Published var waterHistory: [(date: Date, value: Double)] = []
 
     // Historique poids pour graphique
     @Published var weightHistory: [(date: Date, weight: Double)] = []
@@ -44,6 +51,7 @@ class HealthManager: ObservableObject {
 
     // NOUVEAU: Détection mode économie énergie
     @Published var isLowPowerModeEnabled: Bool = ProcessInfo.processInfo.isLowPowerModeEnabled
+    private var lastFetchTime: Date?
 
     private init() {
         // Vérifier si HealthKit est disponible
@@ -86,9 +94,62 @@ class HealthManager: ObservableObject {
             name: .didReceiveHydrationUpdate,
             object: nil
         )
+        
+        // Observer l'avatar et les infos profil
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAvatarUpdate),
+            name: .didReceiveAvatarUpdate,
+            object: nil
+        )
+    }
+
+    private func setupObservers() {
+        // ... vos autres observers ...
+        
+        NotificationCenter.default.addObserver(forName: .didReceiveAvatarUpdate, object: nil, queue: .main) { notification in
+            if let config = notification.object as? [String: Any] {
+                self.avatarName = config["name"] as? String ?? "samurai"
+                // On pourrait aussi mettre à jour level et rank ici
+                print("👤 [YoroiWatch] Avatar mis à jour: \(self.avatarName)")
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: .didReceiveDataFromiPhone, object: nil, queue: .main) { notification in
+            if let data = notification.object as? Data {
+                // Si ce sont des données d'image
+                self.profilePhotoData = data
+                print("📸 [YoroiWatch] Photo de profil reçue")
+            }
+        }
     }
 
     // MARK: - Handlers iPhone Sync
+
+    @objc private func handleAvatarUpdate(_ notification: Notification) {
+        guard let userInfo = notification.object as? [String: Any] else { return }
+        
+        DispatchQueue.main.async {
+            if let avatarConfig = userInfo["avatarConfig"] as? [String: Any],
+               let pack = avatarConfig["pack"] as? String {
+                self.avatarName = pack
+                print("🎭 Avatar sync: \(pack)")
+            }
+            
+            if let name = userInfo["userName"] as? String {
+                print("👤 Nom sync: \(name)")
+            }
+            
+            // Sync aussi la valeur directe de l'eau si présente
+            if let water = userInfo["waterIntake"] as? Double {
+                self.waterIntake = water
+            } else if let water = userInfo["waterIntake"] as? Int {
+                self.waterIntake = Double(water)
+            }
+            
+            self.savePersistedData()
+        }
+    }
 
     @objc private func handleWeightUpdate(_ notification: Notification) {
         guard let data = notification.object as? Data else { return }
@@ -153,8 +214,9 @@ class HealthManager: ObservableObject {
             
             workoutBuilder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
             
-            workoutSession?.startActivity(with: Date())
-            workoutBuilder?.beginCollection(withStart: Date()) { (success, error) in
+            let startDate = Date()
+            workoutSession?.startActivity(with: startDate)
+            workoutBuilder?.beginCollection(withStart: startDate) { (success, error) in
                 // Session démarrée
             }
             
@@ -162,6 +224,11 @@ class HealthManager: ObservableObject {
                 self.workoutActive = true
                 self.workoutDuration = 0
                 self.startWorkoutTimer()
+                
+                // Persister l'état de l'entraînement
+                UserDefaults.standard.set(true, forKey: "workoutActive")
+                UserDefaults.standard.set(startDate.timeIntervalSince1970, forKey: "workoutStartDate")
+                UserDefaults.standard.set(type.rawValue, forKey: "workoutType")
             }
             
             print("🚀 Séance \(type.name) démarrée")
@@ -185,6 +252,11 @@ class HealthManager: ObservableObject {
             self.workoutActive = false
             self.workoutSession = nil
             self.workoutBuilder = nil
+            
+            // Effacer l'état persistant
+            UserDefaults.standard.removeObject(forKey: "workoutActive")
+            UserDefaults.standard.removeObject(forKey: "workoutStartDate")
+            UserDefaults.standard.removeObject(forKey: "workoutType")
         }
         print("🏁 Séance terminée")
     }
@@ -193,6 +265,11 @@ class HealthManager: ObservableObject {
         workoutTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             DispatchQueue.main.async {
                 self.workoutDuration += 1
+                
+                // Sauvegarde de sécurité toutes les 10 secondes
+                if Int(self.workoutDuration) % 10 == 0 {
+                    UserDefaults.standard.set(self.workoutDuration, forKey: "workoutLastDuration")
+                }
             }
         }
     }
@@ -293,6 +370,14 @@ class HealthManager: ObservableObject {
             print("⚡ Mode économie d'énergie - skip fetch")
             return
         }
+        
+        // Batterie: Ne pas rafraîchir plus d'une fois toutes les 5 minutes hors séance active
+        if let last = lastFetchTime, Date().timeIntervalSince(last) < 300 && !workoutActive {
+            print("🔋 Fetch skip (batterie) - dernier il y a \(Int(Date().timeIntervalSince(last)))s")
+            return
+        }
+        
+        lastFetchTime = Date()
 
         DispatchQueue.main.async {
             self.isLoadingData = true
@@ -536,10 +621,8 @@ class HealthManager: ObservableObject {
     func saveWeight(_ weight: Double) {
         currentWeight = weight
         
-        // 1. Sync avec iPhone via WatchConnectivity (Priorité immédiate)
-        WatchConnectivityManager.shared.sendToiPhone(weight, forKey: "weightUpdate") { success in
-            print(success ? "✅ Poids sync iPhone" : "⚠️ Poids mis en queue")
-        }
+        // 1. Sync avec iPhone via WatchConnectivity (Garantie de livraison)
+        WatchConnectivityManager.shared.transferToiPhone(weight, forKey: "weightUpdate")
 
         // 2. Sauvegarde HealthKit
         guard let healthStore = healthStore,
@@ -587,10 +670,8 @@ class HealthManager: ObservableObject {
         records.insert(newRecord, at: 0)
         savePersistedData()
         
-        // SYNC VERS IPHONE
-        WatchConnectivityManager.shared.sendToiPhone(newRecord, forKey: "newRecordFromWatch") { success in
-            print(success ? "✅ Record sync iPhone" : "⚠️ Record mis en queue")
-        }
+        // SYNC VERS IPHONE (Garantie de livraison)
+        WatchConnectivityManager.shared.transferToiPhone(newRecord, forKey: "newRecordFromWatch")
         
         print("✅ Nouveau record ajouté: \(exercise)")
     }
@@ -722,6 +803,26 @@ class HealthManager: ObservableObject {
         if let data = defaults.data(forKey: "workoutHistory"),
            let decoded = try? JSONDecoder().decode([WorkoutSession].self, from: data) {
             workoutHistory = decoded
+        }
+
+        // Récupération de l'entraînement en cours si l'app a crashé ou été fermée
+        if defaults.bool(forKey: "workoutActive") {
+            let startDate = Date(timeIntervalSince1970: defaults.double(forKey: "workoutStartDate"))
+            let typeRaw = UInt(defaults.integer(forKey: "workoutType"))
+            let lastDuration = defaults.double(forKey: "workoutLastDuration")
+            
+            // Calculer la durée réelle écoulée
+            let elapsedSinceStart = Date().timeIntervalSince(startDate)
+            
+            DispatchQueue.main.async {
+                self.workoutActive = true
+                self.workoutDuration = max(lastDuration, elapsedSinceStart)
+                self.startWorkoutTimer()
+                
+                // Note: Re-lier à HealthKit nécessiterait de redémarrer une session
+                // mais on garde au moins le chrono et l'état UI
+            }
+            print("🔄 Session d'entraînement récupérée (\(Int(self.workoutDuration))s)")
         }
 
         print("✅ Données chargées depuis UserDefaults")

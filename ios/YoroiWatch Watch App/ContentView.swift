@@ -8,49 +8,72 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var healthManager = HealthManager.shared
     @State private var selectedTab = 0
+    
+    // Couleurs par page pour les indicateurs
+    private let tabColors: [Color] = [
+        .green,   // 0. Dashboard
+        .blue,    // 1. Hydratation
+        .orange,  // 2. Poids
+        .cyan,    // 3. Résumé Stats
+        .red,     // 4. Timer
+        .yellow,  // 5. Carnet
+        .orange,  // 6. Dojo
+        .purple,  // 7. Profil
+        .gray     // 8. Réglages
+    ]
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                // 1. Dashboard (Vue d'ensemble + Poids)
-                DashboardView()
+                // 0. Dashboard
+                DashboardView(selectedTab: $selectedTab)
                     .tag(0)
 
-                // 2. Timer (Repos / Combat / Tabata)
-                TimerView()
+                // 1. Hydratation
+                HydrationView()
                     .tag(1)
-
-                // 3. Carnet d'entraînement (Records et ajouts)
-                RecordsView()
-                    .tag(2)
-
-                // 4. Poids de corps
+                
+                // 2. Poids (Graphique)
                 WeightView()
+                    .tag(2)
+                
+                // 3. Résumé Stats
+                SummaryStatsView()
                     .tag(3)
 
-                // 5. Séance en direct (Workout)
-                WorkoutView()
+                // 4. Timer
+                TimerView()
                     .tag(4)
 
-                // 6. Hydratation
-                HydrationView()
+                // 5. Carnet (Records)
+                RecordsView()
                     .tag(5)
-
-                // 7. Réglages
-                SettingsView()
+                
+                // 6. Dojo (Avatar)
+                DojoView()
                     .tag(6)
+
+                // 7. Profil (Badges)
+                ProfileView()
+                    .tag(7)
+
+                // 8. Réglages
+                SettingsView()
+                    .tag(8)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never)) // Cacher l'index par défaut
+            .tabViewStyle(.page(indexDisplayMode: .never))
             
-            // INDICATEUR DE PAGE CUSTOM (En bas)
+            // INDICATEUR DE PAGE EN HAUT
             HStack(spacing: 4) {
-                ForEach(0..<7) { index in
-                    Circle()
-                        .fill(selectedTab == index ? Color.accentColor : Color.gray.opacity(0.3))
-                        .frame(width: 4, height: 4)
+                ForEach(0..<9) { index in
+                    Capsule()
+                        .fill(selectedTab == index ? tabColors[index] : Color.white.opacity(0.2))
+                        .frame(width: selectedTab == index ? 8 : 3, height: 3)
+                        .animation(.spring(), value: selectedTab)
                 }
             }
-            .padding(.bottom, 2)
+            .padding(.top, 2)
+            .zIndex(10)
         }
         .onAppear {
             healthManager.requestAuthorization()

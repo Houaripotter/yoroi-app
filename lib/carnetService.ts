@@ -5,6 +5,7 @@
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { WatchConnectivity } from './watchConnectivity.ios';
 
 // ============================================
 // TYPES
@@ -400,6 +401,10 @@ export const createBenchmark = async (
     };
     benchmarks.push(newBenchmark);
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
+    
+    // Sync Watch
+    setTimeout(() => syncCarnetToWatch(), 100);
+    
     return newBenchmark;
   } catch (error) {
     console.error('Error creating benchmark:', error);
@@ -434,6 +439,10 @@ export const addBenchmarkEntry = async (
     };
     benchmarks[index].entries.push(entry);
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));
+    
+    // Sync Watch
+    setTimeout(() => syncCarnetToWatch(), 100);
+    
     return entry;
   } catch (error) {
     console.error('Error adding benchmark entry:', error);
@@ -921,5 +930,39 @@ export const cleanDemoData = async (): Promise<{ removed: number; message: strin
       removed: 0,
       message: 'Erreur lors du nettoyage',
     };
+  }
+};
+
+/**
+ * Helper interne pour synchroniser le carnet vers la montre
+ */
+export const syncCarnetToWatch = async () => {
+  try {
+    const data = await AsyncStorage.getItem('yoroi_benchmarks_v2');
+    if (!data) return;
+    const benchmarks: Benchmark[] = JSON.parse(data);
+    
+    // Préparer les données simplifiées pour la montre
+    const watchRecords = benchmarks.map(b => {
+      const pr = getBenchmarkPR(b);
+      return {
+        exercise: b.name,
+        weight: pr?.value || 0,
+        reps: pr?.reps || 0,
+        date: pr?.date || new Date().toISOString(),
+        category: b.category.toUpperCase(),
+        muscleGroup: b.muscleGroup || 'GÉNÉRAL'
+      };
+    });
+    
+    await WatchConnectivity.updateApplicationContext({
+      recordsUpdate: {
+        records: watchRecords,
+        timestamp: Date.now()
+      }
+    });
+    console.log('📡 Carnet synchronisé vers Apple Watch');
+  } catch (e) {
+    console.warn('Échec sync carnet vers Watch:', e);
   }
 };

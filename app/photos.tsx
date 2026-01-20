@@ -160,7 +160,7 @@ export default function PhotosScreen() {
           date: today,
           source: 'manual',
         });
-        logger.info('Poids enregistré dans la base:', weight, 'kg');
+        logger.info(`Poids enregistré dans la base: ${weight} kg`);
       } catch (error) {
         logger.error('❌ Erreur lors de l\'enregistrement du poids:', error);
       }

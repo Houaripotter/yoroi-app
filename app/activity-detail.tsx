@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,20 +43,22 @@ export default function ActivityDetailScreen() {
     } catch (error) {
       logger.error('Erreur chargement trainings:', error);
     } finally {
-      setLoading(false);
+      // Simuler un léger délai pour éviter le flash de contenu
+      setTimeout(() => setLoading(false), 400);
     }
   };
 
   // Filtrer par période
   const getFilteredData = () => {
+    if (!trainings || !Array.isArray(trainings)) return [];
     const now = new Date();
     const daysMap = { '7d': 7, '30d': 30, '90d': 90, 'all': 365 * 10 };
-    const days = daysMap[period];
+    const days = daysMap[period] || 30;
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 
-    return trainings.filter(t => new Date(t.date) >= cutoff).sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    return trainings
+      .filter(t => t && t.date && new Date(t.date) >= cutoff)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   const filteredTrainings = getFilteredData();
@@ -129,6 +132,15 @@ export default function ActivityDetailScreen() {
 
   const mostFrequentType = Array.from(typeCount.entries())
     .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+  if (loading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>Analyse de tes performances...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -349,13 +361,20 @@ const styles = StyleSheet.create({
   },
   periodBtn: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   periodText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

@@ -186,6 +186,10 @@ class HealthConnectService {
   };
 
   async initialize(): Promise<boolean> {
+    if (Platform.OS !== 'ios') {
+      logger.info('HealthConnect iOS ignoré sur cette plateforme');
+      return false;
+    }
     try {
       const savedStatus = await AsyncStorage.getItem(STORAGE_KEYS.SYNC_STATUS);
       if (savedStatus) {
@@ -299,7 +303,7 @@ class HealthConnectService {
 
   async connect(): Promise<boolean> {
     // Mode démo : simuler une connexion réussie
-    if (DEMO_MODE) {
+    if (DEMO_MODE && __DEV__) {
       this.syncStatus.isConnected = true;
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
@@ -457,23 +461,20 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
+      // Utiliser queryStatistics pour laisser HealthKit dédupliquer les sources (iPhone vs Watch)
+      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierStepCount', {
         from: today.getTime(),
         to: new Date().getTime(),
-        ascending: false,
-        limit: 1000,
+        options: ['cumulativeSum'],
       });
 
-      if (samples && samples.length > 0) {
-        // Additionner tous les échantillons - prendre les données brutes d'Apple Santé
-        const totalSteps = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
+      const totalSteps = result?.sumQuantity || 0;
 
-        if (totalSteps > 0) {
-          return {
-            count: Math.round(totalSteps),
-            date: today.toISOString(),
-          };
-        }
+      if (totalSteps > 0) {
+        return {
+          count: Math.round(totalSteps),
+          date: today.toISOString(),
+        };
       }
       return null;
     }, 'steps');
@@ -481,11 +482,12 @@ class HealthConnectService {
 
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
     return this.queryHealthKit(async () => {
-      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: yesterday.getTime(),
-        to: new Date().getTime(),
+        to: now.getTime(),
         limit: 100,
       });
 
@@ -510,50 +512,42 @@ class HealthConnectService {
           if (duration <= 0) return;
 
           // HKCategoryValueSleepAnalysis: 0=InBed, 1=Asleep, 2=Awake, 3=Core, 4=Deep, 5=REM
+          // IMPORTANT: On ne compte que le sommeil REEL (pas InBed)
           switch (s.value) {
             case 0:
               inBedMinutes += duration;
               break;
-            case 1:
+            case 1: // Asleep
+            case 3: // Core
+            case 4: // Deep
+            case 5: // REM
               totalMinutes += duration;
+              if (s.value === 3) coreMinutes += duration;
+              if (s.value === 4) deepMinutes += duration;
+              if (s.value === 5) remMinutes += duration;
               break;
             case 2:
               awakeMinutes += duration;
               break;
-            case 3:
-              coreMinutes += duration;
-              totalMinutes += duration;
-              break;
-            case 4:
-              deepMinutes += duration;
-              totalMinutes += duration;
-              break;
-            case 5:
-              remMinutes += duration;
-              totalMinutes += duration;
-              break;
           }
         });
 
-        if (totalMinutes <= 0) return null;
+        // Limite de sécurité : une nuit ne peut pas faire plus de 16h
+        if (totalMinutes <= 0 || totalMinutes > 960) return null;
 
         const result: HealthData['sleep'] = {
           startTime: new Date(startTime).toISOString(),
           endTime: new Date(endTime).toISOString(),
           duration: Math.round(totalMinutes),
           quality: this.getSleepQuality(totalMinutes),
-        };
-
-        if (remMinutes > 0 || coreMinutes > 0 || deepMinutes > 0) {
-          result.phases = {
-            awake: Math.round(awakeMinutes),
+          phases: {
+            deep: Math.round(deepMinutes),
             rem: Math.round(remMinutes),
             core: Math.round(coreMinutes),
-            deep: Math.round(deepMinutes),
+            awake: Math.round(awakeMinutes),
             inBed: Math.round(inBedMinutes),
-          };
-        }
-
+          },
+        };
         return result;
       }
       return null;
@@ -577,16 +571,17 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDietaryWater', {
+      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierDietaryWater', {
         from: today.getTime(),
         to: new Date().getTime(),
+        options: ['cumulativeSum'],
       });
 
-      if (samples && samples.length > 0) {
-        // Apple Health retourne l'eau en litres, on convertit en millilitres
-        const totalLiters = samples.reduce((sum: number, s: any) => sum + s.quantity, 0);
+      const totalLiters = result?.sumQuantity || 0;
+      
+      if (totalLiters > 0) {
         return {
-          amount: Math.round(totalLiters * 1000),
+          amount: Math.round(totalLiters * 1000), // Convertir litres en ml
           date: today.toISOString(),
         };
       }
@@ -684,24 +679,21 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const [activeSamples, basalSamples] = await Promise.all([
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', {
+      const [activeResult, basalResult] = await Promise.all([
+        HealthKit.queryStatistics('HKQuantityTypeIdentifierActiveEnergyBurned', {
           from: today.getTime(),
           to: new Date().getTime(),
+          options: ['cumulativeSum'],
         }),
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBasalEnergyBurned', {
+        HealthKit.queryStatistics('HKQuantityTypeIdentifierBasalEnergyBurned', {
           from: today.getTime(),
           to: new Date().getTime(),
+          options: ['cumulativeSum'],
         }),
       ]);
 
-      const active = activeSamples && activeSamples.length > 0
-        ? activeSamples.reduce((sum: number, s: any) => sum + s.quantity, 0)
-        : 0;
-
-      const basal = basalSamples && basalSamples.length > 0
-        ? basalSamples.reduce((sum: number, s: any) => sum + s.quantity, 0)
-        : 0;
+      const active = activeResult?.sumQuantity || 0;
+      const basal = basalResult?.sumQuantity || 0;
 
       return {
         active: Math.round(active),
@@ -720,19 +712,19 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Distance marche + course (en mètres)
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', {
+      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierDistanceWalkingRunning', {
         from: today.getTime(),
         to: new Date().getTime(),
+        options: ['cumulativeSum'],
       });
 
-      if (samples && samples.length > 0) {
-        const totalMeters = samples.reduce((sum: number, s: any) => sum + s.quantity, 0);
-        const totalKm = totalMeters / 1000;
+      const totalMeters = result?.sumQuantity || 0;
 
+      if (totalMeters > 0) {
+        const totalKm = totalMeters / 1000;
         return {
-          walking: Math.round(totalKm * 0.6 * 10) / 10, // Estimation 60% marche
-          running: Math.round(totalKm * 0.4 * 10) / 10, // Estimation 40% course
+          walking: Math.round(totalKm * 0.6 * 10) / 10,
+          running: Math.round(totalKm * 0.4 * 10) / 10,
           total: Math.round(totalKm * 10) / 10,
           unit: 'km',
         };
@@ -938,7 +930,7 @@ class HealthConnectService {
   // ============================================
 
   async getHRVHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoHRVHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoHRVHistory(days);
 
     try {
       const fromDate = new Date();
@@ -975,7 +967,7 @@ class HealthConnectService {
   }
 
   async getRestingHRHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoRestingHRHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoRestingHRHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1012,7 +1004,7 @@ class HealthConnectService {
   }
 
   async getHeartRateHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoHeartRateHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoHeartRateHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1049,7 +1041,7 @@ class HealthConnectService {
   }
 
   async getOxygenSaturationHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoOxygenSaturationHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoOxygenSaturationHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1087,7 +1079,7 @@ class HealthConnectService {
   }
 
   async getBodyTemperatureHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoBodyTemperatureHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoBodyTemperatureHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1124,7 +1116,7 @@ class HealthConnectService {
   }
 
   async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoWeightHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoWeightHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1158,7 +1150,7 @@ class HealthConnectService {
     total: number;
     duration?: number;
   }>> {
-    if (DEMO_MODE) return DemoData.getDemoSleepHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoSleepHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1218,7 +1210,7 @@ class HealthConnectService {
     basal: number;
     total: number;
   }>> {
-    if (DEMO_MODE) return DemoData.getDemoCaloriesHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoCaloriesHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1268,7 +1260,7 @@ class HealthConnectService {
   }
 
   async getVO2MaxHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoVO2MaxHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoVO2MaxHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1294,7 +1286,7 @@ class HealthConnectService {
   }
 
   async getStepsHistory(days: number = 7): Promise<Array<{ date: string; value: number }>> {
-    if (DEMO_MODE) return DemoData.getDemoStepsHistory(days);
+    if (DEMO_MODE && __DEV__) return DemoData.getDemoStepsHistory(days);
 
     try {
       const fromDate = new Date();
@@ -1328,8 +1320,8 @@ class HealthConnectService {
   }
 
   async getAllHealthData(): Promise<HealthData> {
-    // Mode démo : retourner des données fictives
-    if (DEMO_MODE) {
+    // Mode démo : UNIQUEMENT si explicitement activé en dev
+    if (DEMO_MODE && __DEV__) {
       const demoData = DemoData.getDemoHealthData();
       // Calculer les totaux
       if (demoData.calories) {
@@ -1342,24 +1334,26 @@ class HealthConnectService {
     }
 
     try {
-      // CRITIQUE: Utiliser Promise.allSettled au lieu de Promise.all
-      // pour éviter qu'une seule requête qui échoue fasse crasher tout le chargement
-      const results = await Promise.allSettled([
-        this.getLatestWeight(),
-        this.getTodaySteps(),
-        this.getLastSleep(),
-        this.getTodayHydration(),
-        this.getTodayHeartRate(),
-        this.getTodayHRV(),
-        this.getTodayCalories(),
-        this.getTodayDistance(),
-        this.getVO2Max(),
-        this.getOxygenSaturation(),
-        this.getRespiratoryRate(),
-        this.getBodyTemperature(),
-        this.getBodyComposition(),
-        this.getWorkouts(),
-      ]);
+      // Vérifier si le module est disponible avant de lancer les requêtes
+      const available = await this.isAvailable();
+      if (!available) {
+        return {
+          weight: undefined,
+          steps: undefined,
+          sleep: undefined,
+          hydration: undefined,
+          heartRate: undefined,
+          heartRateVariability: undefined,
+          calories: undefined,
+          distance: undefined,
+          vo2Max: undefined,
+          oxygenSaturation: undefined,
+          respiratoryRate: undefined,
+          bodyTemperature: undefined,
+          bodyComposition: undefined,
+          workouts: undefined,
+        };
+      }
 
       // Extraire les valeurs avec typage explicite
       const weight = results[0].status === 'fulfilled' ? results[0].value : null;
@@ -1597,7 +1591,7 @@ class HealthConnectService {
   }
 
   getSyncStatus(): SyncStatus {
-    if (DEMO_MODE) {
+    if (DEMO_MODE && __DEV__) {
       return {
         ...this.syncStatus,
         isConnected: true,

@@ -71,7 +71,7 @@ export const HydrationCard2: React.FC<HydrationCard2Props> = ({
 
   // Animer la hauteur de l'eau quand currentMl change
   useEffect(() => {
-    logger.info('💧 ANIMATING WATER HEIGHT to:', waterHeight, 'from currentMl:', currentMl);
+    logger.info(`💧 ANIMATING WATER HEIGHT to: ${waterHeight} from currentMl: ${currentMl}`);
     Animated.spring(waterHeightAnim, {
       toValue: waterHeight,
       tension: 40,

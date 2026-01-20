@@ -630,6 +630,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				UIRequiresFullScreen = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -661,6 +662,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Yoroi/Yoroi-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				UIRequiresFullScreen = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -922,7 +924,8 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				UIRequiresFullScreen = YES;
 			};
 			name = Debug;
 		};
@@ -954,7 +957,8 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				UIRequiresFullScreen = YES;
 			};
 			name = Release;
 		};

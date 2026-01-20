@@ -170,6 +170,20 @@ export const SPORTS: Sport[] = [
     category: 'fitness',
     muscles: ['pectoraux', 'dos', 'epaules', 'biceps', 'triceps', 'abdos', 'jambes', 'fessiers'],
   },
+  {
+    id: 'hyrox',
+    name: 'Hyrox',
+    icon: 'timer',
+    color: '#EA580C',
+    category: 'fitness',
+  },
+  {
+    id: 'calisthenics',
+    name: 'Calisthenics',
+    icon: 'gymnastics',
+    color: '#10B981',
+    category: 'fitness',
+  },
 
   // === CARDIO ===
   {
@@ -431,13 +445,6 @@ export const SPORTS: Sport[] = [
   },
 
   // === FITNESS (ajouts) ===
-  {
-    id: 'hyrox',
-    name: 'Hyrox',
-    icon: 'weight-lifter',
-    color: '#EA580C',
-    category: 'fitness',
-  },
   {
     id: 'body_pump',
     name: 'Body Pump / LIA',

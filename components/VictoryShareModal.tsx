@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
     marginLeft: -170,
     opacity: 0.3,
   },
-  // TOP BANNER - Strava style
+  // TOP BANNER - Style Yoroi
   topBanner: {
     position: 'absolute',
     top: 16,

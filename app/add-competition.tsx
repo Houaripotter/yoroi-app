@@ -148,6 +148,7 @@ export default function AddCompetitionScreen() {
               value={nom}
               onChangeText={setNom}
               autoFocus
+              maxLength={100}
             />
           </View>
         </View>
@@ -165,6 +166,7 @@ export default function AddCompetitionScreen() {
               placeholderTextColor={colors.textMuted}
               value={lieu}
               onChangeText={setLieu}
+              maxLength={100}
             />
           </View>
         </View>
@@ -182,6 +184,7 @@ export default function AddCompetitionScreen() {
               placeholderTextColor={colors.textMuted}
               value={typeEvenement}
               onChangeText={setTypeEvenement}
+              maxLength={50}
             />
           </View>
           {/* Suggestions */}

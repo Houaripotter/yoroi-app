@@ -1,5 +1,5 @@
 // ============================================
-// YOROI - HUB DE PARTAGE (Style Strava)
+// YOROI - HUB DE PARTAGE (Style Yoroi)
 // Templates avec photo utilisateur mise en avant
 // ============================================
 

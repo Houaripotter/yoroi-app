@@ -1,7 +1,7 @@
 // ============================================
 // YOROI - FICHE COMBATTANT (FIGHTER CARD)
 // ============================================
-// Carte de stats style UFC pour partager sur Instagram
+// Carte de stats style Yoroi pour partager sur Instagram
 // Design premium avec stats et infos combattant
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';

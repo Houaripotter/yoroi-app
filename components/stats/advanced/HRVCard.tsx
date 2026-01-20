@@ -1,5 +1,5 @@
 // ============================================
-// HRV CARD - Style Whoop
+// HRV CARD - Style Yoroi
 // Carte HRV avec comparaison à la baseline et indicateur de statut
 // ============================================
 

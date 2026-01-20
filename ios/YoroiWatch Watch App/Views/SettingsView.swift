@@ -141,24 +141,6 @@ struct SettingsView: View {
         WKInterfaceDevice.current().play(.success)
     }
 }
-    
-    private func handleVersionTap() {
-        versionTapCount += 1
-        if versionTapCount >= 4 {
-            versionTapCount = 0
-            enteredCode = ""
-            showCodeInput = true
-            WKInterfaceDevice.current().play(.click)
-        }
-    }
-    
-    private func activateScreenshotMode() {
-        isScreenshotMode = true
-        showCodeInput = false
-        healthManager.enableScreenshotMode()
-        WKInterfaceDevice.current().play(.success)
-    }
-}
 
 #Preview {
     SettingsView()

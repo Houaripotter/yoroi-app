@@ -85,7 +85,7 @@ import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeServi
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
 import { getHomeCustomization, saveHomeCustomization, isSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
-import { generateScreenshotDemoData } from '@/lib/screenshotDemoData';
+import { generateScreenshotDemoData, clearScreenshotDemoData, isScreenshotModeEnabled } from '@/lib/screenshotDemoData';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
 
@@ -735,6 +735,27 @@ export default function MoreScreen() {
     loadCreatorMode();
   }, []);
 
+  const handlePurgeData = async () => {
+    Alert.alert(
+      '🔥 NETTOYAGE TOTAL',
+      'Ceci va supprimer TOUTES les données de démo (Germain Del Jarret) et réinitialiser l\'application pour une synchronisation propre avec Apple Santé. Continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'OUI, TOUT SUPPRIMER', 
+          style: 'destructive',
+          onPress: async () => {
+            const result = await clearScreenshotDemoData();
+            if (result.success) {
+              setCreatorModeActive(false);
+              showPopup('Succès', 'Application nettoyée. Redémarre l\'app pour synchroniser tes vraies données Apple Santé.', [{ text: 'OK', style: 'primary' }]);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   // Load user settings on mount
   useEffect(() => {
     loadUserSettings();
@@ -875,7 +896,7 @@ export default function MoreScreen() {
   };
 
   const handleContact = () => {
-    Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Contact%20Yoroi');
+    router.push({ pathname: '/ideas', params: { category: 'other' } });
   };
 
   const handleExportPDF = async () => {
@@ -996,7 +1017,7 @@ export default function MoreScreen() {
   };
 
   const handleIdeas = () => {
-    Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Idée%20pour%20YOROI&body=Bonjour,%0A%0AVoici%20mon%20idée%20:%0A%0A');
+    router.push({ pathname: '/ideas', params: { category: 'feature' } });
   };
 
   const handleModeChange = async (mode: 'light' | 'dark' | 'auto') => {
@@ -1357,6 +1378,30 @@ export default function MoreScreen() {
             </View>
           </View>
         )}
+
+          {/* URGENCE NETTOYAGE (Germain Del Jarret) */}
+          {creatorModeActive && (
+            <View style={[styles.sectionContainer, { marginTop: 10 }]}>
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: '#EF444420', borderColor: '#EF4444', borderWidth: 1, borderRadius: 16 }]}
+                onPress={handlePurgeData}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: '#EF444430' }]}>
+                  <Trash2 size={20} color="#EF4444" strokeWidth={2.5} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: '#EF4444', fontWeight: '900' }]}>
+                    ⚠️ URGENCE : NETTOYER TOUT
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: '#EF4444' }]}>
+                    Supprime Germain et ses fausses données
+                  </Text>
+                </View>
+                <ChevronRight size={18} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* PROFIL */}
           {renderSection(t('menu.profileAndGamification'), PROFILE_ITEMS)}
@@ -2003,7 +2048,7 @@ export default function MoreScreen() {
                 style={[styles.feedbackButton, { backgroundColor: colors.accent }]}
                 onPress={() => {
                   setUpcomingModalVisible(false);
-                  Linking.openURL('mailto:yoroiapp@hotmail.com?subject=Idée%20pour%20YOROI');
+                  router.push({ pathname: '/ideas', params: { category: 'feature' } });
                 }}
               >
                 <MessageCircle size={18} color={colors.textOnAccent} />

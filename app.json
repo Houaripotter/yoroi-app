@@ -20,20 +20,11 @@
       "bundleIdentifier": "com.houari.yoroi",
       "infoPlist": {
         "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
-        "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil dans Apple Santé pour synchroniser automatiquement vos progrès entre tous vos appareils Apple (iPhone, iPad, Apple Watch).",
-        "NSCalendarsUsageDescription": "YOROI utilise votre calendrier pour planifier vos entraînements.",
-        "NSRemindersUsageDescription": "YOROI utilise les rappels pour vos notifications d'entraînement.",
-        "NSPhotoLibraryUsageDescription": "YOROI a besoin d'accéder à vos photos pour définir votre photo de profil.",
-        "NSCameraUsageDescription": "YOROI a besoin d'accéder à la caméra pour prendre une photo de profil.",
-        "NSSupportsLiveActivities": true,
-        "ITSAppUsesNonExemptEncryption": false
+        "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil dans Apple Santé pour synchroniser automatiquement vos progrès entre tous vos appareils Apple (iPhone, iPad, Apple Watch)."
       },
       "entitlements": {
         "com.apple.developer.healthkit": true,
-        "com.apple.developer.healthkit.background-delivery": true,
-        "com.apple.developer.healthkit.access": [
-          "health-records"
-        ]
+        "com.apple.developer.healthkit.background-delivery": true
       }
     },
     "web": {

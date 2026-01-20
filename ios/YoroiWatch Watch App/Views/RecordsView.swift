@@ -1,6 +1,6 @@
 // ============================================
 // YOROI WATCH - Vue Carnet / Records Évoluée
-// Ajout de performances avec sélection d'exercices
+// Bibliothèque de sports et gestion des records
 // ============================================
 
 import SwiftUI
@@ -12,6 +12,25 @@ struct RecordsView: View {
     var body: some View {
         NavigationView {
             List {
+                // BOUTON AJOUT EN HAUT (PROÉMINENT)
+                Section {
+                    Button(action: { 
+                        WKInterfaceDevice.current().play(.click)
+                        showExercisePicker = true 
+                    }) {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20))
+                            Text("AJOUTER RECORD")
+                                .font(.system(size: 13, weight: .black))
+                            Spacer()
+                        }
+                        .foregroundColor(.yellow)
+                        .padding(.vertical, 4)
+                    }
+                }
+                
                 // SECTION BIBLIOTHÈQUE DE SPORTS
                 Section(header: Text("BIBLIOTHÈQUE").font(.system(size: 10, weight: .black))) {
                     ForEach(ExerciseDatabase.sports) { sport in
@@ -27,21 +46,6 @@ struct RecordsView: View {
                             }
                             .padding(.vertical, 4)
                         }
-                    }
-                }
-                
-                // BOUTON AJOUT RAPIDE
-                Section {
-                    Button(action: { 
-                        WKInterfaceDevice.current().play(.click)
-                        showExercisePicker = true 
-                    }) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("NOUVEAU RECORD")
-                                .font(.system(size: 12, weight: .bold))
-                        }
-                        .foregroundColor(.yellow)
                     }
                 }
             }
@@ -236,7 +240,7 @@ struct AddPerformanceFinalView: View {
     }
 }
 
-// Les structures PerformanceRow et formatage restent identiques mais nettoyées...
+// Les structures PerformanceRow et formatage
 struct PerformanceRow: View {
     let record: ExerciseRecord
     var body: some View {
@@ -264,7 +268,6 @@ struct PerformanceRow: View {
     func formatDate(_ date: Date) -> String { let f = DateFormatter(); f.dateFormat = "dd MMM"; return f.string(from: date) }
     func formatTime(_ s: Int) -> String { let h = s / 3600; let m = (s % 3600) / 60; let sec = s % 60; return h > 0 ? String(format: "%dh%02d", h, m) : String(format: "%dm%02d", m, sec) }
 }
-
 
 #Preview {
     RecordsView()

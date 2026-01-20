@@ -37,6 +37,7 @@ import { getUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { StatsExplanation } from '../StatsExplanation';
 
 export const CompositionPage: React.FC = () => {
   const { colors } = useTheme();
@@ -281,6 +282,12 @@ export const CompositionPage: React.FC = () => {
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
         showPeriodSelector={true}
+      />
+
+      <StatsExplanation 
+        title="Composition Corporelle"
+        text="La Composition analyse la qualité de ton poids. Le taux de Graisse indique tes réserves d'énergie, la Masse Musculaire reflète ta force et ton métabolisme, et le Gras Viscéral surveille la graisse stockée autour de tes organes."
+        color="#F59E0B"
       />
 
       {/* Graphique de tendance principal */}

@@ -1,5 +1,5 @@
 // ============================================
-// RECOVERY CIRCLE - Style Whoop
+// RECOVERY CIRCLE - Style Yoroi
 // Grand cercle de récupération avec score coloré
 // ============================================
 
@@ -43,11 +43,11 @@ export const RecoveryCircle: React.FC<RecoveryCircleProps> = ({
     strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
   }));
 
-  // Couleurs style Whoop: Vert 67-100%, Jaune 34-66%, Rouge 0-33%
+  // Couleurs style Yoroi: Vert 67-100%, Jaune 34-66%, Rouge 0-33%
   const getColor = (score: number) => {
-    if (score >= 67) return '#16EC06';  // Vert Whoop
-    if (score >= 34) return '#FFDE00';  // Jaune Whoop
-    return '#FF0026';                    // Rouge Whoop
+    if (score >= 67) return '#16EC06';  // Vert Yoroi
+    if (score >= 34) return '#FFDE00';  // Jaune Yoroi
+    return '#FF0026';                    // Rouge Yoroi
   };
 
   const getStatusText = (score: number) => {

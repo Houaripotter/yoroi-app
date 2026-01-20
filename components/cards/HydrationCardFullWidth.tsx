@@ -1,5 +1,5 @@
 // ============================================
-// HYDRATION CARD - Style Apple Watch avec Animation
+// HYDRATION CARD - Style Yoroi avec Animation
 // ============================================
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -27,7 +27,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
   const { t } = useI18n();
   const percentage = Math.min((currentMl / goalMl) * 100, 100);
 
-  // Toast state (comme Apple Watch)
+  // Toast state (comme Yoroi)
   const [showToast, setShowToast] = useState(false);
   const [lastAmount, setLastAmount] = useState(0);
   const toastAnim = useRef(new Animated.Value(0)).current;
@@ -158,7 +158,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundCard }]}>
-      {/* Toast notification (comme Apple Watch) */}
+      {/* Toast notification (comme Yoroi) */}
       {showToast && (
         <Animated.View
           style={[
@@ -239,7 +239,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
           </View>
         </View>
 
-        {/* Bouteille style Apple Watch */}
+        {/* Bouteille Design Circulaire */}
         <TouchableOpacity
           style={styles.bottleContainer}
           onPress={() => router.push('/hydration')}

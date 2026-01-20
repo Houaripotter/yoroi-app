@@ -15,8 +15,10 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Switch,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   X,
   Share2,
@@ -31,6 +33,7 @@ import {
   Moon,
   Sun,
   MapPinned,
+  ArrowRight,
 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
@@ -42,7 +45,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
-import { getTrainings, Training } from '@/lib/database';
+import { getTrainings, Training, getClubs } from '@/lib/database';
 import { SPORTS, getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -58,12 +61,9 @@ const CARD_HEIGHT_PORTRAIT = CARD_WIDTH * (16 / 9);  // Portrait 9:16
 const CARD_HEIGHT_LANDSCAPE = CARD_WIDTH * (9 / 16); // Paysage 16:9
 const GOLD_COLOR = '#D4AF37';
 
-// ============================================
-// COMPOSANT PRINCIPAL
-// ============================================
-
 export default function LastSessionScreen() {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
   const cardRef = useRef<View>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -79,32 +79,78 @@ export default function LastSessionScreen() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [customLocation, setCustomLocation] = useState<string>('');
 
-  // Load last training
+  // Nouveaux states pour la personnalisation
+  const [showYearlyCount, setShowYearlyCount] = useState(true);
+  const [showMonthlyCount, setShowMonthlyCount] = useState(true);
+  const [showWeeklyCount, setShowWeeklyCount] = useState(true);
+  const [showExercises, setShowExercises] = useState(true);
+  const [showDate, setShowDate] = useState(true);
+  const [showClub, setShowClub] = useState(true);
+  const [showLieu, setShowLieu] = useState(true);
+  const [showGoalProgress, setShowGoalProgress] = useState(true);
+  const [showStats, setShowStats] = useState(true);
+  const [yearlyCount, setYearlyCount] = useState(0);
+  const [monthlyCount, setMonthlyCount] = useState(0);
+  const [weeklyCount, setWeeklyCount] = useState(0);
+  const [yearlyObjective, setYearlyObjective] = useState(0);
+
   useEffect(() => {
-    const loadLastTraining = async () => {
+    const loadData = async () => {
       try {
-        const trainings = await getTrainings();
+        const [trainings, clubs] = await Promise.all([
+          getTrainings(),
+          getClubs(),
+        ]);
+
+        let currentTraining: Training | null = null;
         if (trainings.length > 0) {
-          // Si un ID est passé en paramètre, on cherche cet ID spécifique
           if (params.id) {
-            const specific = trainings.find(t => t.id === parseInt(params.id!));
-            if (specific) {
-              setLastTraining(specific);
-              setIsLoadingData(false);
-              return;
-            }
+            currentTraining = trainings.find(t => t.id === parseInt(params.id!)) || null;
+          } else {
+            currentTraining = trainings[0];
           }
-          
-          // Sinon fallback sur le premier (déjà trié par ID DESC dans la DB)
-          setLastTraining(trainings[0]);
+          setLastTraining(currentTraining);
         }
+
+        // Calculer l'objectif si un club est associé
+        if (currentTraining && currentTraining.club_id) {
+          const club = clubs.find(c => c.id === currentTraining?.club_id);
+          if (club) {
+            const now = new Date();
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const weeksPassed = Math.max(1, Math.ceil((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24 * 7)));
+            setYearlyObjective((club.sessions_per_week || 3) * weeksPassed);
+          }
+        }
+
+        // Calculer les compteurs
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        const startOfWeek = new Date(now);
+        const day = startOfWeek.getDay();
+        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+        startOfWeek.setDate(diff);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const thisYear = trainings.filter(t => new Date(t.date).getFullYear() === currentYear);
+        const thisMonth = trainings.filter(t => {
+          const d = new Date(t.date);
+          return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+        });
+        const thisWeek = trainings.filter(t => new Date(t.date) >= startOfWeek);
+
+        setYearlyCount(thisYear.length);
+        setMonthlyCount(thisMonth.length);
+        setWeeklyCount(thisWeek.length);
+
       } catch (error) {
-        logger.error('Error loading last training:', error);
+        logger.error('Error loading data:', error);
       } finally {
         setIsLoadingData(false);
       }
     };
-    loadLastTraining();
+    loadData();
   }, [params.id]);
 
   // ============================================
@@ -294,42 +340,73 @@ export default function LastSessionScreen() {
   }
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper noPadding>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-            <X size={24} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Share2 size={20} color={colors.accent} />
-            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              Partager ma séance
-            </Text>
+        
+        {/* HEADER ÉTAPE 3 - SOMMET ABSOLU */}
+        <View style={{ 
+          paddingTop: insets.top, 
+          backgroundColor: colors.background, 
+          borderBottomWidth: 1, 
+          borderBottomColor: colors.border,
+          zIndex: 999
+        }}>
+          <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.gold, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 3 SUR 4</Text>
+            <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
+              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
+              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
+              <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
+              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            </View>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginTop: 12, letterSpacing: 1 }}>PARTAGE & PERSONNALISATION</Text>
           </View>
-          <View style={{ width: 40 }} />
         </View>
 
-        {/* INDICATEUR ÉTAPE 3 - VERSION LARGE */}
-        <View style={{ paddingVertical: 20, backgroundColor: colors.background, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ fontSize: 14, fontWeight: '900', color: colors.accent, letterSpacing: 2, marginBottom: 10 }}>ÉTAPE 3 SUR 3</Text>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <View style={{ width: 40, height: 2, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <View style={{ width: 40, height: 2, backgroundColor: colors.accent }} />
-            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
-          </View>
-          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>Partage & Personnalisation</Text>
-        </View>
-
-        <ScrollView
+        <ScrollView 
           ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: 20, paddingBottom: 150 }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Card Preview */}
+          {/* 1. SÉLECTEUR DE FOND - EN HAUT POUR CHARGER PHOTO DIRECT */}
+          <View style={[styles.styleSection, { marginBottom: 30 }]}>
+            <View style={styles.styleRow}>
+              {[
+                { key: 'photo', label: 'PHOTO PERSO', icon: Camera },
+                { key: 'black', label: 'SOMBRE', icon: Moon },
+                { key: 'white', label: 'CLAIR', icon: Sun },
+              ].map((style) => (
+                <TouchableOpacity
+                  key={style.key}
+                  style={[
+                    styles.styleBtn,
+                    {
+                      backgroundColor: backgroundType === style.key ? colors.accent : colors.backgroundCard,
+                      borderColor: backgroundType === style.key ? colors.accent : colors.border,
+                      flex: 1,
+                    }
+                  ]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setBackgroundType(style.key as any);
+                    if (style.key === 'photo') pickImage();
+                    else setBackgroundImage(undefined);
+                  }}
+                >
+                  <style.icon size={18} color={backgroundType === style.key ? '#FFFFFF' : colors.textPrimary} />
+                  <Text style={[styles.styleBtnText, { color: backgroundType === style.key ? '#FFFFFF' : colors.textPrimary }]}>
+                    {style.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* 2. APERÇU DE LA CARTE (Format Story 9:16) */}
           <View style={styles.cardContainer}>
             <SessionCard
               ref={cardRef}
@@ -338,163 +415,96 @@ export default function LastSessionScreen() {
               backgroundType={backgroundType}
               customLocation={customLocation}
               isLandscape={isLandscapeImage}
+              yearlyCount={yearlyCount}
+              monthlyCount={monthlyCount}
+              weeklyCount={weeklyCount}
+              yearlyObjective={yearlyObjective}
+              showDate={showDate}
+              showYearlyCount={showYearlyCount}
+              showMonthlyCount={showMonthlyCount}
+              showWeeklyCount={showWeeklyCount}
+              showGoalProgress={showGoalProgress}
+              showClub={showClub}
+              showLieu={showLieu}
+              showExercises={showExercises}
+              showStats={showStats}
+              width={CARD_WIDTH}
             />
           </View>
 
-          {/* Style Selector */}
-          <View style={styles.styleSection}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>Style de fond</Text>
-            <View style={styles.styleRow}>
-              {/* Sombre */}
-              <TouchableOpacity
-                style={[
-                  styles.styleBtn,
-                  {
-                    backgroundColor: backgroundType === 'black' ? colors.accent : colors.backgroundCard,
-                    borderColor: backgroundType === 'black' ? colors.accent : colors.border,
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setBackgroundType('black');
-                  setBackgroundImage(undefined);
-                }}
-              >
-                <Moon size={18} color={backgroundType === 'black' ? '#FFFFFF' : colors.textPrimary} />
-                <Text style={[
-                  styles.styleBtnText,
-                  { color: backgroundType === 'black' ? colors.textOnAccent : colors.textPrimary }
-                ]}>
-                  Sombre
-                </Text>
-              </TouchableOpacity>
-
-              {/* Clair */}
-              <TouchableOpacity
-                style={[
-                  styles.styleBtn,
-                  {
-                    backgroundColor: backgroundType === 'white' ? colors.accent : colors.backgroundCard,
-                    borderColor: backgroundType === 'white' ? colors.accent : colors.border,
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setBackgroundType('white');
-                  setBackgroundImage(undefined);
-                }}
-              >
-                <Sun size={18} color={backgroundType === 'white' ? '#FFFFFF' : colors.textPrimary} />
-                <Text style={[
-                  styles.styleBtnText,
-                  { color: backgroundType === 'white' ? colors.textOnAccent : colors.textPrimary }
-                ]}>
-                  Clair
-                </Text>
-              </TouchableOpacity>
-
-              {/* Photo */}
-              <TouchableOpacity
-                style={[
-                  styles.styleBtn,
-                  {
-                    backgroundColor: backgroundType === 'photo' ? colors.accent : colors.backgroundCard,
-                    borderColor: backgroundType === 'photo' ? colors.accent : colors.border,
-                  }
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setBackgroundType('photo');
-                  // Scroll vers les boutons photo (en bas)
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }, 150);
-                }}
-              >
-                <Camera size={18} color={backgroundType === 'photo' ? '#FFFFFF' : colors.textPrimary} />
-                <Text style={[
-                  styles.styleBtnText,
-                  { color: backgroundType === 'photo' ? colors.textOnAccent : colors.textPrimary }
-                ]}>
-                  Photo
-                </Text>
-              </TouchableOpacity>
+          {/* 3. NOMBREUX TOGGLES DE PERSONNALISATION */}
+          <View style={{ marginBottom: 30 }}>
+            <Text style={[styles.sectionLabel, { color: colors.textMuted, textAlign: 'left', marginBottom: 15 }]}>ÉLÉMENTS À AFFICHER SUR L'IMAGE</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+              {[
+                { label: 'Date', value: showDate, setter: setShowDate, color: '#9CA3AF' },
+                { label: 'Club', value: showClub, setter: setShowClub, color: GOLD_COLOR },
+                { label: 'Lieu', value: showLieu, setter: setShowLieu, color: '#9CA3AF' },
+                { label: 'Annuel', value: showYearlyCount, setter: setShowYearlyCount, color: GOLD_COLOR },
+                { label: 'Mensuel', value: showMonthlyCount, setter: setShowMonthlyCount, color: colors.accent },
+                { label: 'Hebdo', value: showWeeklyCount, setter: setShowWeeklyCount, color: '#3B82F6' },
+                { label: 'Objectif', value: showGoalProgress, setter: setShowGoalProgress, color: GOLD_COLOR },
+                { label: 'Exercices', value: showExercises, setter: setShowExercises, color: '#10B981' },
+                { label: 'Stats (KM/Allure)', value: showStats, setter: setShowStats, color: colors.accent },
+              ].map((item, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => item.setter(!item.value)}
+                  style={{ 
+                    width: '48%', 
+                    backgroundColor: item.value ? item.color + '15' : 'rgba(255,255,255,0.05)', 
+                    padding: 14, 
+                    borderRadius: 16, 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    borderWidth: 1,
+                    borderColor: item.value ? item.color : 'transparent'
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
+                  <Switch 
+                    value={item.value} 
+                    onValueChange={item.setter}
+                    trackColor={{ false: '#333', true: item.color }}
+                    thumbColor="#FFFFFF"
+                    style={{ transform: [{ scale: 0.7 }] }}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
 
-          {/* Photo Actions */}
-          {backgroundType === 'photo' && (
-            <View style={styles.photoSection}>
-              <TouchableOpacity
-                style={[styles.photoBtn, { backgroundColor: colors.accent }]}
-                onPress={takePhoto}
-              >
-                <Camera size={20} color={colors.textOnAccent} />
-                <Text style={[styles.photoBtnText, { color: colors.textOnAccent }]}>Prendre une photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
-                onPress={pickImage}
-              >
-                <ImageIcon size={20} color={colors.textPrimary} />
-                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Choisir dans la galerie</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Location Input */}
+          {/* 4. LIEU PERSONNALISÉ */}
           <View style={styles.locationSection}>
             <View style={styles.locationHeader}>
               <MapPinned size={18} color={colors.accent} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>
-                Lieu (optionnel)
-              </Text>
+              <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>Modifier le lieu</Text>
             </View>
             <TextInput
-              style={[
-                styles.locationInput,
-                {
-                  backgroundColor: colors.backgroundCard,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                }
-              ]}
+              style={[styles.locationInput, { backgroundColor: colors.backgroundCard, borderColor: colors.border, color: colors.textPrimary }]}
               value={customLocation}
               onChangeText={setCustomLocation}
-              placeholder="Ex: Paris, Salle de sport XYZ..."
+              placeholder="Ex: Basic-Fit Prado, Marseille..."
               placeholderTextColor={colors.textMuted}
-              maxLength={50}
             />
           </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionSection}>
-            <TouchableOpacity
-              style={[styles.shareBtn, { backgroundColor: colors.accent }]}
-              onPress={shareCard}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <>
-                  <Share2 size={22} color="#FFFFFF" />
-                  <Text style={styles.shareBtnText}>Partager sur Instagram / TikTok</Text>
-                </>
-              )}
+          {/* 5. ACTIONS FINALES */}
+          <View style={{ gap: 15, marginTop: 20 }}>
+            <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
+              <Share2 size={24} color="#FFFFFF" />
+              <Text style={[styles.shareBtnText, { fontSize: 18 }]}>PARTAGER SUR INSTAGRAM</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              onPress={saveToGallery}
-              disabled={isLoading}
+            <TouchableOpacity 
+              style={[styles.shareBtn, { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]} 
+              onPress={() => router.push('/social-share/backup-step')}
             >
-              <Download size={20} color={colors.textPrimary} />
-              <Text style={[styles.saveBtnText, { color: colors.textPrimary }]}>Sauvegarder</Text>
+              <Text style={[styles.shareBtnText, { color: '#FFFFFF' }]}>ÉTAPE SUIVANTE : SAUVEGARDE</Text>
+              <ArrowRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-
-          <View style={styles.bottomSpacer} />
         </ScrollView>
       </View>
       <PopupComponent />
@@ -834,5 +844,13 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  skipBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  skipText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

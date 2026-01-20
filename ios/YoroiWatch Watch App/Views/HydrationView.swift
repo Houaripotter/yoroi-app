@@ -18,11 +18,11 @@ struct HydrationView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 4) {
+            VStack(spacing: 0) {
                 // SECTION 1: VISUEL PRINCIPAL
                 VStack(spacing: 4) {
                     // Bouteille animée
-                    TimelineView(.animation) { timeline in
+                    TimelineView(.animation) { (timeline: TimelineViewDefaultContext) in
                         let now = timeline.date.timeIntervalSinceReferenceDate
                         let angle = now.remainder(dividingBy: 2) * .pi * 2
                         
@@ -54,8 +54,8 @@ struct HydrationView: View {
                         }
                         .scaleEffect(bottleScale)
                     }
-                    .frame(height: 75)
-                    .padding(.top, -10) // Remonte la bouteille
+                    .frame(height: 70)
+                    .padding(.top, 0) // Supprimé padding négatif ou positif, on colle au haut
                     
                     // Valeur centrale
                     VStack(spacing: 0) {
@@ -117,6 +117,8 @@ struct HydrationView: View {
                     .padding(6)
                     .background(Color.gray.opacity(0.12))
                     .cornerRadius(12)
+                    .focusable(true)
+                    .digitalCrownRotation($customAmount, from: 0, through: 2000, by: 50, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
                     
                     // MODIFIER L'OBJECTIF
                     HStack {
@@ -161,100 +163,6 @@ struct HydrationView: View {
             healthManager.removeWater(abs(amount))
             WKInterfaceDevice.current().play(.directionUp)
         }
-    }
-}
-
-// Forme de la bouteille
-struct WaterBottleShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        let width = rect.width
-        let height = rect.height
-
-        // Goulot
-        let neckWidth = width * 0.4
-        let neckHeight = height * 0.15
-        let neckX = (width - neckWidth) / 2
-
-        // Corps
-        let bodyTop = neckHeight
-        let cornerRadius: CGFloat = 15
-
-        path.move(to: CGPoint(x: neckX, y: 0))
-        path.addLine(to: CGPoint(x: neckX + neckWidth, y: 0))
-        path.addLine(to: CGPoint(x: neckX + neckWidth, y: bodyTop))
-
-        // Épaule droite
-        path.addQuadCurve(
-            to: CGPoint(x: width - cornerRadius, y: bodyTop + 15),
-            control: CGPoint(x: width, y: bodyTop)
-        )
-
-        // Côté droit
-        path.addLine(to: CGPoint(x: width, y: height - cornerRadius))
-
-        // Coin bas droit
-        path.addQuadCurve(
-            to: CGPoint(x: width - cornerRadius, y: height),
-            control: CGPoint(x: width, y: height)
-        )
-
-        // Bas
-        path.addLine(to: CGPoint(x: cornerRadius, y: height))
-
-        // Coin bas gauche
-        path.addQuadCurve(
-            to: CGPoint(x: 0, y: height - cornerRadius),
-            control: CGPoint(x: 0, y: height)
-        )
-
-        // Côté gauche
-        path.addLine(to: CGPoint(x: 0, y: bodyTop + 15))
-
-        // Épaule gauche
-        path.addQuadCurve(
-            to: CGPoint(x: neckX, y: bodyTop),
-            control: CGPoint(x: 0, y: bodyTop)
-        )
-
-        path.closeSubpath()
-
-        return path
-    }
-}
-
-// Forme des vagues
-struct WaveShape: Shape {
-    var offset: CGFloat
-    var percent: Double
-
-    var animatableData: CGFloat {
-        get { offset }
-        set { offset = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-
-        let waveHeight: CGFloat = 5
-        let width = rect.width
-        let height = rect.height
-
-        path.move(to: CGPoint(x: 0, y: waveHeight))
-
-        for x in stride(from: 0, through: width, by: 1) {
-            let relativeX = x / width
-            let sine = sin(relativeX * .pi * 2 + offset)
-            let y = waveHeight + sine * waveHeight
-            path.addLine(to: CGPoint(x: x, y: y))
-        }
-
-        path.addLine(to: CGPoint(x: width, y: height))
-        path.addLine(to: CGPoint(x: 0, y: height))
-        path.closeSubpath()
-
-        return path
     }
 }
 

@@ -92,7 +92,27 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Envoie des données à l'iPhone avec retry automatique
+    /// Envoie des données à l'iPhone avec garantie de livraison (transferUserInfo)
+    /// Idéal pour le poids, les records, l'hydratation
+    func transferToiPhone<T: Codable>(_ data: T, forKey key: String) {
+        guard let session = session else { return }
+        
+        // Encoder les données
+        guard let encoded = try? JSONEncoder().encode(data) else { return }
+        let userInfo = [key: encoded]
+        
+        // transferUserInfo est géré par iOS/WatchOS en arrière-plan
+        // et garantit la livraison même si l'app est fermée
+        session.transferUserInfo(userInfo)
+        
+        DispatchQueue.main.async {
+            self.lastSyncDate = Date()
+            print("🚀 Données envoyées via transferUserInfo: \(key)")
+        }
+    }
+
+    /// Envoie des données à l'iPhone avec retry automatique (sendMessage)
+    /// Utilisé pour les actions qui demandent une réponse immédiate
     func sendToiPhone<T: Codable>(_ data: T, forKey key: String, completion: ((Bool) -> Void)? = nil) {
         guard let session = session else {
             completion?(false)
@@ -118,14 +138,14 @@ class WatchConnectivityManager: NSObject, ObservableObject {
             }, errorHandler: { error in
                 DispatchQueue.main.async {
                     print("❌ Erreur envoi message: \(error.localizedDescription)")
-                    // Ajouter à la queue pour retry
-                    self.addToQueue(key: key, data: encoded)
+                    // Pour les données importantes, on double avec transferUserInfo
+                    self.transferToiPhone(data, forKey: key)
                     completion?(false)
                 }
             })
         } else {
-            // iPhone pas reachable, ajouter à la queue
-            addToQueue(key: key, data: encoded)
+            // iPhone pas reachable, on utilise le transfert robuste
+            self.transferToiPhone(data, forKey: key)
             completion?(false)
         }
     }
@@ -315,6 +335,30 @@ extension WatchConnectivityManager: WCSessionDelegate {
         }
     }
 
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        // Recevoir les données envoyées via transferUserInfo (robuste/background)
+        DispatchQueue.main.async {
+            print("📩 UserInfo reçu de l'iPhone (Background Sync): \(userInfo.keys)")
+
+            if let weightData = userInfo["weightUpdate"] as? Data {
+                NotificationCenter.default.post(name: .didReceiveWeightUpdate, object: weightData)
+            }
+
+            if let hydrationData = userInfo["hydrationUpdate"] as? Data {
+                NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: hydrationData)
+            }
+            
+            if let recordsData = userInfo["recordsUpdate"] as? Data {
+                NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: recordsData)
+            }
+            
+            // Nouveau: Gestion Avatar et Contexte global
+            if let avatarData = userInfo["avatarConfig"] as? [String: Any] {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: avatarData)
+            }
+        }
+    }
+
     func session(_ session: WCSession, didReceiveMessageData messageData: Data) {
         // Recevoir des données binaires de l'iPhone
         DispatchQueue.main.async {
@@ -329,5 +373,6 @@ extension Notification.Name {
     static let didReceiveWeightUpdate = Notification.Name("didReceiveWeightUpdate")
     static let didReceiveHydrationUpdate = Notification.Name("didReceiveHydrationUpdate")
     static let didReceiveRecordsUpdate = Notification.Name("didReceiveRecordsUpdate")
+    static let didReceiveAvatarUpdate = Notification.Name("didReceiveAvatarUpdate")
     static let didReceiveDataFromiPhone = Notification.Name("didReceiveDataFromiPhone")
 }

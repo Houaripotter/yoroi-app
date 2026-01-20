@@ -106,7 +106,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
       try {
         const exported = await HealthConnect.writeHydration(amount);
         if (exported) {
-          logger.info('Hydratation synchronisée vers Apple Health:', amount, 'ml');
+          logger.info(`Hydratation synchronisée vers Apple Health: ${amount} ml`);
         }
       } catch (healthError) {
         // Ne pas bloquer l'ajout si l'export échoue

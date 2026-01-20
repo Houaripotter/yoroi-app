@@ -53,7 +53,7 @@ struct TimerView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 // CERCLE PRINCIPAL AVEC CONTRÔLES INTÉGRÉS
                 HStack(spacing: 10) {
                     // BOUTON MOINS (Gauche)

@@ -28,7 +28,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { getCombats } from '@/lib/fighterModeService';
 import { Combat, calculateRecord } from '@/lib/fighterMode';
-import { SPACING, RADIUS } from '@/constants/appTheme';
+import { SPACING, RADIUS, SHADOWS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
 type FilterType = 'all' | 'victoire' | 'defaite' | 'nul';
@@ -361,11 +361,20 @@ export default function PalmaresScreen() {
                   ? 'Aucune défaite'
                   : 'Aucun match nul'}
               </Text>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              <Text style={[styles.emptyText, { color: colors.textMuted, marginBottom: SPACING.xl }]}>
                 {filter === 'all'
                   ? 'Ajoute ton premier combat pour commencer ton palmarès'
                   : 'Aucun combat trouvé avec ce filtre'}
               </Text>
+              {filter === 'all' && (
+                <TouchableOpacity
+                  style={[styles.emptyStateButton, { backgroundColor: colors.accent }]}
+                  onPress={handleAddCombat}
+                >
+                  <Plus size={20} color="#FFF" />
+                  <Text style={styles.emptyStateButtonText}>Enregistrer mon premier combat</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -551,6 +560,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  emptyStateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.md,
+  },
+  emptyStateButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 
   // FAB

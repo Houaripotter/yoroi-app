@@ -146,8 +146,26 @@ export default function OnboardingScreen() {
     {
       id: 'welcome',
       icon: (
-        <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
-          <Image source={require('../assets/images/logo2010.png')} style={{ width: 90, height: 90, borderRadius: 20 }} resizeMode="contain" />
+        <View style={{ 
+          width: 120, 
+          height: 120, 
+          borderRadius: 60, 
+          backgroundColor: '#FFFFFF', 
+          borderWidth: 3, 
+          borderColor: '#000000',
+          justifyContent: 'center', 
+          alignItems: 'center',
+          overflow: 'hidden',
+          shadowColor: '#000',
+          shadowOpacity: 0.2,
+          shadowRadius: 10,
+          elevation: 5
+        }}>
+          <Image 
+            source={require('../assets/images/logo2010.png')} 
+            style={{ width: 90, height: 90 }} 
+            resizeMode="contain" 
+          />
         </View>
       ),
       title: 'Bienvenue dans la team Yoroi',

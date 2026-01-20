@@ -1,72 +1,71 @@
-// ============================================
-// YOROI - BIBLIOTHÈQUE D'EXERCICES COMPLÈTE
-// ============================================
+// ============================================ 
+// YOROI - BIBLIOTHÈQUE MASSIVE D'EXERCICES PRO 
+// ============================================ 
 
-export const EXERCISE_LIBRARY = [
-  // PECTORAUX
-  { name: 'Développé couché (Barre)', category: 'force', muscle: 'PECTORAUX', unit: 'kg' },
-  { name: 'Développé couché (Haltères)', category: 'force', muscle: 'PECTORAUX', unit: 'kg' },
-  { name: 'Développé incliné', category: 'force', muscle: 'PECTORAUX', unit: 'kg' },
-  { name: 'Écartés haltères', category: 'force', muscle: 'PECTORAUX', unit: 'kg' },
-  { name: 'Pec Deck', category: 'force', muscle: 'PECTORAUX', unit: 'kg' },
-  { name: 'Dips (Pectoraux)', category: 'force', muscle: 'PECTORAUX', unit: 'reps' },
-  { name: 'Pompes', category: 'force', muscle: 'PECTORAUX', unit: 'reps' },
-  
-  // DOS
-  { name: 'Tractions (Pronation)', category: 'force', muscle: 'DOS', unit: 'reps' },
-  { name: 'Tractions (Supination)', category: 'force', muscle: 'DOS', unit: 'reps' },
-  { name: 'Tirage poitrine', category: 'force', muscle: 'DOS', unit: 'kg' },
-  { name: 'Rowing barre', category: 'force', muscle: 'DOS', unit: 'kg' },
-  { name: 'Rowing haltère', category: 'force', muscle: 'DOS', unit: 'kg' },
-  { name: 'Deadlift', category: 'force', muscle: 'DOS', unit: 'kg' },
-  { name: 'Tirage bûcheron', category: 'force', muscle: 'DOS', unit: 'kg' },
-  
-  // JAMBES
-  { name: 'Squat (Barre)', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Presse à cuisses', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Leg Extension', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Leg Curl', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Fentes haltères', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Mollets debout', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  { name: 'Soulevé de terre jambes tendues', category: 'force', muscle: 'JAMBES', unit: 'kg' },
-  
-  // ÉPAULES
-  { name: 'Développé militaire', category: 'force', muscle: 'ÉPAULES', unit: 'kg' },
-  { name: 'Élévations latérales', category: 'force', muscle: 'ÉPAULES', unit: 'kg' },
-  { name: 'Arnold Press', category: 'force', muscle: 'ÉPAULES', unit: 'kg' },
-  { name: 'Oiseau haltères', category: 'force', muscle: 'ÉPAULES', unit: 'kg' },
-  { name: 'Tirage menton', category: 'force', muscle: 'ÉPAULES', unit: 'kg' },
-  
-  // BRAS
-  { name: 'Curl barre EZ', category: 'force', muscle: 'BRAS', unit: 'kg' },
-  { name: 'Curl haltères', category: 'force', muscle: 'BRAS', unit: 'kg' },
-  { name: 'Curl marteau', category: 'force', muscle: 'BRAS', unit: 'kg' },
-  { name: 'Extensions triceps poulie', category: 'force', muscle: 'BRAS', unit: 'kg' },
-  { name: 'Barre au front', category: 'force', muscle: 'BRAS', unit: 'kg' },
-  { name: 'Dips triceps', category: 'force', muscle: 'BRAS', unit: 'reps' },
-  
-  // ABDOS
-  { name: 'Crunch', category: 'force', muscle: 'ABDOS', unit: 'reps' },
-  { name: 'Gainage (Planche)', category: 'force', muscle: 'ABDOS', unit: 'time' },
-  { name: 'Relevé de jambes', category: 'force', muscle: 'ABDOS', unit: 'reps' },
-  { name: 'Roulette abdos', category: 'force', muscle: 'ABDOS', unit: 'reps' },
-  
-  // RUNNING & TRAIL
-  { name: '5km Course', category: 'running', muscle: 'CARDIO', unit: 'time' },
-  { name: '10km Course', category: 'running', muscle: 'CARDIO', unit: 'time' },
-  { name: 'Semi-Marathon', category: 'running', muscle: 'CARDIO', unit: 'time' },
-  { name: 'Fractionné (VMA)', category: 'running', muscle: 'CARDIO', unit: 'time' },
-  { name: 'Sortie Trail 15km', category: 'trail', muscle: 'CARDIO', unit: 'time' },
-  
-  // SPORTS DE COMBAT (Records techniques)
-  { name: 'Sparring JJB (min)', category: 'custom', muscle: 'JJB', unit: 'time' },
-  { name: 'Drills Technique (reps)', category: 'custom', muscle: 'JJB', unit: 'reps' },
-  { name: 'Sac de frappe (min)', category: 'custom', muscle: 'BOXE', unit: 'time' },
-  { name: 'Leçons avec coach', category: 'custom', muscle: 'COMBAT', unit: 'reps' },
-  
-  // HYROX
-  { name: 'SkiErg 1000m', category: 'hyrox', muscle: 'CARDIO', unit: 'time' },
-  { name: 'Sled Push 50m', category: 'hyrox', muscle: 'FORCE', unit: 'time' },
-  { name: 'Burpees Broad Jumps', category: 'hyrox', muscle: 'CARDIO', unit: 'reps' },
-  { name: 'Wall Balls (reps)', category: 'hyrox', muscle: 'CARDIO', unit: 'reps' },
+export interface ExerciseDefinition { 
+  name: string; 
+  category: string; 
+  muscle?: string; 
+  unit: 'reps' | 'time' | 'km'; 
+} 
+
+export const EXERCISE_LIBRARY: ExerciseDefinition[] = [ 
+  // === CARDIO MACHINES (MATRIX / TECHNOGYM) === 
+  { name: 'Tapis de course (Matrix)', category: 'cardio', muscle: 'CARDIO', unit: 'km' }, 
+  { name: 'Vélo Elliptique (Technogym)', category: 'cardio', muscle: 'CARDIO', unit: 'time' }, 
+  { name: 'Stairmaster / Escalier', category: 'cardio', muscle: 'JAMBES', unit: 'time' }, 
+  { name: 'Rameur Concept2', category: 'cardio', muscle: 'DOS', unit: 'km' }, 
+  { name: 'Vélo de Biking / Spinning', category: 'cardio', muscle: 'JAMBES', unit: 'km' }, 
+  { name: 'Assault Bike', category: 'cardio', muscle: 'CORPS ENTIER', unit: 'time' }, 
+  { name: 'SkiErg', category: 'cardio', muscle: 'BRAS/DOS', unit: 'time' }, 
+  { name: 'Marche Inclinée (Matrix)', category: 'cardio', muscle: 'FESSIERS', unit: 'km' }, 
+  { name: 'Vario (Technogym)', category: 'cardio', muscle: 'CARDIO', unit: 'time' }, 
+
+  // === MUSCULATION (40+ EXERCICES) === 
+  { name: 'Développé Couché Barre', category: 'musculation', muscle: 'PECTORAUX', unit: 'reps' }, 
+  { name: 'Développé Couché Haltères', category: 'musculation', muscle: 'PECTORAUX', unit: 'reps' }, 
+  { name: 'Dips Poids de corps', category: 'musculation', muscle: 'PECTORAUX', unit: 'reps' }, 
+  { name: 'Écartés à la Poulie', category: 'musculation', muscle: 'PECTORAUX', unit: 'reps' }, 
+  { name: 'Chest Press Machine', category: 'musculation', muscle: 'PECTORAUX', unit: 'reps' }, 
+  { name: 'Tractions Pronation', category: 'musculation', muscle: 'DOS', unit: 'reps' }, 
+  { name: 'Tirage Vertical', category: 'musculation', muscle: 'DOS', unit: 'reps' }, 
+  { name: 'Rowing Barre', category: 'musculation', muscle: 'DOS', unit: 'reps' }, 
+  { name: 'Low Row Machine', category: 'musculation', muscle: 'DOS', unit: 'reps' }, 
+  { name: 'Pull Over Poulie', category: 'musculation', muscle: 'DOS', unit: 'reps' }, 
+  { name: 'Squat Barre Libre', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Presse à Cuisses Matrix', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Leg Extension', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Leg Curl Ischios', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Adducteurs Machine', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Abducteurs Machine', category: 'musculation', muscle: 'FESSIERS', unit: 'reps' }, 
+  { name: 'Développé Militaire', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' }, 
+  { name: 'Élévations Latérales', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' }, 
+  { name: 'Shoulder Press Machine', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' }, 
+  { name: 'Facepull Poulie', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' }, 
+  { name: 'Curl Biceps Haltères', category: 'musculation', muscle: 'BICEPS', unit: 'reps' }, 
+  { name: 'Curl Marteau', category: 'musculation', muscle: 'BICEPS', unit: 'reps' }, 
+  { name: 'Barre au front', category: 'musculation', muscle: 'TRICEPS', unit: 'reps' }, 
+  { name: 'Extension Triceps Poulie', category: 'musculation', muscle: 'TRICEPS', unit: 'reps' }, 
+  { name: 'Crunch Machine', category: 'musculation', muscle: 'ABDOS', unit: 'reps' }, 
+  { name: 'Gainage Planche', category: 'musculation', muscle: 'ABDOS', unit: 'time' }, 
+  { name: 'Deadlift Soulevé de terre', category: 'musculation', muscle: 'DOS/JAMBES', unit: 'reps' }, 
+  { name: 'Fentes Marchées', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Hip Thrust Barre', category: 'musculation', muscle: 'FESSIERS', unit: 'reps' }, 
+  { name: 'Skullcrusher', category: 'musculation', muscle: 'TRICEPS', unit: 'reps' }, 
+  { name: 'Preacher Curl', category: 'musculation', muscle: 'BICEPS', unit: 'reps' }, 
+  { name: 'Upright Row', category: 'musculation', muscle: 'ÉPAULES', unit: 'reps' }, 
+  { name: 'Hack Squat', category: 'musculation', muscle: 'JAMBES', unit: 'reps' }, 
+  { name: 'Machine à Mollets', category: 'musculation', muscle: 'MOLLETS', unit: 'reps' }, 
+
+  // === SPORTS DE COMBAT === 
+  { name: 'Drilling Technique', category: 'jjb', unit: 'reps' }, 
+  { name: 'Sparring Souple', category: 'jjb', unit: 'time' }, 
+  { name: 'Sparring Intensif', category: 'jjb', unit: 'time' }, 
+  { name: 'Passages de garde', category: 'jjb', unit: 'reps' }, 
+  { name: 'Lutte à genoux', category: 'jjb', unit: 'time' }, 
+  { name: 'Shadow Boxing', category: 'boxe', unit: 'time' }, 
+  { name: 'Travail au Sac', category: 'boxe', unit: 'time' }, 
+  { name: 'Mitts (Pattes d\'ours)', category: 'boxe', unit: 'time' }, 
+  { name: 'Sparring Boxe', category: 'boxe', unit: 'time' }, 
+  { name: 'Corde à sauter', category: 'boxe', unit: 'time' }, 
 ];

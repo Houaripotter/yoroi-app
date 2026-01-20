@@ -22,6 +22,7 @@ import { getProfile, getAllWeights } from '@/lib/database';
 import { getUserSettings } from '@/lib/storage';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { StatsExplanation } from '../StatsExplanation';
 
 export const PoidsPage: React.FC = () => {
   const { colors } = useTheme();
@@ -258,6 +259,12 @@ export const PoidsPage: React.FC = () => {
         description={t('statsPages.weight.description')}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
+      />
+
+      <StatsExplanation 
+        title="Poids & IMC"
+        text="Le Poids est ton indicateur de masse globale. L'IMC (Indice de Masse Corporelle) permet de situer ton poids par rapport à ta taille. Utilise la moyenne mobile pour lisser les variations quotidiennes dues à l'eau."
+        color="#3B82F6"
       />
 
       {/* Section Graphique Principal */}

@@ -16,15 +16,16 @@ import { HistoryScrollCard } from '../charts/HistoryScrollCard';
 import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
-import { RecoveryCircle } from '../whoop/RecoveryCircle';
-import { SleepPhasesBar } from '../whoop/SleepPhasesBar';
-import { HRVCard } from '../whoop/HRVCard';
+import { RecoveryCircle } from '../advanced/RecoveryCircle';
+import { SleepPhasesBar } from '../advanced/SleepPhasesBar';
+import { HRVCard } from '../advanced/HRVCard';
 import { healthConnect } from '@/lib/healthConnect';
 import { Moon, Droplet, Heart, Activity, Zap } from 'lucide-react-native';
 import { CircularProgress } from '@/components/charts/CircularProgress';
 import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES, getMetricStatus } from '@/lib/healthRanges';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { StatsExplanation } from '../StatsExplanation';
 
 export const VitalitePage: React.FC = () => {
   const { colors } = useTheme();
@@ -245,6 +246,12 @@ export const VitalitePage: React.FC = () => {
         description={t('statsPages.vitality.description')}
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
+      />
+
+      <StatsExplanation 
+        title="Santé & Vitalité"
+        text="Cette section regroupe tes indicateurs de récupération. Le Sommeil répare les tissus, l'Hydratation maintient tes performances, et le VRC (Variabilité de Fréquence Cardiaque) indique si ton système nerveux est prêt pour une séance intense."
+        color="#EC4899"
       />
 
       {/* Graphique de tendance principal */}
@@ -470,7 +477,7 @@ export const VitalitePage: React.FC = () => {
           </View>
         )}
 
-        {/* HRV Card style Whoop */}
+        {/* Carte VRC (Analyse Système Nerveux) */}
         {healthData?.hrv?.value && healthData?.hrv?.baseline && (
           <TouchableOpacity
             activeOpacity={0.7}

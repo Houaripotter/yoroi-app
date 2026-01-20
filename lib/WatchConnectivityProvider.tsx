@@ -53,44 +53,59 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
   const initializeWatchConnectivity = async () => {
     try {
-      console.log('📡 Tentative d\'activation WatchConnectivity...');
+      console.log('📡 [YoroiSync] Activation de la session instantanée...');
       
-      // Activer la session explicitement
+      // Activer la session
       await WatchConnectivity.activateSession();
       
-      // Vérifier disponibilité
-      const available = await WatchConnectivity.isWatchAvailable();
+      // Vérifier l'état immédiat
       const reachable = await WatchConnectivity.isWatchReachable();
-
-      setIsAvailable(available);
       setIsReachable(reachable);
 
-      if (available) {
-        console.log('✅ Apple Watch détectée et configurée');
-
-        // Sync initiale si Watch disponible
-        await syncAllData();
-      }
-
-      // Écouter les changements de reachability
-      const reachabilityListener = WatchConnectivity.onReachabilityChanged((status) => {
-        console.log('📡 Watch reachability changed:', status.isReachable);
-
-        setIsReachable(status.isReachable);
-        setIsAvailable(status.isPaired && status.isWatchAppInstalled);
-
-        // Si Watch revient à portée, sync automatique
-        if (status.isReachable) {
-          console.log('✅ Watch reconnectée - sync des données automatique...');
-          // Petit délai pour laisser la session se stabiliser
-          setTimeout(() => syncAllData(), 1000);
+      // Écouter les messages de la Watch
+      WatchConnectivity.onMessageReceived((message) => {
+        console.log('⚡ [YoroiSync] Message instantané:', message);
+        handleWatchMessage(message);
+        
+        // Répondre immédiatement pour garder le canal ouvert
+        if (message.ping) {
+          WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now() }).catch(() => {});
         }
       });
 
-      // Écouter les messages de la Watch
-      const messageListener = WatchConnectivity.onMessageReceived((message) => {
-        console.log('📩 Message reçu de la Watch:', message);
-        handleWatchMessage(message);
+      // Synchroniser les infos de profil immédiatement si possible
+      const syncProfileToWatch = async () => {
+        try {
+          const profile = await getProfile();
+          if (profile) {
+            // Envoyer la config avatar et photo
+            await WatchConnectivity.updateApplicationContext({
+              avatarConfig: {
+                name: profile.avatar_id || 'samurai',
+                level: profile.level || 1,
+                rank: profile.rank || 'Novice'
+              },
+              // Si on a une photo, on pourrait l'envoyer ici (limité en taille)
+              // Pour l'instant on envoie juste l'ID
+              timestamp: Date.now()
+            });
+          }
+        } catch (e) {
+          console.log('⚠️ Erreur sync profil vers watch:', e);
+        }
+      };
+
+      // Lancer la sync profil au démarrage et quand la watch se connecte
+      syncProfileToWatch();
+      WatchConnectivity.onReachabilityChanged((status) => {
+        if (status.isReachable) syncProfileToWatch();
+      });
+
+      // 2. Écouter les changements de portée
+      WatchConnectivity.onReachabilityChanged((status) => {
+        console.log('📡 [YoroiSync] État connexion:', status.isReachable ? 'CONNECTÉ' : 'DÉCONNECTÉ');
+        setIsReachable(status.isReachable);
+        if (status.isReachable) syncAllData();
       });
 
       // Écouter les données de la Watch
@@ -287,24 +302,29 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     try {
       console.log('🔄 Sync complète vers la Watch...');
 
-      // Charger toutes les données depuis AsyncStorage
-      const [weight, waterIntake, streak] = await Promise.all([
+      // Charger TOUTES les données profil
+      const [weight, waterIntake, streak, avatarConfig, userName] = await Promise.all([
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
         AsyncStorage.getItem('streak'),
+        AsyncStorage.getItem('@yoroi_avatar_config'),
+        AsyncStorage.getItem('@yoroi_user_name'),
       ]);
 
       // Envoyer tout en une fois via applicationContext
+      // Note: Pour la photo, on envoie le signal de rafraîchir
       await WatchConnectivity.updateApplicationContext({
         weight: parseFloat(weight || '0'),
         waterIntake: parseInt(waterIntake || '0'),
         streak: parseInt(streak || '0'),
+        avatarConfig: avatarConfig ? JSON.parse(avatarConfig) : null,
+        userName: userName || 'Guerrier',
         lastSync: new Date().toISOString(),
         timestamp: Date.now(),
       });
 
       setLastSyncDate(new Date());
-      console.log('✅ Sync complète réussie');
+      console.log('✅ Sync complète réussie (Profil + Avatar + Eau)');
     } catch (error) {
       console.error('❌ Erreur sync complète:', error);
       setLastError('Erreur sync complète');

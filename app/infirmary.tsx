@@ -149,8 +149,8 @@ export default function InfirmaryScreen() {
     // Détecter toutes les zones qui se chevauchent avec la zone cliquée
     const overlapping = getOverlappingZones(zone, view);
 
-    logger.info('Zone cliquée:', zone.label, 'x:', zone.x, 'y:', zone.y, 'w:', zone.w, 'h:', zone.h);
-    logger.info('🔍 Zones qui se chevauchent:', overlapping.length, overlapping.map(z => z.label));
+    logger.info(`Zone cliquée: ${zone.label} x: ${zone.x} y: ${zone.y} w: ${zone.w} h: ${zone.h}`);
+    logger.info(`🔍 Zones qui se chevauchent: ${overlapping.length}`, overlapping.map(z => z.label));
 
     if (overlapping.length > 1) {
       // Plusieurs zones se chevauchent: afficher le sélecteur pour choisir la zone exacte

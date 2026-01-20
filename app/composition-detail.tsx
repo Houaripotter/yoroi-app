@@ -159,6 +159,7 @@ export default function CompositionDetailScreen() {
 
   // Filtrer les données selon la période
   const filteredData = useMemo(() => {
+    if (!compositionData || !Array.isArray(compositionData)) return [];
     const period = PERIODS.find((p) => p.id === selectedPeriod);
     if (!period || !period.days) return compositionData;
 
@@ -166,18 +167,20 @@ export default function CompositionDetailScreen() {
     cutoffDate.setDate(cutoffDate.getDate() - period.days);
 
     return compositionData.filter(
-      (item) => new Date(item.date) >= cutoffDate
+      (item) => item && item.date && new Date(item.date) >= cutoffDate
     );
   }, [compositionData, selectedPeriod]);
 
   // Préparer les données pour le graphique
   const chartData = useMemo(() => {
+    if (!filteredData || !activeMetric) return [];
     return filteredData
       .map((item) => {
+        if (!item) return { value: 0, label: '' };
         const value = item[activeMetric.dataKey];
         return {
           value: typeof value === 'number' ? value : 0,
-          label: format(parseISO(item.date), 'd MMM', { locale: fr }),
+          label: item.date ? format(parseISO(item.date), 'd MMM', { locale: fr }) : '',
         };
       })
       .filter((item) => item.value > 0);

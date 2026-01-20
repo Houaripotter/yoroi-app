@@ -280,6 +280,7 @@ export default function AddCombatScreen() {
               placeholderTextColor={colors.textMuted}
               value={adversaireNom}
               onChangeText={setAdversaireNom}
+              maxLength={100}
             />
           </View>
         </View>
@@ -297,6 +298,7 @@ export default function AddCombatScreen() {
               placeholderTextColor={colors.textMuted}
               value={adversaireClub}
               onChangeText={setAdversaireClub}
+              maxLength={100}
             />
           </View>
         </View>
@@ -399,6 +401,7 @@ export default function AddCombatScreen() {
                 placeholderTextColor={colors.textMuted}
                 value={technique}
                 onChangeText={setTechnique}
+                maxLength={100}
               />
             </View>
           </View>
@@ -419,6 +422,7 @@ export default function AddCombatScreen() {
                 value={round}
                 onChangeText={setRound}
                 keyboardType="number-pad"
+                maxLength={2}
               />
             </View>
           </View>
@@ -435,6 +439,7 @@ export default function AddCombatScreen() {
                 placeholderTextColor={colors.textMuted}
                 value={temps}
                 onChangeText={setTemps}
+                maxLength={10}
               />
             </View>
           </View>
@@ -457,6 +462,7 @@ export default function AddCombatScreen() {
                 value={poidsPesee}
                 onChangeText={setPoidsPesee}
                 keyboardType="decimal-pad"
+                maxLength={6}
               />
             </View>
           </View>
@@ -476,6 +482,7 @@ export default function AddCombatScreen() {
                 value={poidsJourJ}
                 onChangeText={setPoidsJourJ}
                 keyboardType="decimal-pad"
+                maxLength={6}
               />
             </View>
           </View>
@@ -500,6 +507,7 @@ export default function AddCombatScreen() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+              maxLength={2000}
             />
           </View>
         </View>

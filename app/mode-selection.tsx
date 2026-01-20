@@ -230,7 +230,7 @@ export default function ModeSelectionScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* MODE LOISIR */}
+          {/* MODE DÉCOUVERTE / FORME */}
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => handleSelectMode('loisir')}

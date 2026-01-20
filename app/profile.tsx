@@ -18,13 +18,12 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Path } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import {
   ChevronLeft,
   Target,
   Scale,
   Ruler,
-  Flame,
   Calendar,
   Edit3,
   TrendingDown,
@@ -35,20 +34,13 @@ import {
   Check,
   Trophy,
   Zap,
-  Heart,
   Activity,
   Camera,
   ChevronRight,
-  Droplet,
-  Swords,
   User,
-  Star,
-  Shield,
-  Crown,
   Sparkles,
+  Star,
 } from 'lucide-react-native';
-import { AvatarSolid } from '@/components/Avatar';
-import { Icon } from '@/components/Icon';
 import {
   getProfile,
   saveProfile,
@@ -62,7 +54,7 @@ import { getUnlockedBadges } from '@/lib/badges';
 import { getWeights, getTrainings } from '@/lib/database';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, GRADIENTS } from '@/constants/design';
+import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from '@/constants/design';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 // 🔒 SÉCURITÉ: Protection contre les screenshots
@@ -75,59 +67,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // ============================================
 // PROFIL - DESIGN V5 VIBRANT & ADDICTIVE
 // ============================================
-
-// Large Ring Progress Component
-const LargeRingProgress = ({
-  progress,
-  size = 160,
-  strokeWidth = 10,
-  accentColor,
-  children
-}: {
-  progress: number;
-  size?: number;
-  strokeWidth?: number;
-  accentColor: string;
-  children?: React.ReactNode;
-}) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  return (
-    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
-      <Svg width={size} height={size} style={{ position: 'absolute' }}>
-        <Defs>
-          <SvgGradient id="profileRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor={accentColor} />
-            <Stop offset="100%" stopColor={accentColor} stopOpacity="0.5" />
-          </SvgGradient>
-        </Defs>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={COLORS.surfaceBorder}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="url(#profileRingGrad)"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-      {children}
-    </View>
-  );
-};
 
 // Stat Badge Component
 const StatBadge = ({
@@ -170,22 +109,22 @@ const ProgressCard = ({ weightProgress, t, colors }: { weightProgress: any; t: (
   const progress = Math.min(weightProgress.progress || 0, 100);
 
   return (
-    <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <View style={[styles.progressCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}>
       <View style={styles.progressHeader}>
         <View style={styles.progressTitleRow}>
-          <Target size={18} color={colors.accent} />
-          <Text style={[styles.progressTitle, { color: colors.textPrimary }]}>{t('profile.goal')}</Text>
+          <Target size={18} color={colors?.accent ?? '#0ABAB5'} />
+          <Text style={[styles.progressTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.goal')}</Text>
         </View>
-        <View style={[styles.progressPercentBadge, { backgroundColor: colors.accentMuted }]}>
-          <Text style={[styles.progressPercent, { color: colors.accent }]}>{progress.toFixed(0)}%</Text>
+        <View style={[styles.progressPercentBadge, { backgroundColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)' }]}>
+          <Text style={[styles.progressPercent, { color: colors?.accent ?? '#0ABAB5' }]}>{progress.toFixed(0)}%</Text>
         </View>
       </View>
 
       {/* Progress Bar */}
       <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBarBg, { backgroundColor: colors.backgroundElevated }]}>
+        <View style={[styles.progressBarBg, { backgroundColor: colors?.backgroundElevated ?? '#242429' }]}>
           <LinearGradient
-            colors={[colors.accent, colors.accentDark || colors.accent]}
+            colors={[colors?.accent ?? '#0ABAB5', colors?.accentDark || colors?.accent || '#089490']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.progressBarFill, { width: `${progress}%` }]}
@@ -196,18 +135,18 @@ const ProgressCard = ({ weightProgress, t, colors }: { weightProgress: any; t: (
       {/* Labels */}
       <View style={styles.progressLabels}>
         <View style={styles.progressLabelItem}>
-          <Text style={[styles.progressLabelValue, { color: colors.textPrimary }]}>{weightProgress.start}</Text>
-          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.start')}</Text>
+          <Text style={[styles.progressLabelValue, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{weightProgress.start}</Text>
+          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.start')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'center' }]}>
-          <Text style={[styles.progressLabelValue, { color: colors.accent, fontSize: TYPOGRAPHY.size.xl }]}>
+          <Text style={[styles.progressLabelValue, { color: colors?.accent ?? '#0ABAB5', fontSize: TYPOGRAPHY.size.xl }]}>
             {weightProgress.current}
           </Text>
-          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.current')}</Text>
+          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.current')}</Text>
         </View>
         <View style={[styles.progressLabelItem, { alignItems: 'flex-end' }]}>
-          <Text style={[styles.progressLabelValue, { color: colors.success }]}>{weightProgress.target}</Text>
-          <Text style={[styles.progressLabelText, { color: colors.textMuted }]}>{t('profile.goal')}</Text>
+          <Text style={[styles.progressLabelValue, { color: colors?.success ?? '#10B981' }]}>{weightProgress.target}</Text>
+          <Text style={[styles.progressLabelText, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.goal')}</Text>
         </View>
       </View>
     </View>
@@ -253,7 +192,7 @@ export default function ProfileScreen() {
   const { t } = useI18n();
 
   // 🔒 SÉCURITÉ: Protection contre les screenshots
-  const { isProtected, isBlurred, screenshotDetected } = useSensitiveScreen();
+  const { isBlurred, screenshotDetected } = useSensitiveScreen();
 
   // Custom popup
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -344,9 +283,6 @@ export default function ProfileScreen() {
   );
 
   const rank = getCurrentRank(streak);
-  const nextRank = getNextRank(streak);
-  const daysToNext = getDaysToNextRank(streak);
-  const rankProgress = getRankProgress(streak);
   const level = getLevel(totalPoints);
 
   const handleSave = async () => {
@@ -428,17 +364,12 @@ export default function ProfileScreen() {
 
   const pickProfilePhoto = async (withEditing: boolean = true) => {
     try {
-      logger.info('[Profile] Demande ouverture galerie...');
-
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      logger.info('[Profile] Permission galerie:', status);
-
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
         return;
       }
 
-      logger.info('[Profile] Ouverture galerie...');
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: withEditing,
@@ -447,11 +378,8 @@ export default function ProfileScreen() {
         selectionLimit: 1,
       });
 
-      logger.info('[Profile] Résultat galerie:', result.canceled);
-
       if (!result.canceled && result.assets && result.assets[0]) {
         const photoUri = result.assets[0].uri;
-        logger.info('[Profile] Photo sélectionnée:', photoUri);
         setProfilePhoto(photoUri);
         const safeName = (profile?.name?.trim() || name?.trim() || 'Champion') || 'Champion';
 
@@ -474,21 +402,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const useAvatarPhoto = async () => {
-    setProfilePhoto(null);
-    const safeName = (profile?.name || name || 'Champion').trim() || 'Champion';
-    await saveProfile({
-      name: safeName,
-      height_cm: profile?.height_cm,
-      target_weight: profile?.target_weight,
-      start_weight: profile?.start_weight,
-      start_date: profile?.start_date,
-      avatar_gender: profile?.avatar_gender || 'homme',
-      profile_photo: null,
-    });
-    await loadData();
-  };
-
   const handleChangePhoto = () => {
     showPopup(
       t('profile.profilePhoto') || 'Photo de profil',
@@ -498,8 +411,6 @@ export default function ProfileScreen() {
           text: '📸 ' + (t('profile.takePhoto') || 'Prendre une photo'),
           style: 'primary',
           onPress: async () => {
-            // Attendre que le popup modal soit complètement fermé avant d'ouvrir la caméra
-            logger.info('[Profile] Bouton caméra pressé');
             setTimeout(() => {
               takeProfilePhoto(true);
             }, 500);
@@ -509,8 +420,6 @@ export default function ProfileScreen() {
           text: '🖼️ ' + (t('profile.chooseFromGallery') || 'Choisir depuis la galerie'),
           style: 'default',
           onPress: async () => {
-            // Attendre que le popup modal soit complètement fermé avant d'ouvrir la galerie
-            logger.info('[Profile] Bouton galerie pressé');
             setTimeout(() => {
               pickProfilePhoto(true);
             }, 500);
@@ -530,42 +439,40 @@ export default function ProfileScreen() {
   const bmi = calculateBMI();
 
   const getBMIStatus = () => {
-    if (!bmi) return { text: '-', color: COLORS.textMuted };
+    if (!bmi) return { text: '-', color: colors?.textMuted ?? '#6B7280' };
     const value = parseFloat(bmi);
-    if (value < 18.5) return { text: 'Insuffisant', color: COLORS.warning };
-    if (value < 25) return { text: 'Normal', color: COLORS.success };
-    if (value < 30) return { text: 'Surpoids', color: COLORS.warning };
-    return { text: 'Obésité', color: COLORS.error };
+    if (value < 18.5) return { text: 'Insuffisant', color: colors?.warning ?? '#F59E0B' };
+    if (value < 25) return { text: 'Normal', color: colors?.success ?? '#10B981' };
+    if (value < 30) return { text: 'Surpoids', color: colors?.warning ?? '#F59E0B' };
+    return { text: 'Obésité', color: colors?.error ?? '#EF4444' };
   };
 
-  const bmiStatus = getBMIStatus();
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+    <View style={[styles.container, { backgroundColor: colors?.background ?? '#000000' }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors?.background ?? '#000000'} />
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets?.top ?? 0 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[styles.backButton, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}
             onPress={() => router.back()}
           >
-            <ChevronLeft size={22} color={colors.textPrimary} />
+            <ChevronLeft size={22} color={colors?.textPrimary ?? '#FFFFFF'} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>{t('profile.title')}</Text>
+          <Text style={[styles.headerTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.title')}</Text>
           <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: colors.card, borderColor: colors.border }, isEditing && { borderColor: colors.error, backgroundColor: colors.errorMuted }]}
+            style={[styles.editButton, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }, isEditing && { borderColor: colors?.error ?? '#FF0000', backgroundColor: colors?.errorMuted ?? 'rgba(255,0,0,0.1)' }]}
             onPress={() => setIsEditing(!isEditing)}
           >
             {isEditing ? (
-              <X size={18} color={colors.error} />
+              <X size={18} color={colors?.error ?? '#FF0000'} />
             ) : (
-              <Edit3 size={18} color={colors.accent} />
+              <Edit3 size={18} color={colors?.accent ?? '#0ABAB5'} />
             )}
           </TouchableOpacity>
         </View>
@@ -580,24 +487,24 @@ export default function ProfileScreen() {
         )}
 
         {/* Profile Hero Card - Photo centrée avec nom */}
-        <View style={[styles.heroCard, { borderColor: colors.border }]}>
+        <View style={[styles.heroCard, { borderColor: colors?.border ?? '#333333' }]}>
           <LinearGradient
-            colors={[colors.card, colors.background]}
+            colors={[colors?.card ?? '#1A1A1A', colors?.background ?? '#000000']}
             style={styles.heroGradient}
           >
             {/* Nom au-dessus */}
             {isEditing ? (
               <TextInput
-                style={[styles.nameInput, { color: colors.textPrimary, marginBottom: 16, borderBottomColor: colors.accent }]}
+                style={[styles.nameInput, { color: colors?.textPrimary ?? '#FFFFFF', marginBottom: 16, borderBottomColor: colors?.accent ?? '#0ABAB5' }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Ton nom"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                 textAlign="center"
                 maxLength={50}
               />
             ) : (
-              <Text style={[styles.profileName, { color: colors.textPrimary, marginTop: 0, marginBottom: 16 }]}>
+              <Text style={[styles.profileName, { color: colors?.textPrimary ?? '#FFFFFF', marginTop: 0, marginBottom: 16 }]}>
                 {profile?.name || 'Guerrier'}
               </Text>
             )}
@@ -612,23 +519,23 @@ export default function ProfileScreen() {
                 {profilePhoto ? (
                   <Image
                     source={{ uri: profilePhoto }}
-                    style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors.accent }}
+                    style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: colors?.accent ?? '#0ABAB5' }}
                     resizeMode="cover"
                   />
                 ) : (
-                  <View style={[styles.photoPlaceholderLarge, { backgroundColor: colors.card, borderColor: colors.accent }]}>
-                    <User size={48} color={colors.textMuted} />
+                  <View style={[styles.photoPlaceholderLarge, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.accent ?? '#0ABAB5' }]}>
+                    <User size={48} color={colors?.textMuted ?? '#6B7280'} />
                   </View>
                 )}
-                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors.accent }]}>
-                  <Camera size={16} color={colors.textOnAccent} />
+                <View style={[styles.cameraButton, { bottom: 4, right: 4, backgroundColor: colors?.accent ?? '#0ABAB5' }]}>
+                  <Camera size={16} color={colors?.textOnAccent ?? '#FFFFFF'} />
                 </View>
               </View>
             </Pressable>
 
             {/* Date d'inscription */}
             {profile?.start_date && (
-              <Text style={[styles.memberSince, { color: colors.textMuted }]}>
+              <Text style={[styles.memberSince, { color: colors?.textMuted ?? '#6B7280' }]}>
                 {t('profile.memberSince')} {format(new Date(profile.start_date), 'MMMM yyyy', { locale: fr })}
               </Text>
             )}
@@ -642,77 +549,77 @@ export default function ProfileScreen() {
             value={weightProgress?.lost > 0 ? (weightGoal === 'gain' ? `+${weightProgress.lost.toFixed(1)}` : `-${weightProgress.lost.toFixed(1)}`) : '0'}
             unit=" kg"
             label={weightGoal === 'gain' ? t('profile.gained') : t('profile.lost')}
-            color={weightGoal === 'gain' ? colors.warning : colors.success}
-            bgColor={weightGoal === 'gain' ? colors.warningMuted : colors.successMuted}
-            textColor={colors.textPrimary}
-            cardBgColor={colors.card}
-            borderColor={colors.border}
+            color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.success ?? '#10B981'}
+            bgColor={weightGoal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
+            textColor={colors?.textPrimary ?? '#FFFFFF'}
+            cardBgColor={colors?.card ?? '#1A1A1A'}
+            borderColor={colors?.border ?? '#333333'}
           />
           <StatBadge
             icon={Target}
             value={weightProgress?.target ? `${weightProgress.target}` : '-'}
             unit=" kg"
             label={t('profile.target')}
-            color={colors.accent}
-            bgColor={colors.accentMuted}
-            textColor={colors.textPrimary}
-            cardBgColor={colors.card}
-            borderColor={colors.border}
+            color={colors?.accent ?? '#0ABAB5'}
+            bgColor={colors?.accentMuted ?? 'rgba(10,186,181,0.1)'}
+            textColor={colors?.textPrimary ?? '#FFFFFF'}
+            cardBgColor={colors?.card ?? '#1A1A1A'}
+            borderColor={colors?.border ?? '#333333'}
           />
           <StatBadge
             icon={Activity}
             value={weightProgress?.remaining > 0 ? weightProgress.remaining.toFixed(1) : '0'}
             unit=" kg"
             label={weightGoal === 'gain' ? t('profile.toGain') : weightGoal === 'maintain' ? t('profile.maintenance') : t('profile.toLoose')}
-            color={weightGoal === 'gain' ? colors.warning : weightGoal === 'maintain' ? colors.info : colors.success}
-            bgColor={weightGoal === 'gain' ? colors.warningMuted : weightGoal === 'maintain' ? colors.infoMuted : colors.successMuted}
-            textColor={colors.textPrimary}
-            cardBgColor={colors.card}
-            borderColor={colors.border}
+            color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.success ?? '#10B981'}
+            bgColor={weightGoal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : weightGoal === 'maintain' ? colors?.infoMuted ?? 'rgba(59,130,246,0.1)' : colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
+            textColor={colors?.textPrimary ?? '#FFFFFF'}
+            cardBgColor={colors?.card ?? '#1A1A1A'}
+            borderColor={colors?.border ?? '#333333'}
           />
         </View>
 
         {/* Section Dojo - XP, Niveau, Badges */}
         <TouchableOpacity
-          style={[styles.dojoCard, { backgroundColor: colors.card, borderColor: colors.gold + '40' }]}
+          style={[styles.dojoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: (colors?.gold ?? '#0ABAB5') + '40' }]}
           onPress={() => router.push('/gamification')}
           activeOpacity={0.8}
         >
           <View style={styles.dojoHeader}>
-            <View style={[styles.dojoIconContainer, { backgroundColor: colors.gold + '20' }]}>
-              <Sparkles size={20} color={colors.gold} strokeWidth={2.5} />
+            <View style={[styles.dojoIconContainer, { backgroundColor: (colors?.gold ?? '#0ABAB5') + '20' }]}>
+              <Sparkles size={20} color={colors?.gold ?? '#0ABAB5'} strokeWidth={2.5} />
             </View>
-            <Text style={[styles.dojoTitle, { color: colors.textPrimary }]}>{t('gamification.title')}</Text>
-            <ChevronRight size={20} color={colors.textMuted} />
+            <Text style={[styles.dojoTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('gamification.title')}</Text>
+            <ChevronRight size={20} color={colors?.textMuted ?? '#6B7280'} />
           </View>
 
           <View style={styles.dojoStats}>
             {/* XP */}
             <View style={styles.dojoStatItem}>
-              <Zap size={18} color={colors.accent} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors.accent }]}>{totalPoints}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>XP</Text>
+              <Zap size={18} color={colors?.accent ?? '#0ABAB5'} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors?.accent ?? '#0ABAB5' }]}>{totalPoints}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>XP</Text>
             </View>
 
             {/* Niveau */}
             <View style={styles.dojoStatItem}>
-              <Star size={18} color={colors.gold} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors.gold }]}>{level.level}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.level')}</Text>
+              <Star size={18} color={colors?.gold ?? '#0ABAB5'} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors?.gold ?? '#0ABAB5' }]}>{level.level}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.level')}</Text>
             </View>
 
             {/* Rang */}
             <View style={styles.dojoStatItem}>
-              <Trophy size={18} color={rank?.color || colors.gold} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: rank?.color || colors.gold }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.rank')}</Text>
+              <Trophy size={18} color={rank?.color || colors?.gold || '#0ABAB5'} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: rank?.color || colors?.gold || '#0ABAB5' }]}>{rank?.name?.split(' ')[0] || '-'}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.rank')}</Text>
             </View>
 
             {/* Badges */}
             <View style={styles.dojoStatItem}>
-              <Award size={18} color={colors.success} strokeWidth={2.5} />
-              <Text style={[styles.dojoStatValue, { color: colors.success }]}>{unlockedBadgesCount}</Text>
-              <Text style={[styles.dojoStatLabel, { color: colors.textMuted }]}>{t('gamification.badges')}</Text>
+              <Award size={18} color={colors?.success ?? '#10B981'} strokeWidth={2.5} />
+              <Text style={[styles.dojoStatValue, { color: colors?.success ?? '#10B981' }]}>{unlockedBadgesCount}</Text>
+              <Text style={[styles.dojoStatLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('gamification.badges')}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -721,37 +628,37 @@ export default function ProfileScreen() {
         <ProgressCard weightProgress={weightProgress} t={t} colors={colors} />
 
         {/* Personal Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('profile.informations')}</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: colors?.border ?? '#333333' }]}>
+          <Text style={[styles.sectionTitle, { color: colors?.textPrimary ?? '#FFFFFF' }]}>{t('profile.informations')}</Text>
 
           {isEditing ? (
             <View style={styles.editForm}>
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.height')} (cm)</Text>
+                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.height')} (cm)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={heightCm}
                     onChangeText={setHeightCm}
                     placeholder="175"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="number-pad"
                     maxLength={3}
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Date de naissance</Text>
+                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Date de naissance</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={birthDate}
                     onChangeText={setBirthDate}
                     placeholder="15/06/1995"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="default"
                     maxLength={10}
                   />
                   {calculatedAge && (
-                    <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 4 }}>
+                    <Text style={{ fontSize: 11, color: colors?.textMuted ?? '#6B7280', marginTop: 4 }}>
                       → {calculatedAge} ans
                     </Text>
                   )}
@@ -760,25 +667,25 @@ export default function ProfileScreen() {
 
               <View style={styles.inputRow}>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.startingWeight')} (kg)</Text>
+                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.startingWeight')} (kg)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={startWeight}
                     onChangeText={setStartWeight}
                     placeholder="85.0"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="decimal-pad"
                     maxLength={6}
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>{t('profile.target')} (kg)</Text>
+                  <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>{t('profile.target')} (kg)</Text>
                   <TextInput
-                    style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
+                    style={[styles.input, { backgroundColor: colors?.backgroundElevated ?? '#242429', color: colors?.textPrimary ?? '#FFFFFF', borderColor: colors?.border ?? '#333333' }]}
                     value={targetWeight}
                     onChangeText={setTargetWeight}
                     placeholder="75.0"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor={colors?.textMuted ?? '#6B7280'}
                     keyboardType="decimal-pad"
                     maxLength={6}
                   />
@@ -786,46 +693,46 @@ export default function ProfileScreen() {
               </View>
 
               {/* Weight Goal Selector */}
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Mon objectif</Text>
+              <Text style={[styles.inputLabel, { color: colors?.textMuted ?? '#6B7280' }]}>Mon objectif</Text>
               <View style={styles.goalSelector}>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'lose' ? colors.success : colors.border },
+                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.border ?? '#333333' },
                     weightGoal === 'lose' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('lose')}
                 >
-                  <TrendingDown size={20} color={weightGoal === 'lose' ? colors.success : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors.success : colors.textPrimary }]}>Perte</Text>
+                  <TrendingDown size={20} color={weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textMuted ?? '#6B7280'} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'lose' ? colors?.success ?? '#10B981' : colors?.textPrimary ?? '#FFFFFF' }]}>Perte</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'maintain' ? colors.info : colors.border },
+                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.border ?? '#333333' },
                     weightGoal === 'maintain' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('maintain')}
                 >
-                  <Minus size={20} color={weightGoal === 'maintain' ? colors.info : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors.info : colors.textPrimary }]}>Maintien</Text>
+                  <Minus size={20} color={weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textMuted ?? '#6B7280'} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'maintain' ? colors?.info ?? '#3B82F6' : colors?.textPrimary ?? '#FFFFFF' }]}>Maintien</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.goalOption,
-                    { backgroundColor: colors.card, borderColor: weightGoal === 'gain' ? colors.warning : colors.border },
+                    { backgroundColor: colors?.card ?? '#1A1A1A', borderColor: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.border ?? '#333333' },
                     weightGoal === 'gain' && { borderWidth: 2 }
                   ]}
                   onPress={() => setWeightGoal('gain')}
                 >
-                  <TrendingUp size={20} color={weightGoal === 'gain' ? colors.warning : colors.textMuted} />
-                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors.warning : colors.textPrimary }]}>Prise</Text>
+                  <TrendingUp size={20} color={weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textMuted ?? '#6B7280'} />
+                  <Text style={[styles.goalOptionText, { color: weightGoal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.textPrimary ?? '#FFFFFF' }]}>Prise</Text>
                 </TouchableOpacity>
               </View>
 
               <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                 <LinearGradient
-                  colors={[colors.accent, colors.accentDark || colors.accent]}
+                  colors={[colors?.accent ?? '#0ABAB5', colors?.accentDark ?? colors?.accent ?? '#089490']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.saveButtonGradient}
@@ -841,51 +748,51 @@ export default function ProfileScreen() {
                 icon={Ruler}
                 label={t('profile.height')}
                 value={profile?.height_cm ? `${profile.height_cm} cm` : '-'}
-                color={colors.info}
-                bgColor={colors.infoMuted}
-                textColor={colors.textPrimary}
-                textSecondaryColor={colors.textSecondary}
-                successColor={colors.success}
+                color={colors?.info ?? '#3B82F6'}
+                bgColor={colors?.infoMuted ?? 'rgba(59,130,246,0.1)'}
+                textColor={colors?.textPrimary ?? '#FFFFFF'}
+                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
+                successColor={colors?.success ?? '#10B981'}
               />
               <InfoRow
                 icon={Calendar}
                 label={t('profile.age')}
                 value={calculatedAge ? `${calculatedAge} ans` : (profile?.age ? `${profile.age} ans` : '-')}
-                color={colors.accent}
-                bgColor={colors.accentMuted}
-                textColor={colors.textPrimary}
-                textSecondaryColor={colors.textSecondary}
-                successColor={colors.success}
+                color={colors?.accent ?? '#0ABAB5'}
+                bgColor={colors?.accentMuted ?? 'rgba(10,186,181,0.1)'}
+                textColor={colors?.textPrimary ?? '#FFFFFF'}
+                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
+                successColor={colors?.success ?? '#10B981'}
               />
               <InfoRow
                 icon={Scale}
                 label={t('profile.startingWeight')}
                 value={weightProgress?.start ? `${weightProgress.start} kg` : '-'}
-                color={colors.warning}
-                bgColor={colors.warningMuted}
-                textColor={colors.textPrimary}
-                textSecondaryColor={colors.textSecondary}
-                successColor={colors.success}
+                color={colors?.warning ?? '#F59E0B'}
+                bgColor={colors?.warningMuted ?? 'rgba(245,158,11,0.1)'}
+                textColor={colors?.textPrimary ?? '#FFFFFF'}
+                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
+                successColor={colors?.success ?? '#10B981'}
               />
               <InfoRow
                 icon={Target}
                 label={t('profile.target')}
                 value={weightProgress?.target ? `${weightProgress.target} kg` : '-'}
-                color={colors.success}
-                bgColor={colors.successMuted}
-                textColor={colors.textPrimary}
-                textSecondaryColor={colors.textSecondary}
-                successColor={colors.success}
+                color={colors?.success ?? '#10B981'}
+                bgColor={colors?.successMuted ?? 'rgba(16,185,129,0.1)'}
+                textColor={colors?.textPrimary ?? '#FFFFFF'}
+                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
+                successColor={colors?.success ?? '#10B981'}
               />
               <InfoRow
                 icon={profile?.weight_goal === 'lose' ? TrendingDown : profile?.weight_goal === 'gain' ? TrendingUp : Minus}
                 label={t('profile.goalType')}
                 value={profile?.weight_goal === 'lose' ? t('profile.weightLoss') : profile?.weight_goal === 'gain' ? t('profile.massGain') : t('profile.maintenance')}
-                color={profile?.weight_goal === 'lose' ? colors.success : profile?.weight_goal === 'gain' ? colors.warning : colors.info}
-                bgColor={profile?.weight_goal === 'lose' ? colors.successMuted : profile?.weight_goal === 'gain' ? colors.warningMuted : colors.infoMuted}
-                textColor={colors.textPrimary}
-                textSecondaryColor={colors.textSecondary}
-                successColor={colors.success}
+                color={profile?.weight_goal === 'lose' ? colors?.success ?? '#10B981' : profile?.weight_goal === 'gain' ? colors?.warning ?? '#F59E0B' : colors?.info ?? '#3B82F6'}
+                bgColor={profile?.weight_goal === 'lose' ? colors?.successMuted ?? 'rgba(16,185,129,0.1)' : profile?.weight_goal === 'gain' ? colors?.warningMuted ?? 'rgba(245,158,11,0.1)' : colors?.infoMuted ?? 'rgba(59,130,246,0.1)'}
+                textColor={colors?.textPrimary ?? '#FFFFFF'}
+                textSecondaryColor={colors?.textSecondary ?? '#9CA3AF'}
+                successColor={colors?.success ?? '#10B981'}
               />
             </View>
           )}
@@ -893,16 +800,16 @@ export default function ProfileScreen() {
 
 
         {/* Motivational Quote */}
-        <View style={[styles.quoteCard, { borderColor: colors.accentMuted }]}>
+        <View style={[styles.quoteCard, { borderColor: colors?.accentMuted ?? 'rgba(10,186,181,0.1)' }]}>
           <LinearGradient
-            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : [colors.accentMuted, colors.background]}
+            colors={isDark ? ['rgba(0, 214, 143, 0.15)', 'rgba(0, 214, 143, 0.08)'] : [colors?.accentMuted ?? 'rgba(10,186,181,0.1)', colors?.background ?? '#000000']}
             style={styles.quoteGradient}
           >
-            <Trophy size={24} color={colors.accentText} />
-            <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
+            <Trophy size={24} color={colors?.accentText ?? '#0ABAB5'} />
+            <Text style={[styles.quoteText, { color: colors?.textPrimary ?? '#FFFFFF' }]}>
               "La victoire appartient au plus persévérant"
             </Text>
-            <Text style={[styles.quoteAuthor, { color: colors.textPrimary, fontWeight: '600' }]}>Napoléon Bonaparte</Text>
+            <Text style={[styles.quoteAuthor, { color: colors?.textPrimary ?? '#FFFFFF', fontWeight: '600' }]}>Napoléon Bonaparte</Text>
           </LinearGradient>
         </View>
 
@@ -1452,12 +1359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   photoPlaceholderLarge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 4,
+    width: 120, height: 120, borderRadius: 60, alignItems: 'center', justifyContent: 'center', borderWidth: 4,
   },
   memberSince: {
     fontSize: TYPOGRAPHY.size.sm,
@@ -1518,4 +1420,8 @@ const styles = StyleSheet.create({
   competitionSublabel: {
     fontSize: TYPOGRAPHY.size.sm,
   },
+  starButton: { padding: 4 },
+  starsContainer: { flexDirection: 'row', gap: 12, justifyContent: 'center', marginVertical: 12 },
+  starsLabels: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20 },
+  starLabel: { fontSize: 12, fontWeight: '600' },
 });
