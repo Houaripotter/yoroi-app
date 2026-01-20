@@ -122,8 +122,8 @@ export const HomeShareMenu: React.FC = () => {
                 activeOpacity={0.8}
                 style={styles.optionButton}
               >
-                <View style={styles.labelWrapper}>
-                  <Text style={[styles.optionLabel, { color: colors.textPrimary }]}>
+                <View style={[styles.labelWrapper, { backgroundColor: colors.accent }]}>
+                  <Text style={[styles.optionLabel, { color: isDark ? '#000000' : '#FFFFFF' }]}>
                     {option.label}
                   </Text>
                 </View>
