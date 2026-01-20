@@ -3,6 +3,7 @@
 // ============================================
 // Carte partagée réutilisable (Last Session + Modal Validation)
 
+import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
