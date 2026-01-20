@@ -606,7 +606,7 @@ export default function MoreScreen() {
       setVersionTapCount(newCount);
       
       if (newCount === 5) {
-        Haptics.notificationAsync(Haptics.ImpactFeedbackStyle.Success);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setVersionTapCount(0);
         
         // Demander le code secret

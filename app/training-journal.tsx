@@ -26,9 +26,11 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Trash2, Archive, CheckCircle, RotateCcw, Search, Filter, Plus, Target, ChevronRight, Share2, Info, Dumbbell, Activity, Timer } from 'lucide-react-native';
+import {
+  Trash2, Archive, CheckCircle, RotateCcw, Search, Filter, Plus, Target, ChevronRight, Share2, Info, Dumbbell, Activity, Timer,
+  Mountain, Flame, Shield, Move, Lock, Users, Zap, Scale, Swords, BarChart3, Footprints, BookOpen, Award, FileText, Play, X, Clock, Check, ImageIcon, Calendar, Edit3, Gauge, ChevronLeft, Video, ExternalLink, TrendingUp, Camera
+} from 'lucide-react-native';
 import { useWatch } from '@/lib/WatchConnectivityProvider';
-import { getBenchmarkPR } from '@/lib/carnetService';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
