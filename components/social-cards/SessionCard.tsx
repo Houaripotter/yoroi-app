@@ -142,6 +142,45 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
               </Text>
             </View>
 
+            {/* Distance (si dispo) */}
+            {hasDistance && (
+              <View style={styles.statBlockLeft}>
+                <View style={styles.statLabelRow}>
+                  <MapPin size={12} color={GOLD_COLOR} />
+                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>DISTANCE</Text>
+                </View>
+                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
+                  {Number(training.distance).toFixed(2)} km
+                </Text>
+              </View>
+            )}
+
+            {/* Allure (si dispo) */}
+            {pace && (
+              <View style={styles.statBlockLeft}>
+                <View style={styles.statLabelRow}>
+                  <Trophy size={12} color={GOLD_COLOR} />
+                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>ALLURE</Text>
+                </View>
+                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
+                  {pace} /km
+                </Text>
+              </View>
+            )}
+
+            {/* Rounds (si dispo) */}
+            {hasRounds && (
+              <View style={styles.statBlockLeft}>
+                <View style={styles.statLabelRow}>
+                  <Clock size={12} color={GOLD_COLOR} />
+                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>ROUNDS</Text>
+                </View>
+                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
+                  {training.rounds}
+                </Text>
+              </View>
+            )}
+
             {/* Intensité */}
             {training.intensity && (
               <View style={styles.statBlockLeft}>
@@ -195,32 +234,8 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
           </View>
         </View>
 
-        {/* BAS: Stats Supplémentaires + Footer */}
+        {/* BAS: Footer seulement (les stats sont à gauche) */}
         <View style={styles.bottomContent}>
-          {/* Si Distance ou Rounds, on les met en bas comme "Big Numbers" */}
-          {(hasDistance || hasRounds) && (
-            <View style={styles.extraStatsRow}>
-              {hasDistance && (
-                <View style={styles.extraStatItem}>
-                  <Text style={[styles.extraStatValue, { color: GOLD_COLOR }]}>{Number(training.distance).toFixed(2)}</Text>
-                  <Text style={[styles.extraStatLabel, { color: textSecondary }]}>KM</Text>
-                </View>
-              )}
-              {pace && (
-                <View style={styles.extraStatItem}>
-                  <Text style={[styles.extraStatValue, { color: textPrimary }]}>{pace}</Text>
-                  <Text style={[styles.extraStatLabel, { color: textSecondary }]}>/KM</Text>
-                </View>
-              )}
-              {hasRounds && (
-                <View style={styles.extraStatItem}>
-                  <Text style={[styles.extraStatValue, { color: GOLD_COLOR }]}>{training.rounds}</Text>
-                  <Text style={[styles.extraStatLabel, { color: textSecondary }]}>ROUNDS</Text>
-                </View>
-              )}
-            </View>
-          )}
-
           {/* INFOS SECONDAIRES (Date, Lieu) */}
           <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
             <View style={styles.statItem}>
