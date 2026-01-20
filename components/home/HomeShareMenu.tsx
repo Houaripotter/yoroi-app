@@ -146,11 +146,11 @@ export const HomeShareMenu: React.FC = () => {
         style={styles.mainButtonWrapper}
       >
         <LinearGradient
-          colors={isOpen ? ['#333', '#000'] : [colors.accent, colors.accentDark || colors.accent]}
+          colors={[colors.accent, colors.accentDark || colors.accent]}
           style={[styles.mainButton, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
         >
           {isOpen ? (
-            <X size={24} color="#FFFFFF" strokeWidth={3} />
+            <X size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={3} />
           ) : (
             <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
           )}
