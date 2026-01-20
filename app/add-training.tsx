@@ -13,8 +13,6 @@ import {
   Modal,
   Share,
 } from 'react-native';
-import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -475,7 +473,6 @@ export default function AddTrainingScreen() {
   const [techniqueRating, setTechniqueRating] = useState<number | null>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
-  const shareViewRef = useRef<View>(null);
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>('Champion');
@@ -1720,9 +1717,8 @@ export default function AddTrainingScreen() {
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           
-          {/* CARTE À PARTAGER (Capturée) */}
+          {/* CARTE À PARTAGER (Aperçu) */}
           <View 
-            ref={shareViewRef}
             collapsable={false}
             style={{ 
               backgroundColor: colors.card, 
@@ -1777,19 +1773,13 @@ export default function AddTrainingScreen() {
                 shadowRadius: 8,
                 elevation: 4
               }}
-              onPress={async () => {
-                try {
-                  const uri = await captureRef(shareViewRef, {
-                    format: 'png',
-                    quality: 1,
-                  });
-                  if (await Sharing.isAvailableAsync()) {
-                    await Sharing.shareAsync(uri);
-                    // On peut fermer après, mais l'utilisateur veut peut-être voir
-                    // handleFinish();
-                  }
-                } catch (e) {
-                  console.error(e);
+              onPress={() => {
+                setShowValidationModal(false);
+                // Rediriger vers l'écran complet de partage pour personnaliser (Photo, Lieu...)
+                if (lastSavedTrainingId) {
+                  router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
+                } else {
+                  router.push('/social-share/last-session');
                 }
               }}
             >
@@ -1807,6 +1797,8 @@ export default function AddTrainingScreen() {
                 borderColor: colors.border
               }}
               onPress={() => {
+                setShowValidationModal(false);
+                // Ouvrir le modal de notation ou quitter
                 handleFinish();
               }}
             >
