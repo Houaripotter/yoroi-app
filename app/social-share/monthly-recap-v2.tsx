@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -43,10 +44,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function MonthlyRecapV2Screen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('dark');
+  const [selectedTemplate, setSelectedTemplate] = useState<'photo' | 'dark' | 'light'>('photo');
+  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('black');
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -256,123 +259,136 @@ export default function MonthlyRecapV2Screen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Card Preview */}
-        <View style={styles.cardContainer}>
-          <MonthlyRecapCardV2
-            ref={cardRef}
-            stats={stats}
-            format="stories"
-            backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
-            backgroundType={getBackgroundType()}
-            isLandscape={isLandscapeImage}
-            username="yoroiapp"
-          />
-        </View>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Card Preview */}
+          <View style={styles.cardContainer}>
+            <MonthlyRecapCardV2
+              ref={cardRef}
+              stats={stats}
+              format="stories"
+              backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
+              backgroundType={getBackgroundType()}
+              isLandscape={isLandscapeImage}
+              username="yoroiapp"
+            />
+          </View>
 
-        {/* Template Selector */}
-        <View style={styles.templateRow}>
-          <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
-          {([
-            { key: 'photo', label: 'Photo' },
-            { key: 'dark', label: 'Sombre' },
-            { key: 'light', label: 'Clair' },
-          ] as const).map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              style={[
-                styles.templateBtn,
-                {
-                  backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
-                  borderColor: selectedTemplate === key ? colors.accent : colors.border,
-                }
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedTemplate(key);
-              }}
-            >
-              <Text style={[
-                styles.templateBtnText,
-                { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
-              ]}>
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
-        {selectedTemplate === 'photo' && !backgroundImage && (
-          <View style={styles.photoPickerContainer}>
-            <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
-              Ajoute ta photo
-            </Text>
-            <View style={styles.photoPickerButtons}>
+          {/* Template Selector */}
+          <View style={styles.templateRow}>
+            <Text style={[styles.templateLabel, { color: colors.textMuted }]}>Style:</Text>
+            {([
+              { key: 'photo', label: 'Photo' },
+              { key: 'dark', label: 'Sombre' },
+              { key: 'light', label: 'Clair' },
+            ] as const).map(({ key, label }) => (
               <TouchableOpacity
-                style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
-                onPress={takePhoto}
+                key={key}
+                style={[
+                  styles.templateBtn,
+                  {
+                    backgroundColor: selectedTemplate === key ? colors.accent : colors.backgroundCard,
+                    borderColor: selectedTemplate === key ? colors.accent : colors.border,
+                  }
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedTemplate(key);
+                  // Scroll auto si photo
+                  if (key === 'photo') {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                  }
+                }}
               >
-                <Camera size={20} color={colors.textOnAccent} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
+                <Text style={[
+                  styles.templateBtnText,
+                  { color: selectedTemplate === key ? colors.textOnAccent : colors.textPrimary }
+                ]}>
+                  {label}
+                </Text>
               </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Photo Actions - Show picker when NO photo, show change buttons when photo exists */}
+          {selectedTemplate === 'photo' && !backgroundImage && (
+            <View style={styles.photoPickerContainer}>
+              <Text style={[styles.photoPickerTitle, { color: colors.textPrimary }]}>
+                Ajoute ta photo
+              </Text>
+              <View style={styles.photoPickerButtons}>
+                <TouchableOpacity
+                  style={[styles.photoPickerBtn, { backgroundColor: colors.accent }]}
+                  onPress={takePhoto}
+                >
+                  <Camera size={20} color={colors.textOnAccent} />
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textOnAccent }]}>Photo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
+                  onPress={pickImage}
+                >
+                  <ImageIcon size={20} color={colors.textPrimary} />
+                  <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          {selectedTemplate === 'photo' && backgroundImage && (
+            <View style={styles.photoActions}>
               <TouchableOpacity
-                style={[styles.photoPickerBtn, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
+                style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={pickImage}
               >
-                <ImageIcon size={20} color={colors.textPrimary} />
-                <Text style={[styles.photoPickerBtnText, { color: colors.textPrimary }]}>Galerie</Text>
+                <ImageIcon size={18} color={colors.textPrimary} />
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                onPress={takePhoto}
+              >
+                <Camera size={18} color={colors.textPrimary} />
+                <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-        {selectedTemplate === 'photo' && backgroundImage && (
-          <View style={styles.photoActions}>
+          )}
+
+          {/* Share Actions */}
+          <View style={styles.shareActions}>
             <TouchableOpacity
-              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              onPress={pickImage}
+              style={[styles.shareBtn, { backgroundColor: colors.accent }]}
+              onPress={shareCard}
+              disabled={isLoading}
             >
-              <ImageIcon size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Changer</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Share2 size={20} color="#FFFFFF" />
+                  <Text style={styles.shareBtnText}>Partager</Text>
+                </>
+              )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.photoBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-              onPress={takePhoto}
+              style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+              onPress={saveToGallery}
+              disabled={isLoading}
             >
-              <Camera size={18} color={colors.textPrimary} />
-              <Text style={[styles.photoBtnText, { color: colors.textPrimary }]}>Nouvelle</Text>
+              <Download size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
-        )}
 
-        {/* Share Actions */}
-        <View style={styles.shareActions}>
-          <TouchableOpacity
-            style={[styles.shareBtn, { backgroundColor: colors.accent }]}
-            onPress={shareCard}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Share2 size={20} color="#FFFFFF" />
-                <Text style={styles.shareBtnText}>Partager</Text>
-              </>
-            )}
+          {/* Close Button */}
+          <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+            <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-            onPress={saveToGallery}
-            disabled={isLoading}
-          >
-            <Download size={20} color={colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Close Button */}
-        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
-          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
-        </TouchableOpacity>
+        </ScrollView>
       </View>
       <PopupComponent />
     </ScreenWrapper>

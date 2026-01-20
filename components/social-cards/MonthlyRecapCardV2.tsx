@@ -212,7 +212,7 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImageContain}
-            resizeMode={isLandscape ? "contain" : "cover"}
+            resizeMode="contain"
           />
           
           <LinearGradient

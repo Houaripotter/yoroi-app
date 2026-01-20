@@ -264,11 +264,11 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
             resizeMode="cover"
           />
           
-          {/* 2. Image principale - On change le mode selon l'orientation */}
+          {/* 2. Image principale - Toujours en contain pour voir toute la photo */}
           <Image
             source={{ uri: backgroundImage }}
             style={styles.backgroundImageContain}
-            resizeMode={isLandscape ? "contain" : "cover"}
+            resizeMode="contain"
           />
           
           <LinearGradient
