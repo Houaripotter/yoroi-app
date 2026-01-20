@@ -59,12 +59,12 @@ let screenshotListenerSubscription: any = null;
  */
 export async function enableScreenshotProtection(): Promise<void> {
   if (!SCREENSHOT_PROTECTION_CONFIG.enabled || !ScreenCapture) {
-    logger.debug('Screenshot protection disabled or not available');
+    logger.info('Screenshot protection disabled or not available');
     return;
   }
 
   if (isProtectionActive) {
-    logger.debug('Screenshot protection already active');
+    logger.info('Screenshot protection already active');
     return;
   }
 
@@ -94,7 +94,7 @@ export async function enableScreenshotProtection(): Promise<void> {
  */
 export async function disableScreenshotProtection(): Promise<void> {
   if (!isProtectionActive || !ScreenCapture) {
-    logger.debug('Screenshot protection already inactive or not available');
+    logger.info('Screenshot protection already inactive or not available');
     return;
   }
 
@@ -142,12 +142,12 @@ let appStateSubscription: any = null;
  */
 export function enableBackgroundBlur(onBlur?: () => void, onUnblur?: () => void): void {
   if (!SCREENSHOT_PROTECTION_CONFIG.blurOnBackground) {
-    logger.debug('Background blur disabled in config');
+    logger.info('Background blur disabled in config');
     return;
   }
 
   if (backgroundBlurEnabled) {
-    logger.debug('Background blur already enabled');
+    logger.info('Background blur already enabled');
     return;
   }
 
@@ -155,11 +155,11 @@ export function enableBackgroundBlur(onBlur?: () => void, onUnblur?: () => void)
   appStateSubscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
     if (nextAppState === 'background' || nextAppState === 'inactive') {
       // App passe en arrière-plan : flouter
-      logger.debug('App went to background, applying blur');
+      logger.info('App went to background, applying blur');
       onBlur?.();
     } else if (nextAppState === 'active') {
       // App revient au premier plan : déflouter
-      logger.debug('App came to foreground, removing blur');
+      logger.info('App came to foreground, removing blur');
       onUnblur?.();
     }
   });
@@ -277,14 +277,14 @@ export function useBackgroundBlur() {
       ) {
         // App passe en arrière-plan
         setIsBlurred(true);
-        logger.debug('Blur activated');
+        logger.info('Blur activated');
       } else if (
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
         // App revient au premier plan
         setIsBlurred(false);
-        logger.debug('Blur deactivated');
+        logger.info('Blur deactivated');
       }
 
       appState.current = nextAppState;

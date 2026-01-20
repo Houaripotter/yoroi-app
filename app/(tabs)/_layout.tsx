@@ -55,20 +55,30 @@ const triggerHaptic = () => {
 // BOUTON BUZZER CENTRAL - DESIGN BRILLANT
 // ============================================
 function CentralBuzzerButton() {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Couleurs du bouton selon le mode
-  // Mode clair: bouton BLANC avec + NOIR
-  // Mode sombre: bouton coloré (accent) avec + blanc
+  // Spécification YOROI: Si thème Classic -> Toujours fond NOIR et + BLANC
+  const isClassicTheme = themeColor === 'classic';
   const isLightMode = !isDark;
-  const buttonBgColor = isLightMode ? '#FFFFFF' : colors.accent;
-  const buttonBgColorDark = isLightMode ? '#F0F0F0' : (colors.accent + 'DD');
-  const plusIconColor = isLightMode ? '#1A1A1A' : colors.textOnAccent;
-  const pulseColor = isLightMode ? 'rgba(0,0,0,0.08)' : `${colors.accent}20`;
-  const pulseBorderColor = isLightMode ? 'rgba(0,0,0,0.15)' : `${colors.accent}40`;
+  
+  // Par défaut (thèmes colorés comme indigo, volt, etc.)
+  // On utilise TOUJOURS la couleur du thème (accent), même en mode clair
+  let buttonBgColor = colors.accent;
+  let plusIconColor = colors.textOnAccent;
+  let buttonBgColorDark = colors.accentDark;
+
+  // Override pour le thème Classic UNIQUEMENT
+  if (isClassicTheme) {
+    buttonBgColor = '#000000';
+    plusIconColor = '#FFFFFF';
+    buttonBgColorDark = '#1A1A1A';
+  }
+
+  const pulseColor = isClassicTheme ? 'rgba(0,0,0,0.15)' : (isLightMode ? 'rgba(0,0,0,0.08)' : `${colors.accent}20`);
+  const pulseBorderColor = isClassicTheme ? 'rgba(0,0,0,0.25)' : (isLightMode ? 'rgba(0,0,0,0.15)' : `${colors.accent}40`);
 
   // Animation pulse continue pour l'anneau externe
   const startPulse = () => {
@@ -137,6 +147,11 @@ function CentralBuzzerButton() {
           {
             transform: [{ scale: scaleAnim }],
           },
+          isClassicTheme && {
+            shadowColor: '#FFFFFF',
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+          }
         ]}
       >
         <TouchableOpacity
@@ -150,7 +165,11 @@ function CentralBuzzerButton() {
             end={{ x: 1, y: 1 }}
             style={[
               styles.buzzerGradient,
-              isLightMode && {
+              isClassicTheme && {
+                borderColor: 'rgba(255,255,255,0.5)',
+                borderWidth: 2,
+              },
+              isLightMode && !isClassicTheme && {
                 shadowColor: '#000000',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.2,

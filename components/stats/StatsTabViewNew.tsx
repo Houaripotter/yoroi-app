@@ -122,10 +122,11 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
           ref={tabScrollRef}
           horizontal
           showsHorizontalScrollIndicator={false}
-          scrollEnabled={!allTabsFit}
+          scrollEnabled={true}
           contentContainerStyle={[
             styles.tabsContent,
-            allTabsFit && styles.tabsContentCentered
+            // Centrer seulement si on a peu d'onglets et de l'espace, sinon alignement gauche standard
+            allTabsFit ? styles.tabsContentCentered : null
           ]}
           style={styles.tabsScroll}
         >

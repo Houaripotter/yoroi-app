@@ -10,6 +10,8 @@ enum TimerMode: String, CaseIterable, Identifiable {
     case rest = "REPOS"
     case combat = "COMBAT"
     case tabata = "TABATA"
+    case breathing = "RESPIRATION"
+    case stretching = "STRETCH"
     
     var id: String { self.rawValue }
     
@@ -18,6 +20,8 @@ enum TimerMode: String, CaseIterable, Identifiable {
         case .rest: return "timer"
         case .combat: return "figure.martial.arts"
         case .tabata: return "bolt.fill"
+        case .breathing: return "lungs.fill"
+        case .stretching: return "figure.flexibility"
         }
     }
     
@@ -26,6 +30,8 @@ enum TimerMode: String, CaseIterable, Identifiable {
         case .rest: return .yellow
         case .combat: return .red
         case .tabata: return .orange
+        case .breathing: return .cyan
+        case .stretching: return .green
         }
     }
 }
@@ -38,81 +44,59 @@ struct TimerView: View {
     @State private var currentRound = 1
     @State private var totalRounds = 5
     @State private var isWorkPhase = true // Pour Tabata/Combat
+    @State private var showCustomDurationPicker = false
+    @State private var customMinutes = 1
+    @State private var customSeconds = 30
     
     @State private var timer: Timer?
-    let durations = [30, 60, 90, 120, 180]
+    let durations = [30, 60, 90, 120, 180, 300, 600]
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
-                // SÉLECTEUR DE MODE
-                HStack(spacing: 4) {
-                    ForEach(TimerMode.allCases) { mode in
-                        Button(action: { 
-                            if !isRunning {
-                                currentMode = mode
-                                setupModeDefaults()
-                            }
-                        }) {
-                            VStack(spacing: 2) {
-                                Image(systemName: mode.icon)
-                                    .font(.system(size: 14))
-                                Text(mode.rawValue)
-                                    .font(.system(size: 8, weight: .bold))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 6)
-                            .background(currentMode == mode ? mode.color : Color.gray.opacity(0.15))
-                            .foregroundColor(currentMode == mode ? .black : .gray)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 4)
-                .padding(.top, 4)
-                
+            VStack(spacing: 12) {
                 // CERCLE PRINCIPAL AVEC CONTRÔLES INTÉGRÉS
                 HStack(spacing: 10) {
                     // BOUTON MOINS (Gauche)
                     Button(action: { 
-                        remainingTime = max(0, remainingTime - 10) 
-                        WKInterfaceDevice.current().play(.click)
+                        if remainingTime > 10 {
+                            remainingTime -= 10 
+                            WKInterfaceDevice.current().play(.click)
+                        }
                     }) {
                         Image(systemName: "minus.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 28))
                             .foregroundColor(.gray.opacity(0.6))
                     }
                     .buttonStyle(.plain)
-                    .disabled(isRunning && currentMode != .rest)
+                    .disabled(isRunning)
                     
                     ZStack {
                         Circle()
-                            .stroke(currentMode.color.opacity(0.2), lineWidth: 6)
-                            .frame(width: 100, height: 100)
+                            .stroke(currentMode.color.opacity(0.2), lineWidth: 8)
+                            .frame(width: 110, height: 110)
                         
                         Circle()
                             .trim(from: 0, to: CGFloat(Double(remainingTime) / Double(max(1, selectedDuration))))
-                            .stroke(currentMode.color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                            .frame(width: 100, height: 100)
+                            .stroke(currentMode.color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .frame(width: 110, height: 110)
                             .rotationEffect(.degrees(-90))
                             .animation(.linear, value: remainingTime)
                         
                         VStack(spacing: 2) {
-                            if currentMode != .rest {
+                            if currentMode != .rest && currentMode != .breathing && currentMode != .stretching {
                                 Text("R\(currentRound)/\(totalRounds)")
-                                    .font(.system(size: 10, weight: .black))
+                                    .font(.system(size: 12, weight: .black))
                                     .foregroundColor(currentMode.color)
                             }
                             
                             Text(formatTime(remainingTime))
-                                .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                .font(.system(size: 28, weight: .bold, design: .monospaced))
                                 .foregroundColor(.white)
                             
                             // BOUTON PLAY/STOP AU MILIEU
                             Button(action: toggleTimer) {
-                                Image(systemName: isRunning ? "pause.circle.fill" : "play.circle.fill")
-                                    .font(.system(size: 32))
+                                Image(systemName: isRunning ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 24))
                                     .foregroundColor(isRunning ? .orange : currentMode.color)
                             }
                             .buttonStyle(.plain)
@@ -126,39 +110,146 @@ struct TimerView: View {
                         WKInterfaceDevice.current().play(.click)
                     }) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 28))
                             .foregroundColor(.gray.opacity(0.6))
                     }
                     .buttonStyle(.plain)
-                    .disabled(isRunning && currentMode != .rest)
+                    .disabled(isRunning)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 8)
                 
-                // CONTRÔLES DURÉE (Seulement si mode repos et pas lancé)
-                if currentMode == .rest && !isRunning {
+                // SÉLECTEUR DE MODE (SCROLLABLE SI TROP D'OPTIONS)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("MODE")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                        .padding(.leading, 4)
+                        
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
-                            ForEach(durations, id: \.self) { d in
-                                Button(action: {
-                                    selectedDuration = d
-                                    remainingTime = d
-                                    WKInterfaceDevice.current().play(.click)
+                            ForEach(TimerMode.allCases) { mode in
+                                Button(action: { 
+                                    if !isRunning {
+                                        currentMode = mode
+                                        setupModeDefaults()
+                                        WKInterfaceDevice.current().play(.click)
+                                    }
                                 }) {
-                                    Text(d < 60 ? "\(d)s" : "\(d/60)m")
-                                        .font(.system(size: 11, weight: .bold))
-                                        .frame(width: 38, height: 38)
-                                        .background(selectedDuration == d ? Color.yellow : Color.gray.opacity(0.2))
-                                        .foregroundColor(selectedDuration == d ? .black : .white)
+                                    VStack(spacing: 4) {
+                                        Image(systemName: mode.icon)
+                                            .font(.system(size: 16))
+                                        Text(mode.rawValue)
+                                            .font(.system(size: 9, weight: .bold))
+                                    }
+                                    .frame(width: 70, height: 50)
+                                    .background(currentMode == mode ? mode.color : Color.gray.opacity(0.15))
+                                    .foregroundColor(currentMode == mode ? .black : .white)
+                                    .cornerRadius(12)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+                
+                // SÉLECTEUR DE DURÉE RAPIDE
+                if !isRunning {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("DURÉE RAPIDE")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.gray)
+                            .padding(.leading, 4)
+                            
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 6) {
+                                ForEach(durations, id: \.self) { d in
+                                    Button(action: {
+                                        selectedDuration = d
+                                        remainingTime = d
+                                        WKInterfaceDevice.current().play(.click)
+                                    }) {
+                                        Text(d < 60 ? "\(d)s" : "\(d/60)m")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .frame(width: 44, height: 44)
+                                            .background(selectedDuration == d ? Color.white : Color.gray.opacity(0.2))
+                                            .foregroundColor(selectedDuration == d ? .black : .white)
+                                            .clipShape(Circle())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                
+                                // BOUTON CUSTOM
+                                Button(action: {
+                                    showCustomDurationPicker = true
+                                }) {
+                                    Image(systemName: "slider.horizontal.3")
+                                        .font(.system(size: 16))
+                                        .frame(width: 44, height: 44)
+                                        .background(Color.gray.opacity(0.2))
+                                        .foregroundColor(.white)
                                         .clipShape(Circle())
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal, 8)
                     }
                 }
+                
+                // PARAMÈTRES AVANCÉS (ROUNDS)
+                if (currentMode == .combat || currentMode == .tabata) && !isRunning {
+                    HStack {
+                        Text("Rounds")
+                            .font(.system(size: 12))
+                        Spacer()
+                        Button(action: { if totalRounds > 1 { totalRounds -= 1 } }) {
+                            Image(systemName: "minus.circle.fill").foregroundColor(.gray)
+                        }
+                        Text("\(totalRounds)")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(minWidth: 20)
+                        Button(action: { if totalRounds < 20 { totalRounds += 1 } }) {
+                            Image(systemName: "plus.circle.fill").foregroundColor(.gray)
+                        }
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(10)
+                }
             }
+            .padding(.horizontal, 4)
             .padding(.bottom, 20)
+        }
+        .sheet(isPresented: $showCustomDurationPicker) {
+            VStack {
+                Text("Durée personnalisée")
+                    .font(.headline)
+                
+                HStack {
+                    Picker("Min", selection: $customMinutes) {
+                        ForEach(0..<60) { i in Text("\(i)m").tag(i) }
+                    }
+                    .labelsHidden()
+                    .frame(width: 60, height: 80)
+                    
+                    Picker("Sec", selection: $customSeconds) {
+                        ForEach(0..<60) { i in Text("\(i)s").tag(i) }
+                    }
+                    .labelsHidden()
+                    .frame(width: 60, height: 80)
+                }
+                
+                Button("Valider") {
+                    let totalSeconds = (customMinutes * 60) + customSeconds
+                    if totalSeconds > 0 {
+                        selectedDuration = totalSeconds
+                        remainingTime = totalSeconds
+                    }
+                    showCustomDurationPicker = false
+                }
+                .padding()
+                .background(Color.green)
+                .cornerRadius(20)
+            }
         }
         .background(Color.black)
         .onDisappear { stopTimer() }
@@ -179,6 +270,12 @@ struct TimerView: View {
             remainingTime = 20
             totalRounds = 8
             isWorkPhase = true
+        case .breathing:
+            selectedDuration = 60
+            remainingTime = 60
+        case .stretching:
+            selectedDuration = 30
+            remainingTime = 30
         }
     }
     
@@ -208,7 +305,7 @@ struct TimerView: View {
     }
     
     private func handlePhaseEnd() {
-        if currentMode == .rest {
+        if currentMode == .rest || currentMode == .breathing || currentMode == .stretching {
             SoundManager.shared.playSound(named: "beep")
             stopTimer()
             return
@@ -251,8 +348,4 @@ struct TimerView: View {
         let s = seconds % 60
         return String(format: "%d:%02d", m, s)
     }
-}
-
-#Preview {
-    TimerView()
 }

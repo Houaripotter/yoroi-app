@@ -454,7 +454,6 @@ export interface Training {
   technical_theme?: string; // Technical theme for combat sports (e.g., "Passage de garde", "Triangle")
   distance?: number; // Distance en km
   calories?: number; // Calories brûlées
-  intensity?: number; // RPE 1-10
   rounds?: number; // Nombre de rounds
   round_duration?: number; // Durée d'un round en minutes
   exercises?: Exercise[]; // For musculation workouts

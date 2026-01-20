@@ -8,6 +8,7 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import {
   Target,
@@ -125,13 +126,13 @@ export default function SetupScreen() {
 
           {/* Badges de bienvenue */}
           <View style={styles.welcomeBadges}>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
               <Swords size={20} color={colors.accent} />
               <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
                 Esprit guerrier
               </Text>
             </View>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
               <Star size={20} color="#FFD700" />
               <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
                 Premier badge
@@ -187,7 +188,7 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
+                { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border },
                 goal === 'lose' && {
                   backgroundColor: '#4CAF50',
                   borderColor: '#4CAF50',
@@ -216,7 +217,7 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
+                { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border },
                 goal === 'maintain' && {
                   backgroundColor: colors.accent,
                   borderColor: colors.accent,
@@ -245,7 +246,7 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
+                { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border },
                 goal === 'gain' && {
                   backgroundColor: '#FF6B6B',
                   borderColor: '#FF6B6B',
@@ -283,7 +284,7 @@ export default function SetupScreen() {
               backgroundColor: canContinue()
                 ? colors.accent
                 : colors.backgroundCard,
-              borderWeight: canContinue() ? 0 : 1,
+              borderWidth: canContinue() ? 0 : 1,
               borderColor: colors.border,
             },
           ]}

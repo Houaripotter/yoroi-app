@@ -359,37 +359,37 @@ async function exportAllData(): Promise<string> {
 
   // Récupérer toutes les données
   try {
-    const measurements = await secureStorage.getObject('@yoroi_measurements');
+    const measurements = await secureStorage.getItem('@yoroi_measurements');
     if (measurements) data.data.measurements = measurements as any[];
 
-    const photos = await secureStorage.getObject('@yoroi_photos');
+    const photos = await secureStorage.getItem('@yoroi_photos');
     if (photos) data.data.photos = photos as any[];
 
-    const photosData = await secureStorage.getObject('@yoroi_photos_data');
+    const photosData = await secureStorage.getItem('@yoroi_photos_data');
     if (photosData) data.data.photos_data = photosData as any[];
 
-    const trainings = await secureStorage.getObject('@yoroi_trainings');
+    const trainings = await secureStorage.getItem('@yoroi_trainings');
     if (trainings) data.data.trainings = trainings as any[];
 
-    const exercises = await secureStorage.getObject('@yoroi_exercises');
+    const exercises = await secureStorage.getItem('@yoroi_exercises');
     if (exercises) data.data.exercises = exercises as any[];
 
-    const programs = await secureStorage.getObject('@yoroi_programs');
+    const programs = await secureStorage.getItem('@yoroi_programs');
     if (programs) data.data.programs = programs as any[];
 
-    const settings = await secureStorage.getObject('@yoroi_user_settings');
+    const settings = await secureStorage.getItem('@yoroi_user_settings');
     if (settings) data.data.user_settings = settings;
 
-    const hydration = await secureStorage.getObject('@yoroi_hydration_log');
+    const hydration = await secureStorage.getItem('@yoroi_hydration_log');
     if (hydration) data.data.hydration_log = hydration as any[];
 
-    const mood = await secureStorage.getObject('@yoroi_mood_log');
+    const mood = await secureStorage.getItem('@yoroi_mood_log');
     if (mood) data.data.mood_log = mood as any[];
 
-    const bodyStatus = await secureStorage.getObject('@yoroi_user_body_status');
+    const bodyStatus = await secureStorage.getItem('@yoroi_user_body_status');
     if (bodyStatus) data.data.body_status = bodyStatus;
 
-    const profile = await secureStorage.getObject('@yoroi_user_profile');
+    const profile = await secureStorage.getItem('@yoroi_user_profile');
     if (profile) data.data.profile = profile;
   } catch (error) {
     logger.error('Failed to collect export data', error);
@@ -448,7 +448,7 @@ export async function secureExportData(): Promise<{ success: boolean; error?: st
       });
     }
 
-    logger.success('Export completed successfully');
+    logger.info('Export completed successfully');
     return { success: true };
   } catch (error) {
     logger.error('Export failed', error);
@@ -544,56 +544,56 @@ export async function secureImportData(): Promise<ImportResult> {
     const itemsImported: ImportResult['items_imported'] = {};
 
     if (backup.data.measurements) {
-      await secureStorage.setObject('@yoroi_measurements', backup.data.measurements);
+      await secureStorage.setItem('@yoroi_measurements', backup.data.measurements);
       itemsImported.measurements = backup.data.measurements.length;
     }
 
     if (backup.data.photos) {
-      await secureStorage.setObject('@yoroi_photos', backup.data.photos);
+      await secureStorage.setItem('@yoroi_photos', backup.data.photos);
       itemsImported.photos = backup.data.photos.length;
     }
 
     if (backup.data.photos_data) {
-      await secureStorage.setObject('@yoroi_photos_data', backup.data.photos_data);
+      await secureStorage.setItem('@yoroi_photos_data', backup.data.photos_data);
     }
 
     if (backup.data.trainings) {
-      await secureStorage.setObject('@yoroi_trainings', backup.data.trainings);
+      await secureStorage.setItem('@yoroi_trainings', backup.data.trainings);
       itemsImported.trainings = backup.data.trainings.length;
     }
 
     if (backup.data.exercises) {
-      await secureStorage.setObject('@yoroi_exercises', backup.data.exercises);
+      await secureStorage.setItem('@yoroi_exercises', backup.data.exercises);
       itemsImported.exercises = backup.data.exercises.length;
     }
 
     if (backup.data.programs) {
-      await secureStorage.setObject('@yoroi_programs', backup.data.programs);
+      await secureStorage.setItem('@yoroi_programs', backup.data.programs);
       itemsImported.programs = backup.data.programs.length;
     }
 
     if (backup.data.user_settings) {
-      await secureStorage.setObject('@yoroi_user_settings', backup.data.user_settings);
+      await secureStorage.setItem('@yoroi_user_settings', backup.data.user_settings);
       itemsImported.settings = 1;
     }
 
     if (backup.data.hydration_log) {
-      await secureStorage.setObject('@yoroi_hydration_log', backup.data.hydration_log);
+      await secureStorage.setItem('@yoroi_hydration_log', backup.data.hydration_log);
     }
 
     if (backup.data.mood_log) {
-      await secureStorage.setObject('@yoroi_mood_log', backup.data.mood_log);
+      await secureStorage.setItem('@yoroi_mood_log', backup.data.mood_log);
     }
 
     if (backup.data.body_status) {
-      await secureStorage.setObject('@yoroi_user_body_status', backup.data.body_status);
+      await secureStorage.setItem('@yoroi_user_body_status', backup.data.body_status);
     }
 
     if (backup.data.profile) {
-      await secureStorage.setObject('@yoroi_user_profile', backup.data.profile);
+      await secureStorage.setItem('@yoroi_user_profile', backup.data.profile);
     }
 
-    logger.success('Import completed successfully', itemsImported);
+    logger.info('Import completed successfully', itemsImported);
 
     return {
       success: true,

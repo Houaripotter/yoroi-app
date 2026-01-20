@@ -296,7 +296,7 @@ export default function SportSelectionScreen() {
               <TouchableOpacity
                 style={[
                   styles.categoryHeader,
-                  { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }
+                  { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }
                 ]}
                 onPress={() => toggleCategory(categoryIndex)}
                 activeOpacity={0.7}

@@ -209,7 +209,7 @@ export default function WeightCategorySelectionScreen() {
       {/* Actions */}
       <View style={[styles.actions, { paddingBottom: insets.bottom + 16, backgroundColor: colors.background }]}>
         {selectedCat && (
-          <View style={[styles.selectedInfo, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
+          <View style={[styles.selectedInfo, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
             <Text style={[styles.selectedLabel, { color: colors.textMuted }]}>
               Catégorie sélectionnée :
             </Text>

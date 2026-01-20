@@ -6,223 +6,115 @@
 import SwiftUI
 
 struct RecordsView: View {
-
     @StateObject private var healthManager = HealthManager.shared
-
-    @State private var showExercisePicker = false
-
+    @State private var showSportPicker = false
     @State private var selectedExercise: String?
-
     @State private var selectedCategory: String = "musculation"
-
     @State private var selectedMuscle: String = "GÉNÉRAL"
-
     @State private var showEntrySheet = false
-
     
-
     // Groupement des records existants
-
-    var groupedRecords: [(category: String, muscles: [(name: String, items: [ExerciseRecord])])] {
-
-        let categories = Dictionary(grouping: healthManager.records, by: { $0.category })
-
+    var groupedRecords: [(sport: String, categories: [(name: String, items: [ExerciseRecord])])] {
+        // Grouper par Sport (Category principale)
+        let bySport = Dictionary(grouping: healthManager.records, by: { $0.category }) // Utilise category comme sport (ex: musculation, running)
         
-
-        return categories.map { cat, records in
-
-            let muscles = Dictionary(grouping: records, by: { $0.muscleGroup })
-
-            let sortedMuscles = muscles.map { muscle, items in
-
-                (name: muscle, items: items)
-
-            }.sorted(by: { $0.name < 
-.name })
-
+        return bySport.map { sport, records in
+            // Grouper par Sous-catégorie (MuscleGroup)
+            let bySubCat = Dictionary(grouping: records, by: { $0.muscleGroup })
+            let sortedSubCats = bySubCat.map { name, items in
+                (name: name, items: items)
+            }.sorted(by: { $0.name < $0.name })
             
-
-            return (category: cat, muscles: sortedMuscles)
-
-        }.sorted(by: { $0.category < 
-.category })
-
+            return (sport: sport, categories: sortedSubCats)
+        }.sorted(by: { $0.sport < $0.sport })
     }
-
     
-
     var body: some View {
-
         ScrollView {
-
             VStack(spacing: 12) {
-
                 // Header CARNET
-
                 HStack(spacing: 6) {
-
                     Image(systemName: "list.bullet.clipboard.fill")
-
                         .foregroundColor(.yellow)
-
                     Text("CARNET")
-
                         .font(.system(size: 14, weight: .bold))
-
                         .foregroundColor(.yellow)
-
                 }
-
                 .padding(.top, 8)
-
                 
-
                 // Bouton Ajouter
-
                 Button(action: { 
-
                     WKInterfaceDevice.current().play(.click)
-
-                    showExercisePicker = true 
-
+                    showSportPicker = true 
                 }) {
-
                     HStack {
-
                         Image(systemName: "plus.circle.fill")
-
                         Text("AJOUTER")
-
                             .font(.system(size: 14, weight: .bold))
-
                     }
-
                     .foregroundColor(.black)
-
                     .frame(maxWidth: .infinity)
-
                     .padding(.vertical, 12)
-
                     .background(Color.yellow)
-
                     .cornerRadius(12)
-
                 }
-
                 .buttonStyle(.plain)
-
                 .padding(.horizontal, 8)
 
-
-
                 // Liste des records groupés
-
                 if healthManager.records.isEmpty {
-
                     VStack(spacing: 10) {
-
                         Image(systemName: "trophy.slash")
-
                             .font(.system(size: 30))
-
                             .foregroundColor(.gray.opacity(0.5))
-
                         Text("Aucun record")
-
                             .font(.system(size: 12))
-
                             .foregroundColor(.gray)
-
                     }
-
                     .padding(.top, 20)
-
                 } else {
-
-                    ForEach(groupedRecords, id: \.category) { group in
-
+                    ForEach(groupedRecords, id: \.sport) { group in
                         VStack(alignment: .leading, spacing: 10) {
-
                             // Header Sport (ex: MUSCULATION)
-
-                            Text(group.category.uppercased())
-
+                            Text(group.sport.uppercased())
                                 .font(.system(size: 12, weight: .black))
-
                                 .foregroundColor(.yellow)
-
                                 .padding(.horizontal, 8)
-
                                 .padding(.top, 10)
-
                             
-
-                            ForEach(group.muscles, id: \.name) { muscle in
-
+                            ForEach(group.categories, id: \.name) { subCat in
                                 VStack(alignment: .leading, spacing: 6) {
-
-                                    // Header Muscle (ex: PECTORAUX)
-
-                                    if muscle.name != "GÉNÉRAL" {
-
-                                        Text(muscle.name)
-
+                                    // Header Sous-catégorie (ex: PECTORAUX, 5K)
+                                    if subCat.name != "GÉNÉRAL" {
+                                        Text(subCat.name)
                                             .font(.system(size: 10, weight: .bold))
-
                                             .foregroundColor(.gray)
-
                                             .padding(.horizontal, 8)
-
                                     }
-
                                     
-
-                                    ForEach(muscle.items) { record in
-
+                                    ForEach(subCat.items) { record in
                                         PerformanceRow(record: record)
-
                                     }
-
                                 }
-
                             }
-
                         }
-
                     }
-
                 }
-
             }
-
             .padding(.bottom, 16)
-
         }
-
         .background(Color.black)
-
-        .sheet(isPresented: $showExercisePicker) {
-
+        .sheet(isPresented: $showSportPicker) {
             NavigationView {
-
-                CategoryPickerView(selectedExercise: $selectedExercise, selectedCategory: $selectedCategory, selectedMuscle: $selectedMuscle, isPresented: $showExercisePicker, showEntry: $showEntrySheet)
-
+                SportPickerView(selectedExercise: $selectedExercise, selectedCategory: $selectedCategory, selectedMuscle: $selectedMuscle, isPresented: $showSportPicker, showEntry: $showEntrySheet)
             }
-
         }
-
         .sheet(isPresented: $showEntrySheet) {
-
             if let exercise = selectedExercise {
-
                 AddPerformanceSheet(exercise: exercise, category: selectedCategory, muscleGroup: selectedMuscle, isPresented: $showEntrySheet)
-
             }
-
         }
-
     }
-
 }
 
 // MARK: - Row Performance
@@ -242,27 +134,35 @@ struct PerformanceRow: View {
             }
             
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text("\(Int(record.weight))")
-                    .font(.system(size: 28, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                
-                Text("KG")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.yellow)
+                if record.category == "RUNNING" {
+                    Text(formatTime(Int(record.weight))) // Weight utilisé pour stocker le temps en secondes pour le running
+                        .font(.system(size: 24, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                } else {
+                    Text("\(Int(record.weight))")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("KG")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.yellow)
+                }
                 
                 Spacer()
                 
-                Text("×")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.gray)
-                
-                Text("\(record.reps)")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                
-                Text("REPS")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.gray)
+                if record.category != "RUNNING" {
+                    Text("×")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.gray)
+                    
+                    Text("\(record.reps)")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Text("REPS")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                }
             }
         }
         .padding(12)
@@ -276,16 +176,58 @@ struct PerformanceRow: View {
         formatter.dateFormat = "dd MMM"
         return formatter.string(from: date)
     }
+    
+    private func formatTime(_ seconds: Int) -> String {
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        if h > 0 {
+            return String(format: "%dh%02d", h, m)
+        }
+        return String(format: "%dm%02d", m, s)
+    }
 }
 
-// MARK: - Sélecteur de Catégorie
-struct CategoryPickerView: View {
+// MARK: - Sélecteur de Sport (Racine)
+struct SportPickerView: View {
     @Binding var selectedExercise: String?
+    @Binding var selectedCategory: String
+    @Binding var selectedMuscle: String
     @Binding var isPresented: Bool
+    @Binding var showEntry: Bool
     
     var body: some View {
-        List(ExerciseDatabase.categories) { cat in
-            NavigationLink(destination: ExerciseListView(category: cat, selectedExercise: $selectedExercise, isPresented: $isPresented)) {
+        List(ExerciseDatabase.sports) { sport in
+            NavigationLink(destination: CategoryPickerView(sport: sport, selectedExercise: $selectedExercise, selectedCategory: $selectedCategory, selectedMuscle: $selectedMuscle, isPresented: $isPresented, showEntry: $showEntry)) {
+                HStack(spacing: 10) {
+                    Image(systemName: sport.icon)
+                        .font(.system(size: 16))
+                        .foregroundColor(.yellow)
+                        .frame(width: 24)
+                    
+                    Text(sport.name)
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .listStyle(.carousel)
+        .navigationTitle("SPORTS")
+    }
+}
+
+// MARK: - Sélecteur de Sous-Catégorie (ex: Muscles ou Distances)
+struct CategoryPickerView: View {
+    let sport: SportCategory
+    @Binding var selectedExercise: String?
+    @Binding var selectedCategory: String
+    @Binding var selectedMuscle: String
+    @Binding var isPresented: Bool
+    @Binding var showEntry: Bool
+    
+    var body: some View {
+        List(sport.subCategories) { cat in
+            NavigationLink(destination: ExerciseListView(category: cat, sportName: sport.name, selectedExercise: $selectedExercise, selectedCategory: $selectedCategory, selectedMuscle: $selectedMuscle, isPresented: $isPresented, showEntry: $showEntry)) {
                 HStack(spacing: 10) {
                     Image(systemName: cat.icon)
                         .font(.system(size: 16))
@@ -299,19 +241,31 @@ struct CategoryPickerView: View {
             }
         }
         .listStyle(.carousel)
-        .navigationTitle("MUSCLES")
+        .navigationTitle(sport.name)
     }
 }
 
 // MARK: - Liste des Exercices
 struct ExerciseListView: View {
     let category: ExerciseCategory
+    let sportName: String
     @Binding var selectedExercise: String?
+    @Binding var selectedCategory: String
+    @Binding var selectedMuscle: String
     @Binding var isPresented: Bool
+    @Binding var showEntry: Bool
     
     var body: some View {
         List(category.exercises, id: \.self) { ex in
-            NavigationLink(destination: AddPerformanceSheet(exercise: ex, isPresented: $isPresented)) {
+            Button(action: {
+                selectedExercise = ex
+                selectedCategory = sportName
+                selectedMuscle = category.name
+                isPresented = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showEntry = true
+                }
+            }) {
                 Text(ex)
                     .font(.system(size: 13))
                     .padding(.vertical, 4)
@@ -329,8 +283,18 @@ struct AddPerformanceSheet: View {
     @Binding var isPresented: Bool
     @StateObject private var healthManager = HealthManager.shared
     
-    @State private var weight: Double = 60.0
+    // Pour Running: weight = temps en secondes, reps = 0 (ou distance exacte si besoin)
+    @State private var weight: Double = 60.0 // KG ou SECONDES
     @State private var reps: Int = 10
+    
+    // Pour Running (Temps)
+    @State private var hours: Int = 0
+    @State private var minutes: Int = 30
+    @State private var seconds: Int = 0
+    
+    var isRunning: Bool {
+        return category == "RUNNING"
+    }
     
     // Trouver l'ancien record pour cet exercice (Ghost Set)
     var lastRecord: ExerciseRecord? {
@@ -348,7 +312,11 @@ struct AddPerformanceSheet: View {
             if let last = lastRecord {
                 HStack(spacing: 4) {
                     Image(systemName: "ghost.fill")
-                    Text("DERNIER : \(Int(last.weight))KG x \(last.reps)")
+                    if isRunning {
+                        Text("DERNIER : \(formatTime(Int(last.weight)))")
+                    } else {
+                        Text("DERNIER : \(Int(last.weight))KG x \(last.reps)")
+                    }
                 }
                 .font(.system(size: 9, weight: .black))
                 .foregroundColor(.yellow.opacity(0.6))
@@ -360,50 +328,75 @@ struct AddPerformanceSheet: View {
             
             Spacer()
             
-            HStack {
-                // POIDS
-                VStack {
-                    Text("\(Int(weight))")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
-                        .focusable(true)
-                        .digitalCrownRotation($weight, from: 0, through: 400, by: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
-                    Text("KG")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
-                }
-                
-                Text("×")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.yellow)
-                    .padding(.horizontal, 5)
-                
-                // REPS
-                VStack {
-                    Text("\(reps)")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
+            if isRunning {
+                // Saisie TEMPS pour Running
+                HStack(spacing: 2) {
+                    Picker("H", selection: $hours) {
+                        ForEach(0..<24) { i in Text("\(i)h").tag(i) }
+                    }
+                    .labelsHidden()
+                    .frame(width: 45, height: 70)
                     
-                    HStack(spacing: 10) {
-                        Button(action: { if reps > 1 { reps -= 1 } }) {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.system(size: 24))
-                        }
-                        .buttonStyle(.plain)
+                    Picker("M", selection: $minutes) {
+                        ForEach(0..<60) { i in Text("\(i)m").tag(i) }
+                    }
+                    .labelsHidden()
+                    .frame(width: 45, height: 70)
+                    
+                    Picker("S", selection: $seconds) {
+                        ForEach(0..<60) { i in Text("\(i)s").tag(i) }
+                    }
+                    .labelsHidden()
+                    .frame(width: 45, height: 70)
+                }
+            } else {
+                // Saisie POIDS / REPS pour Muscu
+                HStack {
+                    // POIDS
+                    VStack {
+                        Text("\(Int(weight))")
+                            .font(.system(size: 36, weight: .black, design: .rounded))
+                            .focusable(true)
+                            .digitalCrownRotation($weight, from: 0, through: 400, by: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
+                        Text("KG")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Text("×")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.yellow)
+                        .padding(.horizontal, 5)
+                    
+                    // REPS
+                    VStack {
+                        Text("\(reps)")
+                            .font(.system(size: 36, weight: .black, design: .rounded))
                         
-                        Button(action: { reps += 1 }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 24))
+                        HStack(spacing: 10) {
+                            Button(action: { if reps > 1 { reps -= 1 } }) {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 24))
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Button(action: { reps += 1 }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 24))
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.vertical, 10)
             }
-            .padding(.vertical, 10)
             
             Button(action: {
-                // Utiliser la nouvelle méthode du manager avec sport et muscle
+                let finalValue = isRunning ? Double(hours * 3600 + minutes * 60 + seconds) : weight
+                
                 healthManager.addRecord(
                     exercise: exercise, 
-                    weight: weight, 
+                    weight: finalValue, 
                     reps: reps, 
                     category: category, 
                     muscleGroup: muscleGroup
@@ -425,6 +418,16 @@ struct AddPerformanceSheet: View {
         .padding(.horizontal)
         .background(Color.black)
         .navigationTitle("DÉTAILS")
+    }
+    
+    private func formatTime(_ seconds: Int) -> String {
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        if h > 0 {
+            return String(format: "%dh%02d", h, m)
+        }
+        return String(format: "%dm%02d", m, s)
     }
 }
 

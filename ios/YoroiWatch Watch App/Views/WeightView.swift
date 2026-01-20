@@ -201,7 +201,7 @@ struct AddWeightView: View {
             // Boutons de contrôle rapide
             HStack(spacing: 20) {
                 Button(action: { 
-                    weight -= 1.0
+                    weight -= 0.1
                     WKInterfaceDevice.current().play(.click)
                 }) {
                     Image(systemName: "minus")
@@ -213,7 +213,7 @@ struct AddWeightView: View {
                 .buttonStyle(.plain)
                 
                 Button(action: { 
-                    weight += 1.0
+                    weight += 0.1
                     WKInterfaceDevice.current().play(.click)
                 }) {
                     Image(systemName: "plus")

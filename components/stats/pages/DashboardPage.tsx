@@ -127,7 +127,14 @@ export const DashboardPage: React.FC = () => {
       });
 
       // --- 4. DISCIPLINE ---
-      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings?.length || 0, data: [] });
+      // Filtrer pour n'avoir que les 30 derniers jours (car on charge 60 jours pour les graphes)
+      const trainings30d = trainings?.filter((t: any) => {
+        const date = new Date(t.date);
+        const cutoff = subDays(new Date(), 30);
+        return date >= cutoff;
+      }) || [];
+
+      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings30d.length, data: [] });
       metricsList.push({ id: 'load', metricKey: 'load', theme: 'Discipline', title: 'Charge globale', icon: <Flame size={16} color="#F97316" />, color: '#F97316', unit: 'pts', value: loadStats?.totalLoad || 0, data: [] });
 
       // --- 5. SANTÉ ---

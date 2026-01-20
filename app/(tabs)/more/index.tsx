@@ -617,7 +617,7 @@ export default function MoreScreen() {
             { text: 'Annuler', style: 'cancel' },
             {
               text: 'Valider',
-              onPress: async (code) => {
+              onPress: async (code: any) => {
                 if (code === '2022') {
                   setCreatorModeActive(true);
                   await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
@@ -1004,6 +1004,48 @@ export default function MoreScreen() {
       await setThemeMode(mode);
     } catch (error) {
       logger.error('[MoreScreen] Error changing theme mode:', error);
+    }
+  };
+
+  const handleCloseCreatorModal = () => {
+    setShowCreatorInput(false);
+    setCreatorCode('');
+    setSecretGestureDone(0);
+  };
+
+  const handleSecretGesture = () => {
+    const newCount = secretGestureDone + 1;
+    setSecretGestureDone(newCount);
+    if (newCount >= 3) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setShowCreatorInput(true);
+      setSecretGestureDone(0);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handleCreatorCodeSubmit = async () => {
+    try {
+      const hash = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        creatorCode
+      );
+      
+      if (SECRET_HASHES.includes(hash)) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setCreatorModeActive(true);
+        await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+        await generateScreenshotDemoData();
+        handleCloseCreatorModal();
+        showPopup('Mode Créateur Activé', 'Bienvenue Germain.', [{ text: 'Merci', style: 'primary' }]);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Erreur', 'Code incorrect.');
+        setCreatorCode('');
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 

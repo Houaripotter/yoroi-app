@@ -44,6 +44,26 @@ export const calculateReadinessScore = async (
       getTodayHydration(),
     ]);
 
+    // Détection pas de données : Si tout est vide, score = 0
+    const hasSleepData = sleepStats && sleepStats.lastNightDuration > 0;
+    const hasLoadData = loadStats && loadStats.totalLoad > 0;
+    const hasHydrationData = hydration > 0;
+
+    if (!hasSleepData && !hasLoadData && !hasHydrationData) {
+      return {
+        score: 0,
+        level: 'moderate',
+        message: 'En attente de données...',
+        factors: {
+          sleep: { score: 0, impact: 'neutral' },
+          charge: { score: 0, impact: 'neutral' },
+          hydration: { score: 0, impact: 'neutral' },
+          streak: { score: 0, impact: 'neutral' },
+        },
+        recommendation: 'caution',
+      };
+    }
+
     // Score Sommeil (0-100)
     let sleepScore = 0;
     if (sleepStats) {

@@ -10,6 +10,7 @@ import { Platform } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addWeight } from '@/lib/database';
+import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
 import { appleWatchService } from '@/lib/appleWatchService';
 
 interface WatchContextType {
