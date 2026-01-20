@@ -1672,15 +1672,18 @@ const generateCarnetData = async (): Promise<number> => {
 // ============================================
 // FONCTION PRINCIPALE : CHARGER LES DONNÉES
 // ============================================
-export const loadScreenshotDemoData = async (): Promise<{ success: boolean; error?: string }> => {
+export const generateScreenshotDemoData = async (): Promise<{ success: boolean; error?: string }> => {
   try {
-    logger.info('Chargement des données de démonstration pour screenshots...');
+    logger.info('Génération du mode Germain Del Jarret (Screenshot)...');
 
     // 1. Initialiser la base de données
     await initDatabase();
     const database = await openDatabase();
 
     // 2. Sauvegarder le profil dans AsyncStorage
+    await AsyncStorage.removeItem('@yoroi_user_name');
+    await AsyncStorage.removeItem('@yoroi_user_settings');
+    
     await AsyncStorage.setItem('@yoroi_user_name', DEMO_PROFILE.name);
     await AsyncStorage.setItem('@yoroi_user_height', DEMO_PROFILE.height_cm.toString());
     await AsyncStorage.setItem('@yoroi_start_weight', DEMO_PROFILE.start_weight.toString());
@@ -1689,18 +1692,23 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     await AsyncStorage.setItem('@yoroi_user_mode', DEMO_PROFILE.mode);
 
     // 2b. Sauvegarder le profil dans la base de données SQLite
-    // D'abord supprimer tout profil existant pour éviter les conflits
     const startDate = format(DEMO_PROFILE.startDate, 'yyyy-MM-dd');
     await database.runAsync(`DELETE FROM profile`);
     await database.runAsync(
       `INSERT INTO profile (name, height_cm, start_weight, target_weight, start_date, avatar_gender) VALUES (?, ?, ?, ?, ?, ?)`,
       [DEMO_PROFILE.name, DEMO_PROFILE.height_cm, DEMO_PROFILE.start_weight, DEMO_PROFILE.target_weight, startDate, 'homme']
     );
-    logger.info('Profil créé dans la base de données:');
-    logger.info(`   • Nom: ${DEMO_PROFILE.name}`);
-    logger.info(`   • Poids départ: ${DEMO_PROFILE.start_weight}kg`);
-    logger.info(`   • Objectif: ${DEMO_PROFILE.target_weight}kg`);
-    logger.info(`   • Sport: ${DEMO_PROFILE.sport}`);
+    
+    // Synchroniser avec les paramètres utilisateur globaux
+    await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
+      username: DEMO_PROFILE.name,
+      gender: 'male',
+      height: DEMO_PROFILE.height_cm,
+      targetWeight: DEMO_PROFILE.target_weight,
+      onboardingCompleted: true,
+    }));
+
+    logger.info(`Profil créé: ${DEMO_PROFILE.name}`);
 
     // 3. Générer et insérer les pesées avec composition corporelle complète
     logger.info('Génération des pesées...');
@@ -1864,86 +1872,44 @@ export const loadScreenshotDemoData = async (): Promise<{ success: boolean; erro
     logger.info('RÉSUMÉ COMPLET DES DONNÉES GÉNÉRÉES');
     logger.info('==========================================');
     logger.info('');
-    logger.info('👤 PROFIL & GAMIFICATION - 1 AN DE TRANSFORMATION!');
-    logger.info(`   • Profil: Thomas Silva (178cm, 120kg → 85kg, objectif: 82kg)`);
-    logger.info(`   • Perte de poids: -35kg en 1 an! 🔥🔥🔥 INCROYABLE!`);
+    logger.info('👤 PROFIL & GAMIFICATION - 6 MOIS DE TRANSFORMATION!');
+    logger.info(`   • Profil: ${DEMO_PROFILE.name} (${DEMO_PROFILE.height_cm}cm, ${DEMO_PROFILE.start_weight}kg → 76.2kg, objectif: ${DEMO_PROFILE.target_weight}kg)`);
+    logger.info(`   • Perte de poids: -22kg en 6 mois! 🔥 ATHLÈTE ÉLITE`);
     logger.info(`   • Grade: Empereur (天皇) - Niveau 7 - LÉGENDAIRE!`);
-    logger.info(`   • Streak: 365 jours consécutifs! 💪💪`);
+    logger.info(`   • Streak: 178 jours consécutifs! 💪💪`);
     logger.info(`   • XP: 9850 points - Niveau 24`);
     logger.info(`   • Avatar: Samurai (masculin) + 14 autres débloqués`);
     logger.info(`   • Badges: ${badges.length} débloqués`);
     logger.info('');
-    logger.info('📊 STATS (6 onglets) - 1 AN DE DONNÉES!');
-    logger.info(`   • Poids: ${weights.length} pesées sur 365 jours (120kg → 85kg = -35kg!)`);
-    logger.info(`   • Composition: 18% graisse (-17%), 42% muscle (+12%), 58% eau, âge méta 28 ans (-17 ans!)`);
-    logger.info(`   • Mensurations: ${measurements.length} entrées - Taille -10cm, Biceps +2.5cm!`);
-    logger.info(`   • Discipline: ${trainingsCount} entraînements (3 clubs avec logos)`);
-    logger.info(`   • Performance: ${carnetCount} éléments (Dév Couché 80kg×6, 10km 36min)`);
+    logger.info('📊 STATS (6 onglets) - 6 MOIS DE DONNÉES!');
+    logger.info(`   • Poids: ${weights.length} pesées sur 180 jours (98kg → 76kg)`);
+    logger.info(`   • Composition: 14.5% graisse, 44% muscle, 60% eau - SANS TROU`);
+    logger.info(`   • Mensurations: ${measurements.length} entrées - Taille affinée, Biceps massifs!`);
+    logger.info(`   • Discipline: ${trainingsCount} entraînements (Basic-Fit + Gracie Barra)`);
+    logger.info(`   • Performance: PRs enregistrés (Dév Couché 80kg×6, 10km 36min)`);
     logger.info(`   • Vitalité: SpO2 99%, HRV 62ms, FC repos 54 bpm - ATHLÈTE!`);
     logger.info('');
     logger.info('🏋️ ENTRAÎNEMENT & PLANNING');
-    logger.info(`   • Clubs: Run & Fit Marseille (Running), Basic-Fit (Muscu), Urban Street Workout (Calisthenics)`);
-    logger.info(`   • Planning: 6 séances/semaine (max 2/jour, Mer/Dim repos)`);
-    logger.info(`   • Carnet: Benchmarks muscu (Dév Couché, Squat, Soulevé, Tractions...)`);
-    logger.info(`   • Carnet: Benchmarks running (5km, 10km, Semi, Trail)`);
-    logger.info(`   • Carnet: 9 techniques JJB (Berimbolo, Triangle, Armbar, Kimura...)`);
+    logger.info(`   • Clubs: Basic-Fit (Muscu), Gracie Barra (JJB), Running (Solo)`);
+    logger.info(`   • Planning: 10-12 séances/semaine (MMA Spirit!)`);
+    logger.info(`   • Carnet: Benchmarks muscu, running et 9 techniques JJB`);
     logger.info('');
     logger.info('🏆 COMPÉTITION');
     logger.info(`   • À venir: Open Marseille JJB (J-15), HYROX Paris (J-45)`);
     logger.info(`   • Palmares: 3 compétitions passées`);
-    logger.info(`     - Open Nice JJB: 🥉 Bronze (-82kg)`);
-    logger.info(`     - HYROX Lyon: 45ème/250 (1h18)`);
-    logger.info(`     - Open Marseille JJB: 🥈 Argent (-77kg)`);
     logger.info('');
     logger.info('🎮 GAMIFICATION');
-    logger.info(`   • Défis quotidiens: 3 (8000 pas, Hydratation, Entraînement)`);
-    logger.info(`   • Défis hebdomadaires: 2 (5 entraînements, 5 pesées)`);
-    logger.info(`   • Quêtes: 3 (Objectif poids, 100 entraînements, Streak 90j)`);
-    logger.info('');
-    logger.info('🍽️ NUTRITION & JEÛNE');
-    logger.info(`   • Jeûne intermittent: 14 jours (16/8 en semaine, 18/6 weekend)`);
-    logger.info('');
-    logger.info('⏱️ OUTILS');
-    logger.info(`   • Timer: 8 sessions (Combat, HIIT, EMOM, AMRAP, Tabata)`);
-    logger.info(`   • Calculateurs: IMC, IMG, TDEE disponibles`);
-    logger.info('');
-    logger.info('❤️ APPLE HEALTH - 6 MOIS - NIVEAU ATHLÈTE ÉLITE!');
-    logger.info(`   • Pas: 180 jours (6000-18000 pas/jour, aujourd'hui: 13567!) 🚀`);
-    logger.info(`   • Calories: 180 jours (350-1100 kcal/jour - BEAST MODE!)`);
-    logger.info(`   • Distance: 180 jours (5-15 km/jour, aujourd'hui: 10.1km)`);
-    logger.info(`   • FC repos: 52-58 bpm (NIVEAU ATHLÈTE!), max 175-195 bpm`);
-    logger.info(`   • SpO2: 97-100% (santé parfaite!), HRV: 45-75ms`);
-    logger.info('');
-    logger.info('📸 TRANSFORMATION VISUELLE');
-    logger.info(`   • Photos: 3 photos (début, milieu, actuelle)`);
-    logger.info(`   • Poids: Variations dramatiques visibles sur graphiques!`);
-    logger.info(`   • Cartes de partage: Disponibles pour réseaux sociaux`);
-    logger.info('');
-    logger.info('💤 VITALITÉ - RÉCUPÉRATION OPTIMALE');
-    logger.info(`   • Sommeil: 30 nuits (7-9h, 26% profond, 23% REM, qualité 89%)`);
-    logger.info(`   • Hydratation: 30 jours (aujourd'hui: 3.2L/3.5L - CHAMPION!)`);
-    logger.info(`   • Charge: Niveau 92%, Stress 15% - GESTION PARFAITE!`);
-    logger.info(`   • Charge: 14 jours + 12 semaines (optimal 85%)`);
-    logger.info(`   • Batterie: 180 jours (récupération, nutrition, stress)`);
-    logger.info('');
-    logger.info('🗓️ PLANNING HEBDOMADAIRE TYPE');
-    logger.info('   Lun: Run & Fit (Endurance) 07h00 + Basic-Fit (Muscu) 18h30');
-    logger.info('   Mar: Urban Street Workout (Upper Body) 10h');
-    logger.info('   Mer: REPOS');
-    logger.info('   Jeu: Run & Fit (Fractionné) 07h00 + Basic-Fit (Muscu) 18h30');
-    logger.info('   Ven: Urban Street Workout (Skills) 10h');
-    logger.info('   Sam: Run & Fit (Long Run) 08h00 - Après-midi REPOS');
-    logger.info('   Dim: REPOS');
+    logger.info(`   • Défis quotidiens: 3, Défis hebdomadaires: 2, Quêtes: 3`);
     logger.info('');
     logger.info('==========================================');
-    logger.info('✅ MODE SCREENSHOT 100% COMPLET');
+    logger.info('✅ MODE GERMAIN DEL JARRET 100% OPÉRATIONNEL');
     logger.info('==========================================');
 
     return {
       success: true,
     };
   } catch (error) {
-    logger.error('❌ Erreur lors du chargement des données de démonstration:', error);
+    logger.error('❌ Erreur lors de la génération Germain:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Erreur inconnue',
@@ -2132,14 +2098,12 @@ export const cleanDuplicateTrainings = async (): Promise<{ success: boolean; rem
       clubIds = await createClubs();
     } else {
       // Récupérer les IDs des clubs existants
-      const rf = await database.getFirstAsync<{ id: number }>(`SELECT id FROM clubs WHERE sport = 'running' LIMIT 1`);
+      const gb = await database.getFirstAsync<{ id: number }>(`SELECT id FROM clubs WHERE sport = 'jjb' LIMIT 1`);
       const bf = await database.getFirstAsync<{ id: number }>(`SELECT id FROM clubs WHERE sport = 'musculation' LIMIT 1`);
-      const usw = await database.getFirstAsync<{ id: number }>(`SELECT id FROM clubs WHERE sport = 'calisthenics' LIMIT 1`);
 
       clubIds = {
-        runAndFit: rf?.id || 1,
+        gracieBarra: gb?.id || 1,
         basicFit: bf?.id || 2,
-        urbanStreetWorkout: usw?.id || 3,
       };
     }
 

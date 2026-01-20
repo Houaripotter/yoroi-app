@@ -14,6 +14,7 @@ import { MetricCard } from '../charts/MetricCard';
 import { SimpleCompositionCard } from '../charts/SimpleCompositionCard';
 import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { getLatestWeight, getAllWeights } from '@/lib/database';
 import { Activity, Droplet, Bone, Zap, Flame, Target } from 'lucide-react-native';
@@ -281,6 +282,26 @@ export const CompositionPage: React.FC = () => {
         onPeriodChange={setSelectedPeriod}
         showPeriodSelector={true}
       />
+
+      {/* Graphique de tendance principal */}
+      <StatsSection
+        title="Tendance Masse Grasse"
+        description="Évolution de ton taux de graisse sur la période"
+      >
+        <ScrollableLineChart
+          data={historyData.bodyFat}
+          color="#F59E0B"
+          unit="%"
+          height={200}
+          onPress={() => setSelectedMetric({
+            key: 'fat_percent',
+            label: t('statsPages.composition.bodyFat'),
+            color: '#F59E0B',
+            unit: '%',
+            icon: <Activity size={18} color="#F59E0B" strokeWidth={2.5} />,
+          })}
+        />
+      </StatsSection>
 
       {/* Section Composition Globale */}
       <StatsSection

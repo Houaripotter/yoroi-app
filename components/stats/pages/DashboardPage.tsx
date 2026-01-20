@@ -52,7 +52,7 @@ export const DashboardPage: React.FC = () => {
     try {
       setLoading(true);
       const settings = await getUserSettings();
-      const isScreenshotMode = settings.username === 'Thomas Silva';
+      const isScreenshotMode = settings.username === 'Germain Del Jarret';
 
       let weights, trainings, measurements, sleep, readiness, loadStats;
 
@@ -208,7 +208,6 @@ export const DashboardPage: React.FC = () => {
               dataPointsColor={metric.color}
               showValuesAsDataPointsText
               textFontSize={10}
-              fontWeight="900"
               textColor={isDark ? '#FFFFFF' : '#000000'}
               textShiftY={-15}
               scrollEnabled={true}

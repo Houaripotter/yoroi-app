@@ -13,6 +13,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { SimpleMetricCard } from '../charts/SimpleMetricCard';
 import { HealthKitConnectCard } from '../HealthKitConnectCard';
 import { RecoveryCircle } from '../whoop/RecoveryCircle';
@@ -245,6 +246,26 @@ export const VitalitePage: React.FC = () => {
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
+
+      {/* Graphique de tendance principal */}
+      <StatsSection
+        title="Historique Sommeil"
+        description="Suivi de la durée de tes nuits"
+      >
+        <ScrollableLineChart
+          data={vitalHistory.sleep}
+          color="#6366F1"
+          unit="h"
+          height={200}
+          onPress={() => setSelectedMetric({
+            key: 'sleep',
+            label: t('statsPages.vitality.sleepDuration'),
+            color: '#6366F1',
+            unit: 'h',
+            icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
+          })}
+        />
+      </StatsSection>
 
       {healthData?.recovery?.score && (
         <StatsSection

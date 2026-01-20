@@ -53,6 +53,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
   height = 220,
   compact = false,
   unit = '',
+  onPress,
 }) => {
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();

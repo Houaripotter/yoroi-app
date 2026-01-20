@@ -13,6 +13,7 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { HistoryScrollCard } from '../charts/HistoryScrollCard';
+import { ScrollableLineChart } from '../charts/ScrollableLineChart';
 import { StrainGauge } from '../whoop/StrainGauge';
 import { aggregateTrainingData } from '@/lib/statsAggregation';
 import { getTrainings } from '@/lib/database';
@@ -237,6 +238,26 @@ export const DisciplinePage: React.FC = () => {
         selectedPeriod={selectedPeriod}
         onPeriodChange={setSelectedPeriod}
       />
+
+      {/* Graphique de tendance principal */}
+      <StatsSection
+        title="Volume d'entraînement"
+        description="Évolution de tes sessions sur la période"
+      >
+        <ScrollableLineChart
+          data={trainingHistory.duration}
+          color="#10B981"
+          unit=" min"
+          height={200}
+          onPress={() => setSelectedMetric({
+            key: 'duration',
+            label: t('statsPages.discipline.duration'),
+            color: '#10B981',
+            unit: 'min',
+            icon: <Timer size={18} color="#10B981" strokeWidth={2.5} />,
+          })}
+        />
+      </StatsSection>
 
       {trainingData && trainingData.weeklyLoad > 0 && (
         <StatsSection
