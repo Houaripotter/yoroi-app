@@ -4,6 +4,7 @@
 // ============================================
 
 import SwiftUI
+import HealthKit
 
 struct WorkoutView: View {
     @StateObject private var healthManager = HealthManager.shared
@@ -145,7 +146,7 @@ struct WorkoutView: View {
         }
         .background(Color.black)
         .sheet(isPresented: $showActivityPicker) {
-            ActivityPickerSheet(activities: activities, selectedActivity: $selectedActivity)
+            ActivityPickerSheet(activities: activities, selectedActivity: $selectedActivity, healthManager: healthManager)
         }
     }
     private func formatDuration(_ seconds: TimeInterval) -> String {
@@ -193,6 +194,7 @@ struct StatBox: View {
 struct ActivityPickerSheet: View {
     let activities: [(name: String, icon: String, color: Color)]
     @Binding var selectedActivity: String?
+    @ObservedObject var healthManager: HealthManager
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

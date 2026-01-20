@@ -6,69 +6,223 @@
 import SwiftUI
 
 struct RecordsView: View {
+
     @StateObject private var healthManager = HealthManager.shared
+
     @State private var showExercisePicker = false
+
     @State private var selectedExercise: String?
+
+    @State private var selectedCategory: String = "musculation"
+
+    @State private var selectedMuscle: String = "GÉNÉRAL"
+
     @State private var showEntrySheet = false
+
     
+
+    // Groupement des records existants
+
+    var groupedRecords: [(category: String, muscles: [(name: String, items: [ExerciseRecord])])] {
+
+        let categories = Dictionary(grouping: healthManager.records, by: { $0.category })
+
+        
+
+        return categories.map { cat, records in
+
+            let muscles = Dictionary(grouping: records, by: { $0.muscleGroup })
+
+            let sortedMuscles = muscles.map { muscle, items in
+
+                (name: muscle, items: items)
+
+            }.sorted(by: { $0.name < 
+.name })
+
+            
+
+            return (category: cat, muscles: sortedMuscles)
+
+        }.sorted(by: { $0.category < 
+.category })
+
+    }
+
+    
+
     var body: some View {
+
         ScrollView {
+
             VStack(spacing: 12) {
+
                 // Header CARNET
+
                 HStack(spacing: 6) {
+
                     Image(systemName: "list.bullet.clipboard.fill")
+
                         .foregroundColor(.yellow)
+
                     Text("CARNET")
+
                         .font(.system(size: 14, weight: .bold))
+
                         .foregroundColor(.yellow)
+
                 }
+
                 .padding(.top, 8)
+
                 
+
                 // Bouton Ajouter
+
                 Button(action: { 
+
                     WKInterfaceDevice.current().play(.click)
+
                     showExercisePicker = true 
+
                 }) {
+
                     HStack {
+
                         Image(systemName: "plus.circle.fill")
+
                         Text("AJOUTER")
+
                             .font(.system(size: 14, weight: .bold))
+
                     }
+
                     .foregroundColor(.black)
+
                     .frame(maxWidth: .infinity)
+
                     .padding(.vertical, 12)
+
                     .background(Color.yellow)
+
                     .cornerRadius(12)
+
                 }
+
                 .buttonStyle(.plain)
+
                 .padding(.horizontal, 8)
 
-                // Liste des records
+
+
+                // Liste des records groupés
+
                 if healthManager.records.isEmpty {
+
                     VStack(spacing: 10) {
+
                         Image(systemName: "trophy.slash")
+
                             .font(.system(size: 30))
+
                             .foregroundColor(.gray.opacity(0.5))
+
                         Text("Aucun record")
+
                             .font(.system(size: 12))
+
                             .foregroundColor(.gray)
+
                     }
+
                     .padding(.top, 20)
+
                 } else {
-                    ForEach(healthManager.records) { record in
-                        PerformanceRow(record: record)
+
+                    ForEach(groupedRecords, id: \.category) { group in
+
+                        VStack(alignment: .leading, spacing: 10) {
+
+                            // Header Sport (ex: MUSCULATION)
+
+                            Text(group.category.uppercased())
+
+                                .font(.system(size: 12, weight: .black))
+
+                                .foregroundColor(.yellow)
+
+                                .padding(.horizontal, 8)
+
+                                .padding(.top, 10)
+
+                            
+
+                            ForEach(group.muscles, id: \.name) { muscle in
+
+                                VStack(alignment: .leading, spacing: 6) {
+
+                                    // Header Muscle (ex: PECTORAUX)
+
+                                    if muscle.name != "GÉNÉRAL" {
+
+                                        Text(muscle.name)
+
+                                            .font(.system(size: 10, weight: .bold))
+
+                                            .foregroundColor(.gray)
+
+                                            .padding(.horizontal, 8)
+
+                                    }
+
+                                    
+
+                                    ForEach(muscle.items) { record in
+
+                                        PerformanceRow(record: record)
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
                     }
+
                 }
+
             }
+
             .padding(.bottom, 16)
+
         }
+
         .background(Color.black)
+
         .sheet(isPresented: $showExercisePicker) {
+
             NavigationView {
-                CategoryPickerView(selectedExercise: $selectedExercise, isPresented: $showExercisePicker)
+
+                CategoryPickerView(selectedExercise: $selectedExercise, selectedCategory: $selectedCategory, selectedMuscle: $selectedMuscle, isPresented: $showExercisePicker, showEntry: $showEntrySheet)
+
             }
+
         }
+
+        .sheet(isPresented: $showEntrySheet) {
+
+            if let exercise = selectedExercise {
+
+                AddPerformanceSheet(exercise: exercise, category: selectedCategory, muscleGroup: selectedMuscle, isPresented: $showEntrySheet)
+
+            }
+
+        }
+
     }
+
 }
 
 // MARK: - Row Performance
@@ -168,80 +322,107 @@ struct ExerciseListView: View {
     }
 }
 
-// MARK: - Sheet Ajout Poids/Reps
 struct AddPerformanceSheet: View {
     let exercise: String
+    let category: String
+    let muscleGroup: String
     @Binding var isPresented: Bool
     @StateObject private var healthManager = HealthManager.shared
     
     @State private var weight: Double = 60.0
     @State private var reps: Int = 10
     
+    // Trouver l'ancien record pour cet exercice (Ghost Set)
+    var lastRecord: ExerciseRecord? {
+        healthManager.records.first(where: { $0.exercise.lowercased() == exercise.lowercased() })
+    }
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                Text(exercise.uppercased())
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.yellow)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 5)
-                
-                HStack {
-                    // POIDS
-                    VStack {
-                        Text("\(Int(weight))")
-                            .font(.system(size: 36, weight: .black, design: .rounded))
-                            .focusable(true)
-                            .digitalCrownRotation($weight, from: 0, through: 400, by: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
-                        Text("KG")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.gray)
-                    }
-                    
-                    Text("×")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.yellow)
-                        .padding(.horizontal, 5)
-                    
-                    // REPS
-                    VStack {
-                        Text("\(reps)")
-                            .font(.system(size: 36, weight: .black, design: .rounded))
-                        
-                        HStack(spacing: 10) {
-                            Button(action: { if reps > 1 { reps -= 1 } }) {
-                                Image(systemName: "minus.circle.fill")
-                                    .font(.system(size: 24))
-                            }
-                            .buttonStyle(.plain)
-                            
-                            Button(action: { reps += 1 }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 24))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+        VStack(spacing: 8) {
+            Text(exercise.uppercased())
+                .font(.system(size: 10, weight: .black))
+                .foregroundColor(.yellow)
+                .multilineTextAlignment(.center)
+            
+            // AFFICHAGE GHOST SET
+            if let last = lastRecord {
+                HStack(spacing: 4) {
+                    Image(systemName: "ghost.fill")
+                    Text("DERNIER : \(Int(last.weight))KG x \(last.reps)")
                 }
-                .padding(.vertical, 10)
-                
-                Button(action: {
-                    healthManager.addRecord(exercise: exercise, weight: weight, reps: reps)
-                    WKInterfaceDevice.current().play(.success)
-                    isPresented = false
-                }) {
-                    Text("ENREGISTRER")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.yellow)
-                        .cornerRadius(12)
-                }
-                .buttonStyle(.plain)
+                .font(.system(size: 9, weight: .black))
+                .foregroundColor(.yellow.opacity(0.6))
+                .padding(.vertical, 2)
+                .padding(.horizontal, 8)
+                .background(Color.yellow.opacity(0.1))
+                .cornerRadius(4)
             }
-            .padding(.horizontal)
+            
+            Spacer()
+            
+            HStack {
+                // POIDS
+                VStack {
+                    Text("\(Int(weight))")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                        .focusable(true)
+                        .digitalCrownRotation($weight, from: 0, through: 400, by: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
+                    Text("KG")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+                
+                Text("×")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.yellow)
+                    .padding(.horizontal, 5)
+                
+                // REPS
+                VStack {
+                    Text("\(reps)")
+                        .font(.system(size: 36, weight: .black, design: .rounded))
+                    
+                    HStack(spacing: 10) {
+                        Button(action: { if reps > 1 { reps -= 1 } }) {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.system(size: 24))
+                        }
+                        .buttonStyle(.plain)
+                        
+                        Button(action: { reps += 1 }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 24))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.vertical, 10)
+            
+            Button(action: {
+                // Utiliser la nouvelle méthode du manager avec sport et muscle
+                healthManager.addRecord(
+                    exercise: exercise, 
+                    weight: weight, 
+                    reps: reps, 
+                    category: category, 
+                    muscleGroup: muscleGroup
+                )
+                
+                WKInterfaceDevice.current().play(.success)
+                isPresented = false
+            }) {
+                Text("ENREGISTRER")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.yellow)
+                    .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal)
         .background(Color.black)
         .navigationTitle("DÉTAILS")
     }

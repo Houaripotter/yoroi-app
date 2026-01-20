@@ -61,13 +61,6 @@ class HealthManager: ObservableObject {
             name: Notification.Name.NSProcessInfoPowerStateDidChange,
             object: nil
         )
-    }
-
-    // CORRECTION MEMORY LEAK: Nettoyer les queries à la destruction
-    deinit {
-        stopAllQueries()
-        NotificationCenter.default.removeObserver(self)
-    }
 
         // Observer les records
         NotificationCenter.default.addObserver(
@@ -76,6 +69,19 @@ class HealthManager: ObservableObject {
             name: .didReceiveRecordsUpdate,
             object: nil
         )
+    }
+
+    // CORRECTION MEMORY LEAK: Nettoyer les queries à la destruction
+    deinit {
+        stopAllQueries()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func lowPowerModeChanged() {
+        DispatchQueue.main.async {
+            self.isLowPowerModeEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
+            print("⚡ Mode économie d'énergie: \(self.isLowPowerModeEnabled)")
+        }
     }
 
     @objc private func handleRecordsUpdate(_ notification: Notification) {
@@ -127,8 +133,8 @@ class HealthManager: ObservableObject {
     
     func stopWorkout() {
         workoutSession?.end()
-        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
-            self.workoutBuilder?.finishWorkout { (workout, error) in
+        workoutBuilder?.endCollection(withEnd: Date()) { [weak self] (success, error) in
+            self?.workoutBuilder?.finishWorkout { (workout, error) in
                 // Workout terminé et sauvegardé
             }
         }
@@ -530,12 +536,14 @@ class HealthManager: ObservableObject {
     }
     
     // NOUVEAU: Ajouter un record depuis la vue Records
-    func addRecord(exercise: String, weight: Double, reps: Int) {
+    func addRecord(exercise: String, weight: Double, reps: Int, category: String, muscleGroup: String) {
         let newRecord = ExerciseRecord(
             exercise: exercise,
             weight: weight,
             reps: reps,
-            date: Date()
+            date: Date(),
+            category: category,
+            muscleGroup: muscleGroup
         )
         records.insert(newRecord, at: 0)
         savePersistedData()
@@ -666,27 +674,39 @@ struct WeightEntry: Codable {
 }
 
 struct ExerciseRecord: Identifiable, Codable {
-    let id = UUID()
+    let id: UUID
     let exercise: String
     let weight: Double
     let reps: Int
     let date: Date
+    let category: String // ex: musculation, running
+    let muscleGroup: String // ex: PECTORAUX, CARDIO
+    
+    init(id: UUID = UUID(), exercise: String, weight: Double, reps: Int, date: Date, category: String = "musculation", muscleGroup: String = "GÉNÉRAL") {
+        self.id = id
+        self.exercise = exercise
+        self.weight = weight
+        self.reps = reps
+        self.date = date
+        self.category = category
+        self.muscleGroup = muscleGroup
+    }
 }
 
 struct WorkoutSession: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let date: Date
     let exercises: [Exercise]
 }
 
 struct Exercise: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let name: String
     let sets: [ExerciseSet]
 }
 
 struct ExerciseSet: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let weight: Double
     let reps: Int
     let isRecord: Bool
