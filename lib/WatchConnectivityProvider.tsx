@@ -180,6 +180,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           console.error('❌ Erreur parsing record Watch:', e);
         }
       }
+
+      // SIGNAL DE TEST / SYNC REÇU
+      if (message.testSignal) {
+        console.log('📡 Signal de synchronisation reçu de la Watch');
+        // On pourrait déclencher une petite vibration ici ou un toast
+      }
       
       // Support du format direct envoyé par WatchConnectivityManager.swift
       if (message.weightUpdate !== undefined) {

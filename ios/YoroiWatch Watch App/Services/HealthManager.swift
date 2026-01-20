@@ -23,6 +23,7 @@ class HealthManager: ObservableObject {
     @Published var steps: Int = 0
     @Published var sleepHours: Double = 0
     @Published var waterIntake: Double = 0
+    @Published var waterGoal: Double = 2500 // Valeur par défaut
     @Published var activeCalories: Double = 0
     @Published var streak: Int = 0
     @Published var currentWeight: Double = 0
@@ -69,6 +70,44 @@ class HealthManager: ObservableObject {
             name: .didReceiveRecordsUpdate,
             object: nil
         )
+        
+        // Observer le poids
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleWeightUpdate),
+            name: .didReceiveWeightUpdate,
+            object: nil
+        )
+        
+        // Observer l'hydratation
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleHydrationUpdate),
+            name: .didReceiveHydrationUpdate,
+            object: nil
+        )
+    }
+
+    // MARK: - Handlers iPhone Sync
+
+    @objc private func handleWeightUpdate(_ notification: Notification) {
+        guard let data = notification.object as? Data else { return }
+        if let weight = try? JSONDecoder().decode(Double.self, from: data) {
+            DispatchQueue.main.async {
+                self.currentWeight = weight
+                print("⚖️ Poids sync depuis iPhone: \(weight)kg")
+            }
+        }
+    }
+
+    @objc private func handleHydrationUpdate(_ notification: Notification) {
+        guard let data = notification.object as? Data else { return }
+        if let amount = try? JSONDecoder().decode(Double.self, from: data) {
+            DispatchQueue.main.async {
+                self.waterIntake = amount
+                print("💧 Hydratation sync depuis iPhone: \(amount)ml")
+            }
+        }
     }
 
     // CORRECTION MEMORY LEAK: Nettoyer les queries à la destruction
@@ -580,6 +619,44 @@ class HealthManager: ObservableObject {
         print("🗑️ TOUTES les données de la montre ont été effacées")
     }
 
+    // NOUVEAU: Mode Screenshot avec données Germain
+    func enableScreenshotMode() {
+        let calendar = Calendar.current
+        let today = Date()
+        
+        DispatchQueue.main.async {
+            self.currentWeight = 84.5
+            self.targetWeight = 80.0
+            self.steps = 12450
+            self.activeCalories = 645
+            self.waterIntake = 2150
+            self.heartRate = 68
+            self.spO2 = 99
+            self.streak = 42
+            self.sleepHours = 7.5
+            
+            // Historique poids
+            self.weightHistory = [
+                (calendar.date(byAdding: .day, value: -10, to: today)!, 86.5),
+                (calendar.date(byAdding: .day, value: -7, to: today)!, 86.2),
+                (calendar.date(byAdding: .day, value: -5, to: today)!, 85.8),
+                (calendar.date(byAdding: .day, value: -2, to: today)!, 85.1),
+                (today, 84.5)
+            ]
+            
+            // Records (Nouveau format)
+            self.records = [
+                ExerciseRecord(exercise: "Développé couché", weight: 100, reps: 5, date: today, category: "MUSCULATION", muscleGroup: "PECTORAUX"),
+                ExerciseRecord(exercise: "Squat", weight: 140, reps: 3, date: today, category: "MUSCULATION", muscleGroup: "JAMBES"),
+                ExerciseRecord(exercise: "10 km", weight: 2520, reps: 0, date: today, category: "RUNNING", muscleGroup: "DISTANCES"), // 42 min
+                ExerciseRecord(exercise: "Tractions", weight: 20, reps: 8, date: today, category: "MUSCULATION", muscleGroup: "DOS")
+            ]
+            
+            self.savePersistedData()
+            print("📸 Mode Screenshot activé (Données Germain)")
+        }
+    }
+
     // MARK: - Persistance Locale (UserDefaults)
 
     func savePersistedData() {
@@ -590,6 +667,7 @@ class HealthManager: ObservableObject {
         defaults.set(steps, forKey: "steps")
         defaults.set(sleepHours, forKey: "sleepHours")
         defaults.set(waterIntake, forKey: "waterIntake")
+        defaults.set(waterGoal, forKey: "waterGoal")
         defaults.set(currentWeight, forKey: "currentWeight")
         defaults.set(targetWeight, forKey: "targetWeight")
         defaults.set(streak, forKey: "streak")
@@ -620,6 +698,8 @@ class HealthManager: ObservableObject {
         steps = defaults.integer(forKey: "steps")
         sleepHours = defaults.double(forKey: "sleepHours")
         waterIntake = defaults.double(forKey: "waterIntake")
+        let savedGoal = defaults.double(forKey: "waterGoal")
+        waterGoal = savedGoal > 0 ? savedGoal : 2500
         currentWeight = defaults.double(forKey: "currentWeight")
         targetWeight = defaults.double(forKey: "targetWeight")
         streak = defaults.integer(forKey: "streak")

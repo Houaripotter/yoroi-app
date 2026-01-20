@@ -1,7 +1,8 @@
 // ============================================
-// SESSION CARD COMPONENT
+// SESSION CARD COMPONENT - PREMIUM DESIGN
 // ============================================
-// Carte partagée réutilisable (Last Session + Modal Validation)
+// Design style "Strava / UFC" avec bandes noires et lignes dorées
+// Photo entière (contain) et stats détaillées
 
 import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
@@ -9,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Trophy, Clock, Calendar, MapPin, Flame, Dumbbell, Zap, Timer } from 'lucide-react-native';
 import { Training } from '@/lib/database';
-import { getClubLogoSource } from '@/lib/sports';
+import { getClubLogoSource, getSportIcon, getSportName } from '@/lib/sports';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -23,43 +24,27 @@ interface SessionCardProps {
   customLocation?: string;
   isLandscape?: boolean;
   width?: number;
+  yearlyCount?: number; 
+  yearlyObjective?: number;
+  monthlyCount?: number; // Nouveau
+  weeklyCount?: number; // Nouveau
+  showYearlyCount?: boolean;
+  showMonthlyCount?: boolean; // Nouveau
+  showWeeklyCount?: boolean; // Nouveau
+  showExercises?: boolean; // Nouveau
 }
 
 export const SessionCard = React.forwardRef<View, SessionCardProps>(
-  ({ training, backgroundImage, backgroundType = 'black', customLocation, isLandscape = false, width = DEFAULT_WIDTH }, ref) => {
-    const CARD_HEIGHT_PORTRAIT = width * (16 / 9);
-    const CARD_HEIGHT_LANDSCAPE = width * (9 / 16);
-    const cardHeight = isLandscape ? CARD_HEIGHT_LANDSCAPE : CARD_HEIGHT_PORTRAIT;
-
-    const getDisplayName = (s: string) => {
-      if (!s) return 'Entraînement';
-      try {
-        const sportList = require('@/lib/sports').SPORTS;
-        const found = sportList.find((sp: any) => sp.id === s.toLowerCase());
-        if (found) return found.name;
-      } catch (e) {}
-      return s.charAt(0).toUpperCase() + s.slice(1);
-    };
-
-    const sportString = training.sport || 'training';
-    const sportName = sportString.includes(',') 
-      ? sportString.split(',').map(s => getDisplayName(s.trim())).join(' + ') 
-      : getDisplayName(sportString);
-
-    let sportIcon = 'trophy';
-    let sportColor = GOLD_COLOR;
-    try {
-      const primarySportId = sportString.split(',')[0].trim().toLowerCase();
-      const sportList = require('@/lib/sports').SPORTS;
-      const primarySport = sportList.find((s: any) => s.id === primarySportId);
-      if (primarySport) {
-        sportIcon = primarySport.icon;
-        sportColor = primarySport.color;
-      }
-    } catch (e) {}
-
-    const displayLocation = customLocation || (training.is_outdoor ? 'Plein air' : 'Salle');
-
+  ({ 
+    training, backgroundImage, backgroundType = 'black', customLocation, isLandscape = false, width = DEFAULT_WIDTH, 
+    yearlyCount, yearlyObjective, monthlyCount, weeklyCount,
+    showYearlyCount = false, showMonthlyCount = false, showWeeklyCount = false, showExercises = true 
+  }, ref) => {
+    
+    const CARD_HEIGHT = width * (16 / 9);
+    const dateObj = training.date ? new Date(training.date) : new Date();
+    
+    // Stats Calculations
     const calculatePace = () => {
       if (!training.distance || !training.duration_minutes) return null;
       const totalSeconds = training.duration_minutes * 60;
@@ -73,412 +58,340 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
     const hasDistance = !!training.distance && training.distance > 0;
     const hasRounds = !!training.rounds && training.rounds > 0;
     const clubLogoSource = training.club_logo ? getClubLogoSource(training.club_logo) : null;
-    const hasClubLogo = !!clubLogoSource;
-
-    const dateObj = training.date ? new Date(training.date) : new Date();
+    
     const formattedDate = dateObj.toLocaleDateString('fr-FR', {
-      weekday: 'long',
+      weekday: 'short',
       day: 'numeric',
-      month: 'long',
-    });
+      month: 'short',
+      year: 'numeric'
+    }).toUpperCase();
 
-    const isLightBackground = backgroundType === 'white';
-    const brandingVariant = isLightBackground ? 'light' : 'dark';
-    const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
-    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
-    const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-    const statsRowBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
-
-    // Muscles logic
+    // Muscles & Exercices logic
     const musclesList = training.muscles ? training.muscles.split(',').map(m => m.trim()) : [];
-    const showMuscles = musclesList.length > 0;
+    const exercisesList = training.exercises || [];
+    
+    // Header Info
+    const sportId = training.sport?.split(',')[0].trim() || 'autre';
+    const sportNameStr = training.sport?.split(',').map(s => getSportName(s)).join(' + ') || 'ENTRAÎNEMENT';
 
-    const content = (
-      <View style={styles.contentContainer}>
-        {/* HAUT: Label + Date */}
-        <View style={styles.topContent}>
-          <View style={styles.titleSection}>
-            <View style={styles.titleRow}>
-              <Trophy size={14} color={GOLD_COLOR} />
-              <Text style={[styles.titleText, { color: GOLD_COLOR }]}>SÉANCE TERMINÉE</Text>
+    const renderDataOverlay = () => (
+      <View style={styles.overlayContainer}>
+        
+        {/* BANDEAU HAUT (NOIR) */}
+        <View style={styles.topBar}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.dateText}>{formattedDate}</Text>
+            <View style={styles.headerTitleRow}>
+              <Text style={styles.previewLabel}>APERÇU DE TA CARD</Text>
             </View>
-            <Text style={[styles.titleDateText, { color: textSecondary }]}>
-              {formattedDate.toUpperCase()}
-            </Text>
           </View>
-        </View>
-
-        {/* CENTRE: Colonne Gauche (Stats) + Droite (Icone) */}
-        <View style={styles.centerRow}>
-          {/* COLONNE GAUCHE: Stats détaillées */}
-          <View style={styles.leftColumn}>
-            {/* Muscles */}
-            {showMuscles && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <Dumbbell size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>CIBLÉS</Text>
-                </View>
-                <View style={styles.musclesContainer}>
-                  {musclesList.slice(0, 3).map((m, i) => (
-                    <Text key={i} style={[styles.muscleText, { color: textPrimary }]}>
-                      • {m.charAt(0).toUpperCase() + m.slice(1)}
-                    </Text>
-                  ))}
-                  {musclesList.length > 3 && (
-                    <Text style={[styles.muscleText, { color: textPrimary }]}>...</Text>
-                  )}
-                </View>
+          
+          {/* Section des compteurs (Haut Droite) */}
+          <View style={styles.counterSectionTop}>
+            {showYearlyCount && yearlyCount !== undefined && (
+              <View style={styles.yearlyCounterBox}>
+                <Text style={styles.yearlyCounterValue}>{yearlyCount}</Text>
+                <Text style={styles.yearlyCounterLabel}>/AN</Text>
               </View>
             )}
-
-            {/* Durée */}
-            <View style={styles.statBlockLeft}>
-              <View style={styles.statLabelRow}>
-                <Timer size={12} color={GOLD_COLOR} />
-                <Text style={[styles.statLabelLeft, { color: textSecondary }]}>DURÉE</Text>
-              </View>
-              <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                {training.duration_minutes} min
-              </Text>
-            </View>
-
-            {/* Distance (si dispo) */}
-            {hasDistance && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <MapPin size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>DISTANCE</Text>
+            
+            <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
+              {showMonthlyCount && monthlyCount !== undefined && (
+                <View style={[styles.yearlyCounterBox, { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'transparent' }]}>
+                  <Text style={[styles.yearlyCounterValue, { fontSize: 10 }]}>{monthlyCount}</Text>
+                  <Text style={[styles.yearlyCounterLabel, { fontSize: 7 }]}>/MOIS</Text>
                 </View>
-                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                  {Number(training.distance).toFixed(2)} km
-                </Text>
-              </View>
-            )}
-
-            {/* Allure (si dispo) */}
-            {pace && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <Trophy size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>ALLURE</Text>
+              )}
+              {showWeeklyCount && weeklyCount !== undefined && (
+                <View style={[styles.yearlyCounterBox, { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'transparent' }]}>
+                  <Text style={[styles.yearlyCounterValue, { fontSize: 10 }]}>{weeklyCount}</Text>
+                  <Text style={[styles.yearlyCounterLabel, { fontSize: 7 }]}>/SEMAINE</Text>
                 </View>
-                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                  {pace} /km
-                </Text>
-              </View>
-            )}
-
-            {/* Rounds (si dispo) */}
-            {hasRounds && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <Clock size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>ROUNDS</Text>
-                </View>
-                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                  {training.rounds}
-                </Text>
-              </View>
-            )}
-
-            {/* Intensité */}
-            {training.intensity && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <Flame size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>INTENSITÉ</Text>
-                </View>
-                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                  {training.intensity}/10
-                </Text>
-              </View>
-            )}
-
-            {/* Calories */}
-            {(training.calories || 0) > 0 && (
-              <View style={styles.statBlockLeft}>
-                <View style={styles.statLabelRow}>
-                  <Zap size={12} color={GOLD_COLOR} />
-                  <Text style={[styles.statLabelLeft, { color: textSecondary }]}>CALORIES</Text>
-                </View>
-                <Text style={[styles.statValueLeft, { color: textPrimary }]}>
-                  {training.calories} kcal
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* COLONNE DROITE: Icone Sport */}
-          <View style={styles.rightColumn}>
-            <View style={[
-              styles.sportIconContainer, 
-              { 
-                backgroundColor: '#FFFFFF', 
-                borderWidth: 3, 
-                borderColor: hasClubLogo ? GOLD_COLOR : sportColor 
-              }
-            ]}>
-              {hasClubLogo ? (
-                <Image
-                  source={clubLogoSource}
-                  style={styles.clubLogo}
-                  resizeMode="contain"
-                />
-              ) : (
-                <MaterialCommunityIcons name={sportIcon as any} size={42} color={sportColor} />
               )}
             </View>
-            <Text style={[styles.sportNameSmall, { color: textPrimary }]}>
-              {sportName}
-            </Text>
           </View>
         </View>
 
-        {/* BAS: Footer seulement (les stats sont à gauche) */}
-        <View style={styles.bottomContent}>
-          {/* INFOS SECONDAIRES (Date, Lieu) */}
-          <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
-            <View style={styles.statItem}>
-              <Clock size={14} color={GOLD_COLOR} />
-              <Text style={[styles.statValue, { color: textPrimary }]}>
-                {training.start_time || '--:--'}
-              </Text>
+        {/* LIGNE DORÉE PREMIUM HAUT (COURTE ET CENTRÉE) */}
+        <View style={styles.goldLineWrapper}>
+          <View style={styles.premiumGoldLineShort} />
+        </View>
+
+        {/* ESPACE MILIEU (IMAGE) */}
+        <View style={styles.imageSpace} />
+
+        {/* LIGNE DORÉE PREMIUM BAS (COURTE ET CENTRÉE) */}
+        <View style={styles.goldLineWrapper}>
+          <View style={styles.premiumGoldLineShort} />
+        </View>
+
+        {/* BANDEAU BAS (NOIR) */}
+        <View style={styles.bottomBar}>
+          <View style={styles.statsContainer}>
+            {/* Colonne de gauche : Stats techniques & EXERCICES */}
+            <View style={styles.technicalColumn}>
+              
+              {/* Club & Lieu */}
+              <View style={[styles.techRow, { marginBottom: 4 }]}>
+                {clubLogoSource ? (
+                  <Image source={clubLogoSource} style={styles.clubLogoSmall} resizeMode="contain" />
+                ) : (
+                  <MaterialCommunityIcons name={getSportIcon(sportId) as any} size={16} color={GOLD_COLOR} />
+                )}
+                <Text style={[styles.techText, { color: GOLD_COLOR }]}>
+                  {training.club_name?.toUpperCase() || 'YOROI'} • {training.is_outdoor ? 'PLEIN AIR' : 'EN SALLE'}
+                </Text>
+              </View>
+
+              {/* Exercices effectués */}
+              {showExercises && exercisesList.length > 0 && (
+                <View style={styles.exercisesBox}>
+                  {exercisesList.slice(0, 3).map((ex, i) => (
+                    <Text key={i} style={styles.exerciseItemText} numberOfLines={1}>
+                      • {ex.name.toUpperCase()} {ex.sets ? `(${ex.sets.length}S)` : ''}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.techRow}>
+                <Timer size={12} color={GOLD_COLOR} />
+                <Text style={styles.techText}>{training.duration_minutes} MIN</Text>
+                {training.intensity && (
+                  <Text style={[styles.techText, { color: GOLD_COLOR }]}> • INT {training.intensity}/10</Text>
+                )}
+              </View>
+
+              <View style={styles.techRow}>
+                {(training.calories || 0) > 0 && (
+                  <Text style={styles.techText}>{training.calories} KCAL</Text>
+                )}
+                {training.technique_rating && (
+                  <Text style={[styles.techText, { color: GOLD_COLOR }]}> • TECH {training.technique_rating}/5</Text>
+                )}
+                {training.heart_rate && (
+                  <Text style={styles.techText}> • {training.heart_rate} BPM</Text>
+                )}
+              </View>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: statsRowBorder }]} />
-            <View style={styles.statItem}>
-              <MapPin size={14} color={GOLD_COLOR} />
-              <Text style={[styles.statValue, { color: textPrimary }]} numberOfLines={1}>
-                {displayLocation}
-              </Text>
-            </View>
+
+            {/* Chiffres Clés (Running / Cardio) */}
+            {(hasDistance || hasRounds) && (
+              <View style={styles.keyStats}>
+                {hasDistance && (
+                  <View style={styles.keyStatItem}>
+                    <Text style={styles.keyStatValue}>{Number(training.distance).toFixed(2)}</Text>
+                    <Text style={styles.keyStatLabel}>KM</Text>
+                  </View>
+                )}
+                {pace && (
+                  <View style={styles.keyStatItem}>
+                    <Text style={styles.keyStatValue}>{pace}</Text>
+                    <Text style={styles.keyStatLabel}>/KM</Text>
+                  </View>
+                )}
+              </View>
+            )}
           </View>
 
-          {/* FOOTER */}
-          <View style={{ paddingBottom: 10, paddingTop: 10 }}>
-            <SocialCardFooter variant={brandingVariant} />
+          {/* BRANDING FOOTER */}
+          <View style={styles.cardFooter}>
+            <SocialCardFooter variant="dark" />
           </View>
         </View>
       </View>
     );
 
-    // ... (Le reste du code pour les rendus conditionnels reste identique)
-    if (backgroundImage) {
-        return (
-          <View
-            ref={ref}
-            style={[styles.card, { backgroundColor: '#000000', width, height: cardHeight }]}
-            collapsable={false}
-          >
-            <Image
-              source={{ uri: backgroundImage }}
-              style={styles.backgroundImageContain}
-              resizeMode="contain"
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0.6)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.8)']}
-              locations={[0, 0.2, 0.7, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-            {content}
-          </View>
-        );
-      }
-  
-      if (isLightBackground) {
-        return (
-          <View
-            ref={ref}
-            style={[styles.card, { backgroundColor: '#FFFFFF', width, height: cardHeight }]}
-            collapsable={false}
-          >
-            {content}
-          </View>
-        );
-      }
-  
-      return (
-        <View
-          ref={ref}
-          style={[styles.card, { width, height: cardHeight }]}
-          collapsable={false}
-        >
+    return (
+      <View
+        ref={ref}
+        style={[styles.card, { width, height: CARD_HEIGHT, backgroundColor: '#000000' }]}
+        collapsable={false}
+      >
+        {/* L'IMAGE DE FOND (CONTAIN) */}
+        {backgroundImage ? (
+          <Image
+            source={{ uri: backgroundImage }}
+            style={styles.mainImage}
+            resizeMode="contain"
+          />
+        ) : (
           <LinearGradient
-            colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
-            style={styles.defaultBackground}
-          >
-            {content}
-          </LinearGradient>
-        </View>
-      );
-    }
-  );
+            colors={['#0f0f1a', '#1a1a2e']}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
+        {/* OVERLAY AVEC INFOS ET BANDES NOIRES */}
+        {renderDataOverlay()}
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 15,
   },
-  defaultBackground: {
-    flex: 1,
-  },
-  backgroundImageContain: {
+  mainImage: {
     position: 'absolute',
-    top: 0,
+    top: '15%', // Décalage pour laisser voir le haut noir
+    bottom: '25%', // Décalage pour laisser voir le bas noir
     left: 0,
     right: 0,
-    bottom: 0,
     width: '100%',
-    height: '100%',
+    height: '60%', // La photo occupe le centre
   },
-  contentContainer: {
+  overlayContainer: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  topContent: {
-    paddingTop: 24,
-    alignItems: 'center',
-  },
-  centerRow: {
+  topBar: {
+    height: '15%',
+    backgroundColor: '#000000',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    flex: 1,
+    paddingTop: 10,
   },
-  leftColumn: {
-    flex: 1,
-    gap: 16,
-    alignItems: 'flex-start',
+  headerLeft: {
+    flexDirection: 'column',
+    gap: 4,
   },
-  rightColumn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleSection: {
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  titleRow: {
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  titleText: {
+  clubLogoSmall: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: GOLD_COLOR,
+  },
+  clubNameText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  counterSectionTop: {
+    alignItems: 'flex-end',
+  },
+  yearlyCounterBox: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  yearlyCounterValue: {
+    color: GOLD_COLOR,
     fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 3,
   },
-  titleDateText: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    marginTop: 4,
+  yearlyCounterLabel: {
+    color: GOLD_COLOR,
+    fontSize: 8,
+    fontWeight: '700',
+    marginLeft: 2,
+    opacity: 0.8,
   },
-  
-  // Left Stats Styles
-  statBlockLeft: {
-    gap: 2,
+  premiumGoldLine: {
+    height: 1.5,
+    backgroundColor: GOLD_COLOR,
+    width: '100%',
+    shadowColor: GOLD_COLOR,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 8,
   },
-  statLabelRow: {
+  imageSpace: {
+    flex: 1,
+  },
+  bottomBar: {
+    height: '25%',
+    backgroundColor: '#000000',
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  exercisesBox: {
+    marginBottom: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: GOLD_COLOR,
+    paddingLeft: 8,
+  },
+  exerciseItemText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  technicalColumn: {
+    flex: 1,
+    gap: 8,
+  },
+  techRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  statLabelLeft: {
-    fontSize: 10,
+  techText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1,
-  },
-  statValueLeft: {
-    fontSize: 20,
-    fontWeight: '900',
-    marginLeft: 18, // Aligner sous le label (approx)
-  },
-  musclesContainer: {
-    marginLeft: 18,
-    marginTop: 2,
-  },
-  muscleText: {
-    fontSize: 12,
-    fontWeight: '600',
-    lineHeight: 16,
-  },
-
-  // Right Icon Styles
-  sportIconContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  clubLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  sportNameSmall: {
-    fontSize: 18,
-    fontWeight: '900',
-    textAlign: 'center',
     letterSpacing: 0.5,
   },
-
-  centerSpace: {
-    // Supprimé car remplacé par centerRow
+  dotSeparator: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 2,
   },
-  bottomContent: {
-    gap: 12,
-    paddingBottom: 0,
-  },
-  
-  // Extra Stats (Distance/Pace)
-  extraStatsRow: {
+  keyStats: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 30,
-    marginBottom: 8,
+    gap: 20, // Plus d'espace
+    alignItems: 'flex-end',
+    flexWrap: 'wrap', // Permettre le wrap si trop large
+    justifyContent: 'flex-end',
+    maxWidth: '50%', // Limiter la largeur pour laisser de la place à la colonne technique
   },
-  extraStatItem: {
+  keyStatItem: {
     alignItems: 'center',
+    minWidth: 45, // Largeur minimale pour éviter le tassement
   },
-  extraStatValue: {
-    fontSize: 28,
+  keyStatValue: {
+    color: '#FFFFFF',
+    fontSize: 22, // Réduit légèrement
     fontWeight: '900',
   },
-  extraStatLabel: {
-    fontSize: 10,
+  keyStatLabel: {
+    color: GOLD_COLOR,
+    fontSize: 8,
     fontWeight: '800',
-    letterSpacing: 1,
+    marginTop: 2,
   },
-
-  statsRow: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  statDivider: {
-    width: 1,
-    height: '80%',
-    alignSelf: 'center',
+  cardFooter: {
+    paddingTop: 10,
+    borderTopWidth: 0.5,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
 });

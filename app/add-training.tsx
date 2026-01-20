@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Modal,
   Share,
+  Switch,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,6 +38,7 @@ import {
   Heart,
   Share2,
   Lightbulb,
+  Trophy,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -477,12 +479,25 @@ export default function AddTrainingScreen() {
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>('Champion');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [yearlyCount, setYearlyCount] = useState<number>(0);
+  const [yearlyObjective, setYearlyObjective] = useState<number>(0);
+  const [monthlyCount, setMonthlyCount] = useState<number>(0);
+  const [weeklyCount, setWeeklyCount] = useState<number>(0);
+  const [showYearlyCountOnCard, setShowYearlyCountOnCard] = useState<boolean>(true);
+  const [showMonthlyCount, setShowMonthlyCount] = useState<boolean>(true);
+  const [showWeeklyCount, setShowWeeklyCount] = useState<boolean>(true);
+  const [showExercisesOnCard, setShowExercisesOnCard] = useState<boolean>(true);
+  const [heartRate, setHeartRate] = useState<string>('');
 
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const profile = await getProfile();
+        const [profile, allTrainings] = await Promise.all([
+          getProfile(),
+          addTraining ? require('@/lib/database').getTrainings() : [],
+        ]);
+
         if (profile) {
           setUserName(profile.name);
           if (profile.profile_photo) setUserPhoto(profile.profile_photo);
@@ -490,6 +505,39 @@ export default function AddTrainingScreen() {
           const settings = await getUserSettings();
           if (settings.username) setUserName(settings.username);
         }
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+        
+        // Calculer début de semaine (Lundi)
+        const startOfWeek = new Date(now);
+        const day = startOfWeek.getDay();
+        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+        startOfWeek.setDate(diff);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const trainingsList = allTrainings || [];
+
+        // 1. Compteur annuel
+        const thisYearTrainings = trainingsList.filter((t: any) => 
+          new Date(t.date).getFullYear() === currentYear
+        );
+        setYearlyCount(thisYearTrainings.length + 1);
+
+        // 2. Compteur mensuel
+        const thisMonthTrainings = trainingsList.filter((t: any) => {
+          const d = new Date(t.date);
+          return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+        });
+        setMonthlyCount(thisMonthTrainings.length + 1);
+
+        // 3. Compteur hebdomadaire
+        const thisWeekTrainings = trainingsList.filter((t: any) => 
+          new Date(t.date) >= startOfWeek
+        );
+        setWeeklyCount(thisWeekTrainings.length + 1);
+
       } catch (e) {
         const settings = await getUserSettings();
         if (settings.username) setUserName(settings.username);
@@ -497,6 +545,23 @@ export default function AddTrainingScreen() {
     };
     loadUserData();
   }, []);
+
+  // Recalculer l'objectif quand le club change
+  useEffect(() => {
+    if (selectedClub) {
+      // Semaines écoulées dans l'année
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const diffInMs = now.getTime() - startOfYear.getTime();
+      const weeksPassed = Math.max(1, Math.ceil(diffInMs / (1000 * 60 * 60 * 24 * 7)));
+      
+      // Objectif = séances_par_semaine * semaines_passées
+      const goalPerWeek = selectedClub.sessions_per_week || 3;
+      setYearlyObjective(goalPerWeek * weeksPassed);
+    } else {
+      setYearlyObjective(0);
+    }
+  }, [selectedClub]);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -848,7 +913,21 @@ export default function AddTrainingScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      <Header title="Nouvel Entrainement" showClose />
+      <Header title="Nouvel Entraînement" showClose />
+      
+      {/* INDICATEUR ÉTAPE 1 - VERSION LARGE */}
+      <View style={{ paddingVertical: 20, backgroundColor: colors.background, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border }}>
+        <Text style={{ fontSize: 14, fontWeight: '900', color: colors.accent, letterSpacing: 2, marginBottom: 10 }}>ÉTAPE 1 SUR 3</Text>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
+          <View style={{ width: 40, height: 2, backgroundColor: colors.border }} />
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.border }} />
+          <View style={{ width: 40, height: 2, backgroundColor: colors.border }} />
+          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.border }} />
+        </View>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>Saisie des détails</Text>
+      </View>
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
@@ -1710,13 +1789,27 @@ export default function AddTrainingScreen() {
       />
 
       {/* MODAL 1: VALIDATION & PARTAGE RICH CARD */}
+      {/* MODAL 1: VALIDATION & PARTAGE RICH CARD */}
       <Modal
         visible={showValidationModal}
         transparent
         animationType="fade"
       >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 16 }}>
           
+          {/* INDICATEUR ÉTAPE 2 - VERSION LARGE */}
+          <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <Text style={{ fontSize: 14, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 10 }}>ÉTAPE 2 SUR 3</Text>
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(212, 175, 55, 0.3)' }} />
+              <View style={{ width: 40, height: 2, backgroundColor: colors.gold }} />
+              <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+              <View style={{ width: 40, height: 2, backgroundColor: 'rgba(212, 175, 55, 0.3)' }} />
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(212, 175, 55, 0.3)' }} />
+            </View>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#FFFFFF', marginTop: 8, opacity: 0.8 }}>Confirmation & Cloud</Text>
+          </View>
+
           {/* CARTE À PARTAGER (Aperçu) */}
           <View 
             collapsable={false}
@@ -1724,14 +1817,14 @@ export default function AddTrainingScreen() {
               backgroundColor: colors.card, 
               borderRadius: 24, 
               width: '100%', 
-              maxWidth: 340, 
+              maxWidth: 360, // Légèrement plus large
               overflow: 'hidden',
-              marginBottom: 20,
+              marginBottom: 16,
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.3,
-              shadowRadius: 20,
-              elevation: 10,
+              shadowOffset: { width: 0, height: 15 },
+              shadowOpacity: 0.6,
+              shadowRadius: 25,
+              elevation: 20,
             }}
           >
             <SessionCard
@@ -1741,19 +1834,98 @@ export default function AddTrainingScreen() {
                 distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
                 calories: calories ? parseInt(calories) : undefined,
                 intensity: intensity,
+                heart_rate: heartRate ? parseInt(heartRate) : undefined,
                 date: date.toISOString(),
                 start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                 rounds: rounds ? parseInt(rounds) : undefined,
                 round_duration: roundDuration ? parseInt(roundDuration) : undefined,
                 club_logo: selectedClub?.logo_uri,
+                club_name: selectedClub?.name,
+                muscles: selectedMuscles.join(','),
+                exercises: exercises, // Passer la vraie liste des exercices
                 technique_rating: techniqueRating || undefined,
                 is_outdoor: isOutdoor,
               }}
-              backgroundImage={userPhoto} // Photo de profil comme fond
+              backgroundImage={userPhoto}
               backgroundType={userPhoto ? 'photo' : 'black'}
               isLandscape={false}
-              width={340} // Largeur du modal
+              width={360}
+              yearlyCount={yearlyCount}
+              yearlyObjective={yearlyObjective}
+              monthlyCount={monthlyCount}
+              weeklyCount={weeklyCount}
+              showYearlyCount={showYearlyCountOnCard}
+              showMonthlyCount={showMonthlyCount}
+              showWeeklyCount={showWeeklyCount}
+              showExercises={showExercisesOnCard}
             />
+          </View>
+
+          {/* PERSONNALISATION DE LA CARTE - MULTIPLES OPTIONS */}
+          <View style={{ width: '100%', maxWidth: 360, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 10, opacity: 0.6 }}>PERSONNALISER L'IMAGE</Text>
+            
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {/* Toggle Annuel */}
+              <TouchableOpacity 
+                onPress={() => setShowYearlyCountOnCard(!showYearlyCountOnCard)}
+                style={{ flex: 1, minWidth: '45%', backgroundColor: showYearlyCountOnCard ? colors.gold + '20' : 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: showYearlyCountOnCard ? colors.gold : 'transparent' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Annuel</Text>
+                <Switch 
+                  value={showYearlyCountOnCard} 
+                  onValueChange={setShowYearlyCountOnCard}
+                  trackColor={{ false: '#333', true: colors.gold }}
+                  thumbColor="#FFF"
+                  style={{ transform: [{ scale: 0.7 }] }}
+                />
+              </TouchableOpacity>
+
+              {/* Toggle Mensuel */}
+              <TouchableOpacity 
+                onPress={() => setShowMonthlyCount(!showMonthlyCount)}
+                style={{ flex: 1, minWidth: '45%', backgroundColor: showMonthlyCount ? colors.accent + '20' : 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: showMonthlyCount ? colors.accent : 'transparent' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Mensuel</Text>
+                <Switch 
+                  value={showMonthlyCount} 
+                  onValueChange={setShowMonthlyCount}
+                  trackColor={{ false: '#333', true: colors.accent }}
+                  thumbColor="#FFF"
+                  style={{ transform: [{ scale: 0.7 }] }}
+                />
+              </TouchableOpacity>
+
+              {/* Toggle Hebdo */}
+              <TouchableOpacity 
+                onPress={() => setShowWeeklyCount(!showWeeklyCount)}
+                style={{ flex: 1, minWidth: '45%', backgroundColor: showWeeklyCount ? '#3B82F620' : 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: showWeeklyCount ? '#3B82F6' : 'transparent' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Hebdo</Text>
+                <Switch 
+                  value={showWeeklyCount} 
+                  onValueChange={setShowWeeklyCount}
+                  trackColor={{ false: '#333', true: '#3B82F6' }}
+                  thumbColor="#FFF"
+                  style={{ transform: [{ scale: 0.7 }] }}
+                />
+              </TouchableOpacity>
+
+              {/* Toggle Exercices */}
+              <TouchableOpacity 
+                onPress={() => setShowExercisesOnCard(!showExercisesOnCard)}
+                style={{ flex: 1, minWidth: '45%', backgroundColor: showExercisesOnCard ? '#10B98120' : 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: showExercisesOnCard ? '#10B981' : 'transparent' }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>Détails</Text>
+                <Switch 
+                  value={showExercisesOnCard} 
+                  onValueChange={setShowExercisesOnCard}
+                  trackColor={{ false: '#333', true: '#10B981' }}
+                  thumbColor="#FFF"
+                  style={{ transform: [{ scale: 0.7 }] }}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* ACTIONS */}

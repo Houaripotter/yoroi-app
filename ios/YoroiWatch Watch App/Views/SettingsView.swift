@@ -7,114 +7,156 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var healthManager = HealthManager.shared
-    @State private var useDemoMode = false
     @State private var hapticEnabled = true
     
+    // Secret Menu State
+    @State private var versionTapCount = 0
+    @State private var showCodeInput = false
+    @State private var enteredCode = ""
+    @State private var isScreenshotMode = false
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                // Header
-                HStack(spacing: 6) {
-                    Image(systemName: "gearshape.fill")
-                        .foregroundColor(.gray)
-                    Text("RÉGLAGES")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.gray)
-                }
-                .padding(.top, 8)
-                
-                // Section Profil
-                VStack(spacing: 8) {
-                    HStack {
-                        Circle()
-                            .fill(Color.accentColor.opacity(0.2))
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .foregroundColor(.accentColor)
-                            )
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(healthManager.currentWeight > 0 ? "Utilisateur Yoroi" : "En attente sync...")
-                                .font(.system(size: 14, weight: .bold))
-                            Text(healthManager.streak > 0 ? "Série: \(healthManager.streak) jours" : "Connecte ton iPhone")
-                                .font(.system(size: 10))
-                                .foregroundColor(.gray)
-                        }
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(Color.gray.opacity(0.12))
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 8)
-                
-                // Options
-                VStack(spacing: 0) {
-                    Toggle(isOn: $useDemoMode) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Mode Démo")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Utiliser des données mock")
-                                .font(.system(size: 9))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
+        List {
+            // SECTION UTILISATEUR
+            Section(header: Text("PROFIL").font(.system(size: 10, weight: .black))) {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.crop.circle.fill")
+                        .foregroundColor(.accentColor)
+                        .font(.system(size: 24))
                     
-                    Divider().background(Color.gray.opacity(0.3))
-                    
-                    Toggle(isOn: $hapticEnabled) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Haptique")
-                                .font(.system(size: 13, weight: .semibold))
-                            Text("Vibrations lors des actions")
-                                .font(.system(size: 9))
-                                .foregroundColor(.gray)
-                        }
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(healthManager.currentWeight > 0 ? "Utilisateur" : "Non Sync")
+                            .font(.system(size: 13, weight: .bold))
+                        Text("\(healthManager.streak) jours de série")
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
                 }
-                .background(Color.gray.opacity(0.12))
-                .cornerRadius(12)
-                .padding(.horizontal, 8)
-                
-                // Info Version
-                VStack(spacing: 2) {
-                    Text("Yoroi App")
-                        .font(.system(size: 10, weight: .bold))
-                }
-                .padding(.top, 4)
-                
-                // Bouton Déconnexion (Sync Reset)
+                .padding(.vertical, 4)
+            }
+            
+            // SECTION SYNCHRONISATION
+            Section(header: Text("IPHONE SYNC").font(.system(size: 10, weight: .black))) {
                 Button(action: {
-                    healthManager.resetAllData()
-                    WKInterfaceDevice.current().play(.failure)
-                }) {
-                    Text("EFFACER TOUTES LES DONNÉES")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.red)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: {
+                    WKInterfaceDevice.current().play(.click)
                     healthManager.fetchAllData()
                 }) {
-                    Text("Forcer Synchronisation")
-                        .font(.system(size: 12, weight: .bold))
+                    Label("Sync iPhone", systemImage: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.blue)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity)
+                }
+                
+                Button(action: {
+                    // Envoyer un signal de test à l'iPhone
+                    WatchConnectivityManager.shared.sendToiPhone(["ping": true], forKey: "testSignal") { _ in
+                        WKInterfaceDevice.current().play(.success)
+                    }
+                }) {
+                    Label("Tester Connexion", systemImage: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+            }
+            
+            // SECTION PRÉFÉRENCES
+            Section(header: Text("PRÉFÉRENCES").font(.system(size: 10, weight: .black))) {
+                Toggle("Haptique", isOn: $hapticEnabled)
+                    .font(.system(size: 12, weight: .semibold))
+                
+                if isScreenshotMode {
+                    HStack {
+                        Label("Mode Screenshot", systemImage: "camera.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.orange)
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill").foregroundColor(.orange)
+                    }
+                }
+            }
+            
+            // SECTION MAINTENANCE
+            Section(header: Text("MAINTENANCE").font(.system(size: 10, weight: .black))) {
+                Button(action: {
+                    healthManager.resetAllData()
+                    isScreenshotMode = false
+                    WKInterfaceDevice.current().play(.failure)
+                }) {
+                    Text("Effacer Données")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.red)
+                }
+            }
+            
+            // VERSION & SECRET
+            Section {
+                Button(action: handleVersionTap) {
+                    Text("Yoroi V: 1.0.1")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.gray.opacity(0.5))
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.bottom, 20)
         }
-        .background(Color.black)
+        .listStyle(.carousel)
+        .navigationTitle("RÉGLAGES")
+        .sheet(isPresented: $showCodeInput) {
+            VStack(spacing: 15) {
+                Text("CODE SECRET")
+                    .font(.headline)
+                
+                TextField("Code...", text: $enteredCode)
+                    .multilineTextAlignment(.center)
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                
+                Button("VALIDER") {
+                    if enteredCode == "2022" {
+                        activateScreenshotMode()
+                    } else {
+                        enteredCode = ""
+                        showCodeInput = false
+                        WKInterfaceDevice.current().play(.failure)
+                    }
+                }
+                .padding()
+                .background(Color.orange)
+                .cornerRadius(12)
+            }
+        }
+    }
+    
+    private func handleVersionTap() {
+        versionTapCount += 1
+        if versionTapCount >= 4 {
+            versionTapCount = 0
+            enteredCode = ""
+            showCodeInput = true
+            WKInterfaceDevice.current().play(.click)
+        }
+    }
+    
+    private func activateScreenshotMode() {
+        isScreenshotMode = true
+        showCodeInput = false
+        healthManager.enableScreenshotMode()
+        WKInterfaceDevice.current().play(.success)
+    }
+}
+    
+    private func handleVersionTap() {
+        versionTapCount += 1
+        if versionTapCount >= 4 {
+            versionTapCount = 0
+            enteredCode = ""
+            showCodeInput = true
+            WKInterfaceDevice.current().play(.click)
+        }
+    }
+    
+    private func activateScreenshotMode() {
+        isScreenshotMode = true
+        showCodeInput = false
+        healthManager.enableScreenshotMode()
+        WKInterfaceDevice.current().play(.success)
     }
 }
 

@@ -10,29 +10,17 @@ struct HydrationView: View {
     @State private var waveOffset: CGFloat = 0
     @State private var isAnimating: Bool = false
     @State private var customAmount: Double = 100
-
-    private let goal: Double = 3000 // mL
+    @State private var bottleScale: CGFloat = 1.0
 
     var progress: Double {
-        min(healthManager.waterIntake / goal, 1.0)
+        min(healthManager.waterIntake / max(1, healthManager.waterGoal), 1.0)
     }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 // SECTION 1: VISUEL PRINCIPAL
-                VStack(spacing: 6) {
-                    // Titre
-                    HStack(spacing: 4) {
-                        Image(systemName: "drop.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.cyan)
-                        Text("HYDRATATION")
-                            .font(.system(size: 11, weight: .black))
-                            .foregroundColor(.cyan)
-                    }
-                    .padding(.top, 4)
-                    
+                VStack(spacing: 4) {
                     // Bouteille animée
                     TimelineView(.animation) { timeline in
                         let now = timeline.date.timeIntervalSinceReferenceDate
@@ -41,7 +29,7 @@ struct HydrationView: View {
                         ZStack {
                             WaterBottleShape()
                                 .stroke(Color.cyan.opacity(0.3), lineWidth: 2)
-                                .frame(width: 60, height: 80)
+                                .frame(width: 50, height: 70)
                             
                             WaterBottleShape()
                                 .fill(
@@ -51,7 +39,7 @@ struct HydrationView: View {
                                         endPoint: .top
                                     )
                                 )
-                                .frame(width: 60, height: 80)
+                                .frame(width: 50, height: 70)
                                 .mask(
                                     GeometryReader { geo in
                                         VStack {
@@ -64,119 +52,115 @@ struct HydrationView: View {
                                 )
                                 .clipShape(WaterBottleShape())
                         }
+                        .scaleEffect(bottleScale)
                     }
-                    .frame(height: 80)
+                    .frame(height: 75)
+                    .padding(.top, -10) // Remonte la bouteille
                     
                     // Valeur centrale
-                    Text("\(Int(healthManager.waterIntake)) ml")
-                        .font(.system(size: 24, weight: .black, design: .rounded))
-                        .foregroundColor(.cyan)
-                    
-                    // Contrôles Rapides
-                    HStack(spacing: 8) {
-                        // Bouton MOINS (-250)
-                        Button(action: { 
-                            healthManager.removeWater(250)
-                            WKInterfaceDevice.current().play(.directionUp)
-                        }) {
-                            Image(systemName: "minus")
-                                .font(.system(size: 14, weight: .bold))
-                                .frame(width: 36, height: 36)
-                                .background(Color.red.opacity(0.2))
-                                .clipShape(Circle())
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Bouton +250
-                        Button(action: { 
-                            healthManager.addWater(250)
-                            WKInterfaceDevice.current().play(.click)
-                        }) {
-                            Text("+250")
-                                .font(.system(size: 12, weight: .bold))
-                                .frame(width: 50, height: 36)
-                                .background(Color.cyan)
-                                .foregroundColor(.black)
-                                .cornerRadius(18)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        // Bouton +500
-                        Button(action: { 
-                            healthManager.addWater(500)
-                            WKInterfaceDevice.current().play(.click)
-                        }) {
-                            Text("+500")
-                                .font(.system(size: 12, weight: .bold))
-                                .frame(width: 50, height: 36)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(18)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.bottom, 16)
-                
-                // SECTION 2: PLUS D'OPTIONS (Scroll)
-                VStack(spacing: 10) {
-                    Text("OPTIONS AVANCÉES")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.gray)
-                    
-                    // Sélecteur précis
-                    HStack {
-                        Button(action: { if customAmount > 50 { customAmount -= 50 } }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(.gray)
-                        }
-                        .buttonStyle(.plain)
-                        
-                        Text("\(Int(customAmount)) ml")
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(minWidth: 60)
-                        
-                        Button(action: { customAmount += 50 }) {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.gray)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-                    
-                    Button(action: {
-                        healthManager.addWater(customAmount)
-                        WKInterfaceDevice.current().play(.success)
-                    }) {
-                        Text("Ajouter \(Int(customAmount)) ml")
-                            .fontWeight(.bold)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.cyan.opacity(0.3))
-                            .cornerRadius(10)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Objectif
-                    VStack(spacing: 2) {
-                        Text("OBJECTIF QUOTIDIEN")
+                    VStack(spacing: 0) {
+                        Text("\(Int(healthManager.waterIntake)) ml")
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .foregroundColor(.cyan)
+                        Text("OBJECTIF: \(Int(healthManager.waterGoal))ml")
                             .font(.system(size: 8, weight: .bold))
                             .foregroundColor(.gray)
-                        Text("\(Int(goal)) ml")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                        ProgressView(value: healthManager.waterIntake, total: goal)
-                            .tint(.cyan)
                     }
-                    .padding(.top, 8)
+                    
+                    // Contrôles Rapides
+                    HStack(spacing: 6) {
+                        Button(action: { animateWaterAdd( -250) }) {
+                            Image(systemName: "minus").font(.system(size: 12, weight: .bold))
+                                .frame(width: 32, height: 32).background(Color.red.opacity(0.2)).clipShape(Circle())
+                        }.buttonStyle(.plain)
+                        
+                        Button(action: { animateWaterAdd(250) }) {
+                            Text("+250").font(.system(size: 11, weight: .black))
+                                .frame(width: 48, height: 32).background(Color.cyan).foregroundColor(.black).cornerRadius(16)
+                        }.buttonStyle(.plain)
+                        
+                        Button(action: { animateWaterAdd(500) }) {
+                            Text("+500").font(.system(size: 11, weight: .black))
+                                .frame(width: 48, height: 32).background(Color.blue).foregroundColor(.white).cornerRadius(16)
+                        }.buttonStyle(.plain)
+                    }
+                }
+                .padding(.bottom, 10)
+                
+                // SECTION 2: OPTIONS AVANCÉES
+                VStack(spacing: 8) {
+                    Divider().background(Color.gray.opacity(0.3)).padding(.horizontal, 10)
+                    
+                    Text("PRÉCIS")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundColor(.gray)
+                    
+                    HStack {
+                        Button(action: { if customAmount > 50 { customAmount -= 50 } }) {
+                            Image(systemName: "minus.circle.fill").foregroundColor(.gray)
+                        }.buttonStyle(.plain)
+                        
+                        Text("\(Int(customAmount))")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(minWidth: 40)
+                        
+                        Button(action: { customAmount += 50 }) {
+                            Image(systemName: "plus.circle.fill").foregroundColor(.gray)
+                        }.buttonStyle(.plain)
+                        
+                        Button(action: { animateWaterAdd(customAmount) }) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.cyan)
+                                .font(.system(size: 24))
+                        }.buttonStyle(.plain)
+                    }
+                    .padding(6)
+                    .background(Color.gray.opacity(0.12))
+                    .cornerRadius(12)
+                    
+                    // MODIFIER L'OBJECTIF
+                    HStack {
+                        Text("OBJ.")
+                            .font(.system(size: 9, weight: .black))
+                            .foregroundColor(.orange)
+                        Spacer()
+                        Button(action: { if healthManager.waterGoal > 500 { healthManager.waterGoal -= 250; healthManager.savePersistedData() } }) {
+                            Image(systemName: "minus.square.fill").foregroundColor(.gray)
+                        }.buttonStyle(.plain)
+                        Text("\(Int(healthManager.waterGoal))").font(.system(size: 12, weight: .bold)).frame(minWidth: 45)
+                        Button(action: { healthManager.waterGoal += 250; healthManager.savePersistedData() }) {
+                            Image(systemName: "plus.square.fill").foregroundColor(.gray)
+                        }.buttonStyle(.plain)
+                    }
+                    .padding(8)
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(10)
                 }
                 .padding(.horizontal, 4)
                 .padding(.bottom, 20)
             }
         }
         .background(Color.black)
+    }
+    
+    private func animateWaterAdd(_ amount: Double) {
+        if amount > 0 {
+            healthManager.addWater(amount)
+            WKInterfaceDevice.current().play(.click)
+            
+            // Animation de la bouteille
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                bottleScale = 1.2
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.spring()) {
+                    bottleScale = 1.0
+                }
+            }
+        } else {
+            healthManager.removeWater(abs(amount))
+            WKInterfaceDevice.current().play(.directionUp)
+        }
     }
 }
 

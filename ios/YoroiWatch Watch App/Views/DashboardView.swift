@@ -1,7 +1,7 @@
 // ============================================
 // YOROI WATCH - Dashboard principal
-// Adapté pour toutes les tailles Apple Watch
-// Deux pages verticales : Résumé (Haut) et Détails (Bas)
+// Adapté pour toutes les tailles Apple Watch (y compris Ultra 2)
+// Design entièrement scrollable et adaptatif
 // ============================================
 
 import SwiftUI
@@ -11,171 +11,115 @@ struct DashboardView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let isSmallWatch = geometry.size.width < 170
-            let ringSize = geometry.size.width * 0.42
+            let screenWidth = geometry.size.width
+            let ringSize = screenWidth * 0.48
             
-            TabView {
-                // PAGE 1: RÉSUMÉ (Anneaux + Poids)
-                VStack(spacing: 8) {
-                    // Sync Status
-                    Button(action: {
-                        WKInterfaceDevice.current().play(.click)
-                        healthManager.fetchAllData()
-                    }) {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(healthManager.currentWeight > 0 ? Color.green : Color.orange)
-                                .frame(width: 6, height: 6)
-                            Text(healthManager.currentWeight > 0 ? "Connecté" : "Sync...")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 4)
-                    
-                    // GRANDS ANNEAUX
+            ScrollView {
+                VStack(spacing: 0) {
+                    // 1. RÉSUMÉ ACTIVITÉ (Anneaux avec texte à l'intérieur)
                     ZStack {
-                        // Pas Ring
+                        // Pas (Extérieur)
                         ProgressRing(
                             progress: Double(healthManager.steps) / 10000.0,
                             color: .green,
-                            size: ringSize * 1.6,
-                            thickness: 10
+                            size: ringSize * 1.8,
+                            thickness: 14
                         )
-                        VStack {
+                        .overlay(
                             Image(systemName: "figure.walk")
-                                .font(.system(size: 12))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.green)
-                            Text(formatSteps(healthManager.steps))
-                                .font(.system(size: 14, weight: .bold))
-                        }
-                        .offset(y: -ringSize * 0.7)
+                                .offset(y: -ringSize * 0.82)
+                        )
                         
-                        // Kcal Ring
+                        // Kcal (Milieu)
                         ProgressRing(
                             progress: healthManager.activeCalories / 800.0,
                             color: .red,
-                            size: ringSize * 1.15,
-                            thickness: 10
+                            size: ringSize * 1.25,
+                            thickness: 14
                         )
-                        VStack {
-                            Text("\(Int(healthManager.activeCalories))")
-                                .font(.system(size: 12, weight: .bold))
+                        .overlay(
                             Image(systemName: "flame.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.red)
-                        }
-                        .offset(x: ringSize * 0.55, y: ringSize * 0.2)
+                                .offset(y: -ringSize * 0.55)
+                        )
                         
-                        // Eau Ring
+                        // Eau (Intérieur)
                         ProgressRing(
-                            progress: healthManager.waterIntake / 2500.0,
+                            progress: healthManager.waterIntake / healthManager.waterGoal,
                             color: .blue,
                             size: ringSize * 0.7,
-                            thickness: 10
+                            thickness: 14
                         )
-                        VStack {
-                            Text("\(Int(healthManager.waterIntake))ml")
-                                .font(.system(size: 10, weight: .bold))
+                        .overlay(
                             Image(systemName: "drop.fill")
-                                .font(.system(size: 8))
+                                .font(.system(size: 8, weight: .bold))
                                 .foregroundColor(.blue)
+                                .offset(y: -ringSize * 0.28)
+                        )
+                        
+                        // Valeur centrale (Active Kcal)
+                        VStack(spacing: -2) {
+                            Text("\(Int(healthManager.activeCalories))")
+                                .font(.system(size: 18, weight: .black, design: .rounded))
+                            Text("KCAL")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(.gray)
                         }
                     }
-                    .frame(height: ringSize * 1.7)
+                    .frame(height: ringSize * 1.9)
+                    .padding(.top, -10) // Remonte tout en haut
                     
-                    // CARTE POIDS
+                    // 2. STATUS & SYNC (Compact sous les anneaux)
+                    HStack {
+                        Circle().fill(healthManager.currentWeight > 0 ? Color.green : Color.orange).frame(width: 4, height: 4)
+                        Text(healthManager.currentWeight > 0 ? "SYNC OK" : "SYNC...")
+                            .font(.system(size: 8, weight: .black))
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text("\(healthManager.streak) JRS").foregroundColor(.orange).font(.system(size: 8, weight: .black))
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 10)
+
+                    // 3. SECTION POIDS
                     HStack {
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("POIDS")
-                                .font(.system(size: 9, weight: .bold))
+                            Text("POIDS ACTUEL")
+                                .font(.system(size: 8, weight: .black))
                                 .foregroundColor(.gray)
                             HStack(alignment: .firstTextBaseline, spacing: 2) {
                                 Text(String(format: "%.1f", healthManager.currentWeight))
-                                    .font(.system(size: 24, weight: .black, design: .rounded))
+                                    .font(.system(size: 28, weight: .black, design: .rounded))
+                                    .foregroundColor(.white)
                                 Text("KG")
                                     .font(.system(size: 12, weight: .bold))
                                     .foregroundColor(.orange)
                             }
                         }
                         Spacer()
+                        Image(systemName: "scalemass.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.orange.opacity(0.5))
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
+                    .padding(12)
+                    .background(Color.gray.opacity(0.15))
+                    .cornerRadius(16)
+                    .padding(.horizontal, 8)
                     
-                    // Indicateur page suivante
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.gray.opacity(0.5))
-                        .padding(.bottom, 4)
-                }
-                .tag(0)
-                
-                // PAGE 2: DÉTAILS (Grille Stats)
-                ScrollView {
-                    VStack(spacing: 10) {
-                        Text("DÉTAILS SANTÉ")
-                            .font(.system(size: 12, weight: .black))
-                            .foregroundColor(.accentColor)
-                            .padding(.top, 10)
-                        
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 8),
-                            GridItem(.flexible(), spacing: 8)
-                        ], spacing: 8) {
-                            // BPM
-                            DashboardStatCard(
-                                icon: "heart.fill",
-                                iconColor: .red,
-                                value: healthManager.heartRate > 0 ? "\(Int(healthManager.heartRate))" : "--",
-                                label: "BPM"
-                            )
-
-                            // SpO2
-                            DashboardStatCard(
-                                icon: "waveform.path.ecg",
-                                iconColor: .cyan,
-                                value: "\(healthManager.spO2)%",
-                                label: "OXYGÈNE"
-                            )
-
-                            // SOMMEIL
-                            DashboardStatCard(
-                                icon: "moon.fill",
-                                iconColor: .purple,
-                                value: formatSleep(healthManager.sleepHours),
-                                label: "SOMMEIL"
-                            )
-                            
-                            // TEMPÉRATURE
-                            DashboardStatCard(
-                                icon: "thermometer.medium",
-                                iconColor: .orange,
-                                value: "36.6°", // Placeholder si pas de donnée
-                                label: "CORPS"
-                            )
-                        }
-                        .padding(.horizontal, 8)
-                        
-                        // STREAK
-                        HStack {
-                            Image(systemName: "flame.fill")
-                                .foregroundColor(.orange)
-                            Text("\(healthManager.streak) Jours de suite")
-                                .font(.system(size: 14, weight: .bold))
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.gray.opacity(0.15))
-                        .cornerRadius(12)
-                        .padding(.horizontal, 8)
+                    // 4. GRILLE SANTÉ
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                        HealthDetailMiniCard(icon: "heart.fill", color: .red, value: healthManager.heartRate > 0 ? "\(Int(healthManager.heartRate))" : "--", unit: "BPM")
+                        HealthDetailMiniCard(icon: "waveform.path.ecg", color: .cyan, value: "\(healthManager.spO2)", unit: "% SpO2")
                     }
-                    .padding(.bottom, 20)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
+                    
+                    Spacer(minLength: 20)
                 }
-                .tag(1)
             }
-            .tabViewStyle(.verticalPage)
         }
         .background(Color.black)
         .onAppear {
@@ -184,16 +128,43 @@ struct DashboardView: View {
     }
 
     private func formatSteps(_ steps: Int) -> String {
-        if steps >= 1000 {
-            return String(format: "%.1fk", Double(steps) / 1000)
-        }
-        return "\(steps)"
+        steps >= 1000 ? String(format: "%.1fk", Double(steps) / 1000) : "\(steps)"
     }
 
     private func formatSleep(_ hours: Double) -> String {
         let h = Int(hours)
         let m = Int((hours - Double(h)) * 60)
         return "\(h)h\(String(format: "%02d", m))"
+    }
+}
+
+    private func formatSteps(_ steps: Int) -> String {
+        steps >= 1000 ? String(format: "%.1fk", Double(steps) / 1000) : "\(steps)"
+    }
+
+    private func formatSleep(_ hours: Double) -> String {
+        let h = Int(hours)
+        let m = Int((hours - Double(h)) * 60)
+        return "\(h)h\(String(format: "%02d", m))"
+    }
+}
+
+struct HealthDetailMiniCard: View {
+    let icon: String
+    let color: Color
+    let value: String
+    let unit: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).foregroundColor(color).font(.system(size: 14))
+            Text(value).font(.system(size: 18, weight: .black))
+            Text(unit).font(.system(size: 8, weight: .bold)).foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(Color.gray.opacity(0.15))
+        .cornerRadius(12)
     }
 }
 

@@ -310,6 +310,19 @@ export default function LastSessionScreen() {
           <View style={{ width: 40 }} />
         </View>
 
+        {/* INDICATEUR ÉTAPE 3 - VERSION LARGE */}
+        <View style={{ paddingVertical: 20, backgroundColor: colors.background, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border }}>
+          <Text style={{ fontSize: 14, fontWeight: '900', color: colors.accent, letterSpacing: 2, marginBottom: 10 }}>ÉTAPE 3 SUR 3</Text>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <View style={{ width: 40, height: 2, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <View style={{ width: 40, height: 2, backgroundColor: colors.accent }} />
+            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
+          </View>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textSecondary, marginTop: 8 }}>Partage & Personnalisation</Text>
+        </View>
+
         <ScrollView
           ref={scrollViewRef}
           style={styles.scrollView}
