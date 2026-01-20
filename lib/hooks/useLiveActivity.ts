@@ -14,6 +14,7 @@ interface UseLiveActivityReturn {
   startActivity: (activityName: string) => Promise<boolean>;
   stopActivity: () => Promise<boolean>;
   updateHeartRate: (heartRate: number) => Promise<void>;
+  updateActivity: (data: Partial<LiveActivityData>) => Promise<void>;
   elapsedSeconds: number;
 }
 
@@ -150,12 +151,22 @@ export function useLiveActivity(): UseLiveActivityReturn {
     }
   }, [isRunning]);
 
+  const updateActivity = useCallback(async (data: Partial<LiveActivityData>): Promise<void> => {
+    if (!isRunning) return;
+    try {
+      await liveActivityManager.update(data);
+    } catch (error) {
+      logger.error('Erreur mise à jour activité:', error);
+    }
+  }, [isRunning]);
+
   return {
     isAvailable,
     isRunning,
     startActivity,
     stopActivity,
     updateHeartRate,
+    updateActivity,
     elapsedSeconds,
   };
 }

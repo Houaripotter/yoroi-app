@@ -47,7 +47,7 @@ export default function StatsScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.stats}
           onClose={handleCloseTutorial}
-          onLater={handleLaterTutorial}
+          onSkip={handleLaterTutorial}
         />
       )}
     </View>

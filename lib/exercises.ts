@@ -22,115 +22,90 @@ export const MUSCLE_GROUPS = {
   avant_bras: 'Avant-bras',
 };
 
+export const CARDIO_EQUIPMENT = {
+  tapis: 'Tapis de course',
+  velo: 'Vélo / Spinning',
+  rameur: 'Rameur',
+  elliptique: 'Elliptique',
+  skierg: 'SkiErg',
+  assault_bike: 'Assault Bike',
+  escalier: 'Escaliers / Stairmaster',
+  corde: 'Corde à sauter',
+};
+
 export const EXERCISES: ExerciseTemplate[] = [
+  // === MUSCULATION ===
   // Pectoraux
-  { id: 'dev_couche', name: 'Développé couché', muscle_group: 'pectoraux', category: 'compound' },
-  { id: 'dev_incline', name: 'Développé incliné', muscle_group: 'pectoraux', category: 'compound' },
-  { id: 'dev_decline', name: 'Développé décliné', muscle_group: 'pectoraux', category: 'compound' },
-  { id: 'ecarte_couche', name: 'Écarté couché', muscle_group: 'pectoraux', category: 'isolation' },
-  { id: 'ecarte_incline', name: 'Écarté incliné', muscle_group: 'pectoraux', category: 'isolation' },
-  { id: 'pompes', name: 'Pompes', muscle_group: 'pectoraux', category: 'bodyweight' },
-  { id: 'dips_pecs', name: 'Dips pectoraux', muscle_group: 'pectoraux', category: 'bodyweight' },
-  { id: 'pec_deck', name: 'Pec Deck', muscle_group: 'pectoraux', category: 'machine' },
-  { id: 'cable_crossover', name: 'Cable Crossover', muscle_group: 'pectoraux', category: 'cable' },
+  { id: 'dev_couche', name: 'Développé couché (Barre)', muscle_group: 'pectoraux', category: 'Compound' },
+  { id: 'dev_halteres', name: 'Développé couché (Haltères)', muscle_group: 'pectoraux', category: 'Compound' },
+  { id: 'dev_incline', name: 'Développé incliné (Barre)', muscle_group: 'pectoraux', category: 'Compound' },
+  { id: 'dev_incline_halteres', name: 'Développé incliné (Haltères)', muscle_group: 'pectoraux', category: 'Compound' },
+  { id: 'ecarte_couche', name: 'Écarté couché', muscle_group: 'pectoraux', category: 'Isolation' },
+  { id: 'pec_deck', name: 'Pec Deck', muscle_group: 'pectoraux', category: 'Machine' },
+  { id: 'dips_pecs', name: 'Dips (Pectoraux)', muscle_group: 'pectoraux', category: 'Bodyweight' },
+  { id: 'pompes', name: 'Pompes', muscle_group: 'pectoraux', category: 'Bodyweight' },
+  { id: 'cable_fly', name: 'Écartés poulie haute', muscle_group: 'pectoraux', category: 'Cables' },
 
   // Dos
-  { id: 'tractions', name: 'Tractions', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'rowing_barre', name: 'Rowing barre', muscle_group: 'dos', category: 'compound' },
-  { id: 'rowing_haltere', name: 'Rowing haltère', muscle_group: 'dos', category: 'compound' },
-  { id: 'tirage_vertical', name: 'Tirage vertical', muscle_group: 'dos', category: 'machine' },
-  { id: 'tirage_horizontal', name: 'Tirage horizontal', muscle_group: 'dos', category: 'machine' },
-  { id: 'souleve_terre', name: 'Soulevé de terre', muscle_group: 'dos', category: 'compound' },
-  { id: 'pull_over', name: 'Pull-over', muscle_group: 'dos', category: 'isolation' },
-  { id: 't_bar_row', name: 'T-Bar Row', muscle_group: 'dos', category: 'compound' },
+  { id: 'tractions', name: 'Tractions (Pronation)', muscle_group: 'dos', category: 'Bodyweight' },
+  { id: 'tractions_supi', name: 'Tractions (Supination)', muscle_group: 'dos', category: 'Bodyweight' },
+  { id: 'rowing_barre', name: 'Rowing barre', muscle_group: 'dos', category: 'Compound' },
+  { id: 'rowing_haltere', name: 'Rowing haltère', muscle_group: 'dos', category: 'Compound' },
+  { id: 'tirage_vertical', name: 'Tirage poitrine', muscle_group: 'dos', category: 'Machine' },
+  { id: 'tirage_horizontal', name: 'Tirage horizontal', muscle_group: 'dos', category: 'Machine' },
+  { id: 'souleve_terre', name: 'Soulevé de terre (Deadlift)', muscle_group: 'dos', category: 'Compound' },
+  { id: 'pull_over_poulie', name: 'Pull-over poulie haute', muscle_group: 'dos', category: 'Cables' },
+  { id: 'lombaires', name: 'Banc à lombaires', muscle_group: 'dos', category: 'Isolation' },
 
   // Épaules
-  { id: 'dev_militaire', name: 'Développé militaire', muscle_group: 'epaules', category: 'compound' },
-  { id: 'dev_halteres', name: 'Développé haltères', muscle_group: 'epaules', category: 'compound' },
-  { id: 'elev_laterales', name: 'Élévations latérales', muscle_group: 'epaules', category: 'isolation' },
-  { id: 'elev_frontales', name: 'Élévations frontales', muscle_group: 'epaules', category: 'isolation' },
-  { id: 'oiseau', name: 'Oiseau (deltoïdes postérieurs)', muscle_group: 'epaules', category: 'isolation' },
-  { id: 'face_pulls', name: 'Face Pulls', muscle_group: 'epaules', category: 'cable' },
-  { id: 'shrugs', name: 'Shrugs (trapèzes)', muscle_group: 'epaules', category: 'isolation' },
+  { id: 'dev_militaire', name: 'Développé militaire', muscle_group: 'epaules', category: 'Compound' },
+  { id: 'dev_halteres_assis', name: 'Développé haltères assis', muscle_group: 'epaules', category: 'Compound' },
+  { id: 'elev_laterales', name: 'Élévations latérales', muscle_group: 'epaules', category: 'Isolation' },
+  { id: 'oiseau', name: 'Oiseau haltères', muscle_group: 'epaules', category: 'Isolation' },
+  { id: 'face_pull', name: 'Face Pull', muscle_group: 'epaules', category: 'Cables' },
+  { id: 'arnold_press', name: 'Arnold Press', muscle_group: 'epaules', category: 'Compound' },
+  { id: 'shrugs', name: 'Shrugs', muscle_group: 'epaules', category: 'Isolation' },
 
   // Biceps
-  { id: 'curl_barre', name: 'Curl barre', muscle_group: 'biceps', category: 'isolation' },
-  { id: 'curl_haltere', name: 'Curl haltère', muscle_group: 'biceps', category: 'isolation' },
-  { id: 'curl_marteau', name: 'Curl marteau', muscle_group: 'biceps', category: 'isolation' },
-  { id: 'curl_pupitre', name: 'Curl pupitre', muscle_group: 'biceps', category: 'isolation' },
-  { id: 'curl_incline', name: 'Curl incliné', muscle_group: 'biceps', category: 'isolation' },
-  { id: 'curl_cable', name: 'Curl à la poulie', muscle_group: 'biceps', category: 'cable' },
+  { id: 'curl_barre_ez', name: 'Curl barre EZ', muscle_group: 'biceps', category: 'Isolation' },
+  { id: 'curl_halteres', name: 'Curl haltères', muscle_group: 'biceps', category: 'Isolation' },
+  { id: 'curl_marteau', name: 'Curl marteau', muscle_group: 'biceps', category: 'Isolation' },
+  { id: 'curl_pupitre', name: 'Curl Larry Scott', muscle_group: 'biceps', category: 'Isolation' },
+  { id: 'curl_poulie', name: 'Curl poulie basse', muscle_group: 'biceps', category: 'Cables' },
 
   // Triceps
-  { id: 'dips_triceps', name: 'Dips triceps', muscle_group: 'triceps', category: 'bodyweight' },
-  { id: 'ext_couche', name: 'Extensions couchées', muscle_group: 'triceps', category: 'isolation' },
-  { id: 'ext_poulie', name: 'Extensions à la poulie', muscle_group: 'triceps', category: 'cable' },
-  { id: 'kick_back', name: 'Kick-back', muscle_group: 'triceps', category: 'isolation' },
-  { id: 'ext_nuque', name: 'Extensions nuque', muscle_group: 'triceps', category: 'isolation' },
-  { id: 'dev_serre', name: 'Développé prise serrée', muscle_group: 'triceps', category: 'compound' },
+  { id: 'ext_poulie_corde', name: 'Extensions triceps poulie', muscle_group: 'triceps', category: 'Cables' },
+  { id: 'barre_au_front', name: 'Barre au front', muscle_group: 'triceps', category: 'Isolation' },
+  { id: 'dips_triceps', name: 'Dips (Triceps)', muscle_group: 'triceps', category: 'Bodyweight' },
+  { id: 'ext_haltere', name: 'Extension haltère nuque', muscle_group: 'triceps', category: 'Isolation' },
 
   // Jambes
-  { id: 'squat', name: 'Squat', muscle_group: 'jambes', category: 'compound' },
-  { id: 'squat_front', name: 'Squat avant', muscle_group: 'jambes', category: 'compound' },
-  { id: 'presse_cuisses', name: 'Presse à cuisses', muscle_group: 'jambes', category: 'machine' },
-  { id: 'leg_extension', name: 'Leg extension', muscle_group: 'jambes', category: 'machine' },
-  { id: 'leg_curl', name: 'Leg curl', muscle_group: 'jambes', category: 'machine' },
-  { id: 'fentes', name: 'Fentes', muscle_group: 'jambes', category: 'compound' },
-  { id: 'sdt_jambes_tendues', name: 'SDT jambes tendues', muscle_group: 'jambes', category: 'compound' },
-  { id: 'hack_squat', name: 'Hack squat', muscle_group: 'jambes', category: 'machine' },
-
-  // Fessiers
-  { id: 'hip_thrust', name: 'Hip thrust', muscle_group: 'fessiers', category: 'compound' },
-  { id: 'fentes_bulgares', name: 'Fentes bulgares', muscle_group: 'fessiers', category: 'compound' },
-  { id: 'kick_back_cable', name: 'Kick-back à la poulie', muscle_group: 'fessiers', category: 'cable' },
-  { id: 'abduction_machine', name: 'Abduction machine', muscle_group: 'fessiers', category: 'machine' },
-
-  // Mollets
-  { id: 'mollets_debout', name: 'Mollets debout', muscle_group: 'mollets', category: 'isolation' },
-  { id: 'mollets_assis', name: 'Mollets assis', muscle_group: 'mollets', category: 'isolation' },
-  { id: 'mollets_presse', name: 'Mollets à la presse', muscle_group: 'mollets', category: 'machine' },
+  { id: 'squat_barre', name: 'Squat (Barre)', muscle_group: 'jambes', category: 'Compound' },
+  { id: 'presse_cuisses', name: 'Presse à cuisses', muscle_group: 'jambes', category: 'Machine' },
+  { id: 'leg_extension', name: 'Leg Extension', muscle_group: 'jambes', category: 'Machine' },
+  { id: 'leg_curl', name: 'Leg Curl', muscle_group: 'jambes', category: 'Machine' },
+  { id: 'fentes_halteres', name: 'Fentes haltères', muscle_group: 'jambes', category: 'Compound' },
+  { id: 'hack_squat', name: 'Hack Squat', muscle_group: 'jambes', category: 'Machine' },
+  { id: 'sdt_jambes_tendues', name: 'Soulevé de terre jambes tendues', muscle_group: 'jambes', category: 'Compound' },
 
   // Abdominaux
-  { id: 'crunch', name: 'Crunch', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'planche', name: 'Planche', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'relevé_jambes', name: 'Relevé de jambes', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'russian_twist', name: 'Russian twist', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'mountain_climbers', name: 'Mountain climbers', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'abs_wheel', name: 'Roue abdominale', muscle_group: 'abdos', category: 'equipment' },
-  { id: 'cable_crunch', name: 'Crunch à la poulie', muscle_group: 'abdos', category: 'cable' },
+  { id: 'crunch', name: 'Crunch', muscle_group: 'abdos', category: 'Bodyweight' },
+  { id: 'releve_jambes', name: 'Relevé de jambes', muscle_group: 'abdos', category: 'Bodyweight' },
+  { id: 'planche', name: 'Planche (Gainage)', muscle_group: 'abdos', category: 'Bodyweight' },
+  { id: 'russian_twist', name: 'Russian Twist', muscle_group: 'abdos', category: 'Bodyweight' },
+  { id: 'roulette_abdos', name: 'Roulette abdos', muscle_group: 'abdos', category: 'Isolation' },
 
-  // Avant-bras
-  { id: 'curl_poignet', name: 'Curl poignet', muscle_group: 'avant_bras', category: 'isolation' },
-  { id: 'curl_inverse', name: 'Curl inversé', muscle_group: 'avant_bras', category: 'isolation' },
-  { id: 'farmers_walk', name: 'Farmers walk', muscle_group: 'avant_bras', category: 'functional' },
-
-  // Street Workout - Dos
-  { id: 'tractions_pronation', name: 'Tractions pronation (Pull-ups)', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'tractions_supination', name: 'Tractions supination (Chin-ups)', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'tractions_australiennes', name: 'Tractions australiennes', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'muscle_ups', name: 'Muscle-ups', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'front_lever', name: 'Front lever', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'back_lever', name: 'Back lever', muscle_group: 'dos', category: 'bodyweight' },
-  { id: 'tirage_trx', name: 'Tirage TRX', muscle_group: 'dos', category: 'equipment' },
-
-  // Street Workout - Pectoraux
-  { id: 'pompes_diamant', name: 'Pompes diamant', muscle_group: 'triceps', category: 'bodyweight' },
-  { id: 'pompes_declinées', name: 'Pompes déclinées', muscle_group: 'pectoraux', category: 'bodyweight' },
-  { id: 'pompes_trx', name: 'Pompes TRX', muscle_group: 'pectoraux', category: 'equipment' },
-
-  // Street Workout - Épaules
-  { id: 'handstand_pushups', name: 'Handstand push-ups (Pompes poirier)', muscle_group: 'epaules', category: 'bodyweight' },
-  { id: 'pike_trx', name: 'Pike TRX', muscle_group: 'epaules', category: 'equipment' },
-
-  // Street Workout - Jambes
-  { id: 'pistol_squats', name: 'Pistol squats (Squat une jambe)', muscle_group: 'jambes', category: 'bodyweight' },
-  { id: 'fentes_arriere', name: 'Fentes arrière', muscle_group: 'jambes', category: 'compound' },
-  { id: 'jump_squats', name: 'Jump squats', muscle_group: 'jambes', category: 'bodyweight' },
-
-  // Street Workout - Abdominaux
-  { id: 'hanging_leg_raises', name: 'Relevés de jambes suspendus', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'l_sit', name: 'L-sit', muscle_group: 'abdos', category: 'bodyweight' },
-  { id: 'human_flag', name: 'Human flag', muscle_group: 'abdos', category: 'bodyweight' },
+  // === CARDIO ===
+  { id: 'tapis_course', name: 'Course (Tapis)', muscle_group: 'cardio', category: 'Tapis' },
+  { id: 'tapis_marche', name: 'Marche inclinée', muscle_group: 'cardio', category: 'Tapis' },
+  { id: 'velo_spinning', name: 'Spinning / RPM', muscle_group: 'cardio', category: 'Velo' },
+  { id: 'velo_droit', name: 'Vélo statique', muscle_group: 'cardio', category: 'Velo' },
+  { id: 'rameur_concept2', name: 'Rameur (Concept2)', muscle_group: 'cardio', category: 'Rameur' },
+  { id: 'elliptique_standard', name: 'Elliptique', muscle_group: 'cardio', category: 'Elliptique' },
+  { id: 'skierg_pm5', name: 'SkiErg', muscle_group: 'cardio', category: 'SkiErg' },
+  { id: 'assault_bike_intense', name: 'Assault Bike', muscle_group: 'cardio', category: 'Assault Bike' },
+  { id: 'stairmaster', name: 'Escaliers (Stairmaster)', muscle_group: 'cardio', category: 'Escalier' },
+  { id: 'corde_sauter', name: 'Corde à sauter', muscle_group: 'cardio', category: 'Corde' },
 ];
 
 export const getExercisesByMuscleGroup = (muscleGroup: string): ExerciseTemplate[] => {

@@ -11,7 +11,7 @@ import { WatchConnectivity } from './watchConnectivity.ios';
 // TYPES
 // ============================================
 
-export type BenchmarkCategory = 'bodyweight' | 'force' | 'running' | 'trail' | 'hyrox' | 'custom';
+export type BenchmarkCategory = 'bodyweight' | 'force' | 'musculation' | 'cardio' | 'street_workout' | 'running' | 'trail' | 'hyrox' | 'custom';
 export type BenchmarkUnit = 'kg' | 'lbs' | 'time' | 'reps' | 'meters' | 'km';
 export type SkillStatus = 'to_learn' | 'in_progress' | 'mastered';
 export type SkillCategory = 'jjb_garde' | 'jjb_passage' | 'jjb_soumission' | 'lutte' | 'striking' | 'other';
@@ -25,6 +25,14 @@ export interface BenchmarkEntry {
   notes?: string;
   duration?: number; // Duration in minutes
   calories?: number; // Estimated or user-entered calories
+  // Advanced metrics for Cardio/Machines
+  distance?: number; // in km
+  incline?: number; // pente in %
+  speed?: number; // in km/h
+  pace?: string; // allure in min/km
+  watts?: number; // power
+  resistance?: number; // machine level/resistance
+  level?: number; // machine level
 }
 
 // Weight unit for Force exercises
@@ -35,7 +43,10 @@ export type WeightUnit = 'kg' | 'lbs';
 // ============================================
 export const METS_VALUES: Record<BenchmarkCategory, number> = {
   force: 5,
+  musculation: 5,
   bodyweight: 6,
+  cardio: 7,
+  street_workout: 6,
   running: 9.8,
   trail: 8,
   hyrox: 8,
@@ -60,7 +71,7 @@ export interface Benchmark {
   id: string;
   name: string;
   category: BenchmarkCategory;
-  muscleGroup?: string; // NOUVEAU: pour trier la muscu par muscle
+  muscleGroup?: string; // NOUVEAU: pour trier la muscu par muscle ou cardio par appareil
   unit: BenchmarkUnit;
   iconName: string; // lucide icon name
   color: string;
@@ -207,7 +218,10 @@ export const STRIKING_SKILLS: Omit<Skill, 'id' | 'drillCount' | 'notes' | 'creat
 
 export const BENCHMARK_CATEGORIES: Record<BenchmarkCategory, { label: string; color: string; iconName: string }> = {
   bodyweight: { label: 'Poids de Corps', color: '#8B5CF6', iconName: 'scale' },
-  force: { label: 'Musculation', color: '#EF4444', iconName: 'dumbbell' },
+  force: { label: 'Force', color: '#EF4444', iconName: 'dumbbell' },
+  musculation: { label: 'Musculation', color: '#EF4444', iconName: 'dumbbell' },
+  cardio: { label: 'Cardio Appareils', color: '#10B981', iconName: 'activity' },
+  street_workout: { label: 'Street Workout', color: '#F59E0B', iconName: 'arm-flex' },
   running: { label: 'Running', color: '#3B82F6', iconName: 'timer' },
   trail: { label: 'Trail', color: '#10B981', iconName: 'mountain' },
   hyrox: { label: 'Hyrox', color: '#F59E0B', iconName: 'flame' },
@@ -420,7 +434,16 @@ export const addBenchmarkEntry = async (
   customDate?: Date,
   reps?: number,
   duration?: number,
-  calories?: number
+  calories?: number,
+  advancedMetrics?: {
+    distance?: number;
+    incline?: number;
+    speed?: number;
+    pace?: string;
+    watts?: number;
+    resistance?: number;
+    level?: number;
+  }
 ): Promise<BenchmarkEntry | null> => {
   try {
     const benchmarks = await getBenchmarks();
@@ -436,6 +459,7 @@ export const addBenchmarkEntry = async (
       notes,
       duration,
       calories,
+      ...advancedMetrics,
     };
     benchmarks[index].entries.push(entry);
     await AsyncStorage.setItem(BENCHMARKS_KEY, JSON.stringify(benchmarks));

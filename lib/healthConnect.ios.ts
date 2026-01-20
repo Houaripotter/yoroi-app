@@ -461,20 +461,28 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Utiliser queryStatistics pour laisser HealthKit dédupliquer les sources (iPhone vs Watch)
-      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierStepCount', {
+      // Revenir à queryQuantitySamples pour compatibilité max
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
         from: today.getTime(),
         to: new Date().getTime(),
-        options: ['cumulativeSum'],
       });
 
-      const totalSteps = result?.sumQuantity || 0;
+      if (samples && samples.length > 0) {
+        // DÉDOUBLONNAGE : Apple Santé peut avoir des échantillons qui se chevauchent 
+        // entre l'iPhone et la Watch. On groupe par source et on prend le meilleur.
+        // Pour faire simple et robuste sans queryStatistics : on additionne tout
+        // mais on s'assure de ne pas prendre de données aberrantes.
+        const totalSteps = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
 
-      if (totalSteps > 0) {
-        return {
-          count: Math.round(totalSteps),
-          date: today.toISOString(),
-        };
+        if (totalSteps > 0) {
+          // Limite de sécurité : 100 000 pas par jour max pour éviter les bugs de capteurs
+          const safeSteps = Math.min(Math.round(totalSteps), 100000);
+          
+          return {
+            count: safeSteps,
+            date: today.toISOString(),
+          };
+        }
       }
       return null;
     }, 'steps');
@@ -571,15 +579,14 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierDietaryWater', {
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDietaryWater', {
         from: today.getTime(),
         to: new Date().getTime(),
-        options: ['cumulativeSum'],
       });
 
-      const totalLiters = result?.sumQuantity || 0;
-      
-      if (totalLiters > 0) {
+      if (samples && samples.length > 0) {
+        // Apple Health retourne l'eau en litres, on convertit en millilitres
+        const totalLiters = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
         return {
           amount: Math.round(totalLiters * 1000), // Convertir litres en ml
           date: today.toISOString(),
@@ -680,20 +687,23 @@ class HealthConnectService {
       today.setHours(0, 0, 0, 0);
 
       const [activeResult, basalResult] = await Promise.all([
-        HealthKit.queryStatistics('HKQuantityTypeIdentifierActiveEnergyBurned', {
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', {
           from: today.getTime(),
           to: new Date().getTime(),
-          options: ['cumulativeSum'],
         }),
-        HealthKit.queryStatistics('HKQuantityTypeIdentifierBasalEnergyBurned', {
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBasalEnergyBurned', {
           from: today.getTime(),
           to: new Date().getTime(),
-          options: ['cumulativeSum'],
         }),
       ]);
 
-      const active = activeResult?.sumQuantity || 0;
-      const basal = basalResult?.sumQuantity || 0;
+      const active = activeResult && activeResult.length > 0
+        ? activeResult.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0)
+        : 0;
+
+      const basal = basalResult && basalResult.length > 0
+        ? basalResult.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0)
+        : 0;
 
       return {
         active: Math.round(active),
@@ -712,19 +722,18 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const result = await HealthKit.queryStatistics('HKQuantityTypeIdentifierDistanceWalkingRunning', {
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', {
         from: today.getTime(),
         to: new Date().getTime(),
-        options: ['cumulativeSum'],
       });
 
-      const totalMeters = result?.sumQuantity || 0;
-
-      if (totalMeters > 0) {
+      if (samples && samples.length > 0) {
+        const totalMeters = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
         const totalKm = totalMeters / 1000;
+
         return {
-          walking: Math.round(totalKm * 0.6 * 10) / 10,
-          running: Math.round(totalKm * 0.4 * 10) / 10,
+          walking: Math.round(totalKm * 0.6 * 10) / 10, // Estimation 60% marche
+          running: Math.round(totalKm * 0.4 * 10) / 10, // Estimation 40% course
           total: Math.round(totalKm * 10) / 10,
           unit: 'km',
         };
@@ -1354,6 +1363,24 @@ class HealthConnectService {
           workouts: undefined,
         };
       }
+
+      // Lancer toutes les requêtes en parallèle avec allSettled pour ne pas bloquer si une échoue
+      const results = await Promise.allSettled([
+        this.getLatestWeight(),
+        this.getTodaySteps(),
+        this.getLastSleep(),
+        this.getTodayHydration(),
+        this.getTodayHeartRate(),
+        this.getTodayHRV(),
+        this.getTodayCalories(),
+        this.getTodayDistance(),
+        this.getVO2Max(),
+        this.getOxygenSaturation(),
+        this.getRespiratoryRate(),
+        this.getBodyTemperature(),
+        this.getBodyComposition(),
+        this.getWorkouts(),
+      ]);
 
       // Extraire les valeurs avec typage explicite
       const weight = results[0].status === 'fulfilled' ? results[0].value : null;

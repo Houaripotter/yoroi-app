@@ -1854,7 +1854,7 @@ export default function PlanningScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.planning}
           onClose={handleCloseTutorial}
-          onLater={handleLaterTutorial}
+          onSkip={handleLaterTutorial}
         />
       )}
 

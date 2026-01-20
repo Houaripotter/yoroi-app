@@ -235,6 +235,13 @@ export default function TrainingJournalScreen() {
   const [hyroxEffortType, setHyroxEffortType] = useState<HyroxEffortType>('course');
   const [hyroxDistanceMeters, setHyroxDistanceMeters] = useState('');
 
+  // Advanced Cardio Metrics
+  const [newEntryIncline, setNewEntryIncline] = useState('');
+  const [newEntrySpeed, setNewEntrySpeed] = useState('');
+  const [newEntryWatts, setNewEntryWatts] = useState('');
+  const [newEntryResistance, setNewEntryResistance] = useState('');
+  const [newEntryLevel, setNewEntryLevel] = useState('');
+
   // PILLAR 3: Victory Share Modal
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [victorySessionData, setVictorySessionData] = useState<VictorySessionData | null>(null);
@@ -701,6 +708,15 @@ export default function TrainingJournalScreen() {
     // Get current PR before adding new entry
     const currentPR = getBenchmarkPR(selectedBenchmark);
 
+    const advancedMetrics = {
+      distance: newEntryDistance.trim() ? parseFloat(newEntryDistance) : undefined,
+      incline: newEntryIncline.trim() ? parseFloat(newEntryIncline) : undefined,
+      speed: newEntrySpeed.trim() ? parseFloat(newEntrySpeed) : undefined,
+      pace: newEntryPace.trim() ? newEntryPace : undefined,
+      watts: newEntryWatts.trim() ? parseInt(newEntryWatts) : undefined,
+      level: newEntryLevel.trim() ? parseInt(newEntryLevel) : undefined,
+    };
+
     const newEntry = await addBenchmarkEntry(
       selectedBenchmark.id,
       value,
@@ -709,7 +725,8 @@ export default function TrainingJournalScreen() {
       selectedDate,
       reps,
       duration,
-      calories
+      calories,
+      advancedMetrics
     );
 
     if (newEntry) {
@@ -731,12 +748,7 @@ export default function TrainingJournalScreen() {
         : formatValue(value, selectedBenchmark.unit);
 
       setShowAddEntryModal(false);
-      setNewEntryValue('');
-      setNewEntryReps('');
-      setNewEntryDuration('');
-      setNewEntryCalories('');
-      setNewEntryRPE(5);
-      setEntryDate('today');
+      resetModalState();
 
       // Prepare victory data
       const isRunning = ['running', 'trail', 'hyrox'].includes(selectedBenchmark.category);
@@ -750,8 +762,10 @@ export default function TrainingJournalScreen() {
         date: selectedDate.toISOString(),
         isPR,
         // Running-specific: for pace calculation
-        distanceKm: isRunning && selectedBenchmark.unit === 'km' ? value : undefined,
-        timeSeconds: isRunning && duration ? duration * 60 : undefined,
+        distanceKm: (isRunning || selectedBenchmark.category === 'cardio') && advancedMetrics.distance ? advancedMetrics.distance : (isRunning && selectedBenchmark.unit === 'km' ? value : undefined),
+        timeSeconds: (isRunning || selectedBenchmark.category === 'cardio') && duration ? duration * 60 : undefined,
+        // Advanced metrics for social card
+        ...advancedMetrics,
       });
 
       // Show victory modal (Style Yoroi)
@@ -1572,6 +1586,8 @@ export default function TrainingJournalScreen() {
       (selectedBenchmark?.unit === 'kg' || selectedBenchmark?.unit === 'lbs');
     const isRunningExercise = ['running', 'trail'].includes(selectedBenchmark?.category || '');
     const isHyroxExercise = selectedBenchmark?.category === 'hyrox';
+    const isCardioExercise = selectedBenchmark?.category === 'cardio';
+    const isMusculationExercise = selectedBenchmark?.category === 'musculation';
 
     // Calculate total time in seconds from H/M/S fields
     const getTotalTimeSeconds = () => {
@@ -1620,6 +1636,11 @@ export default function TrainingJournalScreen() {
       setRunningTimeSeconds('');
       setHyroxEffortType('course');
       setHyroxDistanceMeters('');
+      setNewEntryIncline('');
+      setNewEntrySpeed('');
+      setNewEntryWatts('');
+      setNewEntryResistance('');
+      setNewEntryLevel('');
     };
 
     return (
@@ -1848,6 +1869,87 @@ export default function TrainingJournalScreen() {
                       </Text>
                     </View>
                   )}
+
+              {/* ============================================ */}
+              {/* CARDIO MACHINE METRICS (Distance, Incline, etc.) */}
+              {/* ============================================ */}
+              {isCardioExercise && (
+                <View style={{ gap: 12, marginTop: 10 }}>
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Distance (km)</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0.0"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntryDistance}
+                        onChangeText={setNewEntryDistance}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Pente (%)</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntryIncline}
+                        onChangeText={setNewEntryIncline}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vitesse (km/h)</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0.0"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntrySpeed}
+                        onChangeText={setNewEntrySpeed}
+                        keyboardType="decimal-pad"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Allure (min/km)</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="5:30"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntryPace}
+                        onChangeText={setNewEntryPace}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Watts</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntryWatts}
+                        onChangeText={setNewEntryWatts}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Niveau / Résist.</Text>
+                      <TextInput
+                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
+                        placeholder="0"
+                        placeholderTextColor={colors.textMuted}
+                        value={newEntryLevel}
+                        onChangeText={setNewEntryLevel}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
                 </>
               )}
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, Text, AppState, AppStateStatus, LogBox } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { ThemeProvider, useTheme } from '@/lib/ThemeContext';
@@ -205,17 +206,19 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <I18nProvider>
-        <ThemeProvider>
-          <DevModeProvider>
-            <BadgeProvider>
-              <WatchConnectivityProvider>
-                <RootLayoutContent />
-              </WatchConnectivityProvider>
-            </BadgeProvider>
-          </DevModeProvider>
-        </ThemeProvider>
-      </I18nProvider>
+      <SafeAreaProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <DevModeProvider>
+              <BadgeProvider>
+                <WatchConnectivityProvider>
+                  <RootLayoutContent />
+                </WatchConnectivityProvider>
+              </BadgeProvider>
+            </DevModeProvider>
+          </ThemeProvider>
+        </I18nProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

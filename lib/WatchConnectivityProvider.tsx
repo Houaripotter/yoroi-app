@@ -5,29 +5,24 @@
  * Sync automatique des données: poids, hydratation, workouts, records
  */
 
-import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback } from 'react';
-import { Platform } from 'react-native';
+import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef } from 'react';
+import { Platform, Animated, View, Text, StyleSheet } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { addWeight } from '@/lib/database';
+import { addWeight, getProfile } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
-import { appleWatchService } from '@/lib/appleWatchService';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-interface WatchContextType {
-  // Statut
+export interface WatchContextType {
   isWatchAvailable: boolean;
   isWatchReachable: boolean;
   lastError: string | null;
   lastSyncDate: Date | null;
-
-  // Actions de sync
   syncWeight: (weight: number) => Promise<void>;
   syncHydration: (waterIntake: number) => Promise<void>;
   syncWorkout: (workout: any) => Promise<void>;
   syncRecords: (records: any[]) => Promise<void>;
   syncAllData: () => Promise<void>;
-
-  // Données reçues de la Watch
   watchData: any;
 }
 
@@ -39,297 +34,163 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const [lastError, setLastError] = useState<string | null>(null);
   const [lastSyncDate, setLastSyncDate] = useState<Date | null>(null);
   const [watchData, setWatchData] = useState<any>(null);
+  
+  // Animation de la bannière
+  const bannerAnim = useRef(new Animated.Value(-100)).current;
+  const [syncMessage, setSyncMessage] = useState('');
 
-  // Initialisation au montage
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-
-    initializeWatchConnectivity();
-
-    return () => {
-      // Cleanup listeners
-    };
-  }, []);
-
-  const initializeWatchConnectivity = async () => {
-    try {
-      console.log('📡 [YoroiSync] Activation de la session instantanée...');
-      
-      // Activer la session
-      await WatchConnectivity.activateSession();
-      
-      // Vérifier l'état immédiat
-      const reachable = await WatchConnectivity.isWatchReachable();
-      setIsReachable(reachable);
-
-      // Écouter les messages de la Watch
-      WatchConnectivity.onMessageReceived((message) => {
-        console.log('⚡ [YoroiSync] Message instantané:', message);
-        handleWatchMessage(message);
-        
-        // Répondre immédiatement pour garder le canal ouvert
-        if (message.ping) {
-          WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now() }).catch(() => {});
-        }
-      });
-
-      // Synchroniser les infos de profil immédiatement si possible
-      const syncProfileToWatch = async () => {
-        try {
-          const profile = await getProfile();
-          if (profile) {
-            // Envoyer la config avatar et photo
-            await WatchConnectivity.updateApplicationContext({
-              avatarConfig: {
-                name: profile.avatar_id || 'samurai',
-                level: profile.level || 1,
-                rank: profile.rank || 'Novice'
-              },
-              // Si on a une photo, on pourrait l'envoyer ici (limité en taille)
-              // Pour l'instant on envoie juste l'ID
-              timestamp: Date.now()
-            });
-          }
-        } catch (e) {
-          console.log('⚠️ Erreur sync profil vers watch:', e);
-        }
-      };
-
-      // Lancer la sync profil au démarrage et quand la watch se connecte
-      syncProfileToWatch();
-      WatchConnectivity.onReachabilityChanged((status) => {
-        if (status.isReachable) syncProfileToWatch();
-      });
-
-      // 2. Écouter les changements de portée
-      WatchConnectivity.onReachabilityChanged((status) => {
-        console.log('📡 [YoroiSync] État connexion:', status.isReachable ? 'CONNECTÉ' : 'DÉCONNECTÉ');
-        setIsReachable(status.isReachable);
-        if (status.isReachable) syncAllData();
-      });
-
-      // Écouter les données de la Watch
-      const dataListener = WatchConnectivity.onDataReceived((data) => {
-        console.log('📦 Données reçues de la Watch:', data.type);
-        setWatchData(data.data);
-        handleWatchData(data);
-      });
-
-      // Écouter les erreurs
-      const errorListener = WatchConnectivity.onError((error) => {
-        console.error('❌ Erreur WatchConnectivity:', error.error);
-        setLastError(error.error);
-
-        // Clear error après 5 secondes
-        setTimeout(() => setLastError(null), 5000);
-      });
-
-      // Écouter l'activation
-      const activationListener = WatchConnectivity.onActivationCompleted((status) => {
-        console.log('✅ WatchConnectivity activée:', status.state);
-
-        if (status.error) {
-          setLastError(status.error);
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Erreur initialisation WatchConnectivity:', error);
-    }
+  const showSyncBanner = (message: string) => {
+    setSyncMessage(message);
+    Animated.sequence([
+      Animated.spring(bannerAnim, { toValue: 50, useNativeDriver: true, speed: 12 }),
+      Animated.delay(2000),
+      Animated.timing(bannerAnim, { toValue: -100, duration: 500, useNativeDriver: true })
+    ]).start();
   };
+
+  // Synchroniser les infos de profil immédiatement si possible
+  const syncProfileToWatch = useCallback(async () => {
+    try {
+      const profile = await getProfile();
+      if (profile) {
+        // Récupérer les données de gamification depuis AsyncStorage
+        const [avatarId, level, rank] = await Promise.all([
+          AsyncStorage.getItem('@yoroi_avatar_id'),
+          AsyncStorage.getItem('@yoroi_level'),
+          AsyncStorage.getItem('@yoroi_rank'),
+        ]);
+
+        await WatchConnectivity.updateApplicationContext({
+          avatarConfig: {
+            name: avatarId || 'samurai',
+            level: level ? parseInt(level) : 1,
+            rank: rank || 'Novice'
+          },
+          userName: profile.name || 'Guerrier',
+          timestamp: Date.now()
+        });
+      }
+    } catch (e) {
+      console.log('⚠️ Erreur sync profil vers watch:', e);
+    }
+  }, []);
 
   // Handler pour les messages de la Watch
   const handleWatchMessage = useCallback(async (message: any) => {
     try {
-      // Workout complété sur la Watch
-      if (message.workoutCompleted) {
-        console.log('🏋️ Workout reçu de la Watch:', message.workoutCompleted);
-        await AsyncStorage.setItem('lastWatchWorkout', JSON.stringify(message.workoutCompleted));
-      }
-
-      // Poids mis à jour depuis la Watch
       if (message.weightUpdate) {
+        showSyncBanner('⚖️ Poids synchronisé');
         const weight = typeof message.weightUpdate === 'number' ? message.weightUpdate : message.weightUpdate.weight;
-        console.log('⚖️ Poids mis à jour depuis la Watch:', weight);
-        
-        // Sauvegarder dans la vraie base SQLite
         await addWeight(weight);
-        
-        // Mettre à jour l'état local si nécessaire via appleWatchService ou autre
         await AsyncStorage.setItem('currentWeight', String(weight));
       }
 
-      // Hydratation mise à jour depuis la Watch
       if (message.hydrationUpdate) {
-        const amount = typeof message.hydrationUpdate === 'number' ? message.hydrationUpdate : message.hydrationUpdate.waterIntake;
-        console.log('💧 Hydratation mise à jour depuis la Watch:', amount);
-        // ... handled via appleWatchService or direct add
+        showSyncBanner('💧 Hydratation mise à jour');
       }
       
-      // Nouveau record reçu de la Watch
       if (message.newRecordFromWatch) {
+        showSyncBanner('🏆 Record enregistré');
         try {
           const record = typeof message.newRecordFromWatch === 'string' 
             ? JSON.parse(message.newRecordFromWatch) 
             : message.newRecordFromWatch;
-            
-          console.log('🏆 Nouveau record reçu de la Watch:', record.exercise);
-          
-          // Sauvegarder dans la base iPhone
-          // On cherche ou crée le benchmark d'abord
           const benchmarks = await getBenchmarks();
           let target = benchmarks.find(b => b.name.toLowerCase() === record.exercise.toLowerCase());
-          
           if (target) {
-            await addBenchmarkEntry(
-              target.id,
-              record.weight,
-              5, // RPE par défaut
-              'Ajouté depuis Apple Watch',
-              new Date(record.date),
-              record.reps
-            );
-            console.log('✅ Record Watch sauvegardé sur iPhone');
+            await addBenchmarkEntry(target.id, record.weight, 5, 'Apple Watch', new Date(record.date), record.reps);
           }
-        } catch (e) {
-          console.error('❌ Erreur parsing record Watch:', e);
-        }
+        } catch (e) {}
       }
 
-      // SIGNAL DE TEST / SYNC REÇU
       if (message.testSignal) {
-        console.log('📡 Signal de synchronisation reçu de la Watch');
-        // On pourrait déclencher une petite vibration ici ou un toast
+        showSyncBanner('⌚ Apple Watch connectée');
       }
-      
-      // Support du format direct envoyé par WatchConnectivityManager.swift
-      if (message.weightUpdate !== undefined) {
-          // Déjà géré au dessus
+
+      if (message.ping) {
+        WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now() }).catch(() => {});
       }
     } catch (error) {
       console.error('❌ Erreur handling watch message:', error);
     }
   }, []);
 
-  // Handler pour les données de la Watch
-  const handleWatchData = useCallback(async (dataEvent: any) => {
-    if (dataEvent.type === 'applicationContext') {
-      console.log('📦 Application context reçu de la Watch');
-      // Mettre à jour les données locales si nécessaire
-    }
+  // Initialisation
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
 
-    if (dataEvent.type === 'userInfo') {
-      console.log('📦 UserInfo reçu de la Watch');
-    }
-  }, []);
+    const init = async () => {
+      try {
+        await WatchConnectivity.activateSession();
+        const available = await WatchConnectivity.isWatchAvailable();
+        const reachable = await WatchConnectivity.isWatchReachable();
+        setIsAvailable(available);
+        setIsReachable(reachable);
 
-  // Sync du poids vers la Watch
-  const syncWeight = useCallback(async (weight: number) => {
-    if (!isAvailable || Platform.OS !== 'ios') {
-      console.log('⚠️ Watch non disponible - skip sync weight');
-      return;
-    }
+        if (available) {
+          syncAllData();
+          syncProfileToWatch();
+        }
 
+        // Listeners
+        WatchConnectivity.onReachabilityChanged((status) => {
+          setIsReachable(status.isReachable);
+          setIsAvailable(status.isPaired && status.isWatchAppInstalled);
+          if (status.isReachable) {
+            syncAllData();
+            syncProfileToWatch();
+          }
+        });
+
+        WatchConnectivity.onMessageReceived((message) => {
+          handleWatchMessage(message);
+        });
+
+        WatchConnectivity.onDataReceived((data) => {
+          if (data.data) setWatchData(data.data);
+        });
+
+      } catch (e) {
+        console.error('Watch init error:', e);
+      }
+    };
+
+    init();
+  }, [handleWatchMessage, syncProfileToWatch]);
+
+  const syncWeight = async (weight: number) => {
+    if (isAvailable) await WatchConnectivity.sendWeightUpdate(weight);
+  };
+
+  const syncHydration = async (amount: number) => {
+    if (isAvailable) await WatchConnectivity.sendHydrationUpdate(amount);
+  };
+
+  const syncWorkout = async (workout: any) => {
+    if (isAvailable) await WatchConnectivity.sendWorkoutSession(workout);
+  };
+
+  const syncRecords = async (records: any[]) => {
+    if (isAvailable) await WatchConnectivity.sendRecordsUpdate(records);
+  };
+
+  const syncAllData = async () => {
+    if (!isAvailable) return;
     try {
-      await WatchConnectivity.sendWeightUpdate(weight);
-      setLastSyncDate(new Date());
-      console.log('✅ Poids envoyé à la Watch:', weight);
-    } catch (error) {
-      console.error('❌ Erreur sync weight:', error);
-      setLastError('Erreur sync poids');
-      // Ne pas throw - continuer même si la Watch n'est pas disponible
-    }
-  }, [isAvailable]);
-
-  // Sync de l'hydratation vers la Watch
-  const syncHydration = useCallback(async (waterIntake: number) => {
-    if (!isAvailable || Platform.OS !== 'ios') {
-      console.log('⚠️ Watch non disponible - skip sync hydration');
-      return;
-    }
-
-    try {
-      await WatchConnectivity.sendHydrationUpdate(waterIntake);
-      setLastSyncDate(new Date());
-      console.log('✅ Hydratation envoyée à la Watch:', waterIntake);
-    } catch (error) {
-      console.error('❌ Erreur sync hydration:', error);
-      setLastError('Erreur sync hydratation');
-    }
-  }, [isAvailable]);
-
-  // Sync d'un workout vers la Watch
-  const syncWorkout = useCallback(async (workout: any) => {
-    if (!isAvailable || Platform.OS !== 'ios') {
-      console.log('⚠️ Watch non disponible - skip sync workout');
-      return;
-    }
-
-    try {
-      await WatchConnectivity.sendWorkoutSession(workout);
-      setLastSyncDate(new Date());
-      console.log('✅ Workout envoyé à la Watch');
-    } catch (error) {
-      console.error('❌ Erreur sync workout:', error);
-      setLastError('Erreur sync workout');
-    }
-  }, [isAvailable]);
-
-  // Sync des records vers la Watch
-  const syncRecords = useCallback(async (records: any[]) => {
-    if (!isAvailable || Platform.OS !== 'ios') {
-      console.log('⚠️ Watch non disponible - skip sync records');
-      return;
-    }
-
-    try {
-      await WatchConnectivity.sendRecordsUpdate(records);
-      setLastSyncDate(new Date());
-      console.log('✅ Records envoyés à la Watch:', records.length);
-    } catch (error) {
-      console.error('❌ Erreur sync records:', error);
-      setLastError('Erreur sync records');
-    }
-  }, [isAvailable]);
-
-  // Sync complète de toutes les données
-  const syncAllData = useCallback(async () => {
-    if (!isAvailable || Platform.OS !== 'ios') {
-      console.log('⚠️ Watch non disponible - skip sync all');
-      return;
-    }
-
-    try {
-      console.log('🔄 Sync complète vers la Watch...');
-
-      // Charger TOUTES les données profil
-      const [weight, waterIntake, streak, avatarConfig, userName] = await Promise.all([
+      const [weight, waterIntake, streak] = await Promise.all([
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
         AsyncStorage.getItem('streak'),
-        AsyncStorage.getItem('@yoroi_avatar_config'),
-        AsyncStorage.getItem('@yoroi_user_name'),
       ]);
-
-      // Envoyer tout en une fois via applicationContext
-      // Note: Pour la photo, on envoie le signal de rafraîchir
       await WatchConnectivity.updateApplicationContext({
         weight: parseFloat(weight || '0'),
         waterIntake: parseInt(waterIntake || '0'),
         streak: parseInt(streak || '0'),
-        avatarConfig: avatarConfig ? JSON.parse(avatarConfig) : null,
-        userName: userName || 'Guerrier',
-        lastSync: new Date().toISOString(),
         timestamp: Date.now(),
       });
-
       setLastSyncDate(new Date());
-      console.log('✅ Sync complète réussie (Profil + Avatar + Eau)');
-    } catch (error) {
-      console.error('❌ Erreur sync complète:', error);
-      setLastError('Erreur sync complète');
-    }
-  }, [isAvailable]);
+    } catch (e) {}
+  };
 
   return (
     <WatchContext.Provider
@@ -347,29 +208,28 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       }}
     >
       {children}
+      
+      <Animated.View style={[styles.banner, { transform: [{ translateY: bannerAnim }] }]}>
+        <View style={styles.bannerContent}>
+          <View style={styles.iconContainer}>
+            <MaterialCommunityIcons name="watch" size={20} color="#000" />
+          </View>
+          <Text style={styles.bannerText}>{syncMessage}</Text>
+        </View>
+      </Animated.View>
     </WatchContext.Provider>
   );
 }
 
-/**
- * Hook pour utiliser WatchConnectivity dans vos composants
- *
- * @example
- * ```tsx
- * const { syncWeight, isWatchAvailable } = useWatch();
- *
- * const handleSaveWeight = async (weight: number) => {
- *   await AsyncStorage.setItem('weight', String(weight));
- *   if (isWatchAvailable) {
- *     await syncWeight(weight);
- *   }
- * };
- * ```
- */
+const styles = StyleSheet.create({
+  banner: { position: 'absolute', top: 0, left: 20, right: 20, zIndex: 9999, alignItems: 'center' },
+  bannerContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4ade80', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 25, gap: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  iconContainer: { width: 28, height: 28, backgroundColor: 'rgba(255,255,255,0.3)', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  bannerText: { color: '#000', fontWeight: '800', fontSize: 14 }
+});
+
 export function useWatch() {
   const context = useContext(WatchContext);
-  if (!context) {
-    throw new Error('useWatch must be used within WatchConnectivityProvider');
-  }
+  if (!context) throw new Error('useWatch must be used within WatchConnectivityProvider');
   return context;
 }

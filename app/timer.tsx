@@ -39,6 +39,7 @@ import { WorkoutSummaryModal } from '@/components/WorkoutSummaryModal';
 import { RPEModal } from '@/components/RPEModal';
 import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
+import { useLiveActivity } from '@/lib/hooks/useLiveActivity';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -153,6 +154,9 @@ export default function TimerScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
 
+  // Dynamic Island
+  const { startActivity, stopActivity, updateActivity, isAvailable: isIslandAvailable } = useLiveActivity();
+
   // Ronin Mode (mode focus ultra-minimaliste)
   const [isRoninMode, setIsRoninMode] = useState(false);
 
@@ -247,12 +251,16 @@ export default function TimerScreen() {
   useEffect(() => {
     if (timerState === 'finished') {
       deactivateKeepAwake();
+      // Arrêter la Live Activity
+      if (isIslandAvailable) {
+        stopActivity().catch(e => logger.error('LiveActivity Stop Error:', e));
+      }
       // Afficher le summary après 1.5s (laisser le son victory jouer)
       setTimeout(() => {
         setShowSummaryModal(true);
       }, 1500);
     }
-  }, [timerState]);
+  }, [timerState, isIslandAvailable]);
 
   // Enregistrer le temps de début du workout
   useEffect(() => {
@@ -361,6 +369,11 @@ export default function TimerScreen() {
       } else {
         await soundManager.playBeep();
       }
+
+      // Dynamic Island - Démarrer l'activité
+      if (isIslandAvailable) {
+        startActivity(mode.toUpperCase()).catch(e => logger.error('LiveActivity Error:', e));
+      }
     }
 
     // Garder l'ecran allume pendant le timer
@@ -388,6 +401,11 @@ export default function TimerScreen() {
     triggerHaptic('medium');
     deactivateKeepAwake();
     setTimerState('idle');
+
+    // Arrêter la Live Activity
+    if (isIslandAvailable) {
+      stopActivity().catch(e => logger.error('LiveActivity Reset Error:', e));
+    }
 
     switch (mode) {
       case 'musculation':

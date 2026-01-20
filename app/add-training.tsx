@@ -945,26 +945,26 @@ export default function AddTrainingScreen() {
 
   return (
     <ScreenWrapper noPadding>
-      {/* HEADER ÉTAPE 1 - SOMMET ABSOLU */}
+      {/* HEADER ÉTAPE 1 - COLLÉ AU TOP */}
       <View style={{ 
-        paddingTop: insets.top, 
+        paddingTop: Math.max(insets.top, 10), 
         backgroundColor: colors.background, 
         borderBottomWidth: 1, 
         borderBottomColor: colors.border,
         zIndex: 999
       }}>
-        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, fontWeight: '900', color: colors.accent, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 1 SUR 4</Text>
-          <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+        <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 1 SUR 4</Text>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 8, elevation: 8 }} />
+            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginTop: 12, letterSpacing: 1 }}>CONFIGURATION DE LA SÉANCE</Text>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginTop: 10, letterSpacing: 0.5 }}>CONFIGURATION DE LA SÉANCE</Text>
         </View>
       </View>
 
@@ -2313,29 +2313,29 @@ const styles = StyleSheet.create({
   sportsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-    paddingHorizontal: 4,
+    gap: 6,
+    padding: 4,
   },
   sportGridItem: {
-    width: (SCREEN_WIDTH - SPACING.xl * 2 - SPACING.sm * 3) / 4,
+    width: '23.5%', // 4 colonnes
+    aspectRatio: 0.85,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 6,
     alignItems: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: 4,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    position: 'relative',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   sportGridIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
   },
   sportGridName: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
     textAlign: 'center',
   },

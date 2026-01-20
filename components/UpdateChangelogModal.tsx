@@ -59,20 +59,26 @@ const CHANGELOG_ITEMS = [
   {
     icon: Palette,
     color: '#EC4899',
-    title: '10 Thèmes de couleurs',
-    description: 'Classic, Tiffany, Volt, Magma, Sakura, Matrix, Blaze, Phantom, Ghost et Ocean',
+    title: '15 Thèmes Premium',
+    description: 'Une personnalisation totale avec de nouveaux thèmes exclusifs (Blaze, Phantom, Ghost, Ocean, etc.)',
+  },
+  {
+    icon: Zap,
+    color: '#F59E0B',
+    title: 'Dynamic Island',
+    description: 'Ton timer de combat ou de muscu s\'affiche en haut de l\'écran, même hors de l\'app',
   },
   {
     icon: Watch,
-    color: '#F59E0B',
-    title: 'Apple Watch',
-    description: 'Application Apple Watch fonctionnelle avec suivi en temps réel',
+    color: '#3B82F6',
+    title: 'Apple Watch Total Sync',
+    description: 'Application Apple Watch fonctionnelle avec suivi en temps réel de tes records',
   },
   {
-    icon: Camera,
+    icon: Activity,
     color: '#8B5CF6',
-    title: 'Photos de profil améliorées',
-    description: 'Choix entre photo entière ou recadrage en cercle',
+    title: 'Human Battery',
+    description: 'Ton score d\'énergie calculé intelligemment pour savoir si tu es prêt à t\'entraîner',
   },
   {
     icon: BarChart3,
@@ -161,7 +167,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
             />
             <Text style={[styles.appName, { color: colors.textPrimary }]}>YOROI</Text>
             <View style={[styles.versionBadge, { backgroundColor: colors.accent + '20' }]}>
-              <Text style={[styles.versionText, { color: colors.accent }]}>v1.1</Text>
+              <Text style={[styles.versionText, { color: colors.accent }]}>v1.0.1</Text>
             </View>
           </View>
 
@@ -171,10 +177,10 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
               <Sparkles size={48} color={colors.accentText} />
             </View>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Quoi de neuf ?
+              Mise à jour majeure
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Découvre toutes les nouveautés de cette mise à jour
+              Design V2 : Tout a été repensé pour toi
             </Text>
           </View>
 

@@ -2392,7 +2392,7 @@ export default function MoreScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.menu}
           onClose={handleCloseTutorial}
-          onLater={handleLaterTutorial}
+          onSkip={handleLaterTutorial}
         />
       )}
 

@@ -61,6 +61,12 @@ export interface VictorySessionData {
   reps?: number;
   weight?: number;
   weightUnit?: 'kg' | 'lbs';
+  // Advanced cardio
+  incline?: number;
+  speed?: number;
+  pace?: string;
+  watts?: number;
+  level?: number;
 }
 
 interface VictoryShareModalProps {

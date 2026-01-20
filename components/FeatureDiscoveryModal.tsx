@@ -40,7 +40,7 @@ interface FeatureDiscoveryModalProps {
   visible: boolean;
   tutorial: PageTutorial;
   onClose: () => void; // Appelé quand l'utilisateur clique sur "Compris" (marque comme vu)
-  onLater?: () => void; // Appelé quand l'utilisateur clique sur "Plus tard" (ne marque pas comme vu)
+  onSkip?: () => void; // Appelé quand l'utilisateur clique sur "Plus tard" (ne marque pas comme vu)
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -61,17 +61,17 @@ export const FeatureDiscoveryModal: React.FC<FeatureDiscoveryModalProps> = ({
   visible,
   tutorial,
   onClose,
-  onLater,
+  onSkip,
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const IconComponent = ICON_MAP[tutorial.icon] || Home;
 
-  // Si onLater n'est pas fourni, on utilise onClose pour fermer sans marquer comme vu
-  const handleLater = () => {
-    if (onLater) {
-      onLater();
+  // Si onSkip n'est pas fourni, on utilise onClose pour fermer sans marquer comme vu
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
     }
   };
 
@@ -163,10 +163,10 @@ export const FeatureDiscoveryModal: React.FC<FeatureDiscoveryModalProps> = ({
           </TouchableOpacity>
 
           {/* Bouton Plus tard - Secondaire */}
-          {onLater && (
+          {onSkip && (
             <TouchableOpacity
               style={[styles.secondaryButton, { borderColor: colors.border }]}
-              onPress={handleLater}
+              onPress={handleSkip}
               activeOpacity={0.7}
             >
               <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>

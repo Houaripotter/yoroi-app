@@ -1072,7 +1072,7 @@ export default function AddScreen() {
           visible={true}
           tutorial={PAGE_TUTORIALS.add}
           onClose={handleCloseTutorial}
-          onLater={handleLaterTutorial}
+          onSkip={handleLaterTutorial}
         />
       )}
 

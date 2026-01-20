@@ -1,6 +1,6 @@
 // ============================================
 // YOROI WATCH - Base de données d'exercices
-// Groupés par muscle pour sélection rapide
+// Classé par sport, groupe musculaire et équipement
 // ============================================
 
 import Foundation
@@ -21,60 +21,71 @@ struct ExerciseCategory: Identifiable {
 
 struct ExerciseDatabase {
     static let sports: [SportCategory] = [
+        // 1. MUSCULATION (Classé par Groupe Musculaire)
         SportCategory(name: "MUSCULATION", icon: "figure.strengthtraining.traditional", subCategories: [
             ExerciseCategory(name: "PECTORAUX", icon: "figure.strengthtraining.traditional", exercises: [
-                "Développé couché (Barre)", "Développé couché (Haltères)", "Développé incliné (Barre)", "Développé incliné (Haltères)", "Écartés haltères", "Écartés poulie haute", "Dips (Pecs)", "Pompes", "Pec Deck", "Chest Press Machine"
+                "Développé couché (Barre)", "Développé couché (Haltères)", "Développé incliné (Barre)", "Développé incliné (Haltères)", "Écarté couché", "Pec Deck", "Dips (Pecs)", "Pompes", "Écartés poulie haute"
             ]),
             ExerciseCategory(name: "DOS", icon: "figure.strengthtraining.functional", exercises: [
-                "Tractions", "Tirage poitrine", "Rowing barre", "Rowing haltère", "Deadlift", "Tirage horizontal", "Pull-over poulie", "Shrugs", "Lombaires", "Rowing Machine"
+                "Tractions (Pronation)", "Tractions (Supination)", "Rowing barre", "Rowing haltère", "Tirage poitrine", "Tirage horizontal", "Deadlift", "Pull-over poulie", "Banc à lombaires"
             ]),
-            ExerciseCategory(name: "JAMBES", icon: "figure.walk", exercises: [
-                "Squat (Barre)", "Presse à cuisses", "Leg Extension", "Leg Curl", "Fentes haltères", "Hack Squat", "Soulevé de terre jambes tendues", "Mollets debout", "Mollets assis", "Adducteurs"
-            ]),
-            ExerciseCategory(name: "ÉPAULES", icon: "figure.strengthtraining.functional", exercises: [
-                "Développé militaire", "Élévations latérales", "Développé haltères assis", "Oiseau haltères", "Arnold Press", "Tirage menton", "Face Pull", "Élévations frontales"
+            ExerciseCategory(name: "ÉPAULES", icon: "figure.strengthtraining.traditional", exercises: [
+                "Développé militaire", "Développé haltères assis", "Élévations latérales", "Oiseau haltères", "Face Pull", "Arnold Press", "Shrugs"
             ]),
             ExerciseCategory(name: "BRAS", icon: "dumbbell.fill", exercises: [
-                "Curl barre EZ", "Curl haltères", "Curl marteau", "Curl pupitre Larry Scott", "Extensions triceps poulie", "Barre au front", "Dips (Triceps)", "Kickback haltère"
+                "Curl barre EZ", "Curl haltères", "Curl marteau", "Curl Larry Scott", "Curl poulie basse", "Extensions triceps poulie", "Barre au front", "Dips (Triceps)", "Extension haltère nuque"
+            ]),
+            ExerciseCategory(name: "JAMBES", icon: "figure.walk", exercises: [
+                "Squat (Barre)", "Presse à cuisses", "Leg Extension", "Leg Curl", "Fentes haltères", "Hack Squat", "Soulevé de terre jambes tendues"
             ]),
             ExerciseCategory(name: "ABDOMINAUX", icon: "figure.core.training", exercises: [
-                "Crunch", "Relevé de jambes", "Planche (Gainage)", "Russian Twist", "Roulette abdos", "Crunch poulie haute", "Mountain Climbers", "Leg Raise suspendu"
+                "Crunch", "Relevé de jambes", "Planche (Gainage)", "Russian Twist", "Roulette abdos"
             ])
         ]),
         
+        // 2. CARDIO (Classé par Appareil)
+        SportCategory(name: "CARDIO", icon: "figure.run", subCategories: [
+            ExerciseCategory(name: "TAPIS", icon: "figure.walk", exercises: [
+                "Course (Tapis)", "Marche inclinée"
+            ]),
+            ExerciseCategory(name: "VÉLO", icon: "figure.outdoor.cycle", exercises: [
+                "Spinning / RPM", "Vélo statique"
+            ]),
+            ExerciseCategory(name: "RAMEUR", icon: "figure.rower", exercises: [
+                "Rameur (Concept2)"
+            ]),
+            ExerciseCategory(name: "ELLIPTIQUE", icon: "figure.cross.training", exercises: [
+                "Elliptique"
+            ]),
+            ExerciseCategory(name: "SKIERG", icon: "figure.skiing.crosscountry", exercises: [
+                "SkiErg"
+            ]),
+            ExerciseCategory(name: "ASSAULT BIKE", icon: "figure.indoor.cycle", exercises: [
+                "Assault Bike"
+            ]),
+            ExerciseCategory(name: "ESCALIER", icon: "figure.stairs", exercises: [
+                "Escaliers (Stairmaster)"
+            ]),
+            ExerciseCategory(name: "CORDE", icon: "figure.jumprope", exercises: [
+                "Corde à sauter"
+            ])
+        ]),
+        
+        // 3. STREET WORKOUT
         SportCategory(name: "STREET WORKOUT", icon: "figure.gymnastics", subCategories: [
             ExerciseCategory(name: "STATIQUE", icon: "figure.hold", exercises: [
-                "Planche (Full/Straddle)", "Front Lever", "Back Lever", "Human Flag", "L-Sit", "V-Sit", "Handstand Hold", "Elbow Lever"
+                "Planche (Full/Straddle)", "Front Lever", "Back Lever", "Human Flag", "L-Sit", "Handstand Hold"
             ]),
-            ExerciseCategory(name: "FORCE", icon: "figure.strengthtraining.functional", exercises: [
-                "Muscle Up", "Tractions lestées", "Dips lestés", "HSPU (Handstand Push-up)", "Pompes en planche", "Tractions Archer", "Pompes Archer"
-            ]),
-            ExerciseCategory(name: "REPS", icon: "repeat", exercises: [
-                "Max Pompes", "Max Tractions", "Max Dips", "Burpees", "Pompes Diamant", "Jump Squats"
+            ExerciseCategory(name: "DYNAMIQUE", icon: "figure.strengthtraining.functional", exercises: [
+                "Muscle Up", "Tractions lestées", "Dips lestés", "HSPU", "Pompes en planche"
             ])
         ]),
         
+        // 4. HYROX
         SportCategory(name: "HYROX", icon: "timer", subCategories: [
             ExerciseCategory(name: "STATIONS", icon: "figure.cross.training", exercises: [
                 "1000m SkiErg", "50m Sled Push", "50m Sled Pull", "80m Burpee Broad Jumps", "1000m Row", "200m Farmers Carry", "100m Sandbag Lunges", "100 Wall Balls"
-            ]),
-            ExerciseCategory(name: "RUNNING", icon: "figure.run", exercises: [
-                "1 km Run", "Total Time (Hyrox)", "Intervalles 1km"
-            ])
-        ]),
-        
-        SportCategory(name: "RUNNING", icon: "figure.run", subCategories: [
-            ExerciseCategory(name: "DISTANCES", icon: "map", exercises: [
-                "1 km", "5 km", "10 km", "Semi-Marathon", "Marathon", "Trail 15km", "Trail 30km"
-            ]),
-            ExerciseCategory(name: "TESTS", icon: "stopwatch", exercises: [
-                "Cooper (12 min)", "VMA (Demi-Cooper)", "Test 2.4 km"
             ])
         ])
     ]
-    
-    // Pour compatibilité descendante si nécessaire
-    static var categories: [ExerciseCategory] {
-        return sports.first(where: { $0.name == "MUSCULATION" })?.subCategories ?? []
-    }
 }

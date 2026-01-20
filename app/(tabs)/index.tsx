@@ -11,10 +11,11 @@ import {
   Share,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Polygon, Line, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import {
   Scale,
@@ -63,6 +64,8 @@ import {
   List,
   Building2,
   Cloud,
+  Watch,
+  Shield,
 } from 'lucide-react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { format, differenceInDays } from 'date-fns';
@@ -97,6 +100,7 @@ import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
+import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
 // Mode Essentiel
@@ -1460,71 +1464,22 @@ export default function HomeScreen() {
       {/* Menu de partage social flottant */}
       <HomeShareMenu />
 
+      {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
+      <UpdateChangelogModal 
+        visible={showWhatIsNew} 
+        onClose={() => setShowWhatIsNew(false)} 
+      />
+
       {/* Tutoriel de découverte */}
       {showTutorial && (
-        {/* MESSAGE DE MISE À JOUR ET DISCLAIMER */}
-      <Modal visible={showWhatIsNew} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: colors.card, width: '100%', maxWidth: 400, borderRadius: 32, padding: 24, borderWidth: 1, borderColor: colors.border }}>
-            <LinearGradient colors={[colors.accent, '#3DBDB5']} style={{ width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 20 }}>
-              <Zap size={32} color="#FFFFFF" />
-            </LinearGradient>
-            
-            <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, marginBottom: 12 }}>YOROI V1.0.1</Text>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 20, letterSpacing: 1 }}>GROSSE MISE À JOUR !</Text>
-            
-            <ScrollView style={{ maxHeight: 300, marginBottom: 20 }}>
-              <View style={{ gap: 16 }}>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Palette size={20} color={colors.accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Nouveau Design</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Refonte complète de l'interface pour une expérience plus fluide et immersive.</Text>
-                  </View>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Watch size={20} color={colors.accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Apple Watch</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Synchronisation améliorée de l'avatar, du poids et de l'eau en temps réel.</Text>
-                  </View>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <Shield size={20} color={colors.accent} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Stabilité Santé</Text>
-                    <Text style={{ color: colors.textMuted, fontSize: 14 }}>Correction des erreurs de calcul et des doublons sur les pas et le sommeil.</Text>
-                  </View>
-                </View>
-                <View style={{ marginTop: 10, padding: 12, backgroundColor: colors.backgroundElevated, borderRadius: 12 }}>
-                  <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                    <AlertTriangle size={16} color={colors.gold} />
-                    <Text style={{ color: colors.gold, fontWeight: '800', fontSize: 12 }}>DISCLAIMER</Text>
-                  </View>
-                  <Text style={{ color: colors.textSecondary, fontSize: 13, lineHeight: 18 }}>
-                    C'est un changement massif. Si vous trouvez des bugs, merci de me les signaler dans la Boîte à Idées ! Je corrigerai tout en 24h.
-                  </Text>
-                </View>
-              </View>
-            </ScrollView>
-
-            <TouchableOpacity 
-              style={{ backgroundColor: colors.accent, width: '100%', paddingVertical: 18, borderRadius: 20, alignItems: 'center' }}
-              onPress={() => setShowWhatIsNew(false)}
-            >
-              <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18 }}>C'EST PARTI !</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      <FeatureDiscoveryModal
+        <FeatureDiscoveryModal
           visible={true}
           tutorial={PAGE_TUTORIALS.home}
           onClose={handleCloseTutorial}
-          onLater={handleLaterTutorial}
+          onSkip={handleLaterTutorial}
         />
       )}
+
 
       {/* Bouton flottant de sauvegarde */}
       {/* <TouchableOpacity
