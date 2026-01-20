@@ -256,14 +256,6 @@ const SessionCard = React.forwardRef<View, SessionCardProps>(
           style={[styles.card, { backgroundColor: '#000000', height: CARD_HEIGHT_PORTRAIT }]}
           collapsable={false}
         >
-          {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
-          <Image
-            source={{ uri: backgroundImage }}
-            style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
-            blurRadius={15}
-            resizeMode="cover"
-          />
-          
           {/* 2. Image principale - Toujours en contain pour voir toute la photo */}
           <Image
             source={{ uri: backgroundImage }}

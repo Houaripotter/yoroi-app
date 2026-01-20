@@ -200,14 +200,6 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
           style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
           collapsable={false}
         >
-          {/* 1. Fond flou pour remplir l'espace (Zoomé) */}
-          <Image
-            source={{ uri: backgroundImage }}
-            style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
-            blurRadius={15}
-            resizeMode="cover"
-          />
-          
           {/* 2. Image principale entière (Non coupée) */}
           <Image
             source={{ uri: backgroundImage }}
