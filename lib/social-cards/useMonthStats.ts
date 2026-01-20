@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTrainings, getWeights, Training } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================
 // TYPES
@@ -118,15 +119,60 @@ export const useMonthStats = (
       setIsLoading(true);
       setError(null);
 
+      const isScreenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode') === 'true';
+
       const today = new Date();
       const targetYear = year !== undefined ? year : today.getFullYear();
       const targetMonth = month !== undefined ? month : today.getMonth(); // 0-11
 
-      // Dates du mois
+      const totalDays = getDaysInMonth(targetYear, targetMonth);
+
+      if (isScreenshotMode) {
+        // GÉNÉRER DES DONNÉES PARFAITES POUR SCREENSHOTS
+        // Ligne qui bouge, pas de trous!
+        const calendar: MonthStats['calendar'] = [];
+        for (let d = 1; d <= totalDays; d++) {
+          const date = new Date(targetYear, targetMonth, d);
+          const dayOfWeek = date.getDay();
+          // Actif 5 jours sur 7
+          const isActive = dayOfWeek !== 0 && dayOfWeek !== 3; 
+          calendar.push({
+            day: d,
+            isActive,
+            isToday: d === today.getDate() && date.getMonth() === today.getMonth(),
+            isWeekend: dayOfWeek === 0 || dayOfWeek === 6,
+            dayOfWeek,
+          });
+        }
+
+        const stats: MonthStats = {
+          year: targetYear,
+          month: targetMonth,
+          monthName: getMonthName(targetMonth),
+          activeDays: Math.floor(totalDays * 0.7),
+          totalDays,
+          totalTrainings: Math.floor(totalDays * 0.8),
+          percentage: 72.5,
+          calendar,
+          clubTrainings: [
+            { clubName: 'Basic-Fit', sport: 'musculation', count: 12, clubColor: '#FF6B00' },
+            { clubName: 'MMA Factory', sport: 'mma', count: 8, clubColor: '#EF4444' },
+            { clubName: 'Yoroi Dojo', sport: 'jjb', count: 6, clubColor: '#3B82F6' },
+          ],
+          evolution: {
+            weight: { start: 82.5, end: 76.8, change: -5.7 }
+          },
+          bestWeek: { weekNumber: 2, daysActive: 6 }
+        };
+        setStats(stats);
+        setIsLoading(false);
+        return;
+      }
+
+      // Dates du mois (mode normal)
       const monthStart = new Date(targetYear, targetMonth, 1);
       monthStart.setHours(0, 0, 0, 0);
 
-      const totalDays = getDaysInMonth(targetYear, targetMonth);
       const monthEnd = new Date(targetYear, targetMonth, totalDays, 23, 59, 59);
 
       // Récupérer TOUS les trainings

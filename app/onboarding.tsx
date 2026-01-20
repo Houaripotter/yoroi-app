@@ -11,6 +11,7 @@ import {
   TextInput,
   Platform,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -144,7 +145,11 @@ export default function OnboardingScreen() {
       const slides: Slide[] = [
     {
       id: 'welcome',
-      icon: <Image source={require('../assets/images/logo2010.png')} style={{ width: 100, height: 100, borderRadius: 24 }} resizeMode="contain" />,
+      icon: (
+        <View style={{ backgroundColor: '#FFFFFF', padding: 12, borderRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
+          <Image source={require('../assets/images/logo2010.png')} style={{ width: 90, height: 90, borderRadius: 20 }} resizeMode="contain" />
+        </View>
+      ),
       title: 'Bienvenue dans la team Yoroi',
       description: 'Désolé pour les notifications récentes, tout est rentré dans l\'ordre ! 🙏 Yoroi fonctionne 100% HORS LIGNE. Tes données restent sur TON téléphone. Pas de compte, pas de cloud, pas de tracking.',
       color: colors.accent,
@@ -444,83 +449,93 @@ export default function OnboardingScreen() {
     });
 
     return (
-      <View style={[styles.slide, { width }]}>
-        {/* Icon avec cercle de fond animé */}
-        <Animated.View
-          style={[
-            styles.iconContainer,
-            {
-              backgroundColor: item.color + '25',
-              transform: [{ scale }, { rotate: iconRotate }],
-              opacity,
-              borderWidth: 2,
-              borderColor: item.color + '40',
-            }
-          ]}
+      <View style={{ width, flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.slide, { width }]}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
         >
-          {item.icon}
-        </Animated.View>
-
-        {/* Titre avec animation */}
-        <Animated.Text
-          style={[
-            styles.title,
-            {
-              color: colors.textPrimary,
-              opacity,
-              transform: [{ translateY }],
-            }
-          ]}
-        >
-          {item.title}
-        </Animated.Text>
-
-        {/* Description avec animation */}
-        <Animated.Text
-          style={[
-            styles.description,
-            {
-              color: colors.textSecondary,
-              opacity,
-              transform: [{ translateY }],
-            }
-          ]}
-        >
-          {item.description}
-        </Animated.Text>
-
-        {/* Highlights avec animation */}
-        {item.highlights && item.highlights.length > 0 && (
+          {/* Icon avec cercle de fond animé */}
           <Animated.View
             style={[
-              styles.highlightsContainer,
+              styles.iconContainer,
               {
+                backgroundColor: item.color + '25',
+                transform: [{ scale }, { rotate: iconRotate }],
+                opacity,
+                borderWidth: 2,
+                borderColor: item.color + '40',
+              }
+            ]}
+          >
+            {item.icon}
+          </Animated.View>
+
+          {/* Titre avec animation */}
+          <Animated.Text
+            style={[
+              styles.title,
+              {
+                color: colors.textPrimary,
                 opacity,
                 transform: [{ translateY }],
               }
             ]}
           >
-            {item.highlights.map((highlight, idx) => (
-              <View
-                key={idx}
-                style={[
-                  styles.highlightItem,
-                  {
-                    backgroundColor: colors.backgroundCard,
-                    borderColor: item.color + '30',
-                  }
-                ]}
-              >
-                <View style={[styles.highlightIcon, { backgroundColor: item.color + '20' }]}>
-                  {highlight.icon}
+            {item.title}
+          </Animated.Text>
+
+          {/* Description avec animation */}
+          <Animated.Text
+            style={[
+              styles.description,
+              {
+                color: colors.textSecondary,
+                opacity,
+                transform: [{ translateY }],
+              }
+            ]}
+          >
+            {item.description}
+          </Animated.Text>
+
+          {/* Highlights avec animation */}
+          {item.highlights && item.highlights.length > 0 && (
+            <Animated.View
+              style={[
+                styles.highlightsContainer,
+                {
+                  opacity,
+                  transform: [{ translateY }],
+                }
+              ]}
+            >
+              {item.highlights.map((highlight, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.highlightItem,
+                    {
+                      backgroundColor: colors.backgroundCard,
+                      borderColor: item.color + '30',
+                    }
+                  ]}
+                >
+                  <View style={[styles.highlightIcon, { backgroundColor: item.color + '20' }]}>
+                    {highlight.icon}
+                  </View>
+                  <Text style={[styles.highlightText, { color: colors.textPrimary }]}>
+                    {highlight.text}
+                  </Text>
                 </View>
-                <Text style={[styles.highlightText, { color: colors.textPrimary }]}>
-                  {highlight.text}
-                </Text>
-              </View>
-            ))}
-          </Animated.View>
-        )}
+              ))}
+            </Animated.View>
+          )}
+          
+          {/* Espace en bas pour ne pas être caché par le footer fixe */}
+          <View style={{ height: 180 }} />
+        </ScrollView>
       </View>
     );
   };
@@ -528,7 +543,8 @@ export default function OnboardingScreen() {
   // Écran de configuration du profil
   if (showSetup) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <StatusBar barStyle="dark-content" />
         {/* Logo en haut */}
         <View style={styles.logoContainer}>
           <Image
@@ -815,19 +831,8 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Logo en haut */}
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('../assets/images/logo2010.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={[styles.logoText, { color: colors.textPrimary }]}>
-          Yoroi
-        </Text>
-      </View>
-
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="dark-content" />
       {/* Slides */}
       <FlatList
         ref={flatListRef}
@@ -845,49 +850,52 @@ export default function OnboardingScreen() {
         keyExtractor={(item) => item.id}
       />
 
-      {/* Indicateur de page numérique */}
-      <View style={styles.pagination}>
-        <View style={[styles.pageIndicator, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-          <Text style={[styles.pageNumber, { color: colors.accent }]}>
-            {currentIndex + 1}
-          </Text>
-          <Text style={[styles.pageSeparator, { color: colors.textMuted }]}>
-            /
-          </Text>
-          <Text style={[styles.pageTotal, { color: colors.textSecondary }]}>
-            {slides.length}
-          </Text>
+      {/* Footer fixe en bas */}
+      <View style={styles.fixedBottomContainer}>
+        {/* Indicateur de page numérique */}
+        <View style={styles.pagination}>
+          <View style={[styles.pageIndicator, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+            <Text style={[styles.pageNumber, { color: colors.accent }]}>
+              {currentIndex + 1}
+            </Text>
+            <Text style={[styles.pageSeparator, { color: colors.textMuted }]}>
+              /
+            </Text>
+            <Text style={[styles.pageTotal, { color: colors.textSecondary }]}>
+              {slides.length}
+            </Text>
+          </View>
+        </View>
+
+        {/* Bouton */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: colors.accent }]}
+            onPress={goToNext}
+            disabled={isSavingProfile}
+          >
+            <Text style={[styles.buttonText, { color: buttonTextColor }]}>
+              {isSavingProfile ? 'Chargement...' : (currentIndex === slides.length - 1 ? "C'est parti !" : 'Continuer')}
+            </Text>
+            <ChevronRight size={22} color={buttonTextColor} />
+          </TouchableOpacity>
+
+          {/* Skip */}
+          {currentIndex < slides.length - 1 && (
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={skipToSetup}
+            >
+              <Text style={[styles.skipText, { color: colors.textMuted }]}>
+                Passer
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      {/* Bouton */}
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.accent }]}
-          onPress={goToNext}
-          disabled={isSavingProfile}
-        >
-          <Text style={[styles.buttonText, { color: buttonTextColor }]}>
-            {isSavingProfile ? 'Chargement...' : (currentIndex === slides.length - 1 ? "C'est parti !" : 'Continuer')}
-          </Text>
-          <ChevronRight size={22} color={buttonTextColor} />
-        </TouchableOpacity>
-
-        {/* Skip */}
-        {currentIndex < slides.length - 1 && (
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={skipToSetup}
-          >
-            <Text style={[styles.skipText, { color: colors.textMuted }]}>
-              Passer
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
       <PopupComponent />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -916,11 +924,10 @@ const styles = StyleSheet.create({
 
   // Slide
   slide: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 32,
-    paddingTop: 10,
+    paddingTop: 60, // Plus d'espace car on a retiré le logo header
   },
   iconContainer: {
     width: 130,
@@ -937,7 +944,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 14,
@@ -988,34 +995,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 15,
   },
   pageIndicator: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
   },
   pageNumber: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
   },
   pageSeparator: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     marginHorizontal: 4,
   },
   pageTotal: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
 
   // Footer
+  fixedBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+  },
   footer: {
     paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 40,
     alignItems: 'center',
   },
   button: {

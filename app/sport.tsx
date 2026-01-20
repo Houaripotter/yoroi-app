@@ -404,6 +404,22 @@ export default function SportScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* LIVE SESSION CTA */}
+        <TouchableOpacity 
+          style={[styles.liveSessionCard, { backgroundColor: themeColors.accent }]}
+          onPress={() => router.push('/add-training')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.liveSessionIcon}>
+            <MaterialCommunityIcons name="play-circle" size={32} color={themeColors.textOnAccent || "#FFFFFF"} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.liveSessionTitle, { color: themeColors.textOnAccent || "#FFFFFF" }]}>Démarrer une séance</Text>
+            <Text style={[styles.liveSessionSubtitle, { color: (themeColors.textOnAccent || "#FFFFFF") + 'CC' }]}>Enregistre tes efforts en direct</Text>
+          </View>
+          <Plus size={24} color={themeColors.textOnAccent || "#FFFFFF"} strokeWidth={3} />
+        </TouchableOpacity>
+
         {/* Subtitle */}
         <Text style={styles.headerSubtitle}>Planifie tes entrainements</Text>
 
@@ -453,8 +469,7 @@ export default function SportScreen() {
                       {isToday && activity && activity.type && activity.type !== 'rest' && (
                         <TouchableOpacity
                           style={styles.validateButtonCompact}
-                          onPress={(e) => {
-                            e.stopPropagation();
+                          onPress={() => {
                             handleValidateToday();
                           }}
                           activeOpacity={0.7}
@@ -843,6 +858,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#64748B',
+  },
+  liveSessionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    gap: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  liveSessionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveSessionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  liveSessionSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   modalScrollView: {
     flex: 1,

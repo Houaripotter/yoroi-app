@@ -69,13 +69,85 @@ class HealthManager: ObservableObject {
         NotificationCenter.default.removeObserver(self)
     }
 
-    @objc private func lowPowerModeChanged() {
-        DispatchQueue.main.async {
-            self.isLowPowerModeEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
+        // Observer les records
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleRecordsUpdate),
+            name: .didReceiveRecordsUpdate,
+            object: nil
+        )
+    }
 
-            // Si mode économie activé, arrêter toutes les queries
-            if self.isLowPowerModeEnabled {
-                self.stopAllQueries()
+    @objc private func handleRecordsUpdate(_ notification: Notification) {
+        guard let data = notification.object as? Data else { return }
+        if let decoded = try? JSONDecoder().decode([ExerciseRecord].self, from: data) {
+            DispatchQueue.main.async {
+                self.records = decoded
+                self.savePersistedData()
+            }
+        }
+    }
+    
+    // NOUVEAU: Gestion Session Workout
+    private var workoutSession: HKWorkoutSession?
+    private var workoutBuilder: HKLiveWorkoutBuilder?
+    @Published var workoutDuration: TimeInterval = 0
+    @Published var workoutActive: Bool = false
+    private var workoutTimer: Timer?
+
+    func startWorkout(type: HKWorkoutActivityType) {
+        guard let healthStore = healthStore else { return }
+        
+        let configuration = HKWorkoutConfiguration()
+        configuration.activityType = type
+        configuration.locationType = .unknown
+        
+        do {
+            workoutSession = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
+            workoutBuilder = workoutSession?.associatedWorkoutBuilder()
+            
+            workoutBuilder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
+            
+            workoutSession?.startActivity(with: Date())
+            workoutBuilder?.beginCollection(withStart: Date()) { (success, error) in
+                // Session démarrée
+            }
+            
+            DispatchQueue.main.async {
+                self.workoutActive = true
+                self.workoutDuration = 0
+                self.startWorkoutTimer()
+            }
+            
+            print("🚀 Séance \(type.name) démarrée")
+        } catch {
+            print("❌ Erreur démarrage workout: \(error.localizedDescription)")
+        }
+    }
+    
+    func stopWorkout() {
+        workoutSession?.end()
+        workoutBuilder?.endCollection(withEnd: Date()) { (success, error) in
+            self.workoutBuilder?.finishWorkout { (workout, error) in
+                // Workout terminé et sauvegardé
+            }
+        }
+        
+        workoutTimer?.invalidate()
+        workoutTimer = nil
+        
+        DispatchQueue.main.async {
+            self.workoutActive = false
+            self.workoutSession = nil
+            self.workoutBuilder = nil
+        }
+        print("🏁 Séance terminée")
+    }
+    
+    private func startWorkoutTimer() {
+        workoutTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+            DispatchQueue.main.async {
+                self.workoutDuration += 1
             }
         }
     }
@@ -468,7 +540,11 @@ class HealthManager: ObservableObject {
         records.insert(newRecord, at: 0)
         savePersistedData()
         
-        // Optionnel: On pourrait aussi sync vers l'iPhone ici
+        // SYNC VERS IPHONE
+        WatchConnectivityManager.shared.sendToiPhone(newRecord, forKey: "newRecordFromWatch") { success in
+            print(success ? "✅ Record sync iPhone" : "⚠️ Record mis en queue")
+        }
+        
         print("✅ Nouveau record ajouté: \(exercise)")
     }
 

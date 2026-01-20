@@ -14,106 +14,46 @@ import type { BenchmarkCategory, BenchmarkUnit, SkillCategory, SkillStatus } fro
 // PROFIL DE DÉMONSTRATION - TRANSFORMATION INCROYABLE!
 // ============================================
 const DEMO_PROFILE = {
-  name: 'Thomas Silva',
-  height_cm: 178,
-  start_weight: 120.0, // Poids de départ - OBÉSITÉ
-  target_weight: 82.0, // Objectif final
-  sport: 'running', // Running + Street Workout
+  name: 'Germain Del Jarret',
+  height_cm: 182,
+  start_weight: 98.5, // Poids de départ
+  target_weight: 76.0, // Objectif final
+  sport: 'mma', // MMA + Musculation
   mode: 'competitor',
-  startDate: subDays(new Date(), 365), // Il y a 1 AN - TRANSFORMATION FOLLE!
+  startDate: subDays(new Date(), 180), // 6 MOIS de transformation
 };
 
 // ============================================
-// GÉNÉRATION DES PESÉES (12 mois) - TRANSFORMATION EXTRÊME!
+// GÉNÉRATION DES PESÉES (6 mois) - TRANSFORMATION EXTRÊME!
 // ============================================
 const generateWeights = () => {
   const weights = [];
-  const days = 365; // 1 AN DE DONNÉES - TRANSFORMATION COMPLÈTE!
-  const startWeight = 120.0; // Poids de départ - OBÉSITÉ
-  const endWeight = 85.0; // Transformation incroyable!
-  const totalLoss = startWeight - endWeight; // 35kg perdu en 1 an - TRANSFORMATION DE MALADE!
+  const days = 180; // 6 MOIS DE DONNÉES - SANS TROU!
+  const startWeight = 98.5; 
+  const endWeight = 76.2; 
+  const totalLoss = startWeight - endWeight;
 
   for (let i = 0; i <= days; i++) {
     const date = subDays(new Date(), days - i);
 
-    // Progression réaliste sur 12 mois : COURBE DE TRANSFORMATION ÉPIQUE!
-    let progress;
-    if (i < 30) {
-      // Mois 1 : perte initiale MASSIVE (eau + graisse) - 15% de la perte
-      progress = (i / 30) * 0.15;
-    } else if (i < 60) {
-      // Mois 2 : motivation max - 12%
-      progress = 0.15 + ((i - 30) / 30) * 0.12;
-    } else if (i < 90) {
-      // Mois 3 : continuation forte - 10%
-      progress = 0.27 + ((i - 60) / 30) * 0.10;
-    } else if (i < 120) {
-      // Mois 4 : léger plateau puis reprise - 8%
-      progress = 0.37 + ((i - 90) / 30) * 0.08;
-    } else if (i < 150) {
-      // Mois 5 : reprise forte - 9%
-      progress = 0.45 + ((i - 120) / 30) * 0.09;
-    } else if (i < 180) {
-      // Mois 6 : milieu du parcours - 8%
-      progress = 0.54 + ((i - 150) / 30) * 0.08;
-    } else if (i < 210) {
-      // Mois 7 : deuxième souffle - 8%
-      progress = 0.62 + ((i - 180) / 30) * 0.08;
-    } else if (i < 240) {
-      // Mois 8 : progression constante - 7%
-      progress = 0.70 + ((i - 210) / 30) * 0.07;
-    } else if (i < 270) {
-      // Mois 9 : accélération - 7%
-      progress = 0.77 + ((i - 240) / 30) * 0.07;
-    } else if (i < 300) {
-      // Mois 10 : dernière ligne droite - 7%
-      progress = 0.84 + ((i - 270) / 30) * 0.07;
-    } else if (i < 330) {
-      // Mois 11 : finition - 6%
-      progress = 0.91 + ((i - 300) / 30) * 0.06;
-    } else {
-      // Mois 12 : OBJECTIF PRESQUE ATTEINT! - 3%
-      progress = 0.97 + ((i - 330) / 35) * 0.03;
-    }
-
+    // Courbe de perte de poids constante et sans trou
+    const progress = i / days;
+    // Ajout d'une courbe sinus pour des variations réalistes mais sans trou
     const baseWeight = startWeight - (totalLoss * progress);
+    const variation = (Math.sin(i * 0.2) * 0.5) + (Math.cos(i * 0.1) * 0.3);
+    const weight = baseWeight + variation;
 
-    // VARIATIONS DRAMATIQUES pour screenshots (jusqu'à ±1.5kg!)
-    // Les 7 derniers jours ont des variations impressionnantes
-    let dailyVariation;
-    const daysFromEnd = days - i;
-    if (daysFromEnd <= 7) {
-      // Semaine récente : variations visibles pour montrer la fluctuation
-      const dramaticPattern = [
-        1.8,   // J-7: +1.8kg (après gros repas)
-        0.2,   // J-6: léger
-        -0.8,  // J-5: descente
-        -1.5,  // J-4: grosse perte (après compétition/jeûne)
-        -0.3,  // J-3: stabilisation
-        0.5,   // J-2: légère remontée
-        0.0,   // J-1: stable
-        -0.4,  // Aujourd'hui: léger déficit
-      ];
-      dailyVariation = dramaticPattern[7 - daysFromEnd] || 0;
-    } else {
-      // Avant: variations normales
-      dailyVariation = (Math.sin(i * 0.3) * 0.4) + (Math.cos(i * 0.2) * 0.3);
-    }
-
-    const weight = baseWeight + dailyVariation;
-
-    // Enregistrer TOUS les jours pour des graphiques ÉPIQUES
+    // Composition corporelle SANS TROU
     weights.push({
       date: format(date, 'yyyy-MM-dd'),
       weight: Math.round(weight * 10) / 10,
-      bodyFat: Math.round((35 - (progress * 17)) * 10) / 10, // 35% → 18% (TRANSFORMATION FOLLE!)
-      muscleMass: Math.round((30 + (progress * 12)) * 10) / 10, // 30% → 42% (GAINS MASSIFS!)
-      water: Math.round((45 + (progress * 10)) * 10) / 10, // 45% → 55%
-      // Données de composition avancées pour screenshots
-      boneMass: Math.round((2.8 + (progress * 0.5)) * 10) / 10, // 2.8kg → 3.3kg
-      visceralFat: Math.round((18 - (progress * 10))), // 18 → 8 (ÉNORME amélioration santé!)
-      bmr: Math.round(1500 + (progress * 400)), // 1500 → 1900 kcal (métabolisme BOOSTÉ!)
-      metabolicAge: Math.round(45 - (progress * 17)), // 45 → 28 ans (RAJEUNI DE 17 ANS!)
+      bodyFat: Math.round((28 - (progress * 13.5)) * 10) / 10, // 28% → 14.5%
+      muscleMass: Math.round((38 + (progress * 6)) * 10) / 10, // 38% → 44%
+      water: Math.round((52 + (progress * 8)) * 10) / 10,     // 52% → 60%
+      boneMass: Math.round((3.1 + (progress * 0.4)) * 10) / 10,
+      visceralFat: Math.round((14 - (progress * 8))),
+      bmr: Math.round(1750 + (progress * 300)),
+      metabolicAge: Math.round(38 - (progress * 12)),
     });
   }
 
@@ -167,290 +107,56 @@ const generateTrainings = async (clubIds: ClubIds) => {
   const database = await openDatabase();
   let count = 0;
 
-  // DÉCEMBRE PASSÉ + JANVIER COURANT
-  // Si nous sommes en janvier, décembre = année précédente
-  // Si nous sommes après janvier, décembre = année courante
   const now = new Date();
-  const currentMonth = now.getMonth(); // 0 = janvier
-  const currentYear = now.getFullYear();
+  const startDate = new Date(now.getFullYear(), 0, 1); // 1er Janvier
+  const endDate = now; // Jusqu'à aujourd'hui
 
-  // Décembre de l'année précédente si on est en janvier, sinon décembre de l'année courante
-  const decYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-  const janYear = currentMonth === 0 ? currentYear : currentYear + 1;
+  const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-  // Décembre complet (1-31)
-  const decStart = new Date(decYear, 11, 1); // 1er décembre
-  const decEnd = new Date(decYear, 11, 31); // 31 décembre
+  logger.info(`Génération de l'entraînement intensif pour Germain Del Jarret (${days} jours)`);
 
-  // Janvier complet (1-31)
-  const janStart = new Date(janYear, 0, 1); // 1er janvier
-  const janEnd = new Date(janYear, 0, 31); // 31 janvier
-
-  const daysInDec = Math.floor((decEnd.getTime() - decStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  const daysInJan = Math.floor((janEnd.getTime() - janStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  logger.info(`Génération décembre (${daysInDec} jours) + janvier (${daysInJan} jours) avec 3 clubs FITNESS`);
-  logger.info(`🏢 Clubs: Run & Fit (Running), Basic-Fit (Muscu), Urban Street Workout (Calisthenics)`);
-
-  // Types de séances variées pour chaque club
-  const runningSessions = [
-    { type: 'endurance', notes: 'Footing 45min - Zone 2 cardio', distance: 8 },
-    { type: 'interval', notes: 'Fractionné 10x400m - Récup 1min30', distance: 6 },
-    { type: 'tempo', notes: 'Tempo Run 30min - Allure semi-marathon', distance: 7 },
-    { type: 'long', notes: 'Sortie longue - Exploration nouveaux parcours', distance: 15 },
-    { type: 'recovery', notes: 'Footing récup - Régénération active', distance: 5 },
-  ];
-
-  const calisthenicsSessions = [
-    { type: 'upper', notes: 'Upper Body - Dips, Tractions, Push-ups' },
-    { type: 'lower', notes: 'Lower Body - Pistol squats, Lunges' },
-    { type: 'skills', notes: 'Skills - Muscle-up progressions, Handstand' },
-    { type: 'full', notes: 'Full Body Circuit - 5 rounds AMRAP' },
-    { type: 'core', notes: 'Core & Abs - L-sit, Dragon flags, Planks' },
-  ];
-
-  const muscuSessions = [
-    { muscles: 'pectoraux,triceps', notes: 'Push Day - Développé couché 5x5' },
-    { muscles: 'dos,biceps', notes: 'Pull Day - Tractions + Rowing' },
-    { muscles: 'jambes,fessiers', notes: 'Leg Day - Squat 5x5 + Fentes' },
-    { muscles: 'epaules,abdos', notes: 'Shoulders & Core - Military press' },
-  ];
-
-  let sessionIndex = 0;
-
-  for (let dayOffset = 0; dayOffset < daysInDec; dayOffset++) {
-    const date = addDays(decStart, dayOffset);
-    const dayOfWeek = date.getDay(); // 0=Dim, 1=Lun, ..., 6=Sam
+  for (let i = 0; i < days; i++) {
+    const date = addDays(startDate, i);
     const dateStr = format(date, 'yyyy-MM-dd');
+    const dayOfWeek = date.getDay(); // 0=Dim, 1=Lun...
 
-    // ======================================
-    // MERCREDI (3) = REPOS COMPLET
-    // ======================================
-    if (dayOfWeek === 3) {
-      continue;
+    // Sélection des jours de repos (3 par mois environ)
+    // On prend le 15, le 28 et le 5 de chaque mois comme repos
+    const dayOfMonth = date.getDate();
+    if ([5, 15, 28].includes(dayOfMonth)) {
+      continue; 
     }
 
-    // ======================================
-    // DIMANCHE (0) = REPOS COMPLET
-    // ======================================
-    if (dayOfWeek === 0) {
-      continue;
-    }
-
-    // ======================================
-    // LUNDI (1) = MATIN Running + SOIR Basic-Fit
-    // ======================================
-    if (dayOfWeek === 1) {
-      const runSession = runningSessions[sessionIndex % runningSessions.length];
-      // MATIN : Run & Fit - Running
+    // --- SÉANCE DU MATIN (6h30 - 8h00) ---
+    if (dayOfWeek === 0 || dayOfWeek === 3) {
+      // Mercredi et Dimanche = RUNNING obligatoire
       await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', runSession.type, dateStr, '06:30', 50, runSession.notes]
+        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, distance) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [null, 'running', 'Endurance', dateStr, '07:30', 60, 'Sortie matinale oxygénation', dayOfWeek === 0 ? 12.5 : 8.2]
       );
       count++;
-
-      const muscuSession = muscuSessions[sessionIndex % muscuSessions.length];
-      // SOIR : Basic-Fit Musculation
+    } else {
+      // Autres jours : Muscu (Basic-Fit)
       await database.runAsync(
         `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '18:30', 75, muscuSession.muscles, muscuSession.notes]
+        [clubIds.basicFit, 'musculation', dateStr, '06:30', 75, 'Pectoraux, Bras', 'Séance force et volume']
       );
       count++;
     }
 
-    // ======================================
-    // MARDI (2) = MATIN Street Workout + SOIR Running
-    // ======================================
-    if (dayOfWeek === 2) {
-      const calisthenicsSession = calisthenicsSessions[sessionIndex % calisthenicsSessions.length];
-      // MATIN : Urban Street Workout
+    // --- SÉANCE DU SOIR (18h30) --- 
+    // On rajoute une 2ème séance 4 fois par semaine (Lun, Mar, Jeu, Ven)
+    if ([1, 2, 4, 5].includes(dayOfWeek)) {
+      // JJB (Gracie Barra) le soir
       await database.runAsync(
         `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', calisthenicsSession.type, dateStr, '07:00', 60, calisthenicsSession.notes]
-      );
-      count++;
-
-      const runSession = runningSessions[(sessionIndex + 1) % runningSessions.length];
-      // SOIR : Run & Fit - Running
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', runSession.type, dateStr, '19:00', 45, runSession.notes]
+        [clubIds.gracieBarra, 'jjb', 'Sparring', dateStr, '18:30', 90, 'Drills techniques + 5 rounds de 6min']
       );
       count++;
     }
-
-    // ======================================
-    // JEUDI (4) = MATIN Basic-Fit + SOIR Street Workout
-    // ======================================
-    if (dayOfWeek === 4) {
-      const muscuSession = muscuSessions[(sessionIndex + 1) % muscuSessions.length];
-      // MATIN : Basic-Fit
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '07:00', 60, muscuSession.muscles, muscuSession.notes]
-      );
-      count++;
-
-      const calisthenicsSession = calisthenicsSessions[(sessionIndex + 2) % calisthenicsSessions.length];
-      // SOIR : Urban Street Workout
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', calisthenicsSession.type, dateStr, '18:00', 70, calisthenicsSession.notes]
-      );
-      count++;
-    }
-
-    // ======================================
-    // VENDREDI (5) = MATIN Running Fractionné + SOIR Basic-Fit
-    // ======================================
-    if (dayOfWeek === 5) {
-      const runSession = runningSessions[1]; // Fractionné
-      // MATIN : Run & Fit - Interval
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', 'interval', dateStr, '06:30', 55, runSession.notes]
-      );
-      count++;
-
-      const muscuSession = muscuSessions[(sessionIndex + 2) % muscuSessions.length];
-      // SOIR : Basic-Fit
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '17:30', 70, muscuSession.muscles, muscuSession.notes]
-      );
-      count++;
-    }
-
-    // ======================================
-    // SAMEDI (6) = MATIN Running longue distance + Street Workout
-    // ======================================
-    if (dayOfWeek === 6) {
-      // MATIN : Run & Fit - Sortie longue
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', 'long', dateStr, '08:00', 90, 'Sortie longue 15km - Préparation semi-marathon']
-      );
-      count++;
-
-      // APRÈS-MIDI : Urban Street Workout - Session skills
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', 'skills', dateStr, '14:00', 60, 'Skills training - Muscle-up & Handstand work']
-      );
-      count++;
-    }
-
-    sessionIndex++;
   }
 
-  logger.info(`Décembre : Généré ${count} entraînements`);
-
-  // ============================================
-  // JANVIER COMPLET (1-31)
-  // ============================================
-  for (let dayOffset = 0; dayOffset < daysInJan; dayOffset++) {
-    const date = addDays(janStart, dayOffset);
-    const dayOfWeek = date.getDay(); // 0=Dim, 1=Lun, ..., 6=Sam
-    const dateStr = format(date, 'yyyy-MM-dd');
-
-    // MERCREDI (3) = REPOS COMPLET
-    if (dayOfWeek === 3) {
-      continue;
-    }
-
-    // DIMANCHE (0) = REPOS COMPLET
-    if (dayOfWeek === 0) {
-      continue;
-    }
-
-    // LUNDI (1) = MATIN Running + SOIR Basic-Fit
-    if (dayOfWeek === 1) {
-      const runSession = runningSessions[sessionIndex % runningSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', runSession.type, dateStr, '06:30', 50, runSession.notes]
-      );
-      count++;
-
-      const muscuSession = muscuSessions[sessionIndex % muscuSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '18:30', 75, muscuSession.muscles, muscuSession.notes]
-      );
-      count++;
-    }
-
-    // MARDI (2) = MATIN Street Workout + SOIR Running
-    if (dayOfWeek === 2) {
-      const calisthenicsSession = calisthenicsSessions[sessionIndex % calisthenicsSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', calisthenicsSession.type, dateStr, '07:00', 60, calisthenicsSession.notes]
-      );
-      count++;
-
-      const runSession = runningSessions[(sessionIndex + 1) % runningSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', runSession.type, dateStr, '19:00', 45, runSession.notes]
-      );
-      count++;
-    }
-
-    // JEUDI (4) = MATIN Basic-Fit + SOIR Street Workout
-    if (dayOfWeek === 4) {
-      const muscuSession = muscuSessions[(sessionIndex + 1) % muscuSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '07:00', 60, muscuSession.muscles, muscuSession.notes]
-      );
-      count++;
-
-      const calisthenicsSession = calisthenicsSessions[(sessionIndex + 2) % calisthenicsSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', calisthenicsSession.type, dateStr, '18:00', 70, calisthenicsSession.notes]
-      );
-      count++;
-    }
-
-    // VENDREDI (5) = MATIN Running Fractionné + SOIR Basic-Fit
-    if (dayOfWeek === 5) {
-      const runSession = runningSessions[1]; // Fractionné
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', 'interval', dateStr, '06:30', 55, runSession.notes]
-      );
-      count++;
-
-      const muscuSession = muscuSessions[(sessionIndex + 2) % muscuSessions.length];
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, date, start_time, duration_minutes, muscles, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.basicFit, 'musculation', dateStr, '17:30', 70, muscuSession.muscles, muscuSession.notes]
-      );
-      count++;
-    }
-
-    // SAMEDI (6) = MATIN Running longue distance + Street Workout
-    if (dayOfWeek === 6) {
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.runAndFit, 'running', 'long', dateStr, '08:00', 90, 'Sortie longue 15km - Préparation semi-marathon']
-      );
-      count++;
-
-      await database.runAsync(
-        `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [clubIds.urbanStreetWorkout, 'calisthenics', 'skills', dateStr, '14:00', 60, 'Skills training - Muscle-up & Handstand work']
-      );
-      count++;
-    }
-
-    sessionIndex++;
-  }
-
-  logger.info(`TOTAL Décembre + Janvier : Généré ${count} entraînements`);
-  logger.info(`Planning : Lun/Mar/Jeu/Ven = 2 séances, Sam = 2 séances, Mer/Dim = REPOS`);
+  logger.info(`TOTAL Germain Del Jarret : ${count} entraînements générés (MMA Spirit!)`);
   return count;
 };
 
@@ -546,38 +252,30 @@ const generateHydrationData = async () => {
 // CLUBS DE SPORT - INSERTION SQLITE
 // ============================================
 interface ClubIds {
-  runAndFit: number;
+  gracieBarra: number;
   basicFit: number;
-  urbanStreetWorkout: number;
 }
 
 const createClubs = async (): Promise<ClubIds> => {
   const database = await openDatabase();
 
-  // Run & Fit Marseille (Running) - Club de course à pied avec logo running
-  const rfResult = await database.runAsync(
+  // Gracie Barra (JJB)
+  const gbResult = await database.runAsync(
     `INSERT INTO clubs (name, sport, logo_uri, color) VALUES (?, ?, ?, ?)`,
-    ['Run & Fit Marseille', 'running', 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=200&h=200&fit=crop&auto=format', '#3B82F6']
+    ['Gracie Barra Marseille', 'jjb', 'gracie-barra', '#EF4444']
   );
 
-  // Basic Fit (Musculation) - Avec logo Basic-Fit local
+  // Basic Fit (Musculation)
   const bfResult = await database.runAsync(
     `INSERT INTO clubs (name, sport, logo_uri, color) VALUES (?, ?, ?, ?)`,
-    ['Basic-Fit Marseille', 'musculation', 'basic-fit', '#FF6B00']
+    ['Basic-Fit Prado', 'musculation', 'basic-fit', '#FF6B00']
   );
 
-  // Urban Street Workout (Calisthenics) - Street Workout avec logo calisthenics
-  const uswResult = await database.runAsync(
-    `INSERT INTO clubs (name, sport, logo_uri, color) VALUES (?, ?, ?, ?)`,
-    ['Urban Street Workout', 'calisthenics', 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&h=200&fit=crop&auto=format', '#10B981']
-  );
-
-  logger.info(`3 clubs créés avec logos: Run & Fit Marseille (Running), Basic-Fit (Muscu), Urban Street Workout (Calisthenics)`);
+  logger.info(`2 clubs créés avec logos: Gracie Barra (JJB), Basic-Fit (Muscu)`);
 
   return {
-    runAndFit: rfResult.lastInsertRowId,
+    gracieBarra: gbResult.lastInsertRowId,
     basicFit: bfResult.lastInsertRowId,
-    urbanStreetWorkout: uswResult.lastInsertRowId,
   };
 };
 
@@ -587,47 +285,18 @@ const createClubs = async (): Promise<ClubIds> => {
 const generateWeeklyPlan = async (clubIds: ClubIds): Promise<void> => {
   const database = await openDatabase();
 
-  // Planning complet avec 3 clubs FITNESS - 10 séances par semaine
   const plan = [
-    // ======================================
-    // LUNDI (1) = MATIN Running + SOIR Basic-Fit
-    // ======================================
-    { day: 1, club_id: clubIds.runAndFit, sport: 'running', time: '06:30', duration: 50, is_rest: 0, session_type: 'Endurance' },
-    { day: 1, club_id: clubIds.basicFit, sport: 'musculation', time: '18:30', duration: 75, muscles: 'pectoraux,triceps,épaules', is_rest: 0, session_type: 'Push Day' },
-
-    // ======================================
-    // MARDI (2) = MATIN Street Workout + SOIR Running
-    // ======================================
-    { day: 2, club_id: clubIds.urbanStreetWorkout, sport: 'calisthenics', time: '07:00', duration: 60, is_rest: 0, session_type: 'Upper Body' },
-    { day: 2, club_id: clubIds.runAndFit, sport: 'running', time: '19:00', duration: 45, is_rest: 0, session_type: 'Tempo' },
-
-    // ======================================
-    // MERCREDI (3) = REPOS
-    // ======================================
-    { day: 3, club_id: null, sport: 'repos', time: null, duration: null, is_rest: 1, session_type: null },
-
-    // ======================================
-    // JEUDI (4) = MATIN Basic-Fit + SOIR Street Workout
-    // ======================================
-    { day: 4, club_id: clubIds.basicFit, sport: 'musculation', time: '07:00', duration: 60, muscles: 'dos,biceps', is_rest: 0, session_type: 'Pull Day' },
-    { day: 4, club_id: clubIds.urbanStreetWorkout, sport: 'calisthenics', time: '18:00', duration: 70, is_rest: 0, session_type: 'Skills' },
-
-    // ======================================
-    // VENDREDI (5) = MATIN Running Fractionné + SOIR Basic-Fit
-    // ======================================
-    { day: 5, club_id: clubIds.runAndFit, sport: 'running', time: '06:30', duration: 55, is_rest: 0, session_type: 'Interval' },
-    { day: 5, club_id: clubIds.basicFit, sport: 'musculation', time: '17:30', duration: 70, muscles: 'jambes,fessiers', is_rest: 0, session_type: 'Leg Day' },
-
-    // ======================================
-    // SAMEDI (6) = MATIN Running longue distance + Street Workout
-    // ======================================
-    { day: 6, club_id: clubIds.runAndFit, sport: 'running', time: '08:00', duration: 90, is_rest: 0, session_type: 'Long Run' },
-    { day: 6, club_id: clubIds.urbanStreetWorkout, sport: 'calisthenics', time: '14:00', duration: 60, is_rest: 0, session_type: 'Full Body' },
-
-    // ======================================
-    // DIMANCHE (0) = REPOS ou Running léger
-    // ======================================
-    { day: 0, club_id: null, sport: 'repos', time: null, duration: null, is_rest: 1, session_type: null },
+    { day: 1, club_id: clubIds.basicFit, sport: 'musculation', time: '06:30', duration: 75, muscles: 'pectoraux,triceps', is_rest: 0, session_type: 'Push' },
+    { day: 1, club_id: clubIds.gracieBarra, sport: 'jjb', time: '18:30', duration: 90, is_rest: 0, session_type: 'Technique' },
+    { day: 2, club_id: clubIds.basicFit, sport: 'musculation', time: '06:30', duration: 75, muscles: 'dos,biceps', is_rest: 0, session_type: 'Pull' },
+    { day: 2, club_id: clubIds.gracieBarra, sport: 'jjb', time: '18:30', duration: 90, is_rest: 0, session_type: 'Sparring' },
+    { day: 3, club_id: null, sport: 'running', time: '07:30', duration: 60, is_rest: 0, session_type: 'Cardio' },
+    { day: 4, club_id: clubIds.basicFit, sport: 'musculation', time: '06:30', duration: 75, muscles: 'jambes', is_rest: 0, session_type: 'Legs' },
+    { day: 4, club_id: clubIds.gracieBarra, sport: 'jjb', time: '18:30', duration: 90, is_rest: 0, session_type: 'Technique' },
+    { day: 5, club_id: clubIds.basicFit, sport: 'musculation', time: '06:30', duration: 75, muscles: 'épaules', is_rest: 0, session_type: 'Shoulders' },
+    { day: 5, club_id: clubIds.gracieBarra, sport: 'jjb', time: '18:30', duration: 90, is_rest: 0, session_type: 'Sparring' },
+    { day: 6, club_id: clubIds.gracieBarra, sport: 'jjb', time: '10:00', duration: 120, is_rest: 0, session_type: 'Open Mat' },
+    { day: 0, club_id: null, sport: 'running', time: '08:00', duration: 90, is_rest: 0, session_type: 'Long Run' },
   ];
 
   for (const item of plan) {
@@ -920,17 +589,16 @@ const generateTodayData = async (): Promise<void> => {
   // ============================================
   // OBJECTIF DE POIDS - Bien visible pour screenshots
   // ============================================
-  // Poids départ: 85kg → Objectif: 77kg → Actuel: 78.2kg
-  // Perdu: 6.8kg | Reste: 1.2kg
-  await AsyncStorage.setItem('@yoroi_start_weight', '85.0');
+  // Poids départ: 98.5kg → Objectif: 76kg → Actuel: 76.8kg
+  await AsyncStorage.setItem('@yoroi_start_weight', '98.5');
   await AsyncStorage.setItem('@yoroi_target_weight', '76.0');
   await AsyncStorage.setItem('@yoroi_current_weight', '76.8');
-  // Poids perdu calculé: 85 - 76.8 = 8.2kg - TRANSFORMATION!
-  await AsyncStorage.setItem('@yoroi_weight_lost', '8.2');
+  // Poids perdu calculé: 98.5 - 76.8 = 21.7kg - TRANSFORMATION!
+  await AsyncStorage.setItem('@yoroi_weight_lost', '21.7');
   // Reste à perdre: 76.8 - 76 = 0.8kg (presque au but!)
   await AsyncStorage.setItem('@yoroi_weight_remaining', '0.8');
-  // Progression: (8.2 / 9) * 100 = 91% - PRESQUE LÀ!
-  await AsyncStorage.setItem('@yoroi_weight_progress', '91');
+  // Progression: (21.7 / 22.5) * 100 = 96.4% - PRESQUE LÀ!
+  await AsyncStorage.setItem('@yoroi_weight_progress', '96.4');
 
   // ============================================
   // PAS QUOTIDIENS - 13567 pas - IMPRESSIONNANT!

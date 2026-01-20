@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -25,9 +26,27 @@ import {
   sportHasWeightCategories,
 } from '@/lib/weightCategories';
 
+// Couleurs forcées en mode CLAIR pour la sélection de catégorie (thème Classic)
+const WEIGHT_SELECTION_COLORS = {
+  background: '#F7F7F7',
+  backgroundCard: '#FFFFFF',
+  backgroundElevated: '#F0F0F0',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#555555',
+  textMuted: '#666666',
+  accent: '#1A1A1A',
+  accentText: '#FFFFFF',
+  border: '#E0E0E0',
+  textOnAccent: '#FFFFFF',
+};
+
 export default function WeightCategorySelectionScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { isDark: themeIsDark } = useTheme();
+  
+  // Utiliser les couleurs forcées claires
+  const colors = WEIGHT_SELECTION_COLORS;
+  
   const { showPopup, PopupComponent } = useCustomPopup();
   const params = useLocalSearchParams<{ sport?: string; gender?: 'male' | 'female'; currentWeight?: string }>();
 
@@ -102,6 +121,7 @@ export default function WeightCategorySelectionScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={[styles.iconContainer, { backgroundColor: colors.accent + '20' }]}>
@@ -189,7 +209,7 @@ export default function WeightCategorySelectionScreen() {
       {/* Actions */}
       <View style={[styles.actions, { paddingBottom: insets.bottom + 16, backgroundColor: colors.background }]}>
         {selectedCat && (
-          <View style={[styles.selectedInfo, { backgroundColor: colors.backgroundCard }]}>
+          <View style={[styles.selectedInfo, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
             <Text style={[styles.selectedLabel, { color: colors.textMuted }]}>
               Catégorie sélectionnée :
             </Text>
@@ -205,16 +225,18 @@ export default function WeightCategorySelectionScreen() {
             {
               backgroundColor: selectedCategory ? colors.accent : colors.backgroundCard,
               opacity: selectedCategory ? 1 : 0.5,
+              borderWidth: selectedCategory ? 0 : 1,
+              borderColor: colors.border,
             },
           ]}
           onPress={handleContinue}
           disabled={!selectedCategory}
           activeOpacity={0.8}
         >
-          <Text style={[styles.continueBtnText, { color: selectedCategory ? colors.textOnAccent : colors.textMuted }]}>
+          <Text style={[styles.continueBtnText, { color: selectedCategory ? '#FFFFFF' : colors.textMuted }]}>
             Continuer
           </Text>
-          <ChevronRight size={20} color={selectedCategory ? colors.textOnAccent : colors.textMuted} />
+          <ChevronRight size={20} color={selectedCategory ? '#FFFFFF' : colors.textMuted} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipBtn} onPress={handleSkip} activeOpacity={0.7}>

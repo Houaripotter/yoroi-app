@@ -3,7 +3,7 @@
 // Mes Records (Benchmarks) + Mes Techniques (Skills)
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -120,6 +120,7 @@ import VictoryShareModal, { VictorySessionData, createVictoryData, createVictory
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
+import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -363,12 +364,43 @@ export default function TrainingJournalScreen() {
       });
     } catch (error) {
       console.error('Erreur nettoyage:', error);
-      showPopup({
-        title: 'Erreur',
-        message: 'Impossible de nettoyer',
-        type: 'error',
-        buttons: [{ text: 'OK', style: 'default' }]
-      });
+    }
+  };
+
+  const handleInstallLibrary = async () => {
+    try {
+      setIsSubmitting(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      // Installer la bibliothèque massive
+      for (const ex of EXERCISE_LIBRARY) {
+        // Éviter les doublons
+        const existing = benchmarks.find(b => b.name.toLowerCase() === ex.name.toLowerCase());
+        if (!existing) {
+          await createBenchmark(ex.name, ex.category as any, ex.unit as any, undefined, undefined, ex.muscle);
+        }
+      }
+
+      await loadData();
+      
+      // 🔄 SYNC VERS LA MONTRE
+      const currentBenchmarks = await getBenchmarks();
+      const recordsToSync = currentBenchmarks.map(b => ({
+        exercise: b.name,
+        weight: getBenchmarkPR(b)?.value || 0,
+        reps: getBenchmarkPR(b)?.reps || 0,
+        date: getBenchmarkPR(b)?.date || new Date().toISOString()
+      }));
+      
+      if (isWatchAvailable) {
+        await syncRecords(recordsToSync);
+      }
+
+      showToast('Bibliothèque complète installée !');
+    } catch (error) {
+      console.error('Error installing library:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -428,14 +460,18 @@ export default function TrainingJournalScreen() {
     return true;
   };
 
-  // Group benchmarks by category for the display
+  // Group benchmarks by category and sub-group muscu by muscle
   const groupedBenchmarks = useMemo(() => {
-    const groups: Record<string, Benchmark[]> = {};
+    const groups: Record<string, Record<string, Benchmark[]>> = {};
     
     filteredBenchmarks.forEach(b => {
       const catLabel = BENCHMARK_CATEGORIES[b.category]?.label || 'AUTRE';
-      if (!groups[catLabel]) groups[catLabel] = [];
-      groups[catLabel].push(b);
+      const muscle = b.muscleGroup || 'GÉNÉRAL';
+      
+      if (!groups[catLabel]) groups[catLabel] = {};
+      if (!groups[catLabel][muscle]) groups[catLabel][muscle] = [];
+      
+      groups[catLabel][muscle].push(b);
     });
     
     return groups;
@@ -470,7 +506,7 @@ export default function TrainingJournalScreen() {
       // 1. Find if benchmark exists or create it
       let targetBenchmark = benchmarks.find(b => b.name === exerciseName);
       if (!targetBenchmark) {
-        targetBenchmark = await createBenchmark(exerciseName, category, unit);
+        targetBenchmark = await createBenchmark(exerciseName, category, unit, undefined, undefined, selectedMuscleGroup || undefined);
       }
       
       if (targetBenchmark) {
@@ -1026,7 +1062,6 @@ export default function TrainingJournalScreen() {
               <TouchableOpacity
                 style={[styles.compactShareBtn, { backgroundColor: colors.backgroundCard, borderColor: benchmark.color }]}
                 onPress={(e) => {
-                  e.stopPropagation();
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   // Create victory data from the last entry
                   const victoryData = createVictoryFromEntry(
@@ -1047,7 +1082,6 @@ export default function TrainingJournalScreen() {
             <TouchableOpacity
               style={[styles.compactAddBtn, { backgroundColor: benchmark.color }]}
               onPress={(e) => {
-                e.stopPropagation();
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 setSelectedBenchmark(benchmark);
                 setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
@@ -1138,7 +1172,6 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity
           style={[styles.quickAddBtn, { backgroundColor: benchmark.color }]}
           onPress={(e) => {
-            e.stopPropagation();
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setSelectedBenchmark(benchmark);
             setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
@@ -2897,11 +2930,24 @@ export default function TrainingJournalScreen() {
               </TouchableOpacity>
             ) : (
               Object.keys(groupedBenchmarks).map((categoryName) => (
-                <View key={categoryName} style={{ marginBottom: 20 }}>
-                  <Text style={[styles.categoryHeader, { color: colors.textMuted }]}>{categoryName}</Text>
-                  <View style={styles.compactCardsList}>
-                    {groupedBenchmarks[categoryName].map(renderCompactBenchmarkCard)}
+                <View key={categoryName} style={{ marginBottom: 24 }}>
+                  {/* CATEGORY HEADER (e.g. MUSCULATION, RUNNING) */}
+                  <View style={[styles.mainCategoryHeader, { backgroundColor: colors.backgroundCard }]}>
+                    <Text style={[styles.mainCategoryText, { color: colors.accent }]}>{categoryName}</Text>
                   </View>
+                  
+                  {Object.keys(groupedBenchmarks[categoryName]).map((muscleGroup) => (
+                    <View key={muscleGroup} style={{ marginTop: 12 }}>
+                      {/* SUB HEADER (e.g. PECTORAUX, DOS) - only if it's Musculation or has a muscle group */}
+                      {muscleGroup !== 'GÉNÉRAL' && (
+                        <Text style={[styles.categoryHeader, { color: colors.textMuted, marginLeft: 4 }]}>{muscleGroup}</Text>
+                      )}
+                      
+                      <View style={styles.compactCardsList}>
+                        {groupedBenchmarks[categoryName][muscleGroup].map(renderCompactBenchmarkCard)}
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))
             )}
@@ -4539,9 +4585,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1,
-    marginBottom: 10,
+    marginBottom: 8,
     marginTop: 5,
     textTransform: 'uppercase',
+  },
+  mainCategoryHeader: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  mainCategoryText: {
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1.5,
   },
   // New Picker Styles
   muscleItem: {
@@ -4577,5 +4635,20 @@ const styles = StyleSheet.create({
   exerciseText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  installLibBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginTop: 12,
+    borderStyle: 'dashed',
+  },
+  installLibText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

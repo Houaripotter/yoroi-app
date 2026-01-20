@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -26,22 +26,22 @@ import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 
-// Couleurs forcées en mode sombre pour le setup (cohérent avec mode-selection)
+// Couleurs forcées en mode CLAIR pour le setup (thème Classic)
 const SETUP_COLORS = {
-  background: '#0A0A0A',
-  backgroundCard: '#151515',
-  backgroundElevated: '#1F1F1F',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8B8B8',
-  textMuted: '#808080',
-  accent: '#FFFFFF',
+  background: '#F7F7F7',
+  backgroundCard: '#FFFFFF',
+  backgroundElevated: '#F0F0F0',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#555555',
+  textMuted: '#666666',
+  accent: '#1A1A1A',
   accentText: '#FFFFFF',
-  textOnGold: '#000000',  // Noir sur fond blanc
-  border: '#2A2A2A',
+  textOnGold: '#FFFFFF',  // Blanc sur fond noir
+  border: '#E0E0E0',
 };
 
 export default function SetupScreen() {
-  // Utiliser les couleurs forcées sombres pour cohérence
+  // Utiliser les couleurs forcées claires
   const colors = SETUP_COLORS;
 
   // 🔒 PROTECTION ANTI-SPAM : Hook pour empêcher les double-clics
@@ -102,10 +102,11 @@ export default function SetupScreen() {
   if (showWelcome) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle="dark-content" />
         <View style={styles.welcomeContent}>
           {/* Logo et animation */}
           <View style={[styles.welcomeIconContainer, { backgroundColor: colors.accent + '20' }]}>
-            <Shield size={80} color={colors.accentText} />
+            <Shield size={80} color={colors.accent} />
           </View>
 
           {/* Titre principal */}
@@ -124,13 +125,13 @@ export default function SetupScreen() {
 
           {/* Badges de bienvenue */}
           <View style={styles.welcomeBadges}>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard }]}>
-              <Swords size={20} color={colors.accentText} />
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
+              <Swords size={20} color={colors.accent} />
               <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
                 Esprit guerrier
               </Text>
             </View>
-            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.welcomeBadge, { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }]}>
               <Star size={20} color="#FFD700" />
               <Text style={[styles.welcomeBadgeText, { color: colors.textPrimary }]}>
                 Premier badge
@@ -161,6 +162,7 @@ export default function SetupScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <StatusBar barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -168,7 +170,7 @@ export default function SetupScreen() {
         {/* Seule étape : Objectif (prénom et genre déjà collectés dans onboarding) */}
         <View style={styles.stepContainer}>
           <View style={[styles.iconCircle, { backgroundColor: colors.accent + '20' }]}>
-            <Target size={48} color={colors.accentText} />
+            <Target size={48} color={colors.accent} />
           </View>
 
           {existingProfile.username && (
@@ -185,9 +187,10 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundElevated },
+                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
                 goal === 'lose' && {
                   backgroundColor: '#4CAF50',
+                  borderColor: '#4CAF50',
                 },
               ]}
               onPress={() => setGoal('lose')}
@@ -213,9 +216,10 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundElevated },
+                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
                 goal === 'maintain' && {
                   backgroundColor: colors.accent,
+                  borderColor: colors.accent,
                 },
               ]}
               onPress={() => setGoal('maintain')}
@@ -241,9 +245,10 @@ export default function SetupScreen() {
             <TouchableOpacity
               style={[
                 styles.goalOption,
-                { backgroundColor: colors.backgroundElevated },
+                { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border },
                 goal === 'gain' && {
                   backgroundColor: '#FF6B6B',
+                  borderColor: '#FF6B6B',
                 },
               ]}
               onPress={() => setGoal('gain')}
@@ -277,7 +282,9 @@ export default function SetupScreen() {
             {
               backgroundColor: canContinue()
                 ? colors.accent
-                : colors.backgroundElevated,
+                : colors.backgroundCard,
+              borderWeight: canContinue() ? 0 : 1,
+              borderColor: colors.border,
             },
           ]}
           onPress={handleGoalSelected}

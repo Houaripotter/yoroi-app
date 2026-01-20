@@ -16,7 +16,30 @@ struct DashboardView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     // Espace de sécurité en haut
-                    Spacer(minLength: 15)
+                    Spacer(minLength: 5)
+                    
+                    // STATUS SYNC (Nouveau)
+                    Button(action: {
+                        WKInterfaceDevice.current().play(.click)
+                        healthManager.fetchAllData()
+                    }) {
+                        HStack {
+                            Circle()
+                                .fill(healthManager.currentWeight > 0 ? Color.green : Color.orange)
+                                .frame(width: 6, height: 6)
+                            Text(healthManager.currentWeight > 0 ? "Synchronisé" : "Sync iPhone...")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(.gray)
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 8))
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
                     
                     // ANNEAUX DE PROGRESSION (Adaptatif)
                     HStack(spacing: geometry.size.width * 0.05) {

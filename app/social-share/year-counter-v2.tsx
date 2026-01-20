@@ -1,9 +1,9 @@
-// ============================================
-// YOROI - YEAR COUNTER V2 (Design VictoryShareModal)
-// ============================================
+// ============================================ 
+// YOROI - YEAR COUNTER V2 (Design VictoryShareModal) 
+// ============================================ 
 // Design identique au VictoryShareModal avec Photo/Sombre/Clair
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -32,15 +33,14 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { YearCounterCardV2 } from '@/components/social-cards/YearCounterCardV2';
 import { useYearStats } from '@/lib/social-cards/useYearStats';
-import { getUserSettings } from '@/lib/storage';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ============================================
-// COMPOSANT PRINCIPAL
-// ============================================
+// ============================================ 
+// COMPOSANT PRINCIPAL 
+// ============================================ 
 
 export default function YearCounterV2Screen() {
   const { colors } = useTheme();
@@ -48,21 +48,17 @@ export default function YearCounterV2Screen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [format] = useState<'stories' | 'square'>('stories');
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [backgroundType, setBackgroundType] = useState<'dark' | 'light' | 'photo'>('dark');
+  const [selectedTemplate, setSelectedTemplate] = useState<'dark' | 'light' | 'photo'>('dark');
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [username, setUsername] = useState<string | undefined>(undefined);
 
   const currentYear = new Date().getFullYear();
   const { stats, isLoading: statsLoading, error } = useYearStats(currentYear);
 
-  // ... (reste du code) ...
-
-  // ============================================
-  // PHOTO PICKER
-  // ============================================
+  // ============================================ 
+  // PHOTO PICKER 
+  // ============================================ 
 
   const takePhoto = async () => {
     try {
@@ -82,7 +78,7 @@ export default function YearCounterV2Screen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
+        // Détecter si l\'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -110,7 +106,7 @@ export default function YearCounterV2Screen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
-        // Détecter si l'image est en paysage
+        // Détecter si l\'image est en paysage
         const isLandscape = (asset.width || 0) > (asset.height || 0);
         setIsLandscapeImage(isLandscape);
       }
@@ -120,9 +116,9 @@ export default function YearCounterV2Screen() {
     }
   };
 
-  // ============================================
-  // SHARE & SAVE
-  // ============================================
+  // ============================================ 
+  // SHARE & SAVE 
+  // ============================================ 
 
   const shareCard = async () => {
     if (!cardRef.current) return;
@@ -187,9 +183,9 @@ export default function YearCounterV2Screen() {
     return 'black';
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
+  // ============================================ 
+  // RENDER 
+  // ============================================ 
 
   if (statsLoading) {
     return (
@@ -302,7 +298,7 @@ export default function YearCounterV2Screen() {
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setSelectedTemplate(key);
-                  // Si on sélectionne Photo et pas d'image, scroll vers le bas pour montrer les options
+                  // Si on sélectionne Photo et pas d\'image, scroll vers le bas pour montrer les options
                   if (key === 'photo' && !backgroundImage) {
                     setTimeout(() => {
                       scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -399,9 +395,9 @@ export default function YearCounterV2Screen() {
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
+// ============================================ 
+// STYLES 
+// ============================================ 
 
 const styles = StyleSheet.create({
   container: {
@@ -490,14 +486,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-
-  // Card
   cardContainer: {
     alignItems: 'center',
     marginBottom: 16,
   },
-
-  // Template Selector
   templateRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -521,8 +513,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-
-  // Photo Picker (when no photo selected)
   photoPickerContainer: {
     paddingHorizontal: 24,
     marginBottom: 16,
@@ -547,16 +537,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 8,
   },
-  photoPickerBtnSecondary: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-  },
   photoPickerBtnText: {
     fontSize: 14,
     fontWeight: '700',
   },
-
-  // Photo Actions (when photo exists)
   photoActions: {
     flexDirection: 'row',
     gap: 12,
@@ -578,8 +562,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-
-  // Share Actions
   shareActions: {
     flexDirection: 'row',
     gap: 12,

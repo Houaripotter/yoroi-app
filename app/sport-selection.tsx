@@ -136,8 +136,26 @@ const SPORT_CATEGORIES: SportCategory[] = [
   },
 ];
 
+// Couleurs forcées en mode CLAIR pour la sélection de sport (thème Classic)
+const SPORT_SELECTION_COLORS = {
+  background: '#F7F7F7',
+  backgroundCard: '#FFFFFF',
+  backgroundElevated: '#F0F0F0',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#555555',
+  textMuted: '#666666',
+  accent: '#1A1A1A',
+  accentText: '#FFFFFF',
+  border: '#E0E0E0',
+};
+
 export default function SportSelectionScreen() {
-  const { colors, isDark } = useTheme();
+  const { isDark: themeIsDark } = useTheme();
+  
+  // Utiliser les couleurs forcées claires
+  const colors = SPORT_SELECTION_COLORS;
+  const isDark = false; // Toujours en mode clair pour cette page
+  
   const [selectedSport, setSelectedSport] = useState<Sport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<number[]>([0]); // Ouvre la première catégorie par défaut
@@ -242,12 +260,12 @@ export default function SportSelectionScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <View style={styles.topBar}>
         <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
+          style={[styles.backButton, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}
           onPress={handleBack}
         >
           <ChevronLeft size={24} color={colors.textPrimary} />
@@ -278,7 +296,7 @@ export default function SportSelectionScreen() {
               <TouchableOpacity
                 style={[
                   styles.categoryHeader,
-                  { backgroundColor: colors.backgroundCard }
+                  { backgroundColor: colors.backgroundCard, borderWeight: 1, borderColor: colors.border }
                 ]}
                 onPress={() => toggleCategory(categoryIndex)}
                 activeOpacity={0.7}
@@ -320,14 +338,14 @@ export default function SportSelectionScreen() {
                         <View style={styles.sportIconContainer}>
                           {renderSportIcon(
                             sport.iconType,
-                            isSelected ? colors.background : colors.textPrimary,
+                            isSelected ? '#FFFFFF' : colors.textPrimary,
                             28
                           )}
                         </View>
                         <Text
                           style={[
                             styles.sportLabel,
-                            { color: isSelected ? colors.background : colors.textPrimary },
+                            { color: isSelected ? '#FFFFFF' : colors.textPrimary },
                           ]}
                         >
                           {sport.label}
@@ -337,7 +355,7 @@ export default function SportSelectionScreen() {
                             styles.sportDescription,
                             {
                               color: isSelected
-                                ? colors.background + '99'
+                                ? 'rgba(255, 255, 255, 0.8)'
                                 : colors.textMuted,
                             },
                           ]}
@@ -360,7 +378,7 @@ export default function SportSelectionScreen() {
         })}
 
         {/* Info */}
-        <View style={[styles.infoBox, { backgroundColor: colors.backgroundCard }]}>
+        <View style={[styles.infoBox, { backgroundColor: colors.backgroundCard, borderWidth: 1, borderColor: colors.border }]}>
           <View style={styles.infoContent}>
             <Lightbulb size={16} color={colors.textMuted} strokeWidth={2} />
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
@@ -385,10 +403,10 @@ export default function SportSelectionScreen() {
             disabled={isLoading}
             activeOpacity={0.8}
           >
-            <Text style={[styles.continueButtonText, { color: colors.textOnGold }]}>
+            <Text style={[styles.continueButtonText, { color: '#FFFFFF' }]}>
               {isLoading ? 'Chargement...' : 'Continuer'}
             </Text>
-            <ChevronRight size={20} color={colors.textOnGold} />
+            <ChevronRight size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       )}

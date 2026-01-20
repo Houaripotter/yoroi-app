@@ -309,7 +309,9 @@ export default function HydrationScreen() {
             <Text style={[styles.bigValue, { color: percentage >= 100 ? '#10B981' : colors.textPrimary }]}>
               {currentAmount.toFixed(2)}
             </Text>
-            <Text style={[styles.bigUnit, { color: colors.textMuted }]}>/ {goal}L</Text>
+            <TouchableOpacity onPress={() => setEditingGoal(true)} activeOpacity={0.7}>
+              <Text style={[styles.bigUnit, { color: colors.textMuted }]}>/ {goal}L</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Indicateur succès */}

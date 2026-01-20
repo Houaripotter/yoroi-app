@@ -8,6 +8,7 @@ import { getTrainings, getWeights } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
 import type { Training, Weight } from '@/lib/database';
 import logger from '@/lib/security/logger';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ============================================
 // TYPES
@@ -119,9 +120,55 @@ export function useWeekStats(targetDate?: Date) {
     try {
       setIsLoading(true);
 
+      const isScreenshotMode = await AsyncStorage.getItem('@yoroi_screenshot_mode') === 'true';
+
       const now = targetDate || new Date();
       const weekStart = getMonday(now);
       const weekEnd = getSunday(now);
+
+      if (isScreenshotMode) {
+        // GÉNÉRER DES DONNÉES HEBDO PARFAITES POUR SCREENSHOTS
+        const calendar = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(weekStart);
+          date.setDate(weekStart.getDate() + i);
+          const dayOfWeek = date.getDay();
+          // Actif lun, mar, jeu, ven, sam
+          const isActive = [1, 2, 4, 5, 6].includes(dayOfWeek);
+          calendar.push({
+            date,
+            dayName: DAY_NAMES[dayOfWeek],
+            dayNumber: date.getDate(),
+            isActive,
+            isToday: i === 0,
+            sessions: isActive ? 1 : 0,
+          });
+        }
+
+        setStats({
+          year: weekStart.getFullYear(),
+          weekNumber: getWeekNumber(weekStart),
+          weekStart,
+          weekEnd,
+          weekLabel: `Semaine ${getWeekNumber(weekStart)} • 12-18 Janvier`,
+          activeDays: 5,
+          totalSessions: 6,
+          totalDays: 7,
+          percentage: 71.4,
+          calendar,
+          clubs: [
+            { clubName: 'Basic-Fit', count: 3 },
+            { clubName: 'MMA Factory', count: 2 },
+            { clubName: 'Yoroi Dojo', count: 1 },
+          ],
+          evolution: {
+            weight: { start: 78.5, end: 76.8, change: -1.7 }
+          },
+          bestDay: { dayName: 'Lundi', date: weekStart, sessions: 2 }
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Formater les dates pour la requête
       const startStr = formatDate(weekStart);

@@ -52,6 +52,11 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
   const initializeWatchConnectivity = async () => {
     try {
+      console.log('📡 Tentative d\'activation WatchConnectivity...');
+      
+      // Activer la session explicitement
+      await WatchConnectivity.activateSession();
+      
       // Vérifier disponibilité
       const available = await WatchConnectivity.isWatchAvailable();
       const reachable = await WatchConnectivity.isWatchReachable();
@@ -142,12 +147,36 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       if (message.hydrationUpdate) {
         const amount = typeof message.hydrationUpdate === 'number' ? message.hydrationUpdate : message.hydrationUpdate.waterIntake;
         console.log('💧 Hydratation mise à jour depuis la Watch:', amount);
-        
-        // Utiliser le service dédié pour l'hydratation (gère les timestamp et la sync)
-        if (amount > 0) {
-          // Si c'est un ajout (montant relatif)
-          // Note: On suppose ici que la montre envoie le montant à ajouter
-          // Si elle envoie le total, il faudrait adapter
+        // ... handled via appleWatchService or direct add
+      }
+      
+      // Nouveau record reçu de la Watch
+      if (message.newRecordFromWatch) {
+        try {
+          const record = typeof message.newRecordFromWatch === 'string' 
+            ? JSON.parse(message.newRecordFromWatch) 
+            : message.newRecordFromWatch;
+            
+          console.log('🏆 Nouveau record reçu de la Watch:', record.exercise);
+          
+          // Sauvegarder dans la base iPhone
+          // On cherche ou crée le benchmark d'abord
+          const benchmarks = await getBenchmarks();
+          let target = benchmarks.find(b => b.name.toLowerCase() === record.exercise.toLowerCase());
+          
+          if (target) {
+            await addBenchmarkEntry(
+              target.id,
+              record.weight,
+              5, // RPE par défaut
+              'Ajouté depuis Apple Watch',
+              new Date(record.date),
+              record.reps
+            );
+            console.log('✅ Record Watch sauvegardé sur iPhone');
+          }
+        } catch (e) {
+          console.error('❌ Erreur parsing record Watch:', e);
         }
       }
       

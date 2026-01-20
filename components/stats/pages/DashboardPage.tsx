@@ -19,7 +19,8 @@ import {
   Target,
   Bone,
   Calendar,
-  Waves
+  Waves,
+  PlusCircle
 } from 'lucide-react-native';
 import { getWeights, getTrainings, getMeasurements } from '@/lib/database';
 import { getSleepStats } from '@/lib/sleepService';
@@ -80,6 +81,7 @@ export const DashboardPage: React.FC = () => {
 
       const metricsList: any[] = [];
 
+      // Helper pour préparer les données de graphique
       const prepareLineData = (data: any[], valueKey: string, color: string) => {
         if (!data || data.length === 0) return [];
         const filtered = data.filter(item => item[valueKey] != null);
@@ -95,59 +97,44 @@ export const DashboardPage: React.FC = () => {
         });
       };
 
-      // --- CORPS ---
-      if (weights && weights.length > 0) {
-        const latest = weights[0];
-        metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: latest.weight.toFixed(1), data: prepareLineData(weights, 'weight', '#3B82F6') });
-        if (latest.muscle_percent) metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: latest.muscle_percent.toFixed(1), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
-        if (latest.fat_percent) metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: latest.fat_percent.toFixed(1), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
-        if (latest.water_percent) metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: latest.water_percent.toFixed(1), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
+      const getLatestValue = (data: any[], key: string, fallback: string = '--') => {
+        if (!data || data.length === 0) return fallback;
+        const val = data[0][key];
+        return val ? val.toFixed(1) : fallback;
+      };
 
-        // --- COMPOSITION ---
-        if (latest.visceral_fat) metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: latest.visceral_fat, data: prepareLineData(weights, 'visceral_fat', '#F97316') });
-        if (latest.bone_mass) metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: latest.bone_mass.toFixed(1), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
-        if (latest.bmr) metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: latest.bmr, data: prepareLineData(weights, 'bmr', '#F59E0B') });
-        if (latest.metabolic_age) metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: latest.metabolic_age, data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
-      }
+      // --- 1. CORPS (TOUJOURS AFFICHÉS) ---
+      metricsList.push({ id: 'weight', metricKey: 'weight', theme: 'Corps', title: 'Poids', icon: <Scale size={16} color="#3B82F6" />, color: '#3B82F6', unit: 'kg', value: getLatestValue(weights, 'weight'), data: prepareLineData(weights, 'weight', '#3B82F6') });
+      metricsList.push({ id: 'muscle_percent', metricKey: 'muscle_percent', theme: 'Corps', title: 'Muscle', icon: <TrendingUp size={16} color="#10B981" />, color: '#10B981', unit: '%', value: getLatestValue(weights, 'muscle_percent'), data: prepareLineData(weights, 'muscle_percent', '#10B981') });
+      metricsList.push({ id: 'fat_percent', metricKey: 'fat_percent', theme: 'Corps', title: 'Gras', icon: <Activity size={16} color="#EF4444" />, color: '#EF4444', unit: '%', value: getLatestValue(weights, 'fat_percent'), data: prepareLineData(weights, 'fat_percent', '#EF4444') });
+      metricsList.push({ id: 'water_percent', metricKey: 'water_percent', theme: 'Corps', title: 'Eau', icon: <Waves size={16} color="#06B6D4" />, color: '#06B6D4', unit: '%', value: getLatestValue(weights, 'water_percent'), data: prepareLineData(weights, 'water_percent', '#06B6D4') });
 
-      // --- MENSURATIONS ---
-      if (measurements && measurements.length > 0) {
-        const latestM = measurements[0];
-        const mKeys = [
-          { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
-          { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
-          { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
-        ];
-        mKeys.forEach(m => {
-          if (latestM[m.key as keyof typeof latestM]) {
-            metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: latestM[m.key as keyof typeof latestM], data: prepareLineData(measurements, m.key, '#F59E0B') });
-          }
-        });
-      }
+      // --- 2. COMPOSITION (TOUJOURS AFFICHÉS) ---
+      metricsList.push({ id: 'visceral_fat', metricKey: 'visceral_fat', theme: 'Composition', title: 'Gras Visc.', icon: <Target size={16} color="#F97316" />, color: '#F97316', unit: '', value: weights?.[0]?.visceral_fat || '--', data: prepareLineData(weights, 'visceral_fat', '#F97316') });
+      metricsList.push({ id: 'bone_mass', metricKey: 'bone_mass', theme: 'Composition', title: 'Os', icon: <Bone size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'kg', value: getLatestValue(weights, 'bone_mass'), data: prepareLineData(weights, 'bone_mass', '#8B5CF6') });
+      metricsList.push({ id: 'bmr', metricKey: 'bmr', theme: 'Composition', title: 'BMR', icon: <Flame size={16} color="#F59E0B" />, color: '#F59E0B', unit: 'kcal', value: weights?.[0]?.bmr || '--', data: prepareLineData(weights, 'bmr', '#F59E0B') });
+      metricsList.push({ id: 'metabolic_age', metricKey: 'metabolic_age', theme: 'Composition', title: 'Âge Métab.', icon: <Calendar size={16} color="#EC4899" />, color: '#EC4899', unit: 'ans', value: weights?.[0]?.metabolic_age || '--', data: prepareLineData(weights, 'metabolic_age', '#EC4899') });
 
-      // --- DISCIPLINE ---
-      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings.length, data: [] });
+      // --- 3. MENSURATIONS (PRINCIPALES AFFICHÉES) ---
+      const mKeys = [
+        { key: 'waist', title: 'Taille', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'chest', title: 'Pecs', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'left_arm', title: 'Bras', icon: <Ruler size={16} color="#F59E0B" /> },
+        { key: 'left_thigh', title: 'Cuisse', icon: <Ruler size={16} color="#F59E0B" /> },
+      ];
+      mKeys.forEach(m => {
+        metricsList.push({ id: m.key, metricKey: m.key, theme: 'Mensures', title: m.title, icon: m.icon, color: '#F59E0B', unit: 'cm', value: getLatestValue(measurements, m.key), data: prepareLineData(measurements, m.key, '#F59E0B') });
+      });
 
-      // --- SANTÉ ---
-      if (sleep.weeklyData && sleep.weeklyData.length > 0) {
-        metricsList.push({
-          id: 'sleep',
-          metricKey: 'sleep',
-          theme: 'Santé',
-          title: 'Sommeil',
-          icon: <Moon size={16} color="#8B5CF6" />,
-          color: '#8B5CF6',
-          unit: 'h',
-          value: ((sleep.weeklyData[0].duration || 0) / 60).toFixed(1),
-          data: sleep.weeklyData.slice().reverse().map((s: any) => ({
-            value: (s.duration || 0) / 60,
-            dataPointText: ((s.duration || 0) / 60).toFixed(1),
-            label: format(parseISO(s.date), 'dd/MM'),
-            dataPointColor: '#8B5CF6',
-            labelTextStyle: { color: colors.textMuted, fontSize: 8, fontWeight: '900' },
-          }))
-        });
-      }
+      // --- 4. DISCIPLINE ---
+      metricsList.push({ id: 'trainings', metricKey: 'trainings', theme: 'Discipline', title: 'Entraînements', icon: <Trophy size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: '/30j', value: trainings?.length || 0, data: [] });
+      metricsList.push({ id: 'load', metricKey: 'load', theme: 'Discipline', title: 'Charge globale', icon: <Flame size={16} color="#F97316" />, color: '#F97316', unit: 'pts', value: loadStats?.totalLoad || 0, data: [] });
+
+      // --- 5. SANTÉ ---
+      metricsList.push({ id: 'vitality', metricKey: 'vitality', theme: 'Santé', title: 'Vitalité', icon: <Zap size={16} color="#F59E0B" />, color: '#F59E0B', unit: '/100', value: readiness?.score || '--', data: [] });
+      
+      const sleepDuration = sleep?.weeklyData?.[0]?.duration ? (sleep.weeklyData[0].duration / 60).toFixed(1) : '--';
+      metricsList.push({ id: 'sleep', metricKey: 'sleep', theme: 'Santé', title: 'Sommeil', icon: <Moon size={16} color="#8B5CF6" />, color: '#8B5CF6', unit: 'h', value: sleepDuration, data: prepareLineData(sleep?.weeklyData || [], 'duration', '#8B5CF6').map(d => ({...d, value: d.value/60, dataPointText: (d.value/60).toFixed(1)})) });
 
       setAllMetrics(metricsList);
     } catch (e) {
@@ -158,42 +145,49 @@ export const DashboardPage: React.FC = () => {
   };
 
   const renderMiniCard = (metric: any) => {
-    const values = metric.data.map((d: any) => d.value);
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
+    const hasData = metric.data && metric.data.length > 0;
+    const values = hasData ? metric.data.map((d: any) => d.value) : [];
+    const minValue = hasData ? Math.min(...values) : 0;
+    const maxValue = hasData ? Math.max(...values) : 0;
     const range = maxValue - minValue;
-    // Zoom agressif : on commence juste en dessous du minimum
-    const yAxisOffset = values.length > 0 ? Math.floor(minValue - (range > 0 ? range * 0.5 : 1)) : 0;
+    const yAxisOffset = hasData ? Math.floor(minValue - (range > 0 ? range * 0.5 : 1)) : 0;
 
     return (
-      <TouchableOpacity
+      <View
         key={metric.id}
         style={[styles.miniCard, { backgroundColor: colors.backgroundCard }]}
-        onPress={() => setSelectedMetric(metric)}
-        activeOpacity={0.7}
       >
-        <View style={styles.cardHeader}>
+        <TouchableOpacity 
+          style={styles.cardHeader} 
+          onPress={() => setSelectedMetric(metric)}
+          activeOpacity={0.7}
+        >
           <View style={[styles.iconBox, { backgroundColor: metric.color + '15' }]}>
             {metric.icon}
           </View>
           <Text style={[styles.themeLabel, { color: colors.textMuted }]}>{metric.theme}</Text>
-        </View>
+          <View style={{ flex: 1 }} />
+          <Maximize2 size={12} color={colors.textMuted} />
+        </TouchableOpacity>
 
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
-        
-        <View style={styles.valueRow}>
-          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{metric.value}</Text>
-          <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
-        </View>
+        <TouchableOpacity onPress={() => setSelectedMetric(metric)} activeOpacity={0.7}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>{metric.title}</Text>
+          <View style={styles.valueRow}>
+            <Text style={[styles.cardValue, { color: hasData ? colors.textPrimary : colors.textMuted }]}>
+              {metric.value}
+            </Text>
+            <Text style={[styles.cardUnit, { color: colors.textMuted }]}>{metric.unit}</Text>
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.miniChartWrapper}>
-          {metric.data && metric.data.length > 0 ? (
+          {hasData ? (
             <LineChart
               data={metric.data}
               height={85}
               width={COLUMN_WIDTH} 
               initialSpacing={15}
-              spacing={80} // Espacement large pour garantir le scroll
+              spacing={85} 
               hideRules
               hideAxesAndRules
               hideYAxisText
@@ -214,23 +208,25 @@ export const DashboardPage: React.FC = () => {
               dataPointsColor={metric.color}
               showValuesAsDataPointsText
               textFontSize={10}
+              fontWeight="900"
               textColor={isDark ? '#FFFFFF' : '#000000'}
               textShiftY={-15}
               scrollEnabled={true}
               xAxisLabelTextStyle={{ color: colors.textMuted, fontSize: 8, fontWeight: '900' }}
+              onPress={() => setSelectedMetric(metric)}
             />
           ) : (
-            <View style={styles.noData}>
-              <Activity size={16} color={colors.textMuted} />
-              <Text style={{ fontSize: 10, color: colors.textMuted }}>Pas de données</Text>
-            </View>
+            <TouchableOpacity 
+              style={styles.noDataContainer} 
+              onPress={() => setSelectedMetric(metric)}
+              activeOpacity={0.6}
+            >
+              <PlusCircle size={24} color={metric.color + '60'} strokeWidth={1.5} />
+              <Text style={[styles.noDataText, { color: colors.textMuted }]}>Saisir</Text>
+            </TouchableOpacity>
           )}
         </View>
-        
-        <View style={styles.expandHint}>
-          <Maximize2 size={12} color={colors.textMuted} />
-        </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -395,18 +391,20 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginLeft: -25,
     marginBottom: -10,
-  },
-  noData: {
-    height: 80,
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    opacity: 0.5,
   },
-  expandHint: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    opacity: 0.3,
-  }
+  noDataContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingBottom: 10,
+    marginLeft: 25, // Recentrer par rapport au décalage de la zone graphique
+  },
+  noDataText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
 });

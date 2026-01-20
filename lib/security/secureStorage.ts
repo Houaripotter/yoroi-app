@@ -3,6 +3,14 @@ import { Platform } from 'react-native';
 import logger from './logger';
 
 /**
+ * Nettoie la clé pour être compatible avec SecureStore
+ * (Uniquement alphanumérique, ".", "-", "_")
+ */
+const sanitizeKey = (key: string): string => {
+  return key.replace(/[^a-zA-Z0-9._-]/g, '_');
+};
+
+/**
  * Service de stockage chiffré (AES-256 sur iOS/Android)
  * Pour les données d'identité et jetons sensibles.
  */
@@ -12,15 +20,15 @@ export const secureStorage = {
    */
   setItem: async (key: string, value: any): Promise<boolean> => {
     try {
+      const safeKey = sanitizeKey(key);
       const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
       
       if (Platform.OS === 'web') {
-        // Fallback pour le web (pas de SecureStore)
-        localStorage.setItem(key, stringValue);
+        localStorage.setItem(safeKey, stringValue);
         return true;
       }
 
-      await SecureStore.setItemAsync(key, stringValue, {
+      await SecureStore.setItemAsync(safeKey, stringValue, {
         keychainAccessible: SecureStore.WHEN_UNLOCKED,
       });
       return true;
@@ -35,11 +43,12 @@ export const secureStorage = {
    */
   getItem: async (key: string): Promise<any | null> => {
     try {
+      const safeKey = sanitizeKey(key);
       if (Platform.OS === 'web') {
-        return localStorage.getItem(key);
+        return localStorage.getItem(safeKey);
       }
 
-      const value = await SecureStore.getItemAsync(key);
+      const value = await SecureStore.getItemAsync(safeKey);
       if (!value) return null;
 
       try {
@@ -58,11 +67,12 @@ export const secureStorage = {
    */
   removeItem: async (key: string): Promise<boolean> => {
     try {
+      const safeKey = sanitizeKey(key);
       if (Platform.OS === 'web') {
-        localStorage.removeItem(key);
+        localStorage.removeItem(safeKey);
         return true;
       }
-      await SecureStore.deleteItemAsync(key);
+      await SecureStore.deleteItemAsync(safeKey);
       return true;
     } catch (error) {
       logger.error(`SecureStorage delete error (${key}):`, error);

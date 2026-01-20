@@ -83,6 +83,8 @@ import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
 import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeService';
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
+import { getHomeCustomization, saveHomeCustomization, isSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
+import { generateScreenshotDemoData } from '@/lib/screenshotDemoData';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
 
@@ -481,7 +483,7 @@ const getSecurityItems = (t: TranslateFunction): MenuItem[] => [
 // ============================================
 // SECTION SUPPORT
 // ============================================
-const getSupportItems = (t: TranslateFunction): MenuItem[] => [
+const getSupportItems = (t: TranslateFunction, onScreenshotMode: () => void): MenuItem[] => [
   {
     id: 'help-tutorials',
     label: t('menu.helpAndTutorials'),
@@ -490,6 +492,15 @@ const getSupportItems = (t: TranslateFunction): MenuItem[] => [
     route: '/help-tutorials',
     iconColor: '#8B5CF6',
     iconBg: '#8B5CF620',
+  },
+  {
+    id: 'screenshot-mode',
+    label: 'Support Technique',
+    sublabel: 'Outils de diagnostic et démo',
+    Icon: Settings,
+    onPress: onScreenshotMode,
+    iconColor: '#D4AF37',
+    iconBg: '#D4AF3720',
   },
   {
     id: 'app-store',
@@ -588,7 +599,7 @@ export default function MoreScreen() {
   const HEALTH_ITEMS = getHealthItems(t);
   const BACKUP_ITEMS = getBackupItems(t);
   const SECURITY_ITEMS = getSecurityItems(t);
-  const SUPPORT_ITEMS = getSupportItems(t);
+  const SUPPORT_ITEMS = getSupportItems(t, handleScreenshotMode);
 
   // Recherche
   const [searchQuery, setSearchQuery] = useState('');
@@ -672,6 +683,37 @@ export default function MoreScreen() {
   const [longPressActive, setLongPressActive] = useState(false);
   const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
   const [shareButtonVisible, setShareButtonVisible] = useState(true); // Bouton partage flottant
+
+  // Activer le mode Germain Del Jarret (Screenshot)
+  const handleScreenshotMode = async () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    
+    // Demander le code secret
+    Alert.prompt(
+      'Accès Restreint',
+      'Entrez le code de maintenance pour accéder aux outils de démo :',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Valider',
+          onPress: async (code) => {
+            if (code === '2022') {
+              try {
+                await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+                await generateScreenshotDemoData();
+                showPopup('Succès', 'Mode Germain Del Jarret activé ! Redémarrez l\'app pour voir les changements.', [{ text: 'Génial', style: 'primary' }]);
+              } catch (err) {
+                logger.error('Erreur activation mode screenshot:', err);
+              }
+            } else {
+              Alert.alert('Erreur', 'Code incorrect.');
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
+  };
 
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
@@ -1638,7 +1680,7 @@ export default function MoreScreen() {
               marginTop: 12,
               textAlign: 'center'
             }}>
-              YOROI v1.0.0
+              YOROI v1.0.1
             </Text>
           </TouchableOpacity>
 
@@ -1675,7 +1717,7 @@ export default function MoreScreen() {
           )}
         </View>
 
-        <View style={{ height: 200 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
       </MoreTabView>
 

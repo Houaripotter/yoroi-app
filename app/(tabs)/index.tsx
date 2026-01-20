@@ -109,6 +109,7 @@ import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeight
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
 import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
+import { HomeShareMenu } from '@/components/home/HomeShareMenu';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -1425,9 +1426,9 @@ export default function HomeScreen() {
         dailyChallenges={formattedChallenges}
         stepsGoal={stepsGoal}
         calories={0}
-        bodyFat={bodyComposition?.bodyFat}
-        muscleMass={bodyComposition?.muscleMass}
-        waterPercentage={bodyComposition?.waterPercentage}
+        bodyFat={isScreenshotMode ? 16.2 : bodyComposition?.bodyFat}
+        muscleMass={isScreenshotMode ? 43.5 : bodyComposition?.muscleMass}
+        waterPercentage={isScreenshotMode ? 58.4 : bodyComposition?.waterPercentage}
         weeklyReport={weeklyReport ? {
           weightChange: weeklyReport.weightChange,
           trainingsCount: weeklyReport.totalTrainings,
@@ -1445,6 +1446,9 @@ export default function HomeScreen() {
       <LogoViewer visible={logoViewerVisible} onClose={() => setLogoViewerVisible(false)} />
       <BatteryReadyPopup batteryPercent={batteryPercent} />
       <AvatarViewerModal visible={avatarViewerVisible} onClose={() => setAvatarViewerVisible(false)} />
+      
+      {/* Menu de partage social flottant */}
+      <HomeShareMenu />
 
       {/* Tutoriel de découverte */}
       {showTutorial && (

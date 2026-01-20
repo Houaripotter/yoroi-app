@@ -22,34 +22,79 @@ struct WorkoutView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                // Titre
+                // Header
                 HStack(spacing: 6) {
                     Image(systemName: "figure.strengthtraining.traditional")
                         .foregroundColor(.green)
-                    Text("ENTRAÎNEMENT")
+                    Text("SÉANCE")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.green)
                 }
                 .padding(.top, 8)
 
-                // Bouton démarrer séance
-                Button(action: { showActivityPicker = true }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 16))
-                        Text("Démarrer")
-                            .font(.system(size: 16, weight: .bold))
+                if healthManager.workoutActive {
+                    // AFFICHAGE SÉANCE EN COURS
+                    VStack(spacing: 10) {
+                        Text(formatDuration(healthManager.workoutDuration))
+                            .font(.system(size: 32, weight: .black, design: .rounded))
+                            .foregroundColor(.green)
+                        
+                        HStack(spacing: 20) {
+                            VStack {
+                                Image(systemName: "heart.fill").foregroundColor(.red)
+                                Text("\(Int(healthManager.heartRate))").font(.system(size: 18, weight: .bold))
+                                Text("BPM").font(.system(size: 8)).foregroundColor(.gray)
+                            }
+                            
+                            VStack {
+                                Image(systemName: "flame.fill").foregroundColor(.orange)
+                                Text("\(Int(healthManager.activeCalories))").font(.system(size: 18, weight: .bold))
+                                Text("KCAL").font(.system(size: 8)).foregroundColor(.gray)
+                            }
+                        }
+                        
+                        Button(action: { 
+                            WKInterfaceDevice.current().play(.stop)
+                            healthManager.stopWorkout() 
+                        }) {
+                            Text("TERMINER")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.red)
+                                .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.green)
-                    .cornerRadius(14)
+                    .padding()
+                    .background(Color.gray.opacity(0.12))
+                    .cornerRadius(16)
+                    .padding(.horizontal, 8)
+                    
+                } else {
+                    // BOUTON DÉMARRER SÉANCE
+                    Button(action: { 
+                        WKInterfaceDevice.current().play(.start)
+                        showActivityPicker = true 
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 16))
+                            Text("Démarrer")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.green)
+                        .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 8)
                 }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 8)
 
-                // Statistiques rapides
+                // Dernier entraînement (Historique rapide)
                 HStack(spacing: 8) {
                     StatBox(
                         icon: "flame.fill",
@@ -103,6 +148,15 @@ struct WorkoutView: View {
             ActivityPickerSheet(activities: activities, selectedActivity: $selectedActivity)
         }
     }
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let h = Int(seconds) / 3600
+        let m = Int(seconds) % 3600 / 60
+        let s = Int(seconds) % 60
+        if h > 0 {
+            return String(format: "%d:%02d:%02d", h, m, s)
+        }
+        return String(format: "%02d:%02d", m, s)
+    }
 }
 
 // MARK: - Stat Box
@@ -155,7 +209,11 @@ struct ActivityPickerSheet: View {
                 ], spacing: 6) {
                     ForEach(activities, id: \.name) { activity in
                         Button(action: {
-                            selectedActivity = activity.name
+                            // Convertir le nom en HKWorkoutActivityType
+                            let type: HKWorkoutActivityType = activity.name == "Muscu" ? .traditionalStrengthTraining : 
+                                                             activity.name == "Cardio" ? .running :
+                                                             activity.name == "Boxe" ? .boxing : .other
+                            healthManager.startWorkout(type: type)
                             dismiss()
                         }) {
                             VStack(spacing: 6) {

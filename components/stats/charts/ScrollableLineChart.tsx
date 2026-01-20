@@ -21,6 +21,7 @@ interface ScrollableLineChartProps {
   height?: number;
   compact?: boolean;
   unit?: string;
+  onPress?: () => void;
 }
 
 // Map language codes to date-fns locales
@@ -369,7 +370,13 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
         decelerationRate="fast"
         style={styles.scrollView}
       >
-        <Pressable onPress={() => setIsFullscreen(true)}>
+        <Pressable onPress={() => {
+          if (onPress) {
+            onPress();
+          } else {
+            setIsFullscreen(true);
+          }
+        }}>
           {renderChart(chartData, false)}
         </Pressable>
       </ScrollView>

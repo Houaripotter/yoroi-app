@@ -34,6 +34,9 @@ const WatchConnectivityModule = isModuleAvailable
       sendMessageToWatch: () => Promise.reject(new Error('Module not available')),
       updateApplicationContext: () => Promise.reject(new Error('Module not available')),
       transferUserInfo: () => Promise.reject(new Error('Module not available')),
+      getReceivedApplicationContext: () => Promise.resolve({}),
+      activateSession: () => Promise.resolve(true),
+      transferFile: () => Promise.reject(new Error('Module not available')),
     };
 
 const watchEventEmitter = isModuleAvailable

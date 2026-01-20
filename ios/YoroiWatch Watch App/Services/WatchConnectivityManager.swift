@@ -305,6 +305,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let hydrationData = message["hydrationUpdate"] as? Data {
                 NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: hydrationData)
             }
+            
+            if let recordsData = message["recordsUpdate"] as? Data {
+                NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: recordsData)
+            }
 
             // Répondre à l'iPhone
             replyHandler(["status": "received"])
@@ -324,5 +328,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
 extension Notification.Name {
     static let didReceiveWeightUpdate = Notification.Name("didReceiveWeightUpdate")
     static let didReceiveHydrationUpdate = Notification.Name("didReceiveHydrationUpdate")
+    static let didReceiveRecordsUpdate = Notification.Name("didReceiveRecordsUpdate")
     static let didReceiveDataFromiPhone = Notification.Name("didReceiveDataFromiPhone")
 }

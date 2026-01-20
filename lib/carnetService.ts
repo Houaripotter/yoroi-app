@@ -59,6 +59,7 @@ export interface Benchmark {
   id: string;
   name: string;
   category: BenchmarkCategory;
+  muscleGroup?: string; // NOUVEAU: pour trier la muscu par muscle
   unit: BenchmarkUnit;
   iconName: string; // lucide icon name
   color: string;
@@ -381,7 +382,8 @@ export const createBenchmark = async (
   category: BenchmarkCategory,
   unit: BenchmarkUnit,
   iconName?: string,
-  color?: string
+  color?: string,
+  muscleGroup?: string
 ): Promise<Benchmark | null> => {
   try {
     const benchmarks = await getBenchmarks();
@@ -389,6 +391,7 @@ export const createBenchmark = async (
       id: generateId(),
       name,
       category,
+      muscleGroup,
       unit,
       iconName: iconName || BENCHMARK_CATEGORIES[category].iconName,
       color: color || BENCHMARK_CATEGORIES[category].color,

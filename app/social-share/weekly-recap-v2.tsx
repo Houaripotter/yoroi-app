@@ -46,7 +46,7 @@ export default function WeeklyRecapV2Screen() {
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
-  const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('dark');
+  const [selectedTemplate, setSelectedTemplate] = useState<'photo' | 'dark' | 'light'>('dark');
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 

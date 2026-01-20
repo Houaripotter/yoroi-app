@@ -28,27 +28,27 @@ import logger from '@/lib/security/logger';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Couleurs forcées en mode sombre pour la sélection de mode (fond noir, texte blanc)
+// Couleurs forcées en mode CLAIR pour la sélection de mode (thème Classic)
 // Cela assure une expérience cohérente pour tous les nouveaux utilisateurs
 const MODE_SELECTION_COLORS = {
-  background: '#0A0A0A',
-  backgroundCard: '#151515',
-  backgroundElevated: '#1F1F1F',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#B8B8B8',
-  textMuted: '#808080',
-  accent: '#FFFFFF',
+  background: '#F7F7F7',
+  backgroundCard: '#FFFFFF',
+  backgroundElevated: '#F0F0F0',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#555555',
+  textMuted: '#666666',
+  accent: '#1A1A1A',
   accentText: '#FFFFFF',
-  border: '#2A2A2A',
+  border: '#E0E0E0',
 };
 
 export default function ModeSelectionScreen() {
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
-  // Utiliser les couleurs forcées sombres
+  // Utiliser les couleurs forcées claires
   const colors = MODE_SELECTION_COLORS;
-  const isDark = true; // Toujours en mode sombre pour cette page
+  const isDark = false; // Toujours en mode clair pour cette page
   const [selectedMode, setSelectedMode] = useState<UserMode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -87,7 +87,7 @@ export default function ModeSelectionScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: topPadding }]}
