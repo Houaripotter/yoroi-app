@@ -45,12 +45,13 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, getClubs, Club, Exercise } from '@/lib/database';
+import { addTraining, getClubs, Club, Exercise, getProfile } from '@/lib/database';
 import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
 import { getUserSettings } from '@/lib/storage';
 import * as WebBrowser from 'expo-web-browser';
+import { SessionCard } from '@/components/social-cards/SessionCard';
 
 // Constants for non-theme values
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -69,7 +70,6 @@ import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { SharePromptModal } from '@/components/SharePromptModal';
-import * as WebBrowser from 'expo-web-browser';
 
 // ============================================
 // NOUVEL ENTRAINEMENT - VERSION SIMPLIFIEE
@@ -479,14 +479,26 @@ export default function AddTrainingScreen() {
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
   const [userName, setUserName] = useState<string>('Champion');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
 
-  // Charger le prénom
+  // Charger les données utilisateur
   useEffect(() => {
-    const loadUserName = async () => {
-      const settings = await getUserSettings();
-      if (settings.username) setUserName(settings.username);
+    const loadUserData = async () => {
+      try {
+        const profile = await getProfile();
+        if (profile) {
+          setUserName(profile.name);
+          if (profile.profile_photo) setUserPhoto(profile.profile_photo);
+        } else {
+          const settings = await getUserSettings();
+          if (settings.username) setUserName(settings.username);
+        }
+      } catch (e) {
+        const settings = await getUserSettings();
+        if (settings.username) setUserName(settings.username);
+      }
     };
-    loadUserName();
+    loadUserData();
   }, []);
 
   // Calculer heure de fin
@@ -1724,91 +1736,28 @@ export default function AddTrainingScreen() {
               shadowOpacity: 0.3,
               shadowRadius: 20,
               elevation: 10,
-              borderWidth: 1,
-              borderColor: colors.border
             }}
           >
-            <LinearGradient
-              colors={isDark ? [colors.backgroundCard, '#1a1a2e'] : [colors.backgroundCard, '#f8f9fa']}
-              style={{ padding: 24, alignItems: 'center' }}
-            >
-              {/* Header */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Check size={18} color={colors.success} strokeWidth={3} />
-                <Text style={{ fontSize: 14, fontWeight: '800', color: colors.success, letterSpacing: 1 }}>SÉANCE VALIDÉE</Text>
-              </View>
-              <Text style={{ fontSize: 13, color: colors.textSecondary, fontWeight: '600', marginBottom: 24 }}>
-                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()}
-              </Text>
-
-              {/* Sport Icon */}
-              <View style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: 40, 
-                backgroundColor: colors.background,
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                marginBottom: 16,
-                borderWidth: 3,
-                borderColor: colors.accent,
-                shadowColor: colors.accent,
-                shadowOpacity: 0.3,
-                shadowRadius: 10
-              }}>
-                <MaterialCommunityIcons 
-                  name={getSportIcon(selectedSports[0]) as any} 
-                  size={40} 
-                  color={colors.accent} 
-                />
-              </View>
-
-              {/* Sport Name */}
-              <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, textAlign: 'center', marginBottom: 24 }}>
-                {selectedSports.map(s => getSportName(s)).join(' + ')}
-              </Text>
-
-              {/* Stats Grid */}
-              <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 20, width: '100%', paddingTop: 20, borderTopWidth: 1, borderTopColor: colors.border }}>
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
-                    {duration}
-                  </Text>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>MINUTES</Text>
-                </View>
-                
-                {(distance && parseFloat(distance) > 0) && (
-                  <>
-                    <View style={{ width: 1, height: '80%', backgroundColor: colors.border }} />
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
-                        {distance}
-                      </Text>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>KM</Text>
-                    </View>
-                  </>
-                )}
-
-                {(calories && parseInt(calories) > 0) && (
-                  <>
-                    <View style={{ width: 1, height: '80%', backgroundColor: colors.border }} />
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary }}>
-                        {calories}
-                      </Text>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textSecondary, marginTop: 2 }}>KCAL</Text>
-                    </View>
-                  </>
-                )}
-              </View>
-              
-              {/* Footer Brand */}
-              <View style={{ marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 6, opacity: 0.6 }}>
-                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
-                <Text style={{ fontSize: 10, fontWeight: '800', color: colors.textSecondary, letterSpacing: 2 }}>TEAM YOROI</Text>
-                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
-              </View>
-            </LinearGradient>
+            <SessionCard
+              training={{
+                sport: selectedSports.join(','),
+                duration_minutes: duration,
+                distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+                calories: calories ? parseInt(calories) : undefined,
+                intensity: intensity,
+                date: date.toISOString(),
+                start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                rounds: rounds ? parseInt(rounds) : undefined,
+                round_duration: roundDuration ? parseInt(roundDuration) : undefined,
+                club_logo: selectedClub?.logo_uri,
+                technique_rating: techniqueRating || undefined,
+                is_outdoor: isOutdoor,
+              }}
+              backgroundImage={userPhoto} // Photo de profil comme fond
+              backgroundType={userPhoto ? 'photo' : 'black'}
+              isLandscape={false}
+              width={340} // Largeur du modal
+            />
           </View>
 
           {/* ACTIONS */}
@@ -1891,8 +1840,7 @@ export default function AddTrainingScreen() {
             </Text>
 
             <Text style={{ fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22, marginBottom: 24 }}>
-              J'espère que tu apprécies l'app !{'
-'}
+              J'espère que tu apprécies l'app !{'\n'}
               S'il y a quoi que ce soit, n'hésite pas à me dire tes bugs et tes idées.
             </Text>
 
