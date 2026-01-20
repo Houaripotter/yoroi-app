@@ -26,46 +26,9 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  X,
-  Trash2,
-  TrendingUp,
-  Target,
-  Check,
-  Clock,
-  Edit3,
-  BarChart2,
-  BookOpen,
-  Dumbbell,
-  Award,
-  Timer,
-  Mountain,
-  Flame,
-  Shield,
-  Move,
-  Lock,
-  Users,
-  Zap,
-  Search,
-  Calendar,
-  ChevronDown,
-  FileText,
-  Scale,
-  Video,
-  ExternalLink,
-  Swords,
-  BarChart3,
-  Footprints,
-  Share2,
-  Gauge,
-  Play,
-  Camera,
-  Image as ImageIcon,
-  RotateCcw,
-} from 'lucide-react-native';
+import { Trash2, Archive, CheckCircle, RotateCcw, Search, Filter, Plus, Target, ChevronRight, Share2, Info, Dumbbell, Activity, Timer } from 'lucide-react-native';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
+import { getBenchmarkPR } from '@/lib/carnetService';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
@@ -176,6 +139,7 @@ export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Data state
@@ -460,6 +424,14 @@ export default function TrainingJournalScreen() {
     return true;
   };
 
+  // Filter benchmarks (by global filter AND search query)
+  const filteredBenchmarks = benchmarks.filter(b => {
+    const matchesGlobal = matchesGlobalFilter(b.category, null);
+    const matchesSearch = searchQuery.trim() === '' ||
+      b.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesGlobal && matchesSearch;
+  });
+
   // Group benchmarks by category and sub-group muscu by muscle
   const groupedBenchmarks = useMemo(() => {
     const groups: Record<string, Record<string, Benchmark[]>> = {};
@@ -504,7 +476,7 @@ export default function TrainingJournalScreen() {
   const handleQuickAddRecord = async (exerciseName: string, category: BenchmarkCategory, unit: BenchmarkUnit) => {
     try {
       // 1. Find if benchmark exists or create it
-      let targetBenchmark = benchmarks.find(b => b.name === exerciseName);
+      let targetBenchmark: Benchmark | undefined | null = benchmarks.find(b => b.name === exerciseName);
       if (!targetBenchmark) {
         targetBenchmark = await createBenchmark(exerciseName, category, unit, undefined, undefined, selectedMuscleGroup || undefined);
       }
@@ -512,7 +484,7 @@ export default function TrainingJournalScreen() {
       if (targetBenchmark) {
         setSelectedBenchmark(targetBenchmark);
         setIsExercisePickerVisible(false);
-        setIsEntryModalVisible(true);
+        setShowAddEntryModal(true);
       }
     } catch (error) {
       console.error('Error in quick add:', error);

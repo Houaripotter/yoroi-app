@@ -729,7 +729,7 @@ export default function AddTrainingScreen() {
       });
       const sportsString = finalSports.join(',');
 
-      await addTraining({
+      const newId = await addTraining({
         club_id: selectedClub?.id,
         sport: sportsString, // Sports combinés
         date: format(date, 'yyyy-MM-dd'),
@@ -747,7 +747,9 @@ export default function AddTrainingScreen() {
         round_duration: roundDuration ? parseInt(roundDuration) : undefined,
       });
 
-      setLastSavedTrainingId(newId);
+      if (newId) {
+        setLastSavedTrainingId(Number(newId));
+      }
 
       // Sauvegarder le premier sport et durée pour le Quick Add
       await saveLastSportAndDuration(selectedSports[0], duration);
