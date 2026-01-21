@@ -13,161 +13,54 @@ import React
 @objc(WatchConnectivityBridge)
 public class WatchConnectivityBridge: RCTEventEmitter {
 
-    // MARK: - Singleton
-    static let shared = WatchConnectivityBridge()
-
-    // MARK: - Private Properties
     private var session: WCSession?
     private var hasListeners = false
+    
+    // Instance statique pour accéder au bridge depuis d'autres classes Swift
+    public static var emitter: WatchConnectivityBridge?
 
-    // MARK: - Initialization
     override init() {
         super.init()
-
+        WatchConnectivityBridge.emitter = self
+        
         if WCSession.isSupported() {
-            session = WCSession.default
-            session?.delegate = self
-            session?.activate()
+            self.session = WCSession.default
+            self.session?.delegate = self
+            self.session?.activate()
         }
     }
 
-    // MARK: - RCTEventEmitter Override
-
-    override static func requiresMainQueueSetup() -> Bool {
-        return true
-    }
-
-    override func supportedEvents() -> [String]! {
-        return [
-            "onWatchReachabilityChanged",
-            "onWatchDataReceived",
-            "onWatchMessageReceived",
-            "onWatchActivationCompleted",
-            "onWatchError"
-        ]
-    }
-
-    override func startObserving() {
-        hasListeners = true
-    }
-
-    override func stopObserving() {
-        hasListeners = false
-    }
-
-    // MARK: - Public Methods (Exposed to React Native)
-
-    /// Vérifie si la Watch est disponible
-    @objc
-    func isWatchAvailable(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            resolve(false)
-            return
-        }
-
-        let available = session.isPaired && session.isWatchAppInstalled
-        resolve(available)
-    }
-
-    /// Vérifie si la Watch est à portée (reachable)
-    @objc
-    func isWatchReachable(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            resolve(false)
-            return
-        }
-
-        resolve(session.isReachable)
-    }
-
-    /// Envoie des données à la Watch (message avec reply)
-    @objc
-    func sendMessageToWatch(_ message: [String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity session not available", nil)
-            return
-        }
-
-        guard session.isReachable else {
-            reject("NOT_REACHABLE", "Apple Watch is not reachable", nil)
-            return
-        }
-
-        session.sendMessage(message, replyHandler: { reply in
-            resolve(reply)
-        }, errorHandler: { error in
-            reject("SEND_ERROR", error.localizedDescription, error)
-        })
-    }
-
-    /// Envoie des données à la Watch (applicationContext - pour données persistantes)
-    @objc
-    func updateApplicationContext(_ context: [String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity session not available", nil)
-            return
-        }
-
-        do {
-            try session.updateApplicationContext(context)
-            resolve(true)
-        } catch {
-            reject("UPDATE_ERROR", error.localizedDescription, error)
-        }
-    }
-
-    /// Transfert de fichier vers la Watch
-    @objc
-    func transferFile(_ fileURL: String, metadata: [String: Any]?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity session not available", nil)
-            return
-        }
-
-        let url = URL(fileURLWithPath: fileURL)
-
-        guard FileManager.default.fileExists(atPath: fileURL) else {
-            reject("FILE_NOT_FOUND", "File not found at path: \(fileURL)", nil)
-            return
-        }
-
-        let transfer = session.transferFile(url, metadata: metadata)
-        resolve(["transferID": transfer.description])
-    }
-
-    /// Transfert de UserInfo vers la Watch (en arrière-plan)
-    @objc
-    func transferUserInfo(_ userInfo: [String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity session not available", nil)
-            return
-        }
-
-        let transfer = session.transferUserInfo(userInfo)
-        resolve(["transferring": transfer.isTransferring])
-    }
-
-    /// Récupère le contexte applicatif reçu de la Watch
-    @objc
-    func getReceivedApplicationContext(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity session not available", nil)
-            return
-        }
-
-        resolve(session.receivedApplicationContext)
-    }
-
-    /// Active la session WatchConnectivity
+    // Réactiver la session si nécessaire
     @objc
     func activateSession(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        guard let session = session else {
-            reject("NO_SESSION", "WatchConnectivity not supported", nil)
-            return
+        DispatchQueue.main.async {
+            if WCSession.isSupported() {
+                let session = WCSession.default
+                if session.delegate == nil {
+                    session.delegate = self
+                }
+                if session.activationState != .activated {
+                    session.activate()
+                }
+                resolve(true)
+            } else {
+                resolve(false)
+            }
         }
+    }
 
-        session.activate()
-        resolve(true)
+
+    /// Méthode de Test (Ping) pour vérifier si le bridge répond
+    @objc
+    func ping(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        let status = [
+            "supported": WCSession.isSupported(),
+            "paired": session?.isPaired ?? false,
+            "installed": session?.isWatchAppInstalled ?? false,
+            "reachable": session?.isReachable ?? false,
+            "state": "\(session?.activationState.rawValue ?? -1)"
+        ] as [String : Any]
+        resolve(status)
     }
 }
 

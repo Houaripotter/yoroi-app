@@ -161,6 +161,10 @@ export const initDatabase = async () => {
   } catch (e) { /* colonne existe déjà */ }
 
   try {
+    await database.execAsync(`ALTER TABLE trainings ADD COLUMN speed REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
+  try {
     await database.execAsync(`ALTER TABLE trainings ADD COLUMN resistance INTEGER;`);
   } catch (e) { /* colonne existe déjà */ }
 
@@ -475,6 +479,7 @@ export interface Training {
   rounds?: number; // Nombre de rounds
   round_duration?: number; // Durée d'un round en minutes
   pente?: number; // Inclinaison
+  speed?: number; // Vitesse (km/h)
   resistance?: number; // Niveau de résistance
   watts?: number; // Puissance
   cadence?: number; // RPM
@@ -705,14 +710,14 @@ export const addTraining = async (data: Training): Promise<number> => {
   const database = await openDatabase();
   const exercisesJson = data.exercises ? JSON.stringify(data.exercises) : null;
   const result = await database.runAsync(
-    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, resistance, watts, cadence)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO trainings (club_id, sport, session_type, date, start_time, duration_minutes, notes, muscles, exercises, technique_rating, is_outdoor, distance, calories, intensity, rounds, round_duration, pente, speed, resistance, watts, cadence)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
      data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null, 
      data.intensity || null, data.rounds || null, data.round_duration || null,
-     data.pente || null, data.resistance || null, data.watts || null, data.cadence || null]
+     data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null]
   );
   return result.lastInsertRowId;
 };
@@ -745,6 +750,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
       exercises, 
       is_outdoor: r.is_outdoor === 1,
       pente: r.pente,
+      speed: r.speed,
       resistance: r.resistance,
       watts: r.watts,
       cadence: r.cadence
@@ -754,7 +760,7 @@ export const getTrainings = async (days?: number): Promise<Training[]> => {
 
 export const getTrainingsByMonth = async (year: number, month: number): Promise<Training[]> => {
   const database = await openDatabase();
-  const results = await database.getAllAsync<Training & { exercises?: string }>(
+  const results = await database.getAllAsync<Training & { exercises?: string; is_outdoor?: number }>(
     `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
      FROM trainings t
      LEFT JOIN clubs c ON t.club_id = c.id
@@ -771,7 +777,16 @@ export const getTrainingsByMonth = async (year: number, month: number): Promise<
         exercises = undefined;
       }
     }
-    return { ...r, exercises };
+    return { 
+      ...r, 
+      exercises, 
+      is_outdoor: r.is_outdoor === 1,
+      pente: r.pente,
+      speed: r.speed,
+      resistance: r.resistance,
+      watts: r.watts,
+      cadence: r.cadence
+    };
   });
 };
 

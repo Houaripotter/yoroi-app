@@ -38,7 +38,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import * as Haptics from 'expo-haptics';
-import { calculatePace, formatDuration, formatDistance } from '@/lib/carnetService';
+import { calculatePace, formatDuration, formatDistance, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -94,8 +94,9 @@ export default function VictoryShareModal({
 
   // Detect activity type
   const isRunningActivity = ['running', 'trail', 'hyrox'].includes(sessionData.category.toLowerCase());
-  const isForceActivity = sessionData.category.toLowerCase() === 'force';
-  const isCombatActivity = ['jjb', 'jjb_garde', 'jjb_passage', 'jjb_soumission', 'combat', 'striking', 'lutte', 'boxe'].includes(sessionData.category.toLowerCase());
+  const isForceActivity = sessionData.category.toLowerCase() === 'force' || sessionData.category.toLowerCase() === 'musculation';
+  const isCardioActivity = sessionData.category.toLowerCase() === 'cardio';
+  const isCombatActivity = ['jjb', 'jjb_garde', 'jjb_passage', 'jjb_soumission', 'combat', 'striking', 'lutte', 'boxe', 'mma', 'muay_thai'].includes(sessionData.category.toLowerCase());
 
   // TASK 4: Calculate pace correctly for running (using timeSeconds, not duration)
   const pace = isRunningActivity && sessionData.timeSeconds && sessionData.distanceKm && sessionData.distanceKm > 0
@@ -432,8 +433,97 @@ export default function VictoryShareModal({
     );
   };
 
+  // Render Cardio-specific layout
+  const renderCardioStats = () => {
+    const textColor = getTextColor();
+    const textShadow = getTextShadow();
+    const secondaryColor = getSecondaryTextColor();
+
+    return (
+      <View style={styles.runningStatsContainer}>
+        {/* Exercise Name */}
+        <Text style={[styles.exerciseName, { color: textColor, marginBottom: 12, fontSize: 22 }, textShadow]}>
+          {sessionData.exerciseName}
+        </Text>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 15 }}>
+          {/* DISTANCE */}
+          {sessionData.distanceKm !== undefined && (
+            <View style={[styles.miniStatBlock, { backgroundColor: getCategoryColor() + '30', borderColor: getCategoryColor() + '50', borderWidth: 1 }]}>
+              <Text style={[styles.miniStatLabel, { color: getCategoryColor() }, textShadow]}>DISTANCE</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.distanceKm} km</Text>
+            </View>
+          )}
+
+          {/* INCLINE / PENTE */}
+          {sessionData.incline !== undefined && (
+            <View style={[styles.miniStatBlock, { backgroundColor: '#F59E0B30', borderColor: '#F59E0B50', borderWidth: 1 }]}>
+              <Text style={[styles.miniStatLabel, { color: '#F59E0B' }, textShadow]}>PENTE</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.incline}%</Text>
+            </View>
+          )}
+
+          {/* SPEED */}
+          {sessionData.speed !== undefined && (
+            <View style={[styles.miniStatBlock, { backgroundColor: '#10B98130', borderColor: '#10B98150', borderWidth: 1 }]}>
+              <Text style={[styles.miniStatLabel, { color: '#10B981' }, textShadow]}>VITESSE</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.speed} km/h</Text>
+            </View>
+          )}
+
+          {/* WATTS */}
+          {sessionData.watts !== undefined && (
+            <View style={[styles.miniStatBlock, { backgroundColor: '#3B82F630', borderColor: '#3B82F650', borderWidth: 1 }]}>
+              <Text style={[styles.miniStatLabel, { color: '#3B82F6' }, textShadow]}>WATTS</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>{sessionData.watts}W</Text>
+            </View>
+          )}
+
+          {/* LEVEL / RESISTANCE */}
+          {sessionData.level !== undefined && (
+            <View style={[styles.miniStatBlock, { backgroundColor: '#8B5CF630', borderColor: '#8B5CF650', borderWidth: 1 }]}>
+              <Text style={[styles.miniStatLabel, { color: '#8B5CF6' }, textShadow]}>NIVEAU</Text>
+              <Text style={[styles.miniStatValue, { color: textColor }, textShadow]}>Lvl {sessionData.level}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* PACE / ALLURE (Si disponible) */}
+        {sessionData.pace && (
+          <View style={[styles.runningStatRow, { marginTop: 4, opacity: 0.9 }]}>
+            <Gauge size={16} color={textColor} />
+            <Text style={[styles.statValue, { color: textColor, fontWeight: '700' }, textShadow]}>
+              Allure: {sessionData.pace} /km
+            </Text>
+          </View>
+        )}
+
+        {/* TIME + CALORIES */}
+        <View style={[styles.statsRow, { marginTop: 8 }]}>
+          {sessionData.duration && (
+            <View style={styles.statItem}>
+              <Clock size={16} color={textColor} />
+              <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>
+                {formatDuration(sessionData.duration)}
+              </Text>
+            </View>
+          )}
+          {sessionData.calories && (
+            <View style={styles.statItem}>
+              <Flame size={16} color="#EF4444" fill="#EF4444" />
+              <Text style={[styles.statValue, { color: textColor, fontSize: 15 }, textShadow]}>
+                {sessionData.calories} kcal
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
   // Choose correct renderer based on category
   const renderStats = () => {
+    if (isCardioActivity) return renderCardioStats();
     if (isRunningActivity) return renderRunningStats();
     if (isForceActivity) return renderForceStats();
     return renderCombatStats();
@@ -751,23 +841,18 @@ export const createVictoryData = (
 export const createVictoryFromEntry = (
   benchmarkName: string,
   category: string,
-  entry: {
-    value: number;
-    reps?: number;
-    duration?: number;
-    calories?: number;
-    date: string;
-  },
+  entry: BenchmarkEntry,
   unit: string,
   isPR: boolean = false
 ): VictorySessionData => {
   const isRunning = ['running', 'trail', 'hyrox'].includes(category.toLowerCase());
-  const isForce = category.toLowerCase() === 'force';
+  const isCardio = category.toLowerCase() === 'cardio';
+  const isForce = category.toLowerCase() === 'force' || category.toLowerCase() === 'musculation';
 
   let performance = '';
   if (isForce && (unit === 'kg' || unit === 'lbs')) {
     performance = entry.reps ? `${entry.value} ${unit} × ${entry.reps}` : `${entry.value} ${unit}`;
-  } else if (isRunning && unit === 'km') {
+  } else if ((isRunning || isCardio) && unit === 'km') {
     performance = `${entry.value} km`;
   } else {
     performance = `${entry.value} ${unit}`;
@@ -781,11 +866,17 @@ export const createVictoryFromEntry = (
     duration: entry.duration,
     calories: entry.calories,
     isPR,
-    distanceKm: isRunning ? entry.value : undefined,
-    timeSeconds: isRunning && entry.duration ? entry.duration * 60 : undefined,
+    distanceKm: (isRunning || isCardio) ? (entry.distance || entry.value) : undefined,
+    timeSeconds: (isRunning || isCardio) && entry.duration ? entry.duration * 60 : undefined,
     reps: entry.reps,
     weight: isForce ? entry.value : undefined,
     weightUnit: isForce ? (unit as 'kg' | 'lbs') : undefined,
+    // Advanced metrics
+    incline: entry.incline,
+    speed: entry.speed,
+    pace: entry.pace,
+    watts: entry.watts,
+    level: entry.level,
   };
 };
 
@@ -1242,5 +1333,21 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
+  },
+  miniStatBlock: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 60,
+  },
+  miniStatLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  miniStatValue: {
+    fontSize: 14,
+    fontWeight: '900',
   },
 });

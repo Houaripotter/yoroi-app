@@ -41,13 +41,14 @@ import {
   HealthPermissions,
   SyncStatus,
 } from '@/lib/healthConnect';
-// import { WatchStatusIndicator } from '@/components/WatchStatusIndicator';
+import { useWatch } from '@/lib/WatchConnectivityProvider';
 
 export default function HealthConnectScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { syncAllData, isWatchAvailable } = useWatch();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -230,6 +231,27 @@ export default function HealthConnectScreen() {
             </View>
           )}
         </View>
+
+        {/* Sync Apple Watch - NOUVEAU BOUTON MANUEL */}
+        {Platform.OS === 'ios' && (
+          <TouchableOpacity 
+            style={[styles.watchSyncBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={async () => {
+              lightHaptic();
+              await syncAllData();
+              showPopup('Synchronisation', 'Données envoyées vers l\'Apple Watch !', [{ text: 'OK', style: 'primary' }]);
+            }}
+          >
+            <View style={[styles.watchIconCircle, { backgroundColor: colors.accent + '20' }]}>
+              <Watch size={20} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.watchSyncTitle, { color: colors.textPrimary }]}>Synchroniser ma montre</Text>
+              <Text style={[styles.watchSyncSub, { color: colors.textMuted }]}>Force l'envoi de ton avatar et profil</Text>
+            </View>
+            <RefreshCw size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
 
         {/* Apple Watch Status */}
         {/* <WatchStatusIndicator /> */}
@@ -482,6 +504,30 @@ const styles = StyleSheet.create({
   },
   lastSyncText: {
     fontSize: 12,
+  },
+  watchSyncBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 12,
+    marginBottom: 20,
+  },
+  watchIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  watchSyncTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  watchSyncSub: {
+    fontSize: 12,
+    marginTop: 2,
   },
   connectBtn: {
     flexDirection: 'row',

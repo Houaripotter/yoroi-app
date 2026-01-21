@@ -95,9 +95,7 @@ struct WeightView: View {
             }
         }
         .sheet(isPresented: $showAddWeight) {
-            AddWeightView(weight: .init(get: { 75.0 }, set: { _ in })) {
-                // Logique d'ajout déjà présente dans HealthManager
-            }
+            AddWeightView()
         }
     }
     
@@ -106,6 +104,54 @@ struct WeightView: View {
         f.dateFormat = "EEEE d MMMM"
         f.locale = Locale(identifier: "fr_FR")
         return f.string(from: date).uppercased()
+    }
+}
+
+struct AddWeightView: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var healthManager = HealthManager.shared
+    @State private var weightValue: Double = 75.0
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            Text("NOUVEAU POIDS")
+                .font(.system(size: 12, weight: .black))
+                .foregroundColor(.orange)
+            
+            VStack(spacing: 0) {
+                Text(String(format: "%.1f", weightValue))
+                    .font(.system(size: 44, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .focusable(true)
+                    .digitalCrownRotation($weightValue, from: 30, through: 250, by: 0.1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
+                
+                Text("KG")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.orange)
+            }
+            .padding(.vertical, 5)
+            
+            Button(action: {
+                healthManager.saveWeight(weightValue)
+                WKInterfaceDevice.current().play(.success)
+                dismiss()
+            }) {
+                Text("ENREGISTRER")
+                    .font(.system(size: 14, weight: .black))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.orange)
+                    .foregroundColor(.black)
+                    .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
+        }
+        .onAppear {
+            // Initialiser avec le dernier poids connu
+            if healthManager.currentWeight > 0 {
+                weightValue = healthManager.currentWeight
+            }
+        }
     }
 }
 

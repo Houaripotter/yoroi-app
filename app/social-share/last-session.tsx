@@ -352,17 +352,17 @@ export default function LastSessionScreen() {
           zIndex: 999
         }}>
           <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.gold, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 3 SUR 4</Text>
+            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.accent, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 3 SUR 4</Text>
             <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
-              <View style={{ width: 40, height: 3, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent + '20' }} />
+              <View style={{ width: 40, height: 3, backgroundColor: colors.accent + '20' }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent + '20' }} />
+              <View style={{ width: 40, height: 3, backgroundColor: colors.accent + '20' }} />
+              <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
+              <View style={{ width: 40, height: 3, backgroundColor: colors.border }} />
+              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.border }} />
             </View>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginTop: 12, letterSpacing: 1 }}>PARTAGE & PERSONNALISATION</Text>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginTop: 12, letterSpacing: 1 }}>PARTAGE & PERSONNALISATION</Text>
           </View>
         </View>
 
@@ -374,6 +374,7 @@ export default function LastSessionScreen() {
         >
           {/* 1. SÉLECTEUR DE FOND - EN HAUT POUR CHARGER PHOTO DIRECT */}
           <View style={[styles.styleSection, { marginBottom: 30 }]}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: 'left', marginBottom: 12 }]}>STYLE DE LA CARTE</Text>
             <View style={styles.styleRow}>
               {[
                 { key: 'photo', label: 'PHOTO PERSO', icon: Camera },
@@ -397,8 +398,8 @@ export default function LastSessionScreen() {
                     else setBackgroundImage(undefined);
                   }}
                 >
-                  <style.icon size={18} color={backgroundType === style.key ? '#FFFFFF' : colors.textPrimary} />
-                  <Text style={[styles.styleBtnText, { color: backgroundType === style.key ? '#FFFFFF' : colors.textPrimary }]}>
+                  <style.icon size={18} color={backgroundType === style.key ? colors.textOnAccent : colors.textPrimary} />
+                  <Text style={[styles.styleBtnText, { color: backgroundType === style.key ? colors.textOnAccent : colors.textPrimary }]}>
                     {style.label}
                   </Text>
                 </TouchableOpacity>
@@ -434,7 +435,7 @@ export default function LastSessionScreen() {
 
           {/* 3. NOMBREUX TOGGLES DE PERSONNALISATION */}
           <View style={{ marginBottom: 30 }}>
-            <Text style={[styles.sectionLabel, { color: colors.textMuted, textAlign: 'left', marginBottom: 15 }]}>ÉLÉMENTS À AFFICHER SUR L'IMAGE</Text>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: 'left', marginBottom: 15 }]}>ÉLÉMENTS À AFFICHER SUR L'IMAGE</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {[
                 { label: 'Date', value: showDate, setter: setShowDate, color: '#9CA3AF' },
@@ -445,28 +446,28 @@ export default function LastSessionScreen() {
                 { label: 'Hebdo', value: showWeeklyCount, setter: setShowWeeklyCount, color: '#3B82F6' },
                 { label: 'Objectif', value: showGoalProgress, setter: setShowGoalProgress, color: GOLD_COLOR },
                 { label: 'Exercices', value: showExercises, setter: setShowExercises, color: '#10B981' },
-                { label: 'Stats (KM/Allure)', value: showStats, setter: setShowStats, color: colors.accent },
+                { label: 'Stats Performance', value: showStats, setter: setShowStats, color: colors.accent },
               ].map((item, i) => (
                 <TouchableOpacity
                   key={i}
                   onPress={() => item.setter(!item.value)}
                   style={{ 
                     width: '48%', 
-                    backgroundColor: item.value ? item.color + '15' : 'rgba(255,255,255,0.05)', 
+                    backgroundColor: item.value ? item.color + '15' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'), 
                     padding: 14, 
                     borderRadius: 16, 
                     flexDirection: 'row', 
                     alignItems: 'center', 
                     justifyContent: 'space-between',
                     borderWidth: 1,
-                    borderColor: item.value ? item.color : 'transparent'
+                    borderColor: item.value ? item.color : colors.border
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
+                  <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
                   <Switch 
                     value={item.value} 
                     onValueChange={item.setter}
-                    trackColor={{ false: '#333', true: item.color }}
+                    trackColor={{ false: isDark ? '#333' : '#E5E5E5', true: item.color }}
                     thumbColor="#FFFFFF"
                     style={{ transform: [{ scale: 0.7 }] }}
                   />
@@ -479,7 +480,7 @@ export default function LastSessionScreen() {
           <View style={styles.locationSection}>
             <View style={styles.locationHeader}>
               <MapPinned size={18} color={colors.accent} />
-              <Text style={[styles.sectionLabel, { color: colors.textMuted, marginBottom: 0 }]}>Modifier le lieu</Text>
+              <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginBottom: 0 }]}>Modifier le lieu</Text>
             </View>
             <TextInput
               style={[styles.locationInput, { backgroundColor: colors.backgroundCard, borderColor: colors.border, color: colors.textPrimary }]}
@@ -493,16 +494,16 @@ export default function LastSessionScreen() {
           {/* 5. ACTIONS FINALES */}
           <View style={{ gap: 15, marginTop: 20 }}>
             <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
-              <Share2 size={24} color="#FFFFFF" />
-              <Text style={[styles.shareBtnText, { fontSize: 18 }]}>PARTAGER SUR INSTAGRAM</Text>
+              <Share2 size={24} color={colors.textOnAccent} />
+              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>PARTAGER SUR INSTAGRAM</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.shareBtn, { backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }]} 
+              style={[styles.shareBtn, { backgroundColor: colors.backgroundElevated, paddingVertical: 18, borderWidth: 1, borderColor: colors.border }]} 
               onPress={() => router.push('/social-share/backup-step')}
             >
-              <Text style={[styles.shareBtnText, { color: '#FFFFFF' }]}>ÉTAPE SUIVANTE : SAUVEGARDE</Text>
-              <ArrowRight size={20} color="#FFFFFF" />
+              <Text style={[styles.shareBtnText, { color: colors.textPrimary }]}>ÉTAPE SUIVANTE : SAUVEGARDE</Text>
+              <ArrowRight size={20} color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </ScrollView>

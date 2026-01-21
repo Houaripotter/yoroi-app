@@ -238,6 +238,7 @@ export default function TrainingJournalScreen() {
   // Advanced Cardio Metrics
   const [newEntryIncline, setNewEntryIncline] = useState('');
   const [newEntrySpeed, setNewEntrySpeed] = useState('');
+  const [newEntryPace, setNewEntryPace] = useState('');
   const [newEntryWatts, setNewEntryWatts] = useState('');
   const [newEntryResistance, setNewEntryResistance] = useState('');
   const [newEntryLevel, setNewEntryLevel] = useState('');
@@ -274,6 +275,29 @@ export default function TrainingJournalScreen() {
       }
     };
     checkPendingVictory();
+  }, []);
+
+  // Reset modal state
+  const resetModalState = useCallback(() => {
+    setShowAddEntryModal(false);
+    setNewEntryValue('');
+    setNewEntryReps('');
+    setNewEntryDuration('');
+    setNewEntryCalories('');
+    setNewEntryRPE(5);
+    setEntryDate('today');
+    setNewEntryDistance('');
+    setRunningTimeHours('');
+    setRunningTimeMinutes('');
+    setRunningTimeSeconds('');
+    setHyroxEffortType('course');
+    setHyroxDistanceMeters('');
+    setNewEntryIncline('');
+    setNewEntrySpeed('');
+    setNewEntryPace('');
+    setNewEntryWatts('');
+    setNewEntryResistance('');
+    setNewEntryLevel('');
   }, []);
 
   // Check if first time visiting training journal
@@ -1621,28 +1645,6 @@ export default function TrainingJournalScreen() {
       }
     };
 
-    // Reset modal state
-    const resetModalState = () => {
-      setShowAddEntryModal(false);
-      setNewEntryValue('');
-      setNewEntryReps('');
-      setNewEntryDuration('');
-      setNewEntryCalories('');
-      setNewEntryRPE(5);
-      setEntryDate('today');
-      setNewEntryDistance('');
-      setRunningTimeHours('');
-      setRunningTimeMinutes('');
-      setRunningTimeSeconds('');
-      setHyroxEffortType('course');
-      setHyroxDistanceMeters('');
-      setNewEntryIncline('');
-      setNewEntrySpeed('');
-      setNewEntryWatts('');
-      setNewEntryResistance('');
-      setNewEntryLevel('');
-    };
-
     return (
       <Modal visible={showAddEntryModal} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
@@ -1658,44 +1660,44 @@ export default function TrainingJournalScreen() {
               </View>
 
               {/* Date Picker */}
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Date de la séance</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Date de la séance</Text>
               <View style={styles.datePickerRow}>
                 <TouchableOpacity
                   style={[
                     styles.dateOption,
-                    { backgroundColor: entryDate === 'today' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                    { backgroundColor: entryDate === 'today' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'today' ? colors.accent : colors.border }
                   ]}
                   onPress={() => setEntryDate('today')}
                 >
-                  <Calendar size={16} color={entryDate === 'today' ? '#FFFFFF' : colors.textMuted} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'today' ? '#FFFFFF' : colors.textPrimary }]}>
+                  <Calendar size={16} color={entryDate === 'today' ? '#FFFFFF' : colors.textSecondary} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'today' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
                     Aujourd'hui
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.dateOption,
-                    { backgroundColor: entryDate === 'yesterday' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                    { backgroundColor: entryDate === 'yesterday' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'yesterday' ? colors.accent : colors.border }
                   ]}
                   onPress={() => setEntryDate('yesterday')}
                 >
-                  <Clock size={16} color={entryDate === 'yesterday' ? '#FFFFFF' : colors.textMuted} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'yesterday' ? '#FFFFFF' : colors.textPrimary }]}>
+                  <Clock size={16} color={entryDate === 'yesterday' ? '#FFFFFF' : colors.textSecondary} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'yesterday' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
                     Hier
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.dateOption,
-                    { backgroundColor: entryDate === 'custom' ? colors.accent : colors.backgroundCard, borderColor: colors.border }
+                    { backgroundColor: entryDate === 'custom' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'custom' ? colors.accent : colors.border }
                   ]}
                   onPress={() => {
                     setEntryDate('custom');
                     setShowDatePicker(true);
                   }}
                 >
-                  <Edit3 size={16} color={entryDate === 'custom' ? '#FFFFFF' : colors.textMuted} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'custom' ? '#FFFFFF' : colors.textPrimary }]}>
+                  <Edit3 size={16} color={entryDate === 'custom' ? '#FFFFFF' : colors.textSecondary} />
+                  <Text style={[styles.dateOptionText, { color: entryDate === 'custom' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
                     {entryDate === 'custom'
                       ? customDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
                       : 'Autre'}

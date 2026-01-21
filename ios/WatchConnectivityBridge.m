@@ -47,4 +47,8 @@ RCT_EXTERN_METHOD(getReceivedApplicationContext:(RCTPromiseResolveBlock)resolve
 RCT_EXTERN_METHOD(activateSession:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+// Méthode de diagnostic
+RCT_EXTERN_METHOD(ping:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

@@ -52,24 +52,23 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const syncProfileToWatch = useCallback(async () => {
     try {
       const profile = await getProfile();
-      if (profile) {
-        // Récupérer les données de gamification depuis AsyncStorage
-        const [avatarId, level, rank] = await Promise.all([
-          AsyncStorage.getItem('@yoroi_avatar_id'),
-          AsyncStorage.getItem('@yoroi_level'),
-          AsyncStorage.getItem('@yoroi_rank'),
-        ]);
+      // Récupérer les données de gamification
+      const [avatarConfig, level, rank, waterIntake] = await Promise.all([
+        AsyncStorage.getItem('@yoroi_avatar_config'),
+        AsyncStorage.getItem('@yoroi_level'),
+        AsyncStorage.getItem('@yoroi_rank'),
+        AsyncStorage.getItem('waterIntake'),
+      ]);
 
-        await WatchConnectivity.updateApplicationContext({
-          avatarConfig: {
-            name: avatarId || 'samurai',
-            level: level ? parseInt(level) : 1,
-            rank: rank || 'Novice'
-          },
-          userName: profile.name || 'Guerrier',
-          timestamp: Date.now()
-        });
-      }
+      await WatchConnectivity.updateApplicationContext({
+        avatarConfig: avatarConfig ? JSON.parse(avatarConfig) : { name: 'samurai' },
+        userName: profile?.name || 'Guerrier',
+        level: level ? parseInt(level) : 1,
+        rank: rank || 'Novice',
+        waterIntake: parseFloat(waterIntake || '0'),
+        timestamp: Date.now()
+      });
+      console.log('📡 Profil complet envoyé à la montre');
     } catch (e) {
       console.log('⚠️ Erreur sync profil vers watch:', e);
     }
@@ -174,23 +173,73 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     if (isAvailable) await WatchConnectivity.sendRecordsUpdate(records);
   };
 
-  const syncAllData = async () => {
-    if (!isAvailable) return;
+  // Sync complète de toutes les données (MEGA-PACK)
+  const syncAllData = useCallback(async () => {
+    if (!isAvailable || Platform.OS !== 'ios') return;
+
     try {
-      const [weight, waterIntake, streak] = await Promise.all([
+      console.log('🔄 Préparation du Mega-Pack pour la Watch...');
+
+      // 1. Récupérer TOUTES les données en parallèle
+      const [
+        profile,
+        weight,
+        waterIntake,
+        streak,
+        avatarConfig,
+        level,
+        rank
+      ] = await Promise.all([
+        getProfile(),
         AsyncStorage.getItem('currentWeight'),
         AsyncStorage.getItem('waterIntake'),
         AsyncStorage.getItem('streak'),
+        AsyncStorage.getItem('@yoroi_avatar_config'),
+        AsyncStorage.getItem('@yoroi_level'),
+        AsyncStorage.getItem('@yoroi_rank'),
       ]);
-      await WatchConnectivity.updateApplicationContext({
+
+      // 2. Construire l'enveloppe unique
+      let parsedAvatar = avatarConfig ? JSON.parse(avatarConfig) : { pack: 'samurai' };
+      // Sécurité : si c'est l'ancien format, on transforme
+      if (parsedAvatar && !parsedAvatar.pack && parsedAvatar.id) {
+        parsedAvatar.pack = parsedAvatar.id;
+      }
+
+      const megaPack = {
+        // Santé
         weight: parseFloat(weight || '0'),
-        waterIntake: parseInt(waterIntake || '0'),
+        waterIntake: parseFloat(waterIntake || '0'),
         streak: parseInt(streak || '0'),
+        
+        // Profil (Harmonisé avec la montre)
+        userName: profile?.name || 'Guerrier',
+        avatarConfig: parsedAvatar,
+        level: level ? parseInt(level) : 1,
+        rank: rank || 'Novice',
+        
+        // Métadonnées
         timestamp: Date.now(),
-      });
+        forceRefresh: true
+      };
+
+      // 3. Envoi via deux canaux pour 100% de fiabilité
+      // Canal A : Contexte (Dernier état connu)
+      await WatchConnectivity.updateApplicationContext(megaPack);
+      
+      // Canal B : Message direct (Si l'app Watch est ouverte, c'est instantané)
+      if (isReachable) {
+        await WatchConnectivity.sendMessageToWatch(megaPack);
+      }
+
       setLastSyncDate(new Date());
-    } catch (e) {}
-  };
+      console.log('✅ Mega-Pack envoyé avec succès !');
+      showSyncBanner('⌚ Montre mise à jour');
+    } catch (e) {
+      console.error('❌ Erreur lors du pack de sync:', e);
+      setLastError('Erreur de synchronisation');
+    }
+  }, [isAvailable, isReachable]);
 
   return (
     <WatchContext.Provider

@@ -3,13 +3,12 @@
 // Classé par Sport, Muscle et Équipement
 // ============================================ 
 
-export interface ExerciseDefinition {
-  name: string;
-  category: string;
-  muscle?: string;
-  unit: 'reps' | 'time' | 'km';
+export interface ExerciseDefinition { 
+  name: string; 
+  category: string; 
+  muscle?: string; 
+  unit: 'reps' | 'time' | 'km' | 'meters'; 
 }
-
 export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   // === CARDIO (CLASSÉ PAR APPAREIL) === 
   { name: 'Course (Tapis Matrix)', category: 'cardio', muscle: 'TAPIS', unit: 'km' },
@@ -133,8 +132,47 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = [
   { name: 'Ground and Pound (Sac)', category: 'mma', muscle: 'FRAPPE', unit: 'time' },
   { name: 'Transitions Striking/Wrestling', category: 'mma', muscle: 'TECHNIQUE', unit: 'reps' },
 
-  // === MUAY THAI ===
-  { name: 'Thai Pads (Pao)', category: 'muay_thai', muscle: 'INTENSITÉ', unit: 'time' },
-  { name: 'Clinch / Corps à corps', category: 'muay_thai', muscle: 'TECHNIQUE', unit: 'time' },
-  { name: 'Kick Rounds (Sac)', category: 'muay_thai', muscle: 'PUISSANCE', unit: 'reps' },
-];
+    // === MUAY THAI ===
+    { name: 'Thai Pads (Pao)', category: 'muay_thai', muscle: 'INTENSITÉ', unit: 'time' }, 
+    { name: 'Clinch / Corps à corps', category: 'muay_thai', muscle: 'TECHNIQUE', unit: 'time' }, 
+    { name: 'Kick Rounds (Sac)', category: 'muay_thai', muscle: 'PUISSANCE', unit: 'reps' }, 
+  
+    // === JUDO ===
+    { name: 'Uchi-komi (Répétitions)', category: 'judo', muscle: 'TECHNIQUE', unit: 'reps' },
+    { name: 'Randori (Combat)', category: 'judo', muscle: 'INTENSITÉ', unit: 'time' },
+    { name: 'Nage-komi (Projections)', category: 'judo', muscle: 'PUISSANCE', unit: 'reps' },
+    { name: 'Ne-waza (Sol)', category: 'judo', muscle: 'TECHNIQUE', unit: 'time' },
+  
+    // === LUTTE (WRESTLING) ===
+    { name: 'Shoot Drills', category: 'lutte', muscle: 'EXPLOSIVITÉ', unit: 'reps' },
+    { name: 'Sprawl Drills', category: 'lutte', muscle: 'RÉACTION', unit: 'reps' },
+    { name: 'Combat Libre', category: 'lutte', muscle: 'INTENSITÉ', unit: 'time' },
+    { name: 'Lutte Gréco-Romaine', category: 'lutte', muscle: 'FORCE', unit: 'time' },
+  
+    // === CROSSFIT / WOD ===
+    { name: 'Kettlebell Swings', category: 'crossfit', muscle: 'CHAÎNE POST.', unit: 'reps' },
+    { name: 'Box Jumps', category: 'crossfit', muscle: 'EXPLOSIVITÉ', unit: 'reps' },
+    { name: 'Wall Balls (Crossfit)', category: 'crossfit', muscle: 'CORPS ENTIER', unit: 'reps' },
+    { name: 'Double Unders (Corde)', category: 'crossfit', muscle: 'COORDINATION', unit: 'reps' },
+    { name: 'Toes to Bar', category: 'crossfit', muscle: 'ABDOS', unit: 'reps' },
+    { name: 'Clean & Jerk', category: 'crossfit', muscle: 'PUISSANCE', unit: 'reps' },
+    { name: 'Snatch', category: 'crossfit', muscle: 'TECHNIQUE', unit: 'reps' },
+  
+    // === KARATÉ / TAEKWONDO ===
+    { name: 'Katas / Poomsae', category: 'karate', muscle: 'FORME', unit: 'time' },
+    { name: 'Kihon (Bases)', category: 'karate', muscle: 'TECHNIQUE', unit: 'reps' },
+    { name: 'Kumite (Combat)', category: 'karate', muscle: 'VITESSE', unit: 'time' },
+    { name: 'Frappes Cibles (Pao)', category: 'karate', muscle: 'PRÉCISION', unit: 'reps' },
+  
+    // === CYCLISME / VÉLO ===
+    { name: 'Sortie Route (Endurance)', category: 'velo', muscle: 'JAMBES', unit: 'km' },
+    { name: 'Sprint Cycliste', category: 'velo', muscle: 'PUISSANCE', unit: 'time' },
+    { name: 'Montée de Col', category: 'velo', muscle: 'RÉSISTANCE', unit: 'km' },
+    { name: 'Home Trainer', category: 'velo', muscle: 'CARDIO', unit: 'time' },
+  
+    // === NATATION ===
+    { name: 'Natation Libre (Crawl)', category: 'natation', muscle: 'CORPS ENTIER', unit: 'km' },
+    { name: 'Séries Vitesse (Bassin)', category: 'natation', muscle: 'EXPLOSIVITÉ', unit: 'meters' },
+    { name: 'Natation Plaquettes', category: 'natation', muscle: 'BRAS', unit: 'meters' },
+    { name: 'Eau Libre (Mer)', category: 'natation', muscle: 'ENDURANCE', unit: 'time' },
+  ];

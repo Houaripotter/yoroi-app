@@ -39,6 +39,7 @@ import {
   CalendarDays,
   Bell,
   Scale,
+  Activity,
 } from 'lucide-react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 

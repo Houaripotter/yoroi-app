@@ -23,22 +23,13 @@ if (!isExpoGo && Platform.OS === 'ios') {
 // Mock pour Expo Go ou si le module n'est pas disponible
 const MockHealthKit = {
   isHealthDataAvailable: () => false,
-  requestAuthorization: () => Promise.resolve(false),
-  queryQuantitySamples: () => Promise.resolve([]),
-  queryCategorySamples: () => Promise.resolve([]),
-  getLastSleepSample: () => Promise.resolve(null),
-  getHeartRateSamples: () => Promise.resolve([]),
-  getHeartRateVariabilitySamples: () => Promise.resolve([]),
-  getOxygenSaturationSamples: () => Promise.resolve([]),
-  getBodyTemperatureSamples: () => Promise.resolve([]),
-  getRespiratoryRateSamples: () => Promise.resolve([]),
-  getWaterSamples: () => Promise.resolve([]),
-  getWeightSamples: () => Promise.resolve([]),
-  getStepCount: () => Promise.resolve({ quantity: 0 }),
-  getActiveEnergyBurned: () => Promise.resolve({ quantity: 0 }),
-  // Workout methods
-  saveWorkoutSample: () => Promise.resolve(undefined),
-  queryWorkoutSamples: () => Promise.resolve([]),
+  requestAuthorization: async () => ({}),
+  queryQuantitySamples: async () => [],
+  queryCategorySamples: async () => [],
+  queryWorkoutSamples: async () => [],
+  queryStatistics: async () => ({ sumQuantity: 0 }),
+  saveQuantitySample: async () => true,
+  saveWorkoutSample: async () => true,
 };
 
 // Exporter le module réel ou le mock

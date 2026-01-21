@@ -313,11 +313,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
-        // Recevoir les données de l'iPhone
+        // Recevoir les données de l'iPhone (Canal Direct)
         DispatchQueue.main.async {
-            print("📩 Message reçu de l'iPhone: \(message.keys)")
+            print("📩 Message direct reçu de l'iPhone: \(message.keys)")
 
-            // Exemple: recevoir les données de poids/hydratation/etc
+            // Gestion du MEGA-PACK
+            if message["avatarConfig"] != nil || message["weight"] != nil {
+                // Envoyer l'objet complet au HealthManager
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: message)
+            }
+
+            // Fallback pour les messages individuels (compatibilité)
             if let weightData = message["weightUpdate"] as? Data {
                 NotificationCenter.default.post(name: .didReceiveWeightUpdate, object: weightData)
             }
@@ -325,13 +331,33 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let hydrationData = message["hydrationUpdate"] as? Data {
                 NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: hydrationData)
             }
-            
-            if let recordsData = message["recordsUpdate"] as? Data {
-                NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: recordsData)
-            }
 
             // Répondre à l'iPhone
             replyHandler(["status": "received"])
+        }
+    }
+
+    func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        // Recevoir les données envoyées via updateApplicationContext (Sync initiale/Profil)
+        DispatchQueue.main.async {
+            print("📦 Application Context reçu de l'iPhone: \(applicationContext.keys)")
+
+            if let weight = applicationContext["weight"] as? Double {
+                NotificationCenter.default.post(name: .didReceiveWeightUpdate, object: weight)
+            }
+
+            if let water = applicationContext["waterIntake"] as? Double {
+                NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: water)
+            }
+            
+            // Sync Avatar et Nom
+            if let avatarConfig = applicationContext["avatarConfig"] as? [String: Any] {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["avatarConfig": avatarConfig])
+            }
+            
+            if let userName = applicationContext["userName"] as? String {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["userName": userName])
+            }
         }
     }
 

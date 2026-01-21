@@ -13,6 +13,10 @@
 		498511F0B061E3AE8C25AE87 /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AAAD64A3063ADB127BA85437 /* libPods-Yoroi.a */; };
 		84E5E72A594D6616984C503F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */; };
 		97493F412F1D10E400CC3C63 /* YoroiWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		97966CD02F2059F900460D05 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		97966CD12F2059F900460D05 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		97966CD22F2059F900460D05 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		97966CD32F2059F900460D05 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CB2E1F97A908BAB7451766D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
@@ -76,8 +80,47 @@
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		97966CC42F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Complications/YoroiComplications.swift,
+				YoroiWatchApp.swift,
+			);
+			target = 13B07F861A680F5B00A75B9A /* Yoroi */;
+		};
+		97966CC52F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Complications/YoroiComplications.swift,
+				YoroiWatchApp.swift,
+			);
+			target = 97493F3A2F1D10E400CC3C63 /* YoroiWatch */;
+		};
+		97966CC62F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Complications/YoroiComplications.swift,
+				YoroiWatchApp.swift,
+			);
+			target = 97493F4E2F1D10E500CC3C63 /* YoroiWatch Watch AppTests */;
+		};
+		97966CC72F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+				Complications/YoroiComplications.swift,
+				YoroiWatchApp.swift,
+			);
+			target = 97493F582F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App"; sourceTree = "<group>"; };
+		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (97966CC42F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 97966CC52F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 97966CC62F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 97966CC72F2059BF00460D05 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "YoroiWatch Watch App"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -230,25 +273,7 @@
 			productReference = 13B07F961A680F5B00A75B9A /* Yoroi.app */;
 			productType = "com.apple.product-type.application";
 		};
-		97493F3A2F1D10E400CC3C63 /* YoroiWatch */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 97493F652F1D10E500CC3C63 /* Build configuration list for PBXNativeTarget "YoroiWatch" */;
-			buildPhases = (
-				97493F392F1D10E400CC3C63 /* Resources */,
-				97493F642F1D10E500CC3C63 /* Embed Watch Content */,
-				8B2C2C3179179F466D53BCB0 /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				97493F432F1D10E400CC3C63 /* PBXTargetDependency */,
-			);
-			name = YoroiWatch;
-			productName = YoroiWatch;
-			productReference = 97493F3B2F1D10E400CC3C63 /* YoroiWatch.app */;
-			productType = "com.apple.product-type.application.watchapp2-container";
-		};
-		97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */ = {
+				97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97493F612F1D10E500CC3C63 /* Build configuration list for PBXNativeTarget "YoroiWatch Watch App" */;
 			buildPhases = (
@@ -345,14 +370,12 @@
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (
-				13B07F861A680F5B00A75B9A /* Yoroi */,
-				97493F3A2F1D10E400CC3C63 /* YoroiWatch */,
-				97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */,
-				97493F4E2F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
-				97493F582F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
-			);
-		};
+			                        targets = (
+			                                13B07F861A680F5B00A75B9A /* Yoroi */,
+			                                97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */,
+			                                97493F4E2F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
+			                                97493F582F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
+			                        );		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -371,6 +394,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97966CD02F2059F900460D05 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -378,6 +402,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97966CD12F2059F900460D05 /* Images.xcassets in Resources */,
 				CB2E1F97A908BAB7451766D5 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -386,6 +411,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97966CD22F2059F900460D05 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +419,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97966CD32F2059F900460D05 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

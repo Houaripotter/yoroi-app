@@ -130,21 +130,40 @@ class HealthManager: ObservableObject {
         guard let userInfo = notification.object as? [String: Any] else { return }
         
         DispatchQueue.main.async {
-            if let avatarConfig = userInfo["avatarConfig"] as? [String: Any],
-               let pack = avatarConfig["pack"] as? String {
-                self.avatarName = pack
-                print("🎭 Avatar sync: \(pack)")
+            // 1. Gestion de l'Avatar (Nettoyage du nom pour correspondre aux assets Watch)
+            if let avatarConfig = userInfo["avatarConfig"] as? [String: Any] {
+                var pack = avatarConfig["pack"] as? String ?? avatarConfig["name"] as? String ?? ""
+                if !pack.isEmpty {
+                    // Nettoyage agressif pour matcher les assets Watch
+                    pack = pack.lowercased()
+                        .replacingOccurrences(of: "avatar_", with: "")
+                        .replacingOccurrences(of: ".png", with: "")
+                        .replacingOccurrences(of: ".jpg", with: "")
+                    
+                    self.avatarName = pack
+                    print("🎭 Avatar sync (final cleaned): \(pack)")
+                }
+            }
+            
+            // 2. Gestion du Poids (Mega-pack)
+            if let weight = userInfo["weight"] as? Double {
+                self.currentWeight = weight
+                print("⚖️ Poids Mega-pack: \(weight)")
+            }
+            
+            // 3. Gestion de l'Eau (Mega-pack)
+            if let water = userInfo["waterIntake"] as? Double {
+                self.waterIntake = water
+                print("💧 Eau Mega-pack: \(water)")
+            }
+            
+            // 4. Streak et Nom
+            if let streakVal = userInfo["streak"] as? Int {
+                self.streak = streakVal
             }
             
             if let name = userInfo["userName"] as? String {
                 print("👤 Nom sync: \(name)")
-            }
-            
-            // Sync aussi la valeur directe de l'eau si présente
-            if let water = userInfo["waterIntake"] as? Double {
-                self.waterIntake = water
-            } else if let water = userInfo["waterIntake"] as? Int {
-                self.waterIntake = Double(water)
             }
             
             self.savePersistedData()
@@ -808,7 +827,6 @@ class HealthManager: ObservableObject {
         // Récupération de l'entraînement en cours si l'app a crashé ou été fermée
         if defaults.bool(forKey: "workoutActive") {
             let startDate = Date(timeIntervalSince1970: defaults.double(forKey: "workoutStartDate"))
-            let typeRaw = UInt(defaults.integer(forKey: "workoutType"))
             let lastDuration = defaults.double(forKey: "workoutLastDuration")
             
             // Calculer la durée réelle écoulée

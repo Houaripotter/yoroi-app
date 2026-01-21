@@ -290,8 +290,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#FFEE00',
       accentLight: '#FFFF66',     // Ultra lumineux
       textPrimary: '#FFFFFF',
-      textSecondary: '#E5E5E5',
-      textMuted: '#9E9E9E',
+      textSecondary: '#F0F0F0',   // Plus clair pour lisibilité
+      textMuted: '#AAAAAA',      // Plus clair pour lisibilité
       textOnAccent: '#000000',    // NOIR sur jaune vif ✓
       border: '#2A2A22',
       borderLight: '#3A3A30',
@@ -316,8 +316,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#FFEE00',
       accentLight: '#FFFF66',
       textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textSecondary: '#222222',
+      textMuted: '#555555',
       textOnAccent: '#000000',    // NOIR sur jaune fluo ✓
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
@@ -343,8 +343,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#00E8D8',
       accentLight: '#7FFFF4',     // Tiffany clair brillant
       textPrimary: '#FFFFFF',
-      textSecondary: '#E5E8E8',
-      textMuted: '#9AB0AD',
+      textSecondary: '#F0F5F5',   // Plus clair
+      textMuted: '#A0B0B0',      // Plus clair
       textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
       border: '#1F2D2B',
       borderLight: '#2A3836',
@@ -369,8 +369,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#00E8D8',
       accentLight: '#7FFFF4',
       textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textSecondary: '#222222',
+      textMuted: '#555555',
       textOnAccent: '#000000',    // NOIR sur tiffany fluo ✓
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
@@ -396,8 +396,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#EE0000',
       accentLight: '#FF4444',     // Rouge flamboyant
       textPrimary: '#FFFFFF',
-      textSecondary: '#E8E5E5',
-      textMuted: '#B09898',
+      textSecondary: '#F5F0F0',
+      textMuted: '#B8A0A0',
       textOnAccent: '#FFFFFF',
       border: '#2F1F1F',
       borderLight: '#3A2A2A',
@@ -422,8 +422,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#DD0000',
       accentLight: '#FF3333',
       textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textSecondary: '#222222',
+      textMuted: '#555555',
       textOnAccent: '#FFFFFF',
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
@@ -449,8 +449,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#FF5BA7',
       accentLight: '#FF8DC7',     // Rose bonbon brillant
       textPrimary: '#FFFFFF',
-      textSecondary: '#E8E5E8',
-      textMuted: '#B098A8',
+      textSecondary: '#F5F0F5',
+      textMuted: '#B8A0B0',
       textOnAccent: '#000000',    // Noir sur rose
       border: '#2A1F25',
       borderLight: '#352A30',
@@ -475,8 +475,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#FF5BA7',
       accentLight: '#FF8DC7',
       textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textSecondary: '#222222',
+      textMuted: '#555555',
       textOnAccent: '#000000',    // Noir sur rose
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
@@ -502,8 +502,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#00EE00',
       accentLight: '#66FF66',     // Vert ultra brillant
       textPrimary: '#FFFFFF',
-      textSecondary: '#D0E8D8',
-      textMuted: '#7BB088',
+      textSecondary: '#F0F5F0',
+      textMuted: '#A0B8A0',
       textOnAccent: '#000000',
       border: '#1F2A1F',
       borderLight: '#2A352A',
@@ -528,8 +528,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#00EE00',
       accentLight: '#33FF33',
       textPrimary: '#000000',
-      textSecondary: '#1A1A1A',
-      textMuted: '#666666',
+      textSecondary: '#222222',
+      textMuted: '#555555',
       textOnAccent: '#000000',
       border: '#EEEEEE',
       borderLight: '#F5F5F5',
@@ -767,8 +767,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#E0E0E0',
       accentLight: '#FFFFFF',
       textPrimary: '#FFFFFF',
-      textSecondary: '#B8B8B8',
-      textMuted: '#808080',
+      textSecondary: '#F0F0F0',   // Amélioré (était #B8B8B8)
+      textMuted: '#AAAAAA',      // Amélioré (était #808080)
       textOnAccent: '#000000',
       border: '#2A2A2A',
       borderLight: '#353535',
@@ -793,8 +793,8 @@ export const themes: Record<string, Theme> = {
       accentDark: '#000000',
       accentLight: '#333333',
       textPrimary: '#1A1A1A',
-      textSecondary: '#333333',
-      textMuted: '#666666',
+      textSecondary: '#222222',    // Amélioré
+      textMuted: '#555555',       // Amélioré
       textOnAccent: '#FFFFFF',     // Blanc sur noir
       border: '#E5E5E5',
       borderLight: '#EEEEEE',
