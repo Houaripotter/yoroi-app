@@ -293,4 +293,64 @@ struct StepsComplication: Widget {
         .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryCorner, .accessoryInline])
     }
 }
+
+// MARK: - Timer Complication
+
+struct TimerComplicationView: View {
+    var entry: YoroiEntry
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        switch family {
+        case .accessoryCircular:
+            ZStack {
+                AccessoryWidgetBackground()
+                Image(systemName: "timer")
+                    .font(.system(size: 20))
+                    .foregroundColor(.yellow)
+            }
+
+        case .accessoryRectangular:
+            HStack(spacing: 8) {
+                Image(systemName: "timer")
+                    .font(.system(size: 20))
+                    .foregroundColor(.yellow)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Chrono")
+                        .font(.system(size: 10))
+                        .foregroundColor(.gray)
+                    Text("Lancer")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+
+        case .accessoryCorner:
+            Image(systemName: "timer")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.yellow)
+                .widgetLabel("Chrono")
+
+        case .accessoryInline:
+            Label("Chrono Yoroi", systemImage: "timer")
+
+        default:
+            Image(systemName: "timer")
+        }
+    }
+}
+
+struct TimerComplication: Widget {
+    let kind: String = "TimerComplication"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: YoroiProvider()) { entry in
+            TimerComplicationView(entry: entry)
+                .containerBackground(.black, for: .widget)
+        }
+        .configurationDisplayName("Chrono")
+        .description("Accès rapide au chrono Yoroi")
+        .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryCorner, .accessoryInline])
+    }
+}
 #endif

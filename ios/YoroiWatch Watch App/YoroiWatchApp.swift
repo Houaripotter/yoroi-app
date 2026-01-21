@@ -11,6 +11,9 @@ import WidgetKit
 @main
 struct YoroiWatchApp: App {
     @StateObject private var healthManager = HealthManager.shared
+    
+    // Initialiser le gestionnaire de connexion immédiatement
+    private let connectivityManager = WatchConnectivityManager.shared
 
     var body: some Scene {
         WindowGroup {

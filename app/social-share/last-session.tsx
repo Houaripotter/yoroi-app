@@ -340,29 +340,45 @@ export default function LastSessionScreen() {
   }
 
   return (
-    <ScreenWrapper noPadding>
+    <ScreenWrapper noPadding noContainer>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         
         {/* HEADER ÉTAPE 3 - SOMMET ABSOLU */}
         <View style={{ 
-          paddingTop: insets.top, 
-          backgroundColor: colors.background, 
+          backgroundColor: '#F2F2F7', 
           borderBottomWidth: 1, 
           borderBottomColor: colors.border,
           zIndex: 999
         }}>
-          <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.accent, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 3 SUR 4</Text>
-            <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent + '20' }} />
-              <View style={{ width: 40, height: 3, backgroundColor: colors.accent + '20' }} />
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.accent + '20' }} />
-              <View style={{ width: 40, height: 3, backgroundColor: colors.accent + '20' }} />
-              <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
-              <View style={{ width: 40, height: 3, backgroundColor: colors.border }} />
-              <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.border }} />
+          <View style={{ paddingBottom: 10, paddingTop: 5 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
+              {/* BOUTON RETOUR */}
+              <TouchableOpacity 
+                style={{ position: 'absolute', left: 16, padding: 8 }}
+                onPress={() => router.back()}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
+              </TouchableOpacity>
+
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 3 SUR 4</Text>
+                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                  {/* Etape 1 & 2 (Passées - Gold) */}
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+                  <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+                  <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+                  
+                  {/* Etape 3 (Actuelle - Big Gold) */}
+                  <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+                  
+                  {/* Futur (Noir & Blanc Cassé) */}
+                  <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+                </View>
+              </View>
             </View>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginTop: 12, letterSpacing: 1 }}>PARTAGE & PERSONNALISATION</Text>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>PARTAGE & PERSONNALISATION</Text>
           </View>
         </View>
 
@@ -433,65 +449,7 @@ export default function LastSessionScreen() {
             />
           </View>
 
-          {/* 3. NOMBREUX TOGGLES DE PERSONNALISATION */}
-          <View style={{ marginBottom: 30 }}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: 'left', marginBottom: 15 }]}>ÉLÉMENTS À AFFICHER SUR L'IMAGE</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {[
-                { label: 'Date', value: showDate, setter: setShowDate, color: '#9CA3AF' },
-                { label: 'Club', value: showClub, setter: setShowClub, color: GOLD_COLOR },
-                { label: 'Lieu', value: showLieu, setter: setShowLieu, color: '#9CA3AF' },
-                { label: 'Annuel', value: showYearlyCount, setter: setShowYearlyCount, color: GOLD_COLOR },
-                { label: 'Mensuel', value: showMonthlyCount, setter: setShowMonthlyCount, color: colors.accent },
-                { label: 'Hebdo', value: showWeeklyCount, setter: setShowWeeklyCount, color: '#3B82F6' },
-                { label: 'Objectif', value: showGoalProgress, setter: setShowGoalProgress, color: GOLD_COLOR },
-                { label: 'Exercices', value: showExercises, setter: setShowExercises, color: '#10B981' },
-                { label: 'Stats Performance', value: showStats, setter: setShowStats, color: colors.accent },
-              ].map((item, i) => (
-                <TouchableOpacity
-                  key={i}
-                  onPress={() => item.setter(!item.value)}
-                  style={{ 
-                    width: '48%', 
-                    backgroundColor: item.value ? item.color + '15' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'), 
-                    padding: 14, 
-                    borderRadius: 16, 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    borderWidth: 1,
-                    borderColor: item.value ? item.color : colors.border
-                  }}
-                >
-                  <Text style={{ color: colors.textPrimary, fontSize: 12, fontWeight: '700' }}>{item.label}</Text>
-                  <Switch 
-                    value={item.value} 
-                    onValueChange={item.setter}
-                    trackColor={{ false: isDark ? '#333' : '#E5E5E5', true: item.color }}
-                    thumbColor="#FFFFFF"
-                    style={{ transform: [{ scale: 0.7 }] }}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* 4. LIEU PERSONNALISÉ */}
-          <View style={styles.locationSection}>
-            <View style={styles.locationHeader}>
-              <MapPinned size={18} color={colors.accent} />
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginBottom: 0 }]}>Modifier le lieu</Text>
-            </View>
-            <TextInput
-              style={[styles.locationInput, { backgroundColor: colors.backgroundCard, borderColor: colors.border, color: colors.textPrimary }]}
-              value={customLocation}
-              onChangeText={setCustomLocation}
-              placeholder="Ex: Basic-Fit Prado, Marseille..."
-              placeholderTextColor={colors.textMuted}
-            />
-          </View>
-
-          {/* 5. ACTIONS FINALES */}
+          {/* 3. ACTIONS FINALES */}
           <View style={{ gap: 15, marginTop: 20 }}>
             <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
               <Share2 size={24} color={colors.textOnAccent} />

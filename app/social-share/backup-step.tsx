@@ -47,27 +47,29 @@ export default function BackupStepScreen() {
   };
 
   return (
-    <ScreenWrapper noPadding>
+    <ScreenWrapper noPadding noContainer>
       {/* HEADER ÉTAPE 4 - SOMMET ABSOLU */}
       <View style={{ 
-        paddingTop: insets.top, 
-        backgroundColor: colors.background, 
+        backgroundColor: '#F2F2F7', 
         borderBottomWidth: 1, 
         borderBottomColor: colors.border,
         zIndex: 999
       }}>
-        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-          <Text style={{ fontSize: 16, fontWeight: '900', color: colors.gold, letterSpacing: 4, marginBottom: 12 }}>ÉTAPE 4 SUR 4</Text>
-          <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 40, height: 3, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.6, shadowRadius: 10, elevation: 10 }} />
+        <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
+          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+            {/* Etapes Passées (Gold) */}
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+            
+            {/* Etape 4 (Actuelle - Big Gold) */}
+            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: '#FFFFFF', marginTop: 12, letterSpacing: 1 }}>SÉCURISATION DES DONNÉES</Text>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: '#000000', marginTop: 4, letterSpacing: 1 }}>SÉCURISATION</Text>
         </View>
       </View>
 
@@ -81,32 +83,32 @@ export default function BackupStepScreen() {
           </View>
         </View>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
+        <Text style={[styles.title, { color: '#000000' }]}>
           Sauvegarde ton Cloud ☁️
         </Text>
         
-        <View style={[styles.warningBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}>
+        <View style={[styles.warningBox, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}>
           <Text style={styles.warningText}>
             Attention : YOROI fonctionne sans serveur pour respecter ta vie privée. Tes données sont uniquement sur ce téléphone.
           </Text>
         </View>
 
-        <View style={styles.instructionCard}>
+        <View style={[styles.instructionCard, { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
           <Text style={[styles.instructionTitle, { color: colors.gold }]}>MARCHE À SUIVRE :</Text>
           
           <View style={styles.stepRow}>
             <FolderPlus size={20} color={colors.gold} />
-            <Text style={styles.stepText}>Cree un dossier <Text style={{fontWeight: '900'}}>"Yoroi_app Backup"</Text> dans ton iCloud Drive.</Text>
+            <Text style={[styles.stepText, { color: '#000000' }]}>Cree un dossier <Text style={{fontWeight: '900'}}>"Yoroi_app Backup"</Text> dans ton iCloud Drive.</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Download size={20} color={colors.gold} />
-            <Text style={styles.stepText}>Clique sur le bouton ci-dessous pour generer ton fichier de sauvegarde.</Text>
+            <Text style={[styles.stepText, { color: '#000000' }]}>Clique sur le bouton ci-dessous pour generer ton fichier de sauvegarde.</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Cloud size={20} color={colors.gold} />
-            <Text style={styles.stepText}>Enregistre ce fichier dans ton dossier iCloud pour ne jamais rien perdre.</Text>
+            <Text style={[styles.stepText, { color: '#000000' }]}>Enregistre ce fichier dans ton dossier iCloud pour ne jamais rien perdre.</Text>
           </View>
         </View>
 
@@ -115,7 +117,7 @@ export default function BackupStepScreen() {
           onPress={handleExport}
           disabled={isExporting}
         >
-          <Download size={24} color="#000" />
+          <Download size={24} color="#FFFFFF" />
           <Text style={styles.exportBtnText}>
             {isExporting ? 'GÉNÉRATION...' : 'GÉNÉRER MA SAUVEGARDE'}
           </Text>
@@ -135,8 +137,8 @@ export default function BackupStepScreen() {
             router.replace('/(tabs)');
           }}
         >
-          <Text style={[styles.finishBtnText, { color: colors.textSecondary }]}>TERMINER LE PARCOURS</Text>
-          <ArrowRight size={18} color={colors.textSecondary} />
+          <Text style={[styles.finishBtnText, { color: '#6B7280' }]}>TERMINER LE PARCOURS</Text>
+          <ArrowRight size={18} color="#6B7280" />
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />

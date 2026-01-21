@@ -175,6 +175,13 @@ const SPORT_OPTIONS: Record<string, SportOption[]> = {
     { id: 'm_l_pr', label: 'Presse', icon: 'human-male', color: '#06B6D4', group: 'JAMBES' },
     { id: 'm_abs_c', label: 'Crunch', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
     { id: 'm_abs_p', label: 'Planche', icon: 'view-grid', color: '#84CC16', group: 'ABDOMINAUX' },
+    // AJOUT KETTLEBELL & LOMBAIRES
+    { id: 'm_ket_sw', label: 'Kettlebell Swing', icon: 'kettlebell', color: '#F59E0B', group: 'KETTLEBELL' },
+    { id: 'm_ket_sn', label: 'KB Snatch', icon: 'kettlebell', color: '#F59E0B', group: 'KETTLEBELL' },
+    { id: 'm_ket_cl', label: 'KB Clean & Press', icon: 'kettlebell', color: '#F59E0B', group: 'KETTLEBELL' },
+    { id: 'm_ket_grip', label: 'Grip avec manchon training', icon: 'hand-back-right', color: '#F59E0B', group: 'KETTLEBELL' },
+    { id: 'm_lom_ma', label: 'Banc à Lombaires', icon: 'human', color: '#3B82F6', group: 'LOMBAIRES' },
+    { id: 'm_lom_hi', label: 'Hyperextensions', icon: 'human', color: '#3B82F6', group: 'LOMBAIRES' },
     // AJOUT CARDIO DANS MUSCULATION
     { id: 'm_car_tre', label: 'Tapis de course', icon: 'run-fast', color: '#10B981', group: 'CARDIO' },
     { id: 'm_car_inc', label: 'Marche Inclinée', icon: 'trending-up', color: '#10B981', group: 'CARDIO' },
@@ -249,6 +256,7 @@ export default function AddTrainingScreen() {
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]); // Groupes d'exercices dépliés (fermés par défaut)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({}); // { jjb: ['drill', 'sparring'], running: ['5k'] }
+  const [optionStats, setOptionStats] = useState<Record<string, { weight: string, reps: string }>>({}); // { m_c_be: { weight: '80', reps: '6' } }
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
   const [customDescription, setCustomDescription] = useState(''); // Description personnalisée
@@ -300,6 +308,8 @@ export default function AddTrainingScreen() {
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState(''); // Barre de recherche
+  const [lastPerformances, setLastPerformances] = useState<Record<string, any>>({}); // Historique rapide
   const [userName, setUserName] = useState<string>('Champion');
   const [userGender, setUserGender] = useState<'male' | 'female'>('male');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
@@ -372,7 +382,42 @@ export default function AddTrainingScreen() {
     loadUserData();
   }, []);
 
-  // Recalculer les compteurs et objectifs quand le contexte change
+  // Charger les dernières performances pour chaque exercice
+  useEffect(() => {
+    const loadLastPerformances = async () => {
+      try {
+        const trainings = await getTrainings(90); // 3 derniers mois
+        const perfMap: Record<string, any> = {};
+        
+        // Parcourir du plus ancien au plus récent pour que le dernier écrase
+        [...trainings].reverse().forEach(t => {
+          if (t.notes) {
+            // Tenter de retrouver l'exercice dans les notes ou via les options
+            // Pour simplifier, on stocke la dernière séance complète par sport si elle a du cardio
+            if (t.distance || t.pente || t.speed) {
+              const sports = t.sport.split(',');
+              sports.forEach(s => {
+                perfMap[s.trim()] = {
+                  distance: t.distance,
+                  pente: t.pente,
+                  speed: t.speed,
+                  watts: t.watts,
+                  resistance: t.resistance,
+                  date: t.date
+                };
+              });
+            }
+          }
+        });
+        setLastPerformances(perfMap);
+      } catch (error) {
+        logger.error('Erreur chargement performances:', error);
+      }
+    };
+    loadLastPerformances();
+  }, []);
+
+  // Recalculer l'objectif quand le club change
   useEffect(() => {
     const updateContextualData = async () => {
       try {
@@ -579,99 +624,147 @@ export default function AddTrainingScreen() {
     }
   };
 
-  const renderPerformanceFields = () => (
-    <View style={{ marginTop: 15, padding: 15, backgroundColor: colors.backgroundElevated, borderRadius: 16, borderWidth: 1, borderColor: colors.gold + '30' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <Zap size={16} color={colors.gold} />
-        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textPrimary }}>STATS MACHINE (Technogym / Matrix)</Text>
-      </View>
-      
-      <View style={{ gap: 12 }}>
-        {/* Distance & Vitesse */}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>DISTANCE (KM)</Text>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45, fontSize: 16, fontWeight: '700', color: colors.accent }]}
-              placeholder="0.00"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="decimal-pad"
-              value={distance}
-              onChangeText={setDistance}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>VITESSE (KM/H)</Text>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45, fontSize: 16, fontWeight: '700' }]}
-              placeholder="0.0"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="decimal-pad"
-              value={speed}
-              onChangeText={setSpeed}
-            />
-          </View>
-        </View>
+  const renderPerformanceFields = (sportId: string) => {
+    const last = lastPerformances[sportId];
+    
+    // Detecter le nom de la machine
+    const sportOpts = selectedOptions[sportId] || [];
+    const machineOpt = getOptionsForSport(sportId).find(o => sportOpts.includes(o.id) && ['tapis', 'vélo', 'velo', 'elliptique', 'rameur', 'marche'].some(k => o.label.toLowerCase().includes(k)));
+    const machineTitle = machineOpt ? machineOpt.label.toUpperCase() : 'PERFORMANCE & CARDIO';
 
-        {/* Pente & Calories */}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>PENTE (%)</Text>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45, fontSize: 16, fontWeight: '700' }]}
-              placeholder="0"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="decimal-pad"
-              value={pente}
-              onChangeText={setPente}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>KCAL</Text>
-              <TouchableOpacity onPress={calculateCalories} style={{ paddingHorizontal: 4 }}>
-                <MaterialCommunityIcons name="calculator" size={14} color={colors.gold} />
-              </TouchableOpacity>
+    return (
+      <View style={{ marginTop: 15, padding: 15, backgroundColor: colors.backgroundElevated, borderRadius: 16, borderWidth: 1, borderColor: colors.gold + '30' }}>
+        
+        {/* HEADER SMART */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ padding: 6, backgroundColor: 'rgba(212, 175, 55, 0.1)', borderRadius: 8 }}>
+              <Zap size={18} color={colors.gold} />
             </View>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45, fontSize: 16, fontWeight: '700' }]}
-              placeholder="0"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              value={calories}
-              onChangeText={setCalories}
-            />
+            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.5 }}>{machineTitle}</Text>
           </View>
+          {last && (
+            <TouchableOpacity 
+              onPress={() => {
+                if (last.distance) setDistance(last.distance.toString());
+                if (last.speed) setSpeed(last.speed.toString());
+                if (last.pente) setPente(last.pente.toString());
+                if (last.watts) setWatts(last.watts.toString());
+                if (last.resistance) setResistance(last.resistance.toString());
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }}
+              style={{ backgroundColor: colors.accent + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+            >
+              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>REMETTRE LA DERNIÈRE</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Watts & Resistance (Optionnel) */}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>WATTS</Text>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45 }]}
-              placeholder="0"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              value={watts}
-              onChangeText={setWatts}
-            />
+        {/* DASHBOARD GRID */}
+        <View style={{ gap: 12 }}>
+          {/* Ligne 1: Vitesse & Pente (Les plus importants pour la machine) */}
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>VITESSE</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, minWidth: 40 }}
+                  placeholder="0.0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="decimal-pad"
+                  value={speed}
+                  onChangeText={setSpeed}
+                />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>PENTE</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, minWidth: 40 }}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="decimal-pad"
+                  value={pente}
+                  onChangeText={setPente}
+                />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>%</Text>
+              </View>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textSecondary, marginBottom: 4 }}>NIVEAU / RES.</Text>
-            <TextInput
-              style={[styles.notesInput, { minHeight: 45 }]}
-              placeholder="1"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              value={resistance}
-              onChangeText={setResistance}
-            />
+
+          {/* Ligne 2: Distance & Calories */}
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DISTANCE</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 22, fontWeight: '900', color: colors.accent, minWidth: 40 }}
+                  placeholder="0.0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="decimal-pad"
+                  value={distance}
+                  onChangeText={setDistance}
+                />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KM</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>ÉNERGIE</Text>
+                <TouchableOpacity onPress={calculateCalories} hitSlop={10}>
+                  <MaterialCommunityIcons name="lightning-bolt" size={14} color={colors.gold} />
+                </TouchableOpacity>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 22, fontWeight: '900', color: colors.gold, minWidth: 40 }}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="number-pad"
+                  value={calories}
+                  onChangeText={setCalories}
+                />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
+              </View>
+            </View>
           </View>
+
+          {/* Ligne 3: Watts & Resistance (Compact) */}
+          {(watts || resistance || sportId === 'velo' || sportId === 'spinning') && (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>PUISSANCE</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
+                  <TextInput
+                    style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'right' }}
+                    placeholder="-"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    value={watts}
+                    onChangeText={setWatts}
+                  />
+                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>W</Text>
+                </View>
+              </View>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>RÉSISTANCE</Text>
+                <TextInput
+                  style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'right', minWidth: 30 }}
+                  placeholder="-"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="number-pad"
+                  value={resistance}
+                  onChangeText={setResistance}
+                />
+              </View>
+            </View>
+          )}
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   useEffect(() => {
     loadClubs();
@@ -785,11 +878,16 @@ export default function AddTrainingScreen() {
         const sportOptions = selectedOptions[sportId] || [];
         const entries = sportEntries[sportId] || [];
 
-        // Options sélectionnées
+        // Options sélectionnées avec Stats (kg/reps)
         if (sportOptions.length > 0) {
           const optionLabels = sportOptions.map(optId => {
             const opt = getOptionsForSport(sportId).find(o => o.id === optId);
-            return opt?.label || optId;
+            const stats = optionStats[optId];
+            let label = opt?.label || optId;
+            if (stats && (stats.weight || stats.reps)) {
+              label += ` (${stats.weight || '0'}kg x ${stats.reps || '0'})`;
+            }
+            return label;
           });
           fullNotes += `${sportName}: ${optionLabels.join(', ')}\n`;
         }
@@ -920,26 +1018,65 @@ export default function AddTrainingScreen() {
   // Afficher les muscles et exercices si musculation ou street workout est sélectionné
   const showMuscles = selectedSports.includes('musculation') || selectedSports.includes('street_workout');
 
+  // Construire la liste riche des options sélectionnées
+  const getOptionDetails = () => {
+    return selectedSports.flatMap(sportId => {
+      const opts = getOptionsForSport(sportId);
+      const selectedIds = selectedOptions[sportId] || [];
+      return selectedIds.map(id => {
+        const opt = opts.find(o => o.id === id);
+        if (!opt) return null;
+        const stats = optionStats[id];
+        return {
+          ...opt,
+          weight: stats?.weight,
+          reps: stats?.reps
+        };
+      }).filter(Boolean);
+    });
+  };
+  const optionDetails = getOptionDetails();
+
+  // Construire les notes pour la prévisualisation
+  const getPreviewNotes = () => {
+    let fullNotes = '';
+    selectedSports.forEach(sportId => {
+      const sportName = getSportName(sportId);
+      const entries = sportEntries[sportId] || [];
+      
+      // Entries
+      if (entries.length > 0) {
+        if (selectedOptions[sportId]?.length === 0) fullNotes += `${sportName}:\n`;
+        entries.forEach(entry => fullNotes += `• ${entry}\n`);
+      }
+    });
+
+    if (customDescription.trim()) fullNotes += `\n${customDescription.trim()}`;
+    if (notes.trim()) fullNotes += `\n${notes.trim()}`;
+    return fullNotes.trim();
+  };
+
+  const previewNotes = getPreviewNotes();
+
   return (
-    <ScreenWrapper noPadding>
+    <ScreenWrapper noPadding noContainer>
       {/* HEADER ÉTAPE 1 - COLLÉ AU TOP */}
       <View style={{ 
-        paddingTop: Math.max(insets.top, 10), 
         backgroundColor: colors.background, 
         borderBottomWidth: 1, 
         borderBottomColor: colors.border,
         zIndex: 999
       }}>
-        <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+        <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
           <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 1 SUR 4</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 8, elevation: 8 }} />
-            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 30, height: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+            <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F5F5F5' }} />
+            <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F5F5F5' }} />
+            <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F5F5F5' }} />
           </View>
           <Text style={{ fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginTop: 10, letterSpacing: 0.5 }}>CONFIGURATION DE LA SÉANCE</Text>
         </View>
@@ -952,6 +1089,26 @@ export default function AddTrainingScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+
+        {/* 🔍 BARRE DE RECHERCHE - ULTRA ACCESSIBLE */}
+        <View style={{ marginBottom: 20 }}>
+          <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, height: 54, borderRadius: 18 }]}>
+            <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
+            <TextInput
+              style={[styles.customSportInput, { color: colors.textPrimary, fontSize: 16 }]}
+              placeholder="Rechercher un exercice (ex: Pente, Couché...)"
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {/* ═══════════════════════════════════════════ */}
         {/* ÉTAPE 1: CHOISIS TON SPORT */}
@@ -1187,44 +1344,6 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            {/* TYPE DE LIEU : En salle ou Plein air */}
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Lieu</Text>
-            <View style={styles.locationTypeRow}>
-              {/* Option En salle */}
-              <TouchableOpacity
-                style={[
-                  styles.locationTypeCard,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                  !isOutdoor && { borderColor: colors.accent, backgroundColor: colors.accent + '15' },
-                ]}
-                onPress={() => setIsOutdoor(false)}
-              >
-                <View style={[styles.locationTypeIcon, { backgroundColor: !isOutdoor ? colors.accent + '20' : colors.backgroundElevated }]}>
-                  <Building2 size={28} color={!isOutdoor ? colors.accent : colors.textSecondary} strokeWidth={2} />
-                </View>
-                <Text style={[styles.locationTypeLabel, { color: !isOutdoor ? colors.accent : colors.textSecondary, fontWeight: !isOutdoor ? '700' : '500' }]}>
-                  En salle
-                </Text>
-              </TouchableOpacity>
-
-              {/* Option Plein Air */}
-              <TouchableOpacity
-                style={[
-                  styles.locationTypeCard,
-                  { backgroundColor: colors.card, borderColor: colors.border },
-                  isOutdoor && { borderColor: '#22C55E', backgroundColor: '#22C55E15' },
-                ]}
-                onPress={() => setIsOutdoor(true)}
-              >
-                <View style={[styles.locationTypeIcon, { backgroundColor: isOutdoor ? '#22C55E30' : colors.backgroundElevated }]}>
-                  <Sun size={28} color={isOutdoor ? '#22C55E' : colors.textSecondary} strokeWidth={2} />
-                </View>
-                <Text style={[styles.locationTypeLabel, { color: isOutdoor ? '#22C55E' : colors.textSecondary, fontWeight: isOutdoor ? '700' : '500' }]}>
-                  Plein air
-                </Text>
-              </TouchableOpacity>
-            </View>
-
             {/* CLUBS - Toujours visible (certains clubs ont des séances en plein air) */}
             <>
               <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Club (optionnel)</Text>
@@ -1401,8 +1520,16 @@ export default function AddTrainingScreen() {
               
               {/* Groupement des options en accordéons */}
               {(() => {
+                // Filtrer les options par recherche
+                const filteredOptions = options.filter(opt => 
+                  opt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (opt.group && opt.group.toLowerCase().includes(searchQuery.toLowerCase()))
+                );
+
+                if (filteredOptions.length === 0 && searchQuery.length > 0) return null;
+
                 const grouped: Record<string, SportOption[]> = {};
-                options.forEach(opt => {
+                filteredOptions.forEach(opt => {
                   const gName = opt.group || 'GÉNÉRAL';
                   if (!grouped[gName]) grouped[gName] = [];
                   grouped[gName].push(opt);
@@ -1410,7 +1537,8 @@ export default function AddTrainingScreen() {
 
                 return Object.entries(grouped).map(([groupName, groupOpts]) => {
                   const groupId = `${sportId}-${groupName}`;
-                  const isExpanded = expandedGroups.includes(groupId);
+                  // Si recherche active, on force l'ouverture
+                  const isExpanded = searchQuery.length > 0 || expandedGroups.includes(groupId);
                   
                   return (
                     <View key={groupName} style={{ marginBottom: 10 }}>
@@ -1443,32 +1571,64 @@ export default function AddTrainingScreen() {
                           <View style={styles.sportOptionsGrid}>
                             {groupOpts.map((option) => {
                               const isSelected = sportSelectedOptions.includes(option.id);
+                              const stats = optionStats[option.id] || { weight: '', reps: '' };
+                              const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_');
+
                               return (
-                                <TouchableOpacity
-                                  key={option.id}
-                                  style={[
-                                    styles.sportOptionChip,
-                                    { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border },
-                                    isSelected && { backgroundColor: option.color + '20', borderColor: option.color }
-                                  ]}
-                                  onPress={() => toggleOption(sportId, option.id)}
-                                >
-                                  {option.icon && (
-                                    <MaterialCommunityIcons
-                                      name={option.icon as any}
-                                      size={18}
-                                      color={isSelected ? option.color : colors.textMuted}
-                                    />
-                                  )}
-                                  <Text style={[
-                                    styles.sportOptionLabel,
-                                    { color: colors.textSecondary },
-                                    isSelected && { color: option.color, fontWeight: '700' }
-                                  ]}>
-                                    {option.label}
-                                  </Text>
-                                  {isSelected && <Check size={14} color={option.color} />}
-                                </TouchableOpacity>
+                                <View key={option.id} style={{ marginBottom: 8, width: '100%' }}>
+                                  <TouchableOpacity
+                                    style={[
+                                      styles.sportOptionChip,
+                                      { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border, width: '100%' },
+                                      isSelected && { backgroundColor: option.color + '20', borderColor: option.color }
+                                    ]}
+                                    onPress={() => toggleOption(sportId, option.id)}
+                                  >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
+                                      {option.icon && (
+                                        <MaterialCommunityIcons
+                                          name={option.icon as any}
+                                          size={18}
+                                          color={isSelected ? option.color : colors.textMuted}
+                                        />
+                                      )}
+                                      <Text style={[
+                                        styles.sportOptionLabel,
+                                        { color: colors.textSecondary, flex: 1 },
+                                        isSelected && { color: colors.textPrimary, fontWeight: '700' }
+                                      ]}>
+                                        {option.label}
+                                      </Text>
+                                    </View>
+                                    
+                                    {isSelected && (
+                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                        {isStrength && (
+                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                            <TextInput
+                                              style={{ width: 45, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                              placeholder="kg"
+                                              placeholderTextColor={colors.textMuted}
+                                              keyboardType="number-pad"
+                                              value={stats.weight}
+                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val } }))}
+                                            />
+                                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>x</Text>
+                                            <TextInput
+                                              style={{ width: 40, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                              placeholder="reps"
+                                              placeholderTextColor={colors.textMuted}
+                                              keyboardType="number-pad"
+                                              value={stats.reps}
+                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
+                                            />
+                                          </View>
+                                        )}
+                                        <Check size={16} color={option.color} />
+                                      </View>
+                                    )}
+                                  </TouchableOpacity>
+                                </View>
                               );
                             })}
                           </View>
@@ -1476,7 +1636,7 @@ export default function AddTrainingScreen() {
                           {/* AFFICHAGE DES STATS SI GROUPE CARDIO */}
                           {(groupName === 'CARDIO' || groupName === 'TAPIS' || groupName === 'VÉLO' || groupName === 'DISTANCES') && 
                             groupOpts.some(o => sportSelectedOptions.includes(o.id)) && (
-                            renderPerformanceFields()
+                            renderPerformanceFields(sportId)
                           )}
                         </View>
                       )}
@@ -1618,79 +1778,42 @@ export default function AddTrainingScreen() {
           </View>
         )}
 
-        {/* DURÉE ESTIMÉE */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Duree (minutes)</Text>
-        <View style={[styles.durationContainer, { flexWrap: 'wrap' }]}>
-          {[30, 45, 60, 90].map((d) => (
-            <TouchableOpacity
-              key={d}
-              style={[
-                styles.durationItem,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                duration === d && { borderColor: colors.accent, backgroundColor: colors.accent + '20' },
-              ]}
-              onPress={() => setDuration(d)}
-            >
-              <Text
-                style={[
-                  styles.durationText,
-                  { color: colors.textSecondary },
-                  duration === d && { color: colors.accent, fontWeight: '700' },
-                ]}
-              >
-                {d}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {/* CHAMP LIBRE INTÉGRÉ */}
-          <View
-            style={[
-              styles.durationItem,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                paddingVertical: 0,
-                paddingHorizontal: 10,
-                flexDirection: 'row',
-                alignItems: 'center',
-                minWidth: 80,
-                justifyContent: 'center'
-              },
-              (![30, 45, 60, 90].includes(duration)) && { borderColor: colors.accent, backgroundColor: colors.accent + '10' }
-            ]}
-          >
-            <TextInput
-              style={[
-                styles.durationText,
-                {
-                  color: (![30, 45, 60, 90].includes(duration)) ? colors.accent : colors.textPrimary,
-                  fontWeight: '600',
-                  textAlign: 'right',
-                  minWidth: 30,
-                  paddingVertical: 12,
-                  height: '100%'
-                }
-              ]}
-              value={(![30, 45, 60, 90].includes(duration)) ? duration.toString() : ''}
-              placeholder="..."
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              maxLength={3}
-              onChangeText={(text) => {
-                const num = parseInt(text);
-                if (!isNaN(num) && num > 0) {
-                  setDuration(num);
-                }
-              }}
-            />
-            <Text style={[styles.durationText, { color: colors.textMuted, fontSize: 13, marginLeft: 4, fontWeight: '400' }]}>min</Text>
+        {/* DURÉE (HEURES / MINUTES) */}
+        <View style={{ marginTop: 20 }}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Durée de la séance</Text>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TextInput
+                style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
+                placeholder="0"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                value={Math.floor(duration / 60).toString()}
+                onChangeText={(h) => {
+                  const hours = parseInt(h) || 0;
+                  const minutes = duration % 60;
+                  setDuration(hours * 60 + minutes);
+                }}
+              />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>HEURES</Text>
+            </View>
+            <View style={{ flex: 1, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <TextInput
+                style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
+                placeholder="0"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                value={(duration % 60).toString()}
+                onChangeText={(m) => {
+                  const minutes = parseInt(m) || 0;
+                  const hours = Math.floor(duration / 60);
+                  setDuration(hours * 60 + minutes);
+                }}
+              />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>MINUTES</Text>
+            </View>
           </View>
         </View>
-
-        <Text style={[styles.endTimeText, { color: colors.textMuted }]}>
-          Fin estimee : {calculateEndTime()}
-        </Text>
 
         {/* FIN DES STATS PERFORMANCE */}
 
@@ -1856,133 +1979,148 @@ export default function AddTrainingScreen() {
         onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
       />
 
-      {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
-      <Modal
-        visible={showValidationModal}
-        transparent
-        animationType="fade"
-      >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', paddingTop: insets.top + 10 }}>
-          
-          {/* Header Étape 2 - PROPRE ET HAUT */}
-          <View style={{ alignItems: 'center', marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-              <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
-              <View style={{ width: 30, height: 2, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 30, height: 2, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(212, 175, 55, 0.2)' }} />
-            </View>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 }}>APERÇU DE LA CARTE & CLOUD</Text>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
-            {/* CARTE À PARTAGER (Aperçu) */}
-            <View 
-              style={{ 
-                width: '100%', 
-                maxWidth: 360, 
-                borderRadius: 24,
-                overflow: 'hidden',
-                shadowColor: "#000",
-                shadowOpacity: 0.8,
-                shadowRadius: 30,
-                elevation: 25,
-                marginBottom: 30
-              }}
+            {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
+            <Modal
+              visible={showValidationModal}
+              transparent
+              animationType="fade"
             >
-              <SessionCard
-                training={{
-                  sport: selectedSports.join(','),
-                  duration_minutes: duration,
-                  distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
-                  calories: calories ? parseInt(calories) : undefined,
-                  intensity: intensity,
-                  heart_rate: heartRate ? parseInt(heartRate) : undefined,
-                  date: date.toISOString(),
-                  start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                  rounds: rounds ? parseInt(rounds) : undefined,
-                  round_duration: roundDuration ? parseInt(roundDuration) : undefined,
-                  club_logo: selectedClub?.logo_uri,
-                  club_name: selectedClub?.name,
-                  muscles: selectedMuscles.join(','),
-                  exercises: exercises,
-                  technique_rating: techniqueRating || undefined,
-                  is_outdoor: isOutdoor,
-                  pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
-                  speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
-                  resistance: resistance ? parseInt(resistance) : undefined,
-                  watts: watts ? parseInt(watts) : undefined,
-                  cadence: cadence ? parseInt(cadence) : undefined,
-                }}
-                backgroundImage={userPhoto}
-                backgroundType={userPhoto ? 'photo' : 'black'}
-                isLandscape={false}
-                width={360}
-                yearlyCount={yearlyCount}
-                monthlyCount={monthlyCount}
-                weeklyCount={weeklyCount}
-                yearlyObjective={yearlyObjective}
-                showYearlyCount={true}
-                showMonthlyCount={true}
-                showWeeklyCount={true}
-                showExercises={true}
-              />
-            </View>
-
-            {/* ACTIONS - ÉTAPE 2 */}
-            <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
-              <TouchableOpacity 
-                style={{ 
-                  backgroundColor: colors.accent, 
-                  paddingVertical: 20, 
-                  borderRadius: 24, 
-                  alignItems: 'center', 
-                  flexDirection: 'row', 
-                  justifyContent: 'center', 
-                  gap: 12,
-                  shadowColor: colors.accent,
-                  shadowOpacity: 0.4,
-                  shadowRadius: 15,
-                  elevation: 10
-                }}
-                onPress={() => {
-                  setShowValidationModal(false);
-                  if (lastSavedTrainingId) {
-                    router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
-                  } else {
-                    router.push('/social-share/last-session');
-                  }
-                }}
-              >
-                <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
-                <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>PERSONNALISER & PARTAGER</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={{ 
-                  backgroundColor: 'rgba(255,255,255,0.05)', 
-                  paddingVertical: 18, 
-                  borderRadius: 24, 
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255,255,255,0.1)'
-                }}
-                onPress={() => {
-                  setShowValidationModal(false);
-                  handleFinish();
-                }}
-              >
-                <Text style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '800', fontSize: 16 }}>TERMINER SANS PARTAGER</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
-
+              <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
+                
+                {/* Header Étape 2 - MODE CLAIR */}
+                <View style={{ marginBottom: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
+                    {/* BOUTON RETOUR */}
+                    <TouchableOpacity 
+                      style={{ position: 'absolute', left: 16, padding: 8 }}
+                      onPress={() => setShowValidationModal(false)}
+                    >
+                      <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
+                    </TouchableOpacity>
+      
+                    <View style={{ alignItems: 'center' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
+                      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                        {/* Etape 1 (Passée - Gold) */}
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+                        <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+                        
+                        {/* Etape 2 (Actuelle - Big Gold) */}
+                        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+                        
+                        {/* Futur (Noir & Blanc Cassé) */}
+                        <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+                        <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 20, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>APERÇU DE LA CARTE</Text>
+                </View>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
+                  {/* CARTE À PARTAGER (Aperçu) */}
+                  <View 
+                    style={{ 
+                      width: '100%', 
+                      maxWidth: 360, 
+                      borderRadius: 24,
+                      overflow: 'hidden',
+                      shadowColor: "#000",
+                      shadowOpacity: 0.3,
+                      shadowRadius: 20,
+                      elevation: 15,
+                      marginBottom: 30
+                    }}
+                  >
+                    <SessionCard
+                      training={{
+                        sport: selectedSports.join(','),
+                        duration_minutes: duration,
+                        distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+                        calories: calories ? parseInt(calories) : undefined,
+                        intensity: intensity,
+                        heart_rate: heartRate ? parseInt(heartRate) : undefined,
+                        date: date.toISOString(),
+                        start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                        rounds: rounds ? parseInt(rounds) : undefined,
+                        round_duration: roundDuration ? parseInt(roundDuration) : undefined,
+                        club_logo: selectedClub?.logo_uri,
+                        club_name: selectedClub?.name,
+                        muscles: selectedMuscles.join(','),
+                        exercises: exercises,
+                        notes: previewNotes,
+                        technique_rating: techniqueRating || undefined,
+                        is_outdoor: isOutdoor,
+                        pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
+                        speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
+                        resistance: resistance ? parseInt(resistance) : undefined,
+                        watts: watts ? parseInt(watts) : undefined,
+                        cadence: cadence ? parseInt(cadence) : undefined,
+                      }}
+                      options={optionDetails}
+                      backgroundImage={userPhoto}
+                      backgroundType={userPhoto ? 'photo' : 'black'}
+                      isLandscape={false}
+                      width={360}
+                      yearlyCount={yearlyCount}
+                      monthlyCount={monthlyCount}
+                      weeklyCount={weeklyCount}
+                      yearlyObjective={yearlyObjective}
+                      showYearlyCount={true}
+                      showMonthlyCount={true}
+                      showWeeklyCount={true}
+                      showExercises={true}
+                    />
+                  </View>
+                  {/* ACTIONS - ÉTAPE 2 */}
+                  <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+                                <TouchableOpacity 
+                                  style={{ 
+                                    backgroundColor: colors.accent, 
+                                    paddingVertical: 20, 
+                                    borderRadius: 24, 
+                                    alignItems: 'center', 
+                                    flexDirection: 'row', 
+                                    justifyContent: 'center', 
+                                    gap: 12,
+                                    shadowColor: colors.accent,
+                                    shadowOpacity: 0.4,
+                                    shadowRadius: 15,
+                                    elevation: 10
+                                  }}
+                                  onPress={() => {
+                                    setShowValidationModal(false);
+                                    if (lastSavedTrainingId) {
+                                      router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
+                                    } else {
+                                      router.push('/social-share/last-session');
+                                    }
+                                  }}
+                                >
+                                  <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
+                                  <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>SUIVANT</Text>
+                                </TouchableOpacity>
+                  
+                                <TouchableOpacity 
+                                  style={{ 
+                                    backgroundColor: colors.card, 
+                                    paddingVertical: 18, 
+                                    borderRadius: 24, 
+                                    alignItems: 'center',
+                                    borderWidth: 1,
+                                    borderColor: colors.border
+                                  }}
+                                  onPress={() => {
+                                    setShowValidationModal(false);
+                                    router.push('/social-share/backup-step');
+                                  }}
+                                >
+                                  <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>TERMINER SANS PARTAGER</Text>
+                                </TouchableOpacity>
+                              </View>                </ScrollView>
+              </View>
+            </Modal>
       {/* MODAL 2: NOTATION HOUARI */}
       <Modal
         visible={showHouariRateModal}
