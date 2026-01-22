@@ -194,6 +194,7 @@ export default function AddTrainingScreen() {
   const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userLevel, setUserLevel] = useState<number>(0);
 
   // Charger les données utilisateur
   useEffect(() => {

@@ -140,6 +140,11 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
           )}
 
           <LinearGradient colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']} style={styles.photoGradient}>
+            {/* DATE EN HAUT AU MILIEU */}
+            <View style={{ position: 'absolute', top: 16, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+              <Text style={styles.dateText}>{formattedDate}</Text>
+            </View>
+
             <View style={styles.photoHeader}>
 
               {/* PHOTO PROFIL (GAUCHE) + NOM + RANG + NIVEAU */}
@@ -170,22 +175,12 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 )}
               </View>
 
-              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
+              {/* AVATAR YOROI (DROITE) */}
               <View style={styles.avatarContainer}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
-                )}
-                {rank && (
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
-                  </View>
-                )}
-                {userLevel && (
-                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
-                    NIV. {userLevel}
-                  </Text>
                 )}
               </View>
             </View>
@@ -193,7 +188,6 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
 
           {/* INFOS BAS DE PHOTO */}
           <View style={styles.photoBottomInfo}>
-            <Text style={styles.dateText}>{formattedDate}</Text>
             <View style={styles.clubRow}>
               {clubLogoSource && (
                 <View style={styles.clubLogoBox}>
@@ -228,9 +222,9 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
                     <Text style={[{ color: txt, fontSize: 18, fontWeight: '800' }]}>/ </Text>
                     <Text style={[styles.goldLargeNumber, { fontSize: 24 }]}>{safeObjective}</Text>
-                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS</Text>
+                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS </Text>
+                    <Text style={[{ color: subTxt, fontSize: 10, fontWeight: '700' }]}>(ENTRAINEMENT)</Text>
                   </View>
-                  <Text style={[{ color: subTxt, fontSize: 8, fontWeight: '700', marginTop: 2 }]}>(ENTRAINEMENT)</Text>
                 </View>
                 <View style={styles.progressRight}>
                   <View style={styles.percentContainer}>
@@ -240,7 +234,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                   <View style={styles.yearProgressText}>
                     <Text style={styles.smallGoldText}>{yearlyCount}</Text>
                     <Text style={[{ color: txt, fontSize: 11, fontWeight: '900' }]}> / </Text>
-                    <Text style={styles.smallGoldText}>365 JOURS</Text>
+                    <Text style={styles.smallGoldText}>{safeObjective} JOURS</Text>
                   </View>
                 </View>
               </View>

@@ -92,6 +92,7 @@ import { getRelativeDate } from './training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
 import SkillDetailModal from './training-journal/components/SkillDetailModal';
+import TrashModal from './training-journal/components/TrashModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -1602,177 +1603,6 @@ export default function TrainingJournalScreen() {
   // ============================================
   // TRASH MODAL
   // ============================================
-
-  const renderTrashModal = () => (
-    <Modal visible={showTrashModal} animationType="slide" presentationStyle="fullScreen">
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => setShowTrashModal(false)} style={styles.backButton}>
-            <X size={28} color={colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Corbeille</Text>
-          <View style={{ width: 36 }} />
-        </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Empty State */}
-          {trashCount === 0 && (
-            <View style={{ alignItems: 'center', paddingVertical: 60 }}>
-              <View style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: colors.backgroundCard,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 16,
-              }}>
-                <Trash2 size={36} color={colors.textMuted} />
-              </View>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 }}>
-                Corbeille vide
-              </Text>
-              <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 40 }}>
-                Les éléments supprimés apparaîtront ici
-              </Text>
-            </View>
-          )}
-
-          {/* Trashed Benchmarks */}
-          {trashBenchmarks.length > 0 && (
-            <View style={{ marginTop: 16 }}>
-              <View style={styles.sectionHeader}>
-                <Dumbbell size={18} color="#EF4444" />
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  Records supprimés ({trashBenchmarks.length})
-                </Text>
-              </View>
-
-              {trashBenchmarks.map((trashItem, index) => {
-                const benchmark = trashItem.item;
-                const deletedDate = new Date(trashItem.deletedAt);
-                const now = new Date();
-                const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
-                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
-
-                return (
-                  <View
-                    key={benchmark.id}
-                    style={[
-                      styles.trashItem,
-                      {
-                        backgroundColor: colors.backgroundCard,
-                        borderColor: colors.border,
-                        marginTop: index === 0 ? 12 : 8,
-                      }
-                    ]}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>
-                        {benchmark.name}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                        Supprimé {deletedText}
-                      </Text>
-                      {benchmark.entries.length > 0 && (
-                        <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-                          {benchmark.entries.length} entrée(s)
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleRestoreBenchmark(benchmark.id)}
-                      style={[styles.restoreButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
-                    >
-                      <RotateCcw size={18} color={colors.success} />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Trashed Skills */}
-          {trashSkills.length > 0 && (
-            <View style={{ marginTop: 24, marginBottom: 100 }}>
-              <View style={styles.sectionHeader}>
-                <BookOpen size={18} color="#8B5CF6" />
-                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                  Techniques supprimées ({trashSkills.length})
-                </Text>
-              </View>
-
-              {trashSkills.map((trashItem, index) => {
-                const skill = trashItem.item;
-                const deletedDate = new Date(trashItem.deletedAt);
-                const now = new Date();
-                const diffDays = Math.floor((now.getTime() - deletedDate.getTime()) / (1000 * 60 * 60 * 24));
-                const deletedText = diffDays === 0 ? "Aujourd'hui" : diffDays === 1 ? "Hier" : `Il y a ${diffDays}j`;
-
-                return (
-                  <View
-                    key={skill.id}
-                    style={[
-                      styles.trashItem,
-                      {
-                        backgroundColor: colors.backgroundCard,
-                        borderColor: colors.border,
-                        marginTop: index === 0 ? 12 : 8,
-                      }
-                    ]}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 }}>
-                        {skill.name}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                        Supprimé {deletedText}
-                      </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                        <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                          {skill.drillCount} reps
-                        </Text>
-                        {skill.notes.length > 0 && (
-                          <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                            • {skill.notes.length} note(s)
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleRestoreSkill(skill.id)}
-                      style={[styles.restoreButton, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
-                    >
-                      <RotateCcw size={18} color={colors.success} />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </ScrollView>
-
-        {/* Empty Trash Button - Fixed at bottom */}
-        {trashCount > 0 && (
-          <View style={[styles.trashFooter, {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-            paddingBottom: insets.bottom || 20,
-          }]}>
-            <TouchableOpacity
-              onPress={handleEmptyTrash}
-              style={[styles.emptyTrashButton, { backgroundColor: colors.error }]}
-            >
-              <Trash2 size={20} color="#FFFFFF" />
-              <Text style={styles.emptyTrashText}>
-                Vider la corbeille ({trashCount})
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </SafeAreaView>
-    </Modal>
   );
 
   // ============================================
@@ -2260,7 +2090,18 @@ export default function TrainingJournalScreen() {
         onRefreshSkill={setSelectedSkill}
       />
 
-      {renderTrashModal()}
+      <TrashModal
+        visible={showTrashModal}
+        onClose={() => setShowTrashModal(false)}
+        colors={colors}
+        insets={insets}
+        trashBenchmarks={trashBenchmarks}
+        trashSkills={trashSkills}
+        trashCount={trashCount}
+        onRestoreBenchmark={handleRestoreBenchmark}
+        onRestoreSkill={handleRestoreSkill}
+        onEmptyTrash={handleEmptyTrash}
+      />
 
       {/* PILLAR 3: Victory Share Modal (Strava-Style) */}
       {victorySessionData && (
