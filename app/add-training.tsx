@@ -14,6 +14,7 @@ import {
   Share,
   Switch,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import * as Haptics from 'expo-haptics';
@@ -62,11 +63,11 @@ import { SessionCard } from '@/components/social-cards/SessionCard';
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/constants/design';
 import { useWindowDimensions, useIsSmallScreen } from '@/hooks/useWindowDimensions';
 
-// Utiliser le hook pour les dimensions
-// const { width: SCREEN_WIDTH } = useWindowDimensions(); // À utiliser dans le composant
-// const IS_SMALL_SCREEN = useIsSmallScreen(); // À utiliser dans le composant
+// Constantes statiques pour les styles (StyleSheet ne peut pas utiliser de hooks)
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
 
-// Constants for non-theme values (legacy - à migrer vers hooks)
+// Constants for non-theme values
 const FONT_SIZE = TYPOGRAPHY.size;
 import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
 import { backupReminderService } from '@/lib/backupReminderService';
@@ -1853,10 +1854,7 @@ export default function AddTrainingScreen() {
                                                 placeholderTextColor={colors.textMuted}
                                                 keyboardType="number-pad"
                                                 value={stats.reps}
-                                                onChangeText={(val) => {
-                                                  setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }));
-                                                  setValidatedOptions(prev => ({ ...prev, [option.id]: false }));
-                                                }}
+                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
                                               />
                                             </View>
                                             <TouchableOpacity
