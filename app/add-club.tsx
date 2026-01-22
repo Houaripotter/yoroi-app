@@ -333,8 +333,8 @@ export default function AddClubScreen() {
   );
 }
 
-const RADIUS = { sm: 8, md: 12, lg: 16 };
-const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20 };
+// Import centralisés depuis constants/design
+import { RADIUS, SPACING } from '@/constants/design';
 
 const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12, marginTop: 10 },

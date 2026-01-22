@@ -55,18 +55,19 @@ import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '
 import { getCurrentRank } from '@/lib/ranks';
 import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserSettings } from '@/lib/storage';
 import * as WebBrowser from 'expo-web-browser';
 import { SessionCard } from '@/components/social-cards/SessionCard';
+import { RADIUS, SPACING, TYPOGRAPHY } from '@/constants/design';
+import { useWindowDimensions, useIsSmallScreen } from '@/hooks/useWindowDimensions';
 
-// Constants for non-theme values
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const IS_SMALL_SCREEN = SCREEN_WIDTH < 375;
-const RADIUS = { sm: 8, md: 12 };
-const SPACING = { sm: 8, md: 12, lg: IS_SMALL_SCREEN ? 12 : 16, xl: IS_SMALL_SCREEN ? 16 : 20 }; // Adaptive spacing
-const FONT_SIZE = { xs: 12, sm: 13, md: 14, lg: 16, xl: 18, xxl: 20, display: 28 };
+// Utiliser le hook pour les dimensions
+// const { width: SCREEN_WIDTH } = useWindowDimensions(); // À utiliser dans le composant
+// const IS_SMALL_SCREEN = useIsSmallScreen(); // À utiliser dans le composant
+
+// Constants for non-theme values (legacy - à migrer vers hooks)
+const FONT_SIZE = TYPOGRAPHY.size;
 import { successHaptic, errorHaptic, lightHaptic } from '@/lib/haptics';
 import { backupReminderService } from '@/lib/backupReminderService';
 import { playWorkoutCompleteSound } from '@/lib/soundManager';
