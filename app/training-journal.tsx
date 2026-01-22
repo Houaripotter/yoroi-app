@@ -1229,9 +1229,6 @@ export default function TrainingJournalScreen() {
   // ============================================
   // MODALS
   // ============================================
-  );
-  );
-  };
 
   const renderFabMenu = () => (
     <Modal visible={showFabMenu} animationType="fade" transparent>
@@ -1265,11 +1262,6 @@ export default function TrainingJournalScreen() {
         </View>
       </TouchableOpacity>
     </Modal>
-  );
-
-  // ============================================
-  // TRASH MODAL
-  // ============================================
   );
 
   // ============================================
