@@ -45,6 +45,7 @@ import {
   Home,
   Calendar,
   Clock,
+  Camera,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
@@ -80,6 +81,7 @@ import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { SharePromptModal } from '@/components/SharePromptModal';
+import * as ImagePicker from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
 // ============================================
@@ -175,6 +177,9 @@ export default function AddTrainingScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationStep, setValidationStep] = useState(2); // Étape de validation: 2 = aperçu, 3 = choix photo, 4 = final
+  const [showPhotoChoiceModal, setShowPhotoChoiceModal] = useState(false);
+  const [cardBackgroundImage, setCardBackgroundImage] = useState<string | null>(null);
   const [showHouariRateModal, setShowHouariRateModal] = useState(false);
   const [lastSavedTrainingId, setLastSavedTrainingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState(''); // Barre de recherche
@@ -521,8 +526,8 @@ export default function AddTrainingScreen() {
 
         // Sélection automatique du club correspondant au sport
         const matchingClub = clubs.find(club => {
-          if (!club.sports) return false;
-          const clubSports = club.sports.split(',').map(s => s.trim().toLowerCase());
+          if (!club.sport) return false;
+          const clubSports = club.sport.split(',').map((s: string) => s.trim().toLowerCase());
           return clubSports.includes(sportId.toLowerCase());
         });
 
@@ -1086,7 +1091,8 @@ export default function AddTrainingScreen() {
         // router.back(); // On ne quitte plus, on laisse le flow continuer
       } 
       
-      // AFFICHER LE MODAL DE VALIDATION (Step 1)
+      // AFFICHER LE MODAL DE VALIDATION (Étape 2)
+      setCardBackgroundImage(null);
       setShowValidationModal(true);
 
     } catch (error) {
@@ -1102,6 +1108,46 @@ export default function AddTrainingScreen() {
     return format(date, 'EEEE d MMMM yyyy', { locale: fr });
   };
 
+  // Fonctions pour gérer les photos de fond de carte
+  const pickImageFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showPopup('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setCardBackgroundImage(result.assets[0].uri);
+      lightHaptic();
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showPopup('Permission refusée', 'Nous avons besoin de votre permission pour accéder à l\'appareil photo');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setCardBackgroundImage(result.assets[0].uri);
+      lightHaptic();
+    }
+  };
+
   // Clubs filtrés par sport sélectionné
   const filteredClubs = clubs.filter(c => c.sport === selectedSport);
 
@@ -1114,6 +1160,7 @@ export default function AddTrainingScreen() {
       const opts = getOptionsForSport(sportId);
       const selectedIds = selectedOptions[sportId] || [];
       return selectedIds
+        .filter(id => validatedOptions[id] === true) // Ne garder que les exercices validés
         .map(id => {
           const opt = opts.find(o => o.id === id);
           if (!opt) return null;
@@ -1131,7 +1178,8 @@ export default function AddTrainingScreen() {
             watts: stats?.watts,
             resistance: stats?.resistance,
             notes: stats?.notes,
-            stairs: stats?.stairs
+            stairs: stats?.stairs,
+            pace: stats?.pace
           };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -2377,48 +2425,81 @@ export default function AddTrainingScreen() {
         onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
       />
 
-                        {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
+                        {/* MODAL 1: VALIDATION & APERÇU ÉTAPES 2-3 */}
                                     <Modal
                                       visible={showValidationModal}
                                       transparent
                                       animationType="fade"
                                     >
                                       <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
-                                        <ConfettiCannon count={200} origin={{x: -10, y: 0}} />
-                                        
-                                        {/* Header Étape 2 - MODE CLAIR */}
+                                        {validationStep === 2 && <ConfettiCannon count={200} origin={{x: -10, y: 0}} />}
+
+                                        {/* Header - MODE CLAIR */}
                                         <View style={{ marginBottom: 10 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
                                 {/* BOUTON RETOUR */}
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                   style={{ position: 'absolute', left: 16, padding: 8 }}
-                                  onPress={() => setShowValidationModal(false)}
+                                  onPress={() => {
+                                    if (validationStep === 3) {
+                                      setValidationStep(2);
+                                    } else {
+                                      setShowValidationModal(false);
+                                      setValidationStep(2);
+                                      setCardBackgroundImage(null);
+                                    }
+                                  }}
                                 >
                                   <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
                                 </TouchableOpacity>
-                  
+
                                 <View style={{ alignItems: 'center' }}>
-                                  <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
+                                  <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>
+                                    ÉTAPE {validationStep} SUR 4
+                                  </Text>
                                   <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
                                     {/* Etape 1 (Passée - Gold) */}
                                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
                                     <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-                                    
-                                    {/* Etape 2 (Actuelle - Big Gold) */}
-                                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
-                                    
-                                    {/* Futur (Noir & Blanc Cassé) */}
-                                    <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
-                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+
+                                    {/* Etape 2 */}
+                                    <View style={{
+                                      width: validationStep === 2 ? 14 : 10,
+                                      height: validationStep === 2 ? 14 : 10,
+                                      borderRadius: validationStep === 2 ? 7 : 5,
+                                      backgroundColor: validationStep >= 2 ? colors.gold : '#D1D1D6',
+                                      shadowColor: validationStep === 2 ? colors.gold : 'transparent',
+                                      shadowOpacity: 0.5,
+                                      shadowRadius: 5
+                                    }} />
+
+                                    <View style={{ width: 30, height: 2, backgroundColor: validationStep >= 3 ? colors.gold : '#000000' }} />
+
+                                    {/* Etape 3 */}
+                                    <View style={{
+                                      width: validationStep === 3 ? 14 : 10,
+                                      height: validationStep === 3 ? 14 : 10,
+                                      borderRadius: validationStep === 3 ? 7 : 5,
+                                      backgroundColor: validationStep >= 3 ? colors.gold : '#D1D1D6',
+                                      shadowColor: validationStep === 3 ? colors.gold : 'transparent',
+                                      shadowOpacity: 0.5,
+                                      shadowRadius: 5
+                                    }} />
+
                                     <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
                                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
                                   </View>
                                 </View>
                               </View>
-                              <Text style={{ fontSize: 20, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>APERÇU CARTE</Text>
+                              <Text style={{ fontSize: 20, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>
+                                {validationStep === 2 ? 'APERÇU CARTE' : 'CHOISIS TA PHOTO'}
+                              </Text>
                             </View>
-            
+
+
                             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
+                              {validationStep === 2 && (
+                                <>
                               <View style={{ width: '100%', maxWidth: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
                                 <SessionCard
                                   training={{
@@ -2483,35 +2564,175 @@ export default function AddTrainingScreen() {
                                     elevation: 10
                                   }}
                                   onPress={() => {
-                                    setShowValidationModal(false);
-                                    if (lastSavedTrainingId) {
-                                      router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
-                                    } else {
-                                      router.push('/social-share/last-session');
-                                    }
+                                    setValidationStep(3);
+                                    lightHaptic();
                                   }}
                                 >
                                   <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
                                   <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>SUIVANT</Text>
                                 </TouchableOpacity>
-                  
-                                <TouchableOpacity 
-                                  style={{ 
-                                    backgroundColor: colors.card, 
-                                    paddingVertical: 18, 
-                                    borderRadius: 24, 
-                                    alignItems: 'center', 
+
+                                <TouchableOpacity
+                                  style={{
+                                    backgroundColor: colors.card,
+                                    paddingVertical: 18,
+                                    borderRadius: 24,
+                                    alignItems: 'center',
                                     borderWidth: 1,
                                     borderColor: colors.border
                                   }}
                                   onPress={() => {
                                     setShowValidationModal(false);
+                                    setValidationStep(2);
+                                    setCardBackgroundImage(null);
                                     router.push('/social-share/backup-step');
                                   }}
                                 >
                                   <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>TERMINER SANS PARTAGER</Text>
                                 </TouchableOpacity>
                               </View>
+                              </>
+                              )}
+
+                              {/* ÉTAPE 3: CHOIX PHOTO */}
+                              {validationStep === 3 && (
+                                <>
+                                  {/* Aperçu de la carte avec la photo choisie */}
+                                  <View style={{ width: '100%', maxWidth: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
+                                    <SessionCard
+                                      training={{
+                                        sport: selectedSports.join(','),
+                                        duration_minutes: duration,
+                                        distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+                                        calories: calories ? parseInt(calories) : undefined,
+                                        intensity: intensity,
+                                        heart_rate: heartRate ? parseInt(heartRate) : undefined,
+                                        date: date.toISOString(),
+                                        start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                                        rounds: rounds ? parseInt(rounds) : undefined,
+                                        round_duration: roundDuration ? parseInt(roundDuration) : undefined,
+                                        club_logo: selectedClub?.logo_uri,
+                                        club_name: selectedClub?.name,
+                                        muscles: selectedMuscles.join(','),
+                                        exercises: exercises,
+                                        notes: previewNotes,
+                                        technique_rating: techniqueRating || undefined,
+                                        is_outdoor: isOutdoor,
+                                        pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
+                                        speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
+                                        resistance: resistance ? parseInt(resistance) : undefined,
+                                        watts: watts ? parseInt(watts) : undefined,
+                                        cadence: cadence ? parseInt(cadence) : undefined,
+                                      }}
+                                      options={optionDetails}
+                                      backgroundImage={cardBackgroundImage || userPhoto}
+                                      backgroundType={cardBackgroundImage || userPhoto ? 'photo' : 'black'}
+                                      keepPhotoClear={true}
+                                      userAvatar={userAvatar}
+                                      profilePhoto={userPhoto}
+                                      userName={userName}
+                                      rank={userRank}
+                                      userLevel={userLevel}
+                                      isLandscape={false}
+                                      width={360}
+                                      yearlyCount={yearlyCount}
+                                      monthlyCount={monthlyCount}
+                                      weeklyCount={weeklyCount}
+                                      yearlyObjective={yearlyObjective}
+                                      showYearlyCount={true}
+                                      showMonthlyCount={true}
+                                      showWeeklyCount={true}
+                                      showExercises={true}
+                                    />
+                                  </View>
+
+                                  {/* Options de sélection photo */}
+                                  <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+                                    <TouchableOpacity
+                                      style={{
+                                        backgroundColor: colors.accent,
+                                        paddingVertical: 20,
+                                        borderRadius: 24,
+                                        alignItems: 'center',
+                                        flexDirection: 'row',
+                                        justifyContent: 'center',
+                                        gap: 12,
+                                        shadowColor: colors.accent,
+                                        shadowOpacity: 0.4,
+                                        shadowRadius: 15,
+                                        elevation: 10
+                                      }}
+                                      onPress={pickImageFromGallery}
+                                    >
+                                      <MaterialCommunityIcons name="image" size={24} color={colors.textOnAccent} />
+                                      <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>GALERIE PHOTOS</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                      style={{
+                                        backgroundColor: colors.gold,
+                                        paddingVertical: 20,
+                                        borderRadius: 24,
+                                        alignItems: 'center',
+                                        flexDirection: 'row',
+                                        justifyContent: 'center',
+                                        gap: 12,
+                                      }}
+                                      onPress={takePhoto}
+                                    >
+                                      <Camera size={24} color="#000" strokeWidth={2.5} />
+                                      <Text style={{ color: '#000', fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>PRENDRE UNE PHOTO</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                      style={{
+                                        backgroundColor: colors.textOnAccent,
+                                        paddingVertical: 20,
+                                        borderRadius: 24,
+                                        alignItems: 'center',
+                                        flexDirection: 'row',
+                                        justifyContent: 'center',
+                                        gap: 12,
+                                        shadowColor: colors.textOnAccent,
+                                        shadowOpacity: 0.4,
+                                        shadowRadius: 15,
+                                        elevation: 10
+                                      }}
+                                      onPress={() => {
+                                        setShowValidationModal(false);
+                                        setValidationStep(2);
+                                        if (lastSavedTrainingId) {
+                                          router.push(`/social-share/last-session?id=${lastSavedTrainingId}`);
+                                        } else {
+                                          router.push('/social-share/last-session');
+                                        }
+                                      }}
+                                    >
+                                      <Share2 size={24} color={colors.accent} strokeWidth={2.5} />
+                                      <Text style={{ color: colors.accent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>CONTINUER</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                      style={{
+                                        backgroundColor: colors.card,
+                                        paddingVertical: 18,
+                                        borderRadius: 24,
+                                        alignItems: 'center',
+                                        borderWidth: 1,
+                                        borderColor: colors.border
+                                      }}
+                                      onPress={() => {
+                                        setShowValidationModal(false);
+                                        setValidationStep(2);
+                                        setCardBackgroundImage(null);
+                                        router.push('/social-share/backup-step');
+                                      }}
+                                    >
+                                      <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>TERMINER SANS PARTAGER</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                </>
+                              )}
                             </ScrollView>
                           </View>
                         </Modal>
