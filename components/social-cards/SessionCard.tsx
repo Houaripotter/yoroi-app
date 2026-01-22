@@ -6,7 +6,7 @@
 // - Amélioration des performances de rendu
 // - Code plus maintenable
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Training } from '@/lib/database';
@@ -69,9 +69,9 @@ interface SessionCardProps {
 }
 
 export const SessionCard = React.forwardRef<View, SessionCardProps>(
-  ({ 
+  ({
     training, backgroundImage, backgroundType = 'black', width = DEFAULT_WIDTH,
-    userAvatar, profilePhoto, rank, options,
+    userAvatar, profilePhoto, userName, rank, userLevel, options,
     showYearlyCount = true,
     yearlyCount = 0, yearlyObjective = 365,
     showGoalProgress = true
@@ -119,11 +119,11 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
         <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
           {valStr.split(',').map((part, index) => (
             <React.Fragment key={index}>
-              {index > 0 && <Text style={{ color: txt, fontSize: 13, fontWeight: '900' }}>,</Text>}
-              <Text style={{ color: GOLD_COLOR, fontSize: 13, fontWeight: '900' }}>{part}</Text>
+              {index > 0 && <Text style={{ color: txt, fontSize: 11, fontWeight: '900' }}>,</Text>}
+              <Text style={{ color: GOLD_COLOR, fontSize: 11, fontWeight: '900' }}>{part}</Text>
             </React.Fragment>
           ))}
-          <Text style={{ color: txt, fontSize: 8, fontWeight: '800', marginLeft: 1 }}>{unit}</Text>
+          <Text style={{ color: txt, fontSize: 7, fontWeight: '800', marginLeft: 1 }}>{unit}</Text>
         </View>
       );
     };
@@ -143,17 +143,24 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.photoHeader}>
 
               {/* PHOTO PROFIL (GAUCHE) */}
-              <View style={styles.profileContainer}>
-                {profileSource ? (
-                  <Image source={profileSource} style={styles.photoImage} />
-                ) : (
-                  <View style={styles.profilePlaceholder}>
-                    <MaterialCommunityIcons name="account" size={28} color="#000" />
-                  </View>
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <View style={styles.profileContainer}>
+                  {profileSource ? (
+                    <Image source={profileSource} style={styles.photoImage} />
+                  ) : (
+                    <View style={styles.profilePlaceholder}>
+                      <MaterialCommunityIcons name="account" size={28} color="#000" />
+                    </View>
+                  )}
+                </View>
+                {userName && (
+                  <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    {userName.toUpperCase()}
+                  </Text>
                 )}
               </View>
 
-              {/* AVATAR YOROI (DROITE) + RANG */}
+              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
               <View style={styles.avatarContainer}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
@@ -164,6 +171,11 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                   <View style={styles.rankBadge}>
                     <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
                   </View>
+                )}
+                {userLevel && (
+                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    NIV. {userLevel}
+                  </Text>
                 )}
               </View>
             </View>
@@ -201,22 +213,23 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
-                  <Text style={styles.chronoLabel}>CHRONOLOGIE ANNUELLE</Text>
+                  <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
                   <View style={styles.progressNumbers}>
                     <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}>/ </Text>
-                    <Text style={[styles.goldLargeNumber, { fontSize: 20 }]}>{safeObjective}</Text>
-                    <Text style={[{ color: txt, fontSize: 14, fontWeight: '800' }]}> JOURS</Text>
+                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '800' }]}>/ </Text>
+                    <Text style={[styles.goldLargeNumber, { fontSize: 24 }]}>{safeObjective}</Text>
+                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS</Text>
                   </View>
+                  <Text style={[{ color: subTxt, fontSize: 8, fontWeight: '700', marginTop: 2 }]}>(ENTRAINEMENT)</Text>
                 </View>
                 <View style={styles.progressRight}>
                   <View style={styles.percentContainer}>
                     <Text style={styles.percentLarge}>{Math.round(progressPercent)}</Text>
-                    <Text style={[{ color: txt, fontSize: 14, fontWeight: '900' }]}>%</Text>
+                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '900' }]}>%</Text>
                   </View>
                   <View style={styles.yearProgressText}>
                     <Text style={styles.smallGoldText}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 10, fontWeight: '900' }]}> / </Text>
+                    <Text style={[{ color: txt, fontSize: 11, fontWeight: '900' }]}> / </Text>
                     <Text style={styles.smallGoldText}>365 JOURS</Text>
                   </View>
                 </View>
@@ -234,35 +247,41 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
               <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
             </View>
 
-            <View style={styles.exercisesList}>
-              {options && options.length > 0 ? (
-                options.slice(0, 10).map((opt, i) => {
-                  const pace = getPace(opt.speed);
-                  return (
-                    <View key={i} style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
-                      <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
-                      <View style={styles.exerciseStats}>
-                        {opt.weight && renderStyledStat(opt.weight, 'KG')}
-                        {opt.reps && (
-                          <View style={styles.statValue}>
-                            <Text style={[styles.statSeparator, { color: txt }]}> × </Text>
-                            <Text style={styles.statReps}>{opt.reps}</Text>
-                          </View>
-                        )}
-                        {opt.distance && renderStyledStat(opt.distance, 'KM')}
-                        {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                        {pace && <Text style={[styles.paceText, { color: subTxt }]}>({pace})</Text>}
-                        {opt.pente && renderStyledStat(opt.pente, '%')}
-                        {opt.stairs && renderStyledStat(opt.stairs, 'FLOORS')}
-                        {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
+            <ScrollView
+              style={{ maxHeight: options && options.length > 6 ? 120 : undefined }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
+              <View style={styles.exercisesList}>
+                {options && options.length > 0 ? (
+                  options.slice(0, 15).map((opt, i) => {
+                    const pace = getPace(opt.speed);
+                    return (
+                      <View key={i} style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
+                        <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
+                        <View style={styles.exerciseStats}>
+                          {opt.weight && renderStyledStat(opt.weight, 'KG')}
+                          {opt.reps && (
+                            <View style={styles.statValue}>
+                              <Text style={[styles.statSeparator, { color: txt }]}> × </Text>
+                              <Text style={styles.statReps}>{opt.reps}</Text>
+                            </View>
+                          )}
+                          {opt.distance && renderStyledStat(opt.distance, 'KM')}
+                          {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
+                          {pace && <Text style={[styles.paceText, { color: subTxt }]}>({pace})</Text>}
+                          {opt.pente && renderStyledStat(opt.pente, '%')}
+                          {opt.stairs && renderStyledStat(opt.stairs, 'FLOORS')}
+                          {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
+                        </View>
                       </View>
-                    </View>
-                  );
-                })
-              ) : (
-                <Text style={[styles.emptyNotesText, { color: subTxt }]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
-              )}
-            </View>
+                    );
+                  })
+                ) : (
+                  <Text style={[styles.emptyNotesText, { color: subTxt }]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
+                )}
+              </View>
+            </ScrollView>
           </View>
         </View>
 
@@ -435,7 +454,7 @@ const styles = StyleSheet.create({
   },
   percentLarge: {
     color: GOLD_COLOR,
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: '900',
   },
   yearProgressText: {
@@ -444,7 +463,7 @@ const styles = StyleSheet.create({
   },
   smallGoldText: {
     color: GOLD_COLOR,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '900',
   },
   progressBar: {
@@ -479,12 +498,13 @@ const styles = StyleSheet.create({
   exerciseRow: {
     borderBottomWidth: 0.5,
     paddingBottom: 1,
+    paddingTop: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   exerciseLabel: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '800',
     flex: 1,
   },
@@ -508,15 +528,15 @@ const styles = StyleSheet.create({
     marginLeft: 1,
   },
   statSeparator: {
-    fontSize: 8,
+    fontSize: 7,
   },
   statReps: {
     color: GOLD_COLOR,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '900',
   },
   paceText: {
-    fontSize: 8,
+    fontSize: 7,
   },
   emptyNotesText: {
     fontSize: 11,

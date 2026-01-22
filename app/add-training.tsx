@@ -516,6 +516,18 @@ export default function AddTrainingScreen() {
         // FERMER TOUTES LES CATÉGORIES et cacher la section quand on sélectionne un sport
         setExpandedCategories([]);
         setShowAddSportSection(false);
+
+        // Sélection automatique du club correspondant au sport
+        const matchingClub = clubs.find(club => {
+          if (!club.sports) return false;
+          const clubSports = club.sports.split(',').map(s => s.trim().toLowerCase());
+          return clubSports.includes(sportId.toLowerCase());
+        });
+
+        if (matchingClub && !selectedClub) {
+          setSelectedClub(matchingClub);
+        }
+
         // Scroller vers le haut pour voir le sport sélectionné
         setTimeout(() => {
           scrollViewRef.current?.scrollTo({ y: 0, animated: true });
@@ -2436,6 +2448,7 @@ export default function AddTrainingScreen() {
                                   backgroundType={userPhoto ? 'photo' : 'black'}
                                   userAvatar={userAvatar}
                                   profilePhoto={userPhoto}
+                                  userName={userName}
                                   rank={userRank}
                                   isLandscape={false}
                                   width={360}

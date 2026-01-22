@@ -86,52 +86,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
+import { useTrainingJournal } from './training-journal/hooks/useTrainingJournal';
+import { renderIcon } from './training-journal/utils/iconMap';
+import { getRelativeDate } from './training-journal/utils/dateHelpers';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// ============================================
-// ICON HELPER - Map iconName to Lucide component
-// ============================================
-
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  dumbbell: Dumbbell,
-  timer: Timer,
-  mountain: Mountain,
-  flame: Flame,
-  target: Target,
-  shield: Shield,
-  move: Move,
-  lock: Lock,
-  users: Users,
-  zap: Zap,
-  scale: Scale,
-  swords: Swords,
-  'bar-chart': BarChart3,
-  footprints: Footprints,
-  'book-open': BookOpen,
-};
-
-const renderIcon = (iconName: string, size: number, color: string) => {
-  const IconComponent = ICON_MAP[iconName] || Target;
-  return <IconComponent size={size} color={color} />;
-};
-
-// Helper: Format relative date (Hier, Il y a 2j, 12 janv., etc.)
-const getRelativeDate = (dateString: string, t: (key: string, params?: any) => string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return t('common.today');
-  if (diffDays === 1) return t('common.yesterday');
-  if (diffDays < 7) return t('trainingJournal.daysAgo', { days: diffDays });
-  if (diffDays < 30) return t('trainingJournal.weeksAgo', { weeks: Math.floor(diffDays / 7) });
-
-  // Format: "12 janv."
-  const monthKey = `dates.${['januaryShort', 'februaryShort', 'marchShort', 'aprilShort', 'mayShort', 'juneShort', 'julyShort', 'augustShort', 'septemberShort', 'octoberShort', 'novemberShort', 'decemberShort'][date.getMonth()]}`;
-  return `${date.getDate()} ${t(monthKey)}`;
-};
 
 // ============================================
 // MAIN COMPONENT
@@ -144,44 +103,39 @@ export default function TrainingJournalScreen() {
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  // Data state
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [stats, setStats] = useState({
-    totalBenchmarks: 0,
-    totalPRs: 0,
-    totalSkills: 0,
-    skillsMastered: 0,
-    skillsInProgress: 0,
-    totalDrills: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Anti-spam protection
+  // Use custom hook for all state and logic
+  const {
+    // Data
+    benchmarks,
+    skills,
+    stats,
+    isLoading,
+    isSubmitting,
 
-  // Modal state
-  const [showFabMenu, setShowFabMenu] = useState(false);
-  const [showAddBenchmarkModal, setShowAddBenchmarkModal] = useState(false);
-  const [showAddSkillModal, setShowAddSkillModal] = useState(false);
-  const [showBenchmarkDetail, setShowBenchmarkDetail] = useState(false);
-  const [showSkillDetail, setShowSkillDetail] = useState(false);
-  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
-  const [showTrashModal, setShowTrashModal] = useState(false);
+    // Modals
+    showFabMenu,
+    showAddBenchmarkModal,
+    showAddSkillModal,
+    showBenchmarkDetail,
+    showSkillDetail,
+    showAddEntryModal,
+    showTrashModal,
 
-  // Selected items
-  const [selectedBenchmark, setSelectedBenchmark] = useState<Benchmark | null>(null);
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+    // Selected
+    selectedBenchmark,
+    selectedSkill,
 
-  // Trash state
-  const [trashBenchmarks, setTrashBenchmarks] = useState<TrashItem<Benchmark>[]>([]);
-  const [trashSkills, setTrashSkills] = useState<TrashItem<Skill>[]>([]);
-  const [trashCount, setTrashCount] = useState(0);
+    // Trash
+    trashBenchmarks,
+    trashSkills,
+    trashCount,
 
-  // Form state
-  const [newBenchmarkName, setNewBenchmarkName] = useState('');
-  const [newBenchmarkCategory, setNewBenchmarkCategory] = useState<BenchmarkCategory>('force');
-  const [newBenchmarkUnit, setNewBenchmarkUnit] = useState<BenchmarkUnit>('kg');
-  const [newSkillName, setNewSkillName] = useState('');
-  const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>('jjb_garde');
+    // Forms
+    newBenchmarkName,
+    newBenchmarkCategory,
+    newBenchmarkUnit,
+    newSkillName,
+    newSkillCategory,
   const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('to_learn');
   const [newSkillNotes, setNewSkillNotes] = useState('');
   // TASK 3: Local video URI for techniques
