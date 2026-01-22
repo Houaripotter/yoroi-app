@@ -1,16 +1,25 @@
 /**
- * Events Service - Gestion des événements sportifs
+ * Events Service - Gestion optimisée des événements sportifs
  *
  * Ce service gère les événements de combat (JJB, Grappling) et d'endurance
- * (HYROX, Marathon, Running, Trail) provenant du scraper Yoroi Events.
+ * (HYROX, Marathon, Running, Trail) avec SQLite + Cache en mémoire.
  *
- * Sources: Smoothcomp, IBJJF, HYROX, Ahotu (1,873 événements mondiaux)
+ * Sources: Smoothcomp, IBJJF, HYROX, Ahotu
+ *
+ * ⚡ Optimisations :
+ * - Stockage SQLite (au lieu de 773KB de JSON en mémoire)
+ * - Cache en mémoire pour les requêtes fréquentes
+ * - Indexes SQL pour recherche rapide
+ * - Lazy loading des données
  */
 
-import eventsData from '@/src/data/events.json';
+import { openDatabase } from './database';
 import logger from '@/lib/security/logger';
 
-// Types pour les événements
+// ============================================
+// TYPES
+// ============================================
+
 export interface EventLocation {
   city: string;
   country: string;
@@ -22,177 +31,16 @@ export interface SportEvent {
   title: string;
   date_start: string; // ISO date (YYYY-MM-DD)
   location: EventLocation;
-  category: 'combat' | 'endurance' | 'force';
-  sport_tag: 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail';
+  category: 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
+  sport_tag: 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit';
   registration_link: string;
   federation: string | null;
   image_logo_url: string | null;
 }
 
-export type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail';
-export type CategoryFilter = 'all' | 'combat' | 'endurance';
+export type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit';
+export type CategoryFilter = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
 
-/**
- * Récupère tous les événements
- */
-export function getAllEvents(): SportEvent[] {
-  try {
-    return eventsData as SportEvent[];
-  } catch (error) {
-    logger.error('Erreur chargement événements:', error);
-    return [];
-  }
-}
-
-/**
- * Récupère les événements filtrés par tag de sport
- */
-export function getEventsBySportTag(sportTag: SportTagFilter): SportEvent[] {
-  const events = getAllEvents();
-
-  if (sportTag === 'all') {
-    return events;
-  }
-
-  return events.filter(event => event.sport_tag === sportTag);
-}
-
-/**
- * Récupère les événements filtrés par catégorie
- */
-export function getEventsByCategory(category: CategoryFilter): SportEvent[] {
-  const events = getAllEvents();
-
-  if (category === 'all') {
-    return events;
-  }
-
-  return events.filter(event => event.category === category);
-}
-
-/**
- * Récupère les événements d'un pays spécifique
- */
-export function getEventsByCountry(country: string): SportEvent[] {
-  const events = getAllEvents();
-  return events.filter(event =>
-    event.location.country.toLowerCase() === country.toLowerCase()
-  );
-}
-
-/**
- * Recherche d'événements par mots-clés (titre, ville, pays)
- */
-export function searchEvents(query: string): SportEvent[] {
-  const events = getAllEvents();
-  const searchTerm = query.toLowerCase().trim();
-
-  if (!searchTerm) {
-    return events;
-  }
-
-  return events.filter(event =>
-    event.title.toLowerCase().includes(searchTerm) ||
-    event.location.city.toLowerCase().includes(searchTerm) ||
-    event.location.country.toLowerCase().includes(searchTerm) ||
-    (event.federation && event.federation.toLowerCase().includes(searchTerm))
-  );
-}
-
-/**
- * Récupère les événements à venir (après aujourd'hui)
- */
-export function getUpcomingEvents(): SportEvent[] {
-  const events = getAllEvents();
-  const today = new Date().toISOString().split('T')[0];
-
-  return events.filter(event => event.date_start >= today);
-}
-
-/**
- * Récupère les événements passés
- */
-export function getPastEvents(): SportEvent[] {
-  const events = getAllEvents();
-  const today = new Date().toISOString().split('T')[0];
-
-  return events.filter(event => event.date_start < today);
-}
-
-/**
- * Récupère les événements dans une plage de dates
- */
-export function getEventsByDateRange(startDate: string, endDate: string): SportEvent[] {
-  const events = getAllEvents();
-
-  return events.filter(event =>
-    event.date_start >= startDate && event.date_start <= endDate
-  );
-}
-
-/**
- * Récupère les événements par fédération
- */
-export function getEventsByFederation(federation: string): SportEvent[] {
-  const events = getAllEvents();
-
-  return events.filter(event =>
-    event.federation && event.federation.toLowerCase() === federation.toLowerCase()
-  );
-}
-
-/**
- * Récupère les statistiques globales des événements
- */
-export function getEventsStats() {
-  const events = getAllEvents();
-
-  // Compter par sport tag
-  const bySportTag = {
-    jjb: events.filter(e => e.sport_tag === 'jjb').length,
-    grappling: events.filter(e => e.sport_tag === 'grappling').length,
-    hyrox: events.filter(e => e.sport_tag === 'hyrox').length,
-    marathon: events.filter(e => e.sport_tag === 'marathon').length,
-    running: events.filter(e => e.sport_tag === 'running').length,
-    trail: events.filter(e => e.sport_tag === 'trail').length,
-  };
-
-  // Compter par catégorie
-  const byCategory = {
-    combat: events.filter(e => e.category === 'combat').length,
-    endurance: events.filter(e => e.category === 'endurance').length,
-  };
-
-  // Compter les pays uniques
-  const countries = new Set(events.map(e => e.location.country));
-
-  // Compter événements à venir vs passés
-  const today = new Date().toISOString().split('T')[0];
-  const upcoming = events.filter(e => e.date_start >= today).length;
-  const past = events.filter(e => e.date_start < today).length;
-
-  return {
-    total: events.length,
-    bySportTag,
-    byCategory,
-    countriesCount: countries.size,
-    upcoming,
-    past,
-  };
-}
-
-/**
- * Récupère la liste unique des pays
- */
-export function getAllCountries(): string[] {
-  const events = getAllEvents();
-  const countries = new Set(events.map(e => e.location.country));
-  return Array.from(countries).sort();
-}
-
-/**
- * Récupère les événements par critères multiples
- */
 export interface EventFilters {
   sportTag?: SportTagFilter;
   category?: CategoryFilter;
@@ -202,61 +50,432 @@ export interface EventFilters {
   dateFrom?: string;
   dateTo?: string;
   upcomingOnly?: boolean;
+  limit?: number;
 }
 
-export function getFilteredEvents(filters: EventFilters): SportEvent[] {
-  let events = getAllEvents();
+// ============================================
+// CACHE EN MÉMOIRE
+// ============================================
 
-  // Filtre par sport tag
-  if (filters.sportTag && filters.sportTag !== 'all') {
-    events = events.filter(e => e.sport_tag === filters.sportTag);
+interface CacheEntry {
+  data: SportEvent[];
+  timestamp: number;
+}
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const cache = new Map<string, CacheEntry>();
+
+function getCacheKey(filters: EventFilters): string {
+  return JSON.stringify(filters);
+}
+
+function getFromCache(key: string): SportEvent[] | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+
+  const now = Date.now();
+  if (now - entry.timestamp > CACHE_DURATION) {
+    cache.delete(key);
+    return null;
   }
 
-  // Filtre par catégorie
-  if (filters.category && filters.category !== 'all') {
-    events = events.filter(e => e.category === filters.category);
-  }
+  return entry.data;
+}
 
-  // Filtre par pays
-  if (filters.country) {
-    events = events.filter(e =>
-      e.location.country.toLowerCase() === filters.country!.toLowerCase()
+function setCache(key: string, data: SportEvent[]): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+function clearCache(): void {
+  cache.clear();
+}
+
+// ============================================
+// INITIALISATION DES DONNÉES
+// ============================================
+
+let isInitialized = false;
+
+/**
+ * Importe les événements depuis le fichier JSON vers SQLite
+ * (À n'appeler qu'une seule fois au premier lancement)
+ */
+export async function importEventsFromJSON(): Promise<void> {
+  try {
+    const db = await openDatabase();
+
+    // Vérifier si les données sont déjà importées
+    const count = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM events_catalog'
     );
-  }
 
-  // Filtre par fédération
-  if (filters.federation) {
-    events = events.filter(e =>
-      e.federation && e.federation.toLowerCase() === filters.federation!.toLowerCase()
-    );
-  }
+    if (count && count.count > 0) {
+      logger.info(`Events déjà importés: ${count.count} événements`);
+      isInitialized = true;
+      return;
+    }
 
-  // Filtre par recherche
-  if (filters.searchQuery) {
-    const query = filters.searchQuery.toLowerCase();
-    events = events.filter(e =>
-      e.title.toLowerCase().includes(query) ||
-      e.location.city.toLowerCase().includes(query) ||
-      e.location.country.toLowerCase().includes(query) ||
-      (e.federation && e.federation.toLowerCase().includes(query))
-    );
-  }
+    // Importer les données depuis le JSON
+    logger.info('Import des événements depuis JSON...');
+    const eventsData = require('@/src/data/events.json');
 
-  // Filtre par dates
-  if (filters.dateFrom) {
-    events = events.filter(e => e.date_start >= filters.dateFrom!);
-  }
-  if (filters.dateTo) {
-    events = events.filter(e => e.date_start <= filters.dateTo!);
-  }
+    // Insertion par batch pour meilleures performances
+    const BATCH_SIZE = 100;
+    let imported = 0;
 
-  // Filtre événements à venir seulement
-  if (filters.upcomingOnly) {
+    for (let i = 0; i < eventsData.length; i += BATCH_SIZE) {
+      const batch = eventsData.slice(i, i + BATCH_SIZE);
+
+      await db.withTransactionAsync(async () => {
+        for (const event of batch) {
+          await db.runAsync(
+            `INSERT OR IGNORE INTO events_catalog
+             (id, title, date_start, city, country, full_address, category, sport_tag, registration_link, federation, image_logo_url)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              event.id,
+              event.title,
+              event.date_start,
+              event.location?.city || '',
+              event.location?.country || '',
+              event.location?.full_address || '',
+              event.category,
+              event.sport_tag,
+              event.registration_link || '',
+              event.federation || null,
+              event.image_logo_url || null
+            ]
+          );
+        }
+      });
+
+      imported += batch.length;
+      logger.info(`Importé ${imported}/${eventsData.length} événements`);
+    }
+
+    logger.info(`✅ Import terminé: ${imported} événements`);
+    isInitialized = true;
+    clearCache();
+  } catch (error) {
+    logger.error('Erreur import events:', error);
+    throw error;
+  }
+}
+
+/**
+ * Assure que les données sont initialisées
+ */
+async function ensureInitialized(): Promise<void> {
+  if (!isInitialized) {
+    await importEventsFromJSON();
+  }
+}
+
+// ============================================
+// REQUÊTES OPTIMISÉES
+// ============================================
+
+/**
+ * Récupère tous les événements (avec limite optionnelle)
+ */
+export async function getAllEvents(limit?: number): Promise<SportEvent[]> {
+  try {
+    await ensureInitialized();
+
+    const cacheKey = `all_${limit || 'unlimited'}`;
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const db = await openDatabase();
+    const query = limit
+      ? `SELECT * FROM events_catalog ORDER BY date_start ASC LIMIT ?`
+      : `SELECT * FROM events_catalog ORDER BY date_start ASC`;
+
+    const rows = await db.getAllAsync<any>(query, limit ? [limit] : []);
+    const events = rows.map(mapRowToEvent);
+
+    setCache(cacheKey, events);
+    return events;
+  } catch (error) {
+    logger.error('Erreur getAllEvents:', error);
+    return [];
+  }
+}
+
+/**
+ * Récupère les événements avec filtres multiples
+ */
+export async function getFilteredEvents(filters: EventFilters): Promise<SportEvent[]> {
+  try {
+    await ensureInitialized();
+
+    const cacheKey = getCacheKey(filters);
+    const cached = getFromCache(cacheKey);
+    if (cached) return cached;
+
+    const db = await openDatabase();
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    // Filtre par sport tag
+    if (filters.sportTag && filters.sportTag !== 'all') {
+      conditions.push('sport_tag = ?');
+      params.push(filters.sportTag);
+    }
+
+    // Filtre par catégorie
+    if (filters.category && filters.category !== 'all') {
+      conditions.push('category = ?');
+      params.push(filters.category);
+    }
+
+    // Filtre par pays
+    if (filters.country) {
+      conditions.push('LOWER(country) = LOWER(?)');
+      params.push(filters.country);
+    }
+
+    // Filtre par fédération
+    if (filters.federation) {
+      conditions.push('LOWER(federation) = LOWER(?)');
+      params.push(filters.federation);
+    }
+
+    // Recherche par mots-clés
+    if (filters.searchQuery) {
+      conditions.push('(LOWER(title) LIKE ? OR LOWER(city) LIKE ? OR LOWER(country) LIKE ? OR LOWER(federation) LIKE ?)');
+      const searchTerm = `%${filters.searchQuery.toLowerCase()}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    // Filtre par dates
+    if (filters.dateFrom) {
+      conditions.push('date_start >= ?');
+      params.push(filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      conditions.push('date_start <= ?');
+      params.push(filters.dateTo);
+    }
+
+    // Événements à venir seulement
+    if (filters.upcomingOnly) {
+      const today = new Date().toISOString().split('T')[0];
+      conditions.push('date_start >= ?');
+      params.push(today);
+    }
+
+    // Construire la requête
+    let query = 'SELECT * FROM events_catalog';
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    query += ' ORDER BY date_start ASC';
+
+    if (filters.limit) {
+      query += ' LIMIT ?';
+      params.push(filters.limit);
+    }
+
+    const rows = await db.getAllAsync<any>(query, params);
+    const events = rows.map(mapRowToEvent);
+
+    setCache(cacheKey, events);
+    return events;
+  } catch (error) {
+    logger.error('Erreur getFilteredEvents:', error);
+    return [];
+  }
+}
+
+/**
+ * Récupère les événements à venir
+ */
+export async function getUpcomingEvents(limit: number = 100): Promise<SportEvent[]> {
+  return getFilteredEvents({ upcomingOnly: true, limit });
+}
+
+/**
+ * Récupère les événements passés
+ */
+export async function getPastEvents(limit: number = 100): Promise<SportEvent[]> {
+  const today = new Date().toISOString().split('T')[0];
+  return getFilteredEvents({ dateTo: today, limit });
+}
+
+/**
+ * Récupère les événements par tag de sport
+ */
+export async function getEventsBySportTag(sportTag: SportTagFilter, limit?: number): Promise<SportEvent[]> {
+  return getFilteredEvents({ sportTag, limit });
+}
+
+/**
+ * Récupère les événements par catégorie
+ */
+export async function getEventsByCategory(category: CategoryFilter, limit?: number): Promise<SportEvent[]> {
+  return getFilteredEvents({ category, limit });
+}
+
+/**
+ * Récupère les événements par pays
+ */
+export async function getEventsByCountry(country: string, limit?: number): Promise<SportEvent[]> {
+  return getFilteredEvents({ country, limit });
+}
+
+/**
+ * Recherche d'événements
+ */
+export async function searchEvents(query: string, limit?: number): Promise<SportEvent[]> {
+  return getFilteredEvents({ searchQuery: query, limit });
+}
+
+/**
+ * Récupère les événements dans une plage de dates
+ */
+export async function getEventsByDateRange(startDate: string, endDate: string, limit?: number): Promise<SportEvent[]> {
+  return getFilteredEvents({ dateFrom: startDate, dateTo: endDate, limit });
+}
+
+// ============================================
+// STATISTIQUES
+// ============================================
+
+export interface EventsStats {
+  total: number;
+  bySportTag: Record<string, number>;
+  byCategory: Record<string, number>;
+  countriesCount: number;
+  upcoming: number;
+  past: number;
+}
+
+/**
+ * Récupère les statistiques globales
+ */
+export async function getEventsStats(): Promise<EventsStats> {
+  try {
+    await ensureInitialized();
+
+    const cached = getFromCache('stats');
+    if (cached && cached.length > 0) {
+      return cached[0] as any;
+    }
+
+    const db = await openDatabase();
     const today = new Date().toISOString().split('T')[0];
-    events = events.filter(e => e.date_start >= today);
-  }
 
-  return events;
+    // Total
+    const totalResult = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM events_catalog');
+    const total = totalResult?.count || 0;
+
+    // Par sport tag
+    const sportTagResults = await db.getAllAsync<{ sport_tag: string; count: number }>(
+      'SELECT sport_tag, COUNT(*) as count FROM events_catalog GROUP BY sport_tag'
+    );
+    const bySportTag: Record<string, number> = {};
+    sportTagResults.forEach(r => { bySportTag[r.sport_tag] = r.count; });
+
+    // Par catégorie
+    const categoryResults = await db.getAllAsync<{ category: string; count: number }>(
+      'SELECT category, COUNT(*) as count FROM events_catalog GROUP BY category'
+    );
+    const byCategory: Record<string, number> = {};
+    categoryResults.forEach(r => { byCategory[r.category] = r.count; });
+
+    // Pays uniques
+    const countriesResult = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(DISTINCT country) as count FROM events_catalog'
+    );
+    const countriesCount = countriesResult?.count || 0;
+
+    // À venir vs passés
+    const upcomingResult = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM events_catalog WHERE date_start >= ?',
+      [today]
+    );
+    const upcoming = upcomingResult?.count || 0;
+
+    const pastResult = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM events_catalog WHERE date_start < ?',
+      [today]
+    );
+    const past = pastResult?.count || 0;
+
+    const stats: EventsStats = {
+      total,
+      bySportTag,
+      byCategory,
+      countriesCount,
+      upcoming,
+      past
+    };
+
+    setCache('stats', [stats as any]);
+    return stats;
+  } catch (error) {
+    logger.error('Erreur getEventsStats:', error);
+    return {
+      total: 0,
+      bySportTag: {},
+      byCategory: {},
+      countriesCount: 0,
+      upcoming: 0,
+      past: 0
+    };
+  }
+}
+
+/**
+ * Récupère la liste des pays
+ */
+export async function getAllCountries(): Promise<string[]> {
+  try {
+    await ensureInitialized();
+
+    const cached = getFromCache('countries');
+    if (cached && cached.length > 0) {
+      return cached[0] as any;
+    }
+
+    const db = await openDatabase();
+    const results = await db.getAllAsync<{ country: string }>(
+      'SELECT DISTINCT country FROM events_catalog WHERE country IS NOT NULL AND country != "" ORDER BY country ASC'
+    );
+
+    const countries = results.map(r => r.country);
+    setCache('countries', [countries as any]);
+    return countries;
+  } catch (error) {
+    logger.error('Erreur getAllCountries:', error);
+    return [];
+  }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+/**
+ * Convertit une ligne SQL en objet SportEvent
+ */
+function mapRowToEvent(row: any): SportEvent {
+  return {
+    id: row.id,
+    title: row.title,
+    date_start: row.date_start,
+    location: {
+      city: row.city || '',
+      country: row.country || '',
+      full_address: row.full_address || ''
+    },
+    category: row.category,
+    sport_tag: row.sport_tag,
+    registration_link: row.registration_link || '',
+    federation: row.federation,
+    image_logo_url: row.image_logo_url
+  };
 }
 
 /**
@@ -288,6 +507,10 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
       marathon: 'Marathon',
       running: 'Course à pied',
       trail: 'Trail',
+      climbing: 'Escalade',
+      fitness: 'Fitness',
+      powerlifting: 'Powerlifting',
+      crossfit: 'CrossFit',
       all: 'Tous les sports',
     },
     en: {
@@ -297,6 +520,10 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
       marathon: 'Marathon',
       running: 'Running',
       trail: 'Trail',
+      climbing: 'Climbing',
+      fitness: 'Fitness',
+      powerlifting: 'Powerlifting',
+      crossfit: 'CrossFit',
       all: 'All sports',
     },
   };
@@ -309,20 +536,31 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
  */
 export function getSportTagEmoji(sportTag: string): string {
   const emojis: Record<string, string> = {
-    jjb: '',
-    grappling: '',
-    hyrox: '',
-    marathon: '',
-    running: '',
+    jjb: '🥋',
+    grappling: '🤼',
+    hyrox: '⚙️',
+    marathon: '🏁',
+    running: '🏃',
     trail: '⛰️',
+    climbing: '🧗',
+    fitness: '💪',
+    powerlifting: '🏋️',
+    crossfit: '🔥',
   };
 
   return emojis[sportTag] || '';
 }
 
-// Log des statistiques au chargement du service
-logger.info('Events Service initialized');
-const stats = getEventsStats();
-logger.info(`Total events: ${stats.total}`);
-logger.info(`Upcoming events: ${stats.upcoming}`);
-logger.info(`Countries covered: ${stats.countriesCount}`);
+// ============================================
+// LEGACY COMPATIBILITY (deprecated)
+// ============================================
+
+/**
+ * @deprecated Utiliser getFilteredEvents() à la place
+ */
+export async function getEventsByFederation(federation: string): Promise<SportEvent[]> {
+  return getFilteredEvents({ federation });
+}
+
+// Log au chargement
+logger.info('Events Service initialized (SQLite mode)');

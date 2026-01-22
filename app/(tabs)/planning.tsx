@@ -86,7 +86,7 @@ interface SportEvent {
     country: string;
     full_address: string;
   };
-  category: 'combat' | 'endurance';
+  category: 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
   sport_tag: string;
   registration_link: string;
   federation: string | null;
@@ -95,7 +95,7 @@ interface SportEvent {
 }
 
 type EventsTabMode = 'my_events' | 'catalog';
-type CatalogCategoryFilter = 'all' | 'combat' | 'endurance';
+type CatalogCategoryFilter = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
 type CatalogLocationFilter = 'monde' | 'europe' | 'france';
 
 // European countries for filtering
@@ -461,9 +461,12 @@ export default function PlanningScreen() {
     all: allCatalogEvents.length,
     combat: allCatalogEvents.filter(e => e.category === 'combat').length,
     endurance: allCatalogEvents.filter(e => e.category === 'endurance').length,
+    force: allCatalogEvents.filter(e => e.category === 'force').length,
+    nature: allCatalogEvents.filter(e => e.category === 'nature').length,
+    autre: allCatalogEvents.filter(e => e.category === 'autre').length,
     monde: allCatalogEvents.length,
-    europe: allCatalogEvents.filter(e => EUROPEAN_COUNTRIES.includes(e.location.country)).length,
-    france: allCatalogEvents.filter(e => e.location.country.toLowerCase() === 'france').length,
+    europe: allCatalogEvents.filter(e => EUROPEAN_COUNTRIES.includes(e.location?.country ?? '')).length,
+    france: allCatalogEvents.filter(e => e.location?.country?.toLowerCase() === 'france').length,
   }), [allCatalogEvents]);
 
   // Add external event to saved list
@@ -1519,12 +1522,23 @@ export default function PlanningScreen() {
                         eventDate.setHours(0, 0, 0, 0);
                         const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                         const urgencyColor = daysLeft <= 7 ? '#EF4444' : daysLeft <= 30 ? '#F59E0B' : '#10B981';
-                        const categoryColor = event.category === 'combat' ? '#EF4444' : '#10B981';
+                        
+                        // Dynamic category color
+                        const categoryColor = 
+                          event.category === 'combat' ? '#EF4444' : 
+                          event.category === 'endurance' ? '#10B981' :
+                          event.category === 'force' ? '#F59E0B' :
+                          event.category === 'nature' ? '#8B5CF6' : '#6B7280';
+
+                        const city = event.location?.city || 'Lieu inconnu';
+                        const country = event.location?.country || '';
 
                         return (
-                          <View
+                          <TouchableOpacity
                             key={event.id}
                             style={[styles.savedEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                            onPress={() => event.registration_link && handleOpenExternalEvent(event.registration_link)}
+                            activeOpacity={0.7}
                           >
                             <View style={styles.savedEventLeft}>
                               <View style={[styles.savedEventDateBadge, { backgroundColor: categoryColor + '20' }]}>
@@ -1544,13 +1558,13 @@ export default function PlanningScreen() {
                               <View style={styles.savedEventMeta}>
                                 <MapPin size={12} color={colors.textSecondary} />
                                 <Text style={[styles.savedEventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
-                                  {event.location.city}, {event.location.country}
+                                  {city}{country ? `, ${country}` : ''}
                                 </Text>
                               </View>
                               <View style={[styles.savedEventTagRow]}>
                                 <View style={[styles.savedEventTag, { backgroundColor: categoryColor + '20' }]}>
                                   <Text style={[styles.savedEventTagText, { color: categoryColor }]}>
-                                    {event.sport_tag.toUpperCase()}
+                                    {(event.sport_tag || 'sport').toUpperCase()}
                                   </Text>
                                 </View>
                                 {daysLeft > 0 && (
@@ -1579,7 +1593,7 @@ export default function PlanningScreen() {
                                 <Trash2 size={16} color="#EF4444" />
                               </TouchableOpacity>
                             </View>
-                          </View>
+                          </TouchableOpacity>
                         );
                       })}
                   </>
@@ -1692,7 +1706,7 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                 ) : (
-                  filteredCatalogEvents.slice(0, 20).map((event) => {
+                  filteredCatalogEvents.slice(0, 100).map((event) => {
                     const eventDate = new Date(event.date_start);
                     const formattedDate = eventDate.toLocaleDateString(locale, {
                       day: 'numeric',
@@ -1701,18 +1715,42 @@ export default function PlanningScreen() {
                     });
                     const isSaved = savedExternalEventIds.has(event.id);
 
+                    // Safe location display
+                    const city = event.location?.city || 'Lieu inconnu';
+                    const country = event.location?.country || '';
+
                     return (
-                      <View
+                      <TouchableOpacity
                         key={event.id}
                         style={[styles.catalogEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                        onPress={() => event.registration_link && handleOpenExternalEvent(event.registration_link)}
+                        activeOpacity={0.7}
                       >
                         <View style={styles.catalogEventLeft}>
                           <View style={styles.catalogEventHeader}>
                             <Text style={[styles.catalogEventDate, { color: colors.textSecondary }]}>
                               {formattedDate}
                             </Text>
-                            <View style={[styles.catalogCategoryBadge, { backgroundColor: event.category === 'combat' ? '#EF444420' : '#10B98120' }]}>
-                              <Text style={[styles.catalogCategoryText, { color: event.category === 'combat' ? '#EF4444' : '#10B981' }]}>
+                            <View style={[
+                              styles.catalogCategoryBadge, 
+                              { 
+                                backgroundColor: 
+                                  event.category === 'combat' ? '#EF444420' : 
+                                  event.category === 'endurance' ? '#10B98120' :
+                                  event.category === 'force' ? '#F59E0B20' :
+                                  event.category === 'nature' ? '#8B5CF620' : '#6B728020'
+                              }
+                            ]}>
+                              <Text style={[
+                                styles.catalogCategoryText, 
+                                { 
+                                  color: 
+                                    event.category === 'combat' ? '#EF4444' : 
+                                    event.category === 'endurance' ? '#10B981' :
+                                    event.category === 'force' ? '#F59E0B' :
+                                    event.category === 'nature' ? '#8B5CF6' : '#6B7280'
+                                }
+                              ]}>
                                 {event.sport_tag.toUpperCase()}
                               </Text>
                             </View>
@@ -1725,21 +1763,17 @@ export default function PlanningScreen() {
                           <View style={styles.catalogLocationRow}>
                             <MapPin size={14} color={colors.textSecondary} />
                             <Text style={[styles.catalogLocationText, { color: colors.textSecondary }]} numberOfLines={1}>
-                              {event.location.city}, {event.location.country}
+                              {city}{country ? `, ${country}` : ''}
                             </Text>
                           </View>
 
                           {event.registration_link && (
-                            <TouchableOpacity
-                              style={styles.catalogLinkRow}
-                              onPress={() => handleOpenExternalEvent(event.registration_link)}
-                              activeOpacity={0.7}
-                            >
+                            <View style={styles.catalogLinkRow}>
                               <ExternalLink size={12} color="#8B5CF6" />
                               <Text style={[styles.catalogLinkText, { color: '#8B5CF6' }]}>
                                 Inscription
                               </Text>
-                            </TouchableOpacity>
+                            </View>
                           )}
                         </View>
 
@@ -1757,14 +1791,14 @@ export default function PlanningScreen() {
                             <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
                           )}
                         </TouchableOpacity>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })
                 )}
 
-                {filteredCatalogEvents.length > 20 && (
+                {filteredCatalogEvents.length > 100 && (
                   <Text style={[styles.catalogMoreText, { color: colors.textMuted }]}>
-                    + {filteredCatalogEvents.length - 20} autres evenements...
+                    + {filteredCatalogEvents.length - 100} autres evenements...
                   </Text>
                 )}
               </>

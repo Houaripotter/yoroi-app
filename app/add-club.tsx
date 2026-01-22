@@ -16,9 +16,17 @@ export default function AddClubScreen() {
   const [name, setName] = useState('');
   const [selectedSport, setSelectedSport] = useState<string | null>(null);
   const [logo, setLogo] = useState<string | null>(null);
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(3);
+  const [selectedColor, setSelectedColor] = useState('#D4AF37');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const CLUB_COLORS = [
+    '#EF4444', '#F97316', '#F59E0B', '#22C55E',
+    '#10B981', '#06B6D4', '#3B82F6', '#8B5CF6',
+    '#A855F7', '#EC4899', '#6B7280', '#D4AF37',
+  ];
 
   const handlePickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -58,7 +66,8 @@ export default function AddClubScreen() {
         name: name.trim(),
         sport: selectedSport,
         logo_uri: logo || undefined,
-        color: SPORTS.find(s => s.id === selectedSport)?.color,
+        color: selectedColor,
+        sessions_per_week: sessionsPerWeek,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
@@ -110,7 +119,7 @@ export default function AddClubScreen() {
   };
 
   // NOUVEL ORDRE : Cardio > Musculation > Combat > Danse > reste
-  const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
+  const categoriesList = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
 
   return (
     <ScreenWrapper>
@@ -140,30 +149,40 @@ export default function AddClubScreen() {
         <View style={{ backgroundColor: colors.card, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <TouchableOpacity onPress={handlePickImage}>
-              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.backgroundElevated, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+              <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: selectedColor, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
                 {logo ? (
                   <Image source={{ uri: logo }} style={{ width: 80, height: 80 }} />
                 ) : (
                   selectedSport ? (
-                    <View style={{ width: 80, height: 80, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center' }}>
-                        <MaterialCommunityIcons name={getSportIcon(selectedSport) as any} size={40} color={SPORTS.find(s => s.id === selectedSport)?.color || '#000'} />
+                    <View style={{ width: 80, height: 80, backgroundColor: selectedColor, justifyContent: 'center', alignItems: 'center' }}>
+                        <MaterialCommunityIcons name={getSportIcon(selectedSport) as any} size={40} color="#FFF" />
                     </View>
                   ) : (
-                    <Camera size={24} color={colors.textMuted} />
+                    <Camera size={24} color="#FFF" />
                   )
                 )}
               </View>
             </TouchableOpacity>
-            <Text style={{ flex: 1, color: colors.textMuted, fontSize: 12, lineHeight: 18 }}>
-              Touche le cercle pour choisir une photo. Si tu n'en as pas, on utilisera l'icône du sport.
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 8 }}>
+                Touche le cercle pour choisir une photo ou une couleur de fond.
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {CLUB_COLORS.slice(0, 6).map(c => (
+                  <TouchableOpacity 
+                    key={c} 
+                    onPress={() => setSelectedColor(c)}
+                    style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: c, borderWidth: selectedColor === c ? 2 : 0, borderColor: colors.textPrimary }} 
+                  />
+                ))}
+              </View>
+            </View>
           </View>
         </View>
 
         {/* 3. SPORT */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>3. Sport principal</Text>
         
-        {/* RECHERCHE */}
         <View style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, height: 50, borderRadius: 16, paddingHorizontal: 12, gap: 10 }}>
             <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
@@ -183,10 +202,9 @@ export default function AddClubScreen() {
           </View>
         </View>
 
-        <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 12, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 12, overflow: 'hidden', marginBottom: 20 }}>
           {(() => {
-            // Filtrer les catégories vides après recherche
-            const filteredCategories = categories.filter(category => {
+            const filteredCategories = categoriesList.filter(category => {
               let sports = SPORTS.filter(s => s.category === category);
               if (searchQuery.length > 0) {
                 sports = sports.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -207,7 +225,6 @@ export default function AddClubScreen() {
                 if (searchQuery.length > 0) {
                   sportsInCategory = sportsInCategory.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
                 }
-                
                 if (sportsInCategory.length === 0) return null;
 
                 const isExpanded = expandedCategories.includes(category) || searchQuery.length > 0;
@@ -216,7 +233,6 @@ export default function AddClubScreen() {
 
                 return (
                   <View key={category} style={styles.categorySection}>
-                    {/* Header de catégorie cliquable */}
                     <TouchableOpacity
                       style={[
                         styles.categoryHeader,
@@ -227,65 +243,36 @@ export default function AddClubScreen() {
                     >
                       <View style={styles.categoryHeaderLeft}>
                         <View style={[styles.categoryIconBadge, { backgroundColor: catColor + '20' }]}>
-                          <MaterialCommunityIcons
-                            name={categoryIcons[category] as any}
-                            size={20}
-                            color={catColor}
-                          />
+                          <MaterialCommunityIcons name={categoryIcons[category] as any} size={20} color={catColor} />
                         </View>
-                        <Text style={[
-                          styles.categoryLabel,
-                          { color: hasSelectedSport ? catColor : colors.textPrimary }
-                        ]}>
+                        <Text style={[styles.categoryLabel, { color: hasSelectedSport ? catColor : colors.textPrimary }]}>
                           {categoryLabels[category]}
                         </Text>
                       </View>
                       <View style={styles.categoryHeaderRight}>
-                        <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>
-                          {sportsInCategory.length}
-                        </Text>
-                        {isExpanded ? (
-                          <ChevronDown size={20} color={colors.textMuted} />
-                        ) : (
-                          <ChevronRight size={20} color={colors.textMuted} />
-                        )}
+                        <Text style={[styles.categorySportCount, { color: colors.textMuted }]}>{sportsInCategory.length}</Text>
+                        {isExpanded ? <ChevronDown size={20} color={colors.textMuted} /> : <ChevronRight size={20} color={colors.textMuted} />}
                       </View>
                     </TouchableOpacity>
 
-                    {/* Sports de la catégorie - GRILLE VERTICALE */}
                     {isExpanded && (
                       <View style={styles.sportsGrid}>
                         {sportsInCategory.map((sport) => {
                           const isSelected = selectedSport === sport.id;
-
                           return (
                             <TouchableOpacity
                               key={sport.id}
                               style={[
                                 styles.sportGridItem,
                                 { backgroundColor: colors.backgroundElevated, borderColor: colors.border },
-                                isSelected && {
-                                  borderColor: colors.gold,
-                                  backgroundColor: colors.gold + '15',
-                                },
+                                isSelected && { borderColor: colors.gold, backgroundColor: colors.gold + '15' },
                               ]}
                               onPress={() => setSelectedSport(sport.id)}
                             >
                               <View style={[styles.sportGridIcon, { backgroundColor: sport.color + '20' }]}>
-                                <MaterialCommunityIcons
-                                  name={sport.icon as any}
-                                  size={28}
-                                  color={isSelected ? colors.gold : sport.color}
-                                />
+                                <MaterialCommunityIcons name={sport.icon as any} size={28} color={isSelected ? colors.gold : sport.color} />
                               </View>
-                              <Text
-                                style={[
-                                  styles.sportGridName,
-                                  { color: colors.textPrimary },
-                                  isSelected && { color: colors.gold, fontWeight: '700' },
-                                ]}
-                                numberOfLines={1}
-                              >
+                              <Text style={[styles.sportGridName, { color: colors.textPrimary }, isSelected && { color: colors.gold, fontWeight: '700' }]} numberOfLines={1}>
                                 {sport.name}
                               </Text>
                               {isSelected && (
@@ -304,6 +291,35 @@ export default function AddClubScreen() {
           })()}
         </View>
 
+        {/* 4. OBJECTIF HEBDOMADAIRE */}
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>4. Objectif Hebdomadaire</Text>
+        <View style={{ backgroundColor: colors.card, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 13, marginBottom: 12 }}>Combien de fois par semaine souhaites-tu t'entraîner ?</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+            <TouchableOpacity 
+              onPress={() => setSessionsPerWeek(Math.max(1, sessionsPerWeek - 1))}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.backgroundElevated, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ color: colors.textPrimary, fontSize: 24 }}>-</Text>
+            </TouchableOpacity>
+            
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ color: colors.gold, fontSize: 32, fontWeight: '900' }}>{sessionsPerWeek}</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 10, fontWeight: '700' }}>SÉANCES / SEM.</Text>
+            </View>
+
+            <TouchableOpacity 
+              onPress={() => setSessionsPerWeek(Math.min(7, sessionsPerWeek + 1))}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.backgroundElevated, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ color: colors.textPrimary, fontSize: 24 }}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center' }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Estimation annuelle : <Text style={{ color: colors.gold, fontWeight: '800' }}>{sessionsPerWeek * 52} JOURS</Text></Text>
+          </View>
+        </View>
+
         <TouchableOpacity
           style={{ backgroundColor: colors.accent, padding: 16, borderRadius: 16, alignItems: 'center', marginTop: 20, opacity: (!name.trim() || !selectedSport) ? 0.5 : 1 }}
           disabled={!name.trim() || !selectedSport || isSubmitting}
@@ -317,95 +333,21 @@ export default function AddClubScreen() {
   );
 }
 
-// Constants for non-theme values
 const RADIUS = { sm: 8, md: 12, lg: 16 };
 const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20 };
 
 const styles = StyleSheet.create({
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-    marginTop: 10,
-  },
-  // CATEGORY STYLES (MATCHING ADDTRAINING)
-  categorySection: {
-    marginBottom: SPACING.md,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-  },
-  categoryHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  categoryIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  categoryHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  categorySportCount: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  sportsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    padding: 4,
-    marginTop: 8,
-  },
-  sportGridItem: {
-    width: '23.5%', // 4 colonnes comme l'étape 1
-    aspectRatio: 0.85,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-    position: 'relative',
-  },
-  sportGridIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-  },
-  sportGridName: {
-    fontSize: 9,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  sportGridCheck: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 12, marginTop: 10 },
+  categorySection: { marginBottom: SPACING.md },
+  categoryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.md, borderRadius: RADIUS.md, borderWidth: 1 },
+  categoryHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  categoryIconBadge: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  categoryLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  categoryHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  categorySportCount: { fontSize: 12, fontWeight: '600' },
+  sportsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, padding: 4, marginTop: 8 },
+  sportGridItem: { width: '23.5%', aspectRatio: 0.85, borderRadius: 14, borderWidth: 1, padding: 6, alignItems: 'center', justifyContent: 'center', marginBottom: 4, position: 'relative' },
+  sportGridIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  sportGridName: { fontSize: 9, fontWeight: '600', textAlign: 'center' },
+  sportGridCheck: { position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
 });

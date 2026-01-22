@@ -82,6 +82,7 @@ export const initDatabase = async () => {
       sport TEXT NOT NULL,
       logo_uri TEXT,
       color TEXT,
+      sessions_per_week INTEGER DEFAULT 3,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -368,6 +369,30 @@ export const initDatabase = async () => {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Table Events Catalog (Catalogue d'événements sportifs)
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS events_catalog (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      date_start TEXT NOT NULL,
+      city TEXT,
+      country TEXT,
+      full_address TEXT,
+      category TEXT NOT NULL,
+      sport_tag TEXT NOT NULL,
+      registration_link TEXT,
+      federation TEXT,
+      image_logo_url TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Index pour améliorer les performances de recherche
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
 
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();

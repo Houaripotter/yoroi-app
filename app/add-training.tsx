@@ -261,6 +261,7 @@ export default function AddTrainingScreen() {
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]); // Groupes d'exercices dépliés (fermés par défaut)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({}); // { jjb: ['drill', 'sparring'], running: ['5k'] }
+  const [validatedOptions, setValidatedOptions] = useState<Record<string, boolean>>({}); // { m_c_be: true }
   const [optionStats, setOptionStats] = useState<Record<string, { 
     weight?: string, 
     reps?: string, 
@@ -462,43 +463,48 @@ export default function AddTrainingScreen() {
   }, []);
 
   // Recalculer l'objectif quand le club change
-  useEffect(() => {
-    const updateContextualData = async () => {
-      try {
-        const allTrainings = await getTrainings() || [];
-        const now = new Date();
-        const currentYear = now.getFullYear();
+      useEffect(() => {
+        const updateContextualData = async () => {
+          try {
+            const allTrainings = await getTrainings() || [];
+            const currentYear = new Date().getFullYear();
+            const today = new Date();        const startOfYear = new Date(currentYear, 0, 1);
+        const daysElapsed = Math.floor((today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-        let count = 0;
-        let objective = 150; // Valeur par défaut si pas de club (environ 3x/semaine)
+        // 1. Compter les jours uniques au TOTAL (tous sports)
+        const totalUniqueDays = new Set(allTrainings
+          .filter((t: any) => new Date(t.date).getFullYear() === currentYear)
+          .map((t: any) => new Date(t.date).toISOString().split('T')[0])
+        );
+        const totalCount = Math.min(totalUniqueDays.size + 1, daysElapsed);
+
+        let sportCount = 0;
+        let objective = 150; 
 
         if (selectedClub) {
-          // 1. Contexte CLUB : Compter les séances de ce club cette année
-          const clubTrainings = allTrainings.filter((t: any) => 
-            t.club_id === selectedClub.id && 
-            new Date(t.date).getFullYear() === currentYear
-          );
-          count = clubTrainings.length;
-
-          // Objectif Club : Fréquence * 52
-          if (selectedClub.sessions_per_week) {
-            objective = selectedClub.sessions_per_week * 52;
-          }
+          const clubTrainings = allTrainings.filter((t: any) => {
+            const tDate = new Date(t.date);
+            return t.club_id === selectedClub.id && tDate.getFullYear() === currentYear;
+          });
+          const sportUniqueDays = new Set(clubTrainings.map((t: any) => new Date(t.date).toISOString().split('T')[0]));
+          sportCount = Math.min(sportUniqueDays.size + 1, daysElapsed);
+          objective = selectedClub.sessions_per_week ? selectedClub.sessions_per_week * 52 : 150;
         } else if (selectedSports.length > 0) {
-          // 2. Contexte SPORT : Compter les séances de ce sport cette année
-          // On regarde si le sport de la séance est inclus dans les sports sélectionnés
           const sportTrainings = allTrainings.filter((t: any) => {
-            if (new Date(t.date).getFullYear() !== currentYear) return false;
-            // Vérifier si un des sports de la séance passée correspond au sport actuel
-            const tSports = t.sport ? t.sport.split(',') : [];
+            const tDate = new Date(t.date);
+            if (tDate.getFullYear() !== currentYear) return false;
+            const tSports = t.sport ? t.sport.split(',').map((s: string) => s.trim()) : [];
             return tSports.some((s: string) => selectedSports.includes(s));
           });
-          count = sportTrainings.length;
+          const sportUniqueDays = new Set(sportTrainings.map((t: any) => new Date(t.date).toISOString().split('T')[0]));
+          sportCount = Math.min(sportUniqueDays.size + 1, daysElapsed);
+          objective = 365;
         }
 
-        // Ajouter la séance actuelle (+1)
-        setYearlyCount(count + 1);
+        setYearlyCount(sportCount); // On garde sportCount comme valeur principale
         setYearlyObjective(objective);
+        // On peut stocker le totalCount dans un état si on veut l'afficher spécifiquement
+        // Pour l'instant on va utiliser yearlyCount pour le sport et safeObjective pour le but perso
 
       } catch (error) {
         console.error("Erreur calcul compteurs:", error);
@@ -1033,18 +1039,27 @@ export default function AddTrainingScreen() {
         const sportOptions = selectedOptions[sportId] || [];
         const entries = sportEntries[sportId] || [];
 
-        // Options sélectionnées avec Stats (kg/reps)
+        // Options sélectionnées avec Stats détaillées (kg/reps/km/etc)
         if (sportOptions.length > 0) {
           const optionLabels = sportOptions.map(optId => {
             const opt = getOptionsForSport(sportId).find(o => o.id === optId);
             const stats = optionStats[optId];
-            let label = opt?.label || optId;
-            if (stats && (stats.weight || stats.reps)) {
-              label += ` (${stats.weight || '0'}kg x ${stats.reps || '0'})`;
+            let label = `• ${opt?.label || optId}`;
+            
+            if (stats) {
+              const details = [];
+              if (stats.weight || stats.reps) details.push(`${stats.weight || '0'}kg x ${stats.reps || '0'}`);
+              if (stats.distance) details.push(`${stats.distance}km`);
+              if (stats.speed) details.push(`${stats.speed}km/h`);
+              if (stats.pente) details.push(`${stats.pente}%`);
+              if (stats.stairs) details.push(`${stats.stairs} étages`);
+              if (stats.calories) details.push(`${stats.calories}kcal`);
+              
+              if (details.length > 0) label += ` (${details.join(', ')})`;
             }
             return label;
           });
-          fullNotes += `${sportName}: ${optionLabels.join(', ')}\n`;
+          fullNotes += `${sportName}:\n${optionLabels.join('\n')}\n`;
         }
 
         // Entrées personnalisées
@@ -1859,13 +1874,28 @@ export default function AddTrainingScreen() {
                                       {isSelected && (
                                         <TouchableOpacity 
                                           onPress={(e) => {
-                                            e.stopPropagation(); // Stop toggle
-                                            Keyboard.dismiss();
-                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            e.stopPropagation();
+                                            if (isValid) {
+                                              setValidatedOptions(prev => ({ ...prev, [option.id]: false }));
+                                            } else {
+                                              setValidatedOptions(prev => ({ ...prev, [option.id]: true }));
+                                              Keyboard.dismiss();
+                                              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            }
+                                          }}
+                                          style={{ 
+                                            backgroundColor: isValid ? '#10B981' : '#EF4444', 
+                                            paddingHorizontal: 10, 
+                                            paddingVertical: 6, 
+                                            borderRadius: 8,
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            gap: 4
                                           }}
                                           activeOpacity={0.7}
                                         >
-                                          <Check size={16} color={isValid ? '#10B981' : option.color} />
+                                          <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '900' }}>{isValid ? 'VALIDÉ' : 'VALIDER'}</Text>
+                                          <Check size={14} color="#FFF" />
                                         </TouchableOpacity>
                                       )}
                                     </View>
@@ -1901,9 +1931,23 @@ export default function AddTrainingScreen() {
                                                 placeholderTextColor={colors.textMuted}
                                                 keyboardType="number-pad"
                                                 value={stats.reps}
-                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
+                                                onChangeText={(val) => {
+                                                  setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }));
+                                                  setValidatedOptions(prev => ({ ...prev, [option.id]: false }));
+                                                }}
                                               />
                                             </View>
+                                            {isValid && (
+                                              <TouchableOpacity 
+                                                onPress={() => {
+                                                  setOptionStats(prev => ({ ...prev, [option.id]: { weight: '', reps: '' } }));
+                                                  setValidatedOptions(prev => ({ ...prev, [option.id]: false }));
+                                                }}
+                                                style={{ marginLeft: 8 }}
+                                              >
+                                                <MaterialCommunityIcons name="trash-can-outline" size={20} color="#EF4444" />
+                                              </TouchableOpacity>
+                                            )}
                                           </View>
                                         )}
                                         {isCardio && renderPerformanceFields(option.id, option.label)}

@@ -56,6 +56,7 @@ import { shouldAskForReview } from '@/lib/reviewService';
 import { useReviewModal } from '@/components/ReviewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SessionCard } from '@/components/social-cards/SessionCard';
+import { parseExercisesFromNotes } from '@/lib/exerciseParser';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
@@ -101,25 +102,7 @@ export default function LastSessionScreen() {
   const [weeklyCount, setWeeklyCount] = useState(0);
   const [yearlyObjective, setYearlyObjective] = useState(0);
 
-  // Fonction pour extraire les exercices et leurs stats depuis les notes
-  const parseExercisesFromNotes = (notes: string) => {
-    const details: any[] = [];
-    if (!notes) return details;
-    const lines = notes.split('\n');
-    lines.forEach(line => {
-      const match = line.match(/(?:•\s*)?(.*?)\s*\((\d+)?kg\s*x\s*(\d+)?\)/i);
-      if (match) {
-        let label = match[1].trim();
-        label = label.replace(/^.*:\s*/, '');
-        details.push({
-          label: label,
-          weight: match[2] || '0',
-          reps: match[3] || '0'
-        });
-      }
-    });
-    return details;
-  };
+  // Note: parseExercisesFromNotes est maintenant importé depuis lib/exerciseParser.ts
 
   useEffect(() => {
     const loadData = async () => {
@@ -134,7 +117,11 @@ export default function LastSessionScreen() {
 
         if (profile) {
           setUserName(profile.name || 'Champion');
-          if (profile.profile_photo) setUserPhoto(profile.profile_photo);
+          if (profile.profile_photo) {
+            setUserPhoto(profile.profile_photo);
+            setBackgroundImage(profile.profile_photo);
+            setBackgroundType('photo');
+          }
         }
 
         // Charger l'avatar
@@ -167,37 +154,41 @@ export default function LastSessionScreen() {
           }
         }
 
-        // Calculer l'objectif si un club est associé
+        // Calculer l'objectif (Logique unifiée avec Step 2)
+        const currentYear = new Date().getFullYear();
         if (currentTraining && currentTraining.club_id) {
           const club = clubs.find(c => c.id === currentTraining?.club_id);
           if (club) {
-            const now = new Date();
-            const startOfYear = new Date(now.getFullYear(), 0, 1);
-            const weeksPassed = Math.max(1, Math.ceil((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24 * 7)));
-            setYearlyObjective((club.sessions_per_week || 3) * weeksPassed);
+            setYearlyObjective(club.sessions_per_week ? club.sessions_per_week * 52 : 150);
           }
+        } else {
+          setYearlyObjective(365);
         }
 
-        // Calculer les compteurs
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-        const startOfWeek = new Date(now);
-        const day = startOfWeek.getDay();
-        const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-        startOfWeek.setDate(diff);
-        startOfWeek.setHours(0, 0, 0, 0);
+        // Calculer les compteurs (Logique unifiée avec Step 2)
+        const today = new Date();
+        const startOfYear = new Date(currentYear, 0, 1);
+        const daysElapsed = Math.floor((today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-        const thisYear = trainings.filter(t => new Date(t.date).getFullYear() === currentYear);
-        const thisMonth = trainings.filter(t => {
-          const d = new Date(t.date);
-          return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-        });
-        const thisWeek = trainings.filter(t => new Date(t.date) >= startOfWeek);
+        if (currentTraining) {
+          const sportToCount = currentTraining.sport?.split(',')[0].trim();
+          const clubToCount = currentTraining.club_id;
 
-        setYearlyCount(thisYear.length);
-        setMonthlyCount(thisMonth.length);
-        setWeeklyCount(thisWeek.length);
+          const sportTrainings = trainings.filter(t => {
+            const tDate = new Date(t.date);
+            if (tDate.getFullYear() !== currentYear) return false;
+            
+            if (clubToCount) {
+              return t.club_id === clubToCount;
+            } else {
+              const tSports = t.sport ? t.sport.split(',').map(s => s.trim()) : [];
+              return tSports.includes(sportToCount);
+            }
+          });
+
+          const uniqueDays = new Set(sportTrainings.map(t => new Date(t.date).toISOString().split('T')[0]));
+          setYearlyCount(Math.min(uniqueDays.size, daysElapsed));
+        }
 
       } catch (error) {
         logger.error('Error loading data:', error);
@@ -443,38 +434,58 @@ export default function LastSessionScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingTop: 20, paddingBottom: 150 }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* 1. SÉLECTEUR DE FOND - EN HAUT POUR CHARGER PHOTO DIRECT */}
-          <View style={[styles.styleSection, { marginBottom: 30 }]}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary, textAlign: 'left', marginBottom: 12 }]}>STYLE DE LA CARTE</Text>
-            <View style={styles.styleRow}>
+          {/* 1. SÉLECTEUR DE FOND - DESIGN PREMIUM PILL */}
+          <View style={{ marginBottom: 30, paddingHorizontal: 4 }}>
+            <View style={{ 
+              flexDirection: 'row', 
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', 
+              borderRadius: 20, 
+              padding: 4,
+              gap: 4
+            }}>
               {[
-                { key: 'photo', label: 'PHOTO PERSO', icon: Camera },
+                { key: 'photo', label: 'PHOTO', icon: Camera },
                 { key: 'black', label: 'SOMBRE', icon: Moon },
                 { key: 'white', label: 'CLAIR', icon: Sun },
-              ].map((style) => (
-                <TouchableOpacity
-                  key={style.key}
-                  style={[
-                    styles.styleBtn,
-                    {
-                      backgroundColor: backgroundType === style.key ? colors.accent : colors.backgroundCard,
-                      borderColor: backgroundType === style.key ? colors.accent : colors.border,
+              ].map((style) => {
+                const isActive = backgroundType === style.key;
+                return (
+                  <TouchableOpacity
+                    key={style.key}
+                    style={{
                       flex: 1,
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setBackgroundType(style.key as any);
-                    if (style.key === 'photo') pickImage();
-                    else setBackgroundImage(undefined);
-                  }}
-                >
-                  <style.icon size={18} color={backgroundType === style.key ? colors.textOnAccent : colors.textPrimary} />
-                  <Text style={[styles.styleBtnText, { color: backgroundType === style.key ? colors.textOnAccent : colors.textPrimary }]}>
-                    {style.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      paddingVertical: 12,
+                      borderRadius: 16,
+                      gap: 8,
+                      backgroundColor: isActive ? colors.accent : 'transparent',
+                      shadowColor: isActive ? colors.accent : 'transparent',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isActive ? 0.3 : 0,
+                      shadowRadius: 8,
+                      elevation: isActive ? 4 : 0
+                    }}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setBackgroundType(style.key as any);
+                      if (style.key === 'photo') pickImage();
+                      else setBackgroundImage(undefined);
+                    }}
+                  >
+                    <style.icon size={16} color={isActive ? colors.textOnAccent : colors.textPrimary} />
+                    <Text style={{ 
+                      fontSize: 12, 
+                      fontWeight: '800', 
+                      color: isActive ? colors.textOnAccent : colors.textSecondary,
+                      letterSpacing: 0.5
+                    }}>
+                      {style.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
