@@ -4,7 +4,7 @@
     "slug": "yoroi",
     "displayName": "Yoroi",
     "description": "YOROI - Votre compagnon fitness pour le suivi de poids, composition corporelle et entraînements. 100% offline, vos données restent sur votre appareil.",
-    "version": "1.0.1",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo d'app/logo1.png",
     "scheme": "yoroi",

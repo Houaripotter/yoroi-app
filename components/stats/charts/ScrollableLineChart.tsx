@@ -387,7 +387,7 @@ export const ScrollableLineChart: React.FC<ScrollableLineChartProps> = ({
         <View style={[styles.hintContainer, { backgroundColor: `${lineColor}12` }]}>
           <Ionicons name="swap-horizontal-outline" size={14} color={lineColor} />
           <Text style={[styles.hintText, { color: lineColor }]}>
-            {t('stats.scrollAndTap') || 'Faites défiler • Appuyez pour agrandir'}
+            Faites défiler • Appuyez pour agrandir
           </Text>
         </View>
       )}

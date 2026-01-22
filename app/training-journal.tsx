@@ -213,6 +213,14 @@ export default function TrainingJournalScreen() {
   // Onboarding
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Computed stats from local data
+  const stats = {
+    totalBenchmarks: benchmarks.length,
+    totalPRs: benchmarks.reduce((count, b) => count + (b.entries?.length || 0), 0),
+    skillsMastered: skills.filter(s => s.status === 'mastered').length,
+    totalDrills: skills.reduce((count, s) => count + (s.drillCount || 0), 0),
+  };
+
   // Load user preferences
   useEffect(() => {
     const loadUserPrefs = async () => {

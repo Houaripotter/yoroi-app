@@ -141,9 +141,9 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
           {/* LIGNE 2 : Perdu - Objectif - Reste */}
           <View style={styles.row2}>
             {/* Perdu à gauche - VERT */}
-            {history && history.length > 0 && currentWeight > 0 && history[0] && typeof history[0] === 'number' && !isNaN(history[0]) && !isNaN(currentWeight) ? (
+            {history && history.length > 0 && currentWeight > 0 && history[0] && typeof history[0] === 'number' && !isNaN(history[0]) && !isNaN(currentWeight) && history[0] > currentWeight ? (
               <View style={styles.goalItem}>
-                <Text style={[styles.goalValue, { color: '#10B981' }]}>{`-${(history[0] - currentWeight).toFixed(1)}`}</Text>
+                <Text style={[styles.goalValue, { color: '#10B981' }]}>{`${(history[0] - currentWeight).toFixed(1)}`}</Text>
                 <Text style={[styles.goalLabel, { color: '#10B981' }]}>Perdu</Text>
               </View>
             ) : (

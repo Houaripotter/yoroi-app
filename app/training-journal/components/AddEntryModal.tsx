@@ -539,7 +539,7 @@ export default function AddEntryModal(props: AddEntryModalProps) {
                       onChangeText={(text) => {
                         setNewEntryDuration(text);
                         const duration = parseInt(text);
-                        if (!isNaN(duration) && duration > 0) {
+                        if (!isNaN(duration) && duration > 0 && selectedBenchmark) {
                           const estimatedCal = calculateCalories(duration, userWeight, selectedBenchmark.category);
                           setNewEntryCalories(estimatedCal.toString());
                         }

@@ -32,6 +32,7 @@ import {
 } from '@/lib/carnetService';
 import { getRelativeDate } from '../utils/dateHelpers';
 import { renderIcon } from '../utils/iconMap';
+import { useI18n } from '@/lib/I18nContext';
 
 interface BenchmarkDetailModalProps {
   visible: boolean;
@@ -52,6 +53,8 @@ export default function BenchmarkDetailModal({
   onAddEntry,
   onDelete,
 }: BenchmarkDetailModalProps) {
+  const { t } = useI18n();
+
   if (!benchmark) return null;
 
   const pr = getBenchmarkPR(benchmark);
@@ -175,7 +178,7 @@ export default function BenchmarkDetailModal({
                     )}
                   </View>
                   <Text style={[styles.historyEntryDate, { color: colors.textMuted }]}>
-                    {getRelativeDate(entry.date)}
+                    {getRelativeDate(entry.date, t)}
                   </Text>
                 </View>
               );

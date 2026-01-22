@@ -213,7 +213,12 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
 
       setBenchmarks(benchmarksData);
       setSkills(skillsData);
-      setStats(statsData);
+      setStats({
+        ...statsData,
+        totalSkills: statsData.totalSkills,
+        weeklyDrills: 0, // TODO: Calculate from date filtering
+        monthlyDrills: 0, // TODO: Calculate from date filtering
+      });
       setTrashBenchmarks(trashBenchmarksData);
       setTrashSkills(trashSkillsData);
       setTrashCount(trashCountData);
@@ -350,8 +355,7 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
         newSkillName.trim(),
         newSkillCategory,
         newSkillStatus,
-        newSkillNotes.trim() || undefined,
-        newSkillVideoUri || undefined
+        newSkillNotes.trim() || undefined
       );
       await refreshData();
       closeAddSkill();

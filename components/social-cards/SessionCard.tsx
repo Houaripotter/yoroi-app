@@ -29,6 +29,7 @@ interface SessionCardProps {
   training: Partial<Training>;
   backgroundImage?: string | null;
   backgroundType?: 'photo' | 'black' | 'white';
+  keepPhotoClear?: boolean; // Ne pas assombrir la photo de fond
   customLocation?: string;
   isLandscape?: boolean;
   width?: number;
@@ -64,13 +65,14 @@ interface SessionCardProps {
     calories?: string,
     watts?: string,
     resistance?: string,
-    stairs?: string
+    stairs?: string,
+    pace?: string
   }[];
 }
 
 export const SessionCard = React.forwardRef<View, SessionCardProps>(
   ({
-    training, backgroundImage, backgroundType = 'black', width = DEFAULT_WIDTH,
+    training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width = DEFAULT_WIDTH,
     userAvatar, profilePhoto, userName, rank, userLevel, options,
     showYearlyCount = true,
     yearlyCount = 0, yearlyObjective = 365,
@@ -82,7 +84,8 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
     const formattedDate = dateObj.toLocaleDateString('fr-FR', {
       weekday: 'long',
       day: 'numeric',
-      month: 'long'
+      month: 'long',
+      year: 'numeric'
     }).toUpperCase();
 
     const sportNameStr = training.sport?.split(',').map(s => getSportName(s)).join(' + ') || 'SÉANCE';
@@ -139,7 +142,12 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <LinearGradient colors={['#1a1a1a', '#000']} style={{ flex: 1 }} />
           )}
 
-          <LinearGradient colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']} style={styles.photoGradient}>
+          <LinearGradient
+            colors={keepPhotoClear
+              ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.4)']
+              : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
+            style={styles.photoGradient}
+          >
             {/* DATE EN HAUT AU MILIEU */}
             <View style={{ position: 'absolute', top: 16, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
               <Text style={styles.dateText}>{formattedDate}</Text>
@@ -147,7 +155,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
 
             <View style={styles.photoHeader}>
 
-              {/* PHOTO PROFIL (GAUCHE) + NOM + RANG + NIVEAU */}
+              {/* PHOTO PROFIL (GAUCHE) + NOM */}
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
@@ -163,24 +171,24 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     {userName.toUpperCase()}
                   </Text>
                 )}
-                {rank && (
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
-                  </View>
-                )}
-                {userLevel && (
-                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
-                    NIV. {userLevel}
-                  </Text>
-                )}
               </View>
 
-              {/* AVATAR YOROI (DROITE) */}
+              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
               <View style={styles.avatarContainer}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
+                )}
+                {rank && (
+                  <View style={styles.rankBadge}>
+                    <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
+                  </View>
+                )}
+                {userLevel !== undefined && userLevel !== null && (
+                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    {`NIV. ${userLevel}`}
+                  </Text>
                 )}
               </View>
             </View>
@@ -217,13 +225,15 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
-                  <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
+                    <Text style={[styles.chronoLabel, { color: subTxt }]}>(ENTRAINEMENT)</Text>
+                  </View>
                   <View style={styles.progressNumbers}>
                     <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '800' }]}>/ </Text>
+                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '800' }]}> / </Text>
                     <Text style={[styles.goldLargeNumber, { fontSize: 24 }]}>{safeObjective}</Text>
-                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS </Text>
-                    <Text style={[{ color: subTxt, fontSize: 10, fontWeight: '700' }]}>(ENTRAINEMENT)</Text>
+                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS</Text>
                   </View>
                 </View>
                 <View style={styles.progressRight}>
@@ -252,14 +262,14 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             </View>
 
             <ScrollView
-              style={{ maxHeight: options && options.length > 6 ? 120 : undefined }}
+              style={{ maxHeight: options && options.length > 7 ? 140 : undefined }}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
             >
               <View style={styles.exercisesList}>
                 {options && options.length > 0 ? (
-                  options.slice(0, 15).map((opt, i) => {
-                    const pace = getPace(opt.speed);
+                  options.map((opt, i) => {
+                    const pace = opt.pace || getPace(opt.speed);
                     return (
                       <View key={i} style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
                         <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
@@ -273,7 +283,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                           )}
                           {opt.distance && renderStyledStat(opt.distance, 'KM')}
                           {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                          {pace && <Text style={[styles.paceText, { color: subTxt }]}>({pace})</Text>}
+                          {pace && <Text style={[styles.paceText, { color: subTxt }]}>({pace} min/km)</Text>}
                           {opt.pente && renderStyledStat(opt.pente, '%')}
                           {opt.stairs && renderStyledStat(opt.stairs, 'FLOORS')}
                           {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
@@ -319,6 +329,7 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   profileContainer: {
     width: PROFILE_SIZE,
