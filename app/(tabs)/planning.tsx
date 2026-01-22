@@ -44,8 +44,8 @@ import {
   Sun,
 } from 'lucide-react-native';
 
-// Import events catalog data
-import eventsData from '@/src/data/events.json';
+// Import events catalog service (SQLite optimized)
+import { getFilteredEvents, SportEvent as ImportedSportEvent } from '@/lib/eventsService';
 import { toggleRestDay } from '@/lib/restDaysService';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfWeek, endOfWeek, addDays, getDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -419,8 +419,22 @@ export default function PlanningScreen() {
     }
   };
 
-  // Get all events from JSON (typed)
-  const allCatalogEvents = useMemo(() => eventsData as SportEvent[], []);
+  // Get all events from SQLite (async loaded)
+  const [allCatalogEvents, setAllCatalogEvents] = useState<SportEvent[]>([]);
+
+  // Load events from SQLite on mount
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const events = await getFilteredEvents({ limit: 1000 });
+        setAllCatalogEvents(events as SportEvent[]);
+      } catch (error) {
+        console.error('Error loading events:', error);
+        setAllCatalogEvents([]);
+      }
+    };
+    loadEvents();
+  }, []);
 
   // Filter catalog events
   const filteredCatalogEvents = useMemo(() => {

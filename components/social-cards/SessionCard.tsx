@@ -36,6 +36,7 @@ interface SessionCardProps {
   profilePhoto?: string | null;
   userName?: string;
   rank?: string;
+  userLevel?: number;
   showDate?: boolean;
   showYearlyCount?: boolean;
   showMonthlyCount?: boolean;
