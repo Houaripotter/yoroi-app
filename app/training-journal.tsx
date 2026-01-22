@@ -86,9 +86,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPendingVictory } from '@/lib/victoryTrigger';
 import TrainingJournalOnboarding from '@/components/TrainingJournalOnboarding';
 import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
-import { useTrainingJournal } from './training-journal/hooks/useTrainingJournal';
+// import { useTrainingJournal } from './training-journal/hooks/useTrainingJournal';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
+import AddEntryModal from './training-journal/components/AddEntryModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -103,43 +104,46 @@ export default function TrainingJournalScreen() {
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  // Use custom hook for all state and logic
-  const {
-    // Data
-    benchmarks,
-    skills,
-    stats,
-    isLoading,
-    isSubmitting,
+  // TODO: Migrate to useTrainingJournal hook (WIP)
+  // For now, keep local state management
 
-    // Modals
-    showFabMenu,
-    showAddBenchmarkModal,
-    showAddSkillModal,
-    showBenchmarkDetail,
-    showSkillDetail,
-    showAddEntryModal,
-    showTrashModal,
+  // Data state
+  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Selected
-    selectedBenchmark,
-    selectedSkill,
+  // Modal visibility
+  const [showFabMenu, setShowFabMenu] = useState(false);
+  const [showAddBenchmarkModal, setShowAddBenchmarkModal] = useState(false);
+  const [showAddSkillModal, setShowAddSkillModal] = useState(false);
+  const [showBenchmarkDetail, setShowBenchmarkDetail] = useState(false);
+  const [showSkillDetail, setShowSkillDetail] = useState(false);
+  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
+  const [showTrashModal, setShowTrashModal] = useState(false);
 
-    // Trash
-    trashBenchmarks,
-    trashSkills,
-    trashCount,
+  // Selected items
+  const [selectedBenchmark, setSelectedBenchmark] = useState<Benchmark | null>(null);
+  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
 
-    // Forms
-    newBenchmarkName,
-    newBenchmarkCategory,
-    newBenchmarkUnit,
-    newSkillName,
-    newSkillCategory,
+  // Trash
+  const [trashBenchmarks, setTrashBenchmarks] = useState<TrashItem<Benchmark>[]>([]);
+  const [trashSkills, setTrashSkills] = useState<TrashItem<Skill>[]>([]);
+  const [trashCount, setTrashCount] = useState(0);
+
+  // Form state - Benchmark
+  const [newBenchmarkName, setNewBenchmarkName] = useState('');
+  const [newBenchmarkCategory, setNewBenchmarkCategory] = useState<BenchmarkCategory>('force');
+  const [newBenchmarkUnit, setNewBenchmarkUnit] = useState<BenchmarkUnit>('kg');
+
+  // Form state - Skill
+  const [newSkillName, setNewSkillName] = useState('');
+  const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>('jjb_garde');
   const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('to_learn');
   const [newSkillNotes, setNewSkillNotes] = useState('');
-  // TASK 3: Local video URI for techniques
   const [newSkillVideoUri, setNewSkillVideoUri] = useState<string | null>(null);
+
+  // Form state - Entry
   const [newEntryValue, setNewEntryValue] = useState('');
   const [newEntryReps, setNewEntryReps] = useState('');
   const [newEntryUnit, setNewEntryUnit] = useState<WeightUnit>('kg');
@@ -1558,608 +1562,6 @@ export default function TrainingJournalScreen() {
     </Modal>
   );
 
-  const renderAddEntryModal = () => {
-    // Detect exercise type
-    const isForceExercise = selectedBenchmark?.category === 'force' &&
-      (selectedBenchmark?.unit === 'kg' || selectedBenchmark?.unit === 'lbs');
-    const isRunningExercise = ['running', 'trail'].includes(selectedBenchmark?.category || '');
-    const isHyroxExercise = selectedBenchmark?.category === 'hyrox';
-    const isCardioExercise = selectedBenchmark?.category === 'cardio';
-    const isMusculationExercise = selectedBenchmark?.category === 'musculation';
-
-    // Calculate total time in seconds from H/M/S fields
-    const getTotalTimeSeconds = () => {
-      const h = parseInt(runningTimeHours) || 0;
-      const m = parseInt(runningTimeMinutes) || 0;
-      const s = parseInt(runningTimeSeconds) || 0;
-      return h * 3600 + m * 60 + s;
-    };
-
-    // Auto-calculate pace for Running
-    const getEstimatedPace = () => {
-      const distanceKm = parseFloat(newEntryDistance);
-      const totalSeconds = getTotalTimeSeconds();
-      if (distanceKm > 0 && totalSeconds > 0) {
-        const paceSecondsPerKm = totalSeconds / distanceKm;
-        const paceMin = Math.floor(paceSecondsPerKm / 60);
-        const paceSec = Math.floor(paceSecondsPerKm % 60);
-        return `${paceMin}:${paceSec.toString().padStart(2, '0')} /km`;
-      }
-      return null;
-    };
-
-    // Auto-calculate calories when time changes
-    const updateCaloriesFromTime = () => {
-      const totalSeconds = getTotalTimeSeconds();
-      if (totalSeconds > 0 && selectedBenchmark) {
-        const durationMin = Math.round(totalSeconds / 60);
-        setNewEntryDuration(durationMin.toString());
-        const estimatedCal = calculateCalories(durationMin, userWeight, selectedBenchmark.category);
-        setNewEntryCalories(estimatedCal.toString());
-      }
-    };
-
-    return (
-      <Modal visible={showAddEntryModal} animationType="slide" transparent>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-          <ScrollView style={{ maxHeight: '90%' }} showsVerticalScrollIndicator={false}>
-            <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-                  {selectedBenchmark?.name}
-                </Text>
-                <TouchableOpacity onPress={resetModalState} style={styles.modalCloseBtn}>
-                  <X size={24} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Date Picker */}
-              <Text style={[styles.inputLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Date de la séance</Text>
-              <View style={styles.datePickerRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.dateOption,
-                    { backgroundColor: entryDate === 'today' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'today' ? colors.accent : colors.border }
-                  ]}
-                  onPress={() => setEntryDate('today')}
-                >
-                  <Calendar size={16} color={entryDate === 'today' ? '#FFFFFF' : colors.textSecondary} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'today' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
-                    Aujourd'hui
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.dateOption,
-                    { backgroundColor: entryDate === 'yesterday' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'yesterday' ? colors.accent : colors.border }
-                  ]}
-                  onPress={() => setEntryDate('yesterday')}
-                >
-                  <Clock size={16} color={entryDate === 'yesterday' ? '#FFFFFF' : colors.textSecondary} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'yesterday' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
-                    Hier
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.dateOption,
-                    { backgroundColor: entryDate === 'custom' ? colors.accent : colors.backgroundElevated, borderColor: entryDate === 'custom' ? colors.accent : colors.border }
-                  ]}
-                  onPress={() => {
-                    setEntryDate('custom');
-                    setShowDatePicker(true);
-                  }}
-                >
-                  <Edit3 size={16} color={entryDate === 'custom' ? '#FFFFFF' : colors.textSecondary} />
-                  <Text style={[styles.dateOptionText, { color: entryDate === 'custom' ? '#FFFFFF' : colors.textPrimary, fontWeight: '600' }]}>
-                    {entryDate === 'custom'
-                      ? customDate.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
-                      : 'Autre'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Native Date Picker (iOS inline) */}
-              {showDatePicker && (
-                <View style={[styles.datePickerContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                  <DateTimePicker
-                    value={customDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    maximumDate={new Date()}
-                    locale="fr-FR"
-                    onChange={(event, selectedDate) => {
-                      if (Platform.OS === 'android') {
-                        setShowDatePicker(false);
-                      }
-                      if (selectedDate) {
-                        setCustomDate(selectedDate);
-                        setEntryDate('custom');
-                      }
-                    }}
-                    style={{ height: 150 }}
-                  />
-                  {Platform.OS === 'ios' && (
-                    <TouchableOpacity
-                      style={[styles.datePickerDoneBtn, { backgroundColor: colors.accent }]}
-                      onPress={() => setShowDatePicker(false)}
-                    >
-                      <Text style={styles.datePickerDoneText}>Valider</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-
-              {/* ============================================ */}
-              {/* TASK 2: HYROX Effort Type Toggle */}
-              {/* ============================================ */}
-              {isHyroxExercise && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Type d'effort</Text>
-                  <View style={styles.hyroxTypeRow}>
-                    {([
-                      { key: 'course' as const, label: 'Course/Total', icon: Footprints },
-                      { key: 'station_force' as const, label: 'Station Force', icon: Dumbbell },
-                      { key: 'repetitions' as const, label: 'Répétitions', icon: Target },
-                    ]).map(({ key, label, icon: Icon }) => (
-                      <TouchableOpacity
-                        key={key}
-                        style={[
-                          styles.hyroxTypeBtn,
-                          {
-                            backgroundColor: hyroxEffortType === key ? '#F59E0B' : colors.backgroundCard,
-                            borderColor: hyroxEffortType === key ? '#F59E0B' : colors.border,
-                          }
-                        ]}
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          setHyroxEffortType(key);
-                        }}
-                      >
-                        <Icon size={16} color={hyroxEffortType === key ? '#FFFFFF' : colors.textMuted} />
-                        <Text style={[
-                          styles.hyroxTypeText,
-                          { color: hyroxEffortType === key ? '#FFFFFF' : colors.textPrimary }
-                        ]}>
-                          {label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-
-              {/* ============================================ */}
-              {/* TASK 1: RUNNING PRO ENTRY */}
-              {/* Distance + Time (H:M:S) + Auto Pace */}
-              {/* ============================================ */}
-              {(isRunningExercise || (isHyroxExercise && hyroxEffortType === 'course')) && (
-                <>
-                  {/* Distance Input */}
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Distance (km) <Text style={{ color: '#3B82F6' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#3B82F6' }]}
-                    placeholder="10.5"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryDistance}
-                    onChangeText={(text) => {
-                      setNewEntryDistance(text);
-                      // Store distance as the main value for running
-                      setNewEntryValue(text);
-                    }}
-                    keyboardType="decimal-pad"
-                    autoFocus
-                  />
-
-                  {/* Time Input - Clean H:M:S */}
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Temps <Text style={{ color: '#3B82F6' }}>*</Text>
-                  </Text>
-                  <View style={styles.timeInputRow}>
-                    <View style={styles.timeInputGroup}>
-                      <TextInput
-                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        value={runningTimeHours}
-                        onChangeText={(text) => {
-                          setRunningTimeHours(text.replace(/[^0-9]/g, ''));
-                          setTimeout(updateCaloriesFromTime, 100);
-                        }}
-                        keyboardType="number-pad"
-                        maxLength={2}
-                      />
-                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>h</Text>
-                    </View>
-                    <Text style={[styles.timeSeparator, { color: colors.textMuted }]}>:</Text>
-                    <View style={styles.timeInputGroup}>
-                      <TextInput
-                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="00"
-                        placeholderTextColor={colors.textMuted}
-                        value={runningTimeMinutes}
-                        onChangeText={(text) => {
-                          const val = text.replace(/[^0-9]/g, '');
-                          if (parseInt(val) <= 59 || val === '') {
-                            setRunningTimeMinutes(val);
-                            setTimeout(updateCaloriesFromTime, 100);
-                          }
-                        }}
-                        keyboardType="number-pad"
-                        maxLength={2}
-                      />
-                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>min</Text>
-                    </View>
-                    <Text style={[styles.timeSeparator, { color: colors.textMuted }]}>:</Text>
-                    <View style={styles.timeInputGroup}>
-                      <TextInput
-                        style={[styles.timeInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="00"
-                        placeholderTextColor={colors.textMuted}
-                        value={runningTimeSeconds}
-                        onChangeText={(text) => {
-                          const val = text.replace(/[^0-9]/g, '');
-                          if (parseInt(val) <= 59 || val === '') {
-                            setRunningTimeSeconds(val);
-                            setTimeout(updateCaloriesFromTime, 100);
-                          }
-                        }}
-                        keyboardType="number-pad"
-                        maxLength={2}
-                      />
-                      <Text style={[styles.timeLabel, { color: colors.textMuted }]}>sec</Text>
-                    </View>
-                  </View>
-
-                  {/* Auto-Calculated Pace Display */}
-                  {getEstimatedPace() && (
-                    <View style={[styles.paceDisplay, { backgroundColor: '#3B82F620', borderColor: '#3B82F6' }]}>
-                      <Gauge size={18} color="#3B82F6" />
-                      <Text style={[styles.paceDisplayLabel, { color: colors.textSecondary }]}>
-                        Allure estimée:
-                      </Text>
-                      <Text style={[styles.paceDisplayValue, { color: '#3B82F6' }]}>
-                        {getEstimatedPace()}
-                      </Text>
-                    </View>
-                  )}
-
-              {/* ============================================ */}
-              {/* CARDIO MACHINE METRICS (Distance, Incline, etc.) */}
-              {/* ============================================ */}
-              {isCardioExercise && (
-                <View style={{ gap: 12, marginTop: 10 }}>
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Distance (km)</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0.0"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntryDistance}
-                        onChangeText={setNewEntryDistance}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Pente (%)</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntryIncline}
-                        onChangeText={setNewEntryIncline}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vitesse (km/h)</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0.0"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntrySpeed}
-                        onChangeText={setNewEntrySpeed}
-                        keyboardType="decimal-pad"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Allure (min/km)</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="5:30"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntryPace}
-                        onChangeText={setNewEntryPace}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Watts</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntryWatts}
-                        onChangeText={setNewEntryWatts}
-                        keyboardType="number-pad"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Niveau / Résist.</Text>
-                      <TextInput
-                        style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        value={newEntryLevel}
-                        onChangeText={setNewEntryLevel}
-                        keyboardType="number-pad"
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
-                </>
-              )}
-
-              {/* ============================================ */}
-              {/* HYROX: Station Force (Sleds, Lunges) */}
-              {/* ============================================ */}
-              {isHyroxExercise && hyroxEffortType === 'station_force' && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Poids (kg) <Text style={{ color: '#F59E0B' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#F59E0B' }]}
-                    placeholder="50"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryValue}
-                    onChangeText={setNewEntryValue}
-                    keyboardType="numeric"
-                    autoFocus
-                  />
-
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Distance (m) <Text style={{ color: '#F59E0B' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="25"
-                    placeholderTextColor={colors.textMuted}
-                    value={hyroxDistanceMeters}
-                    onChangeText={setHyroxDistanceMeters}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              {/* ============================================ */}
-              {/* HYROX: Répétitions (Wall Balls, Burpees) */}
-              {/* ============================================ */}
-              {isHyroxExercise && hyroxEffortType === 'repetitions' && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Poids (kg)
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="9"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryValue}
-                    onChangeText={setNewEntryValue}
-                    keyboardType="numeric"
-                    autoFocus
-                  />
-
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Répétitions <Text style={{ color: '#F59E0B' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#F59E0B' }]}
-                    placeholder="100"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryReps}
-                    onChangeText={setNewEntryReps}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              {/* ============================================ */}
-              {/* FORCE: Weight + Reps (existing) */}
-              {/* ============================================ */}
-              {isForceExercise && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Unité</Text>
-                  <View style={styles.unitToggleRow}>
-                    <TouchableOpacity
-                      style={[
-                        styles.unitToggleBtn,
-                        {
-                          backgroundColor: newEntryUnit === 'kg' ? selectedBenchmark?.color : colors.backgroundCard,
-                          borderColor: selectedBenchmark?.color,
-                        }
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setNewEntryUnit('kg');
-                      }}
-                    >
-                      <Text style={[styles.unitToggleText, { color: newEntryUnit === 'kg' ? '#FFFFFF' : colors.textPrimary }]}>
-                        KG
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.unitToggleBtn,
-                        {
-                          backgroundColor: newEntryUnit === 'lbs' ? selectedBenchmark?.color : colors.backgroundCard,
-                          borderColor: selectedBenchmark?.color,
-                        }
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setNewEntryUnit('lbs');
-                      }}
-                    >
-                      <Text style={[styles.unitToggleText, { color: newEntryUnit === 'lbs' ? '#FFFFFF' : colors.textPrimary }]}>
-                        LBS
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Poids ({newEntryUnit}) <Text style={{ color: '#EF4444' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: '#EF4444' }]}
-                    placeholder="100"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryValue}
-                    onChangeText={setNewEntryValue}
-                    keyboardType="numeric"
-                    autoFocus
-                  />
-
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Répétitions <Text style={{ color: '#EF4444' }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.repsInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="5"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryReps}
-                    onChangeText={setNewEntryReps}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              {/* ============================================ */}
-              {/* OTHER Categories - Generic Input */}
-              {/* ============================================ */}
-              {!isRunningExercise && !isForceExercise && !isHyroxExercise && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    {selectedBenchmark?.unit === 'time' ? 'Temps' : `Valeur (${selectedBenchmark?.unit})`}
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, styles.valueInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder={selectedBenchmark?.unit === 'time' ? '25:30' : '100'}
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryValue}
-                    onChangeText={setNewEntryValue}
-                    keyboardType={selectedBenchmark?.unit === 'time' ? 'default' : 'numeric'}
-                    autoFocus
-                  />
-                </>
-              )}
-
-              {/* Duration Input - Show for non-Running exercises */}
-              {!isRunningExercise && !(isHyroxExercise && hyroxEffortType === 'course') && (
-                <>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Durée (minutes)
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="45"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryDuration}
-                    onChangeText={(text) => {
-                      setNewEntryDuration(text);
-                      if (text.trim() && selectedBenchmark) {
-                        const duration = parseInt(text);
-                        if (!isNaN(duration) && duration > 0) {
-                          const estimatedCal = calculateCalories(duration, userWeight, selectedBenchmark.category);
-                          setNewEntryCalories(estimatedCal.toString());
-                        }
-                      }
-                    }}
-                    keyboardType="numeric"
-                  />
-                </>
-              )}
-
-              {/* Calories Display */}
-              <View style={styles.caloriesRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                    Calories estimées
-                  </Text>
-                  <TextInput
-                    style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-                    placeholder="350"
-                    placeholderTextColor={colors.textMuted}
-                    value={newEntryCalories}
-                    onChangeText={setNewEntryCalories}
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={styles.metsInfo}>
-                  <Text style={[styles.metsLabel, { color: colors.textMuted }]}>
-                    MET: {selectedBenchmark ? METS_VALUES[selectedBenchmark.category] || 5 : 5}
-                  </Text>
-                </View>
-              </View>
-
-              {/* RPE Slider */}
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                Difficulté (RPE)
-              </Text>
-              <View style={[styles.rpeContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                <View style={styles.rpeHeader}>
-                  <Text style={[styles.rpeValue, { color: getRPEColor(newEntryRPE) }]}>{newEntryRPE}</Text>
-                  <Text style={[styles.rpeLabel, { color: getRPEColor(newEntryRPE) }]}>{getRPELabel(newEntryRPE)}</Text>
-                </View>
-                <View style={styles.rpeSlider}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => (
-                    <TouchableOpacity
-                      key={val}
-                      style={[
-                        styles.rpeButton,
-                        {
-                          backgroundColor: val <= newEntryRPE ? getRPEColor(val) : colors.background,
-                          borderColor: getRPEColor(val),
-                        }
-                      ]}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setNewEntryRPE(val);
-                      }}
-                    >
-                      <Text style={[
-                        styles.rpeButtonText,
-                        { color: val <= newEntryRPE ? '#FFFFFF' : colors.textMuted }
-                      ]}>
-                        {val}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: selectedBenchmark?.color || colors.accent, opacity: isSubmitting ? 0.6 : 1 }]}
-                onPress={handleAddEntry}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.modalButtonText}>{isSubmitting ? 'Enregistrement...' : 'Enregistrer'}</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-    );
-  };
 
   const renderBenchmarkDetailModal = () => {
     if (!selectedBenchmark) return null;
@@ -3108,7 +2510,60 @@ export default function TrainingJournalScreen() {
       {renderFabMenu()}
       {renderAddBenchmarkModal()}
       {renderAddSkillModal()}
-      {renderAddEntryModal()}
+
+      <AddEntryModal
+        visible={showAddEntryModal}
+        onClose={resetModalState}
+        onSubmit={handleAddEntry}
+        isSubmitting={isSubmitting}
+        selectedBenchmark={selectedBenchmark}
+        colors={colors}
+        locale={locale}
+        userWeight={userWeight}
+        entryDate={entryDate}
+        setEntryDate={setEntryDate}
+        customDate={customDate}
+        setCustomDate={setCustomDate}
+        showDatePicker={showDatePicker}
+        setShowDatePicker={setShowDatePicker}
+        newEntryValue={newEntryValue}
+        setNewEntryValue={setNewEntryValue}
+        newEntryReps={newEntryReps}
+        setNewEntryReps={setNewEntryReps}
+        newEntryUnit={newEntryUnit}
+        setNewEntryUnit={setNewEntryUnit}
+        newEntryRPE={newEntryRPE}
+        setNewEntryRPE={setNewEntryRPE}
+        newEntryDuration={newEntryDuration}
+        setNewEntryDuration={setNewEntryDuration}
+        newEntryCalories={newEntryCalories}
+        setNewEntryCalories={setNewEntryCalories}
+        newEntryDistance={newEntryDistance}
+        setNewEntryDistance={setNewEntryDistance}
+        runningTimeHours={runningTimeHours}
+        setRunningTimeHours={setRunningTimeHours}
+        runningTimeMinutes={runningTimeMinutes}
+        setRunningTimeMinutes={setRunningTimeMinutes}
+        runningTimeSeconds={runningTimeSeconds}
+        setRunningTimeSeconds={setRunningTimeSeconds}
+        hyroxEffortType={hyroxEffortType}
+        setHyroxEffortType={setHyroxEffortType}
+        hyroxDistanceMeters={hyroxDistanceMeters}
+        setHyroxDistanceMeters={setHyroxDistanceMeters}
+        newEntryIncline={newEntryIncline}
+        setNewEntryIncline={setNewEntryIncline}
+        newEntrySpeed={newEntrySpeed}
+        setNewEntrySpeed={setNewEntrySpeed}
+        newEntryPace={newEntryPace}
+        setNewEntryPace={setNewEntryPace}
+        newEntryWatts={newEntryWatts}
+        setNewEntryWatts={setNewEntryWatts}
+        newEntryResistance={newEntryResistance}
+        setNewEntryResistance={setNewEntryResistance}
+        newEntryLevel={newEntryLevel}
+        setNewEntryLevel={setNewEntryLevel}
+      />
+
       {renderBenchmarkDetailModal()}
       {renderSkillDetailModal()}
       {renderTrashModal()}
