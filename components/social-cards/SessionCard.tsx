@@ -142,7 +142,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
           <LinearGradient colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']} style={styles.photoGradient}>
             <View style={styles.photoHeader}>
 
-              {/* PHOTO PROFIL (GAUCHE) */}
+              {/* PHOTO PROFIL (GAUCHE) + NOM + RANG + NIVEAU */}
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
@@ -156,6 +156,16 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 {userName && (
                   <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
                     {userName.toUpperCase()}
+                  </Text>
+                )}
+                {rank && (
+                  <View style={styles.rankBadge}>
+                    <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
+                  </View>
+                )}
+                {userLevel && (
+                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    NIV. {userLevel}
                   </Text>
                 )}
               </View>

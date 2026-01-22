@@ -91,6 +91,7 @@ import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
+import SkillDetailModal from './training-journal/components/SkillDetailModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -1562,201 +1563,6 @@ export default function TrainingJournalScreen() {
       </KeyboardAvoidingView>
     </Modal>
   );
-
-  };
-
-  const renderSkillDetailModal = () => {
-    if (!selectedSkill) return null;
-
-    const statusConfig = SKILL_STATUS_CONFIG[selectedSkill.status];
-    const categoryConfig = SKILL_CATEGORIES[selectedSkill.category] || {
-      label: 'Autre',
-      color: '#6B7280',
-      iconName: 'circle'
-    };
-
-    return (
-      <Modal visible={showSkillDetail} animationType="slide" presentationStyle="fullScreen">
-        <SafeAreaView style={[styles.detailModalOverlay, { backgroundColor: colors.background }]}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
-          >
-            <View style={[styles.detailHeader, { borderBottomColor: colors.border }]}>
-              <TouchableOpacity
-                onPress={() => setShowSkillDetail(false)}
-                style={styles.detailHeaderBtn}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <ChevronLeft size={28} color={colors.textPrimary} />
-              </TouchableOpacity>
-              <Text style={[styles.detailTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {selectedSkill.name}
-              </Text>
-              <View style={styles.detailHeaderRight}>
-                <TouchableOpacity
-                  onPress={() => handleDeleteSkill(selectedSkill.id)}
-                  style={styles.detailHeaderBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Trash2 size={22} color="#EF4444" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowSkillDetail(false)}
-                  style={styles.detailCloseBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <X size={24} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-            {/* Status Selector */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STATUT</Text>
-            <View style={styles.statusRow}>
-              {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
-                const config = SKILL_STATUS_CONFIG[status];
-                const isSelected = selectedSkill.status === status;
-                return (
-                  <TouchableOpacity
-                    key={status}
-                    style={[
-                      styles.statusOption,
-                      { backgroundColor: isSelected ? config.color : colors.backgroundCard, borderColor: config.color }
-                    ]}
-                    onPress={() => handleUpdateSkillStatus(selectedSkill.id, status)}
-                  >
-                    {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
-                    <Text style={[styles.statusOptionText, { color: isSelected ? '#FFFFFF' : config.color }]}>
-                      {config.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Drill Counter */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>COMPTEUR DE REPS</Text>
-            <View style={[styles.drillCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <View style={styles.drillInfo}>
-                <Text style={[styles.drillCount, { color: colors.textPrimary }]}>
-                  {selectedSkill.drillCount}
-                </Text>
-                <Text style={[styles.drillLabel, { color: colors.textMuted }]}>répétitions</Text>
-              </View>
-              <View style={styles.drillActions}>
-                <TextInput
-                  style={[styles.drillInput, { backgroundColor: colors.background, color: colors.textPrimary, borderColor: colors.border }]}
-                  value={drillIncrement}
-                  onChangeText={setDrillIncrement}
-                  keyboardType="numeric"
-                  placeholder="10"
-                  placeholderTextColor={colors.textMuted}
-                />
-                <TouchableOpacity
-                  style={[styles.drillAddBtn, { backgroundColor: categoryConfig.color }]}
-                  onPress={handleIncrementDrill}
-                >
-                  <Plus size={18} color="#FFFFFF" strokeWidth={3} />
-                  <Text style={styles.drillAddText}>Ajouter</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Notes */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>NOTES</Text>
-            <View style={[styles.noteInputContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <TextInput
-                style={[styles.noteInput, { color: colors.textPrimary }]}
-                placeholder="Grip pants first, then..."
-                placeholderTextColor={colors.textMuted}
-                value={newNoteText}
-                onChangeText={setNewNoteText}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity
-                style={[styles.noteAddBtn, { backgroundColor: categoryConfig.color, opacity: (!newNoteText.trim() || isSubmitting) ? 0.6 : 1 }]}
-                onPress={handleAddNote}
-                disabled={!newNoteText.trim() || isSubmitting}
-              >
-                <Plus size={18} color="#FFFFFF" strokeWidth={3} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedSkill.notes.length > 0 && (
-              <View style={styles.notesList}>
-                {[...selectedSkill.notes].reverse().map(note => (
-                  <View
-                    key={note.id}
-                    style={[styles.noteItem, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                  >
-                    <Text style={[styles.noteText, { color: colors.textPrimary }]}>{note.text}</Text>
-                    <View style={styles.noteFooter}>
-                      <Text style={[styles.noteDate, { color: colors.textMuted }]}>
-                        {new Date(note.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          deleteSkillNote(selectedSkill.id, note.id).then(() => {
-                            getSkills().then(updated => {
-                              const refreshed = updated.find(s => s.id === selectedSkill.id);
-                              if (refreshed) setSelectedSkill(refreshed);
-                            });
-                          });
-                        }}
-                      >
-                        <Trash2 size={14} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* TASK 2: Video Link Section */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LIEN VIDÉO</Text>
-            <View style={[styles.videoLinkContainer, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-              <Video size={20} color={colors.textMuted} />
-              <TextInput
-                style={[styles.videoLinkInput, { color: colors.textPrimary }]}
-                placeholder="YouTube, Instagram..."
-                placeholderTextColor={colors.textMuted}
-                value={editingVideoUrl || selectedSkill.videoUrl || ''}
-                onChangeText={setEditingVideoUrl}
-                autoCapitalize="none"
-                keyboardType="url"
-                maxLength={500}
-              />
-              {(editingVideoUrl || selectedSkill.videoUrl) && (
-                <TouchableOpacity
-                  style={[styles.videoSaveBtn, { backgroundColor: categoryConfig.color }]}
-                  onPress={handleUpdateVideoUrl}
-                >
-                  <Check size={16} color="#FFFFFF" strokeWidth={3} />
-                </TouchableOpacity>
-              )}
-            </View>
-            {selectedSkill.videoUrl && (
-              <TouchableOpacity
-                style={[styles.watchVideoBtn, { backgroundColor: categoryConfig.color + '20', borderColor: categoryConfig.color }]}
-                onPress={() => openVideoUrl(selectedSkill.videoUrl!)}
-              >
-                <ExternalLink size={16} color={categoryConfig.color} />
-                <Text style={[styles.watchVideoText, { color: categoryConfig.color }]}>
-                  Voir la vidéo
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={{ height: 100 }} />
-          </ScrollView>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
-    );
   };
 
   const renderFabMenu = () => (
@@ -2432,7 +2238,28 @@ export default function TrainingJournalScreen() {
         onDelete={handleDeleteBenchmark}
       />
 
-      {renderSkillDetailModal()}
+      <SkillDetailModal
+        visible={showSkillDetail}
+        onClose={() => setShowSkillDetail(false)}
+        skill={selectedSkill}
+        colors={colors}
+        locale={locale}
+        isSubmitting={isSubmitting}
+        drillIncrement={drillIncrement}
+        setDrillIncrement={setDrillIncrement}
+        onIncrementDrill={handleIncrementDrill}
+        newNoteText={newNoteText}
+        setNewNoteText={setNewNoteText}
+        onAddNote={handleAddNote}
+        editingVideoUrl={editingVideoUrl}
+        setEditingVideoUrl={setEditingVideoUrl}
+        onUpdateVideoUrl={handleUpdateVideoUrl}
+        onOpenVideoUrl={openVideoUrl}
+        onUpdateStatus={handleUpdateSkillStatus}
+        onDelete={handleDeleteSkill}
+        onRefreshSkill={setSelectedSkill}
+      />
+
       {renderTrashModal()}
 
       {/* PILLAR 3: Victory Share Modal (Strava-Style) */}
