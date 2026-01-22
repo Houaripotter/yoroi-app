@@ -93,6 +93,8 @@ import AddEntryModal from './training-journal/components/AddEntryModal';
 import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
 import SkillDetailModal from './training-journal/components/SkillDetailModal';
 import TrashModal from './training-journal/components/TrashModal';
+import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
+import AddSkillModal from './training-journal/components/AddSkillModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -1227,342 +1229,7 @@ export default function TrainingJournalScreen() {
   // ============================================
   // MODALS
   // ============================================
-
-  const renderAddBenchmarkModal = () => (
-    <Modal visible={showAddBenchmarkModal} animationType="slide" transparent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouveau Suivi</Text>
-            <TouchableOpacity onPress={() => setShowAddBenchmarkModal(false)}>
-              <X size={24} color={colors.textMuted} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Catégorie</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-            {(Object.keys(BENCHMARK_CATEGORIES) as BenchmarkCategory[]).map(cat => (
-              <TouchableOpacity
-                key={cat}
-                style={[
-                  styles.categoryOption,
-                  { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                  newBenchmarkCategory === cat && { backgroundColor: BENCHMARK_CATEGORIES[cat].color, borderColor: BENCHMARK_CATEGORIES[cat].color }
-                ]}
-                onPress={() => {
-                  setNewBenchmarkCategory(cat);
-                  // Auto-set unit based on category
-                  if (cat === 'running' || cat === 'trail') {
-                    setNewBenchmarkUnit('time');
-                  } else if (cat === 'force') {
-                    setNewBenchmarkUnit('kg');
-                  }
-                }}
-              >
-                {renderIcon(
-                  BENCHMARK_CATEGORIES[cat].iconName,
-                  18,
-                  newBenchmarkCategory === cat ? '#FFFFFF' : BENCHMARK_CATEGORIES[cat].color
-                )}
-                <Text style={[
-                  styles.categoryOptionText,
-                  { color: newBenchmarkCategory === cat ? '#FFFFFF' : colors.textPrimary }
-                ]}>
-                  {BENCHMARK_CATEGORIES[cat].label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* TASK 2: Quick Presets for Running */}
-          {(newBenchmarkCategory === 'running' || newBenchmarkCategory === 'trail') && (
-            <>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Distances populaires</Text>
-              <View style={styles.presetChipsRow}>
-                {[
-                  { label: '5km', name: '5km' },
-                  { label: '10km', name: '10km' },
-                  { label: 'Semi-Marathon', name: 'Semi-Marathon' },
-                  { label: 'Marathon', name: 'Marathon' },
-                ].map(preset => (
-                  <TouchableOpacity
-                    key={preset.name}
-                    style={[
-                      styles.presetChip,
-                      {
-                        backgroundColor: newBenchmarkName === preset.name ? '#3B82F6' : colors.backgroundCard,
-                        borderColor: '#3B82F6',
-                      }
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setNewBenchmarkName(preset.name);
-                      setNewBenchmarkUnit('time');
-                    }}
-                  >
-                    <Text style={[
-                      styles.presetChipText,
-                      { color: newBenchmarkName === preset.name ? '#FFFFFF' : '#3B82F6' }
-                    ]}>
-                      {preset.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
-          {/* TASK 2: Quick Presets for Force */}
-          {newBenchmarkCategory === 'force' && (
-            <>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Exercices populaires</Text>
-              <View style={styles.presetChipsRow}>
-                {[
-                  { label: 'Squat', name: 'Squat' },
-                  { label: 'Développé Couché', name: 'Développé Couché' },
-                  { label: 'Soulevé de Terre', name: 'Soulevé de Terre' },
-                ].map(preset => (
-                  <TouchableOpacity
-                    key={preset.name}
-                    style={[
-                      styles.presetChip,
-                      {
-                        backgroundColor: newBenchmarkName === preset.name ? '#EF4444' : colors.backgroundCard,
-                        borderColor: '#EF4444',
-                      }
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setNewBenchmarkName(preset.name);
-                      setNewBenchmarkUnit('kg');
-                    }}
-                  >
-                    <Text style={[
-                      styles.presetChipText,
-                      { color: newBenchmarkName === preset.name ? '#FFFFFF' : '#EF4444' }
-                    ]}>
-                      {preset.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
-          <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom du suivi</Text>
-          <TextInput
-            style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-            placeholder="Ex: Squat, 10km..."
-            placeholderTextColor={colors.textMuted}
-            value={newBenchmarkName}
-            onChangeText={setNewBenchmarkName}
-            maxLength={50}
-          />
-
-          {/* Only show Unit selector if NOT using a preset (Running/Force) */}
-          {newBenchmarkCategory !== 'running' && newBenchmarkCategory !== 'trail' && newBenchmarkCategory !== 'force' && (
-            <>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Unité</Text>
-              <View style={styles.unitRow}>
-                {(['kg', 'lbs', 'time', 'reps', 'km'] as BenchmarkUnit[]).map(unit => (
-                  <TouchableOpacity
-                    key={unit}
-                    style={[
-                      styles.unitOption,
-                      { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                      newBenchmarkUnit === unit && { backgroundColor: colors.accent, borderColor: colors.accent }
-                    ]}
-                    onPress={() => setNewBenchmarkUnit(unit)}
-                  >
-                    <Text style={[
-                      styles.unitOptionText,
-                      { color: newBenchmarkUnit === unit ? colors.textOnGold : colors.textPrimary }
-                    ]}>
-                      {unit === 'time' ? 'Temps' : unit.toUpperCase()}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
-          {/* Show selected unit info for Running/Force */}
-          {(newBenchmarkCategory === 'running' || newBenchmarkCategory === 'trail') && (
-            <View style={[styles.unitInfoBanner, { backgroundColor: '#3B82F620', borderColor: '#3B82F6' }]}>
-              <Clock size={16} color="#3B82F6" />
-              <Text style={[styles.unitInfoText, { color: '#3B82F6' }]}>
-                Unité: Temps (mm:ss ou hh:mm:ss)
-              </Text>
-            </View>
-          )}
-          {newBenchmarkCategory === 'force' && (
-            <View style={[styles.unitInfoBanner, { backgroundColor: '#EF444420', borderColor: '#EF4444' }]}>
-              <Scale size={16} color="#EF4444" />
-              <Text style={[styles.unitInfoText, { color: '#EF4444' }]}>
-                Unité: Poids (kg) × Répétitions
-              </Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[styles.modalButton, { backgroundColor: colors.accent, opacity: isSubmitting ? 0.6 : 1 }]}
-            onPress={handleAddBenchmark}
-            disabled={isSubmitting}
-          >
-            <Text style={[styles.modalButtonText, { color: colors.textOnGold }]}>{isSubmitting ? 'Création...' : 'Créer le Suivi'}</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
   );
-
-  const renderAddSkillModal = () => (
-    <Modal visible={showAddSkillModal} animationType="slide" transparent>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-        <ScrollView style={{ maxHeight: '90%' }} showsVerticalScrollIndicator={false}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Nouvelle Technique</Text>
-              <TouchableOpacity onPress={() => {
-                setShowAddSkillModal(false);
-                setNewSkillStatus('to_learn');
-                setNewSkillNotes('');
-              }}>
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Nom de la technique</Text>
-            <TextInput
-              style={[styles.textInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-              placeholder="Ex: Berimbolo, Leg Lock Defense..."
-              placeholderTextColor={colors.textMuted}
-              value={newSkillName}
-              onChangeText={setNewSkillName}
-              maxLength={50}
-            />
-
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Discipline</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-              {(Object.keys(SKILL_CATEGORIES) as SkillCategory[]).map(cat => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[
-                    styles.categoryOption,
-                    { backgroundColor: colors.backgroundCard, borderColor: colors.border },
-                    newSkillCategory === cat && { backgroundColor: SKILL_CATEGORIES[cat].color, borderColor: SKILL_CATEGORIES[cat].color }
-                  ]}
-                  onPress={() => setNewSkillCategory(cat)}
-                >
-                  {renderIcon(
-                    SKILL_CATEGORIES[cat].iconName,
-                    18,
-                    newSkillCategory === cat ? '#FFFFFF' : SKILL_CATEGORIES[cat].color
-                  )}
-                  <Text style={[
-                    styles.categoryOptionText,
-                    { color: newSkillCategory === cat ? '#FFFFFF' : colors.textPrimary }
-                  ]}>
-                    {SKILL_CATEGORIES[cat].label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* Status Selector - NEW */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Statut initial</Text>
-            <View style={styles.statusSelectorRow}>
-              {(Object.keys(SKILL_STATUS_CONFIG) as SkillStatus[]).map(status => {
-                const config = SKILL_STATUS_CONFIG[status];
-                const isSelected = newSkillStatus === status;
-                return (
-                  <TouchableOpacity
-                    key={status}
-                    style={[
-                      styles.statusPill,
-                      {
-                        backgroundColor: isSelected ? config.color : colors.backgroundCard,
-                        borderColor: config.color,
-                      }
-                    ]}
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setNewSkillStatus(status);
-                    }}
-                  >
-                    {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
-                    <Text style={[
-                      styles.statusPillText,
-                      { color: isSelected ? '#FFFFFF' : config.color }
-                    ]}>
-                      {config.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Notes Field */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Notes techniques (optionnel)</Text>
-            <TextInput
-              style={[styles.textAreaInput, { backgroundColor: colors.backgroundCard, color: colors.textPrimary, borderColor: colors.border }]}
-              placeholder="Grip pants first, then enter legs..."
-              placeholderTextColor={colors.textMuted}
-              value={newSkillNotes}
-              onChangeText={setNewSkillNotes}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              maxLength={500}
-            />
-
-            {/* TASK 3: Video Picker Section */}
-            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Vidéo de la technique (optionnel)</Text>
-            {newSkillVideoUri ? (
-              <View style={[styles.videoPreviewContainer, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}>
-                <View style={styles.videoPreviewIcon}>
-                  <Play size={24} color="#8B5CF6" />
-                </View>
-                <Text style={[styles.videoPreviewText, { color: colors.textPrimary }]} numberOfLines={1}>
-                  Vidéo sélectionnée
-                </Text>
-                <TouchableOpacity
-                  style={styles.videoRemoveBtn}
-                  onPress={() => setNewSkillVideoUri(null)}
-                >
-                  <X size={18} color="#EF4444" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.videoPickerRow}>
-                <TouchableOpacity
-                  style={[styles.videoPickerBtn, { backgroundColor: '#8B5CF6' }]}
-                  onPress={recordSkillVideo}
-                >
-                  <Camera size={20} color="#FFFFFF" />
-                  <Text style={styles.videoPickerBtnText}>Filmer</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.videoPickerBtn, styles.videoPickerBtnSecondary, { borderColor: '#8B5CF6' }]}
-                  onPress={pickSkillVideo}
-                >
-                  <ImageIcon size={20} color="#8B5CF6" />
-                  <Text style={[styles.videoPickerBtnText, { color: '#8B5CF6' }]}>Galerie</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: '#8B5CF6', opacity: isSubmitting ? 0.6 : 1 }]}
-              onPress={handleAddSkill}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.modalButtonText}>{isSubmitting ? 'Ajout...' : 'Ajouter la Technique'}</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
   );
   };
 
@@ -2002,8 +1669,40 @@ export default function TrainingJournalScreen() {
 
       {/* Modals */}
       {renderFabMenu()}
-      {renderAddBenchmarkModal()}
-      {renderAddSkillModal()}
+
+      <AddBenchmarkModal
+        visible={showAddBenchmarkModal}
+        onClose={() => setShowAddBenchmarkModal(false)}
+        colors={colors}
+        isSubmitting={isSubmitting}
+        newBenchmarkName={newBenchmarkName}
+        setNewBenchmarkName={setNewBenchmarkName}
+        newBenchmarkCategory={newBenchmarkCategory}
+        setNewBenchmarkCategory={setNewBenchmarkCategory}
+        newBenchmarkUnit={newBenchmarkUnit}
+        setNewBenchmarkUnit={setNewBenchmarkUnit}
+        onSubmit={handleAddBenchmark}
+      />
+
+      <AddSkillModal
+        visible={showAddSkillModal}
+        onClose={() => setShowAddSkillModal(false)}
+        colors={colors}
+        isSubmitting={isSubmitting}
+        newSkillName={newSkillName}
+        setNewSkillName={setNewSkillName}
+        newSkillCategory={newSkillCategory}
+        setNewSkillCategory={setNewSkillCategory}
+        newSkillStatus={newSkillStatus}
+        setNewSkillStatus={setNewSkillStatus}
+        newSkillNotes={newSkillNotes}
+        setNewSkillNotes={setNewSkillNotes}
+        newSkillVideoUri={newSkillVideoUri}
+        setNewSkillVideoUri={setNewSkillVideoUri}
+        onSubmit={handleAddSkill}
+        onRecordVideo={recordSkillVideo}
+        onPickVideo={pickSkillVideo}
+      />
 
       <AddEntryModal
         visible={showAddEntryModal}

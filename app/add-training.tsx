@@ -234,9 +234,10 @@ export default function AddTrainingScreen() {
           setUserAvatar(image);
         }
 
-        // Charger le rang
+        // Charger le rang et le niveau
         const rank = getCurrentRank(streak);
         setUserRank(rank.name);
+        setUserLevel(streak);
 
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -525,7 +526,7 @@ export default function AddTrainingScreen() {
           return clubSports.includes(sportId.toLowerCase());
         });
 
-        if (matchingClub && !selectedClub) {
+        if (matchingClub) {
           setSelectedClub(matchingClub);
         }
 
@@ -2451,6 +2452,7 @@ export default function AddTrainingScreen() {
                                   profilePhoto={userPhoto}
                                   userName={userName}
                                   rank={userRank}
+                                  userLevel={userLevel}
                                   isLandscape={false}
                                   width={360}
                                   yearlyCount={yearlyCount}
