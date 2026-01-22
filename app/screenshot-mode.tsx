@@ -5,76 +5,72 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Stack } from 'expo-router';
 
 // ============================================
-// MOCK DATA - THOMAS SILVA (TRANSFORMATION)
+// MOCK DATA - GERMAIN (DRAMATIC TRANSFORMATION)
+// 35kg weight loss: 110kg → 75kg
 // ============================================
 
 const MOCK_DATA = {
-  userName: 'Germain Del Jarret',
-  // Using a placeholder or null for photo to show default icon if URL not valid
-  profilePhoto: null, 
+  userName: 'Germain',
+  profilePhoto: null,
   dailyQuote: "La douleur est temporaire, l'abandon est définitif.",
-  steps: 13567,
+  steps: 15834,
   stepsGoal: 10000,
-  streak: 178,
-  level: 24,
+  streak: 267,
+  level: 34,
   rankName: 'Empereur',
-  rankColor: '#F59E0B', // Gold
-  
-  // Weight & Transformation
-  currentWeight: 76.8,
-  targetWeight: 76.0,
-  startWeight: 85.0,
+  rankColor: '#F59E0B',
+
+  // Weight & Dramatic Transformation (35kg lost!)
+  currentWeight: 75.0,
+  targetWeight: 72.0,
+  startWeight: 110.0,
   weightTrend: 'down' as const,
-  // Generate a nice curve for the last 30 days
+  // Generate dramatic weight loss curve for last 30 days (95kg → 75kg)
+  // Shows visible progress with natural fluctuations
   weightHistory: Array.from({ length: 30 }, (_, i) => {
-    // Linear progression from 80kg to 76.8kg with some noise
     const progress = i / 29;
-    const base = 80 - (progress * (80 - 76.8));
-    const noise = (Math.sin(i * 0.5) * 0.3);
-    return Number((base + noise).toFixed(1));
-  }).reverse(), // Recent first? No, usually charts expect chronological or reverse. HomeTabView expects what? 
-  // HomeTabView passes it to Page1Monitoring which passes to FlatList reversed? 
-  // Let's assume standard array. Page1Monitoring does `last30Weights` and renders via FlatList.
-  // It renders `item: weight` and uses `index` to calculate date (daysAgo). 
-  // `const daysAgo = last30Weights.length - 1 - index;`
-  // So index 0 is the OLDEST? No. 
-  // If `daysAgo = 29 - 0 = 29` (29 days ago). So index 0 is oldest.
-  // So we should provide chronological order.
-  
-  // Hydration
-  hydration: 3200,
+    // Exponential curve for realistic weight loss (faster at start, slower at end)
+    const exponentialFactor = 1 - Math.pow(progress, 0.7);
+    const base = 75.0 + (exponentialFactor * 20.0); // 95kg → 75kg
+    // Add natural daily fluctuations (water retention, meals, etc.)
+    const dailyNoise = Math.sin(i * 0.8) * 0.4 + Math.cos(i * 1.3) * 0.3;
+    return Number((base + dailyNoise).toFixed(1));
+  }),
+
+  // Hydration (excellent consistency)
+  hydration: 3800,
   hydrationGoal: 3500,
-  
-  // Sleep
-  sleepHours: 7.8, // 7h48
+
+  // Sleep (optimized recovery)
+  sleepHours: 8.2,
   sleepDebt: 0,
   sleepGoal: 8,
-  
+
   // Workload
-  workloadStatus: 'moderate' as const, // Optimal
-  
-  // Body Composition
-  bodyFat: 16.0,
-  muscleMass: 43.0,
-  waterPercentage: 55.0,
-  
+  workloadStatus: 'moderate' as const,
+
+  // Body Composition (post-transformation)
+  bodyFat: 13.5,      // Down from ~38% at 110kg
+  muscleMass: 48.5,   // Maintained/gained muscle during cut
+  waterPercentage: 61.0,
+
   // Performance / Stats Page
-  calories: 832,
-  
-  // Weekly Report
+  calories: 2450,     // Daily calorie intake
+
+  // Weekly Report (impressive stats)
   weeklyReport: {
-    weightChange: -0.8,
-    trainingsCount: 5,
-    avgSleepHours: 7.8,
-    hydrationRate: 92,
-    totalSteps: 94500,
+    weightChange: -1.4,        // Strong weekly loss
+    trainingsCount: 6,         // Very consistent
+    avgSleepHours: 8.1,        // Excellent recovery
+    hydrationRate: 97,         // Nearly perfect
+    totalSteps: 108450,        // Very active
   },
-  
-  // Daily Challenges
+
+  // Daily Challenges (all completed)
   dailyChallenges: [
     { id: '1', title: '8000 pas', completed: true },
     { id: '2', title: 'Hydratation 3L', completed: true },
-    { id: '3', title: 'Entraînement', completed: false },
+    { id: '3', title: 'Entraînement', completed: true },
   ],
 };
 
