@@ -459,6 +459,7 @@ export interface Exercise {
   distance?: number;
   duration?: number;
   calories?: number;
+  stairs?: number;
 }
 
 export interface Training {

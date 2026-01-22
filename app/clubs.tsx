@@ -261,7 +261,7 @@ export default function ClubsScreen() {
         showBack
         rightElement={
           <TouchableOpacity
-            onPress={() => handleOpenModal()}
+            onPress={() => router.push('/add-club' as any)}
             style={styles.addButton}
           >
             <Plus size={24} color={colors.gold} />
@@ -289,7 +289,7 @@ export default function ClubsScreen() {
             </Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => handleOpenModal()}
+              onPress={() => router.push('/add-club' as any)}
             >
               <LinearGradient
                 colors={gradients.gold}

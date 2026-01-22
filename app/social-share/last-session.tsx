@@ -45,8 +45,10 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
-import { getTrainings, Training, getClubs, getProfile } from '@/lib/database';
+import { getTrainings, Training, getClubs, getProfile, calculateStreak } from '@/lib/database';
 import { SPORTS, getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
+import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { getCurrentRank } from '@/lib/ranks';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
@@ -80,7 +82,24 @@ export default function LastSessionScreen() {
   const [customLocation, setCustomLocation] = useState<string>('');
   const [userName, setUserName] = useState<string>('Champion');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<any>(null);
+  const [userRank, setUserRank] = useState<string>('Ashigaru');
   const [optionDetails, setOptionDetails] = useState<any[]>([]);
+
+  // Toggles
+  const [showDate, setShowDate] = useState(true);
+  const [showYearlyCount, setShowYearlyCount] = useState(true);
+  const [showMonthlyCount, setShowMonthlyCount] = useState(true);
+  const [showWeeklyCount, setShowWeeklyCount] = useState(true);
+  const [showClub, setShowClub] = useState(true);
+  const [showLieu, setShowLieu] = useState(true);
+  const [showExercises, setShowExercises] = useState(true);
+  const [showGoalProgress, setShowGoalProgress] = useState(true);
+  const [showStats, setShowStats] = useState(true);
+  const [yearlyCount, setYearlyCount] = useState(0);
+  const [monthlyCount, setMonthlyCount] = useState(0);
+  const [weeklyCount, setWeeklyCount] = useState(0);
+  const [yearlyObjective, setYearlyObjective] = useState(0);
 
   // Fonction pour extraire les exercices et leurs stats depuis les notes
   const parseExercisesFromNotes = (notes: string) => {
@@ -102,34 +121,36 @@ export default function LastSessionScreen() {
     return details;
   };
 
-  // Nouveaux states pour la personnalisation
-  const [showYearlyCount, setShowYearlyCount] = useState(true);
-  const [showMonthlyCount, setShowMonthlyCount] = useState(true);
-  const [showWeeklyCount, setShowWeeklyCount] = useState(true);
-  const [showExercises, setShowExercises] = useState(true);
-  const [showDate, setShowDate] = useState(true);
-  const [showClub, setShowClub] = useState(true);
-  const [showLieu, setShowLieu] = useState(true);
-  const [showGoalProgress, setShowGoalProgress] = useState(true);
-  const [showStats, setShowStats] = useState(true);
-  const [yearlyCount, setYearlyCount] = useState(0);
-  const [monthlyCount, setMonthlyCount] = useState(0);
-  const [weeklyCount, setWeeklyCount] = useState(0);
-  const [yearlyObjective, setYearlyObjective] = useState(0);
-
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [trainings, clubs, profile] = await Promise.all([
+        const [trainings, clubs, profile, avatarConfig, streak] = await Promise.all([
           getTrainings(),
           getClubs(),
           getProfile(),
+          getAvatarConfig(),
+          calculateStreak(),
         ]);
 
         if (profile) {
           setUserName(profile.name || 'Champion');
           if (profile.profile_photo) setUserPhoto(profile.profile_photo);
         }
+
+        // Charger l'avatar
+        if (avatarConfig) {
+          const image = getAvatarImage(
+            avatarConfig.pack,
+            avatarConfig.state,
+            avatarConfig.collectionCharacter,
+            avatarConfig.gender
+          );
+          setUserAvatar(image);
+        }
+
+        // Charger le rang
+        const rank = getCurrentRank(streak);
+        setUserRank(rank.name);
 
         let currentTraining: Training | null = null;
         if (trainings.length > 0) {
@@ -466,8 +487,10 @@ export default function LastSessionScreen() {
               backgroundType={backgroundType}
               customLocation={customLocation}
               isLandscape={isLandscapeImage}
-              userAvatar={userPhoto}
+              userAvatar={userAvatar}
+              profilePhoto={userPhoto}
               userName={userName}
+              rank={userRank}
               options={optionDetails}
               yearlyCount={yearlyCount}
               monthlyCount={monthlyCount}

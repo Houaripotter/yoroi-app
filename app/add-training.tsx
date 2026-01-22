@@ -13,7 +13,9 @@ import {
   Modal,
   Share,
   Switch,
+  Keyboard,
 } from 'react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -48,8 +50,10 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings, getWeights } from '@/lib/database';
+import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings, getWeights, calculateStreak } from '@/lib/database';
 import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
+import { getCurrentRank } from '@/lib/ranks';
+import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -267,7 +271,9 @@ export default function AddTrainingScreen() {
     calories?: string, 
     watts?: string, 
     resistance?: string,
-    duration?: string
+    duration?: string,
+    notes?: string,
+    stairs?: string
   }>>({}); 
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
@@ -335,15 +341,19 @@ export default function AddTrainingScreen() {
   const [showExercisesOnCard, setShowExercisesOnCard] = useState<boolean>(true);
   const [heartRate, setHeartRate] = useState<string>('');
   const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
+  const [userAvatar, setUserAvatar] = useState<any>(null);
+  const [userRank, setUserRank] = useState<string>('Ashigaru');
 
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const [profile, allTrainings, weights] = await Promise.all([
+        const [profile, allTrainings, weights, avatarConfig, streak] = await Promise.all([
           getProfile(),
           getTrainings(),
           getWeights(),
+          getAvatarConfig(),
+          calculateStreak(),
         ]);
 
         if (profile) {
@@ -360,6 +370,21 @@ export default function AddTrainingScreen() {
         if (weights && weights.length > 0) {
           setUserWeight(weights[0].weight);
         }
+
+        // Charger l'avatar
+        if (avatarConfig) {
+          const image = getAvatarImage(
+            avatarConfig.pack,
+            avatarConfig.state,
+            avatarConfig.collectionCharacter,
+            avatarConfig.gender
+          );
+          setUserAvatar(image);
+        }
+
+        // Charger le rang
+        const rank = getCurrentRank(streak);
+        setUserRank(rank.name);
 
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -854,6 +879,43 @@ export default function AddTrainingScreen() {
               </View>
             </View>
           </View>
+
+          {/* Ligne 3: Marches (Stairmaster etc) */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>MARCHES / ÉTAGES</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="number-pad"
+                  value={stats.stairs}
+                  onChangeText={(v) => updateStat('stairs', v)}
+                />
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>FLOORS</Text>
+              </View>
+            </View>
+            <View style={{ flex: 1 }} />
+          </View>
+
+          {/* Allure (Estimation) */}
+          {(stats.speed || (stats.distance && stats.duration)) && (
+            <View style={{ alignItems: 'center', paddingVertical: 4, backgroundColor: colors.accent + '05', borderRadius: 8 }}>
+              <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '600' }}>
+                ALLURE ESTIMÉE : {(() => {
+                  const speedVal = parseFloat((stats.speed || '0').replace(',', '.'));
+                  if (speedVal > 0) {
+                    const paceDecimal = 60 / speedVal;
+                    const mins = Math.floor(paceDecimal);
+                    const secs = Math.round((paceDecimal - mins) * 60);
+                    return `${mins}:${secs < 10 ? '0' : ''}${secs} min/km`;
+                  }
+                  return '--:-- min/km';
+                })()}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -1125,6 +1187,16 @@ export default function AddTrainingScreen() {
             ...opt,
             weight: stats?.weight,
             reps: stats?.reps,
+            sets: stats?.sets,
+            distance: stats?.distance,
+            duration: stats?.duration,
+            speed: stats?.speed,
+            pente: stats?.pente,
+            calories: stats?.calories,
+            watts: stats?.watts,
+            resistance: stats?.resistance,
+            notes: stats?.notes,
+            stairs: stats?.stairs
           };
         })
         .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -1611,7 +1683,7 @@ export default function AddTrainingScreen() {
                                 styles.clubCard,
                                 { backgroundColor: colors.card, borderColor: colors.border, borderStyle: 'dashed' },
                               ]}
-                              onPress={() => router.push('/clubs' as any)}
+                              onPress={() => router.push('/add-club' as any)}
                             >
                               <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
                                 <Plus size={24} color={colors.accent} strokeWidth={2} />
@@ -1684,7 +1756,17 @@ export default function AddTrainingScreen() {
                   const isGroupValidated = groupOpts.some(option => {
                      if (!sportSelectedOptions.includes(option.id)) return false;
                      const stats = optionStats[option.id];
-                     const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_') && !option.id.includes('ve_') && !option.id.includes('ma_');
+                     
+                     // Classification Logic (Consistent)
+                     const isRun = option.id.startsWith('r_') || option.id.includes('run_');
+                     const isSwim = option.id.startsWith('sw_') || option.id.includes('swim_');
+                     const isWalk = option.id.startsWith('ma_');
+                     const isBike = option.id.startsWith('ve_') || option.id.includes('velo') || option.id.includes('spinning');
+                     const isCardioMachine = option.id.includes('car_') || option.group === 'CARDIO';
+                     const isCombat = ['bo_', 'mt_', 'kb_', 'mma_', 'jjb_', 'j_', 'lu_', 'g_', 'p_', 's_', 't_', 'training', 'technique', 'sparring', 'competition'].some(prefix => option.id.startsWith(prefix));
+
+                     const isCardio = isRun || isSwim || isWalk || isBike || isCardioMachine || option.group === 'DISTANCES';
+                     const isStrength = !isCardio && !isCombat;
                      
                      if (!isStrength) return true;
                      return stats && (stats.weight || stats.reps);
@@ -1722,10 +1804,19 @@ export default function AddTrainingScreen() {
                             {groupOpts.map((option) => {
                               const isSelected = sportSelectedOptions.includes(option.id);
                               const stats = optionStats[option.id] || { weight: '', reps: '' };
-                              const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_') && !option.id.includes('ve_') && !option.id.includes('ma_');
-                              const isCardio = !isStrength && (option.id.includes('car_') || option.id.includes('run_') || option.id.includes('swim_') || option.id.includes('ve_') || option.id.includes('ma_'));
                               
-                              // Validation Logic: Green if Strength has data (Weight OR Reps), or if Non-Strength is selected
+                              // Classification Logic
+                              const isRun = option.id.startsWith('r_') || option.id.includes('run_');
+                              const isSwim = option.id.startsWith('sw_') || option.id.includes('swim_');
+                              const isWalk = option.id.startsWith('ma_');
+                              const isBike = option.id.startsWith('ve_') || option.id.includes('velo') || option.id.includes('spinning');
+                              const isCardioMachine = option.id.includes('car_') || option.group === 'CARDIO';
+                              const isCombat = ['bo_', 'mt_', 'kb_', 'mma_', 'jjb_', 'j_', 'lu_', 'g_', 'p_', 's_', 't_', 'training', 'technique', 'sparring', 'competition'].some(prefix => option.id.startsWith(prefix));
+
+                              const isCardio = isRun || isSwim || isWalk || isBike || isCardioMachine || option.group === 'DISTANCES';
+                              const isStrength = !isCardio && !isCombat;
+                              
+                              // Validation Logic
                               const isValid = isStrength 
                                 ? (isSelected && (stats.weight || stats.reps))
                                 : isSelected;
@@ -1765,7 +1856,18 @@ export default function AddTrainingScreen() {
                                       ]}>
                                         {option.label}
                                       </Text>
-                                      {isSelected && <Check size={16} color={isValid ? '#10B981' : option.color} />}
+                                      {isSelected && (
+                                        <TouchableOpacity 
+                                          onPress={(e) => {
+                                            e.stopPropagation(); // Stop toggle
+                                            Keyboard.dismiss();
+                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                          }}
+                                          activeOpacity={0.7}
+                                        >
+                                          <Check size={16} color={isValid ? '#10B981' : option.color} />
+                                        </TouchableOpacity>
+                                      )}
                                     </View>
                                   </TouchableOpacity>
                                   
@@ -1805,6 +1907,30 @@ export default function AddTrainingScreen() {
                                           </View>
                                         )}
                                         {isCardio && renderPerformanceFields(option.id, option.label)}
+
+                                        {/* NOTES POUR COMBAT / TECHNIQUE */}
+                                        {isCombat && (
+                                          <View style={{ marginTop: 10 }}>
+                                            <TextInput
+                                              style={{ 
+                                                backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', 
+                                                padding: 10, 
+                                                borderRadius: 8, 
+                                                color: colors.textPrimary, 
+                                                fontSize: 12,
+                                                borderWidth: 1, 
+                                                borderColor: colors.border,
+                                                minHeight: 40,
+                                                textAlignVertical: 'top'
+                                              }}
+                                              placeholder="Détails (ex: Partenaire, technique apprise...)"
+                                              placeholderTextColor={colors.textMuted}
+                                              multiline
+                                              value={optionStats[option.id]?.notes || ''}
+                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...prev[option.id], notes: val } }))}
+                                            />
+                                          </View>
+                                        )}
                                     </View>
                                   )}
                                 </View>
@@ -2266,15 +2392,16 @@ export default function AddTrainingScreen() {
       />
 
                         {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
-                        <Modal
-                          visible={showValidationModal}
-                          transparent
-                          animationType="fade"
-                        >
-                          <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
-                            
-                            {/* Header Étape 2 - MODE CLAIR */}
-                            <View style={{ marginBottom: 10 }}>
+                                    <Modal
+                                      visible={showValidationModal}
+                                      transparent
+                                      animationType="fade"
+                                    >
+                                      <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
+                                        <ConfettiCannon count={200} origin={{x: -10, y: 0}} />
+                                        
+                                        {/* Header Étape 2 - MODE CLAIR */}
+                                        <View style={{ marginBottom: 10 }}>
                               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
                                 {/* BOUTON RETOUR */}
                                 <TouchableOpacity 
@@ -2335,6 +2462,9 @@ export default function AddTrainingScreen() {
                                   options={optionDetails}
                                   backgroundImage={userPhoto}
                                   backgroundType={userPhoto ? 'photo' : 'black'}
+                                  userAvatar={userAvatar}
+                                  profilePhoto={userPhoto}
+                                  rank={userRank}
                                   isLandscape={false}
                                   width={360}
                                   yearlyCount={yearlyCount}
@@ -2396,7 +2526,9 @@ export default function AddTrainingScreen() {
                               </View>
                             </ScrollView>
                           </View>
-                        </Modal>      {/* MODAL 2: NOTATION HOUARI */}
+                        </Modal>
+                        
+      {/* MODAL 2: NOTATION HOUARI */}
       <Modal
         visible={showHouariRateModal}
         transparent
