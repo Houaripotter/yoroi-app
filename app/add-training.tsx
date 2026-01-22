@@ -1457,7 +1457,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* ÉTAPE 2: DÉTAILS DE LA SÉANCE - Seulement si sport sélectionné */}
         {/* ═══════════════════════════════════════════ */}
-        {selectedSports.length > 0 && (
+        {selectedSports.length > 0 ? (
           <>
             <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
               2. Configure ta seance
@@ -1698,8 +1698,7 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* DESCRIPTION PERSONNALISÉE - Seulement si sport sélectionné */}
         {/* ═══════════════════════════════════════════ */}
-        {selectedSports.length > 0 && (
-          <View style={[styles.customDescriptionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.customDescriptionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.customDescriptionHeader}>
               <Plus size={20} color={colors.gold} />
               <Text style={[styles.customDescriptionTitle, { color: colors.textPrimary }]}>
@@ -1717,11 +1716,8 @@ export default function AddTrainingScreen() {
               maxLength={500}
             />
           </View>
-        )}
 
         {/* DATE - Seulement si sport sélectionné */}
-        {selectedSports.length > 0 && (
-          <>
         {/* DATE */}
         <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date</Text>
         <TouchableOpacity
@@ -1880,19 +1876,13 @@ export default function AddTrainingScreen() {
               >
                 <Text style={[styles.scienceNote, { color: colors.accent, textDecorationLine: 'underline', fontSize: 10, textAlign: 'center' }]}>
                   L'échelle RPE (Borg, 1982) est validée scientifiquement pour mesurer la charge interne. Voir l'étude →
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-          </>
-        )}
-
-        {/* NOTE TECHNIQUE - Seulement si sport sélectionné */}
-        {selectedSports.length > 0 && (
-          <>
-            <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
-              <View style={styles.techniqueSectionHeader}>
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                
+                        {/* NOTE TECHNIQUE - Seulement si sport sélectionné */}
+                            <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>              <View style={styles.techniqueSectionHeader}>
                 <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>Note ta technique</Text>
                 <Text style={[styles.techniqueSectionSubtitle, { color: colors.textMuted }]}>
                   Comment etait ta technique aujourd'hui ?

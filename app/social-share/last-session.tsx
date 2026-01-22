@@ -45,7 +45,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
-import { getTrainings, Training, getClubs } from '@/lib/database';
+import { getTrainings, Training, getClubs, getProfile } from '@/lib/database';
 import { SPORTS, getSportName, getSportIcon, getSportColor, getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -78,6 +78,29 @@ export default function LastSessionScreen() {
   const [lastTraining, setLastTraining] = useState<Training | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [customLocation, setCustomLocation] = useState<string>('');
+  const [userName, setUserName] = useState<string>('Champion');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [optionDetails, setOptionDetails] = useState<any[]>([]);
+
+  // Fonction pour extraire les exercices et leurs stats depuis les notes
+  const parseExercisesFromNotes = (notes: string) => {
+    const details: any[] = [];
+    if (!notes) return details;
+    const lines = notes.split('\n');
+    lines.forEach(line => {
+      const match = line.match(/(?:•\s*)?(.*?)\s*\((\d+)?kg\s*x\s*(\d+)?\)/i);
+      if (match) {
+        let label = match[1].trim();
+        label = label.replace(/^.*:\s*/, '');
+        details.push({
+          label: label,
+          weight: match[2] || '0',
+          reps: match[3] || '0'
+        });
+      }
+    });
+    return details;
+  };
 
   // Nouveaux states pour la personnalisation
   const [showYearlyCount, setShowYearlyCount] = useState(true);
@@ -97,10 +120,16 @@ export default function LastSessionScreen() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [trainings, clubs] = await Promise.all([
+        const [trainings, clubs, profile] = await Promise.all([
           getTrainings(),
           getClubs(),
+          getProfile(),
         ]);
+
+        if (profile) {
+          setUserName(profile.name || 'Champion');
+          if (profile.profile_photo) setUserPhoto(profile.profile_photo);
+        }
 
         let currentTraining: Training | null = null;
         if (trainings.length > 0) {
@@ -110,6 +139,11 @@ export default function LastSessionScreen() {
             currentTraining = trainings[0];
           }
           setLastTraining(currentTraining);
+
+          if (currentTraining && currentTraining.notes) {
+            const parsed = parseExercisesFromNotes(currentTraining.notes);
+            setOptionDetails(parsed);
+          }
         }
 
         // Calculer l'objectif si un club est associé
@@ -432,6 +466,9 @@ export default function LastSessionScreen() {
               backgroundType={backgroundType}
               customLocation={customLocation}
               isLandscape={isLandscapeImage}
+              userAvatar={userPhoto}
+              userName={userName}
+              options={optionDetails}
               yearlyCount={yearlyCount}
               monthlyCount={monthlyCount}
               weeklyCount={weeklyCount}

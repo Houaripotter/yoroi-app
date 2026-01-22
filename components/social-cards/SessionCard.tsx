@@ -69,6 +69,14 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
     const safeObjective = yearlyObjective && yearlyObjective > 0 ? yearlyObjective : 365;
     const progressPercent = Math.min(100, (yearlyCount / safeObjective) * 100);
 
+    // Formatter la durée (ex: 90 -> 1H 30)
+    const formatDuration = (mins: number = 0) => {
+      if (mins < 60) return `${mins} MIN`;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}H ${m}` : `${h}H`;
+    };
+
     // COULEURS DYNAMIQUES SELON LE THÈME
     const isWhite = backgroundType === 'white';
     const barBg = isWhite ? '#FFFFFF' : '#000000';
@@ -121,26 +129,32 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     {training.club_name?.toUpperCase() || 'SÉANCE PERSO'}
                   </Text>
 
-                  {/* SPORT + LIEU (SANS DURÉE) */}
+                  {/* SPORT + LIEU */}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ color: mainText, fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>
                       {sportNameStr.toUpperCase()}
                     </Text>
-                    {/* LIEU: ULTRA PETIT ET BLANC */}
-                    <Text style={{ color: isWhite ? GOLD_COLOR : '#FFFFFF', fontSize: 8, fontWeight: '800', opacity: 0.9 }}>
+                    <Text style={{ color: isWhite ? GOLD_COLOR : '#FFFFFF', fontSize: 10, fontWeight: '800', opacity: 0.9 }}>
                       • {training.is_outdoor ? 'PLEIN AIR' : 'EN SALLE'}
                     </Text>
                   </View>
                 </View>
              </View>
 
-             {/* USER AVATAR */}
-             {userAvatar && (
-               <Image 
-                 source={{ uri: userAvatar }} 
-                 style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: GOLD_COLOR }} 
-               />
-             )}
+             {/* DROITE: AVATAR & DURÉE */}
+             <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                <View style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                  <Text style={{ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' }}>
+                    {formatDuration(training.duration_minutes)}
+                  </Text>
+                </View>
+                {userAvatar && (
+                  <Image 
+                    source={{ uri: userAvatar }} 
+                    style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: GOLD_COLOR }} 
+                  />
+                )}
+             </View>
           </View>
 
           {/* 2. CENTRE: BLOC OBJECTIF (AU MILIEU DE LA CARTE) */}
@@ -222,48 +236,53 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
           {/* ZONE DE DONNÉES UNIFIÉE (FULL WIDTH) */}
           <View style={{ flex: 1, width: '100%', gap: 12 }}>
             
-            {/* 1. LIGNE DES MÉTRIQUES MAJEURES (STYLE STRAVA) - SANS DURÉE */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: cardContentBg, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: borderColor }}>
-               {training.distance ? (
-                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 20, fontWeight: '900' }}>{training.distance.toFixed(2)}</Text>
-                    <Text style={{ color: subText, fontSize: 8, fontWeight: '800' }}>KM</Text>
-                 </View>
-               ) : null}
-               {training.calories ? (
-                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 20, fontWeight: '900' }}>{training.calories}</Text>
-                    <Text style={{ color: subText, fontSize: 8, fontWeight: '800' }}>KCAL</Text>
-                 </View>
-               ) : null}
-               {training.heart_rate ? (
-                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: '#EF4444', fontSize: 20, fontWeight: '900' }}>{training.heart_rate}</Text>
-                    <Text style={{ color: subText, fontSize: 8, fontWeight: '800' }}>BPM</Text>
-                 </View>
-               ) : null}
-               {training.speed ? (
-                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: mainText, fontSize: 20, fontWeight: '900' }}>{training.speed}</Text>
-                    <Text style={{ color: subText, fontSize: 8, fontWeight: '800' }}>KM/H</Text>
-                 </View>
-               ) : null}
-               {training.pente ? (
-                 <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: mainText, fontSize: 20, fontWeight: '900' }}>{training.pente}%</Text>
-                    <Text style={{ color: subText, fontSize: 8, fontWeight: '800' }}>PENTE</Text>
-                 </View>
-               ) : null}
-            </View>
-
             {/* 2. DÉTAILS DE LA SÉANCE (EXERCICES / OPTIONS / NOTES) */}
             {showExercises && (
               <View style={{ gap: 12 }}>
                 
-                {/* BLOC DES PERFORMANCES (SI POIDS SAISIS) */}
-                {options && options.some(o => o.weight || o.reps) && (
+                {/* LIGNE TECHNIQUE UNIFIÉE (TAPIS, VITESSE, PENTE...) */}
+                {(training.speed || training.pente || training.distance || training.calories) && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, backgroundColor: cardContentBg, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: borderColor }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' }}>
+                      {(() => {
+                        const machine = options?.find(o => ['tapis', 'vélo', 'velo', 'elliptique', 'rameur', 'marche'].some(k => o.label.toLowerCase().includes(k)));
+                        return (machine?.label || 'TECHNIQUE').toUpperCase();
+                      })()} :
+                    </Text>
+                    
+                    {training.speed && (
+                      <Text style={{ color: mainText, fontSize: 24, fontWeight: '900' }}>
+                        {training.speed}<Text style={{ fontSize: 12, color: GOLD_COLOR }}> KM/H</Text>
+                      </Text>
+                    )}
+                    
+                    {training.pente && (
+                      <Text style={{ color: mainText, fontSize: 24, fontWeight: '900' }}>
+                        {training.pente}<Text style={{ fontSize: 12, color: GOLD_COLOR }}>%</Text>
+                      </Text>
+                    )}
+
+                    {training.distance && (
+                      <Text style={{ color: mainText, fontSize: 24, fontWeight: '900' }}>
+                        {training.distance.toFixed(1)}<Text style={{ fontSize: 12, color: GOLD_COLOR }}> KM</Text>
+                      </Text>
+                    )}
+
+                    {training.calories && (
+                      <Text style={{ color: GOLD_COLOR, fontSize: 24, fontWeight: '900' }}>
+                        {training.calories}<Text style={{ fontSize: 12, color: mainText }}> KCAL</Text>
+                      </Text>
+                    )}
+                  </View>
+                )}
+                
+                {/* BLOC DES PERFORMANCES (OPTIONS + EXERCICES AVEC POIDS) */}
+                {((options && options.some(o => o.weight || o.reps)) || (training.exercises && training.exercises.some(e => e.weight || e.reps))) && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                    {options.filter(o => o.weight || o.reps).map((opt, i) => (
+                    {[
+                      ...(options || []).filter(o => o.weight || o.reps).map(o => ({ label: o.label, weight: o.weight, reps: o.reps })),
+                      ...(training.exercises || []).filter(e => e.weight || e.reps).map(e => ({ label: e.name, weight: e.weight?.toString(), reps: e.reps?.toString() }))
+                    ].slice(0, 6).map((item, i) => (
                       <View 
                         key={i} 
                         style={{ 
@@ -277,16 +296,16 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                         }}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
-                          <Text style={{ color: GOLD_COLOR, fontSize: 18, fontWeight: '900' }}>{opt.weight || '0'}</Text>
+                          <Text style={{ color: GOLD_COLOR, fontSize: 18, fontWeight: '900' }}>{item.weight || '0'}</Text>
                           <Text style={{ color: mainText, fontSize: 10, fontWeight: '700' }}>KG</Text>
                           <Text style={{ color: GOLD_COLOR, fontSize: 14, fontWeight: '400', marginHorizontal: 2 }}>×</Text>
-                          <Text style={{ color: mainText, fontSize: 18, fontWeight: '900' }}>{opt.reps || '0'}</Text>
+                          <Text style={{ color: mainText, fontSize: 18, fontWeight: '900' }}>{item.reps || '0'}</Text>
                         </View>
                         <Text 
                           style={{ color: subText, fontSize: 7, fontWeight: '800', textAlign: 'center', marginTop: 4, textTransform: 'uppercase' }}
                           numberOfLines={1}
                         >
-                          {opt.label}
+                          {item.label}
                         </Text>
                       </View>
                     ))}
@@ -294,12 +313,15 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 )}
 
                 {/* AUTRES EXERCICES (SANS POIDS) */}
-                {options && options.some(o => !o.weight && !o.reps) && (
+                {((options && options.some(o => !o.weight && !o.reps)) || (training.exercises && training.exercises.some(e => !e.weight && !e.reps))) && (
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                    {options.filter(o => !o.weight && !o.reps).map((opt, i) => (
+                    {[
+                      ...(options || []).filter(o => !o.weight && !o.reps).map(o => ({ label: o.label, icon: o.icon })),
+                      ...(training.exercises || []).filter(e => !e.weight && !e.reps).map(e => ({ label: e.name, icon: 'dumbbell' }))
+                    ].slice(0, 8).map((item, i) => (
                       <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255, 255, 255, 0.05)', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 6, borderWidth: 0.5, borderColor: borderColor }}>
-                        {opt.icon && <MaterialCommunityIcons name={opt.icon as any} size={10} color={GOLD_COLOR} />}
-                        <Text style={{ color: mainText, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>{opt.label}</Text>
+                        <MaterialCommunityIcons name={(item.icon as any) || 'dumbbell'} size={10} color={GOLD_COLOR} />
+                        <Text style={{ color: mainText, fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>{item.label}</Text>
                       </View>
                     ))}
                   </View>
