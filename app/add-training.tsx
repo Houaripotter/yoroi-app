@@ -48,7 +48,7 @@ import { Header } from '@/components/ui/Header';
 import { Card } from '@/components/ui/Card';
 import { useTheme } from '@/lib/ThemeContext';
 import { useBadges } from '@/lib/BadgeContext';
-import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings } from '@/lib/database';
+import { addTraining, getClubs, Club, Exercise, getProfile, getTrainings, getWeights } from '@/lib/database';
 import { SPORTS, MUSCLES, getSportIcon, getSportName, getClubLogoSource } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
@@ -90,6 +90,7 @@ type SportOption = {
   label: string;
   icon?: string;
   color?: string;
+  group?: string;
 };
 
 const SPORT_OPTIONS: Record<string, SportOption[]> = {
@@ -161,8 +162,8 @@ const SPORT_OPTIONS: Record<string, SportOption[]> = {
   // MUSCULATION (PAR GROUPE MUSCULAIRE)
   // ═══════════════════════════════════════════
   musculation: [
-    { id: 'm_c_be', label: 'Dev. Couché', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
-    { id: 'm_c_in', label: 'Dev. Incliné', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
+    { id: 'm_c_be', label: 'Développé Couché', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
+    { id: 'm_c_in', label: 'Développé Incliné', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
     { id: 'm_c_fl', label: 'Écartés', icon: 'arm-flex', color: '#EF4444', group: 'PECTORAUX' },
     { id: 'm_b_pu', label: 'Tractions', icon: 'human', color: '#3B82F6', group: 'DOS' },
     { id: 'm_b_ro', label: 'Rowing', icon: 'human', color: '#3B82F6', group: 'DOS' },
@@ -256,7 +257,18 @@ export default function AddTrainingScreen() {
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]); // Groupes d'exercices dépliés (fermés par défaut)
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({}); // { jjb: ['drill', 'sparring'], running: ['5k'] }
-  const [optionStats, setOptionStats] = useState<Record<string, { weight: string, reps: string }>>({}); // { m_c_be: { weight: '80', reps: '6' } }
+  const [optionStats, setOptionStats] = useState<Record<string, { 
+    weight?: string, 
+    reps?: string, 
+    sets?: string,
+    speed?: string, 
+    distance?: string, 
+    pente?: string, 
+    calories?: string, 
+    watts?: string, 
+    resistance?: string,
+    duration?: string
+  }>>({}); 
   const [sportEntries, setSportEntries] = useState<Record<string, string[]>>({}); // { jjb: ['Round 1: 5min', 'Guard work'], running: ['5K en 25min'] }
   const [newEntryText, setNewEntryText] = useState<Record<string, string>>({}); // Texte en cours de saisie pour chaque sport
   const [customDescription, setCustomDescription] = useState(''); // Description personnalisée
@@ -322,14 +334,16 @@ export default function AddTrainingScreen() {
   const [showWeeklyCount, setShowWeeklyCount] = useState<boolean>(true);
   const [showExercisesOnCard, setShowExercisesOnCard] = useState<boolean>(true);
   const [heartRate, setHeartRate] = useState<string>('');
+  const [userWeight, setUserWeight] = useState<number>(75); // Poids par défaut
 
   // Charger les données utilisateur
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const [profile, allTrainings] = await Promise.all([
+        const [profile, allTrainings, weights] = await Promise.all([
           getProfile(),
           getTrainings(),
+          getWeights(),
         ]);
 
         if (profile) {
@@ -340,6 +354,11 @@ export default function AddTrainingScreen() {
           const settings = await getUserSettings();
           if (settings.username) setUserName(settings.username);
           if (settings.gender) setUserGender(settings.gender);
+        }
+
+        // Charger le dernier poids
+        if (weights && weights.length > 0) {
+          setUserWeight(weights[0].weight);
         }
 
         const now = new Date();
@@ -490,14 +509,84 @@ export default function AddTrainingScreen() {
           // Dernier sport chargé
         }
         if (savedDuration) {
-          // Dernière durée chargée
+          setDuration(parseInt(savedDuration));
         }
-      } catch (error) {
-        logger.error('Erreur chargement dernier sport:', error);
+      } catch (e) {
+        // ignore
       }
     };
     loadLastSport();
   }, []);
+
+  // CALCUL AUTOMATIQUE DES CALORIES (ESTIMATION)
+  useEffect(() => {
+    if (!userWeight || duration <= 0) return;
+
+    let met = 0;
+    const hours = duration / 60;
+
+    // 1. Logique Tapis de Course (Running / Marche)
+    if (selectedSports.includes('running') || selectedSports.includes('marche')) {
+      const speedVal = parseFloat(speed.replace(',', '.'));
+      const penteVal = parseFloat(pente.replace(',', '.'));
+      
+      if (speedVal) {
+        // Formule de Léger: MET = 1.6 + (0.32 * speed_kmh) + (0.012 * speed_kmh * incline_percent)
+        // Simplifiée :
+        if (speedVal < 5) met = 3.5; // Marche lente
+        else if (speedVal < 8) met = 5.0; // Marche rapide / Jogging très lent
+        else if (speedVal < 10) met = 9.0; // Jogging
+        else if (speedVal < 12) met = 10.5; // Course
+        else met = 12.0; // Course rapide
+
+        // Bonus pente : +0.5 MET par 2% environ
+        if (penteVal) {
+          met += (penteVal * 0.3);
+        }
+      } else {
+        // Pas de vitesse, estimation basique
+        met = selectedSports.includes('running') ? 8.0 : 3.5;
+      }
+    } 
+    // 2. Logique Vélo
+    else if (selectedSports.includes('velo')) {
+      const wattsVal = parseInt(watts);
+      if (wattsVal) {
+        // Formule approximative : Kcal/h ≈ Watts * 3.6
+        // MET = Kcal/h / weight
+        const kcalPerHour = wattsVal * 3.6;
+        met = kcalPerHour / userWeight;
+      } else {
+        met = 7.0; // Vélo modéré par défaut
+      }
+    }
+    // 3. Logique Autres Machines Cardio
+    else if (selectedSports.includes('cardio')) {
+      // Rameur, Elliptique, Stairmaster...
+      met = 8.0; 
+    }
+    // 4. Logique Musculation / Fitness
+    else if (selectedSports.includes('musculation') || selectedSports.includes('fitness')) {
+      // Poids et intensité
+      met = 4.5; // Musculation standard
+      if (intensity >= 8) met = 6.0; // Haute intensité
+    }
+    // 5. Sports de Combat
+    else if (selectedSports.some(s => ['jjb', 'judo', 'lutte', 'mma', 'boxe', 'muay_thai'].includes(s))) {
+      met = 10.0; // Combat général
+      if (intensity < 5) met = 7.0; // Technique
+      if (rounds && parseInt(rounds) > 0) met = 12.0; // Sparring
+    }
+    // 6. Défaut
+    else {
+      met = 5.0;
+    }
+
+    // Formule : KCAL = MET * Poids (kg) * Durée (h)
+    const estimatedCalories = Math.round(met * userWeight * hours);
+    setCalories(estimatedCalories.toString());
+
+  }, [duration, speed, pente, watts, userWeight, selectedSports, intensity, rounds]);
 
   // Sauvegarder le sport et durée quand on enregistre
   const saveLastSportAndDuration = async (sport: string, dur: number) => {
@@ -624,143 +713,147 @@ export default function AddTrainingScreen() {
     }
   };
 
-  const renderPerformanceFields = (sportId: string) => {
-    const last = lastPerformances[sportId];
+  const renderPerformanceFields = (exerciseId: string, label: string) => {
+    const stats = optionStats[exerciseId] || {};
     
-    // Detecter le nom de la machine
-    const sportOpts = selectedOptions[sportId] || [];
-    const machineOpt = getOptionsForSport(sportId).find(o => sportOpts.includes(o.id) && ['tapis', 'vélo', 'velo', 'elliptique', 'rameur', 'marche'].some(k => o.label.toLowerCase().includes(k)));
-    const machineTitle = machineOpt ? machineOpt.label.toUpperCase() : 'PERFORMANCE & CARDIO';
+    const updateStat = (key: string, val: string) => {
+      setOptionStats(prev => ({
+        ...prev,
+        [exerciseId]: { ...prev[exerciseId], [key]: val }
+      }));
+    };
+
+    // Auto-calculate Calories if possible
+    const calculateLocalCalories = () => {
+      if (!userWeight) return;
+      const speedVal = parseFloat((stats.speed || '0').replace(',', '.'));
+      let durationVal = parseFloat((stats.duration || '0').replace(',', '.')); // Duration in minutes
+      const distanceVal = parseFloat((stats.distance || '0').replace(',', '.'));
+
+      // Infer duration from Distance / Speed if missing
+      if (!durationVal && distanceVal > 0 && speedVal > 0) {
+         durationVal = (distanceVal / speedVal) * 60; // hours -> minutes
+         updateStat('duration', Math.round(durationVal).toString());
+      }
+
+      if (durationVal > 0) {
+        // METs approximation
+        let met = 5.0; // Default moderate
+        if (speedVal > 0) {
+             if (speedVal < 5) met = 3.5;
+             else if (speedVal < 8) met = 7;
+             else if (speedVal < 11) met = 10;
+             else met = 12;
+        }
+        
+        // Bonus for incline (pente)
+        const penteVal = parseFloat((stats.pente || '0').replace(',', '.'));
+        if (penteVal > 0) met += (penteVal * 0.3);
+
+        const kcal = Math.round(met * userWeight * (durationVal / 60));
+        updateStat('calories', kcal.toString());
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    };
 
     return (
-      <View style={{ marginTop: 15, padding: 15, backgroundColor: colors.backgroundElevated, borderRadius: 16, borderWidth: 1, borderColor: colors.gold + '30' }}>
+      <View style={{ marginTop: 8, marginBottom: 16, padding: 12, backgroundColor: colors.backgroundElevated, borderRadius: 12, borderWidth: 1, borderColor: colors.gold + '30' }}>
         
-        {/* HEADER SMART */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ padding: 6, backgroundColor: 'rgba(212, 175, 55, 0.1)', borderRadius: 8 }}>
-              <Zap size={18} color={colors.gold} />
-            </View>
-            <Text style={{ fontSize: 16, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.5 }}>{machineTitle}</Text>
-          </View>
-          {last && (
-            <TouchableOpacity 
-              onPress={() => {
-                if (last.distance) setDistance(last.distance.toString());
-                if (last.speed) setSpeed(last.speed.toString());
-                if (last.pente) setPente(last.pente.toString());
-                if (last.watts) setWatts(last.watts.toString());
-                if (last.resistance) setResistance(last.resistance.toString());
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              }}
-              style={{ backgroundColor: colors.accent + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
-            >
-              <Text style={{ color: colors.accent, fontSize: 10, fontWeight: '800' }}>REMETTRE LA DERNIÈRE</Text>
-            </TouchableOpacity>
-          )}
+        {/* HEADER */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ fontSize: 12, fontWeight: '900', color: colors.gold, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+            {label} - DÉTAILS
+          </Text>
         </View>
 
         {/* DASHBOARD GRID */}
-        <View style={{ gap: 12 }}>
-          {/* Ligne 1: Vitesse & Pente (Les plus importants pour la machine) */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>VITESSE</Text>
+        <View style={{ gap: 8 }}>
+          {/* Ligne 0: Durée */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+             <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DURÉE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, minWidth: 40 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
+                  placeholder="0"
+                  placeholderTextColor={colors.textMuted + '40'}
+                  keyboardType="number-pad"
+                  value={stats.duration}
+                  onChangeText={(v) => updateStat('duration', v)}
+                />
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Ligne 1: Vitesse & Pente */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>VITESSE</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                <TextInput
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
                   placeholder="0.0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
-                  value={speed}
-                  onChangeText={setSpeed}
+                  value={stats.speed}
+                  onChangeText={(v) => updateStat('speed', v)}
                 />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
               </View>
             </View>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>PENTE</Text>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>PENTE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 22, fontWeight: '900', color: colors.textPrimary, minWidth: 40 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, minWidth: 40, padding: 0 }}
                   placeholder="0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
-                  value={pente}
-                  onChangeText={setPente}
+                  value={stats.pente}
+                  onChangeText={(v) => updateStat('pente', v)}
                 />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>%</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>%</Text>
               </View>
             </View>
           </View>
 
           {/* Ligne 2: Distance & Calories */}
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DISTANCE</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DISTANCE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 22, fontWeight: '900', color: colors.accent, minWidth: 40 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.accent, minWidth: 40, padding: 0 }}
                   placeholder="0.0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
-                  value={distance}
-                  onChangeText={setDistance}
+                  value={stats.distance}
+                  onChangeText={(v) => updateStat('distance', v)}
                 />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KM</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM</Text>
               </View>
             </View>
-            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>ÉNERGIE</Text>
-                <TouchableOpacity onPress={calculateCalories} hitSlop={10}>
-                  <MaterialCommunityIcons name="lightning-bolt" size={14} color={colors.gold} />
+                <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>CALORIES (ESTIMATION)</Text>
+                <TouchableOpacity onPress={calculateLocalCalories} hitSlop={10}>
+                  <MaterialCommunityIcons name="lightning-bolt" size={12} color={colors.gold} />
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 22, fontWeight: '900', color: colors.gold, minWidth: 40 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: colors.gold, minWidth: 40, padding: 0 }}
                   placeholder="0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="number-pad"
-                  value={calories}
-                  onChangeText={setCalories}
+                  value={stats.calories}
+                  onChangeText={(v) => updateStat('calories', v)}
                 />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
+                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
               </View>
             </View>
           </View>
-
-          {/* Ligne 3: Watts & Resistance (Compact) */}
-          {(watts || resistance || sportId === 'velo' || sportId === 'spinning') && (
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>PUISSANCE</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
-                  <TextInput
-                    style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'right' }}
-                    placeholder="-"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="number-pad"
-                    value={watts}
-                    onChangeText={setWatts}
-                  />
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>W</Text>
-                </View>
-              </View>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#FFF', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border, justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>RÉSISTANCE</Text>
-                <TextInput
-                  style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'right', minWidth: 30 }}
-                  placeholder="-"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad"
-                  value={resistance}
-                  onChangeText={setResistance}
-                />
-              </View>
-            </View>
-          )}
         </View>
       </View>
     );
@@ -1023,16 +1116,18 @@ export default function AddTrainingScreen() {
     return selectedSports.flatMap(sportId => {
       const opts = getOptionsForSport(sportId);
       const selectedIds = selectedOptions[sportId] || [];
-      return selectedIds.map(id => {
-        const opt = opts.find(o => o.id === id);
-        if (!opt) return null;
-        const stats = optionStats[id];
-        return {
-          ...opt,
-          weight: stats?.weight,
-          reps: stats?.reps
-        };
-      }).filter(Boolean);
+      return selectedIds
+        .map(id => {
+          const opt = opts.find(o => o.id === id);
+          if (!opt) return null;
+          const stats = optionStats[id];
+          return {
+            ...opt,
+            weight: stats?.weight,
+            reps: stats?.reps,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
     });
   };
   const optionDetails = getOptionDetails();
@@ -1090,25 +1185,27 @@ export default function AddTrainingScreen() {
         keyboardShouldPersistTaps="handled"
       >
 
-        {/* 🔍 BARRE DE RECHERCHE - ULTRA ACCESSIBLE */}
-        <View style={{ marginBottom: 20 }}>
-          <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, height: 54, borderRadius: 18 }]}>
-            <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
-            <TextInput
-              style={[styles.customSportInput, { color: colors.textPrimary, fontSize: 16 }]}
-              placeholder="Rechercher un exercice (ex: Pente, Couché...)"
-              placeholderTextColor={colors.textMuted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <X size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
+        {/* 🔍 BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
+        {(selectedSports.length === 0 || showAddSportSection) && (
+          <View style={{ marginBottom: 20 }}>
+            <View style={[styles.customSportInputContainer, { backgroundColor: colors.backgroundElevated, borderColor: colors.border, height: 54, borderRadius: 18 }]}>
+              <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
+              <TextInput
+                style={[styles.customSportInput, { color: colors.textPrimary, fontSize: 16 }]}
+                placeholder="Rechercher un sport..."
+                placeholderTextColor={colors.textMuted}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <X size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* ═══════════════════════════════════════════ */}
         {/* ÉTAPE 1: CHOISIS TON SPORT */}
@@ -1190,11 +1287,32 @@ export default function AddTrainingScreen() {
           // NOUVEL ORDRE : Cardio > Musculation > Combat > Danse > reste
           const categories = ['cardio', 'fitness', 'combat_grappling', 'combat_striking', 'danse', 'collectif', 'raquettes', 'glisse', 'nature', 'autre'];
 
-          return categories.map((category) => {
-            const sportsInCategory = SPORTS.filter(s => s.category === category);
+          // Filtrer les catégories vides après recherche
+          const filteredCategories = categories.filter(category => {
+            let sports = SPORTS.filter(s => s.category === category);
+            if (searchQuery.length > 0) {
+              sports = sports.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
+            return sports.length > 0;
+          });
+
+          if (filteredCategories.length === 0 && searchQuery.length > 0) {
+            return (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Text style={{ color: colors.textMuted, textAlign: 'center' }}>Aucun sport trouvé pour "{searchQuery}"</Text>
+              </View>
+            );
+          }
+
+          return filteredCategories.map((category) => {
+            let sportsInCategory = SPORTS.filter(s => s.category === category);
+            if (searchQuery.length > 0) {
+              sportsInCategory = sportsInCategory.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            }
+            
             if (sportsInCategory.length === 0) return null;
 
-            const isExpanded = expandedCategories.includes(category);
+            const isExpanded = expandedCategories.includes(category) || searchQuery.length > 0;
             // Vérifier si un sport sélectionné est dans cette catégorie
             const hasSelectedSport = sportsInCategory.some(s => selectedSports.includes(s.id));
             const catColor = categoryColors[category] || '#6B7280';
@@ -1295,7 +1413,7 @@ export default function AddTrainingScreen() {
           <View style={styles.selectedSportsSection}>
             <View style={styles.selectedSportsHeader}>
               <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 0 }]}>
-                {selectedSports.length === 1 ? 'Sport selectionne' : `${selectedSports.length} sports selectionnes`}
+                {selectedSports.length === 1 ? '1. Sport sélectionné' : `1. ${selectedSports.length} Sports sélectionnés`}
               </Text>
               <Text style={[styles.selectedSportsHint, { color: colors.textMuted }]}>
                 (max 3)
@@ -1342,164 +1460,180 @@ export default function AddTrainingScreen() {
         {/* ═══════════════════════════════════════════ */}
         {/* LIEU D'ENTRAÎNEMENT - Seulement si sport sélectionné */}
         {/* ═══════════════════════════════════════════ */}
+                  {selectedSports.length > 0 && (
+                    <>
+                      <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
+                        2. Où t'entraînes-tu ?
+                      </Text>
+                      
+                                    <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                                      {/* Option SALLE */}
+                                      <TouchableOpacity 
+                                        style={{ 
+                                          flex: 1, 
+                                          backgroundColor: !isOutdoor ? colors.accent + '20' : colors.card,
+                                          borderColor: !isOutdoor ? colors.accent : colors.border,
+                                          borderWidth: 1,
+                                          padding: 12,
+                                          borderRadius: 12,
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: 6,
+                                          height: 80
+                                        }}
+                                        onPress={() => {
+                                          setIsOutdoor(false);
+                                          Haptics.selectionAsync();
+                                        }}
+                                      >
+                                        <Building2 size={24} color={!isOutdoor ? colors.accent : colors.textMuted} />
+                                        <Text style={{ fontWeight: '700', fontSize: 13, color: !isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>En Salle</Text>
+                                      </TouchableOpacity>
+                      
+                                      {/* Option PLEIN AIR */}
+                                      <TouchableOpacity 
+                                        style={{ 
+                                          flex: 1, 
+                                          backgroundColor: isOutdoor ? colors.accent + '20' : colors.card,
+                                          borderColor: isOutdoor ? colors.accent : colors.border,
+                                          borderWidth: 1,
+                                          padding: 12,
+                                          borderRadius: 12,
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: 6,
+                                          height: 80
+                                        }}
+                                        onPress={() => {
+                                          setIsOutdoor(true);
+                                          setSelectedClub(null); // Reset club if outdoor
+                                          Haptics.selectionAsync();
+                                        }}
+                                      >
+                                        <Sun size={24} color={isOutdoor ? colors.accent : colors.textMuted} />
+                                        <Text style={{ fontWeight: '700', fontSize: 13, color: isOutdoor ? colors.accent : colors.textMuted, textAlign: 'center' }}>Plein Air</Text>
+                                      </TouchableOpacity>
+                                    </View>        
+                      {/* LISTE DES CLUBS - UNIQUEMENT SI EN SALLE */}
+                      {!isOutdoor && (
+                        <>
+                          <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Sélectionne ton club</Text>
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.clubsScroll}
+                            contentContainerStyle={styles.clubsScrollContent}
+                          >
+                            {/* Option Sans club */}
+                            <TouchableOpacity
+                              style={[
+                                styles.clubCard,
+                                { backgroundColor: colors.card, borderColor: colors.border },
+                                !selectedClub && { borderColor: colors.accent, borderStyle: 'solid', borderWidth: 2 },
+                              ]}
+                              onPress={() => setSelectedClub(null)}
+                            >
+                              <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
+                                <Home size={24} color={!selectedClub ? colors.textPrimary : colors.textSecondary} strokeWidth={2} />
+                              </View>
+                              <Text style={[styles.clubCardName, { color: !selectedClub ? colors.textPrimary : colors.textSecondary, fontWeight: !selectedClub ? '700' : '500' }]}>
+                                Sans club
+                              </Text>
+                            </TouchableOpacity>
+        
+                            {/* Clubs enregistrés - triés par pertinence */}
+                            {[...clubs]
+                              .sort((a, b) => {
+                                const aMatches = selectedSports.includes(a.sport || '');
+                                const bMatches = selectedSports.includes(b.sport || '');
+                                if (aMatches && !bMatches) return -1;
+                                if (!aMatches && bMatches) return 1;
+                                return 0;
+                              })
+                              .map((club) => {
+                              const isMatchingSport = selectedSports.includes(club.sport || '');
+                              return (
+                              <TouchableOpacity
+                                key={club.id}
+                                style={[
+                                  styles.clubCard,
+                                  {
+                                    backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : isMatchingSport ? colors.accent + '10' : colors.card,
+                                    borderColor: selectedClub?.id === club.id ? colors.gold : isMatchingSport ? colors.accent + '40' : colors.border,
+                                    borderWidth: selectedClub?.id === club.id ? 2 : 1,
+                                    opacity: isMatchingSport ? 1 : 0.6,
+                                  },
+                                ]}
+                                onPress={() => setSelectedClub(club)}
+                              >
+                                {(() => {
+                                  const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
+                                  if (logoSource) {
+                                    return (
+                                      <Image
+                                        source={logoSource}
+                                        style={styles.clubCardLogo}
+                                        resizeMode="cover"
+                                      />
+                                    );
+                                  }
+                                  return (
+                                    <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.backgroundElevated }]}>
+                                      <MaterialCommunityIcons
+                                        name={getSportIcon(club.sport || 'autre') as any}
+                                        size={24}
+                                        color="#FFFFFF"
+                                      />
+                                    </View>
+                                  );
+                                })()}
+                                <Text
+                                  style={[
+                                    styles.clubCardName,
+                                    { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
+                                  ]}
+                                  numberOfLines={1}
+                                >
+                                  {club.name}
+                                </Text>
+                                {isMatchingSport && (
+                                  <View style={[styles.matchingBadge, { backgroundColor: colors.accent }]}>
+                                    <Check size={10} color={colors.textOnAccent} strokeWidth={3} />
+                                  </View>
+                                )}
+                              </TouchableOpacity>
+                            );
+                            })}
+        
+                            {/* Bouton Créer un club */}
+                            <TouchableOpacity
+                              style={[
+                                styles.clubCard,
+                                { backgroundColor: colors.card, borderColor: colors.border, borderStyle: 'dashed' },
+                              ]}
+                              onPress={() => router.push('/clubs' as any)}
+                            >
+                              <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
+                                <Plus size={24} color={colors.accent} strokeWidth={2} />
+                              </View>
+                              <Text style={[styles.clubCardName, { color: colors.accent }]}>
+                                Créer
+                              </Text>
+                            </TouchableOpacity>
+                          </ScrollView>
+                        </>
+                      )}
+                    </>
+                  )}
+        {/* ═══════════════════════════════════════════ */}
+        {/* ÉTAPE 3: DÉTAILS DE LA SÉANCE */}
+        {/* ═══════════════════════════════════════════ */}
         {selectedSports.length > 0 && (
           <>
-            {/* CLUBS - Toujours visible (certains clubs ont des séances en plein air) */}
-            <>
-              <Text style={[styles.clubSectionTitle, { color: colors.textMuted }]}>Club (optionnel)</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.clubsScroll}
-                  contentContainerStyle={styles.clubsScrollContent}
-                >
-                  {/* Option Sans club */}
-                  <TouchableOpacity
-                    style={[
-                      styles.clubCard,
-                      { backgroundColor: colors.card, borderColor: colors.border },
-                      !selectedClub && { borderColor: colors.textMuted, borderStyle: 'dashed' },
-                    ]}
-                    onPress={() => setSelectedClub(null)}
-                  >
-                    <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
-                      <Home size={24} color={!selectedClub ? colors.textPrimary : colors.textSecondary} strokeWidth={2} />
-                    </View>
-                    <Text style={[styles.clubCardName, { color: !selectedClub ? colors.textPrimary : colors.textSecondary, fontWeight: !selectedClub ? '700' : '500' }]}>
-                      Sans club
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Clubs enregistrés - triés par pertinence */}
-                  {[...clubs]
-                    .sort((a, b) => {
-                      const aMatches = selectedSports.includes(a.sport || '');
-                      const bMatches = selectedSports.includes(b.sport || '');
-                      if (aMatches && !bMatches) return -1;
-                      if (!aMatches && bMatches) return 1;
-                      return 0;
-                    })
-                    .map((club) => {
-                    const isMatchingSport = selectedSports.includes(club.sport || '');
-                    return (
-                    <TouchableOpacity
-                      key={club.id}
-                      style={[
-                        styles.clubCard,
-                        {
-                          backgroundColor: selectedClub?.id === club.id ? colors.goldMuted : isMatchingSport ? colors.accent + '10' : colors.card,
-                          borderColor: selectedClub?.id === club.id ? colors.gold : isMatchingSport ? colors.accent + '40' : colors.border,
-                          borderWidth: selectedClub?.id === club.id ? 2 : 1,
-                          opacity: isMatchingSport ? 1 : 0.6,
-                        },
-                      ]}
-                      onPress={() => setSelectedClub(club)}
-                    >
-                      {(() => {
-                        const logoSource = club.logo_uri ? getClubLogoSource(club.logo_uri) : null;
-                        if (logoSource) {
-                          return (
-                            <Image
-                              source={logoSource}
-                              style={styles.clubCardLogo}
-                              resizeMode="cover"
-                            />
-                          );
-                        }
-                        return (
-                          <View style={[styles.clubCardIcon, { backgroundColor: club.color || colors.backgroundElevated }]}>
-                            <MaterialCommunityIcons
-                              name={getSportIcon(club.sport || 'autre') as any}
-                              size={24}
-                              color="#FFFFFF"
-                            />
-                          </View>
-                        );
-                      })()}
-                      <Text
-                        style={[
-                          styles.clubCardName,
-                          { color: selectedClub?.id === club.id ? colors.gold : colors.textPrimary },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {club.name}
-                      </Text>
-                      {isMatchingSport && (
-                        <View style={[styles.matchingBadge, { backgroundColor: colors.accent }]}>
-                          <Check size={10} color={colors.textOnAccent} strokeWidth={3} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                  })}
-
-                  {/* Bouton Créer un club */}
-                  <TouchableOpacity
-                    style={[
-                      styles.clubCard,
-                      { backgroundColor: colors.card, borderColor: colors.border, borderStyle: 'dashed' },
-                    ]}
-                    onPress={() => router.push('/add-club' as any)}
-                  >
-                    <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
-                      <Plus size={24} color={colors.accent} strokeWidth={2} />
-                    </View>
-                    <Text style={[styles.clubCardName, { color: colors.accent }]}>
-                      Créer
-                    </Text>
-                  </TouchableOpacity>
-                </ScrollView>
-            </>
-          </>
-        )}
-
-        {/* ═══════════════════════════════════════════ */}
-        {/* ÉTAPE 2: DÉTAILS DE LA SÉANCE - Seulement si sport sélectionné */}
-        {/* ═══════════════════════════════════════════ */}
-        {selectedSports.length > 0 ? (
-          <>
             <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
-              2. Configure ta seance
+              3. Configure ta seance
             </Text>
-
-            {/* ESPACE PERSONNALISATION MANUELLE */}
-            <View style={[styles.sportOptionsSection, { backgroundColor: colors.card, borderColor: colors.gold + '40', borderWidth: 1.5, marginBottom: 24 }]}>
-              <View style={styles.sportOptionsHeader}>
-                <Edit3 size={20} color={colors.gold} />
-                <Text style={[styles.sportOptionsTitle, { color: colors.textPrimary }]}>Personnalise ta seance</Text>
-              </View>
-              <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 12 }}>Ajoute un exercice ou un detail specifique a la main :</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TextInput
-                  style={[styles.notesInput, { flex: 1, minHeight: 50, marginBottom: 0, paddingVertical: 10 }]}
-                  placeholder="Ex: 50 tractions, Sparring intensif..."
-                  placeholderTextColor={colors.textMuted}
-                  value={customExerciseName}
-                  onChangeText={setCustomExerciseName}
-                />
-                <TouchableOpacity 
-                  style={{ 
-                    backgroundColor: colors.gold, 
-                    paddingHorizontal: 15, 
-                    borderRadius: 12, 
-                    justifyContent: 'center', 
-                    alignItems: 'center' 
-                  }}
-                  onPress={() => {
-                    if (customExerciseName.trim()) {
-                      setExercises(prev => [...prev, { name: customExerciseName.trim(), sets: 0, reps: 0, weight: 0 }]);
-                      setCustomExerciseName('');
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  }}
-                >
-                  <Plus size={24} color="#000" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </>
-        )}
+            <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
 
         {/* Options pour chaque sport sélectionné */}
         {selectedSports.map((sportId) => {
@@ -1526,7 +1660,13 @@ export default function AddTrainingScreen() {
                   (opt.group && opt.group.toLowerCase().includes(searchQuery.toLowerCase()))
                 );
 
-                if (filteredOptions.length === 0 && searchQuery.length > 0) return null;
+                if (filteredOptions.length === 0 && searchQuery.length > 0) {
+                  return (
+                    <View style={{ padding: 20, alignItems: 'center' }}>
+                      <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>Aucun exercice trouvé pour "{searchQuery}"</Text>
+                    </View>
+                  );
+                }
 
                 const grouped: Record<string, SportOption[]> = {};
                 filteredOptions.forEach(opt => {
@@ -1540,6 +1680,16 @@ export default function AddTrainingScreen() {
                   // Si recherche active, on force l'ouverture
                   const isExpanded = searchQuery.length > 0 || expandedGroups.includes(groupId);
                   
+                  // Check if group is validated (at least one valid exercise)
+                  const isGroupValidated = groupOpts.some(option => {
+                     if (!sportSelectedOptions.includes(option.id)) return false;
+                     const stats = optionStats[option.id];
+                     const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_') && !option.id.includes('ve_') && !option.id.includes('ma_');
+                     
+                     if (!isStrength) return true;
+                     return stats && (stats.weight || stats.reps);
+                  });
+
                   return (
                     <View key={groupName} style={{ marginBottom: 10 }}>
                       <TouchableOpacity 
@@ -1549,20 +1699,20 @@ export default function AddTrainingScreen() {
                           justifyContent: 'space-between',
                           paddingVertical: 12,
                           paddingHorizontal: 14,
-                          backgroundColor: isExpanded ? sport.color + '15' : colors.backgroundElevated,
+                          backgroundColor: isGroupValidated ? '#10B98120' : (isExpanded ? sport.color + '15' : colors.backgroundElevated),
                           borderRadius: 12,
                           borderWidth: 1,
-                          borderColor: isExpanded ? sport.color + '40' : colors.border,
+                          borderColor: isGroupValidated ? '#10B981' : (isExpanded ? sport.color + '40' : colors.border),
                         }}
                         onPress={() => toggleGroup(groupId)}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <View style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: sport.color }} />
-                          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{groupName}</Text>
+                          <View style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: isGroupValidated ? '#10B981' : sport.color }} />
+                          <Text style={{ fontSize: 13, fontWeight: '800', color: isGroupValidated ? '#10B981' : colors.textPrimary, textTransform: 'uppercase', letterSpacing: 0.5 }}>{groupName}</Text>
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{groupOpts.length} exos</Text>
-                          {isExpanded ? <ChevronDown size={18} color={colors.textMuted} /> : <ChevronRight size={18} color={colors.textMuted} />}
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: isGroupValidated ? '#10B981' : colors.textMuted }}>{groupOpts.length} exos</Text>
+                          {isExpanded ? <ChevronDown size={18} color={isGroupValidated ? '#10B981' : colors.textMuted} /> : <ChevronRight size={18} color={isGroupValidated ? '#10B981' : colors.textMuted} />}
                         </View>
                       </TouchableOpacity>
 
@@ -1572,15 +1722,31 @@ export default function AddTrainingScreen() {
                             {groupOpts.map((option) => {
                               const isSelected = sportSelectedOptions.includes(option.id);
                               const stats = optionStats[option.id] || { weight: '', reps: '' };
-                              const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_');
+                              const isStrength = !option.id.includes('car_') && !option.id.includes('run_') && !option.id.includes('swim_') && !option.id.includes('ve_') && !option.id.includes('ma_');
+                              const isCardio = !isStrength && (option.id.includes('car_') || option.id.includes('run_') || option.id.includes('swim_') || option.id.includes('ve_') || option.id.includes('ma_'));
+                              
+                              // Validation Logic: Green if Strength has data (Weight OR Reps), or if Non-Strength is selected
+                              const isValid = isStrength 
+                                ? (isSelected && (stats.weight || stats.reps))
+                                : isSelected;
 
                               return (
                                 <View key={option.id} style={{ marginBottom: 8, width: '100%' }}>
                                   <TouchableOpacity
                                     style={[
                                       styles.sportOptionChip,
-                                      { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border, width: '100%' },
-                                      isSelected && { backgroundColor: option.color + '20', borderColor: option.color }
+                                      { 
+                                        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', 
+                                        borderColor: colors.border, 
+                                        width: '100%' 
+                                      },
+                                      isSelected && { 
+                                        backgroundColor: isValid ? '#10B98120' : option.color + '20', 
+                                        borderColor: isValid ? '#10B981' : option.color,
+                                        borderBottomLeftRadius: 0,
+                                        borderBottomRightRadius: 0,
+                                        borderBottomWidth: 0,
+                                      }
                                     ]}
                                     onPress={() => toggleOption(sportId, option.id)}
                                   >
@@ -1589,7 +1755,7 @@ export default function AddTrainingScreen() {
                                         <MaterialCommunityIcons
                                           name={option.icon as any}
                                           size={18}
-                                          color={isSelected ? option.color : colors.textMuted}
+                                          color={isSelected ? (isValid ? '#10B981' : option.color) : colors.textMuted}
                                         />
                                       )}
                                       <Text style={[
@@ -1599,45 +1765,52 @@ export default function AddTrainingScreen() {
                                       ]}>
                                         {option.label}
                                       </Text>
+                                      {isSelected && <Check size={16} color={isValid ? '#10B981' : option.color} />}
                                     </View>
-                                    
-                                    {isSelected && (
-                                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                  </TouchableOpacity>
+                                  
+                                  {/* INPUT AREA (Non-clickable for toggle) */}
+                                  {isSelected && (
+                                    <View style={{
+                                        backgroundColor: isValid ? '#10B98120' : option.color + '20', 
+                                        borderColor: isValid ? '#10B981' : option.color,
+                                        borderWidth: 1,
+                                        borderTopWidth: 0,
+                                        borderBottomLeftRadius: 12,
+                                        borderBottomRightRadius: 12,
+                                        padding: 12,
+                                        marginTop: -1
+                                    }}>
                                         {isStrength && (
-                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                            <TextInput
-                                              style={{ width: 45, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
-                                              placeholder="kg"
-                                              placeholderTextColor={colors.textMuted}
-                                              keyboardType="number-pad"
-                                              value={stats.weight}
-                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val } }))}
-                                            />
-                                            <Text style={{ color: colors.textMuted, fontSize: 12 }}>x</Text>
-                                            <TextInput
-                                              style={{ width: 40, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
-                                              placeholder="reps"
-                                              placeholderTextColor={colors.textMuted}
-                                              keyboardType="number-pad"
-                                              value={stats.reps}
-                                              onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
-                                            />
+                                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                              <TextInput
+                                                style={{ width: 45, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: isValid ? '#10B981' : colors.border }}
+                                                placeholder="kg"
+                                                placeholderTextColor={colors.textMuted}
+                                                keyboardType="decimal-pad"
+                                                value={stats.weight}
+                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val } }))}
+                                              />
+                                              <Text style={{ color: colors.textMuted, fontSize: 12 }}>x</Text>
+                                              <TextInput
+                                                style={{ width: 40, height: 34, backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', borderRadius: 8, textAlign: 'center', color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: isValid ? '#10B981' : colors.border }}
+                                                placeholder="reps"
+                                                placeholderTextColor={colors.textMuted}
+                                                keyboardType="number-pad"
+                                                value={stats.reps}
+                                                onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
+                                              />
+                                            </View>
                                           </View>
                                         )}
-                                        <Check size={16} color={option.color} />
-                                      </View>
-                                    )}
-                                  </TouchableOpacity>
+                                        {isCardio && renderPerformanceFields(option.id, option.label)}
+                                    </View>
+                                  )}
                                 </View>
                               );
                             })}
                           </View>
-
-                          {/* AFFICHAGE DES STATS SI GROUPE CARDIO */}
-                          {(groupName === 'CARDIO' || groupName === 'TAPIS' || groupName === 'VÉLO' || groupName === 'DISTANCES') && 
-                            groupOpts.some(o => sportSelectedOptions.includes(o.id)) && (
-                            renderPerformanceFields(sportId)
-                          )}
                         </View>
                       )}
                     </View>
@@ -1645,171 +1818,306 @@ export default function AddTrainingScreen() {
                 });
               })()}
 
-              {/* ═══ ENTRÉES PERSONNALISÉES ═══ */}
-              <View style={styles.sportEntriesSection}>
-                <Text style={[styles.sportEntriesTitle, { color: colors.textMuted }]}>
-                  Tes notes ({(sportEntries[sportId] || []).length}/10)
-                </Text>
-
-                {/* Liste des entrées existantes */}
-                {(sportEntries[sportId] || []).map((entry, index) => (
-                  <View key={index} style={[styles.sportEntryItem, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
-                    <Text style={[styles.sportEntryText, { color: colors.textPrimary }]} numberOfLines={2}>
-                      {entry}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => removeSportEntry(sportId, index)}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <X size={16} color={colors.textMuted} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-
-                {/* Champ d'ajout d'entrée */}
-                {(sportEntries[sportId] || []).length < 10 && (
-                  <View style={styles.sportEntryInputRow}>
-                    <TextInput
-                      style={[
-                        styles.sportEntryInput,
-                        { color: colors.textPrimary, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: colors.border }
-                      ]}
-                      value={newEntryText[sportId] || ''}
-                      onChangeText={(text) => setNewEntryText(prev => ({ ...prev, [sportId]: text }))}
-                      placeholder="Ex: 5 rounds, garde fermee..."
-                      placeholderTextColor={colors.textMuted}
-                      returnKeyType="done"
-                      onSubmitEditing={() => addSportEntry(sportId)}
-                      maxLength={100}
-                    />
-                    <TouchableOpacity
-                      style={[styles.sportEntryAddButton, { backgroundColor: sport.color }]}
-                      onPress={() => addSportEntry(sportId)}
-                    >
-                      <Plus size={18} color="#FFFFFF" strokeWidth={3} />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
+              {/* ═══ FIN OPTIONS ═══ */}
             </View>
           );
         })}
 
-        {/* ═══════════════════════════════════════════ */}
-        {/* DESCRIPTION PERSONNALISÉE - Seulement si sport sélectionné */}
-        {/* ═══════════════════════════════════════════ */}
-        <View style={[styles.customDescriptionSection, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.customDescriptionHeader}>
-              <Plus size={20} color={colors.gold} />
-              <Text style={[styles.customDescriptionTitle, { color: colors.textPrimary }]}>
-                Ajoute ta description
-              </Text>
-            </View>
-            <TextInput
-              style={[styles.customDescriptionInput, { color: colors.textPrimary, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}
-              value={customDescription}
-              onChangeText={setCustomDescription}
-              placeholder="Ex: Travail garde fermée, révision des sweeps..."
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={2}
-              maxLength={500}
-            />
-          </View>
+              {/* PERSONNALISATION MANUELLE */}
+              <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                      <View style={styles.sportOptionsHeader}>
+                        <Edit3 size={20} color={colors.gold} />
+                        <Text style={[styles.sportOptionsTitle, { color: colors.textPrimary }]}>Personnalise ta seance</Text>
+                      </View>
+                      <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 12 }}>Ajoute un exercice ou un detail specifique a la main :</Text>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                                          <TextInput
+                                            style={[styles.notesInput, { flex: 1, minHeight: 50, marginBottom: 0, paddingVertical: 10, color: colors.textPrimary }]}
+                                            placeholder="Ex: 50 tractions, Sparring intensif..."                          placeholderTextColor={colors.textMuted}
+                          value={customExerciseName}
+                          onChangeText={setCustomExerciseName}
+                        />
+                        <TouchableOpacity 
+                          style={{ 
+                            backgroundColor: colors.gold, 
+                            paddingHorizontal: 15, 
+                            borderRadius: 12, 
+                            justifyContent: 'center', 
+                            alignItems: 'center' 
+                          }}
+                          onPress={() => {
+                            if (customExerciseName.trim()) {
+                              setExercises(prev => [...prev, { name: customExerciseName.trim(), sets: 0, reps: 0, weight: 0 }]);
+                              setCustomExerciseName('');
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }
+                          }}
+                        >
+                          <Plus size={24} color="#000" />
+                        </TouchableOpacity>
+                      </View>
+        
+                      {/* LISTE DES EXERCICES PERSONNALISÉS AJOUTÉS */}
+                      {exercises.length > 0 && (
+                        <View style={{ marginTop: 16, gap: 10 }}>
+                          {exercises.map((ex, idx) => (
+                            <View key={idx} style={{ backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border }}>
+                              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <Text style={{ fontWeight: '700', color: colors.textPrimary, fontSize: 14 }}>{ex.name}</Text>
+                                <TouchableOpacity onPress={() => {
+                                  setExercises(prev => prev.filter((_, i) => i !== idx));
+                                  Haptics.selectionAsync();
+                                }}>
+                                  <X size={18} color={colors.textMuted} />
+                                </TouchableOpacity>
+                              </View>
+                              
+                                                              <View style={{ flexDirection: 'column', gap: 12 }}>
+                                                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                                  <View style={{ flex: 1 }}>
+                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>POIDS (KG)</Text>
+                                                                    <TextInput
+                                                                      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                      placeholder="0"
+                                                                      placeholderTextColor={colors.textMuted}
+                                                                      keyboardType="decimal-pad"
+                                                                      value={ex.weight?.toString() || ''}
+                                                                      onChangeText={(val) => {
+                                                                        const w = parseFloat(val.replace(',', '.')) || 0;
+                                                                        setExercises(prev => prev.map((e, i) => i === idx ? { ...e, weight: w } : e));
+                                                                      }}
+                                                                    />
+                                                                  </View>
+                                                                  <View style={{ flex: 1 }}>
+                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>REPS</Text>
+                                                                    <TextInput
+                                                                      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                      placeholder="0"
+                                                                      placeholderTextColor={colors.textMuted}
+                                                                      keyboardType="number-pad"
+                                                                      value={ex.reps?.toString() || ''}
+                                                                      onChangeText={(val) => {
+                                                                        const r = parseInt(val) || 0;
+                                                                        setExercises(prev => prev.map((e, i) => i === idx ? { ...e, reps: r } : e));
+                                                                      }}
+                                                                    />
+                                                                  </View>
+                                                                  <View style={{ flex: 1 }}>
+                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>SÉRIES</Text>
+                                                                    <TextInput
+                                                                      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                      placeholder="0"
+                                                                      placeholderTextColor={colors.textMuted}
+                                                                      keyboardType="number-pad"
+                                                                      value={ex.sets?.toString() || ''}
+                                                                      onChangeText={(val) => {
+                                                                        const s = parseInt(val) || 0;
+                                                                        setExercises(prev => prev.map((e, i) => i === idx ? { ...e, sets: s } : e));
+                                                                      }}
+                                                                    />
+                                                                  </View>
+                                                                </View>
+                                                                
+                                                                {/* Row 2: Distance & Durée (Optionnel) */}
+                                                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                                                  <View style={{ flex: 1 }}>
+                                                                    <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>DISTANCE (KM)</Text>
+                                                                    <TextInput
+                                                                      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                      placeholder="0"
+                                                                      placeholderTextColor={colors.textMuted}
+                                                                      keyboardType="decimal-pad"
+                                                                      value={ex.distance?.toString() || ''}
+                                                                      onChangeText={(val) => {
+                                                                        const d = parseFloat(val.replace(',', '.')) || 0;
+                                                                        setExercises(prev => prev.map((e, i) => i === idx ? { ...e, distance: d } : e));
+                                                                      }}
+                                                                    />
+                                                                  </View>
+                                                                                                      <View style={{ flex: 1 }}>
+                                                                                                        <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>DURÉE (MIN)</Text>
+                                                                                                        <TextInput
+                                                                                                          style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                                                          placeholder="0"
+                                                                                                          placeholderTextColor={colors.textMuted}
+                                                                                                          keyboardType="decimal-pad"
+                                                                                                          value={ex.duration?.toString() || ''}
+                                                                                                          onChangeText={(val) => {
+                                                                                                            const d = parseFloat(val.replace(',', '.')) || 0;
+                                                                                                            setExercises(prev => prev.map((e, i) => i === idx ? { ...e, duration: d } : e));
+                                                                                                          }}
+                                                                                                        />
+                                                                                                      </View>
+                                                                                                      <View style={{ flex: 1 }}>
+                                                                                                        <Text style={{ fontSize: 10, color: colors.textMuted, marginBottom: 2 }}>KCAL</Text>
+                                                                                                        <TextInput
+                                                                                                          style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', padding: 8, borderRadius: 8, color: colors.textPrimary, fontWeight: '700', borderWidth: 1, borderColor: colors.border }}
+                                                                                                          placeholder="0"
+                                                                                                          placeholderTextColor={colors.textMuted}
+                                                                                                          keyboardType="number-pad"
+                                                                                                          value={ex.calories?.toString() || ''}
+                                                                                                          onChangeText={(val) => {
+                                                                                                            const c = parseInt(val) || 0;
+                                                                                                            setExercises(prev => prev.map((e, i) => i === idx ? { ...e, calories: c } : e));
+                                                                                                          }}
+                                                                                                        />
+                                                                                                      </View>
+                                                                                                    </View>                                                              </View>                            </View>
+                          ))}
+                        </View>
+                      )}
+                                  </View>
+                    
+                              {/* DESCRIPTION PERSONNALISÉE */}        
+                                <View style={{ padding: 16 }}>
+        
+                                    <View style={styles.customDescriptionHeader}>
+        
+                                      <Plus size={20} color={colors.gold} />
+        
+                                      <Text style={[styles.customDescriptionTitle, { color: colors.textPrimary }]}>
+        
+                                        Bilan global de la séance
+        
+                                      </Text>
+        
+                                    </View>
+        
+                                    <TextInput
+        
+                                      style={[styles.customDescriptionInput, { color: colors.textPrimary, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', marginBottom: 0 }]}
+        
+                                      value={customDescription}
+        
+                                      onChangeText={setCustomDescription}
+        
+                                      placeholder="Ex: Bonne séance, focus sur la technique..."
+        
+                                      placeholderTextColor={colors.textMuted}
+        
+                                      multiline
+        
+                                      numberOfLines={2}
+        
+                                      maxLength={500}
+        
+                                    />
+        
+                                </View>
+        
+                              </View>
+        
+                            </>
+        
+                          )}
 
         {/* DATE - Seulement si sport sélectionné */}
-        {/* DATE */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Date</Text>
-        <TouchableOpacity
-          style={[styles.dateSelector, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Calendar size={20} color={colors.gold} />
-          <Text style={[styles.dateText, { color: colors.textPrimary }]}>
-            {formatDate(date)}
-          </Text>
-        </TouchableOpacity>
+        {/* ═══════════════════════════════════════════ */}
+        {/* ÉTAPE 4: DATE & HEURE */}
+        {/* ═══════════════════════════════════════════ */}
+        {selectedSports.length > 0 && (
+          <>
+            <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
+              4. Date & Heure
+            </Text>
 
-        {showDatePicker && (
-          <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 12, padding: 8 }}>
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              themeVariant={isDark ? 'dark' : 'light'}
-              textColor={colors.textPrimary}
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-              locale="fr"
-            />
-          </View>
-        )}
+            <View style={{ backgroundColor: colors.card, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border }}>
+              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
+                {/* DATE */}
+                <TouchableOpacity
+                  style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, alignItems: 'center', gap: 6 }}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Calendar size={20} color={colors.textSecondary} />
+                  <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{format(date, 'd MMM yyyy', { locale: fr })}</Text>
+                </TouchableOpacity>
 
-        {/* HEURE DE DÉBUT */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Heure de debut</Text>
-        <TouchableOpacity
-          style={[styles.timeButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-          onPress={() => setShowTimePicker(true)}
-        >
-          <Clock size={20} color={colors.gold} />
-          <Text style={[styles.timeText, { color: colors.textPrimary }]}>
-            {startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </Text>
-        </TouchableOpacity>
+                {/* HEURE */}
+                <TouchableOpacity
+                  style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, alignItems: 'center', gap: 6 }}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Clock size={20} color={colors.textSecondary} />
+                  <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>
+                    {startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-        {showTimePicker && (
-          <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 12, padding: 8 }}>
-            <DateTimePicker
-              value={startTime}
-              mode="time"
-              is24Hour={true}
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              themeVariant={isDark ? 'dark' : 'light'}
-              textColor={colors.textPrimary}
-              onChange={(event, selectedTime) => {
-                setShowTimePicker(Platform.OS === 'ios');
-                if (selectedTime) setStartTime(selectedTime);
-              }}
-            />
-          </View>
-        )}
+              {showDatePicker && (
+                <View style={{ marginBottom: 16 }}>
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
+                    onChange={handleDateChange}
+                    maximumDate={new Date()}
+                    locale="fr"
+                  />
+                </View>
+              )}
 
-        {/* DURÉE (HEURES / MINUTES) */}
-        <View style={{ marginTop: 20 }}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Durée de la séance</Text>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <TextInput
-                style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
-                placeholder="0"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="number-pad"
-                value={Math.floor(duration / 60).toString()}
-                onChangeText={(h) => {
-                  const hours = parseInt(h) || 0;
-                  const minutes = duration % 60;
-                  setDuration(hours * 60 + minutes);
-                }}
-              />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>HEURES</Text>
+              {showTimePicker && (
+                <View style={{ marginBottom: 16 }}>
+                  <DateTimePicker
+                    value={startTime}
+                    mode="time"
+                    is24Hour={true}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    themeVariant={isDark ? 'dark' : 'light'}
+                    textColor={colors.textPrimary}
+                    onChange={(event, selectedTime) => {
+                      setShowTimePicker(Platform.OS === 'ios');
+                      if (selectedTime) setStartTime(selectedTime);
+                    }}
+                  />
+                </View>
+              )}
+
+              {/* DURÉE */}
+              <View>
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, fontWeight: '600' }}>Durée de la séance</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <TextInput
+                      style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                      value={Math.floor(duration / 60).toString()}
+                      onChangeText={(h) => {
+                        const hours = parseInt(h) || 0;
+                        const minutes = duration % 60;
+                        setDuration(hours * 60 + minutes);
+                      }}
+                    />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>HEURES</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: colors.backgroundElevated, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <TextInput
+                      style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
+                      placeholder="0"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="number-pad"
+                      value={(duration % 60).toString()}
+                      onChangeText={(m) => {
+                        const minutes = parseInt(m) || 0;
+                        const hours = Math.floor(duration / 60);
+                        setDuration(hours * 60 + minutes);
+                      }}
+                    />
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MINUTES</Text>
+                  </View>
+                </View>
+              </View>
+
+
+
             </View>
-            <View style={{ flex: 1, backgroundColor: colors.card, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <TextInput
-                style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: 'center' }}
-                placeholder="0"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="number-pad"
-                value={(duration % 60).toString()}
-                onChangeText={(m) => {
-                  const minutes = parseInt(m) || 0;
-                  const hours = Math.floor(duration / 60);
-                  setDuration(hours * 60 + minutes);
-                }}
-              />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted }}>MINUTES</Text>
-            </View>
-          </View>
-        </View>
+          </>
+        )}
 
         {/* FIN DES STATS PERFORMANCE */}
 
@@ -1843,120 +2151,108 @@ export default function AddTrainingScreen() {
           </View>
         )}
 
-        {/* INTENSITÉ AVEC JUSTIFICATION SCIENTIFIQUE */}
+                                    {/* ═══════════════════════════════════════════ */}
+                                    {/* ÉTAPE 5: ANALYSE & RESSENTI */}
+                                    {/* ═══════════════════════════════════════════ */}
+                                    {selectedSports.length > 0 && (
+                                      <>
+                                        <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : '#000000', marginTop: SPACING.lg, fontWeight: '700' }]}>
+                                          5. Analyse & Ressenti
+                                        </Text>
+                  
+                                        <View style={{ backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
+                                          
+                                          {/* INTENSITÉ */}
+                                          <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                              <Activity size={18} color={colors.accent} />
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Intensité de la séance</Text>
+                                            </View>
+                                            
+                                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
+                                              L'échelle RPE (Rate of Perceived Exertion) mesure ton effort ressenti. C'est le meilleur indicateur de ta charge interne.
+                                            </Text>
+                  
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'center' }}>
+                                              <TouchableOpacity onPress={() => setIntensity(Math.max(1, intensity - 1))} style={styles.intensityStep}>
+                                                <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>-</Text>
+                                              </TouchableOpacity>
+                                              
+                                              <View style={{ alignItems: 'center', minWidth: 80 }}>
+                                                <Text style={[styles.proStatInput, { color: intensity > 7 ? '#EF4444' : colors.accent, marginBottom: -4 }]}>
+                                                  {intensity}
+                                                </Text>
+                                                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' }}>
+                                                  {intensity <= 3 ? 'Facile' : intensity <= 6 ? 'Modéré' : intensity <= 8 ? 'Difficile' : 'Maximal'}
+                                                </Text>
+                                              </View>
+                  
+                                              <TouchableOpacity onPress={() => setIntensity(Math.min(10, intensity + 1))} style={styles.intensityStep}>
+                                                <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>+</Text>
+                                              </TouchableOpacity>
+                                            </View>
+                                          </View>
+                  
+                                          {/* TECHNIQUE */}
+                                          <View style={{ padding: 16, backgroundColor: colors.accent + '05' }}>
+                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                              <Star size={18} color={colors.accent} />
+                                              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }}>Qualité technique</Text>
+                                            </View>
+                  
+                                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 16, lineHeight: 18 }}>
+                                              Auto-évaluer ta technique t'oblige à y réfléchir, ce qui accélère ton apprentissage moteur et réduit le risque de blessure.
+                                            </Text>
+                  
+                                            {/* Étoiles */}
+                                            <View style={styles.starsContainer}>
+                                              {[1, 2, 3, 4, 5].map((rating) => (
+                                                <TouchableOpacity
+                                                  key={rating}
+                                                  onPress={() => setTechniqueRating(rating)}
+                                                  style={styles.starButton}
+                                                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                                >
+                                                  <Star
+                                                    size={32}
+                                                    color={techniqueRating && rating <= techniqueRating ? colors.accent : colors.textMuted}
+                                                    fill={techniqueRating && rating <= techniqueRating ? colors.accent : 'transparent'}
+                                                    strokeWidth={2}
+                                                  />
+                                                </TouchableOpacity>
+                                              ))}
+                                            </View>
+                                            
+                                            <View style={styles.starsLabels}>
+                                               <Text style={{ fontSize: 10, color: colors.textMuted }}>À revoir</Text>
+                                               <Text style={{ fontSize: 10, color: colors.textMuted }}>Parfaite</Text>
+                                            </View>
+                                          </View>
+                                        </View>
+                                      </>
+                                    )}
+        {/* BOUTON SAVE */}
         {selectedSports.length > 0 && (
-          <View style={{ marginTop: 20 }}>
-            <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.proStatLabel, { color: colors.textSecondary }]}>Intensité (RPE - Échelle de Borg)</Text>
-                <MaterialCommunityIcons name="information-outline" size={14} color={colors.textMuted} />
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 4, width: '100%', justifyContent: 'center' }}>
-                <TouchableOpacity onPress={() => setIntensity(Math.max(1, intensity - 1))} style={styles.intensityStep}>
-                  <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>-</Text>
-                </TouchableOpacity>
-                
-                <View style={{ alignItems: 'center', minWidth: 80 }}>
-                  <Text style={[styles.proStatInput, { color: intensity > 7 ? '#EF4444' : colors.accent, marginBottom: -4 }]}>
-                    {intensity}
-                  </Text>
-                  <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' }}>
-                    {intensity <= 3 ? 'Facile' : intensity <= 6 ? 'Modéré' : intensity <= 8 ? 'Difficile' : 'Maximal'}
-                  </Text>
-                </View>
-
-                <TouchableOpacity onPress={() => setIntensity(Math.min(10, intensity + 1))} style={styles.intensityStep}>
-                  <Text style={{ fontSize: 28, color: colors.textMuted, fontWeight: '300' }}>+</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <TouchableOpacity 
-                onPress={() => WebBrowser.openBrowserAsync('https://pubmed.ncbi.nlm.nih.gov/7154893/')}
-                style={{ marginTop: 10, alignItems: 'center' }}
-              >
-                <Text style={[styles.scienceNote, { color: colors.accent, textDecorationLine: 'underline', fontSize: 10, textAlign: 'center' }]}>
-                  L'échelle RPE (Borg, 1982) est validée scientifiquement pour mesurer la charge interne. Voir l'étude →
-                                  </Text>
-                                </TouchableOpacity>
-                              </View>
-                            </View>
-                
-                        {/* NOTE TECHNIQUE - Seulement si sport sélectionné */}
-                            <View style={[styles.techniqueSection, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>              <View style={styles.techniqueSectionHeader}>
-                <Text style={[styles.techniqueSectionTitle, { color: colors.textPrimary }]}>Note ta technique</Text>
-                <Text style={[styles.techniqueSectionSubtitle, { color: colors.textMuted }]}>
-                  Comment etait ta technique aujourd'hui ?
-                </Text>
-              </View>
-
-              {/* Étoiles */}
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <TouchableOpacity
-                    key={rating}
-                    onPress={() => setTechniqueRating(rating)}
-                    style={styles.starButton}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Star
-                      size={36}
-                      color={techniqueRating && rating <= techniqueRating ? colors.accent : colors.textMuted}
-                      fill={techniqueRating && rating <= techniqueRating ? colors.accent : 'transparent'}
-                      strokeWidth={2}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Labels sous les étoiles */}
-              <View style={styles.starsLabels}>
-                <Text style={[styles.starLabel, { color: colors.textMuted }]}>1</Text>
-                <Text style={[styles.starLabel, { color: colors.textMuted }]}>2</Text>
-                <Text style={[styles.starLabel, { color: colors.textMuted }]}>3</Text>
-                <Text style={[styles.starLabel, { color: colors.textMuted }]}>4</Text>
-                <Text style={[styles.starLabel, { color: colors.textMuted }]}>5</Text>
-              </View>
-
-              {/* Info scientifique */}
-              <View style={styles.techniqueInfo}>
-                <Text style={[styles.techniqueInfoText, { color: colors.textMuted }]}>
-                  Noter ta technique ameliore ta conscience corporelle et reduit ton risque de blessure de 35%
-                </Text>
-              </View>
-
-              {/* Bouton Passer */}
-              {techniqueRating !== null && (
-                <TouchableOpacity
-                  onPress={() => setTechniqueRating(null)}
-                  style={styles.skipButton}
-                >
-                  <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>x Reinitialiser</Text>
-                </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              { backgroundColor: colors.accent, marginTop: 20 },
+              isSubmitting && styles.saveButtonDisabled
+            ]}
+            onPress={handleSave}
+            disabled={isSubmitting || selectedSports.length === 0}
+          >
+            <View style={styles.saveButtonContent}>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color={colors.textOnAccent || '#FFFFFF'} />
+              ) : (
+                <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
               )}
+              <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
+                {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
+              </Text>
             </View>
-
-            {/* BOUTON SAVE */}
-            <TouchableOpacity
-              style={[
-                styles.saveButton,
-                { backgroundColor: colors.accent },
-                isSubmitting && styles.saveButtonDisabled
-              ]}
-              onPress={handleSave}
-              disabled={isSubmitting || selectedSports.length === 0}
-            >
-              <View style={styles.saveButtonContent}>
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={colors.textOnAccent || '#FFFFFF'} />
-                ) : (
-                  <Dumbbell size={22} color={colors.textOnAccent || '#FFFFFF'} />
-                )}
-                <Text style={[styles.saveButtonText, { color: colors.textOnAccent || '#FFFFFF' }]}>
-                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </>
+          </TouchableOpacity>
         )}
 
         <View style={{ height: 100 }} />
@@ -1969,102 +2265,91 @@ export default function AddTrainingScreen() {
         onAddExercise={(exercise) => setExercises(prev => [...prev, exercise])}
       />
 
-            {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
-            <Modal
-              visible={showValidationModal}
-              transparent
-              animationType="fade"
-            >
-              <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
-                
-                {/* Header Étape 2 - MODE CLAIR */}
-                <View style={{ marginBottom: 10 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
-                    {/* BOUTON RETOUR */}
-                    <TouchableOpacity 
-                      style={{ position: 'absolute', left: 16, padding: 8 }}
-                      onPress={() => setShowValidationModal(false)}
-                    >
-                      <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
-                    </TouchableOpacity>
-      
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
-                      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
-                        {/* Etape 1 (Passée - Gold) */}
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-                        <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-                        
-                        {/* Etape 2 (Actuelle - Big Gold) */}
-                        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
-                        
-                        {/* Futur (Noir & Blanc Cassé) */}
-                        <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
-                        <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
-                      </View>
-                    </View>
-                  </View>
-                  <Text style={{ fontSize: 20, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>APERÇU DE LA CARTE</Text>
-                </View>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
-                  {/* CARTE À PARTAGER (Aperçu) */}
-                  <View 
-                    style={{ 
-                      width: '100%', 
-                      maxWidth: 360, 
-                      borderRadius: 24,
-                      overflow: 'hidden',
-                      shadowColor: "#000",
-                      shadowOpacity: 0.3,
-                      shadowRadius: 20,
-                      elevation: 15,
-                      marginBottom: 30
-                    }}
-                  >
-                    <SessionCard
-                      training={{
-                        sport: selectedSports.join(','),
-                        duration_minutes: duration,
-                        distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
-                        calories: calories ? parseInt(calories) : undefined,
-                        intensity: intensity,
-                        heart_rate: heartRate ? parseInt(heartRate) : undefined,
-                        date: date.toISOString(),
-                        start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-                        rounds: rounds ? parseInt(rounds) : undefined,
-                        round_duration: roundDuration ? parseInt(roundDuration) : undefined,
-                        club_logo: selectedClub?.logo_uri,
-                        club_name: selectedClub?.name,
-                        muscles: selectedMuscles.join(','),
-                        exercises: exercises,
-                        notes: previewNotes,
-                        technique_rating: techniqueRating || undefined,
-                        is_outdoor: isOutdoor,
-                        pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
-                        speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
-                        resistance: resistance ? parseInt(resistance) : undefined,
-                        watts: watts ? parseInt(watts) : undefined,
-                        cadence: cadence ? parseInt(cadence) : undefined,
-                      }}
-                      options={optionDetails}
-                      backgroundImage={userPhoto}
-                      backgroundType={userPhoto ? 'photo' : 'black'}
-                      isLandscape={false}
-                      width={360}
-                      yearlyCount={yearlyCount}
-                      monthlyCount={monthlyCount}
-                      weeklyCount={weeklyCount}
-                      yearlyObjective={yearlyObjective}
-                      showYearlyCount={true}
-                      showMonthlyCount={true}
-                      showWeeklyCount={true}
-                      showExercises={true}
-                    />
-                  </View>
-                  {/* ACTIONS - ÉTAPE 2 */}
-                  <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
+                        {/* MODAL 1: VALIDATION & APERÇU ÉTAPE 2 */}
+                        <Modal
+                          visible={showValidationModal}
+                          transparent
+                          animationType="fade"
+                        >
+                          <View style={{ flex: 1, backgroundColor: '#F2F2F7', paddingTop: insets.top }}>
+                            
+                            {/* Header Étape 2 - MODE CLAIR */}
+                            <View style={{ marginBottom: 10 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }}>
+                                {/* BOUTON RETOUR */}
+                                <TouchableOpacity 
+                                  style={{ position: 'absolute', left: 16, padding: 8 }}
+                                  onPress={() => setShowValidationModal(false)}
+                                >
+                                  <MaterialCommunityIcons name="arrow-left" size={28} color="#000000" />
+                                </TouchableOpacity>
+                  
+                                <View style={{ alignItems: 'center' }}>
+                                  <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 2, marginBottom: 8 }}>ÉTAPE 2 SUR 4</Text>
+                                  <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                                    {/* Etape 1 (Passée - Gold) */}
+                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
+                                    <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
+                                    
+                                    {/* Etape 2 (Actuelle - Big Gold) */}
+                                    <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+                                    
+                                    {/* Futur (Noir & Blanc Cassé) */}
+                                    <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+                                    <View style={{ width: 30, height: 2, backgroundColor: '#000000' }} />
+                                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D1D6' }} />
+                                  </View>
+                                </View>
+                              </View>
+                              <Text style={{ fontSize: 20, fontWeight: '900', color: '#000000', letterSpacing: 1, textAlign: 'center' }}>APERÇU CARTE</Text>
+                            </View>
+            
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
+                              <View style={{ width: '100%', maxWidth: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
+                                <SessionCard
+                                  training={{
+                                    sport: selectedSports.join(','),
+                                    duration_minutes: duration,
+                                    distance: distance ? parseFloat(distance.replace(',', '.')) : undefined,
+                                    calories: calories ? parseInt(calories) : undefined,
+                                    intensity: intensity,
+                                    heart_rate: heartRate ? parseInt(heartRate) : undefined,
+                                    date: date.toISOString(),
+                                    start_time: startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                                    rounds: rounds ? parseInt(rounds) : undefined,
+                                    round_duration: roundDuration ? parseInt(roundDuration) : undefined,
+                                    club_logo: selectedClub?.logo_uri,
+                                    club_name: selectedClub?.name,
+                                    muscles: selectedMuscles.join(','),
+                                    exercises: exercises,
+                                    notes: previewNotes,
+                                    technique_rating: techniqueRating || undefined,
+                                    is_outdoor: isOutdoor,
+                                    pente: pente ? parseFloat(pente.replace(',', '.')) : undefined,
+                                    speed: speed ? parseFloat(speed.replace(',', '.')) : undefined,
+                                    resistance: resistance ? parseInt(resistance) : undefined,
+                                    watts: watts ? parseInt(watts) : undefined,
+                                    cadence: cadence ? parseInt(cadence) : undefined,
+                                  }}
+                                  options={optionDetails}
+                                  backgroundImage={userPhoto}
+                                  backgroundType={userPhoto ? 'photo' : 'black'}
+                                  isLandscape={false}
+                                  width={360}
+                                  yearlyCount={yearlyCount}
+                                  monthlyCount={monthlyCount}
+                                  weeklyCount={weeklyCount}
+                                  yearlyObjective={yearlyObjective}
+                                  showYearlyCount={true}
+                                  showMonthlyCount={true}
+                                  showWeeklyCount={true}
+                                  showExercises={true}
+                                />
+                              </View>
+            
+                              {/* ACTIONS - ÉTAPE 2 */}
+                              <View style={{ width: '100%', maxWidth: 360, gap: 12 }}>
                                 <TouchableOpacity 
                                   style={{ 
                                     backgroundColor: colors.accent, 
@@ -2097,7 +2382,7 @@ export default function AddTrainingScreen() {
                                     backgroundColor: colors.card, 
                                     paddingVertical: 18, 
                                     borderRadius: 24, 
-                                    alignItems: 'center',
+                                    alignItems: 'center', 
                                     borderWidth: 1,
                                     borderColor: colors.border
                                   }}
@@ -2108,10 +2393,10 @@ export default function AddTrainingScreen() {
                                 >
                                   <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>TERMINER SANS PARTAGER</Text>
                                 </TouchableOpacity>
-                              </View>                </ScrollView>
-              </View>
-            </Modal>
-      {/* MODAL 2: NOTATION HOUARI */}
+                              </View>
+                            </ScrollView>
+                          </View>
+                        </Modal>      {/* MODAL 2: NOTATION HOUARI */}
       <Modal
         visible={showHouariRateModal}
         transparent

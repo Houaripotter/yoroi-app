@@ -30,10 +30,12 @@ import {
   Zap,
   Clock,
   Smartphone,
+  Watch,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import logger from '@/lib/security/logger';
+import { lightHaptic } from '@/lib/haptics';
 import {
   healthConnect,
   getProviderIcon,

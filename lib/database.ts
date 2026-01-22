@@ -456,6 +456,9 @@ export interface Exercise {
   reps: number;
   weight: number; // en kg
   muscle_group?: string;
+  distance?: number;
+  duration?: number;
+  calories?: number;
 }
 
 export interface Training {
