@@ -90,6 +90,7 @@ import { EXERCISE_LIBRARY } from '@/constants/exerciseLibrary';
 import { renderIcon } from './training-journal/utils/iconMap';
 import { getRelativeDate } from './training-journal/utils/dateHelpers';
 import AddEntryModal from './training-journal/components/AddEntryModal';
+import BenchmarkDetailModal from './training-journal/components/BenchmarkDetailModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -1562,149 +1563,6 @@ export default function TrainingJournalScreen() {
     </Modal>
   );
 
-
-  const renderBenchmarkDetailModal = () => {
-    if (!selectedBenchmark) return null;
-
-    const pr = getBenchmarkPR(selectedBenchmark);
-    const entries = [...selectedBenchmark.entries].sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-
-    return (
-      <Modal visible={showBenchmarkDetail} animationType="slide" presentationStyle="fullScreen">
-        <SafeAreaView style={[styles.detailModalOverlay, { backgroundColor: colors.background }]}>
-          <View style={[styles.detailHeader, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity
-              onPress={() => setShowBenchmarkDetail(false)}
-              style={styles.detailHeaderBtn}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <ChevronLeft size={28} color={colors.textPrimary} />
-            </TouchableOpacity>
-            <Text style={[styles.detailTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-              {selectedBenchmark.name}
-            </Text>
-            <View style={styles.detailHeaderRight}>
-              <TouchableOpacity
-                onPress={() => handleDeleteBenchmark(selectedBenchmark.id)}
-                style={styles.detailHeaderBtn}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Trash2 size={22} color="#EF4444" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setShowBenchmarkDetail(false)}
-                style={styles.detailCloseBtn}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <X size={24} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <ScrollView style={styles.detailContent} showsVerticalScrollIndicator={false}>
-            {/* PR Card */}
-            <View style={[styles.prCard, { backgroundColor: selectedBenchmark.color + '20', borderColor: selectedBenchmark.color }]}>
-              <View style={styles.prCardIconContainer}>
-                {renderIcon(selectedBenchmark.iconName || BENCHMARK_CATEGORIES[selectedBenchmark.category].iconName, 40, selectedBenchmark.color)}
-              </View>
-              <View style={styles.prCardInfo}>
-                <Text style={[styles.prCardLabel, { color: colors.textMuted }]}>Record Personnel</Text>
-                <Text style={[styles.prCardValue, { color: selectedBenchmark.color }]}>
-                  {pr ? formatValue(pr.value, selectedBenchmark.unit) : '--'}
-                </Text>
-                {pr && (
-                  <Text style={[styles.prCardDate, { color: colors.textMuted }]}>
-                    {new Date(pr.date).toLocaleDateString(locale)}
-                  </Text>
-                )}
-              </View>
-              <TouchableOpacity
-                style={[styles.prAddBtn, { backgroundColor: selectedBenchmark.color }]}
-                onPress={() => setShowAddEntryModal(true)}
-              >
-                <Plus size={20} color="#FFFFFF" strokeWidth={3} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Mini Chart Placeholder */}
-            {entries.length > 1 && (
-              <View style={[styles.chartCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
-                <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>Progression</Text>
-                <View style={styles.chartPlaceholder}>
-                  {entries.slice(0, 10).reverse().map((entry, index) => {
-                    const maxVal = Math.max(...entries.map(e => e.value));
-                    const minVal = Math.min(...entries.map(e => e.value));
-                    const range = maxVal - minVal || 1;
-                    const heightPercent = ((entry.value - minVal) / range) * 100;
-
-                    return (
-                      <View key={entry.id} style={styles.chartBarContainer}>
-                        <View
-                          style={[
-                            styles.chartBar,
-                            {
-                              backgroundColor: selectedBenchmark.color,
-                              height: `${Math.max(20, heightPercent)}%`
-                            }
-                          ]}
-                        />
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {/* History */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>HISTORIQUE</Text>
-            {entries.length === 0 ? (
-              <View style={[styles.emptyCard, { backgroundColor: colors.backgroundCard }]}>
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  Aucune donnée. Ajoute ta première performance !
-                </Text>
-              </View>
-            ) : (
-              entries.map((entry, index) => {
-                const isPR = pr && entry.id === pr.id;
-                const isForce = selectedBenchmark.category === 'force' &&
-                  (selectedBenchmark.unit === 'kg' || selectedBenchmark.unit === 'lbs');
-
-                return (
-                  <View
-                    key={entry.id}
-                    style={[
-                      styles.historyItem,
-                      { backgroundColor: colors.backgroundCard, borderColor: isPR ? selectedBenchmark.color : colors.border }
-                    ]}
-                  >
-                    <View style={styles.historyLeft}>
-                      <Text style={[styles.historyValue, { color: colors.textPrimary }]}>
-                        {isForce
-                          ? formatForceEntry(entry.value, selectedBenchmark.unit, entry.reps)
-                          : formatValue(entry.value, selectedBenchmark.unit)}
-                      </Text>
-                      <Text style={[styles.historyDate, { color: colors.textMuted }]}>
-                        {new Date(entry.date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </Text>
-                    </View>
-                    {isPR && (
-                      <View style={[styles.prBadge, { backgroundColor: selectedBenchmark.color }]}>
-                        <Award size={12} color="#FFFFFF" />
-                        <Text style={styles.prBadgeText}>PR</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })
-            )}
-
-            <View style={{ height: 100 }} />
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-    );
   };
 
   const renderSkillDetailModal = () => {
@@ -2564,7 +2422,16 @@ export default function TrainingJournalScreen() {
         setNewEntryLevel={setNewEntryLevel}
       />
 
-      {renderBenchmarkDetailModal()}
+      <BenchmarkDetailModal
+        visible={showBenchmarkDetail}
+        onClose={() => setShowBenchmarkDetail(false)}
+        benchmark={selectedBenchmark}
+        colors={colors}
+        locale={locale}
+        onAddEntry={() => setShowAddEntryModal(true)}
+        onDelete={handleDeleteBenchmark}
+      />
+
       {renderSkillDetailModal()}
       {renderTrashModal()}
 
