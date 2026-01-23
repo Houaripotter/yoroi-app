@@ -494,38 +494,38 @@ export default function PlanningScreen() {
 
         // Running/Marathon - Distance filters
         if (catalogSportFilter === 'running' || catalogSportFilter === 'marathon') {
-          if (catalogSubFilter === '5k') {
-            return title.includes('5k') || title.includes('5 km') || title.includes('5km');
-          } else if (catalogSubFilter === '10k') {
-            return title.includes('10k') || title.includes('10 km') || title.includes('10km');
+          if (catalogSubFilter === '10k') {
+            return title.includes('10km') || title.includes('10 km');
           } else if (catalogSubFilter === 'semi') {
-            return title.includes('semi') || title.includes('half') || title.includes('21');
+            return title.includes('semi-marathon') || title.includes('semi marathon');
           } else if (catalogSubFilter === 'marathon') {
-            return (title.includes('marathon') && !title.includes('semi') && !title.includes('half'));
+            return title.includes('marathon') && !title.includes('semi');
           } else if (catalogSubFilter === 'ultra') {
-            return title.includes('ultra') || title.includes('100km') || title.includes('100 km');
+            return title.includes('ultra') || title.includes('utmb');
           }
         }
 
         // Trail - Distance filters
         else if (catalogSportFilter === 'trail') {
           if (catalogSubFilter === 'court') {
-            return title.match(/\b([0-9]|1[0-9])k/i); // < 20km
+            return title.match(/\b([0-9]|1[0-9])km/i); // < 20km
           } else if (catalogSubFilter === 'moyen') {
-            return title.match(/\b(2[0-9]|3[0-9]|4[0-9])k/i); // 20-50km
+            return title.match(/\b(2[0-9]|3[0-9]|4[0-9])km/i); // 20-50km
           } else if (catalogSubFilter === 'long') {
-            return title.match(/\b(5[0-9]|[6-9][0-9])k/i); // 50-100km
+            return title.match(/\b(5[0-9]|[6-9][0-9])km/i); // 50-100km
           } else if (catalogSubFilter === 'ultra') {
-            return title.includes('ultra') || title.match(/\b(1[0-9]{2}|[2-9][0-9]{2})k/i); // > 100km
+            return title.includes('ultra') || title.match(/\b(1[0-9]{2}|[2-9][0-9]{2})km/i); // > 100km
           }
         }
 
         // JJB/Grappling - GI filters
         else if (catalogSportFilter === 'jjb' || catalogSportFilter === 'grappling') {
           if (catalogSubFilter === 'gi') {
-            return title.includes('gi') && !title.includes('no gi') && !title.includes('nogi');
+            // GI = tous les événements SANS "no-gi" dans le titre (par défaut c'est GI)
+            return !title.includes('no-gi') && !title.includes('nogi') && !title.includes('no gi');
           } else if (catalogSubFilter === 'nogi') {
-            return title.includes('no gi') || title.includes('nogi') || title.includes('no-gi');
+            // NO GI = événements avec "no-gi" dans le titre
+            return title.includes('no-gi') || title.includes('nogi') || title.includes('no gi');
           }
         }
 
@@ -851,8 +851,9 @@ export default function PlanningScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
+    <ErrorBoundary>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       {/* Header avec tabs circulaires - zIndex élevé pour rester visible */}
       <View style={[styles.tabsHeader, { backgroundColor: colors.background, zIndex: 100, elevation: 10 }]}>
@@ -2132,11 +2133,10 @@ export default function PlanningScreen() {
                           if (catalogSportFilter === 'running' || catalogSportFilter === 'marathon') {
                             subFilters = [
                               { value: 'all', label: 'Toutes distances' },
-                              { value: '5k', label: '5K' },
                               { value: '10k', label: '10K' },
                               { value: 'semi', label: 'Semi-Marathon' },
                               { value: 'marathon', label: 'Marathon' },
-                              { value: 'ultra', label: 'Ultra' },
+                              { value: 'ultra', label: 'Ultra / UTMB' },
                             ];
                           }
                           // Trail - filtres par distance
@@ -2476,7 +2476,8 @@ export default function PlanningScreen() {
       />
 
       <PopupComponent />
-    </View>
+      </View>
+    </ErrorBoundary>
   );
 }
 
