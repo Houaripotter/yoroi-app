@@ -213,6 +213,10 @@ export default function ProfileScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [weightGoal, setWeightGoal] = useState<'lose' | 'maintain' | 'gain'>('lose');
 
+  // Protection anti-spam
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPickingPhoto, setIsPickingPhoto] = useState(false);
+
   // Calcul automatique de l'âge à partir de la date de naissance
   const calculateAge = (dateStr: string): number | null => {
     if (!dateStr) return null;
@@ -286,11 +290,15 @@ export default function ProfileScreen() {
   const level = getLevel(totalPoints);
 
   const handleSave = async () => {
+    // Protection anti-spam
+    if (isSaving) return;
+
     if (!name.trim()) {
       showPopup('Erreur', 'Le nom est requis');
       return;
     }
 
+    setIsSaving(true);
     try {
       await saveProfile({
         name: name.trim(),
@@ -311,14 +319,21 @@ export default function ProfileScreen() {
     } catch (error) {
       logger.error('Save error:', error);
       showPopup('Erreur', 'Impossible de sauvegarder');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const takeProfilePhoto = async (withEditing: boolean = false) => {
+    // Protection anti-spam
+    if (isPickingPhoto) return;
+    setIsPickingPhoto(true);
+
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la caméra requis pour prendre une photo.');
+        setIsPickingPhoto(false);
         return;
       }
 
@@ -359,14 +374,21 @@ export default function ProfileScreen() {
       } else {
         showPopup('Erreur', 'Impossible de prendre une photo. Réessaye plus tard.');
       }
+    } finally {
+      setIsPickingPhoto(false);
     }
   };
 
   const pickProfilePhoto = async (withEditing: boolean = true) => {
+    // Protection anti-spam
+    if (isPickingPhoto) return;
+    setIsPickingPhoto(true);
+
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
+        setIsPickingPhoto(false);
         return;
       }
 
@@ -399,6 +421,8 @@ export default function ProfileScreen() {
     } catch (error) {
       logger.error('[Profile] Erreur sélection photo:', error);
       showPopup('Erreur', 'Impossible de charger la photo. Réessaye plus tard.');
+    } finally {
+      setIsPickingPhoto(false);
     }
   };
 
