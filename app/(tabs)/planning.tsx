@@ -197,6 +197,10 @@ export default function PlanningScreen() {
     return addDays(today, daysToAdd);
   };
 
+  // Protection anti-spam navigation
+  const [isNavigatingToAdd, setIsNavigatingToAdd] = useState(false);
+  const [isNavigatingFromProgramme, setIsNavigatingFromProgramme] = useState(false);
+
   // Programme hebdomadaire: grouper les séances par jour de la semaine
   const weeklyProgram = useMemo(() => {
     // Créer un objet avec un tableau pour chaque jour (0=Lundi, 6=Dimanche)
@@ -416,6 +420,7 @@ export default function PlanningScreen() {
       }
     } catch (error) {
       console.error('Error loading saved external events:', error);
+      // Ne pas bloquer l'app si le storage échoue
     }
   };
 
@@ -604,11 +609,17 @@ export default function PlanningScreen() {
 
   // Handler: ouvrir le flow d'ajout (même que le bouton +)
   const handleOpenAddModal = () => {
+    // Protection anti-spam
+    if (isNavigatingToAdd) return;
+    setIsNavigatingToAdd(true);
+
     setShowDayModal(false);
     // Naviguer vers add-training avec la date sélectionnée
     const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
     setTimeout(() => {
       router.push(`/add-training?date=${dateStr}`);
+      // Reset après navigation
+      setTimeout(() => setIsNavigatingToAdd(false), 1000);
     }, 300);
   };
 
@@ -668,6 +679,10 @@ export default function PlanningScreen() {
 
   // Handler: Ajouter une séance depuis la vue emploi du temps
   const handleAddSessionFromProgramme = (dayId: string, _timeSlot?: string) => {
+    // Protection anti-spam
+    if (isNavigatingFromProgramme) return;
+    setIsNavigatingFromProgramme(true);
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // Calculer la prochaine date pour ce jour de la semaine
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
@@ -675,6 +690,9 @@ export default function PlanningScreen() {
     // Naviguer vers add-training avec la date (même interface que le bouton +)
     const dateStr = format(nextDate, 'yyyy-MM-dd');
     router.push(`/add-training?date=${dateStr}`);
+
+    // Reset après navigation
+    setTimeout(() => setIsNavigatingFromProgramme(false), 1000);
   };
 
   // Handlers pour le popup de notation
