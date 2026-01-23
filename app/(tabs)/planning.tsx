@@ -14,6 +14,7 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
@@ -42,6 +43,7 @@ import {
   X,
   Trash2,
   Sun,
+  Filter,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
@@ -174,7 +176,9 @@ export default function PlanningScreen() {
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<CatalogCategoryFilter>('all');
   const [catalogLocationFilter, setCatalogLocationFilter] = useState<CatalogLocationFilter>('monde');
+  const [catalogSportFilter, setCatalogSportFilter] = useState<string>('all');
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
 
   // Journal/Carnet state - Now uses carnetService
   const [journalStats, setJournalStats] = useState({ total: 0, in_progress: 0, mastered: 0, totalRecords: 0 });
@@ -463,6 +467,11 @@ export default function PlanningScreen() {
       filtered = filtered.filter(event => event.category === catalogCategoryFilter);
     }
 
+    // Filter by sport
+    if (catalogSportFilter !== 'all') {
+      filtered = filtered.filter(event => event.sport_tag === catalogSportFilter);
+    }
+
     // Filter by search query
     if (catalogSearchQuery.trim()) {
       const query = catalogSearchQuery.toLowerCase();
@@ -475,7 +484,7 @@ export default function PlanningScreen() {
     }
 
     return filtered;
-  }, [allCatalogEvents, catalogLocationFilter, catalogCategoryFilter, catalogSearchQuery]);
+  }, [allCatalogEvents, catalogLocationFilter, catalogCategoryFilter, catalogSportFilter, catalogSearchQuery]);
 
   // Event counts for filters
   const catalogEventCounts = useMemo(() => ({
@@ -1544,41 +1553,93 @@ export default function PlanningScreen() {
                 {/* Liste des RDV ajoutés */}
                 {savedExternalEvents.length > 0 ? (
                   <>
-                    <Text style={[styles.sectionTitle, { color: colors.textMuted, marginTop: 16 }]}>
-                      A L'HORIZON
-                    </Text>
-                    {savedExternalEvents
-                      .filter(event => {
+                    {/* Grouper les événements par sport */}
+                    {(() => {
+                      const futureEvents = savedExternalEvents.filter(event => {
                         const eventDate = new Date(event.date_start);
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         eventDate.setHours(0, 0, 0, 0);
                         return eventDate >= today;
-                      })
-                      .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
-                      .map((event) => {
-                        const eventDate = new Date(event.date_start);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        eventDate.setHours(0, 0, 0, 0);
-                        const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        const urgencyColor = daysLeft <= 7 ? '#EF4444' : daysLeft <= 30 ? '#F59E0B' : '#10B981';
-                        
-                        // Dynamic category color
-                        const categoryColor = 
-                          event.category === 'combat' ? '#EF4444' : 
-                          event.category === 'endurance' ? '#10B981' :
-                          event.category === 'force' ? '#F59E0B' :
-                          event.category === 'nature' ? '#8B5CF6' : '#6B7280';
+                      }).sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
 
-                        const city = event.location?.city || 'Lieu inconnu';
-                        const country = event.location?.country || '';
+                      // Grouper par sport_tag
+                      const groupedBySport: Record<string, typeof futureEvents> = {};
+                      futureEvents.forEach(event => {
+                        const sport = event.sport_tag || 'autre';
+                        if (!groupedBySport[sport]) {
+                          groupedBySport[sport] = [];
+                        }
+                        groupedBySport[sport].push(event);
+                      });
+
+                      const sportLabels: Record<string, { label: string; icon: string; color: string }> = {
+                        jjb: { label: 'JJB', icon: '🥋', color: '#EF4444' },
+                        grappling: { label: 'Grappling', icon: '🤼', color: '#EF4444' },
+                        hyrox: { label: 'HYROX', icon: '⚙️', color: '#10B981' },
+                        marathon: { label: 'Marathon', icon: '🏃', color: '#10B981' },
+                        running: { label: 'Course', icon: '🏃', color: '#10B981' },
+                        trail: { label: 'Trail', icon: '⛰️', color: '#8B5CF6' },
+                        climbing: { label: 'Escalade', icon: '🧗', color: '#8B5CF6' },
+                        fitness: { label: 'Fitness', icon: '💪', color: '#F59E0B' },
+                        powerlifting: { label: 'Powerlifting', icon: '🏋️', color: '#F59E0B' },
+                        crossfit: { label: 'CrossFit', icon: '🔥', color: '#F59E0B' },
+                        autre: { label: 'Autre', icon: '🏆', color: '#6B7280' },
+                      };
+
+                      return Object.keys(groupedBySport).map(sportKey => {
+                        const sportInfo = sportLabels[sportKey] || sportLabels.autre;
+                        const events = groupedBySport[sportKey];
+
+                        return (
+                          <View key={sportKey}>
+                            {/* Sport Header */}
+                            <View style={[styles.sportHeader, { backgroundColor: sportInfo.color + '15', borderLeftColor: sportInfo.color }]}>
+                              <Text style={styles.sportIcon}>{sportInfo.icon}</Text>
+                              <Text style={[styles.sportLabel, { color: sportInfo.color }]}>
+                                {sportInfo.label} ({events.length})
+                              </Text>
+                            </View>
+
+                            {/* Events de ce sport */}
+                            {events.map((event) => {
+                              const eventDate = new Date(event.date_start);
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              eventDate.setHours(0, 0, 0, 0);
+                              const daysLeft = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                              const urgencyColor = daysLeft <= 7 ? '#EF4444' : daysLeft <= 30 ? '#F59E0B' : '#10B981';
+
+                              const categoryColor =
+                                event.category === 'combat' ? '#EF4444' :
+                                event.category === 'endurance' ? '#10B981' :
+                                event.category === 'force' ? '#F59E0B' :
+                                event.category === 'nature' ? '#8B5CF6' : '#6B7280';
+
+                              const city = event.location?.city || 'Lieu inconnu';
+                              const country = event.location?.country || '';
 
                         return (
                           <TouchableOpacity
                             key={event.id}
                             style={[styles.savedEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                            onPress={() => event.registration_link && handleOpenExternalEvent(event.registration_link)}
+                            onPress={() => {
+                              impactAsync(ImpactFeedbackStyle.Medium);
+                              router.push({
+                                pathname: '/event-detail',
+                                params: {
+                                  id: event.id,
+                                  title: event.title,
+                                  date_start: event.date_start,
+                                  city: event.location?.city || '',
+                                  country: event.location?.country || '',
+                                  category: event.category,
+                                  sport_tag: event.sport_tag,
+                                  registration_link: event.registration_link || '',
+                                  federation: event.federation || '',
+                                }
+                              });
+                            }}
                             activeOpacity={0.7}
                           >
                             <View style={styles.savedEventLeft}>
@@ -1619,17 +1680,12 @@ export default function PlanningScreen() {
                             </View>
 
                             <View style={styles.savedEventActions}>
-                              {event.registration_link && (
-                                <TouchableOpacity
-                                  style={[styles.savedEventActionBtn, { backgroundColor: '#8B5CF620' }]}
-                                  onPress={() => handleOpenExternalEvent(event.registration_link)}
-                                >
-                                  <ExternalLink size={16} color="#8B5CF6" />
-                                </TouchableOpacity>
-                              )}
                               <TouchableOpacity
                                 style={[styles.savedEventActionBtn, { backgroundColor: '#EF444420' }]}
-                                onPress={() => removeExternalEventFromSaved(event.id)}
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  removeExternalEventFromSaved(event.id);
+                                }}
                               >
                                 <Trash2 size={16} color="#EF4444" />
                               </TouchableOpacity>
@@ -1637,6 +1693,10 @@ export default function PlanningScreen() {
                           </TouchableOpacity>
                         );
                       })}
+                          </View>
+                        );
+                      });
+                    })()}
                   </>
                 ) : (
                   /* État vide */
@@ -1659,76 +1719,307 @@ export default function PlanningScreen() {
             {/* ====== VIEW: TROUVER (CATALOG) ====== */}
             {eventsTabMode === 'catalog' && (
               <>
-                {/* Search Bar */}
-                <View style={[styles.catalogSearchContainer, { backgroundColor: colors.backgroundCard }]}>
-                  <Search size={20} color={colors.textSecondary} />
-                  <TextInput
-                    style={[styles.catalogSearchInput, { color: colors.textPrimary }]}
-                    placeholder="Rechercher un evenement..."
-                    placeholderTextColor={colors.textMuted}
-                    value={catalogSearchQuery}
-                    onChangeText={setCatalogSearchQuery}
-                  />
-                  {catalogSearchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setCatalogSearchQuery('')}>
-                      <X size={18} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                  )}
+                {/* Search Bar + Filtres Compact */}
+                <View style={[styles.searchAndFilters, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}>
+                  <View style={styles.searchBarCompact}>
+                    <Search size={18} color={colors.textSecondary} />
+                    <TextInput
+                      style={[styles.catalogSearchInput, { color: colors.textPrimary }]}
+                      placeholder="Rechercher..."
+                      placeholderTextColor={colors.textMuted}
+                      value={catalogSearchQuery}
+                      onChangeText={setCatalogSearchQuery}
+                    />
+                    {catalogSearchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setCatalogSearchQuery('')}>
+                        <X size={16} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Bouton Filtres */}
+                  <TouchableOpacity
+                    style={[styles.filterButton, { backgroundColor: colors.accent }]}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setShowFiltersModal(true);
+                    }}
+                  >
+                    <Filter size={18} color="#FFFFFF" />
+                    <Text style={styles.filterButtonText}>Filtres</Text>
+                    {(catalogLocationFilter !== 'monde' || catalogCategoryFilter !== 'all') && (
+                      <View style={styles.filterBadge}>
+                        <Text style={styles.filterBadgeText}>
+                          {(catalogLocationFilter !== 'monde' ? 1 : 0) + (catalogCategoryFilter !== 'all' ? 1 : 0)}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
                 </View>
 
-                {/* Location Filters */}
-                <View style={styles.catalogFiltersRow}>
-                  {(['monde', 'europe', 'france'] as CatalogLocationFilter[]).map((loc) => (
+                {/* Modal Filtres */}
+                <Modal
+                  visible={showFiltersModal}
+                  transparent
+                  animationType="slide"
+                  onRequestClose={() => setShowFiltersModal(false)}
+                >
+                  <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowFiltersModal(false)}
+                  >
                     <TouchableOpacity
-                      key={loc}
-                      style={[
-                        styles.catalogFilterChip,
-                        {
-                          backgroundColor: catalogLocationFilter === loc ? '#8B5CF6' : colors.backgroundCard,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                      onPress={() => {
-                        impactAsync(ImpactFeedbackStyle.Light);
-                        setCatalogLocationFilter(loc);
-                      }}
+                      style={[styles.filtersPanel, { backgroundColor: colors.backgroundCard }]}
+                      activeOpacity={1}
                     >
-                      <Text style={[
-                        styles.catalogFilterChipText,
-                        { color: catalogLocationFilter === loc ? '#FFFFFF' : colors.textPrimary },
-                      ]}>
-                        {loc === 'monde' ? 'Monde' : loc === 'europe' ? 'Europe' : 'France'} ({catalogEventCounts[loc]})
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                      {/* Header */}
+                      <View style={[styles.filtersPanelHeader, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.filtersPanelTitle, { color: colors.textPrimary }]}>Filtres</Text>
+                        <TouchableOpacity onPress={() => setShowFiltersModal(false)}>
+                          <X size={24} color={colors.textPrimary} />
+                        </TouchableOpacity>
+                      </View>
 
-                {/* Category Filters */}
-                <View style={styles.catalogFiltersRow}>
-                  {(['all', 'combat', 'endurance'] as CatalogCategoryFilter[]).map((cat) => (
-                    <TouchableOpacity
-                      key={cat}
-                      style={[
-                        styles.catalogFilterChip,
-                        {
-                          backgroundColor: catalogCategoryFilter === cat ? '#8B5CF6' : colors.backgroundCard,
-                          borderColor: colors.border,
-                        },
-                      ]}
-                      onPress={() => {
-                        impactAsync(ImpactFeedbackStyle.Light);
-                        setCatalogCategoryFilter(cat);
-                      }}
-                    >
-                      <Text style={[
-                        styles.catalogFilterChipText,
-                        { color: catalogCategoryFilter === cat ? '#FFFFFF' : colors.textPrimary },
-                      ]}>
-                        {cat === 'all' ? 'Tous' : cat === 'combat' ? 'Combat' : 'Endurance'} ({catalogEventCounts[cat]})
-                      </Text>
+                      <ScrollView style={styles.filtersPanelContent} showsVerticalScrollIndicator={false}>
+                        {/* Localisation */}
+                        <Text style={[styles.filterSectionTitle, { color: colors.textMuted }]}>LOCALISATION</Text>
+                        <View style={styles.filterGrid}>
+                          {(['monde', 'europe', 'france'] as CatalogLocationFilter[]).map((loc) => (
+                            <TouchableOpacity
+                              key={loc}
+                              style={[
+                                styles.filterChip,
+                                {
+                                  backgroundColor: catalogLocationFilter === loc ? colors.accent : colors.background,
+                                  borderColor: catalogLocationFilter === loc ? colors.accent : colors.border,
+                                },
+                              ]}
+                              onPress={() => {
+                                impactAsync(ImpactFeedbackStyle.Light);
+                                setCatalogLocationFilter(loc);
+                              }}
+                            >
+                              <Text style={[
+                                styles.filterChipText,
+                                { color: catalogLocationFilter === loc ? '#FFFFFF' : colors.textPrimary },
+                              ]}>
+                                {loc === 'monde' ? '🌍 Monde' : loc === 'europe' ? '🇪🇺 Europe' : '🇫🇷 France'}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+
+                        {/* Catégorie */}
+                        <Text style={[styles.filterSectionTitle, { color: colors.textMuted, marginTop: 24 }]}>CATÉGORIE</Text>
+                        <View style={styles.filterGrid}>
+                          {(['all', 'combat', 'endurance', 'force', 'nature'] as const).map((cat) => {
+                            const labels = {
+                              all: '🏆 Tous',
+                              combat: '🥋 Combat',
+                              endurance: '🏃 Endurance',
+                              force: '🏋️ Force',
+                              nature: '⛰️ Nature',
+                            };
+                            return (
+                              <TouchableOpacity
+                                key={cat}
+                                style={[
+                                  styles.filterChip,
+                                  {
+                                    backgroundColor: catalogCategoryFilter === cat ? colors.accent : colors.background,
+                                    borderColor: catalogCategoryFilter === cat ? colors.accent : colors.border,
+                                  },
+                                ]}
+                                onPress={() => {
+                                  impactAsync(ImpactFeedbackStyle.Light);
+                                  setCatalogCategoryFilter(cat as CatalogCategoryFilter);
+                                  setCatalogSportFilter('all'); // Reset sport filter
+                                }}
+                              >
+                                <Text style={[
+                                  styles.filterChipText,
+                                  { color: catalogCategoryFilter === cat ? '#FFFFFF' : colors.textPrimary },
+                                ]}>
+                                  {labels[cat]}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+
+                        {/* Sports spécifiques selon la catégorie */}
+                        {catalogCategoryFilter !== 'all' && (
+                          <>
+                            <Text style={[styles.filterSectionTitle, { color: colors.textMuted, marginTop: 24 }]}>SPORT</Text>
+                            <View style={styles.filterGrid}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.filterChip,
+                                  {
+                                    backgroundColor: catalogSportFilter === 'all' ? colors.accent : colors.background,
+                                    borderColor: catalogSportFilter === 'all' ? colors.accent : colors.border,
+                                  },
+                                ]}
+                                onPress={() => {
+                                  impactAsync(ImpactFeedbackStyle.Light);
+                                  setCatalogSportFilter('all');
+                                }}
+                              >
+                                <Text style={[
+                                  styles.filterChipText,
+                                  { color: catalogSportFilter === 'all' ? '#FFFFFF' : colors.textPrimary },
+                                ]}>
+                                  Tous
+                                </Text>
+                              </TouchableOpacity>
+
+                              {/* Sports Combat */}
+                              {catalogCategoryFilter === 'combat' && (
+                                <>
+                                  {['jjb', 'grappling'].map((sport) => (
+                                    <TouchableOpacity
+                                      key={sport}
+                                      style={[
+                                        styles.filterChip,
+                                        {
+                                          backgroundColor: catalogSportFilter === sport ? colors.accent : colors.background,
+                                          borderColor: catalogSportFilter === sport ? colors.accent : colors.border,
+                                        },
+                                      ]}
+                                      onPress={() => {
+                                        impactAsync(ImpactFeedbackStyle.Light);
+                                        setCatalogSportFilter(sport);
+                                      }}
+                                    >
+                                      <Text style={[
+                                        styles.filterChipText,
+                                        { color: catalogSportFilter === sport ? '#FFFFFF' : colors.textPrimary },
+                                      ]}>
+                                        {sport === 'jjb' ? '🥋 JJB' : '🤼 Grappling'}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </>
+                              )}
+
+                              {/* Sports Endurance */}
+                              {catalogCategoryFilter === 'endurance' && (
+                                <>
+                                  {['hyrox', 'marathon', 'running'].map((sport) => (
+                                    <TouchableOpacity
+                                      key={sport}
+                                      style={[
+                                        styles.filterChip,
+                                        {
+                                          backgroundColor: catalogSportFilter === sport ? colors.accent : colors.background,
+                                          borderColor: catalogSportFilter === sport ? colors.accent : colors.border,
+                                        },
+                                      ]}
+                                      onPress={() => {
+                                        impactAsync(ImpactFeedbackStyle.Light);
+                                        setCatalogSportFilter(sport);
+                                      }}
+                                    >
+                                      <Text style={[
+                                        styles.filterChipText,
+                                        { color: catalogSportFilter === sport ? '#FFFFFF' : colors.textPrimary },
+                                      ]}>
+                                        {sport === 'hyrox' ? '⚙️ HYROX' : sport === 'marathon' ? '🏁 Marathon' : '🏃 Running'}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </>
+                              )}
+
+                              {/* Sports Force */}
+                              {catalogCategoryFilter === 'force' && (
+                                <>
+                                  {['powerlifting', 'crossfit', 'fitness'].map((sport) => (
+                                    <TouchableOpacity
+                                      key={sport}
+                                      style={[
+                                        styles.filterChip,
+                                        {
+                                          backgroundColor: catalogSportFilter === sport ? colors.accent : colors.background,
+                                          borderColor: catalogSportFilter === sport ? colors.accent : colors.border,
+                                        },
+                                      ]}
+                                      onPress={() => {
+                                        impactAsync(ImpactFeedbackStyle.Light);
+                                        setCatalogSportFilter(sport);
+                                      }}
+                                    >
+                                      <Text style={[
+                                        styles.filterChipText,
+                                        { color: catalogSportFilter === sport ? '#FFFFFF' : colors.textPrimary },
+                                      ]}>
+                                        {sport === 'powerlifting' ? '🏋️ Powerlifting' : sport === 'crossfit' ? '🔥 CrossFit' : '💪 Fitness'}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </>
+                              )}
+
+                              {/* Sports Nature */}
+                              {catalogCategoryFilter === 'nature' && (
+                                <>
+                                  {['trail', 'climbing'].map((sport) => (
+                                    <TouchableOpacity
+                                      key={sport}
+                                      style={[
+                                        styles.filterChip,
+                                        {
+                                          backgroundColor: catalogSportFilter === sport ? colors.accent : colors.background,
+                                          borderColor: catalogSportFilter === sport ? colors.accent : colors.border,
+                                        },
+                                      ]}
+                                      onPress={() => {
+                                        impactAsync(ImpactFeedbackStyle.Light);
+                                        setCatalogSportFilter(sport);
+                                      }}
+                                    >
+                                      <Text style={[
+                                        styles.filterChipText,
+                                        { color: catalogSportFilter === sport ? '#FFFFFF' : colors.textPrimary },
+                                      ]}>
+                                        {sport === 'trail' ? '⛰️ Trail' : '🧗 Escalade'}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  ))}
+                                </>
+                              )}
+                            </View>
+                          </>
+                        )}
+                      </ScrollView>
+
+                      {/* Footer avec boutons */}
+                      <View style={[styles.filtersPanelFooter, { borderTopColor: colors.border }]}>
+                        <TouchableOpacity
+                          style={[styles.filterResetButton, { borderColor: colors.border }]}
+                          onPress={() => {
+                            impactAsync(ImpactFeedbackStyle.Light);
+                            setCatalogLocationFilter('monde');
+                            setCatalogCategoryFilter('all');
+                            setCatalogSportFilter('all');
+                          }}
+                        >
+                          <Text style={[styles.filterResetButtonText, { color: colors.textSecondary }]}>Réinitialiser</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.filterApplyButton, { backgroundColor: colors.accent }]}
+                          onPress={() => {
+                            impactAsync(ImpactFeedbackStyle.Medium);
+                            setShowFiltersModal(false);
+                          }}
+                        >
+                          <Text style={styles.filterApplyButtonText}>Appliquer</Text>
+                        </TouchableOpacity>
+                      </View>
                     </TouchableOpacity>
-                  ))}
-                </View>
+                  </TouchableOpacity>
+                </Modal>
 
                 {/* Results count */}
                 <Text style={[styles.catalogResultsCount, { color: colors.textMuted }]}>
@@ -1764,7 +2055,23 @@ export default function PlanningScreen() {
                       <TouchableOpacity
                         key={event.id}
                         style={[styles.catalogEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                        onPress={() => event.registration_link && handleOpenExternalEvent(event.registration_link)}
+                        onPress={() => {
+                          impactAsync(ImpactFeedbackStyle.Medium);
+                          router.push({
+                            pathname: '/event-detail',
+                            params: {
+                              id: event.id,
+                              title: event.title,
+                              date_start: event.date_start,
+                              city: event.location?.city || '',
+                              country: event.location?.country || '',
+                              category: event.category,
+                              sport_tag: event.sport_tag,
+                              registration_link: event.registration_link || '',
+                              federation: event.federation || '',
+                            }
+                          });
+                        }}
                         activeOpacity={0.7}
                       >
                         <View style={styles.catalogEventLeft}>
@@ -2957,6 +3264,141 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+
+  // Nouveau système de filtres
+  searchAndFilters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+  },
+  searchBarCompact: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 6,
+  },
+  filterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  filterBadge: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#000',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  filtersPanel: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  filtersPanelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+  },
+  filtersPanelTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  filtersPanelContent: {
+    padding: 20,
+  },
+  filterSectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+  filterOptions: {
+    gap: 8,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  filterGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    minWidth: '30%',
+    alignItems: 'center',
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  filterOptionText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  filtersPanelFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    borderTopWidth: 1,
+  },
+  filterResetButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  filterResetButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  filterApplyButton: {
+    flex: 2,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  filterApplyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
   catalogResultsCount: {
     fontSize: 12,
     marginTop: 12,
@@ -3045,6 +3487,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     fontWeight: '500',
+  },
+
+  // Sport Header
+  sportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    gap: 12,
+  },
+  sportIcon: {
+    fontSize: 24,
+  },
+  sportLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
 
   // Saved Events Card styles

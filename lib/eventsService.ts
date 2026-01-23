@@ -168,21 +168,35 @@ export async function importEventsFromJSON(): Promise<void> {
 async function ensureInitialized(): Promise<void> {
   if (!isInitialized) {
     try {
-      // Vérifier que la table existe, sinon la créer
+      // Vérifier que la table existe
       const db = await openDatabase();
       const tableExists = await db.getFirstAsync<{ count: number }>(
         `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
       );
 
       if (!tableExists || tableExists.count === 0) {
-        logger.info('Table events_catalog manquante, initialisation de la base...');
-        const { initDatabase } = await import('./database');
-        await initDatabase();
+        logger.warn('Table events_catalog manquante - les événements ne seront pas disponibles');
+        // Marquer comme initialisé pour éviter de réessayer à chaque fois
+        isInitialized = true;
+        return;
       }
 
-      await importEventsFromJSON();
+      // Vérifier si des événements sont déjà importés
+      const count = await db.getFirstAsync<{ count: number }>(
+        'SELECT COUNT(*) as count FROM events_catalog'
+      );
+
+      if (!count || count.count === 0) {
+        logger.info('Import des événements...');
+        await importEventsFromJSON();
+      } else {
+        logger.info(`Events déjà importés: ${count.count} événements`);
+        isInitialized = true;
+      }
     } catch (error) {
       logger.error('Erreur ensureInitialized:', error);
+      // Marquer comme initialisé pour éviter de réessayer
+      isInitialized = true;
       // Ne pas throw pour éviter de crasher l'app
       // Les fonctions appelantes retourneront un tableau vide
     }

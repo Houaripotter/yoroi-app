@@ -152,12 +152,54 @@ export default function RootLayout() {
         await initDatabase();
         logger.info('Base de donnees initialisee');
 
-        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.) en arrière-plan
-        // Ne pas attendre pour éviter de bloquer le démarrage
-        importEventsFromJSON().catch(err =>
-          logger.error('Erreur import événements:', err)
-        );
-        logger.info('Import catalogue d\'événements lancé en arrière-plan');
+        // Vérifier et créer la table events_catalog si elle n'existe pas
+        try {
+          const { openDatabase } = await import('@/lib/database');
+          const db = await openDatabase();
+
+          // Vérifier si la table existe
+          const tableCheck = await db.getFirstAsync<{ count: number }>(
+            `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
+          );
+
+          if (!tableCheck || tableCheck.count === 0) {
+            logger.info('Création de la table events_catalog...');
+            await db.execAsync(`
+              CREATE TABLE IF NOT EXISTS events_catalog (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                date_start TEXT NOT NULL,
+                city TEXT,
+                country TEXT,
+                full_address TEXT,
+                category TEXT NOT NULL,
+                sport_tag TEXT NOT NULL,
+                registration_link TEXT,
+                federation TEXT,
+                image_logo_url TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+              );
+            `);
+            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
+            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
+            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
+            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
+            logger.info('✅ Table events_catalog créée');
+          }
+        } catch (err) {
+          logger.error('Erreur création table events_catalog:', err);
+        }
+
+        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.)
+        // Attendre 1 seconde pour être sûr que la table est créée
+        setTimeout(async () => {
+          try {
+            await importEventsFromJSON();
+            logger.info('✅ Catalogue d\'événements importé avec succès');
+          } catch (err) {
+            logger.error('❌ Erreur import événements:', err);
+          }
+        }, 1000);
 
         // Migrer le système d'avatars V2
         await migrateAvatarSystem();
