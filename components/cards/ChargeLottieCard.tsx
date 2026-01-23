@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Activity, Zap } from 'lucide-react-native';
@@ -190,10 +190,11 @@ export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
     };
   }, [config.pulseSpeed]);
 
-  const waveOpacity = waveAnim.interpolate({
+  // OPTIMISATION: Mémoiser l'interpolation
+  const waveOpacity = useMemo(() => waveAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.3, 0.6],
-  });
+  }), [waveAnim]);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>

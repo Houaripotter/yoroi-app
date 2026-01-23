@@ -152,9 +152,12 @@ export default function RootLayout() {
         await initDatabase();
         logger.info('Base de donnees initialisee');
 
-        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.)
-        await importEventsFromJSON();
-        logger.info('Catalogue d\'événements importé');
+        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.) en arrière-plan
+        // Ne pas attendre pour éviter de bloquer le démarrage
+        importEventsFromJSON().catch(err =>
+          logger.error('Erreur import événements:', err)
+        );
+        logger.info('Import catalogue d\'événements lancé en arrière-plan');
 
         // Migrer le système d'avatars V2
         await migrateAvatarSystem();

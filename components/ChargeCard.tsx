@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, memo, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Activity } from 'lucide-react-native';
@@ -102,24 +102,26 @@ const ChargeCardComponent: React.FC<ChargeCardProps> = ({
 
   const { start, end } = getColors();
 
-  // OPTIMISATION: Interpoler strokeDashoffset directement sans setState
-  const strokeDashoffset = progressAnim.interpolate({
+  // OPTIMISATION: Mémoiser les interpolations pour éviter de les recréer à chaque render
+  const strokeDashoffset = useMemo(() => progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [CIRCUMFERENCE, 0],
-  });
+  }), [progressAnim]);
 
-  const glowOpacity = glowAnim.interpolate({
+  const glowOpacity = useMemo(() => glowAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0.3, 0.6],
-  });
-  const glowScale = glowAnim.interpolate({
+  }), [glowAnim]);
+
+  const glowScale = useMemo(() => glowAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.1],
-  });
-  const textOpacity = progressAnim.interpolate({
+  }), [glowAnim]);
+
+  const textOpacity = useMemo(() => progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 1],
-  });
+  }), [progressAnim]);
 
   // Texte selon le niveau de risque
   const getRiskText = () => {

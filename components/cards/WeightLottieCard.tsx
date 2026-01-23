@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingDown, TrendingUp, Target, Dumbbell, Apple, Droplet } from 'lucide-react-native';
@@ -57,10 +57,19 @@ export const WeightLottieCard = React.memo<WeightLottieCardProps>(({
   const currentWeight = weight || 0;
   const hasComposition = fatPercent !== undefined || musclePercent !== undefined || waterPercent !== undefined;
 
-  // Calcul des kg pour chaque composant
-  const fatKg = fatPercent && currentWeight > 0 ? (currentWeight * fatPercent) / 100 : undefined;
-  const muscleKg = musclePercent && currentWeight > 0 ? (currentWeight * musclePercent) / 100 : undefined;
-  const waterKg = waterPercent && currentWeight > 0 ? (currentWeight * waterPercent) / 100 : undefined;
+  // OPTIMISATION: Mémoiser les calculs de kg pour éviter recalculs inutiles
+  const fatKg = useMemo(() =>
+    fatPercent && currentWeight > 0 ? (currentWeight * fatPercent) / 100 : undefined,
+    [fatPercent, currentWeight]
+  );
+  const muscleKg = useMemo(() =>
+    musclePercent && currentWeight > 0 ? (currentWeight * musclePercent) / 100 : undefined,
+    [musclePercent, currentWeight]
+  );
+  const waterKg = useMemo(() =>
+    waterPercent && currentWeight > 0 ? (currentWeight * waterPercent) / 100 : undefined,
+    [waterPercent, currentWeight]
+  );
 
   return (
     <TouchableOpacity

@@ -349,7 +349,7 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

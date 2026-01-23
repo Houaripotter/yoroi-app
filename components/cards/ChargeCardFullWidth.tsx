@@ -308,7 +308,7 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

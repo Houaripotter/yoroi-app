@@ -398,7 +398,7 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

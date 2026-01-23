@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -31,10 +31,11 @@ const AnimatedRing = ({
     }).start();
   }, [progress]);
 
-  const strokeDashoffset = animatedProgress.interpolate({
+  // OPTIMISATION: Mémoiser l'interpolation
+  const strokeDashoffset = useMemo(() => animatedProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [circumference, 0],
-  });
+  }), [animatedProgress, circumference]);
 
   // Créer un composant animé pour le Circle
   const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -76,4 +77,11 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimatedRing;
+// OPTIMISATION #58: Mémoiser le composant
+export default React.memo(AnimatedRing, (prevProps, nextProps) => {
+  return prevProps.progress === nextProps.progress &&
+         prevProps.size === nextProps.size &&
+         prevProps.strokeWidth === nextProps.strokeWidth &&
+         prevProps.color === nextProps.color &&
+         prevProps.backgroundColor === nextProps.backgroundColor;
+});

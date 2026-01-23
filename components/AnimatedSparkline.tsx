@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 
@@ -44,10 +44,11 @@ const AnimatedSparkline = ({
   const pathLength = 500;
   const lastPoint = points[points.length - 1];
 
-  const strokeDashoffset = progress.interpolate({
+  // OPTIMISATION: Mémoiser l'interpolation
+  const strokeDashoffset = useMemo(() => progress.interpolate({
     inputRange: [0, 1],
     outputRange: [pathLength, 0],
-  });
+  }), [progress]);
 
   // Créer un composant animé pour le Path
   const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -76,4 +77,11 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimatedSparkline;
+// OPTIMISATION #58: Mémoiser le composant
+export default React.memo(AnimatedSparkline, (prevProps, nextProps) => {
+  return prevProps.data.length === nextProps.data.length &&
+         prevProps.data.every((val, idx) => val === nextProps.data[idx]) &&
+         prevProps.width === nextProps.width &&
+         prevProps.height === nextProps.height &&
+         prevProps.color === nextProps.color;
+});

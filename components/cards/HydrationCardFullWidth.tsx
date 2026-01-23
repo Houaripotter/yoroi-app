@@ -351,7 +351,7 @@ export const HydrationCardFullWidth = React.memo<HydrationCardFullWidthProps>(({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

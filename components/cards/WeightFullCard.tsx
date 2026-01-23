@@ -247,7 +247,7 @@ export const WeightFullCard = React.memo<WeightFullCardProps>(({
       </Animated.View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

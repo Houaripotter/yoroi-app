@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Animated, Easing, StyleSheet } from 'react-native';
 import Svg, { Rect, Path, G } from 'react-native-svg';
 
@@ -23,7 +23,7 @@ export const AnimatedBattery: React.FC<AnimatedBatteryProps> = ({
       toValue: percentage / 100,
       duration: 1000,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
 
     // Animation pulse
@@ -72,10 +72,11 @@ export const AnimatedBattery: React.FC<AnimatedBatteryProps> = ({
 
   const color = getColor();
 
-  const fillHeight = fillAnim.interpolate({
+  // OPTIMISATION: Mémoiser l'interpolation
+  const fillHeight = useMemo(() => fillAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
-  });
+  }), [fillAnim]);
 
   return (
     <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>

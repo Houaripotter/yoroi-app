@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 
 interface AnimatedProgressBarProps {
@@ -16,14 +16,15 @@ const AnimatedProgressBar = ({ progress, color = '#FFB800', height = 8 }: Animat
       toValue: progress,
       duration: 1500,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [progress]);
 
-  const widthInterpolate = width.interpolate({
+  // OPTIMISATION: Mémoiser l'interpolation
+  const widthInterpolate = useMemo(() => width.interpolate({
     inputRange: [0, 100],
     outputRange: ['0%', '100%'],
-  });
+  }), [width]);
 
   return (
     <View style={[styles.container, { height }]}>

@@ -177,4 +177,11 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AnimatedWaterBottle;
+// OPTIMISATION #58: Mémoiser le composant pour éviter re-renders inutiles
+export default React.memo(AnimatedWaterBottle, (prevProps, nextProps) => {
+  return prevProps.fillPercentage === nextProps.fillPercentage &&
+         prevProps.width === nextProps.width &&
+         prevProps.height === nextProps.height &&
+         prevProps.color === nextProps.color &&
+         prevProps.showBubbles === nextProps.showBubbles;
+});

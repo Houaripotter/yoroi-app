@@ -44,7 +44,10 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   const breatheScale = useRef(new Animated.Value(1)).current;
   
   useEffect(() => {
-    // Lune flottante
+    // OPTIMISATION #70: Étaler les animations avec setTimeout pour éviter de blocker le thread
+    const animations: any[] = [];
+
+    // Lune flottante - démarrage immédiat (légère)
     const float = Animated.loop(
       Animated.sequence([
         Animated.timing(moonFloat, {
@@ -62,8 +65,9 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
       ])
     );
     float.start();
-    
-    // Étoiles scintillantes
+    animations.push(float);
+
+    // Étoiles scintillantes - démarrage décalé
     const twinkle = (anim: Animated.Value, delay: number) => Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
@@ -79,16 +83,26 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
         }),
       ])
     );
-    
-    const t1 = twinkle(starOpacity1, 0);
-    const t2 = twinkle(starOpacity2, 300);
-    const t3 = twinkle(starOpacity3, 600);
-    
-    t1.start();
-    t2.start();
-    t3.start();
-    
-    // Animation ZzZ
+
+    setTimeout(() => {
+      const t1 = twinkle(starOpacity1, 0);
+      t1.start();
+      animations.push(t1);
+    }, 100);
+
+    setTimeout(() => {
+      const t2 = twinkle(starOpacity2, 300);
+      t2.start();
+      animations.push(t2);
+    }, 150);
+
+    setTimeout(() => {
+      const t3 = twinkle(starOpacity3, 600);
+      t3.start();
+      animations.push(t3);
+    }, 200);
+
+    // Animation ZzZ - démarrage encore plus décalé
     const animateZzz = (opacity: Animated.Value, translateY: Animated.Value, delay: number) => {
       return Animated.loop(
         Animated.sequence([
@@ -119,43 +133,49 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
         ])
       );
     };
-    
-    const z1 = animateZzz(zzz1Opacity, zzz1TranslateY, 0);
-    const z2 = animateZzz(zzz2Opacity, zzz2TranslateY, 500);
-    const z3 = animateZzz(zzz3Opacity, zzz3TranslateY, 1000);
-    
-    z1.start();
-    z2.start();
-    z3.start();
-    
-    // Respiration couverture
-    const breathe = Animated.loop(
-      Animated.sequence([
-        Animated.timing(breatheScale, {
-          toValue: 1.02,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(breatheScale, {
-          toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    breathe.start();
-    
+
+    setTimeout(() => {
+      const z1 = animateZzz(zzz1Opacity, zzz1TranslateY, 0);
+      z1.start();
+      animations.push(z1);
+    }, 250);
+
+    setTimeout(() => {
+      const z2 = animateZzz(zzz2Opacity, zzz2TranslateY, 500);
+      z2.start();
+      animations.push(z2);
+    }, 300);
+
+    setTimeout(() => {
+      const z3 = animateZzz(zzz3Opacity, zzz3TranslateY, 1000);
+      z3.start();
+      animations.push(z3);
+    }, 350);
+
+    // Respiration couverture - démarrage différé
+    setTimeout(() => {
+      const breathe = Animated.loop(
+        Animated.sequence([
+          Animated.timing(breatheScale, {
+            toValue: 1.02,
+            duration: 2500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(breatheScale, {
+            toValue: 1,
+            duration: 2500,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      breathe.start();
+      animations.push(breathe);
+    }, 400);
+
     return () => {
-      float.stop();
-      t1.stop();
-      t2.stop();
-      t3.stop();
-      z1.stop();
-      z2.stop();
-      z3.stop();
-      breathe.stop();
+      animations.forEach(anim => anim.stop && anim.stop());
     };
   }, []);
 
@@ -349,7 +369,7 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
       )}
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

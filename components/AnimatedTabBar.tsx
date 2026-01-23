@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -235,6 +235,12 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
     return () => notchPosition.removeListener(listenerId);
   }, []);
 
+  // OPTIMISATION #63: Mémoiser l'interpolation du bouton flottant
+  const floatingButtonLeft = useMemo(() => notchPosition.interpolate({
+    inputRange: [0, SCREEN_WIDTH],
+    outputRange: [-BUTTON_SIZE / 2, SCREEN_WIDTH - BUTTON_SIZE / 2],
+  }), [notchPosition]);
+
   return (
     <View style={styles.container}>
       {/* Bouton + flottant */}
@@ -242,10 +248,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
         style={[
           styles.floatingButtonContainer,
           {
-            left: notchPosition.interpolate({
-              inputRange: [0, SCREEN_WIDTH],
-              outputRange: [-BUTTON_SIZE / 2, SCREEN_WIDTH - BUTTON_SIZE / 2],
-            }),
+            left: floatingButtonLeft,
           },
         ]}
       >
