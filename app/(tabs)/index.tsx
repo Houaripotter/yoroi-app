@@ -195,22 +195,30 @@ export default function HomeScreen() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showWhatIsNew, setShowWhatIsNew] = useState(false);
 
+  // Protection anti-spam navigation
+  const [isNavigating, setIsNavigating] = useState(false);
+
   // Vérifier si c'est la première visite ou une mise à jour
   useEffect(() => {
     const checkFirstVisit = async () => {
-      // 1. Gérer le message de mise à jour (What's New)
-      const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
-      const currentVersion = '1.0.1'; // À mettre à jour à chaque build Store
-      
-      if (lastVersionSeen !== currentVersion) {
-        setShowWhatIsNew(true);
-        await AsyncStorage.setItem('@yoroi_last_version_seen', currentVersion);
-      }
+      try {
+        // 1. Gérer le message de mise à jour (What's New)
+        const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
+        const currentVersion = '1.0.1'; // À mettre à jour à chaque build Store
 
-      // 2. Gérer le tutoriel home
-      const visited = await hasVisitedPage('home');
-      if (!visited && !showWhatIsNew) {
-        setTimeout(() => setShowTutorial(true), 1000);
+        if (lastVersionSeen !== currentVersion) {
+          setShowWhatIsNew(true);
+          await AsyncStorage.setItem('@yoroi_last_version_seen', currentVersion);
+        }
+
+        // 2. Gérer le tutoriel home
+        const visited = await hasVisitedPage('home');
+        if (!visited && !showWhatIsNew) {
+          setTimeout(() => setShowTutorial(true), 1000);
+        }
+      } catch (error) {
+        logger.error('Erreur vérification première visite:', error);
+        // Ne pas bloquer l'app si le storage échoue
       }
     };
     checkFirstVisit();
@@ -405,8 +413,12 @@ export default function HomeScreen() {
   }, []);
 
   const saveHydration = async (value: number) => {
-    const today = format(new Date(), 'yyyy-MM-dd');
-    await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
+    } catch (error) {
+      logger.error('Erreur sauvegarde hydratation:', error);
+    }
   };
 
   const animateWater = (value: number, goal: number = DEFAULT_HYDRATION_GOAL) => {
@@ -425,6 +437,14 @@ export default function HomeScreen() {
     saveHydration(newValue);
     animateWater(newValue, hydrationGoal);
   };
+
+  // Protection navigation anti-spam
+  const handleNavigate = useCallback((route: string) => {
+    if (isNavigating) return;
+    setIsNavigating(true);
+    router.push(route as any);
+    setTimeout(() => setIsNavigating(false), 1000);
+  }, [isNavigating, router]);
 
   // Chargement des données
   const loadData = useCallback(async () => {
@@ -732,7 +752,7 @@ export default function HomeScreen() {
               {/* Photo de profil (Gauche) */}
               <TouchableOpacity
                 style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
-                onPress={() => router.push('/profile')}
+                onPress={() => handleNavigate('/profile')}
                 activeOpacity={0.8}
               >
                 {profile?.profile_photo ? (
@@ -756,9 +776,9 @@ export default function HomeScreen() {
               </View>
 
               {/* Avatar (Droite) */}
-              <TouchableOpacity 
-                style={styles.avatarContainerRight} 
-                onPress={() => router.push('/avatar-selection')} 
+              <TouchableOpacity
+                style={styles.avatarContainerRight}
+                onPress={() => handleNavigate('/avatar-selection')}
                 activeOpacity={0.8}
               >
                 <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
@@ -822,14 +842,14 @@ export default function HomeScreen() {
       case 'stats_compact':
         return (
           <View style={styles.statsRowCompact} key={sectionId}>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/activity-detail')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/activity-detail')}>
               <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
               <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
                 <Flame size={14} color="#F97316" />
               </Animated.View>
@@ -838,14 +858,14 @@ export default function HomeScreen() {
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
               <Trophy size={14} color={rank?.color} />
               <View style={styles.statTextColumn}>
                 <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
@@ -865,7 +885,7 @@ export default function HomeScreen() {
               startWeight={weightHistory[0]?.weight ?? undefined}
               history={last7Weights.map(w => w.weight)}
               onPress={() => {
-                router.push('/(tabs)/stats?tab=poids');
+                handleNavigate('/(tabs)/stats?tab=poids');
               }}
             />
           </View>
@@ -886,7 +906,7 @@ export default function HomeScreen() {
                   onAddMl={(amountMl) => addWater(amountMl)}
                 />
               </View>
-              <TouchableOpacity onPress={() => router.push('/sleep')} activeOpacity={0.9} style={styles.compactCard}>
+              <TouchableOpacity onPress={() => handleNavigate('/sleep')} activeOpacity={0.9} style={styles.compactCard}>
                 <SleepLottieCard
                   hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
                   quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
@@ -894,7 +914,7 @@ export default function HomeScreen() {
                   goal={sleepGoal / 60}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/charge')} activeOpacity={0.9} style={styles.compactCard}>
+              <TouchableOpacity onPress={() => handleNavigate('/charge')} activeOpacity={0.9} style={styles.compactCard}>
                 <ChargeLottieCard
                   level={loadStats?.riskLevel || 'optimal'}
                   totalLoad={loadStats?.totalLoad || 0}
@@ -923,7 +943,7 @@ export default function HomeScreen() {
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/training-journal');
+                handleNavigate('/training-journal');
               }}
               activeOpacity={0.8}
             >
@@ -935,7 +955,7 @@ export default function HomeScreen() {
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/infirmary');
+                handleNavigate('/infirmary');
               }}
               activeOpacity={0.8}
             >
@@ -950,7 +970,7 @@ export default function HomeScreen() {
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/challenges');
+                handleNavigate('/challenges');
               }}
               activeOpacity={0.8}
             >
@@ -963,7 +983,7 @@ export default function HomeScreen() {
       case 'challenges':
         return (
           <AnimatedCard index={1} key={sectionId}>
-            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => router.push('/challenges')} activeOpacity={0.8}>
+            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/challenges')} activeOpacity={0.8}>
               <View style={styles.challengesHeader}>
                 <Target size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
@@ -1004,7 +1024,7 @@ export default function HomeScreen() {
       case 'performance_radar':
         return (
           <AnimatedCard index={2} key={sectionId}>
-            <TouchableOpacity onPress={() => router.push('/radar-performance')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => handleNavigate('/radar-performance')} activeOpacity={0.8}>
               <PerformanceRadar />
             </TouchableOpacity>
           </AnimatedCard>
@@ -1013,7 +1033,7 @@ export default function HomeScreen() {
       case 'healthspan':
         return (
           <AnimatedCard index={3} key={sectionId}>
-            <TouchableOpacity onPress={() => router.push('/stats?tab=sante')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={() => handleNavigate('/stats?tab=sante')} activeOpacity={0.8}>
               <HealthspanChart screenshotMode={isScreenshotMode} />
             </TouchableOpacity>
           </AnimatedCard>
@@ -1074,8 +1094,8 @@ export default function HomeScreen() {
               weekData={last7Weights.map(w => w.weight)}
               weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
               trend={trend}
-              onAddWeight={() => router.push('/(tabs)/add')}
-              onViewStats={() => router.push('/(tabs)/stats?tab=poids')}
+              onAddWeight={() => handleNavigate('/(tabs)/add')}
+              onViewStats={() => handleNavigate('/(tabs)/stats?tab=poids')}
             />
           </View>
         );
@@ -1110,7 +1130,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/training-journal');
+                handleNavigate('/training-journal');
               }}
               activeOpacity={0.85}
             >
@@ -1122,7 +1142,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/timer');
+                handleNavigate('/timer');
               }}
               activeOpacity={0.85}
             >
@@ -1134,7 +1154,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/planning');
+                handleNavigate('/(tabs)/planning');
               }}
               activeOpacity={0.85}
             >
@@ -1146,7 +1166,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/(tabs)/planning?tab=programme');
+                handleNavigate('/(tabs)/planning?tab=programme');
               }}
               activeOpacity={0.85}
             >
@@ -1165,7 +1185,7 @@ export default function HomeScreen() {
             style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push('/infirmary');
+              handleNavigate('/infirmary');
             }}
             activeOpacity={0.85}
           >
@@ -1191,7 +1211,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/energy');
+                handleNavigate('/energy');
               }}
               activeOpacity={0.85}
             >
@@ -1223,7 +1243,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/savoir');
+                handleNavigate('/savoir');
               }}
               activeOpacity={0.85}
             >
@@ -1235,7 +1255,7 @@ export default function HomeScreen() {
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/calculators');
+                handleNavigate('/calculators');
               }}
               activeOpacity={0.85}
             >
@@ -1300,7 +1320,7 @@ export default function HomeScreen() {
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/fasting');
+                  handleNavigate('/fasting');
                 }}
                 activeOpacity={0.85}
               >
@@ -1312,7 +1332,7 @@ export default function HomeScreen() {
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/photos');
+                  handleNavigate('/photos');
                 }}
                 activeOpacity={0.85}
               >
@@ -1329,7 +1349,7 @@ export default function HomeScreen() {
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push('/cut-mode');
+                    handleNavigate('/cut-mode');
                   }}
                   activeOpacity={0.85}
                 >
@@ -1341,7 +1361,7 @@ export default function HomeScreen() {
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push('/palmares');
+                    handleNavigate('/palmares');
                   }}
                   activeOpacity={0.85}
                 >
@@ -1353,7 +1373,7 @@ export default function HomeScreen() {
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push('/hydration');
+                    handleNavigate('/hydration');
                   }}
                   activeOpacity={0.85}
                 >
@@ -1365,7 +1385,7 @@ export default function HomeScreen() {
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push('/body-composition');
+                    handleNavigate('/body-composition');
                   }}
                   activeOpacity={0.85}
                 >
@@ -1438,7 +1458,7 @@ export default function HomeScreen() {
           hydrationRate: 0, // Not available in WeeklyReport
           totalSteps: 0, // Not available in WeeklyReport
         } : undefined}
-        onAddWeight={() => router.push('/(tabs)/add')}
+        onAddWeight={() => handleNavigate('/(tabs)/add')}
         onAddWater={(ml) => addWater(ml)}
         onShareReport={shareReport}
         refreshTrigger={avatarRefreshTrigger}
@@ -1472,7 +1492,7 @@ export default function HomeScreen() {
       {/* Bouton flottant de sauvegarde */}
       {/* <TouchableOpacity
         style={[styles.backupFab, { backgroundColor: colors.accent }]}
-        onPress={() => router.push('/backup')}
+        onPress={() => handleNavigate('/backup')}
         activeOpacity={0.85}
       >
         <Cloud size={20} color="#FFFFFF" />
