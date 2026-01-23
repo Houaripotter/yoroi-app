@@ -91,7 +91,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     }
   }, []);
 
-  // Handler pour les messages de la Watch
+  // Handler pour les messages de la Watch (CORRECTIF: Mémoisation avec dépendances)
   const handleWatchMessage = useCallback(async (message: any) => {
     try {
       if (message.weightUpdate) {
@@ -104,12 +104,12 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       if (message.hydrationUpdate) {
         showSyncBanner('💧 Hydratation mise à jour');
       }
-      
+
       if (message.newRecordFromWatch) {
         showSyncBanner('🏆 Record enregistré');
         try {
-          const record = typeof message.newRecordFromWatch === 'string' 
-            ? JSON.parse(message.newRecordFromWatch) 
+          const record = typeof message.newRecordFromWatch === 'string'
+            ? JSON.parse(message.newRecordFromWatch)
             : message.newRecordFromWatch;
           const benchmarks = await getBenchmarks();
           let target = benchmarks.find(b => b.name.toLowerCase() === record.exercise.toLowerCase());
@@ -129,11 +129,19 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     } catch (error) {
       console.error('❌ Erreur handling watch message:', error);
     }
-  }, []);
+  }, [showSyncBanner]); // Dependencies correctes pour éviter memory leaks
 
-  // Initialisation
+  // Debounce timer pour syncAllData (CORRECTIF: Éviter spam sync)
+  const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialisation (CORRECTIF: Cleanup observers)
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
+
+    // Store listener subscriptions pour cleanup
+    let reachabilityListener: any;
+    let messageListener: any;
+    let dataListener: any;
 
     const init = async () => {
       try {
@@ -148,8 +156,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           syncProfileToWatch();
         }
 
-        // Listeners
-        WatchConnectivity.onReachabilityChanged((status) => {
+        // Listeners avec cleanup
+        reachabilityListener = WatchConnectivity.onReachabilityChanged((status) => {
           setIsReachable(status.isReachable);
           setIsAvailable(status.isPaired && status.isWatchAppInstalled);
           if (status.isReachable) {
@@ -158,11 +166,11 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           }
         });
 
-        WatchConnectivity.onMessageReceived((message) => {
+        messageListener = WatchConnectivity.onMessageReceived((message) => {
           handleWatchMessage(message);
         });
 
-        WatchConnectivity.onDataReceived((data) => {
+        dataListener = WatchConnectivity.onDataReceived((data) => {
           if (data.data) setWatchData(data.data);
         });
 
@@ -172,6 +180,15 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     };
 
     init();
+
+    // CLEANUP: Retirer tous les listeners pour éviter memory leaks
+    return () => {
+      if (reachabilityListener) reachabilityListener.remove();
+      if (messageListener) messageListener.remove();
+      if (dataListener) dataListener.remove();
+      if (syncDebounceTimer.current) clearTimeout(syncDebounceTimer.current);
+      console.log('🧹 WatchConnectivity listeners cleaned up');
+    };
   }, [handleWatchMessage, syncProfileToWatch]);
 
   const syncWeight = async (weight: number) => {
@@ -190,8 +207,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     if (isAvailable) await WatchConnectivity.sendRecordsUpdate(records);
   };
 
-  // Sync complète de toutes les données (MEGA-PACK)
-  const syncAllData = useCallback(async () => {
+  // Fonction interne de sync (sans debounce)
+  const performSync = useCallback(async () => {
     if (!isAvailable || Platform.OS !== 'ios') return;
 
     try {
@@ -290,7 +307,20 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       console.error('❌ Erreur lors du pack de sync:', e);
       setLastError('Erreur de synchronisation');
     }
-  }, [isAvailable, isReachable]);
+  }, [isAvailable, isReachable, showSyncBanner]);
+
+  // Sync complète avec debounce (CORRECTIF: Éviter spam sync)
+  const syncAllData = useCallback(() => {
+    // Annuler le timer précédent
+    if (syncDebounceTimer.current) {
+      clearTimeout(syncDebounceTimer.current);
+    }
+
+    // Créer nouveau timer (debounce 2s)
+    syncDebounceTimer.current = setTimeout(() => {
+      performSync();
+    }, 2000);
+  }, [performSync]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
