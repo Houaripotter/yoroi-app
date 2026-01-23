@@ -3,7 +3,7 @@
 // ============================================ 
 // Design identique au VictoryShareModal avec Photo/Sombre/Clair
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,9 @@ import { YearCounterCardV2 } from '@/components/social-cards/YearCounterCardV2';
 import { useYearStats } from '@/lib/social-cards/useYearStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { getProfile, calculateStreak } from '@/lib/database';
+import { getAvatarConfig } from '@/lib/avatarSystem';
+import { getCurrentRank } from '@/lib/ranks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,8 +56,45 @@ export default function YearCounterV2Screen() {
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // User data
+  const [userName, setUserName] = useState<string>('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<any>(null);
+  const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userLevel, setUserLevel] = useState<number>(1);
+
   const currentYear = new Date().getFullYear();
   const { stats, isLoading: statsLoading, error } = useYearStats(currentYear);
+
+  // Charger les données utilisateur au montage
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const [profile, avatarConfig, streak] = await Promise.all([
+          getProfile(),
+          getAvatarConfig(),
+          calculateStreak(),
+        ]);
+
+        if (profile) {
+          setUserName(profile.name || '');
+          setUserPhoto(profile.photo || null);
+        }
+
+        if (avatarConfig && avatarConfig.selectedAvatar) {
+          setUserAvatar(avatarConfig.selectedAvatar);
+        }
+
+        const rank = getCurrentRank(streak);
+        setUserRank(rank.name);
+        setUserLevel(streak);
+      } catch (error) {
+        logger.error('Error loading user data:', error);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   // ============================================ 
   // PHOTO PICKER 
@@ -274,7 +314,11 @@ export default function YearCounterV2Screen() {
               backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
               backgroundType={getBackgroundType()}
               isLandscape={isLandscapeImage}
-              username="yoroiapp"
+              username={userName}
+              userAvatar={userAvatar}
+              profilePhoto={userPhoto}
+              rank={userRank}
+              userLevel={userLevel}
             />
           </View>
 

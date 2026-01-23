@@ -1320,18 +1320,6 @@ export default function HomeScreen() {
                 <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Photo</Text>
                 <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Avant/Apres</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  router.push('/share-hub');
-                }}
-                activeOpacity={0.85}
-              >
-                <Share2 size={24} color="#EC4899" />
-                <Text style={[styles.toolCardTitleSmall, { color: colors.textPrimary }]}>Partager</Text>
-                <Text style={[styles.toolCardSubtitleSmall, { color: colors.textMuted }]}>Mes reseaux</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Section Compétiteur - 4 petits carrés quand toggle ON */}

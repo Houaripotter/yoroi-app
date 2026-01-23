@@ -1,17 +1,23 @@
 import React, { forwardRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, ImageBackground, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Calendar, Flame, Trophy, BarChart2 } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MonthStats } from '@/lib/social-cards/useMonthStats';
-import { SocialCardTopBanner, SocialCardFooter, SocialCardWatermark } from './SocialCardBranding';
+import { SocialCardFooter } from './SocialCardBranding';
 
 // ============================================
-// MONTHLY RECAP CARD V2 - Récap Mensuel
-// Design épuré avec clubs complets + barre progression
+// MONTHLY RECAP CARD V2 - Style SessionCard
 // ============================================
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
+const GOLD_COLOR = '#D4AF37';
+
+const PHOTO_SECTION_HEIGHT = '65%';
+const STATS_SECTION_HEIGHT = '23%';
+const FOOTER_SECTION_HEIGHT = '12%';
+const PROFILE_SIZE = 50;
+const AVATAR_SIZE = 50;
 
 export interface MonthlyRecapCardV2Props {
   stats: MonthStats;
@@ -19,110 +25,152 @@ export interface MonthlyRecapCardV2Props {
   backgroundImage?: string;
   backgroundType?: 'photo' | 'black' | 'white';
   username?: string;
-  weeklyGoal?: number; // Objectif hebdo (ex: 4 séances/semaine)
+  weeklyGoal?: number;
   isLandscape?: boolean;
+  userAvatar?: any;
+  profilePhoto?: string | null;
+  rank?: string;
+  userLevel?: number;
 }
 
-// Noms des sports complets
-const getSportName = (clubName: string): string => {
-  const lowerName = clubName.toLowerCase();
-  if (lowerName.includes('gracie') || lowerName.includes('jjb') || lowerName.includes('jiu')) return 'Jiu-Jitsu Brésilien';
-  if (lowerName.includes('box')) return 'Boxe';
-  if (lowerName.includes('mma') || lowerName.includes('fight')) return 'MMA';
-  if (lowerName.includes('muay') || lowerName.includes('thai')) return 'Muay Thai';
-  if (lowerName.includes('wrestling') || lowerName.includes('lutte')) return 'Lutte';
-  if (lowerName.includes('judo')) return 'Judo';
-  if (lowerName.includes('karate')) return 'Karaté';
-  if (lowerName.includes('grappling')) return 'Grappling';
-  if (lowerName.includes('crossfit')) return 'CrossFit';
-  if (lowerName.includes('muscu') || lowerName.includes('fitness')) return 'Musculation';
-  return 'Entraînement';
-};
-
-// Noms des sports par ID
-const getSportDisplayName = (sportId: string): string => {
-  const sportNames: Record<string, string> = {
-    'jjb': 'Jiu-Jitsu Brésilien',
-    'mma': 'MMA',
-    'boxe': 'Boxe Anglaise',
-    'kickboxing': 'Kickboxing',
-    'muay_thai': 'Muay Thai',
-    'karate': 'Karaté',
-    'judo': 'Judo',
-    'lutte': 'Lutte',
-    'grappling': 'Grappling',
-    'sambo': 'Sambo',
-    'taekwondo': 'Taekwondo',
-    'boxe_francaise': 'Boxe Française',
-    'kung_fu': 'Kung Fu',
-    'krav_maga': 'Krav Maga',
-    'musculation': 'Musculation',
-    'fitness': 'Fitness',
-    'crossfit': 'CrossFit',
-    'running': 'Course à pied',
-    'natation': 'Natation',
-    'yoga': 'Yoga',
-  };
-  return sportNames[sportId] || sportId.charAt(0).toUpperCase() + sportId.slice(1);
-};
-
 export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
-  ({ stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4, isLandscape = false }, ref) => {
+  ({
+    stats, format, backgroundImage, backgroundType = 'black', weeklyGoal = 4, isLandscape = false,
+    username, userAvatar, profilePhoto, rank, userLevel
+  }, ref) => {
+
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
+    const keepPhotoClear = !!backgroundImage;
 
-    // Calculer l'objectif mensuel basé sur l'objectif hebdo (4 semaines)
+    // Formater la date du mois avec année
+    const currentYear = new Date().getFullYear();
+    const monthLabel = `${stats.monthName} ${stats.year}`.toUpperCase();
+
+    const isWhite = backgroundType === 'white';
+    const bg = isWhite ? '#FFFFFF' : '#000000';
+    const txt = isWhite ? '#000000' : '#FFFFFF';
+    const subTxt = isWhite ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+    const borderColor = isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
+
+    const avatarSource = typeof userAvatar === 'string' ? { uri: userAvatar } : userAvatar;
+    const profileSource = profilePhoto ? { uri: profilePhoto } : null;
+
+    // Calculer objectif mensuel
     const monthlyGoal = weeklyGoal * 4;
     const progressPercent = Math.min((stats.totalTrainings / monthlyGoal) * 100, 100);
 
-    // Déterminer les couleurs selon le type de fond
-    const isLightBackground = backgroundType === 'white';
-    const hasPhoto = !!backgroundImage;
-    const brandingVariant = isLightBackground ? 'light' : 'dark';
+    return (
+      <View ref={ref} style={[styles.card, { width: CARD_WIDTH, height: cardHeight, backgroundColor: bg }]} collapsable={false}>
 
-    // Couleurs dynamiques
-    const textPrimary = isLightBackground ? '#1a1a1a' : '#FFFFFF';
-    const textSecondary = isLightBackground ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
-    const textMuted = isLightBackground ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
-    const goldColor = '#D4AF37';
-    const statsRowBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
-    const statsRowBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
-    const dividerColor = isLightBackground ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
-    const progressBarBgColor = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
-    const clubBubbleBg = isLightBackground ? 'rgba(0,0,0,0.06)' : 'rgba(212, 175, 55, 0.2)';
-    const clubBubbleBorder = isLightBackground ? 'rgba(0,0,0,0.1)' : 'rgba(212, 175, 55, 0.5)';
+        {/* 1. SECTION PHOTO */}
+        <View style={styles.photoSection}>
+          {backgroundImage ? (
+            <Image source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
+          ) : (
+            <LinearGradient colors={['#1a1a1a', '#000']} style={{ flex: 1 }} />
+          )}
 
-    const content = (
-      <View style={styles.contentContainer}>
-        {/* HAUT: Titre mois (minimaliste) */}
-        <View style={styles.topContent}>
-          {/* TITRE MOIS */}
-          <View style={styles.titleSection}>
-            <View style={styles.titleRow}>
-              <Calendar size={20} color={goldColor} />
-              <Text style={[styles.titleText, { color: goldColor }]}>{stats.monthName.toUpperCase()} {stats.year}</Text>
+          <LinearGradient
+            colors={keepPhotoClear
+              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']
+              : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
+            style={styles.photoGradient}
+          >
+            {/* DATE EN HAUT AU MILIEU */}
+            <View style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+              {keepPhotoClear ? (
+                <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={[styles.dateText, { color: GOLD_COLOR }]}>{monthLabel}</Text>
+                </View>
+              ) : (
+                <Text style={styles.dateText}>{monthLabel}</Text>
+              )}
             </View>
-          </View>
 
-          {/* COMPTEUR PRINCIPAL */}
-          <View style={styles.counterSection}>
-            <Text style={[styles.counterNumber, { color: textPrimary }]}>{stats.totalTrainings}</Text>
-            <Text style={[styles.counterLabel, { color: goldColor }]}>ENTRAÎNEMENTS</Text>
+            <View style={styles.photoHeader}>
+
+              {/* PHOTO PROFIL (GAUCHE) + NOM */}
+              <View style={{ alignItems: 'center', gap: 4 }}>
+                <View style={styles.profileContainer}>
+                  {profileSource ? (
+                    <Image source={profileSource} style={styles.photoImage} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.profilePlaceholder}>
+                      <MaterialCommunityIcons name="account" size={28} color="#000" />
+                    </View>
+                  )}
+                </View>
+                {username && (
+                  keepPhotoClear ? (
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>
+                        {username.toUpperCase()}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                      {username.toUpperCase()}
+                    </Text>
+                  )
+                )}
+              </View>
+
+              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
+              <View style={styles.avatarContainer}>
+                {userAvatar && (
+                  <View style={styles.avatarCircle}>
+                    <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
+                  </View>
+                )}
+                {rank && userLevel !== undefined && userLevel !== null ? (
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }}>
+                      Niveau {userLevel}
+                    </Text>
+                  </View>
+                ) : rank ? (
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </LinearGradient>
+
+          {/* INFOS BAS DE PHOTO */}
+          <View style={styles.photoBottomInfo}>
+            {keepPhotoClear ? (
+              <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}>
+                <Text style={[styles.mainTitle, { color: '#FFF' }]}>RÉCAP MENSUEL</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
+                  <Text style={[styles.bigNumber, { color: GOLD_COLOR }]}>{stats.totalTrainings}</Text>
+                  <Text style={[styles.bigLabel, { color: '#FFF' }]}>ENTRAÎNEMENTS</Text>
+                </View>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.mainTitle}>RÉCAP MENSUEL</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 4 }}>
+                  <Text style={styles.bigNumber}>{stats.totalTrainings}</Text>
+                  <Text style={styles.bigLabel}>ENTRAÎNEMENTS</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
-        {/* CENTRE: VIDE pour voir la photo! */}
-        <View style={styles.centerSpace} />
+        {/* 2. SECTION STATS & DÉTAILS */}
+        <View style={styles.statsSection}>
 
-        {/* BAS: Barre + Clubs + Stats + Logo */}
-        <View style={styles.bottomContent}>
-          {/* BARRE DE PROGRESSION */}
-          <View style={styles.progressSection}>
-            <View style={styles.progressHeader}>
-              <Text style={[styles.progressLabel, { color: textSecondary }]}>Objectif {monthlyGoal} séances</Text>
-              <Text style={[styles.progressPercent, { color: goldColor }]}>{Math.round(progressPercent)}%</Text>
+          {/* Barre de progression objectif */}
+          <View style={{ marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <Text style={[styles.sectionLabel, { color: GOLD_COLOR }]}>OBJECTIF {monthlyGoal} SÉANCES</Text>
+              <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>{Math.round(progressPercent)}%</Text>
             </View>
-            <View style={[styles.progressBarBg, { backgroundColor: progressBarBgColor }]}>
+            <View style={[styles.progressBarBg, { backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)' }]}>
               <LinearGradient
                 colors={['#D4AF37', '#F4E5B0', '#D4AF37']}
                 start={{ x: 0, y: 0 }}
@@ -130,417 +178,207 @@ export const MonthlyRecapCardV2 = forwardRef<View, MonthlyRecapCardV2Props>(
                 style={[styles.progressBarFill, { width: `${progressPercent}%` }]}
               />
             </View>
-            <Text style={[styles.progressText, { color: textSecondary }]}>
-              {stats.totalTrainings}/{monthlyGoal} séances
-            </Text>
           </View>
 
-          {/* CLUBS EN BULLES */}
+          {/* Clubs principaux */}
           {stats.clubTrainings && stats.clubTrainings.length > 0 && (
-            <View style={styles.clubsBubblesContainer}>
-              {stats.clubTrainings.slice(0, 4).map((club, index) => (
-                <View key={index} style={styles.clubBubble}>
-                  {/* Badge compteur */}
-                  <View style={styles.clubBubbleCount}>
-                    <Text style={styles.clubBubbleCountText}>x{club.count}</Text>
-                  </View>
-
-                  {/* Logo circulaire */}
-                  {club.clubLogo ? (
-                    <Image source={{ uri: club.clubLogo }} style={styles.clubBubbleLogo} resizeMode="cover" />
-                  ) : (
-                    <View style={[styles.clubBubbleLogoPlaceholder, { backgroundColor: clubBubbleBg, borderColor: clubBubbleBorder }]}>
-                      <Text style={[styles.clubBubbleInitial, { color: goldColor }]}>{club.clubName.charAt(0)}</Text>
+            <View style={{ marginBottom: 6 }}>
+              <View style={styles.detailsHeader}>
+                <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
+                <Text style={styles.detailsLabel}>CLUBS</Text>
+                <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 4 }}>
+                  {stats.clubTrainings.slice(0, 4).map((club, index) => (
+                    <View key={index} style={[styles.clubBadge, { backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', borderColor }]}>
+                      {club.clubLogo && (
+                        <Image source={{ uri: club.clubLogo }} style={{ width: 16, height: 16, borderRadius: 8, marginRight: 4 }} resizeMode="cover" />
+                      )}
+                      <Text style={{ color: txt, fontSize: 9, fontWeight: '800' }} numberOfLines={1}>{club.clubName}</Text>
+                      <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                        <Text style={{ color: '#000', fontSize: 8, fontWeight: '900' }}>×{club.count}</Text>
+                      </View>
                     </View>
-                  )}
-
-                  {/* Nom du club */}
-                  <Text style={[styles.clubBubbleName, { color: textPrimary }]} numberOfLines={2}>{club.clubName}</Text>
-                  {/* Sport */}
-                  <Text style={[styles.clubBubbleSport, { color: goldColor }]} numberOfLines={1}>
-                    {club.sport ? getSportDisplayName(club.sport) : getSportName(club.clubName)}
-                  </Text>
+                  ))}
                 </View>
-              ))}
+              </ScrollView>
             </View>
           )}
 
-          {/* STATS SECONDAIRES */}
-          <View style={[styles.statsRow, { backgroundColor: statsRowBg, borderColor: statsRowBorder }]}>
-            <View style={styles.statItem}>
-              <Flame size={14} color="#FF6B00" />
-              <Text style={[styles.statValue, { color: textPrimary }]}>{stats.totalTrainings}</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>ENTRAÎNEMENTS</Text>
+          {/* Stats rapides */}
+          <View style={[styles.statsRow, { backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', borderColor }]}>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: GOLD_COLOR, fontSize: 16, fontWeight: '900' }}>{stats.activeDays}</Text>
+              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>JOURS ACTIFS</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
-            <View style={styles.statItem}>
-              <Trophy size={16} color={goldColor} />
-              <Text style={[styles.statValue, { color: textPrimary }]}>S{stats.bestWeek?.weekNumber || '-'}</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>BEST WEEK</Text>
+            <View style={{ width: 1, height: 30, backgroundColor: borderColor }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: GOLD_COLOR, fontSize: 16, fontWeight: '900' }}>S{stats.bestWeek?.weekNumber || '-'}</Text>
+              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>BEST WEEK</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: dividerColor }]} />
-            <View style={styles.statItem}>
-              <BarChart2 size={16} color={goldColor} />
-              <Text style={[styles.statValue, { color: textPrimary }]}>{Math.round((stats.activeDays / 30) * 100)}%</Text>
-              <Text style={[styles.statLabel, { color: textMuted }]}>DU MOIS</Text>
+            <View style={{ width: 1, height: 30, backgroundColor: borderColor }} />
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={{ color: GOLD_COLOR, fontSize: 16, fontWeight: '900' }}>{Math.round((stats.activeDays / stats.totalDays) * 100)}%</Text>
+              <Text style={{ color: subTxt, fontSize: 8, fontWeight: '800' }}>DU MOIS</Text>
             </View>
           </View>
-
-          {/* FOOTER - YOROI */}
-          <SocialCardFooter variant={brandingVariant} />
         </View>
-      </View>
-    );
 
-    // Fond avec photo - remplit tout le cadre avec effet flou + image entière intelligente
-    if (backgroundImage) {
-      return (
-        <View
-          ref={ref}
-          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#000000' }]}
-          collapsable={false}
-        >
-          {/* 2. Image principale entière (Non coupée) */}
-          <Image
-            source={{ uri: backgroundImage }}
-            style={styles.backgroundImageContain}
-            resizeMode="contain"
-          />
-          
-          <LinearGradient
-            colors={[
-              'rgba(0,0,0,0.7)',     // 0% - Sombre pour le titre
-              'rgba(0,0,0,0.4)',     // 15% - Transition
-              'rgba(0,0,0,0)',       // 30% - Transparent
-              'rgba(0,0,0,0)',       // 45% - Transparent
-              'rgba(0,0,0,0.5)',     // 65% - Commence à assombrir pour les infos
-              'rgba(0,0,0,0.85)',    // 85% - Sombre pour les stats
-              'rgba(0,0,0,0.95)',    // 100% - Très sombre pour le footer
-            ]}
-            locations={[0, 0.15, 0.3, 0.5, 0.65, 0.85, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-          {content}
+        {/* 3. FOOTER */}
+        <View style={[styles.footerSection, { borderTopColor: borderColor }]}>
+          <SocialCardFooter variant={isWhite ? "light" : "dark"} />
         </View>
-      );
-    }
-
-    // Fond blanc
-    if (isLightBackground) {
-      return (
-        <View
-          ref={ref}
-          style={[styles.container, { width: CARD_WIDTH, height: cardHeight, backgroundColor: '#FFFFFF' }]}
-          collapsable={false}
-        >
-          <SocialCardWatermark show={true} variant="light" />
-          {content}
-        </View>
-      );
-    }
-
-    // Fond noir (défaut)
-    return (
-      <View
-        ref={ref}
-        style={[styles.container, { width: CARD_WIDTH, height: cardHeight }]}
-        collapsable={false}
-      >
-        <LinearGradient
-          colors={['#0a0a0a', '#1a1a2e', '#0f0f1a']}
-          style={styles.defaultBackground}
-        >
-          <SocialCardWatermark show={true} variant="dark" />
-          {content}
-        </LinearGradient>
       </View>
     );
   }
 );
 
-MonthlyRecapCardV2.displayName = 'MonthlyRecapCardV2';
-
-// ============================================
-// STYLES
-// ============================================
-
 const styles = StyleSheet.create({
-  container: {
-    borderRadius: 20,
+  card: {
+    borderRadius: 32,
     overflow: 'hidden',
   },
-  backgroundImage: {
+  photoSection: {
+    height: PHOTO_SECTION_HEIGHT,
+    width: '100%',
+    backgroundColor: '#111',
+  },
+  photoImage: {
     width: '100%',
     height: '100%',
   },
-  backgroundImageContain: {
+  photoGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  photoHeader: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  profileContainer: {
+    width: PROFILE_SIZE,
+    height: PROFILE_SIZE,
+    borderRadius: PROFILE_SIZE / 2,
+    borderWidth: 2,
+    borderColor: '#000000',
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+  },
+  profilePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF',
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  avatarCircle: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    borderWidth: 2,
+    borderColor: '#000000',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoBottomInfo: {
     position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    width: '100%',
-    height: '100%',
+    paddingLeft: 12,
+    paddingRight: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
-  defaultBackground: {
-    flex: 1,
+  dateText: {
+    color: GOLD_COLOR,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
-  overlay: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  topContent: {
-    paddingTop: 12,
-  },
-  centerSpace: {
-    flex: 1,
-  },
-  bottomContent: {
-    paddingBottom: 0,
-  },
-
-  // Title
-  titleSection: {
-    alignItems: 'center',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titleText: {
+  mainTitle: {
+    color: '#FFF',
     fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 3,
-    color: '#D4AF37',
-  },
-
-  // Counter
-  counterSection: {
-    alignItems: 'center',
-  },
-  counterNumber: {
-    fontSize: 56,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -2,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 10,
-  },
-  counterLabel: {
-    fontSize: 12,
-    fontWeight: '800',
     letterSpacing: 2,
-    color: '#D4AF37',
-    marginTop: -4,
   },
-
-  // Progress
-  progressSection: {
-    paddingHorizontal: 24,
-    gap: 6,
+  bigNumber: {
+    color: GOLD_COLOR,
+    fontSize: 48,
+    fontWeight: '900',
+    lineHeight: 48,
   },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  bigLabel: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '900',
   },
-  progressLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
+  statsSection: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    justifyContent: 'center',
   },
-  progressPercent: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#D4AF37',
+  sectionLabel: {
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1.5,
   },
   progressBarBg: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
     borderRadius: 5,
   },
-  progressText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-  },
-
-  // Clubs
-  clubsSection: {
-    paddingHorizontal: 16,
+  detailsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  clubItem: {
+  detailsDivider: {
+    height: 1,
+    flex: 1,
+    opacity: 0.3,
+  },
+  detailsLabel: {
+    color: GOLD_COLOR,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  clubBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    gap: 10,
-  },
-  clubCount: {
-    backgroundColor: '#D4AF37',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    minWidth: 45,
-    alignItems: 'center',
-  },
-  clubCountText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#000000',
-  },
-  clubLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  clubLogoPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
+    maxWidth: 150,
   },
-  clubInitial: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#D4AF37',
-  },
-  clubInfo: {
-    flex: 1,
-  },
-  clubName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  clubSport: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#D4AF37',
-    marginTop: 1,
-  },
-
-  // Club Bubbles (nouvelle présentation)
-  clubsBubblesContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 12,
-    paddingHorizontal: 16,
-    marginVertical: 8,
-  },
-  clubBubble: {
-    alignItems: 'center',
-    width: 70,
-    gap: 4,
-  },
-  clubBubbleCount: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: '#D4AF37',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    zIndex: 10,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  clubBubbleCountText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#000000',
-  },
-  clubBubbleLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#D4AF37',
-    backgroundColor: 'transparent', // Pas de fond blanc pour les logos
-  },
-  clubBubbleLogoPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(212, 175, 55, 0.5)',
-  },
-  clubBubbleInitial: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#D4AF37',
-  },
-  clubBubbleName: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 11,
-  },
-  clubBubbleSport: {
-    fontSize: 8,
-    fontWeight: '600',
-    color: '#D4AF37',
-    textAlign: 'center',
-  },
-
-  // Stats Row
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 12,
     borderRadius: 12,
-    paddingVertical: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
+  footerSection: {
+    height: FOOTER_SECTION_HEIGHT,
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
   },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  statLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.5)',
-    letterSpacing: 0.5,
-  },
-  });
+});
 
 export default MonthlyRecapCardV2;

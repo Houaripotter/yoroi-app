@@ -18,8 +18,8 @@ const DEFAULT_WIDTH = SCREEN_WIDTH - 40;
 const GOLD_COLOR = '#D4AF37';
 
 // Constantes de layout
-const PHOTO_SECTION_HEIGHT = '60%';
-const STATS_SECTION_HEIGHT = '28%';
+const PHOTO_SECTION_HEIGHT = '65%';
+const STATS_SECTION_HEIGHT = '23%';
 const FOOTER_SECTION_HEIGHT = '12%';
 const PROFILE_SIZE = 50;
 const AVATAR_SIZE = 50;
@@ -151,7 +151,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             style={styles.photoGradient}
           >
             {/* DATE EN HAUT AU MILIEU */}
-            <View style={{ position: 'absolute', top: 16, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+            <View style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
               {keepPhotoClear ? (
                 <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
                   <Text style={[styles.dateText, { color: GOLD_COLOR }]}>{formattedDate}</Text>
@@ -175,9 +175,17 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                   )}
                 </View>
                 {userName && (
-                  <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
-                    {userName.toUpperCase()}
-                  </Text>
+                  keepPhotoClear ? (
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>
+                        {userName.toUpperCase()}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                      {userName.toUpperCase()}
+                    </Text>
+                  )
                 )}
               </View>
 
@@ -188,16 +196,18 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
                 )}
-                {rank && (
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankText}>{rank.toUpperCase()}</Text>
+                {rank && userLevel !== undefined && userLevel !== null ? (
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }}>
+                      Niveau {userLevel}
+                    </Text>
                   </View>
-                )}
-                {userLevel !== undefined && userLevel !== null && (
-                  <Text style={{ color: GOLD_COLOR, fontSize: 8, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
-                    {`NIV. ${userLevel}`}
-                  </Text>
-                )}
+                ) : rank ? (
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
           </LinearGradient>
@@ -249,17 +259,17 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                   </View>
                 </View>
                 <View style={styles.progressRight}>
-                  <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4 }}>
+                  <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' }}>
                     {(() => {
                       const h = Math.floor((training.duration_minutes || 0) / 60);
                       const m = (training.duration_minutes || 0) % 60;
-                      return <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>{h > 0 ? `${h}H ${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
+                      return <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
                     })()}
                   </View>
                   <View style={styles.yearProgressText}>
-                    <Text style={styles.smallGoldText}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 11, fontWeight: '900' }]}> / </Text>
-                    <Text style={styles.smallGoldText}>365 JOURS</Text>
+                    <Text style={[styles.smallGoldText, { fontSize: 14 }]}>{yearlyCount}</Text>
+                    <Text style={[{ color: txt, fontSize: 13, fontWeight: '900' }]}> / </Text>
+                    <Text style={[styles.smallGoldText, { fontSize: 14 }]}>365 JOURS</Text>
                   </View>
                 </View>
               </View>
@@ -351,7 +361,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   photoHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 16,
     flexDirection: 'row',
@@ -363,7 +373,7 @@ const styles = StyleSheet.create({
     height: PROFILE_SIZE,
     borderRadius: PROFILE_SIZE / 2,
     borderWidth: 2,
-    borderColor: GOLD_COLOR,
+    borderColor: '#000000',
     overflow: 'hidden',
     backgroundColor: '#FFF',
   },
@@ -382,7 +392,7 @@ const styles = StyleSheet.create({
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
     borderWidth: 2,
-    borderColor: GOLD_COLOR,
+    borderColor: '#000000',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
@@ -405,7 +415,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
+    paddingLeft: 12,
+    paddingRight: 20,
+    paddingTop: 20,
     paddingBottom: 24,
   },
   dateText: {

@@ -424,6 +424,12 @@ class HealthConnectService {
           return null;
         }
 
+        // Erreur "undefined" (HealthKit retourne undefined au lieu d'un tableau)
+        if (error.message?.includes('Value is undefined') || error.message?.includes('expected a number')) {
+          logger.info(`[HealthConnect] Pas de données disponibles pour ${dataTypeName}`);
+          return null;
+        }
+
         // Autres erreurs (réelles)
         logger.error(`[HealthConnect] Erreur lecture ${dataTypeName}:`, error);
       } else {
@@ -461,29 +467,50 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Revenir à queryQuantitySamples pour compatibilité max
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
-        from: today.getTime(),
-        to: new Date().getTime(),
-      });
+      try {
+        // Revenir à queryQuantitySamples pour compatibilité max
+        const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
+          from: today.getTime(),
+          to: new Date().getTime(),
+        });
 
-      if (samples && samples.length > 0) {
-        // DÉDOUBLONNAGE : Apple Santé peut avoir des échantillons qui se chevauchent 
-        // entre l'iPhone et la Watch. On groupe par source et on prend le meilleur.
-        // Pour faire simple et robuste sans queryStatistics : on additionne tout
-        // mais on s'assure de ne pas prendre de données aberrantes.
-        const totalSteps = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
-
-        if (totalSteps > 0) {
-          // Limite de sécurité : 100 000 pas par jour max pour éviter les bugs de capteurs
-          const safeSteps = Math.min(Math.round(totalSteps), 100000);
-          
-          return {
-            count: safeSteps,
-            date: today.toISOString(),
-          };
+        // ✅ PROTECTION: Vérifier que samples est bien un tableau et contient des données valides
+        if (!samples || !Array.isArray(samples) || samples.length === 0) {
+          logger.info('[HealthKit] Pas de données de pas disponibles');
+          return null;
         }
+
+        // ✅ PROTECTION: Vérifier que les samples contiennent des valeurs numériques valides
+        const validSamples = samples.filter(s => s && typeof s.quantity !== 'undefined' && !isNaN(Number(s.quantity)));
+        if (validSamples.length === 0) {
+          logger.info('[HealthKit] Aucune donnée de pas valide trouvée');
+          return null;
+        }
+
+        if (validSamples.length > 0) {
+          // DÉDOUBLONNAGE : Apple Santé peut avoir des échantillons qui se chevauchent
+          // entre l'iPhone et la Watch. On groupe par source et on prend le meilleur.
+          // Pour faire simple et robuste sans queryStatistics : on additionne tout
+          // mais on s'assure de ne pas prendre de données aberrantes.
+          const totalSteps = validSamples.reduce((sum: number, s: any) => {
+            const quantity = Number(s?.quantity || 0);
+            return sum + (isNaN(quantity) ? 0 : quantity);
+          }, 0);
+
+          if (totalSteps > 0) {
+            // Limite de sécurité : 100 000 pas par jour max pour éviter les bugs de capteurs
+            const safeSteps = Math.min(Math.round(totalSteps), 100000);
+
+            return {
+              count: safeSteps,
+              date: today.toISOString(),
+            };
+          }
+        }
+      } catch (error) {
+        logger.error('[HealthKit] Erreur lecture steps:', error);
       }
+
       return null;
     }, 'steps');
   }

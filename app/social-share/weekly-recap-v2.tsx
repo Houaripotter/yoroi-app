@@ -3,7 +3,7 @@
 // ============================================
 // Design identique au VictoryShareModal avec Photo/Sombre/Clair
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,9 @@ import { WeeklyRecapCardV2 } from '@/components/social-cards/WeeklyRecapCardV2';
 import { useWeekStats } from '@/lib/social-cards/useWeekStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { getProfile, calculateStreak } from '@/lib/database';
+import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
+import { getCurrentRank } from '@/lib/ranks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,7 +53,51 @@ export default function WeeklyRecapV2Screen() {
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Données utilisateur
+  const [userName, setUserName] = useState<string>('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<any>(null);
+  const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userLevel, setUserLevel] = useState<number>(1);
+
   const { stats, isLoading: statsLoading } = useWeekStats();
+
+  // Charger les données utilisateur au montage
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const [profile, avatarConfig, streak] = await Promise.all([
+          getProfile(),
+          getAvatarConfig(),
+          calculateStreak(),
+        ]);
+
+        if (profile) {
+          setUserName(profile.name || 'Champion');
+          setUserLevel(profile.level || 1);
+          if (profile.profile_photo) {
+            setUserPhoto(profile.profile_photo);
+          }
+        }
+
+        if (avatarConfig) {
+          const image = getAvatarImage(
+            avatarConfig.pack,
+            avatarConfig.state,
+            avatarConfig.collectionCharacter,
+            avatarConfig.gender
+          );
+          setUserAvatar(image);
+        }
+
+        const rank = getCurrentRank(streak);
+        setUserRank(rank.name);
+      } catch (error) {
+        logger.error('Error loading user data:', error);
+      }
+    };
+    loadUserData();
+  }, []);
 
   // ============================================
   // PHOTO PICKER
@@ -243,7 +290,11 @@ export default function WeeklyRecapV2Screen() {
             backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
             backgroundType={getBackgroundType()}
             isLandscape={isLandscapeImage}
-            username="yoroiapp"
+            username={userName}
+            userAvatar={userAvatar}
+            profilePhoto={userPhoto}
+            rank={userRank}
+            userLevel={userLevel}
           />
         </View>
 

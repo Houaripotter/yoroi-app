@@ -2662,7 +2662,7 @@ export default function AddTrainingScreen() {
                                   }}
                                 >
                                   <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
-                                  <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>PARTAGER SUR LES RÉSEAUX</Text>
+                                  <Text style={{ color: colors.textOnAccent, fontWeight: '900', fontSize: 18, letterSpacing: 1 }}>CONTINUER</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity

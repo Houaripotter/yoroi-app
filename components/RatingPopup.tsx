@@ -206,11 +206,11 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           </View>
 
           {/* Message personnel */}
-          <Text style={[styles.greeting, { color: colors.text }]}>
+          <Text style={[styles.greeting, { color: colors.textPrimary }]}>
             {t('rating.greeting') || 'Salut Champion !'}
           </Text>
 
-          <Text style={[styles.actionMessage, { color: colors.accent }]}>
+          <Text style={[styles.actionMessage, { color: colors.textPrimary }]}>
             {getPersonalMessage()}
           </Text>
 
@@ -221,9 +221,9 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           </Text>
 
           {/* Statistique encourageante */}
-          <View style={[styles.statBox, { backgroundColor: `${colors.accent}15` }]}>
+          <View style={[styles.statBox, { backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}30`, borderWidth: 1 }]}>
             <Ionicons name="people" size={20} color={colors.accent} />
-            <Text style={[styles.statText, { color: colors.text }]}>
+            <Text style={[styles.statText, { color: colors.textPrimary }]}>
               {t('rating.familyGrowing') || 'Chaque note aide la famille Yoroi à grandir !'}
             </Text>
           </View>
@@ -237,21 +237,16 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           <View style={styles.buttonsContainer}>
             {/* Bouton principal - Noter */}
             <TouchableOpacity
-              style={styles.rateButton}
+              style={[styles.rateButton, { backgroundColor: colors.accent }]}
               onPress={handleRateApp}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.rateButtonGradient}
-              >
-                <Ionicons name="star" size={22} color="#FFFFFF" />
-                <Text style={styles.rateButtonText}>
+              <View style={styles.rateButtonGradient}>
+                <Ionicons name="star" size={22} color={isDark ? '#000' : '#FFF'} />
+                <Text style={[styles.rateButtonText, { color: isDark ? '#000' : '#FFF' }]}>
                   {t('rating.rateButton') || "Je note l'app !"}
                 </Text>
-              </LinearGradient>
+              </View>
             </TouchableOpacity>
 
             {/* Bouton secondaire - Boîte à idées */}

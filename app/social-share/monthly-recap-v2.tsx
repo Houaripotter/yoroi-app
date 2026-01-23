@@ -3,7 +3,7 @@
 // ============================================
 // Design identique au WeeklyRecapV2 avec Photo/Sombre/Clair
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -34,6 +34,9 @@ import { MonthlyRecapCardV2 } from '@/components/social-cards/MonthlyRecapCardV2
 import { useMonthStats } from '@/lib/social-cards/useMonthStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
+import { getProfile, calculateStreak } from '@/lib/database';
+import { getAvatarConfig } from '@/lib/avatarSystem';
+import { getCurrentRank } from '@/lib/ranks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -53,11 +56,48 @@ export default function MonthlyRecapV2Screen() {
   const [isLandscapeImage, setIsLandscapeImage] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // User data
+  const [userName, setUserName] = useState<string>('');
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<any>(null);
+  const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userLevel, setUserLevel] = useState<number>(1);
+
   // Charger les stats du mois actuel
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth(); // 0-11
   const { stats, isLoading: statsLoading, error } = useMonthStats(currentYear, currentMonth);
+
+  // Charger les données utilisateur au montage
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const [profile, avatarConfig, streak] = await Promise.all([
+          getProfile(),
+          getAvatarConfig(),
+          calculateStreak(),
+        ]);
+
+        if (profile) {
+          setUserName(profile.name || '');
+          setUserPhoto(profile.photo || null);
+        }
+
+        if (avatarConfig && avatarConfig.selectedAvatar) {
+          setUserAvatar(avatarConfig.selectedAvatar);
+        }
+
+        const rank = getCurrentRank(streak);
+        setUserRank(rank.name);
+        setUserLevel(streak);
+      } catch (error) {
+        logger.error('Error loading user data:', error);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   // ============================================
   // PHOTO PICKER
@@ -274,7 +314,11 @@ export default function MonthlyRecapV2Screen() {
               backgroundImage={selectedTemplate === 'photo' ? backgroundImage : undefined}
               backgroundType={getBackgroundType()}
               isLandscape={isLandscapeImage}
-              username="yoroiapp"
+              username={userName}
+              userAvatar={userAvatar}
+              profilePhoto={userPhoto}
+              rank={userRank}
+              userLevel={userLevel}
             />
           </View>
 

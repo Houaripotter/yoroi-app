@@ -52,8 +52,6 @@ import { getCurrentRank } from '@/lib/ranks';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SocialCardFooter } from '@/components/social-cards/SocialCardBranding';
-import { shouldAskForReview } from '@/lib/reviewService';
-import { useReviewModal } from '@/components/ReviewModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { parseExercisesFromNotes } from '@/lib/exerciseParser';
@@ -72,7 +70,6 @@ export default function LastSessionScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const photoSectionRef = useRef<View>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
-  const { showReviewModal, ReviewModalComponent } = useReviewModal();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
   const [backgroundType, setBackgroundType] = useState<'photo' | 'black' | 'white'>('black');
@@ -85,6 +82,7 @@ export default function LastSessionScreen() {
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
+  const [userLevel, setUserLevel] = useState<number>(1);
   const [optionDetails, setOptionDetails] = useState<any[]>([]);
 
   // Toggles
@@ -117,6 +115,7 @@ export default function LastSessionScreen() {
 
         if (profile) {
           setUserName(profile.name || 'Champion');
+          setUserLevel(profile.level || 1);
           if (profile.profile_photo) {
             setUserPhoto(profile.profile_photo);
             setBackgroundImage(profile.profile_photo);
@@ -280,17 +279,6 @@ export default function LastSessionScreen() {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma séance',
         });
-
-        // Nettoyer le flag pending review
-        await AsyncStorage.removeItem('@yoroi_pending_review');
-
-        // Après partage, vérifier si on doit demander une review (avec délai)
-        setTimeout(async () => {
-          const shouldShowReview = await shouldAskForReview();
-          if (shouldShowReview) {
-            showReviewModal();
-          }
-        }, 1000);
       }
     } catch (error) {
       logger.error('Error sharing:', error);
@@ -321,23 +309,7 @@ export default function LastSessionScreen() {
 
       await MediaLibrary.saveToLibraryAsync(uri);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Nettoyer le flag pending review
-      await AsyncStorage.removeItem('@yoroi_pending_review');
-
-      // Après sauvegarde, vérifier si on doit demander une review
-      const shouldShowReview = await shouldAskForReview();
-      if (shouldShowReview) {
-        showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{
-          text: 'OK',
-          style: 'primary',
-          onPress: () => {
-            setTimeout(() => showReviewModal(), 500);
-          }
-        }]);
-      } else {
-        showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
-      }
+      showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Error saving:', error);
       showPopup('Erreur', 'Impossible de sauvegarder la carte', [{ text: 'OK', style: 'primary' }]);
@@ -503,6 +475,7 @@ export default function LastSessionScreen() {
               profilePhoto={userPhoto}
               userName={userName}
               rank={userRank}
+              userLevel={userLevel}
               options={optionDetails}
               yearlyCount={yearlyCount}
               monthlyCount={monthlyCount}
@@ -539,7 +512,6 @@ export default function LastSessionScreen() {
         </ScrollView>
       </View>
       <PopupComponent />
-      <ReviewModalComponent />
     </ScreenWrapper>
   );
 }

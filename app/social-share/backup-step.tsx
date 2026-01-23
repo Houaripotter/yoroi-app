@@ -54,13 +54,17 @@ export default function BackupStepScreen() {
   const handleFinish = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Vérifier si on doit afficher le popup de notation
-    const ratingResult = await ratingService.recordPositiveAction('session');
+    // Vérifier si l'utilisateur a déjà noté l'app
+    const hasRated = await ratingService.hasRated();
 
-    if (ratingResult.shouldShowPopup) {
-      setShowRatingPopup(true);
-    } else {
-      router.replace('/(tabs)');
+    // Naviguer vers l'accueil
+    router.replace('/(tabs)');
+
+    // Attendre 1.5 secondes puis afficher la popup sauf si déjà noté
+    if (!hasRated) {
+      setTimeout(() => {
+        setShowRatingPopup(true);
+      }, 1500);
     }
   };
 
