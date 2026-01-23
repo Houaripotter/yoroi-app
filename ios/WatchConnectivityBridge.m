@@ -18,7 +18,7 @@ RCT_EXTERN_METHOD(isWatchAvailable:(RCTPromiseResolveBlock)resolve
 RCT_EXTERN_METHOD(isWatchReachable:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
-// Envoie un message à la Watch
+// Envoie un message à la Watch (avec queue si hors ligne)
 RCT_EXTERN_METHOD(sendMessageToWatch:(NSDictionary *)message
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
@@ -39,7 +39,7 @@ RCT_EXTERN_METHOD(transferUserInfo:(NSDictionary *)userInfo
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
-// Récupère le contexte reçu
+// Récupère le contexte reçu de la Watch
 RCT_EXTERN_METHOD(getReceivedApplicationContext:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

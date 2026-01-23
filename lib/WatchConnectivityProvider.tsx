@@ -4,22 +4,43 @@
  * Provider global pour gérer la communication iPhone ↔ Apple Watch
  * Sync automatique des données: poids, hydratation, workouts, records
  *
- * AMÉLIORATIONS:
+ * AMÉLIORATIONS COMPLÈTES:
  * - Retry automatique avec exponential backoff
  * - Validation données avant envoi
  * - Gestion erreurs catégorisée
  * - Logging détaillé avec timestamps
  * - Optimisation taille megaPack
  * - UX feedback amélioré
+ * - Queue locale persistante (NOUVEAU)
+ * - Récupération Watch→iPhone au démarrage (NOUVEAU)
+ * - Versioning des données (NOUVEAU)
+ * - Throttling individuel par type (NOUVEAU)
+ * - Gestion ordre des messages (NOUVEAU)
  */
 
 import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Platform, Animated, View, Text, StyleSheet } from 'react-native';
+import { Platform, Animated, View, Text, StyleSheet, AppState, AppStateStatus } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addWeight, getProfile } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+// VERSIONING
+const APP_VERSION = '2.0.0';
+const MIN_WATCH_VERSION = '1.5.0';
+const DATA_FORMAT_VERSION = '2.0';
+
+// STORAGE KEYS
+const STORAGE_KEYS = {
+  PENDING_SYNCS: '@yoroi_pending_watch_syncs',
+  MESSAGE_QUEUE: '@yoroi_watch_message_queue',
+  PROCESSED_IDS: '@yoroi_processed_message_ids',
+  LAST_SYNC_TIMESTAMPS: '@yoroi_last_sync_timestamps',
+};
+
+// THROTTLING
+const MIN_SYNC_INTERVAL = 1000; // 1 seconde minimum entre syncs du même type
 
 // Types
 export interface WatchContextType {
@@ -28,6 +49,7 @@ export interface WatchContextType {
   lastError: string | null;
   lastSyncDate: Date | null;
   isSyncing: boolean;
+  pendingSyncsCount: number;
   syncWeight: (weight: number) => Promise<void>;
   syncHydration: (waterIntake: number) => Promise<void>;
   syncWorkout: (workout: any) => Promise<void>;
@@ -38,6 +60,20 @@ export interface WatchContextType {
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 type ErrorCategory = 'network' | 'timeout' | 'data' | 'unavailable' | 'unknown';
+
+interface PendingSync {
+  type: 'weight' | 'hydration' | 'workout' | 'records';
+  data: any;
+  timestamp: number;
+  retries: number;
+}
+
+interface QueuedMessage {
+  id: string;
+  message: any;
+  timestamp: number;
+  receivedAt: number;
+}
 
 const WatchContext = createContext<WatchContextType | null>(null);
 
@@ -131,6 +167,20 @@ const categorizeError = (error: any): { category: ErrorCategory; message: string
   };
 };
 
+// VERSIONING: Comparaison de versions
+const compareVersions = (v1: string, v2: string): number => {
+  const parts1 = v1.split('.').map(Number);
+  const parts2 = v2.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+    if (p1 > p2) return 1;
+    if (p1 < p2) return -1;
+  }
+  return 0;
+};
+
 export function WatchConnectivityProvider({ children }: { children: ReactNode }) {
   const [isAvailable, setIsAvailable] = useState(false);
   const [isReachable, setIsReachable] = useState(false);
@@ -139,12 +189,19 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   const [watchData, setWatchData] = useState<any>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingSyncsCount, setPendingSyncsCount] = useState(0);
 
   // Animation de la bannière
   const bannerAnim = useRef(new Animated.Value(-100)).current;
   const [syncMessage, setSyncMessage] = useState('');
   const [bannerIcon, setBannerIcon] = useState('watch');
   const [bannerColor, setBannerColor] = useState('#4ade80');
+
+  // NOUVEAU : Refs pour throttling et queue
+  const lastSyncTimestamps = useRef<Record<string, number>>({});
+  const processedMessageIds = useRef<Set<string>>(new Set());
+  const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   // UX FEEDBACK: Bannière améliorée avec icônes et couleurs
   const showSyncBanner = useCallback((message: string, type: 'info' | 'success' | 'error' | 'loading' = 'info') => {
@@ -171,7 +228,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
     Animated.sequence([
       Animated.spring(bannerAnim, { toValue: 50, useNativeDriver: true, speed: 12 }),
-      Animated.delay(type === 'error' ? 3000 : 2000), // Erreurs affichées plus longtemps
+      Animated.delay(type === 'error' ? 3000 : 2000),
       Animated.timing(bannerAnim, { toValue: -100, duration: 500, useNativeDriver: true })
     ]).start();
   }, [bannerAnim]);
@@ -208,7 +265,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         return result;
       } catch (error) {
         lastError = error;
-        const { category, userMessage } = categorizeError(error);
+        const { category } = categorizeError(error);
 
         logSync(`${operation} - Échec tentative ${attempt}`, { error: category });
 
@@ -232,6 +289,242 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     throw lastError;
   }, [logSync]);
 
+  // NOUVEAU : Gestion queue locale persistante
+  const loadPendingSyncs = useCallback(async (): Promise<PendingSync[]> => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_SYNCS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      logSync('loadPendingSyncs - Erreur', error);
+      return [];
+    }
+  }, [logSync]);
+
+  const savePendingSync = useCallback(async (sync: PendingSync) => {
+    try {
+      const syncs = await loadPendingSyncs();
+      syncs.push(sync);
+      await AsyncStorage.setItem(STORAGE_KEYS.PENDING_SYNCS, JSON.stringify(syncs));
+      setPendingSyncsCount(syncs.length);
+      logSync('savePendingSync', { type: sync.type, count: syncs.length });
+    } catch (error) {
+      logSync('savePendingSync - Erreur', error);
+    }
+  }, [loadPendingSyncs, logSync]);
+
+  const processPendingSyncs = useCallback(async () => {
+    try {
+      const syncs = await loadPendingSyncs();
+      if (syncs.length === 0) return;
+
+      logSync('processPendingSyncs - Début', { count: syncs.length });
+
+      const remainingSyncs: PendingSync[] = [];
+
+      for (const sync of syncs) {
+        try {
+          // Retry avec limite de 5 tentatives
+          if (sync.retries >= 5) {
+            logSync('processPendingSyncs - Max retries atteint', { type: sync.type });
+            continue;
+          }
+
+          // Traiter selon le type
+          switch (sync.type) {
+            case 'weight':
+              await syncWeight(sync.data);
+              break;
+            case 'hydration':
+              await syncHydration(sync.data);
+              break;
+            case 'workout':
+              await syncWorkout(sync.data);
+              break;
+            case 'records':
+              await syncRecords(sync.data);
+              break;
+          }
+
+          logSync('processPendingSyncs - Sync réussi', { type: sync.type });
+        } catch (error) {
+          logSync('processPendingSyncs - Échec', { type: sync.type, error });
+          sync.retries++;
+          remainingSyncs.push(sync);
+        }
+      }
+
+      // Sauvegarder syncs restants
+      await AsyncStorage.setItem(STORAGE_KEYS.PENDING_SYNCS, JSON.stringify(remainingSyncs));
+      setPendingSyncsCount(remainingSyncs.length);
+
+      logSync('processPendingSyncs - Terminé', { processed: syncs.length - remainingSyncs.length, remaining: remainingSyncs.length });
+    } catch (error) {
+      logSync('processPendingSyncs - Erreur', error);
+    }
+  }, [loadPendingSyncs, logSync]);
+
+  // NOUVEAU : Récupération Watch→iPhone au démarrage
+  const retrieveWatchData = useCallback(async () => {
+    try {
+      logSync('retrieveWatchData - Début');
+
+      const context = await WatchConnectivity.getReceivedApplicationContext();
+
+      if (!context || Object.keys(context).length === 0) {
+        logSync('retrieveWatchData - Aucune donnée');
+        return;
+      }
+
+      logSync('retrieveWatchData - Context reçu', { keys: Object.keys(context) });
+
+      // Traiter workouts en attente
+      if (context.pendingWorkouts && Array.isArray(context.pendingWorkouts)) {
+        for (const workout of context.pendingWorkouts) {
+          await handleWatchMessage({ workoutCompleted: workout });
+        }
+        logSync('retrieveWatchData - Workouts traités', { count: context.pendingWorkouts.length });
+      }
+
+      // Traiter autres données
+      if (context.weight) {
+        await handleWatchMessage({ weightUpdate: context.weight });
+      }
+
+      if (context.hydration) {
+        await handleWatchMessage({ hydrationUpdate: context.hydration });
+      }
+
+      // Vérifier version Watch
+      if (context.watchAppVersion) {
+        const watchVersion = context.watchAppVersion;
+        if (compareVersions(watchVersion, MIN_WATCH_VERSION) < 0) {
+          setLastError(`Version Watch obsolète (${watchVersion}). Mettez à jour l'app Watch.`);
+          showSyncBanner('⚠️ Mettez à jour l\'app Watch', 'error');
+          logSync('retrieveWatchData - Version obsolète', { watchVersion, minVersion: MIN_WATCH_VERSION });
+        } else {
+          logSync('retrieveWatchData - Version compatible', { watchVersion });
+        }
+      }
+
+    } catch (error) {
+      logSync('retrieveWatchData - Erreur', error);
+    }
+  }, [logSync, showSyncBanner]);
+
+  // NOUVEAU : Throttling individuel
+  const canSync = useCallback((type: string): boolean => {
+    const now = Date.now();
+    const lastSync = lastSyncTimestamps.current[type] || 0;
+
+    if (now - lastSync < MIN_SYNC_INTERVAL) {
+      logSync(`canSync - Throttled (${type})`, { elapsed: now - lastSync });
+      return false;
+    }
+
+    lastSyncTimestamps.current[type] = now;
+    return true;
+  }, [logSync]);
+
+  // NOUVEAU : Gestion ordre des messages
+  const handleWatchMessage = useCallback(async (message: any) => {
+    try {
+      // Générer ID unique
+      const messageId = message.id || `${message.type || 'unknown'}_${message.timestamp || Date.now()}`;
+
+      // Vérifier si déjà traité
+      if (processedMessageIds.current.has(messageId)) {
+        logSync('handleWatchMessage - Déjà traité', { id: messageId });
+        return;
+      }
+
+      processedMessageIds.current.add(messageId);
+
+      // Stocker dans queue avec timestamp
+      const queueData = await AsyncStorage.getItem(STORAGE_KEYS.MESSAGE_QUEUE);
+      const queue: QueuedMessage[] = queueData ? JSON.parse(queueData) : [];
+
+      queue.push({
+        id: messageId,
+        message,
+        timestamp: message.timestamp || Date.now(),
+        receivedAt: Date.now()
+      });
+
+      // TRIER par timestamp
+      queue.sort((a, b) => a.timestamp - b.timestamp);
+
+      logSync('handleWatchMessage - Message ajouté à la queue', {
+        id: messageId,
+        keys: Object.keys(message),
+        queueSize: queue.length
+      });
+
+      // Traiter dans l'ordre
+      for (const item of queue) {
+        const msg = item.message;
+
+        if (msg.weightUpdate) {
+          showSyncBanner('⚖️ Poids synchronisé', 'success');
+          const weight = typeof msg.weightUpdate === 'number' ? msg.weightUpdate : msg.weightUpdate.weight;
+
+          // VALIDATION
+          if (weight > 0 && weight <= 300) {
+            await addWeight(weight);
+            await AsyncStorage.setItem('currentWeight', String(weight));
+            logSync('handleWatchMessage - Poids sauvegardé', { weight });
+          } else {
+            logSync('handleWatchMessage - Poids invalide', { weight });
+          }
+        }
+
+        if (msg.hydrationUpdate) {
+          showSyncBanner('💧 Hydratation mise à jour', 'success');
+          logSync('handleWatchMessage - Hydratation reçue');
+        }
+
+        if (msg.newRecordFromWatch || msg.workoutCompleted) {
+          showSyncBanner('🏆 Record enregistré', 'success');
+          try {
+            const record = msg.newRecordFromWatch || msg.workoutCompleted;
+            const recordData = typeof record === 'string' ? JSON.parse(record) : record;
+
+            const benchmarks = await getBenchmarks();
+            let target = benchmarks.find(b => b.name.toLowerCase() === recordData.exercise.toLowerCase());
+
+            if (target) {
+              await addBenchmarkEntry(target.id, recordData.weight, 5, 'Apple Watch', new Date(recordData.date), recordData.reps);
+              logSync('handleWatchMessage - Record sauvegardé', { exercise: recordData.exercise });
+            }
+          } catch (e) {
+            logSync('handleWatchMessage - Erreur record', e);
+          }
+        }
+
+        if (msg.testSignal) {
+          showSyncBanner('⌚ Apple Watch connectée', 'info');
+          logSync('handleWatchMessage - Test signal reçu');
+        }
+
+        if (msg.ping) {
+          WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now(), appVersion: APP_VERSION }).catch(() => {});
+          logSync('handleWatchMessage - Pong envoyé');
+        }
+      }
+
+      // Nettoyer queue après succès
+      await AsyncStorage.removeItem(STORAGE_KEYS.MESSAGE_QUEUE);
+
+      // Nettoyer IDs anciens (garder seulement les 1000 derniers)
+      if (processedMessageIds.current.size > 1000) {
+        const ids = Array.from(processedMessageIds.current);
+        processedMessageIds.current = new Set(ids.slice(-1000));
+      }
+
+    } catch (error) {
+      logSync('handleWatchMessage - Erreur', error);
+    }
+  }, [showSyncBanner, logSync]);
+
   // Synchroniser les infos de profil
   const syncProfileToWatch = useCallback(async () => {
     const startTime = Date.now();
@@ -247,14 +540,16 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('waterIntake'),
       ]);
 
-      // OPTIMISATION: Format compact pour réduire la taille
+      // OPTIMISATION: Format compact + VERSIONING
       const contextData: any = {
-        ac: avatarConfig ? JSON.parse(avatarConfig) : { name: 'samurai' }, // avatarConfig → ac
-        un: profile?.name || 'Guerrier', // userName → un
-        lv: level ? parseInt(level) : 1, // level → lv
-        rk: rank || 'Novice', // rank → rk
-        wi: parseFloat(waterIntake || '0'), // waterIntake → wi
-        ts: Date.now() // timestamp → ts
+        v: DATA_FORMAT_VERSION, // ← NOUVEAU: Version du format
+        appVersion: APP_VERSION, // ← NOUVEAU: Version de l'app
+        ac: avatarConfig ? JSON.parse(avatarConfig) : { name: 'samurai' },
+        un: profile?.name || 'Guerrier',
+        lv: level ? parseInt(level) : 1,
+        rk: rank || 'Novice',
+        wi: parseFloat(waterIntake || '0'),
+        ts: Date.now()
       };
 
       // VALIDATION
@@ -275,7 +570,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           const photoSize = (base64Photo.length * 3) / 4;
 
           if (photoSize < 50000) { // 50KB max pour profil sync
-            contextData.pp = base64Photo; // profilePhotoBase64 → pp
+            contextData.pp = base64Photo;
             logSync('syncProfileToWatch - Photo incluse', { size: `${Math.round(photoSize / 1024)}KB` });
           }
         } catch (photoError) {
@@ -303,66 +598,6 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     }
   }, [logSync, retryWithBackoff]);
 
-  // Handler pour les messages de la Watch
-  const handleWatchMessage = useCallback(async (message: any) => {
-    try {
-      logSync('handleWatchMessage - Message reçu', { keys: Object.keys(message) });
-
-      if (message.weightUpdate) {
-        showSyncBanner('⚖️ Poids synchronisé', 'success');
-        const weight = typeof message.weightUpdate === 'number' ? message.weightUpdate : message.weightUpdate.weight;
-
-        // VALIDATION
-        if (weight > 0 && weight <= 300) {
-          await addWeight(weight);
-          await AsyncStorage.setItem('currentWeight', String(weight));
-          logSync('handleWatchMessage - Poids sauvegardé', { weight });
-        } else {
-          logSync('handleWatchMessage - Poids invalide', { weight });
-        }
-      }
-
-      if (message.hydrationUpdate) {
-        showSyncBanner('💧 Hydratation mise à jour', 'success');
-        logSync('handleWatchMessage - Hydratation reçue');
-      }
-
-      if (message.newRecordFromWatch) {
-        showSyncBanner('🏆 Record enregistré', 'success');
-        try {
-          const record = typeof message.newRecordFromWatch === 'string'
-            ? JSON.parse(message.newRecordFromWatch)
-            : message.newRecordFromWatch;
-
-          const benchmarks = await getBenchmarks();
-          let target = benchmarks.find(b => b.name.toLowerCase() === record.exercise.toLowerCase());
-
-          if (target) {
-            await addBenchmarkEntry(target.id, record.weight, 5, 'Apple Watch', new Date(record.date), record.reps);
-            logSync('handleWatchMessage - Record sauvegardé', { exercise: record.exercise });
-          }
-        } catch (e) {
-          logSync('handleWatchMessage - Erreur record', e);
-        }
-      }
-
-      if (message.testSignal) {
-        showSyncBanner('⌚ Apple Watch connectée', 'info');
-        logSync('handleWatchMessage - Test signal reçu');
-      }
-
-      if (message.ping) {
-        WatchConnectivity.sendMessageToWatch({ pong: true, timestamp: Date.now() }).catch(() => {});
-        logSync('handleWatchMessage - Pong envoyé');
-      }
-    } catch (error) {
-      logSync('handleWatchMessage - Erreur', error);
-    }
-  }, [showSyncBanner, logSync]);
-
-  // Debounce timer
-  const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
-
   // Initialisation
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
@@ -385,12 +620,19 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         logSync('État initial', { available, reachable });
 
         if (available) {
+          // NOUVEAU : Récupérer données Watch en attente
+          await retrieveWatchData();
+
+          // NOUVEAU : Traiter syncs en attente
+          await processPendingSyncs();
+
+          // Sync iPhone → Watch
           syncAllData();
           syncProfileToWatch();
         }
 
         // Listeners
-        reachabilityListener = WatchConnectivity.onReachabilityChanged((status) => {
+        reachabilityListener = WatchConnectivity.onReachabilityChanged(async (status) => {
           setIsReachable(status.isReachable);
           setIsAvailable(status.isPaired && status.isWatchAppInstalled);
 
@@ -398,6 +640,14 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
           if (status.isReachable) {
             showSyncBanner('⌚ Watch connectée', 'info');
+
+            // NOUVEAU : Récupérer données en attente
+            await retrieveWatchData();
+
+            // NOUVEAU : Traiter syncs en attente
+            await processPendingSyncs();
+
+            // Sync iPhone → Watch
             syncAllData();
             syncProfileToWatch();
           } else {
@@ -423,19 +673,42 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
     init();
 
+    // Observer AppState pour traiter syncs au retour en foreground
+    const appStateSubscription = AppState.addEventListener('change', async (nextAppState) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        logSync('App foreground - Traitement syncs');
+        await processPendingSyncs();
+        if (isReachable) {
+          await retrieveWatchData();
+        }
+      }
+      appState.current = nextAppState;
+    });
+
     // CLEANUP
     return () => {
       if (reachabilityListener) reachabilityListener.remove();
       if (messageListener) messageListener.remove();
       if (dataListener) dataListener.remove();
       if (syncDebounceTimer.current) clearTimeout(syncDebounceTimer.current);
+      appStateSubscription.remove();
       logSync('Cleanup listeners terminé');
     };
-  }, [handleWatchMessage, syncProfileToWatch, logSync, showSyncBanner]);
+  }, [handleWatchMessage, syncProfileToWatch, logSync, showSyncBanner, retrieveWatchData, processPendingSyncs, isReachable]);
 
-  // Sync spécifiques
+  // Sync spécifiques avec THROTTLING et QUEUE
   const syncWeight = async (weight: number) => {
-    if (!isAvailable) return;
+    // NOUVEAU : Throttling
+    if (!canSync('weight')) {
+      return;
+    }
+
+    if (!isAvailable) {
+      // NOUVEAU : Queue si Watch indisponible
+      await savePendingSync({ type: 'weight', data: weight, timestamp: Date.now(), retries: 0 });
+      showSyncBanner('⚖️ Sera synchronisé avec la Watch plus tard', 'info');
+      return;
+    }
 
     logSync('syncWeight', { weight });
 
@@ -449,11 +722,20 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     } catch (e) {
       const { userMessage } = categorizeError(e);
       showSyncBanner(userMessage, 'error');
+
+      // NOUVEAU : Queue en cas d'erreur
+      await savePendingSync({ type: 'weight', data: weight, timestamp: Date.now(), retries: 0 });
     }
   };
 
   const syncHydration = async (amount: number) => {
-    if (!isAvailable) return;
+    if (!canSync('hydration')) return;
+
+    if (!isAvailable) {
+      await savePendingSync({ type: 'hydration', data: amount, timestamp: Date.now(), retries: 0 });
+      showSyncBanner('💧 Sera synchronisé avec la Watch plus tard', 'info');
+      return;
+    }
 
     logSync('syncHydration', { amount });
 
@@ -467,11 +749,18 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     } catch (e) {
       const { userMessage } = categorizeError(e);
       showSyncBanner(userMessage, 'error');
+      await savePendingSync({ type: 'hydration', data: amount, timestamp: Date.now(), retries: 0 });
     }
   };
 
   const syncWorkout = async (workout: any) => {
-    if (!isAvailable) return;
+    if (!canSync('workout')) return;
+
+    if (!isAvailable) {
+      await savePendingSync({ type: 'workout', data: workout, timestamp: Date.now(), retries: 0 });
+      showSyncBanner('🏋️ Sera synchronisé avec la Watch plus tard', 'info');
+      return;
+    }
 
     logSync('syncWorkout', { type: workout.type });
 
@@ -485,11 +774,18 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     } catch (e) {
       const { userMessage } = categorizeError(e);
       showSyncBanner(userMessage, 'error');
+      await savePendingSync({ type: 'workout', data: workout, timestamp: Date.now(), retries: 0 });
     }
   };
 
   const syncRecords = async (records: any[]) => {
-    if (!isAvailable) return;
+    if (!canSync('records')) return;
+
+    if (!isAvailable) {
+      await savePendingSync({ type: 'records', data: records, timestamp: Date.now(), retries: 0 });
+      showSyncBanner('🏆 Sera synchronisé avec la Watch plus tard', 'info');
+      return;
+    }
 
     logSync('syncRecords', { count: records.length });
 
@@ -503,6 +799,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     } catch (e) {
       const { userMessage } = categorizeError(e);
       showSyncBanner(userMessage, 'error');
+      await savePendingSync({ type: 'records', data: records, timestamp: Date.now(), retries: 0 });
     }
   };
 
@@ -529,23 +826,24 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('@yoroi_rank'),
       ]);
 
-      // 2. Construire megaPack OPTIMISÉ (clés courtes)
+      // 2. Construire megaPack OPTIMISÉ avec VERSIONING
       let parsedAvatar = avatarConfig ? JSON.parse(avatarConfig) : { pack: 'samurai' };
       if (parsedAvatar && !parsedAvatar.pack && parsedAvatar.id) {
         parsedAvatar.pack = parsedAvatar.id;
       }
 
       const megaPack: any = {
-        // Clés courtes pour réduire taille (compatibilité Watch)
-        w: parseFloat(weight || '0'), // weight
-        wi: parseFloat(waterIntake || '0'), // waterIntake
-        s: parseInt(streak || '0'), // streak
-        un: profile?.name || 'Guerrier', // userName
-        ac: parsedAvatar, // avatarConfig
-        lv: level ? parseInt(level) : 1, // level
-        rk: rank || 'Novice', // rank
-        ts: Date.now(), // timestamp
-        fr: true // forceRefresh
+        v: DATA_FORMAT_VERSION, // ← NOUVEAU: Version du format
+        appVersion: APP_VERSION, // ← NOUVEAU: Version de l'app
+        w: parseFloat(weight || '0'),
+        wi: parseFloat(waterIntake || '0'),
+        s: parseInt(streak || '0'),
+        un: profile?.name || 'Guerrier',
+        ac: parsedAvatar,
+        lv: level ? parseInt(level) : 1,
+        rk: rank || 'Novice',
+        ts: Date.now(),
+        fr: true
       };
 
       // VALIDATION complète
@@ -571,7 +869,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
           const estimatedSize = (base64Photo.length * 3) / 4;
 
           if (estimatedSize < 75000) {
-            megaPack.pp = base64Photo; // profilePhotoBase64
+            megaPack.pp = base64Photo;
             logSync('performSync - Photo incluse', { size: `${Math.round(estimatedSize / 1024)}KB` });
           } else {
             logSync('performSync - Photo trop volumineuse', { size: `${Math.round(estimatedSize / 1024)}KB` });
@@ -621,7 +919,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         try {
           await retryWithBackoff(
             () => WatchConnectivity.sendMessageToWatch(megaPack),
-            2, // Moins de retries pour message direct
+            2,
             'sendMessageToWatch'
           );
         } catch (e) {
@@ -674,13 +972,14 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     lastError,
     lastSyncDate,
     isSyncing,
+    pendingSyncsCount,
     syncWeight,
     syncHydration,
     syncWorkout,
     syncRecords,
     syncAllData,
     watchData,
-  }), [isAvailable, isReachable, lastError, lastSyncDate, isSyncing, syncWeight, syncHydration, syncWorkout, syncRecords, syncAllData, watchData]);
+  }), [isAvailable, isReachable, lastError, lastSyncDate, isSyncing, pendingSyncsCount, syncWeight, syncHydration, syncWorkout, syncRecords, syncAllData, watchData]);
 
   return (
     <WatchContext.Provider value={contextValue}>

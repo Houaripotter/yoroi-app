@@ -2,8 +2,8 @@
 //  WatchConnectivityBridge.swift
 //  Yoroi
 //
-//  Bridge entre React Native et WatchConnectivity
-//  Permet la communication bidirectionnelle iPhone ↔ Apple Watch
+//  Bridge complet entre React Native et WatchConnectivity
+//  Gère tous les scénarios de sync : iPhone éteint, hors Bluetooth, force quit, etc.
 //
 
 import Foundation
@@ -15,17 +15,23 @@ public class WatchConnectivityBridge: RCTEventEmitter {
 
     private var session: WCSession?
     private var hasListeners = false
-    
+
     public static var emitter: WatchConnectivityBridge?
+
+    // NOUVEAU : Queue de messages en attente
+    private var pendingMessages: [(message: [String: Any], completion: (Error?) -> Void)] = []
+    private let messageQueueKey = "com.yoroi.watchconnectivity.pendingMessages"
 
     override init() {
         super.init()
         WatchConnectivityBridge.emitter = self
-        
+
         if WCSession.isSupported() {
             self.session = WCSession.default
             self.session?.delegate = self
-            self.session?.activate()
+
+            // Restaurer queue de messages
+            restorePendingMessages()
         }
     }
 
@@ -51,6 +57,8 @@ public class WatchConnectivityBridge: RCTEventEmitter {
         hasListeners = false
     }
 
+    // MARK: - API Methods
+
     @objc
     func isWatchAvailable(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
         let available = WCSession.isSupported() && WCSession.default.isPaired && WCSession.default.isWatchAppInstalled
@@ -73,6 +81,10 @@ public class WatchConnectivityBridge: RCTEventEmitter {
                 if session.activationState != .activated {
                     session.activate()
                 }
+
+                // Après activation, traiter les messages en attente
+                self.processPendingMessages()
+
                 resolve(true)
             } else {
                 resolve(false)
@@ -86,7 +98,7 @@ public class WatchConnectivityBridge: RCTEventEmitter {
             reject("NOT_SUPPORTED", "WatchConnectivity not supported", nil)
             return
         }
-        
+
         do {
             try WCSession.default.updateApplicationContext(context)
             print("🚀 [BRIDGE] Application Context mis à jour: \(context.keys)")
@@ -104,7 +116,15 @@ public class WatchConnectivityBridge: RCTEventEmitter {
         }
 
         guard WCSession.default.isReachable else {
-            reject("NOT_REACHABLE", "Watch not reachable", nil)
+            // NOUVEAU : Si pas reachable, ajouter à la queue
+            print("⚠️ [BRIDGE] Watch not reachable, adding to queue")
+            addToPendingMessages(message) { error in
+                if let error = error {
+                    reject("QUEUE_ERROR", error.localizedDescription, error)
+                } else {
+                    resolve(["queued": true, "message": "Message will be sent when Watch is reachable"])
+                }
+            }
             return
         }
 
@@ -129,7 +149,16 @@ public class WatchConnectivityBridge: RCTEventEmitter {
             if !hasCompleted {
                 hasCompleted = true
                 timeoutTimer?.invalidate()
-                reject("SEND_ERROR", error.localizedDescription, error)
+
+                // Si erreur, ajouter à la queue
+                print("❌ [BRIDGE] Send error, adding to queue: \(error.localizedDescription)")
+                self.addToPendingMessages(message) { queueError in
+                    if queueError != nil {
+                        reject("SEND_ERROR", error.localizedDescription, error)
+                    } else {
+                        reject("SEND_ERROR_QUEUED", "Message failed but queued for retry", error)
+                    }
+                }
             }
         })
     }
@@ -143,6 +172,7 @@ public class WatchConnectivityBridge: RCTEventEmitter {
 
         do {
             let transfer = WCSession.default.transferUserInfo(userInfo)
+            print("📤 [BRIDGE] UserInfo transfer initiated: \(transfer.isTransferring)")
             resolve(["transferring": transfer.isTransferring])
         } catch {
             reject("TRANSFER_ERROR", error.localizedDescription, error)
@@ -172,6 +202,18 @@ public class WatchConnectivityBridge: RCTEventEmitter {
     }
 
     @objc
+    func getReceivedApplicationContext(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        guard WCSession.isSupported() else {
+            reject("NOT_SUPPORTED", "WatchConnectivity not supported", nil)
+            return
+        }
+
+        let context = WCSession.default.receivedApplicationContext
+        print("📥 [BRIDGE] Received application context: \(context.keys)")
+        resolve(context)
+    }
+
+    @objc
     func ping(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
         let session = WCSession.default
         let status = [
@@ -179,14 +221,67 @@ public class WatchConnectivityBridge: RCTEventEmitter {
             "paired": session.isPaired,
             "installed": session.isWatchAppInstalled,
             "reachable": session.isReachable,
-            "state": "\(session.activationState.rawValue)"
+            "state": "\(session.activationState.rawValue)",
+            "pendingMessages": pendingMessages.count
         ] as [String : Any]
         resolve(status)
     }
+
+    // MARK: - Queue Management
+
+    private func addToPendingMessages(_ message: [String: Any], completion: @escaping (Error?) -> Void) {
+        pendingMessages.append((message: message, completion: completion))
+        savePendingMessages()
+        print("📝 [BRIDGE] Message added to queue (total: \(pendingMessages.count))")
+    }
+
+    private func processPendingMessages() {
+        guard WCSession.default.isReachable else {
+            print("⚠️ [BRIDGE] Cannot process queue - Watch not reachable")
+            return
+        }
+
+        print("🔄 [BRIDGE] Processing \(pendingMessages.count) pending messages")
+
+        let messagesToProcess = pendingMessages
+        pendingMessages.removeAll()
+        savePendingMessages()
+
+        for (message, completion) in messagesToProcess {
+            WCSession.default.sendMessage(message, replyHandler: { _ in
+                completion(nil)
+                print("✅ [BRIDGE] Queued message sent successfully")
+            }, errorHandler: { error in
+                completion(error)
+                print("❌ [BRIDGE] Queued message failed: \(error.localizedDescription)")
+                // Re-ajouter à la queue
+                self.addToPendingMessages(message, completion: completion)
+            })
+        }
+    }
+
+    private func savePendingMessages() {
+        let messagesData = pendingMessages.map { $0.message }
+        UserDefaults.standard.set(messagesData, forKey: messageQueueKey)
+        UserDefaults.standard.synchronize()
+    }
+
+    private func restorePendingMessages() {
+        if let savedMessages = UserDefaults.standard.array(forKey: messageQueueKey) as? [[String: Any]] {
+            pendingMessages = savedMessages.map { message in
+                (message: message, completion: { _ in })
+            }
+            print("📂 [BRIDGE] Restored \(pendingMessages.count) messages from queue")
+        }
+    }
 }
+
+// MARK: - WCSessionDelegate
 
 extension WatchConnectivityBridge: WCSessionDelegate {
     public func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        print("🔌 [BRIDGE] Activation completed: \(activationState.rawValue)")
+
         if hasListeners {
             sendEvent(withName: "onWatchActivationCompleted", body: [
                 "state": "\(activationState.rawValue)",
@@ -195,23 +290,84 @@ extension WatchConnectivityBridge: WCSessionDelegate {
                 "isReachable": session.isReachable
             ])
         }
+
+        // Traiter messages en attente après activation
+        if activationState == .activated {
+            processPendingMessages()
+        }
     }
 
     public func sessionReachabilityDidChange(_ session: WCSession) {
+        print("📡 [BRIDGE] Reachability changed: \(session.isReachable)")
+
         if hasListeners {
-            sendEvent(withName: "onWatchReachabilityChanged", body: ["isReachable": session.isReachable])
+            sendEvent(withName: "onWatchReachabilityChanged", body: [
+                "isReachable": session.isReachable,
+                "isPaired": session.isPaired,
+                "isWatchAppInstalled": session.isWatchAppInstalled
+            ])
+        }
+
+        // Traiter messages en attente si Watch devient reachable
+        if session.isReachable {
+            processPendingMessages()
         }
     }
 
     public func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
+        print("📨 [BRIDGE] Message received: \(message.keys)")
+
         if hasListeners {
             sendEvent(withName: "onWatchMessageReceived", body: message)
         }
-        replyHandler(["status": "received"])
+
+        replyHandler(["status": "received", "timestamp": Date().timeIntervalSince1970])
     }
 
-    public func sessionDidBecomeInactive(_ session: WCSession) {}
+    public func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        print("📦 [BRIDGE] Application context received: \(applicationContext.keys)")
+
+        if hasListeners {
+            sendEvent(withName: "onWatchDataReceived", body: [
+                "type": "applicationContext",
+                "data": applicationContext
+            ])
+        }
+    }
+
+    public func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        print("📬 [BRIDGE] UserInfo received: \(userInfo.keys)")
+
+        if hasListeners {
+            sendEvent(withName: "onWatchDataReceived", body: [
+                "type": "userInfo",
+                "data": userInfo
+            ])
+        }
+    }
+
+    public func session(_ session: WCSession, didFinish fileTransfer: WCSessionFileTransfer, error: Error?) {
+        if let error = error {
+            print("❌ [BRIDGE] File transfer failed: \(error.localizedDescription)")
+            if hasListeners {
+                sendEvent(withName: "onWatchError", body: [
+                    "type": "fileTransferFailed",
+                    "error": error.localizedDescription
+                ])
+            }
+        } else {
+            print("✅ [BRIDGE] File transfer completed successfully")
+        }
+    }
+
+    // iOS uniquement
+    public func sessionDidBecomeInactive(_ session: WCSession) {
+        print("💤 [BRIDGE] Session became inactive")
+    }
+
     public func sessionDidDeactivate(_ session: WCSession) {
+        print("🔌 [BRIDGE] Session deactivated - reactivating...")
+        // IMPORTANT : Réactiver automatiquement
         session.activate()
     }
 }
