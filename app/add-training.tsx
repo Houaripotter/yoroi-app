@@ -384,13 +384,20 @@ export default function AddTrainingScreen() {
 
   // Parse date from params if provided
   useEffect(() => {
-    if (params.date) {
-      const parsedDate = new Date(params.date + 'T12:00:00');
-      if (!isNaN(parsedDate.getTime())) {
-        setDate(parsedDate);
+    if (params?.date) {
+      try {
+        const parsedDate = new Date(params.date + 'T12:00:00');
+        // Validation robuste: vérifier que c'est une vraie date et dans une plage raisonnable
+        if (!isNaN(parsedDate.getTime()) && parsedDate.getFullYear() > 2000 && parsedDate.getFullYear() < 2100) {
+          setDate(parsedDate);
+        } else {
+          logger.warn('Date invalide reçue dans params:', params.date);
+        }
+      } catch (error) {
+        logger.error('Erreur parsing date:', error);
       }
     }
-  }, [params.date]);
+  }, [params?.date]);
 
   // Charger le dernier sport utilisé (pour Quick Add seulement, PAS de pré-sélection)
   useEffect(() => {
@@ -959,7 +966,11 @@ export default function AddTrainingScreen() {
   const handleShareModalShare = async () => {
     setShowShareModal(false);
     // Marquer qu'on doit demander la review au retour
-    await AsyncStorage.setItem('@yoroi_pending_review', 'true');
+    try {
+      await AsyncStorage.setItem('@yoroi_pending_review', 'true');
+    } catch (error) {
+      logger.error('Erreur sauvegarde pending review:', error);
+    }
     // Navigate to last-session sharing screen avec l'ID précis
     if (lastSavedTrainingId) {
       router.replace(`/social-share/last-session?id=${lastSavedTrainingId}`);
@@ -984,10 +995,15 @@ export default function AddTrainingScreen() {
   };
 
   const handleSave = async () => {
+    // Protection anti-spam dès le début
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     // Validation : Sport principal obligatoire si plusieurs sports sélectionnés
     if (selectedSports.length > 1 && !primarySportForObjective) {
       setPrimarySportError(true);
       errorHaptic();
+      setIsSubmitting(false); // Libérer le verrou avant le return
 
       // Scroller vers le sélecteur de sport principal
       if (sportSelectorRef.current && scrollViewRef.current) {
@@ -1004,7 +1020,6 @@ export default function AddTrainingScreen() {
     }
 
     setPrimarySportError(false);
-    setIsSubmitting(true);
 
     try {
       // Construire les notes avec les options sélectionnées et description custom
