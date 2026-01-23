@@ -11,10 +11,23 @@ import { StatsTabViewNew } from '@/components/stats/StatsTabViewNew';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 
+type StatsTab = 'discipline' | 'poids' | 'composition' | 'mesures' | 'vitalite' | 'performance' | 'sante';
+
 export default function StatsScreen() {
   const { colors } = useTheme();
-  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const params = useLocalSearchParams<{ tab?: string }>();
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Validation du param tab avec liste blanche
+  const validTabs: StatsTab[] = ['discipline', 'poids', 'composition', 'mesures', 'vitalite', 'performance', 'sante'];
+  const defaultTab: StatsTab = 'discipline';
+
+  const validatedTab: StatsTab | undefined = React.useMemo(() => {
+    if (params?.tab && validTabs.includes(params.tab as StatsTab)) {
+      return params.tab as StatsTab;
+    }
+    return undefined;
+  }, [params?.tab]);
 
   // Vérifier si c'est la première visite
   useEffect(() => {
@@ -39,7 +52,7 @@ export default function StatsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatsTabViewNew initialTab={tab} />
+      <StatsTabViewNew initialTab={validatedTab} />
 
       {/* Tutoriel de découverte */}
       {showTutorial && (
