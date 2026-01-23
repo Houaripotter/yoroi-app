@@ -26,12 +26,15 @@ import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
 import * as Haptics from 'expo-haptics';
+import ratingService from '@/lib/ratingService';
+import { RatingPopup } from '@/components/RatingPopup';
 
 export default function BackupStepScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [isExporting, setIsExporting] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -44,6 +47,31 @@ export default function BackupStepScreen() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleFinish = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Vérifier si on doit afficher le popup de notation
+    const ratingResult = await ratingService.recordPositiveAction('session');
+
+    if (ratingResult.shouldShowPopup) {
+      setShowRatingPopup(true);
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleRatingClose = () => {
+    setShowRatingPopup(false);
+    ratingService.onPopupDismissed();
+    router.replace('/(tabs)');
+  };
+
+  const handleRated = () => {
+    setShowRatingPopup(false);
+    ratingService.onRated();
+    router.replace('/(tabs)');
   };
 
   return (
@@ -130,12 +158,9 @@ export default function BackupStepScreen() {
           </View>
         )}
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.finishBtn}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.replace('/(tabs)');
-          }}
+          onPress={handleFinish}
         >
           <Text style={[styles.finishBtnText, { color: '#6B7280' }]}>TERMINER LE PARCOURS</Text>
           <ArrowRight size={18} color="#6B7280" />
@@ -143,6 +168,14 @@ export default function BackupStepScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Popup de notation */}
+      <RatingPopup
+        visible={showRatingPopup}
+        onClose={handleRatingClose}
+        onRated={handleRated}
+        actionType="session"
+      />
     </ScreenWrapper>
   );
 }

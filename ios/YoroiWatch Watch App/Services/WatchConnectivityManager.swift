@@ -318,9 +318,17 @@ extension WatchConnectivityManager: WCSessionDelegate {
             print("📩 Message direct reçu de l'iPhone: \(message.keys)")
 
             // Gestion du MEGA-PACK
-            if message["avatarConfig"] != nil || message["weight"] != nil {
+            if message["avatarConfig"] != nil || message["weight"] != nil || message["userName"] != nil {
                 // Envoyer l'objet complet au HealthManager
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: message)
+            }
+
+            // Photo de profil (si incluse dans le message)
+            if let photoBase64 = message["profilePhotoBase64"] as? String {
+                if let photoData = Data(base64Encoded: photoBase64) {
+                    NotificationCenter.default.post(name: .didReceiveProfilePhotoUpdate, object: photoData)
+                    print("📸 Photo reçue via message direct (\(photoData.count) bytes)")
+                }
             }
 
             // Fallback pour les messages individuels (compatibilité)
@@ -354,9 +362,26 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let avatarConfig = applicationContext["avatarConfig"] as? [String: Any] {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["avatarConfig": avatarConfig])
             }
-            
+
             if let userName = applicationContext["userName"] as? String {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["userName": userName])
+            }
+
+            // Sync Photo de profil (base64)
+            if let photoBase64 = applicationContext["profilePhotoBase64"] as? String {
+                if let photoData = Data(base64Encoded: photoBase64) {
+                    NotificationCenter.default.post(name: .didReceiveProfilePhotoUpdate, object: photoData)
+                    print("📸 Photo de profil reçue (\(photoData.count) bytes)")
+                }
+            }
+
+            // Sync Level et Rank
+            if let level = applicationContext["level"] as? Int {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["level": level])
+            }
+
+            if let rank = applicationContext["rank"] as? String {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["rank": rank])
             }
         }
     }
@@ -400,5 +425,6 @@ extension Notification.Name {
     static let didReceiveHydrationUpdate = Notification.Name("didReceiveHydrationUpdate")
     static let didReceiveRecordsUpdate = Notification.Name("didReceiveRecordsUpdate")
     static let didReceiveAvatarUpdate = Notification.Name("didReceiveAvatarUpdate")
+    static let didReceiveProfilePhotoUpdate = Notification.Name("didReceiveProfilePhotoUpdate")
     static let didReceiveDataFromiPhone = Notification.Name("didReceiveDataFromiPhone")
 }

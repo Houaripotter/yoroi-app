@@ -11,10 +11,13 @@ import {
   getSelectedLogo,
   getAllHydrationEntries,
   getHydrationSettings,
+  saveUserSettings,
+  saveHomeLayout,
+  saveSelectedLogo,
 } from './storage';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
-import { getUnlockedBadges } from './badges';
+import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -26,22 +29,54 @@ import logger from '@/lib/security/logger';
  */
 export const exportDataToJSON = async (): Promise<boolean> => {
   try {
-    // Récupérer toutes les données depuis la base SQLite
-    const [profile, weights, trainings, bodyCompositions] = await Promise.all([
+    // Récupérer toutes les données depuis la base SQLite et AsyncStorage
+    const [
+      profile,
+      weights,
+      trainings,
+      bodyCompositions,
+      clubs,
+      measurements,
+      userSettings,
+      unlockedBadges,
+      photos,
+      homeLayout,
+      selectedLogo,
+      hydrationEntries,
+      hydrationSettings,
+    ] = await Promise.all([
       getProfile(),
       getWeights(1000), // Récupérer les 1000 dernières mesures
       getTrainings(),
       getAllBodyCompositions(),
+      getClubs(),
+      getAllMeasurements(),
+      getUserSettings(),
+      getUnlockedBadges(),
+      getPhotosFromStorage(),
+      getHomeLayout(),
+      getSelectedLogo(),
+      getAllHydrationEntries(),
+      getHydrationSettings(),
     ]);
 
     const exportData = {
-      version: '2.0',
+      version: '3.0', // Version augmentée car on ajoute plus de données
       exportDate: new Date().toISOString(),
       appName: 'Yoroi',
       profile,
       weights,
       trainings,
       bodyCompositions,
+      clubs,
+      measurements,
+      userSettings,
+      unlockedBadges,
+      photos,
+      homeLayout,
+      selectedLogo,
+      hydrationEntries,
+      hydrationSettings,
     };
 
     // Créer le fichier JSON
@@ -153,9 +188,21 @@ export const importDataFromJSON = async (): Promise<boolean> => {
 
     // Demander confirmation
     const confirmed = await new Promise<boolean>((resolve) => {
+      const summary = [
+        `• ${importedData.weights?.length || 0} mesures de poids`,
+        `• ${importedData.trainings?.length || 0} entraînements`,
+        `• ${importedData.bodyCompositions?.length || 0} compositions corporelles`,
+        `• ${importedData.clubs?.length || 0} clubs`,
+        `• ${importedData.measurements?.length || 0} mensurations`,
+        `• ${importedData.unlockedBadges?.length || 0} badges débloqués`,
+        `• ${importedData.photos?.length || 0} photos`,
+        importedData.userSettings ? '• Paramètres utilisateur' : null,
+        importedData.homeLayout ? '• Layout de l\'accueil' : null,
+      ].filter(Boolean).join('\n');
+
       Alert.alert(
         'Importer les données ?',
-        `Tu vas importer :\n• ${importedData.weights?.length || 0} mesures de poids\n• ${importedData.trainings?.length || 0} entraînements\n• ${importedData.bodyCompositions?.length || 0} compositions corporelles\n\nCela va AJOUTER ces données aux données existantes (pas de remplacement).`,
+        `Tu vas importer :\n${summary}\n\nCela va AJOUTER ces données aux données existantes (pas de remplacement).`,
         [
           { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Importer', onPress: () => resolve(true) },
@@ -223,9 +270,63 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       }
     }
 
+    // Importer les clubs
+    if (importedData.clubs && Array.isArray(importedData.clubs)) {
+      for (const club of importedData.clubs) {
+        try {
+          await addClub(club);
+          importedCount++;
+        } catch (error) {
+          logger.error('Erreur import club:', error);
+        }
+      }
+    }
+
+    // Importer les badges débloqués
+    if (importedData.unlockedBadges && Array.isArray(importedData.unlockedBadges)) {
+      for (const badgeId of importedData.unlockedBadges) {
+        try {
+          await unlockBadge(badgeId);
+          importedCount++;
+        } catch (error) {
+          logger.error('Erreur import badge:', error);
+        }
+      }
+    }
+
+    // Importer les paramètres utilisateur
+    if (importedData.userSettings) {
+      try {
+        await saveUserSettings(importedData.userSettings);
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import settings:', error);
+      }
+    }
+
+    // Importer le layout home
+    if (importedData.homeLayout && Array.isArray(importedData.homeLayout)) {
+      try {
+        await saveHomeLayout(importedData.homeLayout);
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import home layout:', error);
+      }
+    }
+
+    // Importer le logo sélectionné
+    if (importedData.selectedLogo) {
+      try {
+        await saveSelectedLogo(importedData.selectedLogo);
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import logo:', error);
+      }
+    }
+
     Alert.alert(
       'Import réussi !',
-      `${importedCount} éléments ont été importés avec succès.`
+      `${importedCount} éléments ont été importés avec succès.\n\nTes paramètres, clubs, badges et toutes tes données ont été restaurés !`
     );
 
     return true;

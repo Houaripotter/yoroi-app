@@ -60,14 +60,31 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         AsyncStorage.getItem('waterIntake'),
       ]);
 
-      await WatchConnectivity.updateApplicationContext({
+      // Préparer les données de contexte
+      const contextData: any = {
         avatarConfig: avatarConfig ? JSON.parse(avatarConfig) : { name: 'samurai' },
         userName: profile?.name || 'Guerrier',
         level: level ? parseInt(level) : 1,
         rank: rank || 'Novice',
         waterIntake: parseFloat(waterIntake || '0'),
         timestamp: Date.now()
-      });
+      };
+
+      // Si une photo de profil est définie, l'envoyer en base64
+      if (profile?.profile_photo) {
+        try {
+          const FileSystem = require('expo-file-system').default;
+          const base64Photo = await FileSystem.readAsStringAsync(profile.profile_photo, {
+            encoding: FileSystem.EncodingType.Base64
+          });
+          contextData.profilePhotoBase64 = base64Photo;
+          console.log('📸 Photo de profil incluse dans la sync');
+        } catch (photoError) {
+          console.log('⚠️ Erreur lecture photo de profil:', photoError);
+        }
+      }
+
+      await WatchConnectivity.updateApplicationContext(contextData);
       console.log('📡 Profil complet envoyé à la montre');
     } catch (e) {
       console.log('⚠️ Erreur sync profil vers watch:', e);
@@ -206,22 +223,37 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         parsedAvatar.pack = parsedAvatar.id;
       }
 
-      const megaPack = {
+      // Préparer le mega pack de données
+      const megaPack: any = {
         // Santé
         weight: parseFloat(weight || '0'),
         waterIntake: parseFloat(waterIntake || '0'),
         streak: parseInt(streak || '0'),
-        
+
         // Profil (Harmonisé avec la montre)
         userName: profile?.name || 'Guerrier',
         avatarConfig: parsedAvatar,
         level: level ? parseInt(level) : 1,
         rank: rank || 'Novice',
-        
+
         // Métadonnées
         timestamp: Date.now(),
         forceRefresh: true
       };
+
+      // Inclure la photo de profil si disponible
+      if (profile?.profile_photo) {
+        try {
+          const FileSystem = require('expo-file-system').default;
+          const base64Photo = await FileSystem.readAsStringAsync(profile.profile_photo, {
+            encoding: FileSystem.EncodingType.Base64
+          });
+          megaPack.profilePhotoBase64 = base64Photo;
+          console.log('📸 Photo de profil incluse dans le mega-pack');
+        } catch (photoError) {
+          console.log('⚠️ Erreur lecture photo:', photoError);
+        }
+      }
 
       // 3. Envoi via deux canaux pour 100% de fiabilité
       // Canal A : Contexte (Dernier état connu)

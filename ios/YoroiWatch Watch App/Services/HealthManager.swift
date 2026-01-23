@@ -30,6 +30,11 @@ class HealthManager: ObservableObject {
     @Published var targetWeight: Double = 0
     @Published var profilePhotoData: Data? = nil
     @Published var avatarName: String = "samurai"
+
+    // Profil utilisateur (sync depuis iPhone)
+    @Published var userName: String = "Guerrier"
+    @Published var userLevel: Int = 1
+    @Published var userRank: String = "Novice"
     
     // NOUVEAU: Error handling UI
     @Published var healthKitError: String? = nil
@@ -102,6 +107,14 @@ class HealthManager: ObservableObject {
             name: .didReceiveAvatarUpdate,
             object: nil
         )
+
+        // Observer la photo de profil
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleProfilePhotoUpdate),
+            name: .didReceiveProfilePhotoUpdate,
+            object: nil
+        )
     }
 
     private func setupObservers() {
@@ -157,15 +170,26 @@ class HealthManager: ObservableObject {
                 print("💧 Eau Mega-pack: \(water)")
             }
             
-            // 4. Streak et Nom
+            // 4. Streak et Profil utilisateur
             if let streakVal = userInfo["streak"] as? Int {
                 self.streak = streakVal
             }
-            
+
             if let name = userInfo["userName"] as? String {
+                self.userName = name
                 print("👤 Nom sync: \(name)")
             }
-            
+
+            if let level = userInfo["level"] as? Int {
+                self.userLevel = level
+                print("📊 Niveau sync: \(level)")
+            }
+
+            if let rank = userInfo["rank"] as? String {
+                self.userRank = rank
+                print("🏆 Rang sync: \(rank)")
+            }
+
             self.savePersistedData()
         }
     }
@@ -187,6 +211,15 @@ class HealthManager: ObservableObject {
                 self.waterIntake = amount
                 print("💧 Hydratation sync depuis iPhone: \(amount)ml")
             }
+        }
+    }
+
+    @objc private func handleProfilePhotoUpdate(_ notification: Notification) {
+        guard let photoData = notification.object as? Data else { return }
+        DispatchQueue.main.async {
+            self.profilePhotoData = photoData
+            self.savePersistedData()
+            print("📸 Photo de profil mise à jour (\(photoData.count) bytes)")
         }
     }
 
@@ -772,6 +805,15 @@ class HealthManager: ObservableObject {
         defaults.set(targetWeight, forKey: "targetWeight")
         defaults.set(streak, forKey: "streak")
 
+        // Sauvegarder les données de profil
+        defaults.set(userName, forKey: "userName")
+        defaults.set(userLevel, forKey: "userLevel")
+        defaults.set(userRank, forKey: "userRank")
+        defaults.set(avatarName, forKey: "avatarName")
+        if let photoData = profilePhotoData {
+            defaults.set(photoData, forKey: "profilePhotoData")
+        }
+
         // Sauvegarder l'historique de poids (encodé)
         if let encoded = try? JSONEncoder().encode(weightHistory.map { WeightEntry(date: $0.date, weight: $0.weight) }) {
             defaults.set(encoded, forKey: "weightHistory")
@@ -803,6 +845,14 @@ class HealthManager: ObservableObject {
         currentWeight = defaults.double(forKey: "currentWeight")
         targetWeight = defaults.double(forKey: "targetWeight")
         streak = defaults.integer(forKey: "streak")
+
+        // Charger les données de profil
+        userName = defaults.string(forKey: "userName") ?? "Guerrier"
+        userLevel = defaults.integer(forKey: "userLevel")
+        if userLevel == 0 { userLevel = 1 } // Valeur par défaut
+        userRank = defaults.string(forKey: "userRank") ?? "Novice"
+        avatarName = defaults.string(forKey: "avatarName") ?? "samurai"
+        profilePhotoData = defaults.data(forKey: "profilePhotoData")
 
         // Charger l'historique de poids
         if let data = defaults.data(forKey: "weightHistory"),

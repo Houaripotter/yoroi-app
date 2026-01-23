@@ -201,6 +201,8 @@ export default function AddTrainingScreen() {
   const [userRank, setUserRank] = useState<string>('Ashigaru');
   const [userLevel, setUserLevel] = useState<number>(0);
   const [primarySportForObjective, setPrimarySportForObjective] = useState<string>('');
+  const [primarySportError, setPrimarySportError] = useState<boolean>(false);
+  const sportSelectorRef = useRef<View>(null);
 
   // Charger les données utilisateur
   useEffect(() => {
@@ -629,7 +631,7 @@ export default function AddTrainingScreen() {
     }
   };
 
-  const renderPerformanceFields = (exerciseId: string, label: string) => {
+  const renderPerformanceFields = (exerciseId: string, label: string, sportId: string) => {
     const stats = optionStats[exerciseId] || {};
 
     // Calcul automatique de l'allure (pace) basé sur la vitesse
@@ -740,6 +742,26 @@ export default function AddTrainingScreen() {
           <Text style={{ fontSize: 12, fontWeight: '900', color: colors.gold, letterSpacing: 0.5, textTransform: 'uppercase' }}>
             {label} - DÉTAILS
           </Text>
+          <TouchableOpacity
+            onPress={() => {
+              // Supprimer complètement l'exercice
+              setOptionStats(prev => {
+                const newStats = { ...prev };
+                delete newStats[exerciseId];
+                return newStats;
+              });
+              setValidatedOptions(prev => {
+                const newValidated = { ...prev };
+                delete newValidated[exerciseId];
+                return newValidated;
+              });
+              toggleOption(sportId, exerciseId);
+              lightHaptic();
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialCommunityIcons name="trash-can-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
         </View>
 
         {/* DASHBOARD GRID */}
@@ -968,6 +990,26 @@ export default function AddTrainingScreen() {
   };
 
   const handleSave = async () => {
+    // Validation : Sport principal obligatoire si plusieurs sports sélectionnés
+    if (selectedSports.length > 1 && !primarySportForObjective) {
+      setPrimarySportError(true);
+      errorHaptic();
+
+      // Scroller vers le sélecteur de sport principal
+      if (sportSelectorRef.current && scrollViewRef.current) {
+        sportSelectorRef.current.measureLayout(
+          scrollViewRef.current,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
+          },
+          () => {}
+        );
+      }
+
+      return;
+    }
+
+    setPrimarySportError(false);
     setIsSubmitting(true);
 
     try {
@@ -1955,7 +1997,7 @@ export default function AddTrainingScreen() {
                                             </TouchableOpacity>
                                           </View>
                                         )}
-                                        {isCardio && renderPerformanceFields(option.id, option.label)}
+                                        {isCardio && renderPerformanceFields(option.id, option.label, sportId)}
 
                                         {/* NOTES POUR COMBAT / TECHNIQUE */}
                                         {isCombat && (
@@ -2408,13 +2450,39 @@ export default function AddTrainingScreen() {
                                     )}
         {/* SÉLECTEUR SPORT PRINCIPAL POUR OBJECTIF ANNUEL */}
         {selectedSports.length > 1 && (
-          <View style={{ padding: 16, backgroundColor: colors.backgroundCard, borderRadius: 16, marginTop: 20, borderWidth: 1, borderColor: colors.border }}>
+          <View
+            ref={sportSelectorRef}
+            style={{
+              padding: 16,
+              backgroundColor: colors.backgroundCard,
+              borderRadius: 16,
+              marginTop: 20,
+              borderWidth: 2,
+              borderColor: primarySportError ? colors.error : colors.border
+            }}
+          >
             <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 12, letterSpacing: 0.5 }}>
               SPORT PRINCIPAL POUR OBJECTIF ANNUEL
             </Text>
             <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
               Choisis quel sport afficher dans l'objectif annuel de ta carte de partage
             </Text>
+
+            {primarySportError && (
+              <View style={{
+                backgroundColor: colors.error + '20',
+                padding: 12,
+                borderRadius: 12,
+                marginBottom: 16,
+                borderWidth: 1,
+                borderColor: colors.error
+              }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.error, textAlign: 'center' }}>
+                  ⚠️ Vous avez oublié le champ "Sport principal". Veuillez le remplir pour continuer.
+                </Text>
+              </View>
+            )}
+
             <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
               {selectedSports.map(sportId => {
                 const sportName = getSportName(sportId);
@@ -2424,6 +2492,7 @@ export default function AddTrainingScreen() {
                     key={sportId}
                     onPress={() => {
                       setPrimarySportForObjective(sportId);
+                      setPrimarySportError(false);
                       lightHaptic();
                     }}
                     style={{
@@ -2594,7 +2663,9 @@ export default function AddTrainingScreen() {
                                   }}
                                   onPress={() => {
                                     lightHaptic();
-                                    setValidationStep(3);
+                                    setShowValidationModal(false);
+                                    setCardBackgroundImage(null);
+                                    router.push('/social-share/last-session');
                                   }}
                                 >
                                   <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
@@ -2613,7 +2684,7 @@ export default function AddTrainingScreen() {
                                   onPress={() => {
                                     setShowValidationModal(false);
                                     setCardBackgroundImage(null);
-                                    router.push('/social-share/last-session');
+                                    router.replace('/(tabs)');
                                   }}
                                 >
                                   <Text style={{ color: colors.textSecondary, fontWeight: '800', fontSize: 16 }}>PASSER</Text>
