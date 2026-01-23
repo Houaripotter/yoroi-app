@@ -19,6 +19,8 @@ interface DarkButtonProps {
   textStyle?: TextStyle;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'outline' | 'ghost';
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const DarkButton: React.FC<DarkButtonProps> = ({
@@ -31,6 +33,8 @@ export const DarkButton: React.FC<DarkButtonProps> = ({
   textStyle,
   size = 'md',
   variant = 'default',
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { colors } = useTheme();
 
@@ -63,6 +67,10 @@ export const DarkButton: React.FC<DarkButtonProps> = ({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: disabled || loading }}
       style={[
         styles.container,
         variantStyles[variant],

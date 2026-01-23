@@ -26,6 +26,8 @@ import { LucideIcon } from 'lucide-react-native';
 interface GlassButtonProps {
   title: string;
   onPress: () => void;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;

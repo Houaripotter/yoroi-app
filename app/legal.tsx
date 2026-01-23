@@ -30,7 +30,7 @@ export default function LegalScreen() {
 
       const settings = await getUserSettings();
       if (!settings.username || !settings.gender) {
-        router.replace('/onboarding');
+        router.push('/onboarding');
       } else {
         router.replace('/(tabs)');
       }
@@ -46,7 +46,17 @@ export default function LegalScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }} style={styles.backButton}>
+        <TouchableOpacity
+          disabled={isNavigating}
+          onPress={() => {
+            if (!isNavigating) {
+              setIsNavigating(true);
+              setTimeout(() => setIsNavigating(false), 1000);
+              router.back();
+            }
+          }}
+          style={styles.backButton}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Bienvenue</Text>

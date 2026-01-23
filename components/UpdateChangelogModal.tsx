@@ -168,7 +168,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
             />
             <Text style={[styles.appName, { color: colors.textPrimary }]}>YOROI</Text>
             <View style={[styles.versionBadge, { backgroundColor: colors.accent + '20' }]}>
-              <Text style={[styles.versionText, { color: colors.accent }]}>v1.0.1</Text>
+              <Text style={[styles.versionText, { color: colors.accent }]}>Version 2.0.0</Text>
             </View>
           </View>
 

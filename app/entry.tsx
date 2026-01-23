@@ -11,6 +11,7 @@ import {
   Animated,
   StatusBar,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
@@ -173,6 +174,7 @@ export default function EntryScreen() {
   };
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     if (!weight || parseFloat(weight.replace(',', '.')) <= 0) {
       showPopup('Erreur', 'Entre un poids valide', [{ text: 'OK', style: 'primary' }]);
       errorHaptic();

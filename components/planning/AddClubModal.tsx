@@ -285,7 +285,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                 style={[styles.removeLogoButton, { borderColor: colors.danger }]}
                 onPress={() => setLogoUri(null)}
               >
-                <X size={14} color={colors.danger} />
+                <X size={20} color={colors.danger} />
                 <Text style={[styles.removeLogoText, { color: colors.danger }]}>Supprimer</Text>
               </TouchableOpacity>
             )}

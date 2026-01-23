@@ -395,10 +395,10 @@ export default function OnboardingScreen() {
           onboardingCompleted: true,
         });
 
-        router.replace('/mode-selection');
+        router.push('/mode-selection');
       } catch (error) {
         console.error('Erreur sauvegarde profil:', error);
-        router.replace('/mode-selection');
+        router.push('/mode-selection');
       }
     });
   };

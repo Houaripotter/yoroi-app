@@ -1701,7 +1701,7 @@ export default function MoreScreen() {
               marginTop: 12,
               textAlign: 'center'
             }}>
-              YOROI v1.0.1
+              YOROI Version 2.0.0
             </Text>
           </TouchableOpacity>
 

@@ -245,7 +245,7 @@ export default function SportSelectionScreen() {
         });
       } else {
         // Sports sans catégories → setup direct
-        router.replace('/setup');
+        router.push('/setup');
       }
     } catch (error) {
       logger.error('Error saving sport:', error);

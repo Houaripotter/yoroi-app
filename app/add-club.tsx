@@ -21,6 +21,8 @@ export default function AddClubScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [nameError, setNameError] = useState('');
+  const [sportError, setSportError] = useState('');
 
   const CLUB_COLORS = [
     '#EF4444', '#F97316', '#F59E0B', '#22C55E',
@@ -51,12 +53,25 @@ export default function AddClubScreen() {
   };
 
   const handleSave = async () => {
+    Keyboard.dismiss();
+
+    // Réinitialiser les erreurs
+    setNameError('');
+    setSportError('');
+
+    // Validation
+    let hasError = false;
     if (!name.trim()) {
-      Alert.alert('Erreur', 'Le nom du club est obligatoire');
-      return;
+      setNameError('Le nom du club est obligatoire');
+      hasError = true;
     }
     if (!selectedSport) {
-      Alert.alert('Erreur', 'Veuillez choisir un sport');
+      setSportError('Veuillez choisir un sport');
+      hasError = true;
+    }
+
+    if (hasError) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
@@ -72,8 +87,8 @@ export default function AddClubScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (error) {
-      console.error(error);
-      Alert.alert('Erreur', "Impossible de créer le club");
+      console.error('Erreur création club:', error);
+      Alert.alert('Erreur', "Impossible de créer le club. Réessaye dans quelques instants.");
     } finally {
       setIsSubmitting(false);
     }
@@ -155,9 +170,9 @@ export default function AddClubScreen() {
           backgroundColor: colors.backgroundCard,
           padding: 18,
           borderRadius: 20,
-          borderWidth: 1,
-          borderColor: colors.border,
-          marginBottom: 24,
+          borderWidth: nameError ? 2 : 1,
+          borderColor: nameError ? '#EF4444' : colors.border,
+          marginBottom: nameError ? 8 : 24,
           shadowColor: colors.accent,
           shadowOpacity: 0.08,
           shadowRadius: 12,
@@ -168,10 +183,18 @@ export default function AddClubScreen() {
             placeholder="Ex: Gracie Barra, Basic-Fit..."
             placeholderTextColor={colors.textMuted}
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => {
+              setName(text);
+              if (nameError) setNameError('');
+            }}
             maxLength={100}
           />
         </View>
+        {nameError && (
+          <View style={{ backgroundColor: '#EF444420', borderLeftWidth: 3, borderLeftColor: '#EF4444', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>❌ {nameError}</Text>
+          </View>
+        )}
 
         {/* 2. LOGO */}
         <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>2. LOGO (OPTIONNEL)</Text>

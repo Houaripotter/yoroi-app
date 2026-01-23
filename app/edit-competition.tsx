@@ -80,7 +80,7 @@ export default function EditCompetitionScreen() {
       const comp = await getCompetitionById(parseInt(competitionId));
       if (!comp) {
         showPopup('Erreur', 'Compétition introuvable', [
-          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
+          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
         ]);
         return;
       }
@@ -102,7 +102,7 @@ export default function EditCompetitionScreen() {
     } catch (error) {
       logger.error('Error loading competition:', error);
       showPopup('Erreur', 'Impossible de charger la compétition', [
-        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
       ]);
     } finally {
       setLoading(false);

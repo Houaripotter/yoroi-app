@@ -348,7 +348,7 @@ async function exportAllData(): Promise<string> {
   const data: SecureBackupData = {
     version: EXPORT_VERSION,
     exported_at: new Date().toISOString(),
-    app_version: Constants.expoConfig?.version || (Constants.manifest as any)?.version || '1.0.0',
+    app_version: Constants.expoConfig?.version || (Constants.manifest as any)?.version || '2.0.0',
     device_info: {
       platform: 'mobile',
     },

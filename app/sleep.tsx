@@ -61,32 +61,22 @@ export default function SleepScreen() {
   const { t, language } = useI18n();
   const dateLocale = DATE_LOCALES[language] || fr;
 
-  const [entries, setEntries] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<SleepEntry[]>([]);
-  const [stats, setStats] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<SleepStats | null>(null);
-  const [goal, setGoal] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(480); // 8h par défaut
-  const [showAddModal, setShowAddModal] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [entries, setEntries] = useState<SleepEntry[]>([]);
+  const [stats, setStats] = useState<SleepStats | null>(null);
+  const [goal, setGoal] = useState(480); // 8h par défaut
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Formulaire
-  const [bedTime, setBedTime] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('23:00');
-  const [wakeTime, setWakeTime] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('07:00');
-  const [quality, setQuality] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(3);
-  const [notes, setNotes] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [bedTime, setBedTime] = useState('23:00');
+  const [wakeTime, setWakeTime] = useState('07:00');
+  const [quality, setQuality] = useState(3);
+  const [notes, setNotes] = useState('');
 
   // Notifications
-  const [notificationsEnabled, setNotificationsEnabled] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
-  const [bedtimeReminder, setBedtimeReminder] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('22:30');
-  const [showNotificationSettings, setShowNotificationSettings] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [bedtimeReminder, setBedtimeReminder] = useState('22:30');
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -169,7 +159,17 @@ export default function SleepScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.backgroundCard }]}>
-        <TouchableOpacity onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }} style={styles.backBtn}>
+        <TouchableOpacity
+          disabled={isNavigating}
+          onPress={() => {
+            if (!isNavigating) {
+              setIsNavigating(true);
+              setTimeout(() => setIsNavigating(false), 1000);
+              router.back();
+            }
+          }}
+          style={styles.backBtn}
+        >
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{t('sleep.title')}</Text>

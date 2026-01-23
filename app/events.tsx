@@ -355,7 +355,17 @@ export default function EventsScreen() {
     <ScreenWrapper>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }} style={styles.backButton}>
+        <TouchableOpacity
+          disabled={isNavigating}
+          onPress={() => {
+            if (!isNavigating) {
+              setIsNavigating(true);
+              setTimeout(() => setIsNavigating(false), 1000);
+              router.back();
+            }
+          }}
+          style={styles.backButton}
+        >
           <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>

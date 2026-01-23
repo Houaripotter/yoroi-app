@@ -8,6 +8,7 @@ import {
   TextInput,
   StatusBar,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -294,6 +295,7 @@ export default function MeasurementsScreen() {
   };
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     // Check if at least one measurement is provided
     if (!chest && !waist && !hips && !rightArm && !leftArm && !rightThigh && !leftThigh && !neck && !shoulders) {
       showPopup('Erreur', 'Entre au moins une mesure', [

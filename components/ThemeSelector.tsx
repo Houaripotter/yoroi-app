@@ -178,7 +178,7 @@ export const ThemeSelector: React.FC = () => {
   const handlePremiumAlert = () => {
     showPopup(
       'Theme Premium',
-      'Ce theme necessite la version Premium.\n\nMode Createur : Tapez 5 fois sur "Version 1.0.0" dans les Reglages pour debloquer.',
+      'Ce theme necessite la version Premium.\n\nMode Createur : Tapez 5 fois sur "Version 2.0.0" dans les Reglages pour debloquer.',
       [{ text: 'OK', style: 'primary' }]
     );
   };

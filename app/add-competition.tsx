@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -78,6 +79,7 @@ export default function AddCompetitionScreen() {
   };
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     if (!nom.trim()) {
       showPopup('Erreur', 'Saisis un nom de competition', [{ text: 'OK', style: 'primary' }]);
       return;

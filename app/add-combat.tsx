@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -94,6 +95,7 @@ export default function AddCombatScreen() {
   };
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     if (!adversaireNom.trim()) {
       showPopup('Erreur', 'Saisis le nom de l\'adversaire', [{ text: 'OK', style: 'primary' }]);
       return;

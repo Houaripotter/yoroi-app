@@ -49,6 +49,7 @@ export default function ClubsScreen() {
   const router = useRouter();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
 

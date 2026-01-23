@@ -13,6 +13,8 @@ import { useTheme } from '@/lib/ThemeContext';
 interface GoldButtonProps {
   label: string;
   onPress: () => void;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
   icon?: React.ReactNode;
   disabled?: boolean;
   loading?: boolean;
@@ -30,6 +32,8 @@ export const GoldButton: React.FC<GoldButtonProps> = ({
   style,
   textStyle,
   size = 'md',
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const { colors, gradients } = useTheme();
 

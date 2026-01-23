@@ -12,6 +12,7 @@ import {
   Image,
   Pressable,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -290,6 +291,7 @@ export default function ProfileScreen() {
   const level = getLevel(totalPoints);
 
   const handleSave = async () => {
+    Keyboard.dismiss();
     // Protection anti-spam
     if (isSaving) return;
 

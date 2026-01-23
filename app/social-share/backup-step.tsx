@@ -8,6 +8,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Alert,
   ScrollView,
   Image,
   Modal,
@@ -45,7 +46,15 @@ export default function BackupStepScreen() {
       // Afficher le modal de succès
       setShowSuccessModal(true);
     } catch (error) {
-      console.error(error);
+      console.error('Erreur export:', error);
+      Alert.alert(
+        'Erreur de sauvegarde',
+        'Impossible d\'exporter tes données. Vérifie que tu as autorisé l\'accès à tes photos et réessaye.',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Réessayer', onPress: handleExport },
+        ]
+      );
     } finally {
       setIsExporting(false);
     }

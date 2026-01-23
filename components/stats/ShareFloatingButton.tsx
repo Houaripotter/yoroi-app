@@ -303,7 +303,7 @@ export const ShareFloatingButton: React.FC = () => {
         onPress={handleClose}
         hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
       >
-        <X size={14} color="#FFFFFF" strokeWidth={3} />
+        <X size={20} color="#FFFFFF" strokeWidth={3} />
       </TouchableOpacity>
     </Animated.View>
   );

@@ -129,7 +129,7 @@ export default function InjuryEvaluationScreen() {
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
-          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } },
+          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } },
         ]);
       } else {
         // Mode création - créer une nouvelle blessure

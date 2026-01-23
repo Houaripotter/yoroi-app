@@ -69,7 +69,7 @@ export default function CompetitionDetailScreen() {
     // Validation du paramètre
     if (!competitionId || isNaN(parseInt(competitionId))) {
       showPopup('Erreur', 'Compétition non trouvée', [
-        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
       ]);
       setLoading(false);
       return;
@@ -86,7 +86,7 @@ export default function CompetitionDetailScreen() {
     } catch (error) {
       logger.error('Error loading competition:', error);
       showPopup('Erreur', 'Impossible de charger la compétition', [
-        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } }
       ]);
     } finally {
       setLoading(false);

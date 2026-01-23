@@ -200,6 +200,7 @@ export default function HomeScreen() {
 
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Pop-up de notation
   const [showRatingPopup, setShowRatingPopup] = useState(false);
@@ -210,7 +211,7 @@ export default function HomeScreen() {
       try {
         // 1. Gérer le message de mise à jour (What's New)
         const lastVersionSeen = await AsyncStorage.getItem('@yoroi_last_version_seen');
-        const currentVersion = '1.0.1'; // À mettre à jour à chaque build Store
+        const currentVersion = '2.0.0'; // À mettre à jour à chaque build Store
 
         if (lastVersionSeen !== currentVersion) {
           setShowWhatIsNew(true);
@@ -463,6 +464,7 @@ export default function HomeScreen() {
 
   // Chargement des données
   const loadData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const [profileData, weight, history, streakDays, quote, allTrainings, mode, sleep, load, challenges, report, event, sections] = await Promise.all([
         getProfile(),
@@ -526,6 +528,8 @@ export default function HomeScreen() {
       }
     } catch (error) {
       logger.error('Erreur:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, [loadHydration]);
 
@@ -1435,6 +1439,15 @@ export default function HomeScreen() {
     if (totalLoad > 2500) return 'intense';
     return 'moderate';
   }, [loadStats]);
+
+  // Afficher loading pendant le chargement initial
+  if (isLoading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>

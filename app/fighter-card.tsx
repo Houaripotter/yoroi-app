@@ -264,7 +264,7 @@ export default function FighterCardScreen() {
       <View style={styles.header}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: colors.card }]}
-          onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }}
+          onPress={() => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } }}
         >
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>

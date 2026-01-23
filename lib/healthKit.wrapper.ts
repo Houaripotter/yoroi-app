@@ -38,3 +38,4 @@ export default HealthKit || MockHealthKit;
 // Export pour savoir si HealthKit est disponible
 export const isHealthKitAvailable = HealthKit !== null;
 export const isRunningInExpoGo = isExpoGo;
+export const isMockMode = HealthKit === null; // ✅ NOUVEAU : Détecter mode mock

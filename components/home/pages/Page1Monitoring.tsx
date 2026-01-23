@@ -1198,7 +1198,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 onPress={handleDismissShareButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <X size={10} color={colors.textMuted} strokeWidth={3} />
+                <X size={20} color={colors.textMuted} strokeWidth={3} />
               </TouchableOpacity>
             )}
           </View>

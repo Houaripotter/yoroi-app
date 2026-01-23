@@ -74,10 +74,10 @@ export default function ModeSelectionScreen() {
 
       // Si mode compétiteur, rediriger vers config sport
       if (selectedMode === 'competiteur') {
-        router.replace('/sport-selection');
+        router.push('/sport-selection');
       } else {
         // Mode loisir, continuer l'onboarding normal
-        router.replace('/setup');
+        router.push('/setup');
       }
     } catch (error) {
       logger.error('Error saving mode:', error);

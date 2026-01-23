@@ -57,6 +57,16 @@ export default function HealthConnectScreen() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
+    // ✅ AVERTIR SI ANDROID (NON SUPPORTÉ POUR L'INSTANT)
+    if (Platform.OS === 'android') {
+      Alert.alert(
+        'Non disponible',
+        'La synchronisation santé n\'est pas encore disponible sur Android. Elle sera ajoutée dans une prochaine mise à jour.',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+      return;
+    }
+
     loadStatus();
   }, []);
 
@@ -66,43 +76,85 @@ export default function HealthConnectScreen() {
   };
 
   const handleConnect = async () => {
+    // ✅ GUARD CLAUSE : Empêcher double connexion
+    if (isConnecting) {
+      logger.warn('[HealthConnect UI] Connection already in progress');
+      return;
+    }
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsConnecting(true);
-    
+
     try {
       // Vérifier la disponibilité réelle (Simulateur, iPad, etc.)
       const isAvailable = await healthConnect.isAvailable();
       if (!isAvailable) {
         showPopup(
           'Non disponible',
-          Platform.OS === 'ios' 
+          Platform.OS === 'ios'
             ? 'Apple Santé n\'est pas disponible sur cet appareil (ex: Simulateur ou iPad ancien) ou le module n\'est pas chargé.'
             : 'Health Connect n\'est pas disponible sur cet appareil.',
           [{ text: 'J\'ai compris', style: 'primary' }]
         );
-        setIsConnecting(false);
         return;
       }
 
       const success = await healthConnect.connect();
+      const status = healthConnect.getSyncStatus();
 
       if (success) {
         showPopup(
-          'Connecte !',
-          `YOROI est maintenant connecte a ${healthConnect.getProviderName()}. Tes donnees seront synchronisees automatiquement.`,
+          'Connecté !',
+          `YOROI est maintenant connecté à ${healthConnect.getProviderName()}. Tes données seront synchronisées automatiquement.`,
           [{ text: 'Super !', style: 'primary' }]
         );
       } else {
-        showPopup(
-          'Erreur',
-          `Impossible de se connecter a ${healthConnect.getProviderName()}. Verifie que l'app est installee et reessaie.`,
-          [{ text: 'OK', style: 'primary' }]
-        );
+        // ✅ MESSAGES D'ERREUR SPÉCIFIQUES SELON LA RAISON
+        switch (status.failureReason) {
+          case 'USER_DENIED':
+            showPopup(
+              'Permissions refusées',
+              'Tu as refusé l\'accès à Apple Santé. Pour que YOROI fonctionne, tu dois autoriser l\'accès.\n\nVa dans Réglages > Santé > Partage de données > YOROI et active toutes les permissions.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                { text: 'Ouvrir Réglages', onPress: () => Linking.openURL('App-Prefs:HEALTH'), style: 'primary' }
+              ]
+            );
+            break;
+
+          case 'MODULE_NOT_LOADED':
+            showPopup(
+              'Module non chargé',
+              'Le module HealthKit n\'est pas chargé. Cela arrive généralement sur simulateur ou si l\'app n\'est pas compilée correctement.',
+              [{ text: 'OK', style: 'primary' }]
+            );
+            break;
+
+          case 'DEVICE_NOT_SUPPORTED':
+            showPopup(
+              'Appareil non supporté',
+              'Apple Santé n\'est pas disponible sur cet appareil (iPad ou ancien iPhone).',
+              [{ text: 'J\'ai compris', style: 'primary' }]
+            );
+            break;
+
+          default:
+            showPopup(
+              'Erreur',
+              `Impossible de se connecter à ${healthConnect.getProviderName()}. Vérifie que l\'app est installée et réessaye.`,
+              [{ text: 'OK', style: 'primary' }]
+            );
+        }
       }
 
-      setSyncStatus(healthConnect.getSyncStatus());
+      setSyncStatus(status);
     } catch (error) {
       logger.error('Erreur connexion:', error);
+      showPopup(
+        'Erreur',
+        'Une erreur inattendue est survenue. Réessaye plus tard.',
+        [{ text: 'OK', style: 'primary' }]
+      );
     } finally {
       setIsConnecting(false);
     }
