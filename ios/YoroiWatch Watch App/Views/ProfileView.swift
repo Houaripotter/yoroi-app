@@ -1,14 +1,13 @@
 // ============================================
 // YOROI WATCH - Vue Profil & Badges
 // Progression, Grade et Collection
-// Sync en temps réel avec iPhone
 // ============================================
 
 import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var healthManager = HealthManager.shared
-
+    
     // Simuler les badges pour l'instant (à lier au système de badges iPhone plus tard)
     let badges = [
         ("Primeur", "star.fill", Color.yellow),
@@ -18,40 +17,27 @@ struct ProfileView: View {
         ("Sommeil", "moon.fill", Color.purple),
         ("Expert", "crown.fill", Color.yellow)
     ]
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                // SECTION PROFIL (Photo + Avatar + Nom)
-                VStack(spacing: 8) {
+                // SECTION GRADE
+                VStack(spacing: 4) {
                     ZStack {
-                        // Photo de profil ou icône par défaut
-                        if let data = healthManager.profilePhotoData, let uiImage = UIImage(data: data) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 70, height: 70)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.accentColor, lineWidth: 4))
-                        } else {
-                            Circle()
-                                .stroke(Color.accentColor.opacity(0.2), lineWidth: 4)
-                                .frame(width: 70, height: 70)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 30))
-                                        .foregroundColor(.accentColor)
-                                )
-                        }
+                        Circle()
+                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 4)
+                            .frame(width: 70, height: 70)
+                        
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(.accentColor)
                     }
-
-                    // Nom d'utilisateur depuis l'iPhone
-                    Text(healthManager.userName.uppercased())
+                    
+                    Text("SAMURAI")
                         .font(.system(size: 14, weight: .black))
                         .foregroundColor(.white)
-
-                    // Niveau et Rang synchronisés
-                    Text("Niveau \(healthManager.userLevel) • \(healthManager.userRank)")
+                    
+                    Text("Niveau 12")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.gray)
                 }

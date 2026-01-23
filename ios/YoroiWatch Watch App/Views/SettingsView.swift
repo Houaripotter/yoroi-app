@@ -89,7 +89,7 @@ struct SettingsView: View {
             // VERSION & SECRET
             Section {
                 Button(action: handleVersionTap) {
-                    Text("Version 1.0.0")
+                    Text("Yoroi V: 1.0.1")
                         .font(.system(size: 10, weight: .black))
                         .foregroundColor(.gray.opacity(0.5))
                         .frame(maxWidth: .infinity, alignment: .center)

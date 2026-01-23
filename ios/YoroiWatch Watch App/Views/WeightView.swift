@@ -1,6 +1,6 @@
 // ============================================
-// YOROI WATCH - Vue Poids Interactive
-// Graphique scrollable avec Digital Crown
+// YOROI WATCH - Vue Poids
+// Avec graphique orange et bouton ajouter
 // ============================================
 
 import SwiftUI
@@ -8,72 +8,71 @@ import SwiftUI
 struct WeightView: View {
     @StateObject private var healthManager = HealthManager.shared
     @State private var showAddWeight = false
-    @State private var selectedIndex: Int = 0
-    @State private var crownValue: Double = 0.0
-    
+    @State private var newWeight: Double = 78.0
+
+    var weightChange: Double {
+        if healthManager.weightHistory.count >= 2 {
+            let current = healthManager.currentWeight
+            let previous = healthManager.weightHistory[healthManager.weightHistory.count - 2].weight
+            return current - previous
+        }
+        return 0
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 8) {
-                // TITRE
-                Text("POIDS")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundColor(.orange)
-                    .padding(.top, 5)
-                
-                // AFFICHAGE DU POINT SÉLECTIONNÉ
-                if !healthManager.weightHistory.isEmpty {
-                    let entry = healthManager.weightHistory[min(selectedIndex, healthManager.weightHistory.count - 1)]
-                    
-                    VStack(spacing: 0) {
-                        Text(formatFullDate(entry.date))
-                            .font(.system(size: 9, weight: .bold))
+                // Titre
+                HStack(spacing: 6) {
+                    Image(systemName: "scalemass.fill")
+                        .foregroundColor(.orange)
+                    Text("POIDS")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.orange)
+                }
+                .padding(.top, 8)
+
+                // Valeur actuelle
+                HStack(alignment: .bottom) {
+                    Text(String(format: "%.1f", healthManager.currentWeight))
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundColor(.white)
+
+                    Text("kg")
+                        .font(.system(size: 18))
+                        .foregroundColor(.gray)
+                        .padding(.bottom, 6)
+
+                    Spacer()
+
+                    // Changement et objectif
+                    VStack(alignment: .trailing, spacing: 2) {
+                        HStack(spacing: 2) {
+                            Image(systemName: weightChange >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.system(size: 12))
+                            Text(String(format: "%+.1f", weightChange))
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(weightChange <= 0 ? .green : .red)
+
+                        Text("obj: \(String(format: "%.1f", healthManager.targetWeight))")
+                            .font(.system(size: 10))
                             .foregroundColor(.gray)
-                        
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text(String(format: "%.1f", entry.weight))
-                                .font(.system(size: 32, weight: .black, design: .rounded))
-                            Text("KG")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.orange)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                // GRAPHIQUE INTERACTIF (Focus sur Digital Crown)
-                ZStack {
-                    InteractiveWeightChart(data: healthManager.weightHistory, selectedIndex: selectedIndex)
-                        .frame(height: 80)
-                        .focusable(true)
-                        .digitalCrownRotation($crownValue, from: 0, through: Double(max(0, healthManager.weightHistory.count - 1)), by: 1, sensitivity: .low, isContinuous: false, isHapticFeedbackEnabled: true)
-                        .onChange(of: crownValue) { newValue in
-                            selectedIndex = Int(newValue)
-                        }
-                    
-                    // Overlay instructions
-                    if healthManager.weightHistory.count > 1 {
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Image(systemName: "applewatch.side.right")
-                                Text("Tourner pour défiler")
-                            }
-                            .font(.system(size: 7, weight: .bold))
-                            .foregroundColor(.gray.opacity(0.5))
-                        }
                     }
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 8)
 
-                // BOUTON AJOUTER
-                Button(action: { 
-                    WKInterfaceDevice.current().play(.click)
-                    showAddWeight = true 
-                }) {
+                // Graphique
+                WeightChartView(data: healthManager.weightHistory)
+                    .frame(height: 60)
+                    .padding(.horizontal, 4)
+
+                // Bouton ajouter
+                Button(action: { showAddWeight = true }) {
                     HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("NOUVELLE PESÉE")
-                            .font(.system(size: 12, weight: .black))
+                        Image(systemName: "plus")
+                        Text("Ajouter")
+                            .font(.system(size: 14, weight: .semibold))
                     }
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
@@ -83,123 +82,169 @@ struct WeightView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 8)
-                
-                Spacer(minLength: 20)
+                .padding(.bottom, 8)
             }
         }
         .background(Color.black)
-        .onAppear {
-            if !healthManager.weightHistory.isEmpty {
-                selectedIndex = healthManager.weightHistory.count - 1
-                crownValue = Double(selectedIndex)
+        .sheet(isPresented: $showAddWeight) {
+            AddWeightView(weight: $newWeight) {
+                healthManager.saveWeight(newWeight)
+                showAddWeight = false
             }
         }
-        .sheet(isPresented: $showAddWeight) {
-            AddWeightView()
-        }
-    }
-    
-    func formatFullDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE d MMMM"
-        f.locale = Locale(identifier: "fr_FR")
-        return f.string(from: date).uppercased()
     }
 }
 
+// MARK: - Graphique du poids
+
+struct WeightChartView: View {
+    let data: [(date: Date, weight: Double)]
+
+    var minWeight: Double {
+        (data.map { $0.weight }.min() ?? 75) - 0.5
+    }
+
+    var maxWeight: Double {
+        (data.map { $0.weight }.max() ?? 80) + 0.5
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            let height = geo.size.height
+
+            ZStack {
+                // Ligne du graphique
+                Path { path in
+                    guard data.count > 1 else { return }
+
+                    for (index, entry) in data.enumerated() {
+                        let x = CGFloat(index) / CGFloat(data.count - 1) * width
+                        let normalizedY = (entry.weight - minWeight) / (maxWeight - minWeight)
+                        let y = height - (normalizedY * height)
+
+                        if index == 0 {
+                            path.move(to: CGPoint(x: x, y: y))
+                        } else {
+                            path.addLine(to: CGPoint(x: x, y: y))
+                        }
+                    }
+                }
+                .stroke(Color.orange, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+
+                // Points et labels
+                ForEach(Array(data.enumerated()), id: \.offset) { index, entry in
+                    let x = CGFloat(index) / CGFloat(max(data.count - 1, 1)) * width
+                    let normalizedY = (entry.weight - minWeight) / (maxWeight - minWeight)
+                    let y = height - (normalizedY * height)
+
+                    // Point
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 6, height: 6)
+                        .position(x: x, y: y)
+
+                    // Label poids
+                    Text(String(format: "%.1f", entry.weight))
+                        .font(.system(size: 8))
+                        .foregroundColor(.white)
+                        .position(x: x, y: y - 12)
+
+                    // Label jour
+                    Text(dayLabel(entry.date))
+                        .font(.system(size: 7))
+                        .foregroundColor(.gray)
+                        .position(x: x, y: height + 8)
+                }
+            }
+        }
+    }
+
+    private func dayLabel(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "E"
+        formatter.locale = Locale(identifier: "fr_FR")
+        return String(formatter.string(from: date).prefix(1).uppercased())
+    }
+}
+
+// MARK: - Vue ajout poids
+
 struct AddWeightView: View {
-    @Environment(\.dismiss) var dismiss
-    @StateObject private var healthManager = HealthManager.shared
-    @State private var weightValue: Double = 75.0
+    @Binding var weight: Double
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(spacing: 10) {
             Text("NOUVEAU POIDS")
-                .font(.system(size: 12, weight: .black))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.orange)
             
+            Spacer()
+            
+            // Sélecteur central (Focus pour Digital Crown)
             VStack(spacing: 0) {
-                Text(String(format: "%.1f", weightValue))
-                    .font(.system(size: 44, weight: .black, design: .rounded))
+                Text(String(format: "%.1f", weight))
+                    .font(.system(size: 48, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .focusable(true)
-                    .digitalCrownRotation($weightValue, from: 30, through: 250, by: 0.1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
+                    .digitalCrownRotation($weight, from: 30.0, through: 250.0, by: 0.1, sensitivity: .medium, isContinuous: false, isHapticFeedbackEnabled: true)
                 
-                Text("KG")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.orange)
+                Text("KILOGRAMMES")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.gray)
             }
-            .padding(.vertical, 5)
+            
+            Spacer()
+            
+            // Boutons de contrôle rapide
+            HStack(spacing: 20) {
+                Button(action: { 
+                    weight -= 0.1
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: { 
+                    weight += 0.1
+                    WKInterfaceDevice.current().play(.click)
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
             
             Button(action: {
-                healthManager.saveWeight(weightValue)
                 WKInterfaceDevice.current().play(.success)
+                onSave()
                 dismiss()
             }) {
-                Text("ENREGISTRER")
-                    .font(.system(size: 14, weight: .black))
+                Text("CONFIRMER")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(Color.orange)
-                    .foregroundColor(.black)
                     .cornerRadius(12)
             }
             .buttonStyle(.plain)
         }
-        .onAppear {
-            // Initialiser avec le dernier poids connu
-            if healthManager.currentWeight > 0 {
-                weightValue = healthManager.currentWeight
-            }
-        }
+        .padding(.horizontal)
+        .background(Color.black)
     }
 }
 
-struct InteractiveWeightChart: View {
-    let data: [(date: Date, weight: Double)]
-    let selectedIndex: Int
-    
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = geo.size.height
-            let maxW = data.map { $0.weight }.max() ?? 100
-            let minW = data.map { $0.weight }.min() ?? 50
-            let range = max(1, maxW - minW)
-            
-            ZStack {
-                // Ligne de base
-                Path { path in
-                    guard data.count > 1 else { return }
-                    for (i, entry) in data.enumerated() {
-                        let x = CGFloat(i) / CGFloat(data.count - 1) * w
-                        let y = h - CGFloat((entry.weight - minW) / range) * h
-                        if i == 0 { path.move(to: CGPoint(x: x, y: y)) }
-                        else { path.addLine(to: CGPoint(x: x, y: y)) }
-                    }
-                }
-                .stroke(Color.orange.opacity(0.3), lineWidth: 2)
-                
-                // Point sélectionné
-                if !data.isEmpty && selectedIndex < data.count {
-                    let entry = data[selectedIndex]
-                    let x = CGFloat(selectedIndex) / CGFloat(max(1, data.count - 1)) * w
-                    let y = h - CGFloat((entry.weight - minW) / range) * h
-                    
-                    // Ligne verticale indicateur
-                    Path { path in
-                        path.move(to: CGPoint(x: x, y: 0))
-                        path.addLine(to: CGPoint(x: x, y: h))
-                    }
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 8, height: 8)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        .position(x: x, y: y)
-                }
-            }
-        }
-    }
+#Preview {
+    WeightView()
 }

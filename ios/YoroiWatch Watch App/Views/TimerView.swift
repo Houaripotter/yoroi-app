@@ -52,75 +52,73 @@ struct TimerView: View {
     let durations = [30, 60, 90, 120, 180, 300, 600]
     
     var body: some View {
-        TimelineView(.periodic(from: .now, by: isRunning ? 1.0 : 10.0)) { context in
-            ScrollView {
-                VStack(spacing: 8) {
-                    // CERCLE PRINCIPAL AVEC CONTRÔLES INTÉGRÉS
-                    HStack(spacing: 10) {
-                        // BOUTON MOINS (Gauche)
-                        Button(action: { 
-                            if remainingTime > 10 {
-                                remainingTime -= 10 
-                                WKInterfaceDevice.current().play(.click)
-                            }
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundColor(.gray.opacity(0.6))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isRunning)
-                        
-                        ZStack {
-                            Circle()
-                                .stroke(currentMode.color.opacity(0.2), lineWidth: 8)
-                                .frame(width: 110, height: 110)
-                            
-                            Circle()
-                                .trim(from: 0, to: CGFloat(Double(remainingTime) / Double(max(1, selectedDuration))))
-                                .stroke(currentMode.color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                                .frame(width: 110, height: 110)
-                                .rotationEffect(.degrees(-90))
-                                .animation(.linear, value: remainingTime)
-                            
-                            VStack(spacing: 2) {
-                                if currentMode != .rest && currentMode != .breathing && currentMode != .stretching {
-                                    Text("R\(currentRound)/\(totalRounds)")
-                                        .font(.system(size: 12, weight: .black))
-                                        .foregroundColor(currentMode.color)
-                                }
-                                
-                                Text(formatTime(remainingTime))
-                                    .font(.system(size: 28, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white)
-                                
-                                // BOUTON PLAY/STOP AU MILIEU
-                                Button(action: toggleTimer) {
-                                    Image(systemName: isRunning ? "pause.fill" : "play.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(isRunning ? .orange : currentMode.color)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        
-                        // BOUTON PLUS (Droite)
-                        Button(action: { 
-                            remainingTime += 10 
-                            if !isRunning { selectedDuration = remainingTime }
+        ScrollView {
+            VStack(spacing: 8) {
+                // CERCLE PRINCIPAL AVEC CONTRÔLES INTÉGRÉS
+                HStack(spacing: 10) {
+                    // BOUTON MOINS (Gauche)
+                    Button(action: { 
+                        if remainingTime > 10 {
+                            remainingTime -= 10 
                             WKInterfaceDevice.current().play(.click)
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundColor(.gray.opacity(0.6))
                         }
-                        .buttonStyle(.plain)
-                        .disabled(isRunning)
+                    }) {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.gray.opacity(0.6))
                     }
-                    .padding(.vertical, 8)
+                    .buttonStyle(.plain)
+                    .disabled(isRunning)
                     
-                    // SÉLECTEUR DE MODE
-                    // ... reste du code identique ...
+                    ZStack {
+                        Circle()
+                            .stroke(currentMode.color.opacity(0.2), lineWidth: 8)
+                            .frame(width: 110, height: 110)
+                        
+                        Circle()
+                            .trim(from: 0, to: CGFloat(Double(remainingTime) / Double(max(1, selectedDuration))))
+                            .stroke(currentMode.color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .frame(width: 110, height: 110)
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear, value: remainingTime)
+                        
+                        VStack(spacing: 2) {
+                            if currentMode != .rest && currentMode != .breathing && currentMode != .stretching {
+                                Text("R\(currentRound)/\(totalRounds)")
+                                    .font(.system(size: 12, weight: .black))
+                                    .foregroundColor(currentMode.color)
+                            }
+                            
+                            Text(formatTime(remainingTime))
+                                .font(.system(size: 28, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white)
+                            
+                            // BOUTON PLAY/STOP AU MILIEU
+                            Button(action: toggleTimer) {
+                                Image(systemName: isRunning ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(isRunning ? .orange : currentMode.color)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    
+                    // BOUTON PLUS (Droite)
+                    Button(action: { 
+                        remainingTime += 10 
+                        if !isRunning { selectedDuration = remainingTime }
+                        WKInterfaceDevice.current().play(.click)
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(.gray.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRunning)
+                }
+                .padding(.vertical, 8)
+                
+                // SÉLECTEUR DE MODE (SCROLLABLE SI TROP D'OPTIONS)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("MODE")
                         .font(.system(size: 10, weight: .bold))
