@@ -5,7 +5,8 @@
 // - Remplacement des styles inline par StyleSheet
 // - Amélioration des performances de rendu
 // - Code plus maintenable
-import React from 'react';
+// - Conversion des styles inline en useMemo pour réduire les re-allocations
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -72,7 +73,7 @@ interface SessionCardProps {
   }[];
 }
 
-export const SessionCard = React.forwardRef<View, SessionCardProps>(
+export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
   ({
     training, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width = DEFAULT_WIDTH,
     userAvatar, profilePhoto, userName, rank, userLevel, options,
@@ -118,30 +119,85 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
       return null;
     };
 
+    // Memoized styles
+    const cardStyle = useMemo(() => ({ width, height: CARD_HEIGHT, backgroundColor: bg }), [width, CARD_HEIGHT, bg]);
+    const gradientFlexStyle = useMemo(() => ({ flex: 1 }), []);
+    const dateTopContainerStyle = useMemo(() => ({ position: 'absolute' as const, top: 8, left: 0, right: 0, alignItems: 'center' as const, zIndex: 10 }), []);
+    const dateBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }), []);
+    const dateColorStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
+    const profileLeftContainerStyle = useMemo(() => ({ alignItems: 'center' as const, gap: 4, maxWidth: 100 }), []);
+    const usernameBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }), []);
+    const usernameTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
+    const usernameShadowStyle = useMemo(() => ({
+      color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const,
+      textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
+      textAlign: 'center' as const, maxWidth: 100
+    }), []);
+    const avatarRightContainerStyle = useMemo(() => ({ maxWidth: 100 }), []);
+    const rankBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }), []);
+    const rankTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
+    const rankLevelTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const, marginTop: 1 }), []);
+    const objectifRowStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6 }), []);
+    const objectifParenthesesStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
+    const progressSlashStyle = useMemo(() => ({ color: txt, fontSize: 18, fontWeight: '800' as const }), [txt]);
+    const progressGoalNumberStyle = useMemo(() => ({ fontSize: 24 }), []);
+    const progressDaysTextStyle = useMemo(() => ({ color: txt, fontSize: 16, fontWeight: '800' as const }), [txt]);
+    const progressContainerMarginStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, marginTop: 4 }), []);
+    const progressBarBgStyle = useMemo(() => ({
+      width: 120, height: 8,
+      backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+      borderRadius: 4, overflow: 'hidden' as const, position: 'relative' as const
+    }), [isWhite]);
+    const progressBarGraduationsStyle = useMemo(() => ({ position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' as const }), []);
+    const progressBarGraduationLineStyle = useMemo((mark: number) => ({
+      position: 'absolute' as const, left: `${mark}%`, width: 1, height: '100%',
+      backgroundColor: isWhite ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)'
+    }), [isWhite]);
+    const progressBarFillStyle = useMemo(() => ({ height: '100%', width: `${progressPercent}%` }), [progressPercent]);
+    const progressPercentTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' as const }), []);
+    const durationBadgeStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' as const }), []);
+    const durationTextStyle = useMemo(() => ({ color: '#000', fontWeight: '900' as const, fontSize: 13 }), []);
+    const yearDaysSlashStyle = useMemo(() => ({ color: txt, fontSize: 13, fontWeight: '900' as const }), [txt]);
+    const yearDaysNumberStyle = useMemo(() => ({ fontSize: 14 }), []);
+    const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
+    const scrollMaxHeightStyle = useMemo(() => ({ maxHeight: options && options.length > 7 ? 140 : undefined }), [options]);
+    const sportSeparatorMarginStyle = useMemo((i: number) => ({ marginTop: i > 0 ? 8 : 0, marginBottom: 6 }), []);
+    const sportSeparatorTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, letterSpacing: 0.5 }), []);
+    const exerciseRowBorderStyle = useMemo(() => ({ borderBottomColor: borderColor }), [borderColor]);
+    const exerciseLabelStyle = useMemo(() => ({ color: txt }), [txt]);
+    const statSeparatorStyle = useMemo(() => ({ color: txt }), [txt]);
+    const paceTextStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
+    const emptyNotesStyle = useMemo(() => ({ color: subTxt }), [subTxt]);
+    const footerBorderStyle = useMemo(() => ({ borderTopColor: borderColor }), [borderColor]);
+    const styledStatContainerStyle = useMemo(() => ({ flexDirection: 'row' as const, alignItems: 'baseline' as const }), []);
+    const styledStatCommaStyle = useMemo(() => ({ color: txt, fontSize: 11, fontWeight: '900' as const }), [txt]);
+    const styledStatPartStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 11, fontWeight: '900' as const }), []);
+    const styledStatUnitStyle = useMemo(() => ({ color: txt, fontSize: 7, fontWeight: '800' as const, marginLeft: 1 }), [txt]);
+
     const renderStyledStat = (value: string | number, unit: string) => {
       const valStr = value.toString().replace('.', ',');
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+        <View style={styledStatContainerStyle}>
           {valStr.split(',').map((part, index) => (
             <React.Fragment key={index}>
-              {index > 0 && <Text style={{ color: txt, fontSize: 11, fontWeight: '900' }}>,</Text>}
-              <Text style={{ color: GOLD_COLOR, fontSize: 11, fontWeight: '900' }}>{part}</Text>
+              {index > 0 && <Text style={styledStatCommaStyle}>,</Text>}
+              <Text style={styledStatPartStyle}>{part}</Text>
             </React.Fragment>
           ))}
-          <Text style={{ color: txt, fontSize: 7, fontWeight: '800', marginLeft: 1 }}>{unit}</Text>
+          <Text style={styledStatUnitStyle}>{unit}</Text>
         </View>
       );
     };
 
     return (
-      <View ref={ref} style={[styles.card, { width, height: CARD_HEIGHT, backgroundColor: bg }]} collapsable={false}>
+      <View ref={ref} style={[styles.card, cardStyle]} collapsable={false}>
 
         {/* 1. SECTION PHOTO */}
         <View style={styles.photoSection}>
           {backgroundImage ? (
             <Image source={{ uri: backgroundImage }} style={styles.photoImage} resizeMode="cover" />
           ) : (
-            <LinearGradient colors={['#1a1a1a', '#000']} style={{ flex: 1 }} />
+            <LinearGradient colors={['#1a1a1a', '#000']} style={gradientFlexStyle} />
           )}
 
           <LinearGradient
@@ -151,10 +207,10 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             style={styles.photoGradient}
           >
             {/* DATE EN HAUT AU MILIEU */}
-            <View style={{ position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+            <View style={dateTopContainerStyle}>
               {keepPhotoClear ? (
-                <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
-                  <Text style={[styles.dateText, { color: GOLD_COLOR }]}>{formattedDate}</Text>
+                <View style={dateBackdropStyle}>
+                  <Text style={[styles.dateText, dateColorStyle]}>{formattedDate}</Text>
                 </View>
               ) : (
                 <Text style={styles.dateText}>{formattedDate}</Text>
@@ -164,7 +220,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.photoHeader}>
 
               {/* PHOTO PROFIL (GAUCHE) + NOM */}
-              <View style={{ alignItems: 'center', gap: 4, maxWidth: 100 }}>
+              <View style={profileLeftContainerStyle}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
                     <Image source={profileSource} style={styles.photoImage} />
@@ -176,13 +232,13 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 </View>
                 {userName && (
                   keepPhotoClear ? (
-                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }}>
-                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={2}>
+                    <View style={usernameBackdropStyle}>
+                      <Text style={usernameTextStyle} numberOfLines={2}>
                         {userName.toUpperCase()}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textAlign: 'center', maxWidth: 100 }} numberOfLines={2}>
+                    <Text style={usernameShadowStyle} numberOfLines={2}>
                       {userName.toUpperCase()}
                     </Text>
                   )
@@ -190,22 +246,22 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
               </View>
 
               {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
-              <View style={[styles.avatarContainer, { maxWidth: 100 }]}>
+              <View style={[styles.avatarContainer, avatarRightContainerStyle]}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
                 )}
                 {rank && userLevel !== undefined && userLevel !== null ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }} numberOfLines={1}>
+                  <View style={rankBackdropStyle}>
+                    <Text style={rankTextStyle} numberOfLines={1}>{rank.toUpperCase()}</Text>
+                    <Text style={rankLevelTextStyle} numberOfLines={1}>
                       Niveau {userLevel}
                     </Text>
                   </View>
                 ) : rank ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
+                  <View style={rankBackdropStyle}>
+                    <Text style={rankTextStyle} numberOfLines={1}>{rank.toUpperCase()}</Text>
                   </View>
                 ) : null}
               </View>
@@ -234,42 +290,42 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <View style={objectifRowStyle}>
                     <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
-                    <Text style={[styles.chronoLabel, { color: subTxt }]}>(ENTRAINEMENT)</Text>
+                    <Text style={[styles.chronoLabel, objectifParenthesesStyle]}>(ENTRAINEMENT)</Text>
                   </View>
                   <View style={styles.progressNumbers}>
                     <Text style={styles.goldLargeNumber}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '800' }]}> / </Text>
-                    <Text style={[styles.goldLargeNumber, { fontSize: 24 }]}>{safeObjective}</Text>
-                    <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS</Text>
+                    <Text style={progressSlashStyle}> / </Text>
+                    <Text style={[styles.goldLargeNumber, progressGoalNumberStyle]}>{safeObjective}</Text>
+                    <Text style={progressDaysTextStyle}> JOURS</Text>
                   </View>
                   {/* Barre de progression sous l'objectif */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                    <View style={{ width: 120, height: 8, backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                  <View style={progressContainerMarginStyle}>
+                    <View style={progressBarBgStyle}>
                       {/* Graduations */}
-                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' }}>
+                      <View style={progressBarGraduationsStyle}>
                         {[25, 50, 75].map(mark => (
-                          <View key={mark} style={{ position: 'absolute', left: `${mark}%`, width: 1, height: '100%', backgroundColor: isWhite ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }} />
+                          <View key={mark} style={progressBarGraduationLineStyle(mark)} />
                         ))}
                       </View>
-                      <LinearGradient colors={[GOLD_COLOR, '#F59E0B']} start={{x:0, y:0}} end={{x:1, y:0}} style={{ height: '100%', width: `${progressPercent}%` }} />
+                      <LinearGradient colors={[GOLD_COLOR, '#F59E0B']} start={{x:0, y:0}} end={{x:1, y:0}} style={progressBarFillStyle} />
                     </View>
-                    <Text style={[{ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' }]}>{Math.round(progressPercent)}%</Text>
+                    <Text style={progressPercentTextStyle}>{Math.round(progressPercent)}%</Text>
                   </View>
                 </View>
                 <View style={styles.progressRight}>
-                  <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' }}>
+                  <View style={durationBadgeStyle}>
                     {(() => {
                       const h = Math.floor((training.duration_minutes || 0) / 60);
                       const m = (training.duration_minutes || 0) % 60;
-                      return <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
+                      return <Text style={durationTextStyle}>{h > 0 ? `${h}H${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
                     })()}
                   </View>
                   <View style={styles.yearProgressText}>
-                    <Text style={[styles.smallGoldText, { fontSize: 14 }]}>{yearlyCount}</Text>
-                    <Text style={[{ color: txt, fontSize: 13, fontWeight: '900' }]}> / </Text>
-                    <Text style={[styles.smallGoldText, { fontSize: 14 }]}>365 JOURS</Text>
+                    <Text style={[styles.smallGoldText, yearDaysNumberStyle]}>{yearlyCount}</Text>
+                    <Text style={yearDaysSlashStyle}> / </Text>
+                    <Text style={[styles.smallGoldText, yearDaysNumberStyle]}>365 JOURS</Text>
                   </View>
                 </View>
               </View>
@@ -278,13 +334,13 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
 
           <View style={styles.detailsSection}>
             <View style={styles.detailsHeader}>
-              <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
+              <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
               <Text style={styles.detailsLabel}>DÉTAILS DE LA SÉANCE</Text>
-              <View style={[styles.detailsDivider, { backgroundColor: GOLD_COLOR }]} />
+              <View style={[styles.detailsDivider, detailsDividerGoldStyle]} />
             </View>
 
             <ScrollView
-              style={{ maxHeight: options && options.length > 7 ? 140 : undefined }}
+              style={scrollMaxHeightStyle}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled={true}
             >
@@ -299,25 +355,25 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     return (
                       <React.Fragment key={i}>
                         {showSportSeparator && opt.sportName && (
-                          <View style={{ marginTop: i > 0 ? 8 : 0, marginBottom: 6 }}>
-                            <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>
+                          <View style={sportSeparatorMarginStyle(i)}>
+                            <Text style={sportSeparatorTextStyle}>
                               {opt.sportName.toUpperCase()}
                             </Text>
                           </View>
                         )}
-                        <View style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
-                          <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
+                        <View style={[styles.exerciseRow, exerciseRowBorderStyle]}>
+                          <Text style={[styles.exerciseLabel, exerciseLabelStyle]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
                         <View style={styles.exerciseStats}>
                           {opt.weight && renderStyledStat(opt.weight, 'KG')}
                           {opt.reps && (
                             <View style={styles.statValue}>
-                              <Text style={[styles.statSeparator, { color: txt }]}> × </Text>
+                              <Text style={[styles.statSeparator, statSeparatorStyle]}> × </Text>
                               <Text style={styles.statReps}>{opt.reps}</Text>
                             </View>
                           )}
                           {opt.distance && renderStyledStat(opt.distance, 'KM')}
                           {opt.speed && renderStyledStat(opt.speed, 'KM/H')}
-                          {pace && <Text style={[styles.paceText, { color: subTxt }]}>({pace} min/km)</Text>}
+                          {pace && <Text style={[styles.paceText, paceTextStyle]}>({pace} min/km)</Text>}
                           {opt.pente && renderStyledStat(opt.pente, '%')}
                           {opt.stairs && renderStyledStat(opt.stairs, 'FLOORS')}
                           {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
@@ -327,7 +383,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     );
                   })
                 ) : (
-                  <Text style={[styles.emptyNotesText, { color: subTxt }]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
+                  <Text style={[styles.emptyNotesText, emptyNotesStyle]}>{training.notes || 'SÉANCE VALIDÉE'}</Text>
                 )}
               </View>
             </ScrollView>
@@ -335,13 +391,13 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
         </View>
 
         {/* 3. FOOTER */}
-        <View style={[styles.footerSection, { borderTopColor: borderColor }]}>
+        <View style={[styles.footerSection, footerBorderStyle]}>
           <SocialCardFooter variant={isWhite ? "light" : "dark"} />
         </View>
       </View>
     );
   }
-);
+));
 
 const styles = StyleSheet.create({
   card: {

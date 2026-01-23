@@ -49,7 +49,7 @@ export const WeightCard: React.FC<WeightCardProps> = ({
         toValue: progress,
         duration: 1500,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
       }).start();
     }
   }, [currentWeight, targetWeight]);

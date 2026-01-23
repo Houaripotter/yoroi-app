@@ -57,7 +57,7 @@ export const FitnessScoreCard: React.FC<FitnessScoreCardProps> = ({
         toValue: data.score,
         duration: 1500,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler le nombre affiché (text content)
       }).start();
 
       // Animation de la barre de progression
@@ -65,7 +65,7 @@ export const FitnessScoreCard: React.FC<FitnessScoreCardProps> = ({
         toValue: data.score / 100,
         duration: 1200,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
       }).start();
 
       // Pulse si excellent

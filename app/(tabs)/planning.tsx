@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -439,7 +440,7 @@ export default function PlanningScreen() {
       setCatalogLoading(true);
       try {
         // Ne charger que les événements à venir (futurs)
-        const events = await getFilteredEvents({ upcomingOnly: true, limit: 1000 });
+        const events = await getFilteredEvents({ upcomingOnly: true, limit: 5000 });
         setAllCatalogEvents(events as SportEvent[]);
         console.log('✅ Événements chargés:', events.length);
       } catch (error) {
@@ -2264,7 +2265,7 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                 ) : (
-                  filteredCatalogEvents.slice(0, 500).map((event) => {
+                  filteredCatalogEvents.slice(0, 2500).map((event) => {
                     const eventDate = new Date(event.date_start);
                     const formattedDate = eventDate.toLocaleDateString(locale, {
                       day: 'numeric',
@@ -2370,9 +2371,9 @@ export default function PlanningScreen() {
                   })
                 )}
 
-                {filteredCatalogEvents.length > 500 && (
+                {filteredCatalogEvents.length > 2500 && (
                   <Text style={[styles.catalogMoreText, { color: colors.textMuted }]}>
-                    + {filteredCatalogEvents.length - 500} autres evenements...
+                    + {filteredCatalogEvents.length - 2500} autres evenements...
                   </Text>
                 )}
               </>

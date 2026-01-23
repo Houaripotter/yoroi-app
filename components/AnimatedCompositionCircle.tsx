@@ -36,7 +36,7 @@ export const AnimatedCompositionCircle: React.FC<AnimatedCompositionCircleProps>
       toValue: progress / 100,
       tension: 50,
       friction: 7,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour calculer strokeDashoffset via listener (propriété SVG)
     }).start();
 
     const listener = progressAnim.addListener(({ value }) => {

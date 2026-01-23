@@ -27,7 +27,7 @@ const AnimatedRing = ({
       toValue: progress,
       duration: 1500,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: anime strokeDashoffset (propriété SVG non supportée par native driver)
     }).start();
   }, [progress]);
 

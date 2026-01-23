@@ -67,7 +67,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({
       toValue: sleepScore / 100,
       duration: 800,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
     }).start();
 
     return () => {

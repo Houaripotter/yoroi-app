@@ -74,6 +74,7 @@ import { fr } from 'date-fns/locale';
 
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { getProfile, getLatestWeight, getWeights, calculateStreak, getTrainings, Profile, Weight, Training } from '@/lib/database';
 import { getLatestBodyComposition } from '@/lib/bodyComposition';
 import { getSessionQuote, Citation } from '@/lib/citations';
@@ -443,7 +444,7 @@ export default function HomeScreen() {
       toValue: Math.min(value / goal, 1),
       tension: 30,
       friction: 8,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height/width d'eau (layout properties)
     }).start();
   }, [waterAnim]);
 
@@ -782,7 +783,7 @@ export default function HomeScreen() {
     Animated.timing(batteryAnim, {
       toValue: batteryPercent / 100,
       duration: 1000,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height de batterie (layout property)
     }).start();
   }, [batteryPercent]);
 
@@ -791,7 +792,7 @@ export default function HomeScreen() {
     Animated.timing(weightProgressAnim, {
       toValue: weightProgress,
       duration: 600,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
     }).start();
   }, [weightProgress]);
 
@@ -822,7 +823,7 @@ export default function HomeScreen() {
       Animated.timing(sleepDebtAnim, {
         toValue: debtPercent / 100,
         duration: 800,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler height/width (layout property)
       }).start();
     }
   }, [sleepStats]);
@@ -865,7 +866,7 @@ export default function HomeScreen() {
       Animated.timing(chargeWaveAnim, {
         toValue: 1,
         duration: 2000,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour animer vague (translateX/Y via interpolation)
       })
     ).start();
   }, []);
@@ -1611,8 +1612,9 @@ export default function HomeScreen() {
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <MotivationPopup />
+    <ErrorBoundary>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <MotivationPopup />
 
       <HomeTabView
         userName={profile?.name}
@@ -1692,7 +1694,8 @@ export default function HomeScreen() {
       >
         <Cloud size={20} color="#FFFFFF" />
       </TouchableOpacity> */}
-    </View>
+      </View>
+    </ErrorBoundary>
   );
 }
 

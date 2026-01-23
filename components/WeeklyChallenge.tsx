@@ -59,7 +59,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
         toValue: percentage,
         duration: 800,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
       }).start();
     } catch (error) {
       logger.error('Erreur chargement défi:', error);

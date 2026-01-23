@@ -71,7 +71,7 @@ const getSportDisplayName = (sportId: string): string => {
   return sportNames[sportId] || sportId.charAt(0).toUpperCase() + sportId.slice(1);
 };
 
-export const FighterCardV2 = forwardRef<View, FighterCardV2Props>(
+export const FighterCardV2 = React.memo(forwardRef<View, FighterCardV2Props>(
   ({ stats, format, backgroundImage }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
@@ -240,7 +240,7 @@ export const FighterCardV2 = forwardRef<View, FighterCardV2Props>(
       </View>
     );
   }
-);
+));
 
 // ============================================
 // STYLES

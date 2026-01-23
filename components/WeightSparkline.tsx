@@ -64,7 +64,7 @@ export const WeightSparkline: React.FC<WeightSparklineProps> = ({
     Animated.timing(strokeAnim, {
       toValue: 1,
       duration: 1500,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour calculer strokeDashoffset via listener (propriété SVG)
     }).start();
 
     // Listener pour mettre à jour strokeDashoffset

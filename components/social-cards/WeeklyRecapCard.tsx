@@ -31,7 +31,7 @@ interface WeeklyRecapCardProps {
   userLevel?: number;
 }
 
-export const WeeklyRecapCard = React.forwardRef<View, WeeklyRecapCardProps>(
+export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCardProps>(
   ({
     stats, backgroundImage, backgroundType = 'black', keepPhotoClear = false, width = DEFAULT_WIDTH,
     userAvatar, profilePhoto, userName, rank, userLevel
@@ -221,7 +221,7 @@ export const WeeklyRecapCard = React.forwardRef<View, WeeklyRecapCardProps>(
       </View>
     );
   }
-);
+));
 
 const styles = StyleSheet.create({
   card: {

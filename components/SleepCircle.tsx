@@ -34,7 +34,7 @@ export const SleepCircle: React.FC<SleepCircleProps> = ({
       toValue: progress / 100,
       tension: 50,
       friction: 7,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour calculer strokeDashoffset via state (propriété SVG)
     }).start();
 
     // Listener pour mettre à jour le state

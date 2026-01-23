@@ -62,7 +62,7 @@ export const VitalityStats: React.FC<VitalityStatsProps> = ({ trainings = [] }) 
     Animated.timing(animatedScore, {
       toValue: vitalityScore,
       duration: 1000,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler le nombre affiché (text content)
     }).start();
   }, [vitalityScore]);
 

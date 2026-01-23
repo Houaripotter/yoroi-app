@@ -44,7 +44,7 @@ export const HydrationCardFullWidth = React.memo<HydrationCardFullWidthProps>(({
         toValue: 1,
         duration: 2000,
         easing: Easing.linear,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: anime des paths SVG dynamiques (vagues d'eau)
       })
     );
     animation.start();

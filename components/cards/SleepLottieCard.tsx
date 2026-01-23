@@ -46,6 +46,7 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   useEffect(() => {
     // OPTIMISATION #70: Étaler les animations avec setTimeout pour éviter de blocker le thread
     const animations: any[] = [];
+    const timeouts: NodeJS.Timeout[] = [];
 
     // Lune flottante - démarrage immédiat (légère)
     const float = Animated.loop(
@@ -84,23 +85,26 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
       ])
     );
 
-    setTimeout(() => {
+    const timeout1 = setTimeout(() => {
       const t1 = twinkle(starOpacity1, 0);
       t1.start();
       animations.push(t1);
     }, 100);
+    timeouts.push(timeout1);
 
-    setTimeout(() => {
+    const timeout2 = setTimeout(() => {
       const t2 = twinkle(starOpacity2, 300);
       t2.start();
       animations.push(t2);
     }, 150);
+    timeouts.push(timeout2);
 
-    setTimeout(() => {
+    const timeout3 = setTimeout(() => {
       const t3 = twinkle(starOpacity3, 600);
       t3.start();
       animations.push(t3);
     }, 200);
+    timeouts.push(timeout3);
 
     // Animation ZzZ - démarrage encore plus décalé
     const animateZzz = (opacity: Animated.Value, translateY: Animated.Value, delay: number) => {
@@ -134,26 +138,29 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
       );
     };
 
-    setTimeout(() => {
+    const timeout4 = setTimeout(() => {
       const z1 = animateZzz(zzz1Opacity, zzz1TranslateY, 0);
       z1.start();
       animations.push(z1);
     }, 250);
+    timeouts.push(timeout4);
 
-    setTimeout(() => {
+    const timeout5 = setTimeout(() => {
       const z2 = animateZzz(zzz2Opacity, zzz2TranslateY, 500);
       z2.start();
       animations.push(z2);
     }, 300);
+    timeouts.push(timeout5);
 
-    setTimeout(() => {
+    const timeout6 = setTimeout(() => {
       const z3 = animateZzz(zzz3Opacity, zzz3TranslateY, 1000);
       z3.start();
       animations.push(z3);
     }, 350);
+    timeouts.push(timeout6);
 
     // Respiration couverture - démarrage différé
-    setTimeout(() => {
+    const timeout7 = setTimeout(() => {
       const breathe = Animated.loop(
         Animated.sequence([
           Animated.timing(breatheScale, {
@@ -173,9 +180,13 @@ export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
       breathe.start();
       animations.push(breathe);
     }, 400);
+    timeouts.push(timeout7);
 
     return () => {
+      // Cleanup animations
       animations.forEach(anim => anim.stop && anim.stop());
+      // Cleanup timeouts
+      timeouts.forEach(timeout => clearTimeout(timeout));
     };
   }, []);
 

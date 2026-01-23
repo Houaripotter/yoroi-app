@@ -186,7 +186,7 @@ export const SamuraiSlash: React.FC<SamuraiSlashProps> = ({
             toValue: 1,
             duration: slashDuration,
             easing: Easing.out(Easing.exp),
-            useNativeDriver: false,
+            useNativeDriver: false, // REQUIS: utilisé pour interpoler strokeDashoffset SVG (propriété SVG)
           }),
           Animated.sequence([
             Animated.timing(slashOpacity, {
@@ -578,7 +578,7 @@ export const SimpleSlash: React.FC<{
           toValue: 1,
           duration: duration * 0.4,
           easing: Easing.out(Easing.exp),
-          useNativeDriver: false,
+          useNativeDriver: false, // REQUIS: utilisé pour interpoler strokeDashoffset SVG (propriété SVG)
         }),
         Animated.timing(opacity, {
           toValue: 0,

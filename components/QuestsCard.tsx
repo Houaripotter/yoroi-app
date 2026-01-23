@@ -99,12 +99,12 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         Animated.timing(glowAnim, {
           toValue: 1,
           duration: 2000,
-          useNativeDriver: false,
+          useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
           duration: 2000,
-          useNativeDriver: false,
+          useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
         }),
       ])
     ).start();
@@ -124,7 +124,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           toValue: daily.completed / daily.total,
           duration: 800,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: false,
+          useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
         }).start();
       }
     } catch (error) {

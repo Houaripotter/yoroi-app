@@ -73,7 +73,7 @@ export const RanksModal: React.FC<RanksModalProps> = ({
       Animated.timing(progressAnim, {
         toValue: progress,
         duration: 800,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
       }).start();
     }
   }, [visible, progress]);

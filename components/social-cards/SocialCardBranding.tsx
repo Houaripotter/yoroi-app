@@ -9,7 +9,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 // ============================================
 // TOP BANNER - Ligne + Logo + YOROI + Ligne
 // ============================================
-export const SocialCardTopBanner: React.FC<{ variant?: 'dark' | 'light' }> = ({
+export const SocialCardTopBanner = React.memo<{ variant?: 'dark' | 'light' }>(({
   variant = 'dark'
 }) => {
   const isLight = variant === 'light';
@@ -30,12 +30,12 @@ export const SocialCardTopBanner: React.FC<{ variant?: 'dark' | 'light' }> = ({
       <View style={[styles.topBannerLine, { backgroundColor: lineColor }]} />
     </View>
   );
-};
+});
 
 // ============================================
 // FOOTER PRO - Design avec Logo grand à gauche, App Store à droite
 // ============================================
-export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
+export const SocialCardFooter = React.memo<{ variant?: 'dark' | 'light' }>(({
   variant = 'dark'
 }) => {
   const isLight = variant === 'light';
@@ -72,12 +72,12 @@ export const SocialCardFooter: React.FC<{ variant?: 'dark' | 'light' }> = ({
       </View>
     </View>
   );
-};
+});
 
 // ============================================
 // FOOTER COMPACT - Pour cartes plus petites
 // ============================================
-export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> = ({
+export const SocialCardFooterCompact = React.memo<{ variant?: 'dark' | 'light' }>(({
   variant = 'dark'
 }) => {
   const isLight = variant === 'light';
@@ -97,13 +97,13 @@ export const SocialCardFooterCompact: React.FC<{ variant?: 'dark' | 'light' }> =
       />
     </View>
   );
-};
+});
 
 // ============================================
 // WATERMARK LOGO - Grand logo derrière quand pas de photo
 // Utilise logo2010.png
 // ============================================
-export const SocialCardWatermark: React.FC<{ show?: boolean; variant?: 'dark' | 'light' }> = ({
+export const SocialCardWatermark = React.memo<{ show?: boolean; variant?: 'dark' | 'light' }>(({
   show = true,
   variant = 'dark'
 }) => {
@@ -123,7 +123,7 @@ export const SocialCardWatermark: React.FC<{ show?: boolean; variant?: 'dark' | 
       />
     </View>
   );
-};
+});
 
 // ============================================
 // STYLES

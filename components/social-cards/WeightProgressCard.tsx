@@ -24,7 +24,7 @@ export interface WeightProgressCardProps {
   period?: '7' | '30' | '90' | 'all'; // Période sélectionnée (visuel seulement)
 }
 
-export const WeightProgressCard = forwardRef<View, WeightProgressCardProps>(
+export const WeightProgressCard = React.memo(forwardRef<View, WeightProgressCardProps>(
   ({ stats, format, backgroundImage, period = '30' }, ref) => {
     const isStories = format === 'stories';
     const cardHeight = isStories ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
@@ -354,7 +354,7 @@ export const WeightProgressCard = forwardRef<View, WeightProgressCardProps>(
       </View>
     );
   }
-);
+));
 
 // ============================================
 // STYLES

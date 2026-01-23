@@ -102,7 +102,7 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
       toValue: chargeInfo.percentage,
       friction: 8,
       tension: 40,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: anime width via interpolation (layout property)
     }).start();
   }, [chargeInfo.percentage]);
 

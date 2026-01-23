@@ -119,7 +119,7 @@ export default function CutModeScreen() {
         toValue: progress,
         tension: 50,
         friction: 8,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: anime height via interpolation (layout property)
       }).start();
     }
   }, [cutData, currentWeight]);

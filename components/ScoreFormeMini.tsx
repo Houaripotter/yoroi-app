@@ -108,7 +108,7 @@ export const ScoreFormeMini: React.FC<ScoreFormeMiniProps> = ({
     Animated.timing(progressAnim, {
       toValue: score,
       duration: 1000,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
     }).start();
   }, [score]);
 

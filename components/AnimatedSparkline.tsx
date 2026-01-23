@@ -22,7 +22,7 @@ const AnimatedSparkline = ({
       toValue: 1,
       duration: 1500,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: anime strokeDashoffset pour Path SVG (propriété SVG non supportée)
     }).start();
   }, []);
 

@@ -114,7 +114,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
 
   // Animation pulse continue
   useEffect(() => {
-    Animated.loop(
+    const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.15,
@@ -127,7 +127,12 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    pulse.start();
+
+    return () => {
+      pulse.stop();
+    };
   }, []);
 
   // Mettre à jour la position du creux quand l'onglet change
@@ -154,7 +159,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
 
     Animated.spring(notchPosition, {
       toValue: targetX,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: anime la position 'left' (layout property)
       tension: 60,
       friction: 10,
     }).start();

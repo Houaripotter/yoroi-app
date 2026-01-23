@@ -127,7 +127,7 @@ export default function EnergyScreen() {
       Animated.timing(batteryAnim, {
         toValue: Math.min(1, total / 100),
         duration: 1500,
-        useNativeDriver: false,
+        useNativeDriver: false, // REQUIS: anime y et height de Rect SVG (propriétés SVG non supportées)
       }).start();
     } catch (error) {
       logger.error('Erreur:', error);

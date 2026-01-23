@@ -33,7 +33,7 @@ export interface TransformationCardV2Props {
   username?: string;
 }
 
-export const TransformationCardV2 = forwardRef<View, TransformationCardV2Props>(
+export const TransformationCardV2 = React.memo(forwardRef<View, TransformationCardV2Props>(
   ({ stats, format, username }, ref) => {
     const { locale } = useI18n();
     const isStories = format === 'stories';
@@ -184,7 +184,7 @@ export const TransformationCardV2 = forwardRef<View, TransformationCardV2Props>(
       </View>
     );
   }
-);
+));
 
 // ============================================
 // STYLES

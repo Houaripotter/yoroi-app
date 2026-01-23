@@ -126,7 +126,7 @@ export const QuickHydration: React.FC<QuickHydrationProps> = ({
     Animated.timing(progressAnim, {
       toValue: progress,
       duration: 800,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
     }).start();
   }, [progress]);
 

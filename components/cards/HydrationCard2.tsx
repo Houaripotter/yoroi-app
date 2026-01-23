@@ -76,7 +76,7 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
       toValue: waterHeight,
       tension: 40,
       friction: 8,
-      useNativeDriver: false, // height ne supporte pas useNativeDriver
+      useNativeDriver: false, // REQUIS: anime 'height' (layout property non supportée par native driver)
     }).start(() => {
       logger.info('💧 ANIMATION COMPLETED');
     });

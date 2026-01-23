@@ -32,7 +32,7 @@ export const ChargeGauge: React.FC<ChargeGaugeProps> = ({
       toValue: progress / 100,
       tension: 40,
       friction: 8,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour calculer rotation aiguille via listener
     }).start();
 
     // Listener pour mettre à jour le state
@@ -47,12 +47,12 @@ export const ChargeGauge: React.FC<ChargeGaugeProps> = ({
           Animated.timing(glowAnim, {
             toValue: 1,
             duration: 2000,
-            useNativeDriver: false,
+            useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
           }),
           Animated.timing(glowAnim, {
             toValue: 0,
             duration: 2000,
-            useNativeDriver: false,
+            useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
           }),
         ])
       ).start();

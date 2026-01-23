@@ -56,7 +56,7 @@ export function AdvancedMetricsSection({
     Animated.timing(height, {
       toValue: newExpanded ? 1 : 0,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: false, // REQUIS: utilisé pour interpoler height via maxHeight (layout property)
     }).start();
     Animated.timing(rotation, {
       toValue: newExpanded ? 180 : 0,

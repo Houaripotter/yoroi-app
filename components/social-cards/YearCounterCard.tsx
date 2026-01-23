@@ -19,7 +19,7 @@ export interface YearCounterCardProps {
   username?: string;
 }
 
-export const YearCounterCard = forwardRef<View, YearCounterCardProps>(
+export const YearCounterCard = React.memo(forwardRef<View, YearCounterCardProps>(
   ({ stats, format, colors, username }, ref) => {
     const isStories = format === 'stories';
 
@@ -155,7 +155,7 @@ export const YearCounterCard = forwardRef<View, YearCounterCardProps>(
       </View>
     );
   }
-);
+));
 
 // ============================================
 // STYLES

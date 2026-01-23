@@ -19,7 +19,7 @@ export interface MonthlyRecapCardProps {
   username?: string;
 }
 
-export const MonthlyRecapCard = forwardRef<View, MonthlyRecapCardProps>(
+export const MonthlyRecapCard = React.memo(forwardRef<View, MonthlyRecapCardProps>(
   ({ stats, format, colors, username }, ref) => {
     const isStories = format === 'stories';
 
@@ -190,7 +190,7 @@ export const MonthlyRecapCard = forwardRef<View, MonthlyRecapCardProps>(
       </View>
     );
   }
-);
+));
 
 // ============================================
 // STYLES
