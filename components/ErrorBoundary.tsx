@@ -1,183 +1,71 @@
-// ============================================
-// 🔒 ERROR BOUNDARY GLOBAL - YOROI
-// ============================================
-// Capture toutes les erreurs React et affiche un écran d'erreur convivial
+/**
+ * Error Boundary Component
+ * Catches errors in React component tree and displays fallback UI
+ */
 
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { logger } from '@/lib/logger';
-import { setStringAsync, getStringAsync } from 'expo-clipboard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const ERROR_STORAGE_KEY = '@yoroi_crash_reports';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { AlertTriangle, RefreshCw } from 'lucide-react-native';
 
 interface Props {
-  children: React.ReactNode;
+  children: ReactNode;
+  fallback?: (error: Error, resetError: () => void) => ReactNode;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: React.ErrorInfo | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Logger l'erreur de manière sécurisée
-    logger.error('💥 React Error Boundary caught error', {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    });
-
-    this.setState({ error, errorInfo });
-
-    // Sauvegarder le rapport d'erreur pour analyse ultérieure
-    this.saveCrashReport(error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  private async saveCrashReport(error: Error, errorInfo: React.ErrorInfo) {
-    try {
-      const report = {
-        timestamp: new Date().toISOString(),
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-      };
-
-      // Récupérer les rapports existants
-      const existingReportsStr = await AsyncStorage.getItem(ERROR_STORAGE_KEY);
-      const existingReports = existingReportsStr ? JSON.parse(existingReportsStr) : [];
-
-      // Ajouter le nouveau rapport (garder les 10 derniers)
-      existingReports.unshift(report);
-      const reportsToSave = existingReports.slice(0, 10);
-
-      await AsyncStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(reportsToSave));
-      logger.info('Crash report saved for later analysis');
-    } catch (saveError) {
-      logger.error('Failed to save crash report', saveError);
-    }
-  }
-
-  handleReset = () => {
-    logger.info('User reset error boundary');
-    this.setState({ hasError: false, error: null, errorInfo: null });
-
-    try {
-      router.replace('/(tabs)');
-    } catch (navError) {
-      logger.error('Navigation failed during error recovery', navError);
-      // Si la navigation échoue, juste reset l'état
-    }
-  };
-
-  handleExportLogs = async () => {
-    try {
-      const logs = logger.exportLogs();
-
-      // Construire le rapport complet
-      const errorReport = this.state.error ? `
-=== ERREUR ===
-${this.state.error.toString()}
-
-=== STACK TRACE ===
-${this.state.error.stack || 'N/A'}
-
-=== COMPONENT STACK ===
-${this.state.errorInfo?.componentStack || 'N/A'}
-
-` : '';
-
-      const fullReport = `=== YOROI CRASH REPORT ===
-Date: ${new Date().toISOString()}
-
-${errorReport}=== LOGS ===
-${logs}`;
-
-      await setStringAsync(fullReport);
-      Alert.alert(
-        'Logs copiés',
-        'Les logs ont été copiés dans le presse-papier. Tu peux les coller pour les envoyer au support.'
-      );
-      logger.info('Logs exported to clipboard', { logsLength: logs.length });
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible de copier les logs');
-      logger.error('Failed to export logs', error);
-    }
+  resetError = () => {
+    this.setState({ hasError: false, error: null });
   };
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback && this.state.error) {
+        return this.props.fallback(this.state.error, this.resetError);
+      }
+
       return (
         <View style={styles.container}>
-          {/* Emoji et titre */}
-          <Text style={styles.emoji}>😅</Text>
-          <Text style={styles.title}>Oups !</Text>
-          <Text style={styles.message}>
-            Une erreur inattendue s'est produite.{'\n'}
-            Tes données sont en sécurité.
-          </Text>
+          <View style={styles.content}>
+            <AlertTriangle size={64} color="#EF4444" />
+            <Text style={styles.title}>Oups ! Une erreur est survenue</Text>
+            <Text style={styles.subtitle}>
+              L'application a rencontré un problème. Veuillez réessayer.
+            </Text>
 
-          {/* Informations de debug (uniquement en DEV) */}
-          {__DEV__ && this.state.error && (
-            <ScrollView style={styles.errorDetails}>
-              <Text style={styles.errorTitle}>🔍 Debug Info:</Text>
-              <Text style={styles.errorText}>
-                {this.state.error.toString()}
-              </Text>
-              {this.state.error.stack && (
-                <Text style={styles.stackTrace}>
-                  {this.state.error.stack}
-                </Text>
-              )}
-              {this.state.errorInfo && (
-                <>
-                  <Text style={styles.errorTitle}>📍 Component Stack:</Text>
-                  <Text style={styles.stackTrace}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
-                </>
-              )}
-            </ScrollView>
-          )}
+            {__DEV__ && this.state.error && (
+              <ScrollView style={styles.errorDetails}>
+                <Text style={styles.errorText}>{this.state.error.toString()}</Text>
+                <Text style={styles.errorStack}>{this.state.error.stack}</Text>
+              </ScrollView>
+            )}
 
-          {/* Bouton principal de reset */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={this.handleReset}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Retour à l'accueil</Text>
-          </TouchableOpacity>
-
-          {/* Bouton d'export des logs (uniquement en DEV) */}
-          {__DEV__ && (
             <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={this.handleExportLogs}
+              style={styles.button}
+              onPress={this.resetError}
               activeOpacity={0.8}
             >
-              <Text style={styles.secondaryButtonText}>📋 Exporter les logs</Text>
+              <RefreshCw size={20} color="#FFFFFF" />
+              <Text style={styles.buttonText}>Réessayer</Text>
             </TouchableOpacity>
-          )}
-
-          {/* Message de contact support (production uniquement) */}
-          {!__DEV__ && (
-            <Text style={styles.supportMessage}>
-              Si le problème persiste, contacte le support.
-            </Text>
-          )}
+          </View>
         </View>
       );
     }
@@ -189,85 +77,61 @@ ${logs}`;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0D0D0F',
-    padding: 20,
+    padding: 24,
   },
-  emoji: {
-    fontSize: 80,
-    marginBottom: 20,
+  content: {
+    maxWidth: 400,
+    alignItems: 'center',
+    gap: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 10,
-  },
-  message: {
-    fontSize: 16,
-    color: '#8E8E93',
+    color: '#F1F5F9',
     textAlign: 'center',
-    marginBottom: 30,
+    marginTop: 16,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#94A3B8',
+    textAlign: 'center',
     lineHeight: 24,
-    paddingHorizontal: 20,
   },
   errorDetails: {
-    maxHeight: 300,
+    maxHeight: 200,
     width: '100%',
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-  },
-  errorTitle: {
-    color: '#FF453A',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 10,
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
   },
   errorText: {
-    color: '#FF453A',
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  errorStack: {
+    color: '#94A3B8',
     fontSize: 12,
     fontFamily: 'monospace',
-    lineHeight: 18,
-  },
-  stackTrace: {
-    color: '#8E8E93',
-    fontSize: 10,
-    fontFamily: 'monospace',
-    marginTop: 8,
-    lineHeight: 16,
   },
   button: {
-    backgroundColor: '#D4AF37',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    minWidth: 200,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 24,
   },
   buttonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  secondaryButton: {
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-  },
-  secondaryButtonText: {
-    color: '#8E8E93',
-    fontSize: 14,
-  },
-  supportMessage: {
-    marginTop: 20,
-    fontSize: 12,
-    color: '#6E6E73',
-    textAlign: 'center',
-  },
 });
-
-export default ErrorBoundary;
