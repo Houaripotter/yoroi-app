@@ -13,7 +13,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -102,6 +102,8 @@ import HealthConnect from '@/lib/healthConnect.ios';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { RatingPopup } from '@/components/RatingPopup';
+import ratingService from '@/lib/ratingService';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -148,6 +150,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t, language } = useI18n();
+  const params = useLocalSearchParams();
 
   // Mode d'affichage (Complet / Essentiel)
   const { mode, toggleMode, isLoading: isLoadingMode } = useViewMode();
@@ -198,6 +201,9 @@ export default function HomeScreen() {
   // Protection anti-spam navigation
   const [isNavigating, setIsNavigating] = useState(false);
 
+  // Pop-up de notation
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+
   // Vérifier si c'est la première visite ou une mise à jour
   useEffect(() => {
     const checkFirstVisit = async () => {
@@ -223,6 +229,15 @@ export default function HomeScreen() {
     };
     checkFirstVisit();
   }, []);
+
+  // Afficher la popup de notation après navigation depuis l'étape 4
+  useEffect(() => {
+    if (params.showRating === 'true') {
+      setTimeout(() => {
+        setShowRatingPopup(true);
+      }, 500);
+    }
+  }, [params.showRating]);
 
   const handleCloseTutorial = async () => {
     await markPageAsVisited('home');
@@ -1488,6 +1503,18 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* Pop-up de notation */}
+      <RatingPopup
+        visible={showRatingPopup}
+        onClose={async () => {
+          setShowRatingPopup(false);
+          await ratingService.onPopupDismissed();
+        }}
+        onRated={async () => {
+          setShowRatingPopup(false);
+          await ratingService.onRated();
+        }}
+      />
 
       {/* Bouton flottant de sauvegarde */}
       {/* <TouchableOpacity

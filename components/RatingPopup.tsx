@@ -187,10 +187,9 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               colors={[colors.accent, `${colors.accent}80`]}
               style={styles.avatarGradient}
             >
-              {/* Placeholder - Remplacer par ta photo */}
-              {/* <Image source={require('@/assets/developer-photo.png')} style={styles.avatarImage} /> */}
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarEmoji}>👋</Text>
+              {/* Logo de l'app avec fond noir en clair et blanc en sombre */}
+              <View style={[styles.avatarImageContainer, { backgroundColor: isDark ? '#FFFFFF' : '#000000' }]}>
+                <Image source={require('@/assets/images/icon.png')} style={styles.avatarImage} />
               </View>
             </LinearGradient>
 
@@ -330,13 +329,13 @@ const styles = StyleSheet.create({
     height: 74,
     borderRadius: 37,
   },
-  avatarPlaceholder: {
+  avatarImageContainer: {
     width: 74,
     height: 74,
     borderRadius: 37,
-    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarEmoji: {
     fontSize: 36,
@@ -381,7 +380,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   statText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
     flex: 1,
   },
@@ -434,6 +433,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontStyle: 'italic',
     marginTop: 8,
+    marginBottom: 16,
     textAlign: 'center',
   },
 });

@@ -779,6 +779,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.duration}
                   onChangeText={(v) => updateStat('duration', v)}
+                  maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN</Text>
               </View>
@@ -797,6 +798,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.speed}
                   onChangeText={(v) => updateStat('speed', v)}
+                  maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
               </View>
@@ -811,6 +813,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.pente}
                   onChangeText={(v) => updateStat('pente', v)}
+                  maxLength={3}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>%</Text>
               </View>
@@ -829,6 +832,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.distance}
                   onChangeText={(v) => updateStat('distance', v)}
+                  maxLength={5}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM</Text>
               </View>
@@ -848,6 +852,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.calories}
                   onChangeText={(v) => updateStat('calories', v)}
+                  maxLength={5}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
               </View>
@@ -866,6 +871,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.stairs}
                   onChangeText={(v) => updateStat('stairs', v)}
+                  maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>FLOORS</Text>
               </View>
@@ -881,6 +887,7 @@ export default function AddTrainingScreen() {
                   placeholderTextColor={colors.textMuted + '40'}
                   value={stats.pace}
                   onChangeText={(v) => updateStat('pace', v)}
+                  maxLength={6}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN/KM</Text>
               </View>
@@ -2318,6 +2325,7 @@ export default function AddTrainingScreen() {
                         const minutes = duration % 60;
                         setDuration(hours * 60 + minutes);
                       }}
+                      maxLength={2}
                     />
                     <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>HEURES</Text>
                   </View>
@@ -2333,6 +2341,7 @@ export default function AddTrainingScreen() {
                         const hours = Math.floor(duration / 60);
                         setDuration(hours * 60 + minutes);
                       }}
+                      maxLength={2}
                     />
                     <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MINUTES</Text>
                   </View>
@@ -2360,6 +2369,7 @@ export default function AddTrainingScreen() {
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
+                  maxLength={2}
                 />
               </View>
               <View style={[styles.proStatItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -2371,6 +2381,7 @@ export default function AddTrainingScreen() {
                   placeholder="5"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
+                  maxLength={2}
                 />
               </View>
             </View>

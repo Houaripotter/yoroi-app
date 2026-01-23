@@ -57,14 +57,11 @@ export default function BackupStepScreen() {
     // Vérifier si l'utilisateur a déjà noté l'app
     const hasRated = await ratingService.hasRated();
 
-    // Naviguer vers l'accueil
-    router.replace('/(tabs)');
-
-    // Attendre 1.5 secondes puis afficher la popup sauf si déjà noté
+    // Naviguer vers l'accueil avec paramètre pour afficher la popup
     if (!hasRated) {
-      setTimeout(() => {
-        setShowRatingPopup(true);
-      }, 1500);
+      router.replace('/(tabs)?showRating=true');
+    } else {
+      router.replace('/(tabs)');
     }
   };
 

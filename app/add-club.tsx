@@ -169,6 +169,7 @@ export default function AddClubScreen() {
             placeholderTextColor={colors.textMuted}
             value={name}
             onChangeText={setName}
+            maxLength={100}
           />
         </View>
 
@@ -246,6 +247,7 @@ export default function AddClubScreen() {
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
+              maxLength={50}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')}>
