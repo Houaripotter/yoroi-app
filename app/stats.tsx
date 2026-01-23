@@ -33,12 +33,13 @@ export default function StatsScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
 
   const [activeTab, setActiveTab] = useState<StatsTab>((params.tab as StatsTab) || 'discipline');
+  const [isNavigating, setIsNavigating] = useState(false);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => { if (!isNavigating) { setIsNavigating(true); router.back(); } }}>
           <ChevronLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Statistiques</Text>
