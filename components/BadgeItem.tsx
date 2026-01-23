@@ -85,9 +85,9 @@ export function BadgeItem({ badge, unlocked, onPress, showAnimation = false }: B
           style={[
             styles.badge,
             {
-              backgroundColor: unlocked ? badge.color : colors.border,
-              borderColor: unlocked ? badge.color : colors.border,
-              shadowColor: badge.color,
+              backgroundColor: unlocked ? (isDark ? colors.cardHover : colors.gold + '15') : colors.border,
+              borderColor: unlocked ? colors.gold : colors.border,
+              shadowColor: colors.gold,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: unlocked ? 0.3 : 0,
               shadowRadius: 8,

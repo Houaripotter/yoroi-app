@@ -214,8 +214,10 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
                     styles.badgeDetailIcon,
                     {
                       backgroundColor: unlockedBadges.has(selectedBadge.id)
-                        ? selectedBadge.color
+                        ? (themeName === 'dark' ? colors.cardHover : colors.gold + '15')
                         : colors.border,
+                      borderColor: unlockedBadges.has(selectedBadge.id) ? colors.gold : colors.border,
+                      borderWidth: 3,
                     },
                   ]}
                 >
@@ -228,7 +230,7 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
                   <Text style={[styles.requirementText, { color: colors.textPrimary }]}>{selectedBadge.requirement}</Text>
                 </View>
                 {unlockedBadges.has(selectedBadge.id) && (
-                  <View style={styles.unlockedBanner}>
+                  <View style={[styles.unlockedBanner, { backgroundColor: colors.gold + '15' }]}>
                     <Text style={[styles.unlockedText, { color: colors.gold }]}>{t('badges.badgeUnlocked')}</Text>
                   </View>
                 )}
@@ -321,7 +323,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingBottom: 48,
     gap: 24,
   },
   category: {
@@ -407,7 +409,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   unlockedBanner: {
-    backgroundColor: '#E0F2F1',
     borderRadius: 999,
     paddingVertical: 8,
     paddingHorizontal: 16,

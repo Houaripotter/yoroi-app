@@ -12,6 +12,7 @@ import {
   Alert,
   Platform,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
