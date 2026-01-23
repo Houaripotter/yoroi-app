@@ -241,15 +241,34 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         forceRefresh: true
       };
 
-      // Inclure la photo de profil si disponible
+      // Inclure la photo de profil si disponible (avec vérification taille)
       if (profile?.profile_photo) {
         try {
           const FileSystem = require('expo-file-system').default;
           const base64Photo = await FileSystem.readAsStringAsync(profile.profile_photo, {
             encoding: FileSystem.EncodingType.Base64
           });
-          megaPack.profilePhotoBase64 = base64Photo;
-          console.log('📸 Photo de profil incluse dans le mega-pack');
+
+          // Limite WatchConnectivity: 256KB pour updateApplicationContext
+          // Base64 photo size = (base64Photo.length * 3) / 4 bytes
+          const estimatedSize = (base64Photo.length * 3) / 4;
+
+          if (estimatedSize < 75000) { // ~75KB max pour laisser de la marge
+            megaPack.profilePhotoBase64 = base64Photo;
+            console.log(`📸 Photo de profil incluse dans le mega-pack (${Math.round(estimatedSize / 1024)}KB)`);
+          } else {
+            console.log(`⚠️ Photo trop volumineuse (${Math.round(estimatedSize / 1024)}KB), sera envoyée séparément`);
+            // Envoyer via transferFile en arrière-plan (garantie de livraison)
+            try {
+              await WatchConnectivity.transferFile(profile.profile_photo, {
+                type: 'profilePhoto',
+                timestamp: Date.now()
+              });
+              console.log('📤 Photo envoyée via transferFile');
+            } catch (transferError) {
+              console.log('⚠️ Erreur transferFile photo:', transferError);
+            }
+          }
         } catch (photoError) {
           console.log('⚠️ Erreur lecture photo:', photoError);
         }

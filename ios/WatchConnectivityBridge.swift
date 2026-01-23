@@ -102,18 +102,73 @@ public class WatchConnectivityBridge: RCTEventEmitter {
             reject("NOT_ACTIVATED", "Session not activated", nil)
             return
         }
-        
+
+        guard WCSession.default.isReachable else {
+            reject("NOT_REACHABLE", "Watch not reachable", nil)
+            return
+        }
+
+        var hasCompleted = false
+        var timeoutTimer: Timer?
+
+        // Timeout de 5 secondes
+        timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            if !hasCompleted {
+                hasCompleted = true
+                reject("SEND_TIMEOUT", "Message delivery timeout after 5s", nil)
+            }
+        }
+
         WCSession.default.sendMessage(message, replyHandler: { reply in
-            resolve(reply)
+            if !hasCompleted {
+                hasCompleted = true
+                timeoutTimer?.invalidate()
+                resolve(reply)
+            }
         }, errorHandler: { error in
-            reject("SEND_ERROR", error.localizedDescription, error)
+            if !hasCompleted {
+                hasCompleted = true
+                timeoutTimer?.invalidate()
+                reject("SEND_ERROR", error.localizedDescription, error)
+            }
         })
     }
 
     @objc
     func transferUserInfo(_ userInfo: [String: Any], resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
-        let transfer = WCSession.default.transferUserInfo(userInfo)
-        resolve(["transferring": transfer.isTransferring])
+        guard WCSession.isSupported() else {
+            reject("NOT_SUPPORTED", "WatchConnectivity not supported", nil)
+            return
+        }
+
+        do {
+            let transfer = WCSession.default.transferUserInfo(userInfo)
+            resolve(["transferring": transfer.isTransferring])
+        } catch {
+            reject("TRANSFER_ERROR", error.localizedDescription, error)
+        }
+    }
+
+    @objc
+    func transferFile(_ fileURL: String, metadata: [String: Any]?, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+        guard WCSession.isSupported() else {
+            reject("NOT_SUPPORTED", "WatchConnectivity not supported", nil)
+            return
+        }
+
+        guard let url = URL(string: fileURL) else {
+            reject("INVALID_URL", "Invalid file URL", nil)
+            return
+        }
+
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            reject("FILE_NOT_FOUND", "File does not exist at path: \(url.path)", nil)
+            return
+        }
+
+        let transfer = WCSession.default.transferFile(url, metadata: metadata)
+        print("📤 [BRIDGE] File transfer initiated: \(url.lastPathComponent)")
+        resolve(["transferID": transfer.description, "isTransferring": transfer.isTransferring])
     }
 
     @objc

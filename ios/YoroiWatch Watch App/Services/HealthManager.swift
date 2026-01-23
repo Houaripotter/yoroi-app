@@ -391,8 +391,11 @@ class HealthManager: ObservableObject {
     
     // Observer les changements en temps réel
     private func startObservingHealthChanges() {
-        guard let healthStore = healthStore else { return }
-        
+        guard let healthStore = healthStore, isHealthKitAvailable else {
+            print("⚠️ HealthKit non disponible - skip observers")
+            return
+        }
+
         // Observer les pas
         if let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) {
             let query = HKObserverQuery(sampleType: stepType, predicate: nil) { [weak self] _, completion, error in
@@ -400,8 +403,9 @@ class HealthManager: ObservableObject {
                 completion()
             }
             healthStore.execute(query)
+            addQuery(query)
         }
-        
+
         // Observer le rythme cardiaque
         if let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) {
             let query = HKObserverQuery(sampleType: hrType, predicate: nil) { [weak self] _, completion, error in
@@ -409,6 +413,7 @@ class HealthManager: ObservableObject {
                 completion()
             }
             healthStore.execute(query)
+            addQuery(query)
         }
     }
 
@@ -672,22 +677,31 @@ class HealthManager: ObservableObject {
 
     func saveWeight(_ weight: Double) {
         currentWeight = weight
-        
+
         // 1. Sync avec iPhone via WatchConnectivity (Garantie de livraison)
         WatchConnectivityManager.shared.transferToiPhone(weight, forKey: "weightUpdate")
 
-        // 2. Sauvegarde HealthKit
-        guard let healthStore = healthStore,
-              let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return }
+        // 2. Sauvegarde locale (toujours)
+        savePersistedData()
+
+        // 3. Sauvegarde HealthKit (si disponible)
+        guard isHealthKitAvailable,
+              let healthStore = healthStore,
+              let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else {
+            print("⚠️ HealthKit non disponible - poids sauvegardé localement uniquement")
+            return
+        }
 
         let quantity = HKQuantity(unit: .gramUnit(with: .kilo), doubleValue: weight)
         let sample = HKQuantitySample(type: type, quantity: quantity, start: Date(), end: Date())
 
-        healthStore.save(sample) { [weak self] success, _ in
+        healthStore.save(sample) { [weak self] success, error in
             if success {
                 DispatchQueue.main.async {
                     self?.fetchWeight()
                 }
+            } else if let error = error {
+                print("❌ Erreur sauvegarde HealthKit poids: \(error.localizedDescription)")
             }
         }
     }
@@ -695,13 +709,25 @@ class HealthManager: ObservableObject {
     func addWater(_ ml: Double) {
         waterIntake += ml
 
-        guard let healthStore = healthStore,
-              let type = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else { return }
+        // Sauvegarde locale (toujours)
+        savePersistedData()
+
+        // Sauvegarde HealthKit (si disponible)
+        guard isHealthKitAvailable,
+              let healthStore = healthStore,
+              let type = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            print("⚠️ HealthKit non disponible - eau sauvegardée localement uniquement")
+            return
+        }
 
         let quantity = HKQuantity(unit: .literUnit(with: .milli), doubleValue: ml)
         let sample = HKQuantitySample(type: type, quantity: quantity, start: Date(), end: Date())
 
-        healthStore.save(sample) { _, _ in }
+        healthStore.save(sample) { success, error in
+            if !success, let error = error {
+                print("❌ Erreur sauvegarde HealthKit eau: \(error.localizedDescription)")
+            }
+        }
     }
 
     func removeWater(_ ml: Double) {
