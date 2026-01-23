@@ -44,7 +44,7 @@ interface BenchmarkDetailModalProps {
   onDelete: (id: string) => void;
 }
 
-export default function BenchmarkDetailModal({
+export default React.memo(function BenchmarkDetailModal({
   visible,
   onClose,
   benchmark,
@@ -190,7 +190,7 @@ export default function BenchmarkDetailModal({
       </SafeAreaView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   detailModalOverlay: {

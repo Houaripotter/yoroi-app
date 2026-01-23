@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { X, Check, AlertTriangle, Flame, Zap, Battery, Target } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { calculateSessionLoad } from '@/lib/trainingLoadService';
 
@@ -53,13 +53,13 @@ export function RPEModal({ visible, durationMinutes, onClose, onSubmit }: RPEMod
   }, [visible]);
 
   const handleSelect = (rpe: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedRPE(rpe);
   };
 
   const handleSubmit = () => {
     if (selectedRPE === null) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
     const load = calculateSessionLoad(durationMinutes, selectedRPE);
     onSubmit(selectedRPE, load);
   };

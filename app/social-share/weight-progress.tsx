@@ -14,11 +14,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { ChevronLeft, Share2, Download, Square, Smartphone, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -46,14 +46,14 @@ export default function WeightProgressScreen() {
   // Prendre une photo avec la camera
   const takePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'acceder a la camera', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      const result = await launchCameraAsync({
+        mediaTypes: MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
@@ -61,7 +61,7 @@ export default function WeightProgressScreen() {
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
         if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          notificationAsync(NotificationFeedbackType.Success);
         }
       }
     } catch (err) {
@@ -73,14 +73,14 @@ export default function WeightProgressScreen() {
   // Choisir une photo depuis la galerie
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'acceder a ta galerie', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      const result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
@@ -88,7 +88,7 @@ export default function WeightProgressScreen() {
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
         if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          notificationAsync(NotificationFeedbackType.Success);
         }
       }
     } catch (err) {
@@ -101,7 +101,7 @@ export default function WeightProgressScreen() {
   const removePhoto = () => {
     setBackgroundImage(undefined);
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
   };
 
@@ -111,7 +111,7 @@ export default function WeightProgressScreen() {
       setIsSaving(true);
 
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -126,17 +126,17 @@ export default function WeightProgressScreen() {
       });
 
       // Demander permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       // Sauvegarder dans la galerie
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
 
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
 
       showPopup('Sauvegarde', 'Ta carte poids est dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
@@ -152,7 +152,7 @@ export default function WeightProgressScreen() {
   const shareCard = async () => {
     try {
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -166,8 +166,8 @@ export default function WeightProgressScreen() {
         result: 'tmpfile',
       });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma progression poids Yoroi',
         });

@@ -16,7 +16,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Calendar, MapPin, Trophy, Save, Target } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -132,7 +132,7 @@ export default function EditCompetitionScreen() {
     }
 
     setIsSaving(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       const selectedCategory = weightCategories.find(c => c.id === categoriePoidsId);
@@ -271,7 +271,7 @@ export default function EditCompetitionScreen() {
                 ]}
                 onPress={() => {
                   setTypeEvenement(suggestion);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                 }}
                 activeOpacity={0.7}
               >
@@ -387,7 +387,7 @@ export default function EditCompetitionScreen() {
                       setSport(s);
                       setShowSportPicker(false);
                       setCategoriePoidsId(''); // Reset catégorie
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                     }}
                   >
                     <Text style={styles.sportItemEmoji}>{SPORT_ICONS[s]}</Text>
@@ -435,7 +435,7 @@ export default function EditCompetitionScreen() {
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setCategoriePoidsId(category.id);
                     }}
                     activeOpacity={0.7}

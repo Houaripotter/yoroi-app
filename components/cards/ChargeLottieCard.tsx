@@ -74,7 +74,7 @@ const AnimatedZap: React.FC<{ color: string; speed: number; size: number }> = ({
   );
 };
 
-export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
+export const ChargeLottieCard = React.memo<ChargeLottieCardProps>(({
   level = 'optimal',
   totalLoad = 0,
   maxLoad = 2000,
@@ -259,7 +259,7 @@ export const ChargeLottieCard: React.FC<ChargeLottieCardProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

@@ -24,7 +24,7 @@ import {
   Droplets,
   BookOpen,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 
 // ============================================
@@ -104,7 +104,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({
 
     // Haptic feedback
     if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     }
 
     // Animation

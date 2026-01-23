@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Droplet, Plus } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import {
@@ -46,7 +46,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
     if (isAdding) return;
 
     setIsAdding(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     try {
       await addHydratation(amount, 'eau');

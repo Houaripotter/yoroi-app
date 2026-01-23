@@ -21,8 +21,8 @@ import { useI18n } from '@/lib/I18nContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
-import * as StoreReview from 'expo-store-review';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import { requestReview, isAvailableAsync } from 'expo-store-review';
 import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -98,13 +98,13 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
   }, [visible]);
 
   const handleRateApp = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       // Utiliser le système natif de notation
-      const isAvailable = await StoreReview.isAvailableAsync();
+      const isAvailable = await isAvailableAsync();
       if (isAvailable) {
-        await StoreReview.requestReview();
+        await requestReview();
       } else {
         // Fallback vers le store
         const storeUrl = Platform.select({
@@ -124,14 +124,14 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
   };
 
   const handleSuggestionBox = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     onClose();
     // Naviguer vers la boîte à idées
     router.push('/ideas');
   };
 
   const handleLater = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onClose();
   };
 

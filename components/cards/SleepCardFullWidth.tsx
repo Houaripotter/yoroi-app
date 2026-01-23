@@ -8,7 +8,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Moon, Plus, TrendingUp, AlertTriangle, CheckCircle, Settings } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
@@ -20,7 +20,7 @@ interface SleepCardFullWidthProps {
   onPress?: () => void;
 }
 
-export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
+export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
   hours = 0,
   debt = 0,
   goal = 8,
@@ -127,7 +127,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
   }, []);
 
   const handleAdd = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push('/sleep');
 
     // Bounce animation
@@ -171,7 +171,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)' }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/sleep');
           }}
           activeOpacity={0.7}
@@ -196,7 +196,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
       <TouchableOpacity
         style={styles.sleepContainer}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           router.push('/sleep');
         }}
         activeOpacity={0.7}
@@ -339,7 +339,7 @@ export const SleepCardFullWidth: React.FC<SleepCardFullWidthProps> = ({
         <TouchableOpacity
           style={[styles.actionButtonSmall, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)' }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/sleep');
           }}
           activeOpacity={0.7}

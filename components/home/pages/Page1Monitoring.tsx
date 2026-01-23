@@ -20,7 +20,7 @@ import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -393,7 +393,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   }, [showShareButton]);
 
   const openShareMenu = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setShowShareMenu(true);
 
     // Animation d'ouverture du menu avec effet cascade
@@ -421,7 +421,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   };
 
   const closeShareMenu = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     // Animation de fermeture
     Animated.parallel([
@@ -451,7 +451,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   };
 
   const handleShareCard = (type: 'weekly' | 'monthly' | 'yearly') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     closeShareMenu();
 
     // Naviguer vers la carte appropriée
@@ -471,7 +471,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   };
 
   const handleDismissShareButton = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     if (showShareMenu) {
       closeShareMenu();
     }
@@ -582,7 +582,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <TouchableOpacity
           style={styles.statCardTouchable}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/vitality-detail');
           }}
           activeOpacity={0.8}
@@ -607,7 +607,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <TouchableOpacity
           style={styles.statCardTouchable}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/records');
           }}
           activeOpacity={0.8}
@@ -632,7 +632,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <TouchableOpacity
           style={styles.statCardTouchable}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/gamification');
           }}
           activeOpacity={0.8}
@@ -657,7 +657,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <TouchableOpacity
           style={styles.statCardTouchable}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/gamification');
           }}
           activeOpacity={0.8}
@@ -773,7 +773,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           <TouchableOpacity
             style={styles.compositionItem}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.push('/(tabs)/stats?tab=composition');
             }}
             activeOpacity={0.7}
@@ -798,7 +798,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           <TouchableOpacity
             style={styles.compositionItem}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.push('/(tabs)/stats?tab=composition');
             }}
             activeOpacity={0.7}
@@ -823,7 +823,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           <TouchableOpacity
             style={styles.compositionItem}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.push('/(tabs)/stats?tab=composition');
             }}
             activeOpacity={0.7}
@@ -857,7 +857,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST - Cliquable vers stats poids */}
               <TouchableOpacity
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   router.push('/(tabs)/stats?tab=poids');
                 }}
                 activeOpacity={0.9}

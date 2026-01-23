@@ -27,7 +27,7 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -98,7 +98,7 @@ export default function CombatDetailScreen() {
             setIsDeleting(true);
             try {
               await deleteCombat(parseInt(combatId));
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
               logger.error('Error deleting combat:', error);

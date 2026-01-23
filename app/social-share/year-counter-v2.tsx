@@ -23,11 +23,11 @@ import {
   Image as ImageIcon,
   Trophy,
 } from 'lucide-react-native';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import { captureRef } from 'react-native-view-shot';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -102,20 +102,20 @@ export default function YearCounterV2Screen() {
 
   const takePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await launchCameraAsync({
         allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
         // Détecter si l\'image est en paysage
@@ -130,20 +130,20 @@ export default function YearCounterV2Screen() {
 
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await launchImageLibraryAsync({
         allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setSelectedTemplate('photo');
         // Détecter si l\'image est en paysage
@@ -164,7 +164,7 @@ export default function YearCounterV2Screen() {
     if (!cardRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       const uri = await captureRef(cardRef.current, {
@@ -172,8 +172,8 @@ export default function YearCounterV2Screen() {
         quality: 1,
       });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager mon Compteur Annuel',
         });
@@ -190,10 +190,10 @@ export default function YearCounterV2Screen() {
     if (!cardRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
@@ -205,8 +205,8 @@ export default function YearCounterV2Screen() {
         quality: 1,
       });
 
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await saveToLibraryAsync(uri);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup('Sauvegardé', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Error saving:', error);
@@ -340,7 +340,7 @@ export default function YearCounterV2Screen() {
                   }
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setSelectedTemplate(key);
                   // Si on sélectionne Photo et pas d\'image, scroll vers le bas pour montrer les options
                   if (key === 'photo' && !backgroundImage) {

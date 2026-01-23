@@ -26,10 +26,10 @@ import {
   Smartphone,
   Square,
 } from 'lucide-react-native';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { captureRef } from 'react-native-view-shot';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -160,12 +160,12 @@ export default function TransformationV2Screen() {
     if (step === 'select_before') {
       setSelectedBefore(photo);
       setStep('select_after');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     } else if (step === 'select_after') {
       if (photo.id !== selectedBefore?.id) {
         setSelectedAfter(photo);
         setStep('preview');
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       } else {
         showPopup('Photo identique', 'Choisis une photo différente pour la comparaison', [{ text: 'OK', style: 'primary' }]);
       }
@@ -176,7 +176,7 @@ export default function TransformationV2Screen() {
     setSelectedBefore(null);
     setSelectedAfter(null);
     setStep('select_before');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   // ============================================
@@ -186,7 +186,7 @@ export default function TransformationV2Screen() {
   const handleShare = async () => {
     try {
       setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       if (!cardRef.current) {
         showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
@@ -198,12 +198,12 @@ export default function TransformationV2Screen() {
         quality: 1,
       });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma transformation Yoroi',
         });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       } else {
         showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
@@ -218,9 +218,9 @@ export default function TransformationV2Screen() {
   const handleSave = async () => {
     try {
       setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         return;
@@ -236,9 +236,9 @@ export default function TransformationV2Screen() {
         quality: 1,
       });
 
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup('Sauvegardé', 'Ta transformation a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -362,7 +362,7 @@ export default function TransformationV2Screen() {
                   ]}
                   onPress={() => {
                     setFormat('stories');
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                   }}
                 >
                   <Smartphone size={14} color={format === 'stories' ? colors.textOnGold : colors.textSecondary} />
@@ -377,7 +377,7 @@ export default function TransformationV2Screen() {
                   ]}
                   onPress={() => {
                     setFormat('square');
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                   }}
                 >
                   <Square size={14} color={format === 'square' ? colors.textOnGold : colors.textSecondary} />

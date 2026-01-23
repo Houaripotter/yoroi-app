@@ -25,7 +25,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -81,7 +81,7 @@ export default function QuickLogScreen() {
   const { t } = useI18n();
 
   const handleSelectActivity = (activityId: ActivityType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Router vers l'écran de saisie spécifique
     switch (activityId) {
@@ -122,7 +122,7 @@ export default function QuickLogScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}
@@ -203,7 +203,7 @@ export default function QuickLogScreen() {
             }
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/training-journal');
           }}
           activeOpacity={0.7}

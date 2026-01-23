@@ -18,10 +18,10 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import {
   ChevronLeft,
   Share2,
@@ -162,7 +162,7 @@ export default function FighterCardScreen() {
       setIsSaving(true);
 
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -179,7 +179,7 @@ export default function FighterCardScreen() {
       });
 
       // Demander permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorisation necessaire pour sauvegarder l\'image', [
           { text: 'OK', style: 'primary' }
@@ -188,10 +188,10 @@ export default function FighterCardScreen() {
       }
 
       // Sauvegarder dans la galerie
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
 
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
 
       showPopup('Sauvegarde!', 'Fiche Combattant enregistree dans ta galerie!', [
@@ -211,7 +211,7 @@ export default function FighterCardScreen() {
   const shareCard = async () => {
     try {
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -228,8 +228,8 @@ export default function FighterCardScreen() {
       });
 
       // Verifier si le partage est disponible
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma Fiche Combattant',
         });

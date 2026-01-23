@@ -16,7 +16,7 @@ import { ChevronLeft, X, Check, Clock, Plus } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { Club, Training } from '@/lib/database';
 import { getClubLogoSource } from '@/lib/sports';
@@ -176,19 +176,19 @@ export function EnhancedAddSessionModal({
   };
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     reset();
     onClose();
   };
 
   const handleClubSelect = (club: Club) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedClub(club);
     setStep('details');
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setStep('club');
     setSelectedClub(null);
   };
@@ -209,7 +209,7 @@ export function EnhancedAddSessionModal({
         ? prev.filter((m) => m !== muscleId)
         : [...prev, muscleId]
     );
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   // Toggle session type (multi-sélection)
@@ -219,7 +219,7 @@ export function EnhancedAddSessionModal({
         ? prev.filter((t) => t !== typeId)
         : [...prev, typeId]
     );
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   // Ajouter un muscle personnalisé
@@ -228,7 +228,7 @@ export function EnhancedAddSessionModal({
       setSelectedMuscles((prev) => [...prev, customMuscle.trim()]);
       setCustomMuscle('');
       setShowCustomMuscleInput(false);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     }
   };
 
@@ -236,7 +236,7 @@ export function EnhancedAddSessionModal({
     if (!selectedClub || !date || isSaving) return;
 
     setIsSaving(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     const timeStr = format(startTime, 'HH:mm');
 
@@ -278,12 +278,12 @@ export function EnhancedAddSessionModal({
         notes: note.trim() || undefined,
       });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       // Ne pas appeler handleClose() ici - le parent gère la fermeture
       reset(); // Juste reset les champs pour la prochaine fois
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
     } finally {
       setIsSaving(false);
     }
@@ -858,7 +858,7 @@ export function EnhancedAddSessionModal({
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setDuration(preset.value);
                       setShowCustomDuration(false);
                     }}
@@ -893,7 +893,7 @@ export function EnhancedAddSessionModal({
                     },
                   ]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     setShowCustomDuration(true);
                   }}
                 >

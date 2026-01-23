@@ -10,8 +10,8 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter } from 'expo-router';
 import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { Share2, Download, RefreshCw } from 'lucide-react-native';
 import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -187,9 +187,9 @@ export default function WeeklyShareScreen() {
         result: 'tmpfile',
       });
 
-      const canShare = await Sharing.isAvailableAsync();
+      const canShare = await isAvailableAsync();
       if (canShare) {
-        await Sharing.shareAsync(uri, {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma progression Yoroi',
           UTI: 'public.png',
@@ -213,7 +213,7 @@ export default function WeeklyShareScreen() {
 
     try {
       // Demander la permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorise l\'accès à la galerie pour sauvegarder l\'image', [
           { text: 'OK', style: 'primary' },
@@ -227,7 +227,7 @@ export default function WeeklyShareScreen() {
         result: 'tmpfile',
       });
 
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
       successHaptic();
       showPopup('Sauvegardé !', 'L\'image a été ajoutée à ta galerie', [
         { text: 'OK', style: 'primary' },

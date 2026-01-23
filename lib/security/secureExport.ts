@@ -15,9 +15,9 @@ const FileSystem = FS as typeof FS & {
   writeAsStringAsync: (path: string, content: string, options?: any) => Promise<void>;
   readAsStringAsync: (path: string, options?: any) => Promise<string>;
 };
-import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
-import * as Crypto from 'expo-crypto';
+import { shareAsync } from 'expo-sharing';
+import { getDocumentAsync } from 'expo-document-picker';
+import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import logger from './logger';
 import { secureStorage } from './secureStorage';
 import { validators, ValidationResult } from './validators';
@@ -119,8 +119,8 @@ function checkRateLimit(type: 'export' | 'import'): ValidationResult {
  */
 async function calculateChecksum(data: string): Promise<string> {
   try {
-    const digest = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
+    const digest = await digestStringAsync(
+      CryptoDigestAlgorithm.SHA256,
       data
     );
     return digest;
@@ -299,7 +299,7 @@ async function generateExportKey(): Promise<string> {
   const existingKey = await secureStorage.getItem('@yoroi_export_key');
   if (existingKey) return existingKey;
 
-  const randomBytes = await Crypto.getRandomBytesAsync(32);
+  const randomBytes = await getRandomBytesAsync(32);
   const key = Array.from(randomBytes)
     .map(byte => byte.toString(16).padStart(2, '0'))
     .join('');
@@ -441,8 +441,8 @@ export async function secureExportData(): Promise<{ success: boolean; error?: st
     });
 
     // Partager le fichier
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri, {
+    if (await isAvailableAsync()) {
+      await shareAsync(fileUri, {
         mimeType: 'application/json',
         dialogTitle: 'Exporter les données Yoroi',
       });
@@ -474,7 +474,7 @@ export async function secureImportData(): Promise<ImportResult> {
     logger.info('Starting secure import');
 
     // Sélectionner le fichier
-    const result = await DocumentPicker.getDocumentAsync({
+    const result = await getDocumentAsync({
       type: 'application/json',
       copyToCacheDirectory: true,
     });

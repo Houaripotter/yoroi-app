@@ -28,7 +28,7 @@ import {
 } from 'lucide-react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Sport,
   ProgressionItem,
@@ -119,7 +119,7 @@ export default function QuickLogOtherScreen() {
   }, [selectedActivity]);
 
   const incrementValue = (field: 'duration' | 'distance', increment: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     if (field === 'duration') {
       const newValue = (parseInt(durationMinutes) || 0) + increment;
@@ -146,7 +146,7 @@ export default function QuickLogOtherScreen() {
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     // Créer ou récupérer l'item
     const items = getProgressionItems();
@@ -204,7 +204,7 @@ export default function QuickLogOtherScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             style={styles.backButton}
@@ -235,7 +235,7 @@ export default function QuickLogOtherScreen() {
                   { backgroundColor: colors.backgroundCard, borderColor: colors.border },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   setSelectedActivity(activity);
                 }}
                 activeOpacity={0.7}
@@ -266,7 +266,7 @@ export default function QuickLogOtherScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedActivity(null);
           }}
           style={styles.backButton}
@@ -418,7 +418,7 @@ export default function QuickLogOtherScreen() {
                     },
                   ]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     setIntensity(level);
                   }}
                 >

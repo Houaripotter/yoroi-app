@@ -21,7 +21,7 @@ import {
   Calendar,
   Filter,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -66,7 +66,7 @@ export default function PalmaresScreen() {
   };
 
   const handleFilterChange = (newFilter: FilterType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setFilter(newFilter);
     applyFilter(combats, newFilter);
   };
@@ -78,12 +78,12 @@ export default function PalmaresScreen() {
   };
 
   const handleAddCombat = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     router.push('/add-combat');
   };
 
   const handleCombatPress = (combat: Combat) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push(`/combat-detail?id=${combat.id}`);
   };
 

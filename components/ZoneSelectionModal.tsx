@@ -29,7 +29,7 @@ import {
   Heart,
   Circle,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 
@@ -118,7 +118,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
   }, [visible]);
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     
     // Animation de fermeture
     Animated.parallel([
@@ -139,7 +139,7 @@ export const ZoneSelectionModal: React.FC<ZoneSelectionModalProps> = ({
   };
 
   const handleSelect = (zone: Zone) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     
     // Animation de sélection
     Animated.sequence([

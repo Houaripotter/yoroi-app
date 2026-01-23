@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ArrowLeft,
   AlertCircle,
@@ -127,7 +127,7 @@ export default function InjuryEvaluationScreen() {
           notes: notes || undefined,
         });
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
           { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); setTimeout(() => setIsNavigating(false), 1000); router.back(); } } },
         ]);
@@ -143,7 +143,7 @@ export default function InjuryEvaluationScreen() {
           notes: notes || undefined,
         });
 
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
 
         // Vérifier récurrence
         const recurrence = await checkZoneRecurrence(zoneId, zoneView);
@@ -179,7 +179,7 @@ export default function InjuryEvaluationScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               if (!isNavigating) { setIsNavigating(true); router.back(); }
             }}
             activeOpacity={0.7}
@@ -237,7 +237,7 @@ export default function InjuryEvaluationScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setEvaScore(value);
                 }}
                 activeOpacity={0.7}
@@ -282,7 +282,7 @@ export default function InjuryEvaluationScreen() {
                   painType === type.id && { backgroundColor: colors.accent },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setPainType(type.id);
                 }}
                 activeOpacity={0.7}
@@ -318,7 +318,7 @@ export default function InjuryEvaluationScreen() {
                   cause === causeItem.id && { backgroundColor: colors.accent },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setCause(causeItem.id);
                 }}
                 activeOpacity={0.7}
@@ -378,7 +378,7 @@ export default function InjuryEvaluationScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setEstimatedRecoveryDays(suggestedDays);
             }}
             activeOpacity={0.7}
@@ -393,7 +393,7 @@ export default function InjuryEvaluationScreen() {
             <TouchableOpacity
               style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setEstimatedRecoveryDays(Math.max(1, estimatedRecoveryDays - 1));
               }}
               activeOpacity={0.7}
@@ -413,7 +413,7 @@ export default function InjuryEvaluationScreen() {
             <TouchableOpacity
               style={[styles.durationButton, { backgroundColor: colors.backgroundElevated }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setEstimatedRecoveryDays(estimatedRecoveryDays + 1);
               }}
               activeOpacity={0.7}
@@ -433,7 +433,7 @@ export default function InjuryEvaluationScreen() {
                   estimatedRecoveryDays === days && { backgroundColor: colors.accent },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setEstimatedRecoveryDays(days);
                 }}
                 activeOpacity={0.7}

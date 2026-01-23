@@ -20,7 +20,7 @@ import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { MapPin, ExternalLink, Search, ArrowLeft, Plus, Check } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -147,7 +147,7 @@ export default function EventsSimpleScreen() {
   // Add/Remove event from planning
   const toggleEventInPlanning = useCallback(async (event: SportEvent) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const saved = await AsyncStorage.getItem(PLANNING_STORAGE_KEY);
       let savedEvents: SportEvent[] = saved ? JSON.parse(saved) : [];
@@ -186,7 +186,7 @@ export default function EventsSimpleScreen() {
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     safeOpenURL(link);
   }, []);
 
@@ -352,7 +352,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('monde');
           }}
         >
@@ -375,7 +375,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('europe');
           }}
         >
@@ -398,7 +398,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('france');
           }}
         >
@@ -424,7 +424,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('all');
           }}
         >
@@ -447,7 +447,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('combat');
           }}
         >
@@ -470,7 +470,7 @@ export default function EventsSimpleScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('endurance');
           }}
         >

@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function IMGCalculator({ visible, onClose }: Props) {
+export const IMGCalculator = React.memo(function IMGCalculator({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -160,7 +160,7 @@ export function IMGCalculator({ visible, onClose }: Props) {
       </View>
     </Modal>
   );
-}
+});
 
 const RADIUS = { sm: 8, md: 12, lg: 16 };
 

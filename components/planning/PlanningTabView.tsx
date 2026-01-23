@@ -5,7 +5,7 @@
 import React, { useRef, useState } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Calendar, BookOpen, Dumbbell, Clock, Users } from 'lucide-react-native';
 import { PlanningPage1Calendar } from './pages/PlanningPage1Calendar';
 import { PlanningPage2TimeTable } from './pages/PlanningPage2TimeTable';
@@ -83,7 +83,7 @@ export const PlanningTabView: React.FC<PlanningTabViewProps> = (props) => {
       x: pageIndex * SCREEN_WIDTH,
       animated: true,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   return (

@@ -12,7 +12,7 @@ import {
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';
 import { X, Unlock, Lock } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 
 const DevCodeModal: React.FC = () => {
   const { colors } = useTheme();
@@ -27,7 +27,7 @@ const DevCodeModal: React.FC = () => {
     const isValid = await verifyCode(code);
     if (isValid) {
       setSuccess(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       setTimeout(() => {
         setCode('');
         setSuccess(false);
@@ -35,7 +35,7 @@ const DevCodeModal: React.FC = () => {
       }, 1500);
     } else {
       setError(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
       setTimeout(() => setError(false), 1000);
     }
   };

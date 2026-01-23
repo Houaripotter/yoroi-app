@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   Scale,
@@ -290,13 +290,13 @@ export default function OnboardingScreen() {
 
   // Fonctions pour le setup de profil
   const handlePickPhoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusee', 'Acces a la galerie requis');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
@@ -309,13 +309,13 @@ export default function OnboardingScreen() {
   };
 
   const handleTakePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusee', 'Acces a la camera requis');
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,

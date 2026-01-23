@@ -13,7 +13,7 @@ import { MetricRangeIndicator, MetricRange } from './charts/MetricRangeIndicator
 import { getMetricRange } from '@/constants/metricRanges';
 import { getUserSettings } from '@/lib/storage';
 import { getProfile } from '@/lib/database';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 type Period = '30j' | '90j' | '6m' | '1a';
 
@@ -145,7 +145,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
 
   const handlePeriodChange = (period: Period) => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
     setSelectedPeriod(period);
   };

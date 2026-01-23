@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { MetricRange } from '@/lib/healthRanges';
 
 interface MetricCardProps {
@@ -50,7 +50,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
     onPress?.();
   };

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Calendar, MapPin, Plus, Trophy, Clock, ChevronRight, Download } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -81,7 +81,7 @@ export default function CompetitionsScreen() {
             style: 'primary',
             onPress: async () => {
               setImporting(true);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              impactAsync(ImpactFeedbackStyle.Medium);
 
               try {
                 const result = await importAllCompetitions();
@@ -110,12 +110,12 @@ export default function CompetitionsScreen() {
   };
 
   const handleAddCompetition = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     router.push('/add-competition');
   };
 
   const handleCompetitionPress = (competition: Competition) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push(`/competition-detail?id=${competition.id}`);
   };
 

@@ -19,7 +19,7 @@ import {
   Quest,
   QuestProgress,
 } from '@/lib/quests';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import {
   Target,
@@ -172,7 +172,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     <TouchableOpacity
       activeOpacity={0.95}
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
         router.push('/gamification');
       }}
     >

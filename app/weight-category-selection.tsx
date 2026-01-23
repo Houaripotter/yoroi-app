@@ -17,7 +17,7 @@ import { Scale, ChevronRight, Trophy, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import {
   getWeightCategoriesBySportAndGender,
@@ -88,7 +88,7 @@ export default function WeightCategorySelectionScreen() {
   };
 
   const handleSelectCategory = async (categoryId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedCategory(categoryId);
   };
 
@@ -99,7 +99,7 @@ export default function WeightCategorySelectionScreen() {
     }
 
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
 
       // Sauvegarder la catégorie sélectionnée
       await AsyncStorage.setItem('@yoroi_weight_category', selectedCategory);
@@ -113,7 +113,7 @@ export default function WeightCategorySelectionScreen() {
   };
 
   const handleSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.replace('/setup');
   };
 

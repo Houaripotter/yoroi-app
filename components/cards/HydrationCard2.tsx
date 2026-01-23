@@ -4,7 +4,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { Droplets, Minus, Settings, Trophy } from 'lucide-react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 
 import { scale, getGridColumns } from '@/constants/responsive';
 import logger from '@/lib/security/logger';
@@ -20,7 +20,7 @@ interface HydrationCard2Props {
   onAddMl?: (amountMl: number) => void; // En millilitres
 }
 
-export const HydrationCard2: React.FC<HydrationCard2Props> = ({
+export const HydrationCard2 = React.memo<HydrationCard2Props>(({
   currentMl = 0,
   goalMl = 2500,
   onAddMl
@@ -87,7 +87,7 @@ export const HydrationCard2: React.FC<HydrationCard2Props> = ({
     if (goalReached && !hasShownCongrats) {
       setHasShownCongrats(true);
       setShowCongrats(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
 
       // Animation du popup
       scaleAnim.setValue(0);

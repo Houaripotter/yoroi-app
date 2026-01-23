@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Globe, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n, SUPPORTED_LANGUAGES } from '@/lib/I18nContext';
@@ -20,9 +20,9 @@ export function LanguageSelector() {
     if (newLanguage === language) return;
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       await setLanguage(newLanguage);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[LanguageSelector] Erreur changement langue:', error);
     }

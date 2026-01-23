@@ -14,10 +14,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { ChevronLeft, Share2, Download, Square, Smartphone } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -66,7 +66,7 @@ export default function MonthlyRecapScreen() {
       setIsSaving(true);
 
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -81,17 +81,17 @@ export default function MonthlyRecapScreen() {
       });
 
       // Demander permission
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorisation nécessaire pour sauvegarder l\'image', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
       // Sauvegarder dans la galerie
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
 
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
 
       showPopup('Sauvegardé !', 'Monthly Recap enregistré dans ta galerie !', [{ text: 'OK', style: 'primary' }]);
@@ -107,7 +107,7 @@ export default function MonthlyRecapScreen() {
   const shareCard = async () => {
     try {
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
 
       if (!cardRef.current) {
@@ -122,8 +122,8 @@ export default function MonthlyRecapScreen() {
       });
 
       // Vérifier si le partage est disponible
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager mon Monthly Recap Yoroi',
         });

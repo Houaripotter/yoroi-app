@@ -17,7 +17,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { PAGE_TUTORIALS, FeaturePage, PageTutorial } from '@/lib/featureDiscoveryService';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
   home: require('lucide-react-native').Home,
@@ -39,7 +39,7 @@ export default function HelpTutorialsScreen() {
   const [selectedTutorial, setSelectedTutorial] = useState<PageTutorial | null>(null);
 
   const handleTutorialPress = (tutorial: PageTutorial) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSelectedTutorial(tutorial);
   };
 

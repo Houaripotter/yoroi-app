@@ -16,8 +16,8 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
-import * as StoreReview from 'expo-store-review';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { requestReview, isAvailableAsync } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Star, Check, Clock } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
@@ -35,11 +35,11 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
   // Option 1: Laisser un avis - ouvre le store review et marque comme fait
   const handleReview = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     onClose();
 
     try {
-      await StoreReview.requestReview();
+      await requestReview();
       await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
     } catch (error) {
       logger.info('Store review error:', error);
@@ -48,7 +48,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
   // Option 2: C'est deja fait - marque comme fait, ne demandera plus
   const handleAlreadyDone = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     try {
       await AsyncStorage.setItem(REVIEW_ASKED_KEY, 'true');
     } catch (error) {
@@ -59,7 +59,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({ visible, onClose }) =>
 
   // Option 3: Plus tard - ferme simplement, redemandera plus tard
   const handleLater = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onClose();
   };
 

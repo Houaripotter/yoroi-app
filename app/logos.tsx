@@ -12,7 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ArrowLeft,
   Image as ImageIcon,
@@ -46,10 +46,10 @@ export default function LogosScreen() {
 
   const handleLogoChange = async (logoId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       await setSelectedLogo(logoId as any);
       setSelectedLogoId(logoId);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[Logos] Erreur changement logo:', error);
     }
@@ -79,7 +79,7 @@ export default function LogosScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}

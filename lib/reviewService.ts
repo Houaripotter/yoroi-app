@@ -1,4 +1,4 @@
-import * as StoreReview from 'expo-store-review';
+import { requestReview, isAvailableAsync } from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
@@ -40,7 +40,7 @@ export const shouldAskForReview = async (): Promise<boolean> => {
     if (triggerCount < 1) return false;
 
     // Verifier si le store review est disponible
-    const isAvailable = await StoreReview.isAvailableAsync();
+    const isAvailable = await isAvailableAsync();
     if (!isAvailable) return false;
 
     return true;

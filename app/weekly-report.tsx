@@ -27,7 +27,7 @@ import {
   Target,
   AlertTriangle,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -62,7 +62,7 @@ export default function WeeklyReportScreen() {
   const handleShare = async () => {
     if (!report) return;
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       const text = formatReportForSharing(report);
       await Share.share({ message: text });
     } catch (error) {

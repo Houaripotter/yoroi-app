@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Palette,
   Sun,
@@ -175,9 +175,9 @@ export default function ThemesScreen() {
     }
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       await setThemeColor(warriorTheme.themeColor);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[Themes] Erreur changement theme:', error);
       showPopup(t('common.error'), t('screens.themes.errorChangingTheme'), [{ text: t('common.ok'), style: 'primary' }]);
@@ -186,7 +186,7 @@ export default function ThemesScreen() {
 
   const handleModeChange = async (mode: ThemeMode) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       await setThemeMode(mode);
     } catch (error) {
       logger.error('[Themes] Erreur changement mode:', error);
@@ -225,7 +225,7 @@ export default function ThemesScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}

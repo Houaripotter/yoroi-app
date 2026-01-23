@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Trophy, Heart, ChevronRight, Swords, Dumbbell, Lightbulb } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -59,7 +59,7 @@ export default function ModeSelectionScreen() {
     : insets.top + 20;
 
   const handleSelectMode = (mode: UserMode) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedMode(mode);
   };
 
@@ -67,7 +67,7 @@ export default function ModeSelectionScreen() {
     if (!selectedMode) return;
 
     setIsLoading(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       await setUserMode(selectedMode);

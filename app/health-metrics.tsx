@@ -29,7 +29,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/design';
 import { healthConnect, type HealthData } from '@/lib/healthConnect';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   TrendLineChart,
@@ -212,7 +212,7 @@ export default function HealthMetricsScreen() {
 
   const handleConnect = async () => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       const success = await healthConnect.connect();
       if (success) {
         setIsConnected(true);
@@ -239,7 +239,7 @@ export default function HealthMetricsScreen() {
         >
           <TouchableOpacity
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             style={styles.backButton}
@@ -304,7 +304,7 @@ export default function HealthMetricsScreen() {
       >
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}
@@ -340,7 +340,7 @@ export default function HealthMetricsScreen() {
                 },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setPeriod(7);
               }}
             >
@@ -362,7 +362,7 @@ export default function HealthMetricsScreen() {
                 },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setPeriod(30);
               }}
             >
@@ -384,7 +384,7 @@ export default function HealthMetricsScreen() {
                 },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setPeriod(90);
               }}
             >

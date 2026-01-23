@@ -1,6 +1,6 @@
 import { Platform, View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -47,7 +47,7 @@ const getTabBarActiveColor = (accentColor: string): string => {
 
 const triggerHaptic = () => {
   if (Platform.OS !== 'web') {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   }
 };
 
@@ -105,7 +105,7 @@ function CentralBuzzerButton() {
 
   const handlePress = () => {
     // Haptic feedback fort
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
 
     // Animation de pression
     Animated.sequence([

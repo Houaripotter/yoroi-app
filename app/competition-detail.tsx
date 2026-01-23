@@ -23,7 +23,7 @@ import {
   TrendingDown,
   Scale,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -109,7 +109,7 @@ export default function CompetitionDetailScreen() {
             setIsDeleting(true);
             try {
               await deleteCompetition(parseInt(competitionId));
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               if (!isNavigating) { setIsNavigating(true); router.back(); }
             } catch (error) {
               logger.error('Error deleting competition:', error);
@@ -128,7 +128,7 @@ export default function CompetitionDetailScreen() {
   const handleAddFight = () => {
     if (isNavigating) return;
     setIsNavigating(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     router.push(`/add-combat?competitionId=${competitionId}`);
     setTimeout(() => setIsNavigating(false), 1000);
   };
@@ -136,7 +136,7 @@ export default function CompetitionDetailScreen() {
   const handleEdit = () => {
     if (isNavigating) return;
     setIsNavigating(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     router.push(`/edit-competition?id=${competitionId}`);
     setTimeout(() => setIsNavigating(false), 1000);
   };

@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
@@ -107,7 +107,7 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
     if (visible) {
       // Haptic feedback
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
 
       // Animations

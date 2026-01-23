@@ -15,7 +15,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { safeOpenURL } from '@/lib/security/validators';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ChevronLeft,
   Lightbulb,
@@ -72,11 +72,11 @@ export default function IdeasScreen() {
   const triggerHaptic = (type: 'light' | 'medium' | 'success' = 'medium') => {
     if (Platform.OS !== 'web') {
       if (type === 'success') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       } else if (type === 'light') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
       } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        impactAsync(ImpactFeedbackStyle.Medium);
       }
     }
   };

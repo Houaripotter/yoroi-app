@@ -24,7 +24,7 @@ import {
   ChevronRight,
   Activity,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -300,7 +300,7 @@ export default function EnergyScreen() {
         {/* BOUTON GO */}
         <TouchableOpacity 
           style={[styles.goButton, { backgroundColor: batteryColor }]}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); router.push('/add-training'); }}
+          onPress={() => { impactAsync(ImpactFeedbackStyle.Heavy); router.push('/add-training'); }}
         >
           <Zap size={24} color="#FFFFFF" />
           <Text style={styles.goButtonText}>GO ENTRAÎNEMENT !</Text>

@@ -19,7 +19,7 @@ import { Share2, X, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useI18n } from '@/lib/I18nContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -160,7 +160,7 @@ export const ShareFloatingButton: React.FC = () => {
 
   const handleClose = async () => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       // Animation de sortie
       Animated.parallel([
@@ -184,7 +184,7 @@ export const ShareFloatingButton: React.FC = () => {
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
 
     // Animation du bouton
     Animated.sequence([

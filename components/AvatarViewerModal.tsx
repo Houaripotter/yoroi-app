@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { X, ZoomIn, ZoomOut } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import AvatarDisplay from '@/components/AvatarDisplay';
 
@@ -53,7 +53,7 @@ export const AvatarViewerModal: React.FC<AvatarViewerModalProps> = ({
   }, [visible]);
 
   const handleZoom = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     const toValue = isZoomed ? 1 : 3.5;
     setIsZoomed(!isZoomed);
 

@@ -10,7 +10,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Home, BarChart2, Plus, Calendar, Menu } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
@@ -197,7 +197,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
   };
 
   const handlePressAdd = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
 
     Animated.sequence([
       Animated.spring(buttonScale, {
@@ -217,7 +217,7 @@ export function AnimatedTabBar({ state, descriptors, navigation }: TabBarProps) 
   };
 
   const handleTabPress = (routeName: string, isFocused: boolean) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     if (!isFocused) {
       navigation.navigate(routeName);

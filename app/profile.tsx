@@ -18,7 +18,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import {
   ChevronLeft,
@@ -332,14 +332,14 @@ export default function ProfileScreen() {
     setIsPickingPhoto(true);
 
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la caméra requis pour prendre une photo.');
         setIsPickingPhoto(false);
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await launchCameraAsync({
         mediaTypes: ['images'],
         allowsEditing: withEditing,
         aspect: withEditing ? [1, 1] : undefined,
@@ -387,14 +387,14 @@ export default function ProfileScreen() {
     setIsPickingPhoto(true);
 
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Accès à la galerie requis pour choisir une photo.');
         setIsPickingPhoto(false);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: withEditing,
         aspect: withEditing ? [1, 1] : undefined,

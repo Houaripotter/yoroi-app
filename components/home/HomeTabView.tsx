@@ -7,7 +7,7 @@ import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSynt
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -242,16 +242,16 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
       x: pageIndex * SCREEN_WIDTH,
       animated: true,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   const handleLongPressDot = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setEditMode(true);
   };
 
   const handleDoneEditing = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setEditMode(false);
     savePageOrder(pageOrder);
   };

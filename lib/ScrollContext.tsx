@@ -4,7 +4,7 @@
  * Permet aux composants de réagir au scroll de n'importe quelle page
  */
 
-import React, { createContext, useContext, useRef, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useRef, useCallback, ReactNode, useMemo } from 'react';
 import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
 interface ScrollContextType {
@@ -62,16 +62,17 @@ export const ScrollProvider: React.FC<ScrollProviderProps> = ({ children }) => {
     lastScrollY.current = currentY;
   }, []);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
+    scrollY,
+    lastScrollY,
+    isScrollingDown,
+    handleScroll,
+    setScrollingDown,
+  }), [scrollY, handleScroll, setScrollingDown]);
+
   return (
-    <ScrollContext.Provider
-      value={{
-        scrollY,
-        lastScrollY,
-        isScrollingDown,
-        handleScroll,
-        setScrollingDown,
-      }}
-    >
+    <ScrollContext.Provider value={value}>
       {children}
     </ScrollContext.Provider>
   );

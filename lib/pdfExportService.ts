@@ -3,8 +3,8 @@
 // ============================================
 // Génère un rapport PDF professionnel pour médecin/diététicien
 
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+import { printToFileAsync } from 'expo-print';
+import { shareAsync } from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform, Alert } from 'react-native';
 import { getAllMeasurements, getUserSettings } from './storage';
@@ -651,7 +651,7 @@ export const exportToPDF = async (): Promise<boolean> => {
     const html = generateHTMLReport(data);
 
     // 3. Créer le PDF
-    const { uri } = await Print.printToFileAsync({
+    const { uri } = await printToFileAsync({
       html,
       base64: false,
     });
@@ -666,9 +666,9 @@ export const exportToPDF = async (): Promise<boolean> => {
     });
 
     // 5. Partager le PDF
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(pdfPath, {
+      await shareAsync(pdfPath, {
         mimeType: 'application/pdf',
         dialogTitle: 'Partager le rapport Yoroi',
         UTI: 'com.adobe.pdf',
@@ -702,7 +702,7 @@ export const previewPDFReport = async (): Promise<void> => {
 
     const html = generateHTMLReport(data);
 
-    await Print.printAsync({
+    await printAsync({
       html,
     });
   } catch (error) {

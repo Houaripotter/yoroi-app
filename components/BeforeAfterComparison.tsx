@@ -16,8 +16,8 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { X, ArrowRight, ChevronLeft, ChevronRight, Columns, SlidersHorizontal, Share2, TrendingDown, Calendar, Trophy, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ViewShot from 'react-native-view-shot';
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { successHaptic } from '@/lib/haptics';
@@ -176,8 +176,8 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
             text: 'Partager',
             style: 'primary',
             onPress: async () => {
-              if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri);
+              if (await isAvailableAsync()) {
+                await shareAsync(uri);
               } else {
                 await Share.share({ url: uri });
               }
@@ -187,9 +187,9 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
             text: 'Sauvegarder',
             style: 'primary',
             onPress: async () => {
-              const { status } = await MediaLibrary.requestPermissionsAsync();
+              const { status } = await requestPermissionsAsync();
               if (status === 'granted') {
-                await MediaLibrary.saveToLibraryAsync(uri);
+                await saveToLibraryAsync(uri);
                 showPopup('Sauvegarde', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
               } else {
                 showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);

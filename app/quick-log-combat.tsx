@@ -30,7 +30,7 @@ import {
   Play,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ProgressionItem,
   ProgressionStatus,
@@ -86,7 +86,7 @@ export default function QuickLogCombatScreen() {
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     createProgressionItem({
       type: 'technique',
@@ -106,7 +106,7 @@ export default function QuickLogCombatScreen() {
     const currentIndex = statusOrder.indexOf(technique.status);
     const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     updateItemStatus(technique.id, nextStatus);
 
     // Logger la pratique si passage en in_progress ou mastered
@@ -131,7 +131,7 @@ export default function QuickLogCombatScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            notificationAsync(NotificationFeedbackType.Success);
             deleteProgressionItem(technique.id);
             loadTechniques();
           },
@@ -179,7 +179,7 @@ export default function QuickLogCombatScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}
@@ -245,7 +245,7 @@ export default function QuickLogCombatScreen() {
                 },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setFilter(f);
               }}
             >
@@ -406,7 +406,7 @@ export default function QuickLogCombatScreen() {
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setSelectedSport(sport.id);
                     }}
                   >

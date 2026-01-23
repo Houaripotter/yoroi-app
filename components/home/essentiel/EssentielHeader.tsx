@@ -12,7 +12,7 @@ import { Profile, calculateStreak, getWeights, getTrainings } from '@/lib/databa
 import { getCurrentRank } from '@/lib/ranks';
 import { getLevel } from '@/lib/gamification';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Clés des citations motivantes (pour i18n)
 const quoteKeys = [
@@ -79,7 +79,7 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
   const currentLevel = getLevel(totalPoints);
 
   const handleGamificationPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push('/gamification');
   };
 

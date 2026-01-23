@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Target, Trophy, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { getCompetitions, Competition } from '@/lib/database';
 import { differenceInDays, parseISO } from 'date-fns';
 import logger from '@/lib/security/logger';
@@ -84,7 +84,7 @@ const ObjectiveSwitch = () => {
         style={[styles.containerOff, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
         onPress={() => {
           if (Platform.OS !== 'web') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            impactAsync(ImpactFeedbackStyle.Medium);
           }
           router.push('/planning?tab=events');
         }}
@@ -133,7 +133,7 @@ const ObjectiveSwitch = () => {
       ]}
       onPress={() => {
         if (Platform.OS !== 'web') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          impactAsync(ImpactFeedbackStyle.Medium);
         }
         router.push('/planning?tab=events');
       }}

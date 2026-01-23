@@ -39,7 +39,7 @@ import {
   CheckCircle2,
   type LucideIcon,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '@/constants/design';
@@ -154,7 +154,7 @@ export default function AddScreen() {
 
   const triggerHaptic = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
   };
 
@@ -354,7 +354,7 @@ export default function AddScreen() {
         calf: calf ? parseFloat(calf) : undefined,
       });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
 
       // 🔄 SYNC VERS APPLE HEALTH
       try {
@@ -398,7 +398,7 @@ export default function AddScreen() {
   const handleBackupToCloud = async () => {
     setShowSuccessModal(false);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Proposer les deux formats
     showPopup(
@@ -417,7 +417,7 @@ export default function AddScreen() {
             const success = await exportDataToCSV();
             if (success) {
               await backupReminderService.reset();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               setTimeout(() => router.back(), 500);
             }
           },
@@ -429,7 +429,7 @@ export default function AddScreen() {
             const success = await exportDataToJSON();
             if (success) {
               await backupReminderService.reset();
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               setTimeout(() => router.back(), 500);
             }
           },

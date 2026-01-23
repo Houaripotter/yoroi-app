@@ -5,7 +5,7 @@
  * Sync automatique des données: poids, hydratation, workouts, records
  */
 
-import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Platform, Animated, View, Text, StyleSheet } from 'react-native';
 import { WatchConnectivity } from '@/lib/watchConnectivity.ios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -273,23 +273,24 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
     }
   }, [isAvailable, isReachable]);
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    isWatchAvailable: isAvailable,
+    isWatchReachable: isReachable,
+    lastError,
+    lastSyncDate,
+    syncWeight,
+    syncHydration,
+    syncWorkout,
+    syncRecords,
+    syncAllData,
+    watchData,
+  }), [isAvailable, isReachable, lastError, lastSyncDate, syncWeight, syncHydration, syncWorkout, syncRecords, syncAllData, watchData]);
+
   return (
-    <WatchContext.Provider
-      value={{
-        isWatchAvailable: isAvailable,
-        isWatchReachable: isReachable,
-        lastError,
-        lastSyncDate,
-        syncWeight,
-        syncHydration,
-        syncWorkout,
-        syncRecords,
-        syncAllData,
-        watchData,
-      }}
-    >
+    <WatchContext.Provider value={contextValue}>
       {children}
-      
+
       <Animated.View style={[styles.banner, { transform: [{ translateY: bannerAnim }] }]}>
         <View style={styles.bannerContent}>
           <View style={styles.iconContainer}>

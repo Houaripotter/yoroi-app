@@ -1,5 +1,5 @@
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+import { printToFileAsync } from 'expo-print';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getAllMeasurements } from './storage';
@@ -342,14 +342,14 @@ export const generateProgressPDF = async (period: ExportPeriod = '30j'): Promise
     const html = await generatePDFHTML(period);
 
     // Generer le PDF
-    const { uri } = await Print.printToFileAsync({
+    const { uri } = await printToFileAsync({
       html,
       base64: false,
     });
 
     // Partager le PDF
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, {
+    if (await isAvailableAsync()) {
+      await shareAsync(uri, {
         mimeType: 'application/pdf',
         dialogTitle: 'Exporter mon rapport Yoroi',
         UTI: 'com.adobe.pdf',

@@ -25,7 +25,7 @@ import {
   CheckCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   exportTrainingToJSON,
   exportTrainingToCSV,
@@ -93,7 +93,7 @@ export default function ExportDataScreen() {
 
   const handleExport = async (format: ExportFormat) => {
     setExporting(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       let success = false;
@@ -112,7 +112,7 @@ export default function ExportDataScreen() {
 
       if (success) {
         setExportedFormat(format);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         resetTimeoutRef.current = setTimeout(() => setExportedFormat(null), 3000);
       }
     } catch (error) {
@@ -131,7 +131,7 @@ export default function ExportDataScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}

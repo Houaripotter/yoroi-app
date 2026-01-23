@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 
 const VIEW_MODE_HINT_SHOWN_KEY = '@yoroi_view_mode_hint_shown';
@@ -87,7 +87,7 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
   };
 
   const dismissHint = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     // Animation de sortie
     Animated.parallel([

@@ -33,7 +33,7 @@ import {
   CloudRain,
   Moon as MoonIcon,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { notificationService } from '@/lib/notificationService';
 import logger from '@/lib/security/logger';
 import AnimatedWaterBottle from '@/components/AnimatedWaterBottle';
@@ -177,14 +177,14 @@ export default function HydrationScreen() {
       await AsyncStorage.setItem(HYDRATION_GOAL_KEY, newGoal.toString());
       setGoal(newGoal);
       setEditingGoal(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('Erreur sauvegarde objectif:', error);
     }
   };
 
   const addWater = (amountL: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     const newAmount = Math.max(0, currentAmount + amountL);
     setCurrentAmount(newAmount);
     saveAmount(newAmount);
@@ -218,7 +218,7 @@ export default function HydrationScreen() {
 
   const handleToggleNotifications = async (value: boolean) => {
     setNotificationsEnabled(value);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const settings = notificationService.getSettings();
     await notificationService.updateSettings({
@@ -260,7 +260,7 @@ export default function HydrationScreen() {
       },
     });
     setShowNotificationSettings(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
     showPopup(t('hydration.saved'), t('hydration.remindersSavedMessage'));
   };
 

@@ -20,7 +20,7 @@ interface WeightLottieCardProps {
   onPress?: () => void;
 }
 
-export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
+export const WeightLottieCard = React.memo<WeightLottieCardProps>(({
   weight,
   target,
   trend = 'stable',
@@ -189,7 +189,7 @@ export const WeightLottieCard: React.FC<WeightLottieCardProps> = ({
       </Animated.View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

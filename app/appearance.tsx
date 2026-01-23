@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   Palette,
   Sun,
@@ -33,7 +33,7 @@ export default function AppearanceScreen() {
 
   const handleModeChange = async (mode: ThemeMode) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       await setThemeMode(mode);
     } catch (error) {
       console.error('[Appearance] Erreur changement mode:', error);
@@ -41,7 +41,7 @@ export default function AppearanceScreen() {
   };
 
   const handleNavigate = (route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     router.push(route as any);
   };
 
@@ -92,7 +92,7 @@ export default function AppearanceScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}

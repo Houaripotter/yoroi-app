@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { BlurView } from 'expo-blur';
 
@@ -90,7 +90,7 @@ export const FeatureTutorial: React.FC<FeatureTutorialProps> = ({
   };
 
   const handleDismiss = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Animation de sortie
     Animated.parallel([
@@ -117,7 +117,7 @@ export const FeatureTutorial: React.FC<FeatureTutorialProps> = ({
   };
 
   const handleLater = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     // Animation de sortie
     Animated.parallel([

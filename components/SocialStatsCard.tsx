@@ -6,7 +6,7 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import ViewShot from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, TrendingDown, Flame, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -50,8 +50,8 @@ export function SocialStatsCard({
         return;
       }
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           dialogTitle: 'Partager mes stats YOROI',
         });
       } else {

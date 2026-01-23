@@ -17,8 +17,8 @@ import {
   Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import {
   X,
   Check,
@@ -131,7 +131,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   // Sauvegarde
   const handleSave = async () => {
     if (!validate()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
       return;
     }
 
@@ -158,7 +158,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
       // Sauvegarder l'objectif
       await setGoal(selectedSport, weeklyGoal);
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       onSave();
       onClose();
     } catch (error) {
@@ -174,23 +174,23 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
     try {
       let result;
       if (source === 'camera') {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        const permission = await requestCameraPermissionsAsync();
         if (!permission.granted) {
           showPopup('Permission requise', 'Autorise l\'acces a la camera', [{ text: 'OK', style: 'primary' }]);
           return;
         }
-        result = await ImagePicker.launchCameraAsync({
+        result = await launchCameraAsync({
           allowsEditing: true,
           aspect: [1, 1],
           quality: 0.8,
         });
       } else {
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        const permission = await requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
           showPopup('Permission requise', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
           return;
         }
-        result = await ImagePicker.launchImageLibraryAsync({
+        result = await launchImageLibraryAsync({
           mediaTypes: ['images'],
           allowsEditing: true,
           aspect: [1, 1],

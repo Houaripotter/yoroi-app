@@ -11,7 +11,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ChevronLeft,
   Target,
@@ -181,7 +181,7 @@ export default function CutModeScreen() {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newCutData));
       setCutData(newCutData);
       setIsEditing(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('Erreur sauvegarde cut mode:', error);
       showPopup('Erreur', 'Impossible de sauvegarder');
@@ -202,7 +202,7 @@ export default function CutModeScreen() {
               await AsyncStorage.removeItem(STORAGE_KEY);
               setCutData(null);
               progressAnim.setValue(0);
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              impactAsync(ImpactFeedbackStyle.Medium);
             } catch (error) {
               logger.error('Erreur arrêt cut mode:', error);
             }

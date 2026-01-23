@@ -14,7 +14,7 @@ import {
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { ArrowLeft, Plus, Activity, TrendingDown, Shield } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
@@ -144,7 +144,7 @@ export default function InfirmaryScreen() {
 
   // Ouvrir le modal pour ajouter/modifier une blessure
   const handleZonePress = (zone: BodyMapZone, view: 'front' | 'back') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Détecter toutes les zones qui se chevauchent avec la zone cliquée
     const overlapping = getOverlappingZones(zone, view);
@@ -213,7 +213,7 @@ export default function InfirmaryScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}
@@ -307,7 +307,7 @@ export default function InfirmaryScreen() {
                 key={injury.id}
                 style={[styles.injuryCard, { backgroundColor: colors.backgroundCard }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   router.push(`/injury-detail?id=${injury.id}`);
                 }}
                 activeOpacity={0.7}

@@ -14,7 +14,7 @@ const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, { label: string; value: number
   very_active: { label: 'Extremement actif', value: 1.9, desc: 'Athlete, travail physique' },
 };
 
-export function TDEECalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export const TDEECalculator = React.memo(function TDEECalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -87,7 +87,7 @@ export function TDEECalculator({ visible, onClose }: { visible: boolean; onClose
       </View>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { ChevronRight, Check, Swords, Users, Zap, Trophy } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
@@ -57,7 +57,7 @@ export default function CompetitionSportsSelectionScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const toggleSport = (sportId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     if (selectedSports.includes(sportId)) {
       setSelectedSports(selectedSports.filter(s => s !== sportId));
     } else {
@@ -69,7 +69,7 @@ export default function CompetitionSportsSelectionScreen() {
     if (selectedSports.length === 0) return;
 
     setIsLoading(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       // Sauvegarder les sports sélectionnés

@@ -20,7 +20,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import {
   getAvatarConfig,
@@ -135,7 +135,7 @@ export default function AvatarSelectionScreen() {
 
   // Toggle genre
   const handleGenderToggle = (gender: AvatarGender) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSelectedGender(gender);
   };
 
@@ -156,7 +156,7 @@ export default function AvatarSelectionScreen() {
     }
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const success = await setFullAvatarConfig(pack, selectedGender);
 
@@ -165,7 +165,7 @@ export default function AvatarSelectionScreen() {
         return;
       }
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup(
         'Avatar équipé !',
         `Tu es maintenant ${packInfo.name} ${STATE_LABELS[state]} !`
@@ -190,7 +190,7 @@ export default function AvatarSelectionScreen() {
     }
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const success = await setFullAvatarConfig(pack, selectedGender, character);
 
@@ -199,7 +199,7 @@ export default function AvatarSelectionScreen() {
         return;
       }
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup(
         'Avatar équipé !',
         `Tu as équipé ${character} !`

@@ -8,7 +8,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Zap, Activity, TrendingUp, AlertCircle, Settings } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { router } from 'expo-router';
 
 interface ChargeCardFullWidthProps {
@@ -16,7 +16,7 @@ interface ChargeCardFullWidthProps {
   onPress?: () => void;
 }
 
-export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
+export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
   level = 'none',
   onPress,
 }) => {
@@ -156,12 +156,12 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
   });
 
   const handleViewDetails = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push('/charge');
   };
 
   const handleAddTraining = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push('/add-training');
 
     // Bounce animation
@@ -213,7 +213,7 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: `${chargeInfo.color}15` }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/charge');
           }}
           activeOpacity={0.7}
@@ -226,7 +226,7 @@ export const ChargeCardFullWidth: React.FC<ChargeCardFullWidthProps> = ({
       <TouchableOpacity
         style={styles.mainSection}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           router.push('/charge');
         }}
         activeOpacity={0.7}

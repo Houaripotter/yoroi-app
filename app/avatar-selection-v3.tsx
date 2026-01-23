@@ -23,7 +23,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import {
   getAvatarConfig,
@@ -94,7 +94,7 @@ export default function AvatarSelectionV3Screen() {
 
   // Toggle genre
   const handleGenderToggle = (gender: AvatarGender) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSelectedGender(gender);
   };
 
@@ -109,7 +109,7 @@ export default function AvatarSelectionV3Screen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     if (packType === 'collection') {
       // Ouvrir le modal pour choisir un personnage
@@ -144,7 +144,7 @@ export default function AvatarSelectionV3Screen() {
         return;
       }
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       const packName = getPackName(pack);
       const characterName = collectionCharacter ? ` (${collectionCharacter})` : '';
       showPopup('Avatar équipé !', `Tu es maintenant ${packName}${characterName}.`);

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { Droplet, Plus, ChevronRight, X } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import logger from '@/lib/security/logger';
@@ -98,7 +98,7 @@ export const HydrationTracker: React.FC<HydrationTrackerProps> = ({
 
   const addWater = async (amount: number) => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await impactAsync(ImpactFeedbackStyle.Light);
       await addHydrationEntry(amount);
       setTodayAmount(prev => prev + amount);
 

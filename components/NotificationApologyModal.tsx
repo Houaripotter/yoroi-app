@@ -12,7 +12,7 @@ import { BlurView } from 'expo-blur';
 import { X, Bell, MessageSquare, CheckCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // ============================================
 // MODAL D'EXCUSE POUR LES NOTIFICATIONS
@@ -61,7 +61,7 @@ export const NotificationApologyModal: React.FC = () => {
 
   const handleClose = async () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
     try {
       await AsyncStorage.setItem(STORAGE_KEY, 'true');

@@ -27,7 +27,7 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { exportDataToJSON } from '@/lib/exportService';
 import { successHaptic } from '@/lib/haptics';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import ratingService from '@/lib/ratingService';
 import { RatingPopup } from '@/components/RatingPopup';
 
@@ -61,7 +61,7 @@ export default function BackupStepScreen() {
   };
 
   const handleFinish = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Vérifier si l'utilisateur a déjà noté l'app
     const hasRated = await ratingService.hasRated();

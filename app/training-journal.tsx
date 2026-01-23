@@ -33,8 +33,8 @@ import {
 import { useWatch } from '@/lib/WatchConnectivityProvider';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import {
   Benchmark,
@@ -339,7 +339,7 @@ export default function TrainingJournalScreen() {
   const handleInstallLibrary = async () => {
     try {
       setIsSubmitting(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       
       // Installer la bibliothèque massive
       for (const ex of EXERCISE_LIBRARY) {
@@ -517,7 +517,7 @@ export default function TrainingJournalScreen() {
 
     setIsSubmitting(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       const result = await createBenchmark(newBenchmarkName, newBenchmarkCategory, newBenchmarkUnit);
       if (result) {
         setShowAddBenchmarkModal(false);
@@ -559,7 +559,7 @@ export default function TrainingJournalScreen() {
   };
 
   const pickSkillVideo = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showPopup({
         title: 'Permission refusee',
@@ -569,14 +569,14 @@ export default function TrainingJournalScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    const result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Videos,
       allowsEditing: true,
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets[0]) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       // Copy to permanent storage
       const permanentUri = await saveVideoToPermanentStorage(result.assets[0].uri);
       if (permanentUri) {
@@ -592,21 +592,21 @@ export default function TrainingJournalScreen() {
   };
 
   const recordSkillVideo = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusee', 'Autorise l\'acces a la camera pour filmer.');
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    const result = await launchCameraAsync({
+      mediaTypes: MediaTypeOptions.Videos,
       allowsEditing: true,
       quality: 0.8,
       videoMaxDuration: 60, // Max 60 seconds
     });
 
     if (!result.canceled && result.assets[0]) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       // Copy to permanent storage
       const permanentUri = await saveVideoToPermanentStorage(result.assets[0].uri);
       if (permanentUri) {
@@ -626,7 +626,7 @@ export default function TrainingJournalScreen() {
 
     try {
       setIsSubmitting(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       // Create skill with video URI if available
       const result = await createSkill(newSkillName, newSkillCategory, newSkillStatus, newSkillNotes);
       if (result && newSkillVideoUri) {
@@ -653,7 +653,7 @@ export default function TrainingJournalScreen() {
   // TASK 2: Handle video URL update
   const handleUpdateVideoUrl = async () => {
     if (!selectedSkill) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     await updateSkillVideoUrl(selectedSkill.id, editingVideoUrl);
     showToast('Lien vidéo sauvegardé');
     // Refresh
@@ -665,7 +665,7 @@ export default function TrainingJournalScreen() {
 
   const openVideoUrl = (url: string) => {
     if (!url) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     safeOpenURL(url);
   };
 
@@ -684,7 +684,7 @@ export default function TrainingJournalScreen() {
 
     try {
       setIsSubmitting(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     let value: number;
 
     if (selectedBenchmark.unit === 'time') {
@@ -801,7 +801,7 @@ export default function TrainingJournalScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            impactAsync(ImpactFeedbackStyle.Heavy);
             await deleteBenchmark(id);
             setShowBenchmarkDetail(false);
             setSelectedBenchmark(null);
@@ -813,7 +813,7 @@ export default function TrainingJournalScreen() {
   };
 
   const handleUpdateSkillStatus = async (skillId: string, status: SkillStatus) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     await updateSkillStatus(skillId, status);
     loadData();
     // Refresh selected skill
@@ -828,7 +828,7 @@ export default function TrainingJournalScreen() {
 
     try {
       setIsSubmitting(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       await addSkillNote(selectedSkill.id, newNoteText);
       setNewNoteText('');
       // Refresh
@@ -848,7 +848,7 @@ export default function TrainingJournalScreen() {
     if (!selectedSkill) return;
 
     const amount = parseInt(drillIncrement) || 10;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     await incrementDrillCount(selectedSkill.id, amount);
     // Refresh
     const updated = await getSkills();
@@ -867,7 +867,7 @@ export default function TrainingJournalScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: async () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+            impactAsync(ImpactFeedbackStyle.Heavy);
             await deleteSkill(id);
             setShowSkillDetail(false);
             setSelectedSkill(null);
@@ -884,7 +884,7 @@ export default function TrainingJournalScreen() {
 
   const handleRestoreBenchmark = async (benchmarkId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       const success = await restoreBenchmark(benchmarkId);
       if (success) {
         await loadData();
@@ -908,7 +908,7 @@ export default function TrainingJournalScreen() {
 
   const handleRestoreSkill = async (skillId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       const success = await restoreSkill(skillId);
       if (success) {
         await loadData();
@@ -952,7 +952,7 @@ export default function TrainingJournalScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              impactAsync(ImpactFeedbackStyle.Heavy);
               await emptyTrash();
               await loadData();
               setShowTrashModal(false);
@@ -1015,7 +1015,7 @@ export default function TrainingJournalScreen() {
         key={benchmark.id}
         style={[styles.compactCard, { backgroundColor: colors.backgroundCard, borderLeftColor: benchmark.color }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           setSelectedBenchmark(benchmark);
           setShowBenchmarkDetail(true);
         }}
@@ -1054,7 +1054,7 @@ export default function TrainingJournalScreen() {
               <TouchableOpacity
                 style={[styles.compactShareBtn, { backgroundColor: colors.backgroundCard, borderColor: benchmark.color }]}
                 onPress={(e) => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   // Create victory data from the last entry
                   const victoryData = createVictoryFromEntry(
                     benchmark.name,
@@ -1074,7 +1074,7 @@ export default function TrainingJournalScreen() {
             <TouchableOpacity
               style={[styles.compactAddBtn, { backgroundColor: benchmark.color }]}
               onPress={(e) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                impactAsync(ImpactFeedbackStyle.Medium);
                 setSelectedBenchmark(benchmark);
                 setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
                 setShowAddEntryModal(true);
@@ -1119,7 +1119,7 @@ export default function TrainingJournalScreen() {
         key={benchmark.id}
         style={[styles.benchmarkCard, { backgroundColor: colors.backgroundCard, borderColor: benchmark.color + '40' }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           setSelectedBenchmark(benchmark);
           setShowBenchmarkDetail(true);
         }}
@@ -1164,7 +1164,7 @@ export default function TrainingJournalScreen() {
         <TouchableOpacity
           style={[styles.quickAddBtn, { backgroundColor: benchmark.color }]}
           onPress={(e) => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            impactAsync(ImpactFeedbackStyle.Medium);
             setSelectedBenchmark(benchmark);
             setNewEntryUnit(benchmark.unit === 'lbs' ? 'lbs' : 'kg');
             setShowAddEntryModal(true);
@@ -1191,7 +1191,7 @@ export default function TrainingJournalScreen() {
         key={skill.id}
         style={[styles.skillCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           setSelectedSkill(skill);
           setEditingVideoUrl(skill.videoUrl || ''); // Pre-fill video URL
           setShowSkillDetail(true);
@@ -1326,7 +1326,7 @@ export default function TrainingJournalScreen() {
             activeTab === 'records' && { borderBottomColor: '#EF4444', borderBottomWidth: 3 }
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setActiveTab('records');
           }}
           activeOpacity={0.7}
@@ -1351,7 +1351,7 @@ export default function TrainingJournalScreen() {
             activeTab === 'techniques' && { borderBottomColor: '#8B5CF6', borderBottomWidth: 3 }
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setActiveTab('techniques');
           }}
           activeOpacity={0.7}
@@ -1459,7 +1459,7 @@ export default function TrainingJournalScreen() {
                 }
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setGlobalFilter(filter.key);
               }}
             >
@@ -1514,7 +1514,7 @@ export default function TrainingJournalScreen() {
               <TouchableOpacity
                 style={[styles.emptyCompactCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   setIsMusclePickerVisible(true);
                 }}
               >
@@ -1614,7 +1614,7 @@ export default function TrainingJournalScreen() {
                 <TouchableOpacity
                   style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    impactAsync(ImpactFeedbackStyle.Medium);
                     setShowAddSkillModal(true);
                   }}
                 >
@@ -1638,7 +1638,7 @@ export default function TrainingJournalScreen() {
                 <TouchableOpacity
                   style={[styles.createCustomSkillCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    impactAsync(ImpactFeedbackStyle.Medium);
                     setNewSkillName(searchQuery.trim());
                     setSearchQuery('');
                     setShowAddSkillModal(true);
@@ -1668,7 +1668,7 @@ export default function TrainingJournalScreen() {
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: colors.accent }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          impactAsync(ImpactFeedbackStyle.Medium);
           setShowFabMenu(true);
         }}
         activeOpacity={0.8}

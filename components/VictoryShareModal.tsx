@@ -17,8 +17,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import * as ImagePicker from 'expo-image-picker';
-import * as Sharing from 'expo-sharing';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import ViewShot from 'react-native-view-shot';
 import {
   X,
@@ -37,7 +37,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { calculatePace, formatDuration, formatDistance, BenchmarkEntry } from '@/lib/carnetService';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -105,39 +105,39 @@ export default function VictoryShareModal({
 
   // Pick photo from gallery
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
       allowsEditing: false,
       quality: 0.9,
     });
 
     if (!result.canceled && result.assets[0]) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       setUserPhoto(result.assets[0].uri);
     }
   };
 
   // Take photo with camera
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await launchCameraAsync({
       allowsEditing: false,
       quality: 0.9,
     });
 
     if (!result.canceled && result.assets[0]) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       setUserPhoto(result.assets[0].uri);
     }
   };
@@ -147,12 +147,12 @@ export default function VictoryShareModal({
     if (!viewShotRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       const uri = await viewShotRef.current.capture?.();
-      if (uri && (await Sharing.isAvailableAsync())) {
-        await Sharing.shareAsync(uri, {
+      if (uri && (await isAvailableAsync())) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma performance',
         });
@@ -170,13 +170,13 @@ export default function VictoryShareModal({
     if (!viewShotRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       const uri = await viewShotRef.current.capture?.();
       if (uri) {
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri, {
+        if (await isAvailableAsync()) {
+          await shareAsync(uri, {
             mimeType: 'image/png',
             dialogTitle: 'Enregistrer la carte',
           });
@@ -714,7 +714,7 @@ export default function VictoryShareModal({
                     }
                   ]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     setSelectedTemplate(key);
                   }}
                 >

@@ -14,7 +14,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ArrowLeft,
   TrendingDown,
@@ -125,7 +125,7 @@ export default function InjuryDetailScreen() {
 
     try {
       await updateInjuryEva(injuryId, newEva, evaNote || undefined);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       setEvaNote('');
       loadData();
     } catch (error) {
@@ -153,7 +153,7 @@ export default function InjuryDetailScreen() {
             setIsProcessing(true);
             try {
               await markInjuryAsHealed(injuryId);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
               showPopup({
@@ -187,7 +187,7 @@ export default function InjuryDetailScreen() {
             setIsDeleting(true);
             try {
               await deleteInjury(injuryId);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               router.back();
             } catch (error) {
               showPopup({
@@ -219,7 +219,7 @@ export default function InjuryDetailScreen() {
                 injury_id: injuryId,
                 treatment_type: treatmentType,
               });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               loadData();
             } catch (error) {
               showPopup({
@@ -278,7 +278,7 @@ export default function InjuryDetailScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}
@@ -369,7 +369,7 @@ export default function InjuryDetailScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setNewEva(value);
                 }}
                 activeOpacity={0.7}
@@ -543,7 +543,7 @@ export default function InjuryDetailScreen() {
                           text: 'Confirmer',
                           onPress: async () => {
                             await updateInjuryEva(injuryId, 0, 'Reset via Mode Chirurgien');
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            notificationAsync(NotificationFeedbackType.Success);
                             loadData();
                           },
                         },
@@ -570,7 +570,7 @@ export default function InjuryDetailScreen() {
                           text: 'Confirmer',
                           onPress: async () => {
                             await updateInjuryEva(injuryId, 10, 'EVA Max via Mode Chirurgien');
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                            notificationAsync(NotificationFeedbackType.Warning);
                             loadData();
                           },
                         },

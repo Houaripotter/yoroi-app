@@ -1,4 +1,4 @@
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 // ============================================
 // 🎮 HAPTICS FEEDBACK
@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
  */
 export const lightHaptic = async () => {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await impactAsync(ImpactFeedbackStyle.Light);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -20,7 +20,7 @@ export const lightHaptic = async () => {
  */
 export const mediumHaptic = async () => {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await impactAsync(ImpactFeedbackStyle.Medium);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -31,7 +31,7 @@ export const mediumHaptic = async () => {
  */
 export const heavyHaptic = async () => {
   try {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    await impactAsync(ImpactFeedbackStyle.Heavy);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -42,7 +42,7 @@ export const heavyHaptic = async () => {
  */
 export const successHaptic = async () => {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await notificationAsync(NotificationFeedbackType.Success);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -53,7 +53,7 @@ export const successHaptic = async () => {
  */
 export const errorHaptic = async () => {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    await notificationAsync(NotificationFeedbackType.Error);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -64,7 +64,7 @@ export const errorHaptic = async () => {
  */
 export const warningHaptic = async () => {
   try {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    await notificationAsync(NotificationFeedbackType.Warning);
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }
@@ -75,7 +75,7 @@ export const warningHaptic = async () => {
  */
 export const selectionHaptic = async () => {
   try {
-    await Haptics.selectionAsync();
+    await selectionAsync();
   } catch (error) {
     // Silencieux si les haptics ne sont pas supportés
   }

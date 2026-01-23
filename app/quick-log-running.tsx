@@ -26,7 +26,7 @@ import {
   TrendingUp,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ProgressionItem,
   PracticeLog,
@@ -85,7 +85,7 @@ export default function QuickLogRunningScreen() {
     field: 'distance' | 'timeMinutes' | 'timeSeconds',
     increment: number
   ) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     if (field === 'distance') {
       const newValue = (parseFloat(distance) || 0) + increment;
@@ -125,7 +125,7 @@ export default function QuickLogRunningScreen() {
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     // Chercher ou créer l'item "Running"
     let items = getProgressionItems();
@@ -171,7 +171,7 @@ export default function QuickLogRunningScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}
@@ -213,7 +213,7 @@ export default function QuickLogRunningScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setRunType(type);
                 }}
               >
@@ -392,7 +392,7 @@ export default function QuickLogRunningScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setFeeling(level);
                 }}
               >

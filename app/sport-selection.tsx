@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ChevronRight,
   ChevronLeft,
@@ -207,7 +207,7 @@ export default function SportSelectionScreen() {
   };
 
   const toggleCategory = (categoryIndex: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setExpandedCategories((prev) =>
       prev.includes(categoryIndex)
         ? prev.filter((i) => i !== categoryIndex)
@@ -216,7 +216,7 @@ export default function SportSelectionScreen() {
   };
 
   const handleSelectSport = (sport: Sport) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedSport(sport);
   };
 
@@ -224,7 +224,7 @@ export default function SportSelectionScreen() {
     if (!selectedSport) return;
 
     setIsLoading(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       await setUserSport(selectedSport);
@@ -254,7 +254,7 @@ export default function SportSelectionScreen() {
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.back();
   };
 

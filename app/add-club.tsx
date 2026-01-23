@@ -5,9 +5,9 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useRouter } from 'expo-router';
 import { SPORTS, getSportIcon } from '@/lib/sports';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
+import { selectionAsync, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { addClub } from '@/lib/database';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
 import { ChevronLeft, Plus, Check, Camera, ChevronDown, ChevronRight, X } from 'lucide-react-native';
 
 export default function AddClubScreen() {
@@ -31,8 +31,8 @@ export default function AddClubScreen() {
   ];
 
   const handlePickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.5,
@@ -44,10 +44,10 @@ export default function AddClubScreen() {
   };
 
   const toggleCategory = (category: string) => {
-    Haptics.selectionAsync();
-    setExpandedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category) 
+    selectionAsync();
+    setExpandedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
         : [...prev, category]
     );
   };
@@ -71,7 +71,7 @@ export default function AddClubScreen() {
     }
 
     if (hasError) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
       return;
     }
 
@@ -84,7 +84,7 @@ export default function AddClubScreen() {
         color: selectedColor,
         sessions_per_week: sessionsPerWeek,
       });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       router.back();
     } catch (error) {
       console.error('Erreur création club:', error);

@@ -20,7 +20,7 @@ import { useI18n } from '@/lib/I18nContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Plus,
   Clock,
@@ -491,7 +491,7 @@ export default function PlanningScreen() {
   // Add external event to saved list
   const addExternalEventToSaved = useCallback(async (event: SportEvent) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const newSavedEvents = [...savedExternalEvents, event];
       setSavedExternalEvents(newSavedEvents);
@@ -508,7 +508,7 @@ export default function PlanningScreen() {
   // Remove external event from saved list
   const removeExternalEventFromSaved = useCallback(async (eventId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const newSavedEvents = savedExternalEvents.filter(e => e.id !== eventId);
       setSavedExternalEvents(newSavedEvents);
@@ -535,7 +535,7 @@ export default function PlanningScreen() {
   // Open external event link
   const handleOpenExternalEvent = useCallback((link: string) => {
     if (link) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       Linking.openURL(link);
     }
   }, []);
@@ -602,7 +602,7 @@ export default function PlanningScreen() {
 
   // Handler: clic sur un jour du calendrier
   const handleDayPress = (day: Date) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSelectedDate(day);
     setShowDayModal(true);
   };
@@ -627,7 +627,7 @@ export default function PlanningScreen() {
   const handleDeleteSession = async (id: number) => {
     try {
       await deleteTraining(id);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       await loadData();
     } catch (error) {
       console.error('Erreur suppression seance:', error);
@@ -648,7 +648,7 @@ export default function PlanningScreen() {
 
   // Handler: Toggle repos
   const handleToggleRest = async (dayId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     // Calculer la date du jour sélectionné dans la semaine courante
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
@@ -672,7 +672,7 @@ export default function PlanningScreen() {
 
   // Handler: Ouvrir une séance depuis la vue programme
   const handleSessionPress = (dayId: string, sessionIndex: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     // Ouvrir le détail de la séance dans l'historique
     router.push('/history');
   };
@@ -683,7 +683,7 @@ export default function PlanningScreen() {
     if (isNavigatingFromProgramme) return;
     setIsNavigatingFromProgramme(true);
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     // Calculer la prochaine date pour ce jour de la semaine
     const dayIndex = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'].indexOf(dayId);
     const nextDate = getNextDateForDayOfWeek(dayIndex);
@@ -718,7 +718,7 @@ export default function PlanningScreen() {
   const handleTabPress = (tab: ViewMode, index: number) => {
     if (isScrollingRef.current) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     setViewMode(tab);
 
@@ -740,7 +740,7 @@ export default function PlanningScreen() {
         isScrollingRef.current = true;
 
         setViewMode(newTab);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
 
         // Reset le flag après un délai
         setTimeout(() => {
@@ -933,7 +933,7 @@ export default function PlanningScreen() {
               <EmptyState
                 type="journal"
                 onAction={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   router.push('/training-journal');
                 }}
               />
@@ -1377,7 +1377,7 @@ export default function PlanningScreen() {
               <EmptyState
                 type="clubs"
                 onAction={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   setEditingClub(null);
                   setShowAddClubModal(true);
                 }}
@@ -1404,7 +1404,7 @@ export default function PlanningScreen() {
                       key={club.id}
                       style={[styles.clubCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        impactAsync(ImpactFeedbackStyle.Light);
                         // Ouvrir le modal d'edition du club
                         setEditingClub(club);
                         setShowAddClubModal(true);
@@ -1471,7 +1471,7 @@ export default function PlanningScreen() {
                 <TouchableOpacity
                   style={[styles.addClubButtonFixed, { backgroundColor: colors.accent }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    impactAsync(ImpactFeedbackStyle.Medium);
                     setEditingClub(null);
                     setShowAddClubModal(true);
                   }}
@@ -1501,7 +1501,7 @@ export default function PlanningScreen() {
                   eventsTabMode === 'my_events' && { backgroundColor: '#F59E0B' },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setEventsTabMode('my_events');
                 }}
                 activeOpacity={0.8}
@@ -1521,7 +1521,7 @@ export default function PlanningScreen() {
                   eventsTabMode === 'catalog' && { backgroundColor: '#8B5CF6' },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setEventsTabMode('catalog');
                 }}
                 activeOpacity={0.8}
@@ -1634,7 +1634,7 @@ export default function PlanningScreen() {
                   <EmptyState
                     type="competitions"
                     onAction={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      impactAsync(ImpactFeedbackStyle.Medium);
                       setEventsTabMode('catalog');
                     }}
                   />
@@ -1680,7 +1680,7 @@ export default function PlanningScreen() {
                         },
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        impactAsync(ImpactFeedbackStyle.Light);
                         setCatalogLocationFilter(loc);
                       }}
                     >
@@ -1707,7 +1707,7 @@ export default function PlanningScreen() {
                         },
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        impactAsync(ImpactFeedbackStyle.Light);
                         setCatalogCategoryFilter(cat);
                       }}
                     >

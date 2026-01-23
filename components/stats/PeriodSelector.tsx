@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 export type Period = '30j' | '90j' | '6m' | '1a';
 
@@ -30,7 +30,7 @@ export const PeriodSelector: React.FC<PeriodSelectorProps> = ({
 
   const handleSelect = (period: Period) => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
     onChange(period);
   };

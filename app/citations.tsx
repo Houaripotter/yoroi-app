@@ -12,7 +12,7 @@ import {
   Switch,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ArrowLeft,
   MessageSquareQuote,
@@ -75,10 +75,10 @@ export default function CitationsScreen() {
 
   const handleCitationStyleChange = async (style: CitationStyle) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       await setCitationStyle(style);
       setSelectedCitationStyle(style);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[Citations] Erreur changement style citation:', error);
       showPopup('Erreur', 'Impossible de changer le style de citation', [{ text: 'OK', style: 'primary' }]);
@@ -87,7 +87,7 @@ export default function CitationsScreen() {
 
   const handleCitationNotifToggle = async (enabled: boolean) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
 
       if (enabled) {
         // Demander les permissions d'abord
@@ -111,7 +111,7 @@ export default function CitationsScreen() {
       const success = await updateCitationNotifications(newSettings);
 
       if (enabled && success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         showPopup(
           'Notifications activees',
           `Tu recevras ${citationNotifSettings.frequency} citation${citationNotifSettings.frequency > 1 ? 's' : ''} par jour pour te motiver !\n\nLes notifications sont planifiees pour les 7 prochains jours.`,
@@ -136,7 +136,7 @@ export default function CitationsScreen() {
 
   const handleCitationFrequencyChange = async (frequency: number) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       const newSettings = { ...citationNotifSettings, frequency };
       await setCitationNotifSettings(newSettings);
       setCitationNotifSettingsState(newSettings);
@@ -174,7 +174,7 @@ export default function CitationsScreen() {
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             activeOpacity={0.7}

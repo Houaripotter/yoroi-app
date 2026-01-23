@@ -18,7 +18,7 @@ import { Header } from '@/components/ui/Header';
 import { ChevronRight, Check, Weight, Ruler, X } from 'lucide-react-native';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { getUserSettings, saveUserSettings } from '@/lib/storage';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 export default function PreferencesScreen() {
   const { colors } = useTheme();
@@ -38,14 +38,14 @@ export default function PreferencesScreen() {
   };
 
   const handleWeightUnitChange = async (unit: 'kg' | 'lbs') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setWeightUnit(unit);
     await saveUserSettings({ weight_unit: unit });
     setWeightUnitModalVisible(false);
   };
 
   const handleMeasurementUnitChange = async (unit: 'cm' | 'in') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setMeasurementUnit(unit);
     await saveUserSettings({ measurement_unit: unit });
     setMeasurementUnitModalVisible(false);
@@ -71,7 +71,7 @@ export default function PreferencesScreen() {
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setWeightUnitModalVisible(true);
               }}
               activeOpacity={0.7}
@@ -98,7 +98,7 @@ export default function PreferencesScreen() {
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setMeasurementUnitModalVisible(true);
               }}
               activeOpacity={0.7}

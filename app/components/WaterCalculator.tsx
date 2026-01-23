@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function WaterCalculator({ visible, onClose }: Props) {
+export const WaterCalculator = React.memo(function WaterCalculator({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [exerciseHours, setExerciseHours] = useState(1);
@@ -88,7 +88,7 @@ export function WaterCalculator({ visible, onClose }: Props) {
       </View>
     </Modal>
   );
-}
+});
 
 const RADIUS = { sm: 8, md: 12, lg: 16 };
 

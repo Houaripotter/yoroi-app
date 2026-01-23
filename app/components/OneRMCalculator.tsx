@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, Modal, ScrollView, TouchableOpacity 
 import { X } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
-export function OneRMCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export const OneRMCalculator = React.memo(function OneRMCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -70,7 +70,7 @@ export function OneRMCalculator({ visible, onClose }: { visible: boolean; onClos
       </View>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

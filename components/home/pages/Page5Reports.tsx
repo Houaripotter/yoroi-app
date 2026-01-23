@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, Share
 import { useTheme } from '@/lib/ThemeContext';
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { FileText, Share2, TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 16;
@@ -76,7 +76,7 @@ export const Page5Reports: React.FC<Page5ReportsProps> = ({
               <TouchableOpacity
                 style={[styles.shareButton, { backgroundColor: `${colors.accent}15` }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   onShareReport();
                 }}
                 activeOpacity={0.7}

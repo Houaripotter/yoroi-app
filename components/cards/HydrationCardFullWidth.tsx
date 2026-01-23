@@ -8,7 +8,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Droplets, Plus, Minus, Settings, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { router } from 'expo-router';
 import Svg, { Path, Defs, ClipPath, LinearGradient as SvgGradient, Stop, Circle } from 'react-native-svg';
 
@@ -18,7 +18,7 @@ interface HydrationCardFullWidthProps {
   onAddMl?: (ml: number) => void;
 }
 
-export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
+export const HydrationCardFullWidth = React.memo<HydrationCardFullWidthProps>(({
   currentMl = 0,
   goalMl = 2500,
   onAddMl,
@@ -74,7 +74,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
   }, [showBubbles]);
 
   const handleAdd = (amount: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     // Afficher le toast
     setLastAmount(amount);
@@ -218,7 +218,7 @@ export const HydrationCardFullWidth: React.FC<HydrationCardFullWidthProps> = ({
         <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: isDark ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.1)' }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push('/hydration');
           }}
           activeOpacity={0.7}

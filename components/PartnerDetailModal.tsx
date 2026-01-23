@@ -31,7 +31,7 @@ import {
   User,
   ExternalLink,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
@@ -170,7 +170,7 @@ export const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({
   }, [visible]);
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -190,7 +190,7 @@ export const PartnerDetailModal: React.FC<PartnerDetailModalProps> = ({
   };
 
   const handleLinkPress = async (link: PartnerLink) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     
     let url = link.url;
     

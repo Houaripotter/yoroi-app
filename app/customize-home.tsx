@@ -46,7 +46,7 @@ import {
   resetHomeCustomization,
   DEFAULT_HOME_SECTIONS,
 } from '@/lib/homeCustomizationService';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 const ICON_MAP: Record<string, any> = {
@@ -105,7 +105,7 @@ export default function CustomizeHomeScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSections(prev =>
       prev.map(s => (s.id === id ? { ...s, visible: !s.visible } : s))
     );
@@ -117,7 +117,7 @@ export default function CustomizeHomeScreen() {
     const index = sections.findIndex(s => s.id === id);
     if (index <= 0) return; // Déjà en haut
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const newSections = [...sections];
     const temp = newSections[index - 1];
@@ -139,7 +139,7 @@ export default function CustomizeHomeScreen() {
     const index = sections.findIndex(s => s.id === id);
     if (index < 0 || index >= sections.length - 1) return; // Déjà en bas
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const newSections = [...sections];
     const temp = newSections[index + 1];
@@ -159,7 +159,7 @@ export default function CustomizeHomeScreen() {
   // Sauvegarder automatiquement
   const handleSave = async () => {
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       await saveHomeCustomization(sections);
       setHasChanges(false);
       router.back();
@@ -181,7 +181,7 @@ export default function CustomizeHomeScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              notificationAsync(NotificationFeedbackType.Warning);
               await resetHomeCustomization();
               setSections(DEFAULT_HOME_SECTIONS);
               setHasChanges(true);

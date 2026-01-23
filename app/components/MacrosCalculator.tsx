@@ -12,7 +12,7 @@ const MACROS_BY_GOAL: Record<Goal, { protein: number; carbs: number; fat: number
   gain: { protein: 35, carbs: 45, fat: 20, label: 'Prise de muscle' },
 };
 
-export function MacrosCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export const MacrosCalculator = React.memo(function MacrosCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -111,7 +111,7 @@ export function MacrosCalculator({ visible, onClose }: { visible: boolean; onClo
       </View>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

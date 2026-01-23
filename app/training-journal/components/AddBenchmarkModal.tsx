@@ -24,7 +24,7 @@ import {
   Platform,
 } from 'react-native';
 import { X, Clock, Scale } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   BenchmarkCategory,
   BenchmarkUnit,
@@ -50,7 +50,7 @@ interface AddBenchmarkModalProps {
   onSubmit: () => Promise<void>;
 }
 
-export default function AddBenchmarkModal({
+export default React.memo(function AddBenchmarkModal({
   visible,
   onClose,
   colors,
@@ -130,7 +130,7 @@ export default function AddBenchmarkModal({
                       }
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setNewBenchmarkName(preset.name);
                       setNewBenchmarkUnit('time');
                     }}
@@ -167,7 +167,7 @@ export default function AddBenchmarkModal({
                       }
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setNewBenchmarkName(preset.name);
                       setNewBenchmarkUnit('kg');
                     }}
@@ -250,7 +250,7 @@ export default function AddBenchmarkModal({
       </KeyboardAvoidingView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   modalOverlay: {

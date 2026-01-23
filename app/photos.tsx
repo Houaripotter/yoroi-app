@@ -15,8 +15,8 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { Camera, Image as ImageIcon, GitCompare, Plus, X, Shield, Eye, EyeOff, TrendingDown, Calendar, Award } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -76,12 +76,12 @@ export default function PhotosScreen() {
     if (success) {
       fetchPhotos();
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
     } else {
       showPopup('Erreur', 'Impossible de supprimer la photo.');
       if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        notificationAsync(NotificationFeedbackType.Error);
       }
     }
   }, [fetchPhotos, showPopup]);
@@ -126,8 +126,8 @@ export default function PhotosScreen() {
   }, [fetchPhotos]);
 
   const requestPermissions = async () => {
-    const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
-    const mediaStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const cameraStatus = await requestCameraPermissionsAsync();
+    const mediaStatus = await requestMediaLibraryPermissionsAsync();
 
     if (cameraStatus.status !== 'granted' || mediaStatus.status !== 'granted') {
       showPopup(
@@ -177,7 +177,7 @@ export default function PhotosScreen() {
     if (!hasPermissions) return;
 
     try {
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await launchCameraAsync({
         mediaTypes: 'images',
         allowsEditing: true,
         aspect: [3, 4],
@@ -209,7 +209,7 @@ export default function PhotosScreen() {
     if (!hasPermissions) return;
 
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await launchImageLibraryAsync({
         mediaTypes: 'images',
         allowsEditing: true,
         aspect: [3, 4],

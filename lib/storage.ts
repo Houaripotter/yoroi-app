@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { getDocumentAsync } from 'expo-document-picker';
 import { Alert, Platform } from 'react-native';
 import logger from './security/logger';
 import secureStorage from './security/secureStorage';
@@ -947,9 +947,9 @@ export const exportData = async (): Promise<boolean> => {
     await FileSystem.writeAsStringAsync(fileUri, jsonContent, writeOptions);
     
     // Partager le fichier
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(fileUri, {
+      await shareAsync(fileUri, {
         mimeType: 'application/json',
         dialogTitle: 'Sauvegarder tes données Yoroi',
       });
@@ -967,7 +967,7 @@ export const exportData = async (): Promise<boolean> => {
 
 export const importData = async (): Promise<boolean> => {
   try {
-    const result = await DocumentPicker.getDocumentAsync({
+    const result = await getDocumentAsync({
       type: 'application/json',
       copyToCacheDirectory: true,
     });

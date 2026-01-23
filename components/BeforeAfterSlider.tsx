@@ -14,8 +14,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight, Share2, Download } from 'lucide-react-native';
 import ViewShot from 'react-native-view-shot';
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -142,8 +142,8 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
             text: 'Partager',
             style: 'primary',
             onPress: async () => {
-              if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri);
+              if (await isAvailableAsync()) {
+                await shareAsync(uri);
               } else {
                 await Share.share({ url: uri });
               }
@@ -153,9 +153,9 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
             text: 'Sauvegarder',
             style: 'primary',
             onPress: async () => {
-              const { status } = await MediaLibrary.requestPermissionsAsync();
+              const { status } = await requestPermissionsAsync();
               if (status === 'granted') {
-                await MediaLibrary.saveToLibraryAsync(uri);
+                await saveToLibraryAsync(uri);
                 showPopup('Sauvegarde !', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
               } else {
                 showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);

@@ -3,49 +3,49 @@
 // ============================================
 // Feedback tactile centralisé pour toute l'app
 
-import * as Haptics from 'expo-haptics';
+import { selectionAsync, impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Platform } from 'react-native';
 
 export const HapticService = {
   // Feedback léger (sélection, toggle, navigation)
   light: () => {
     if (Platform.OS !== 'web') {
-      Haptics.selectionAsync();
+      selectionAsync();
     }
   },
 
   // Feedback moyen (bouton principal, action standard)
   medium: () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     }
   },
 
   // Feedback fort (action importante, confirmation)
   heavy: () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      impactAsync(ImpactFeedbackStyle.Heavy);
     }
   },
 
   // Succès (sauvegarde, objectif atteint, validation)
   success: () => {
     if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     }
   },
 
   // Erreur (échec, validation invalide)
   error: () => {
     if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
     }
   },
 
   // Warning (attention, avertissement)
   warning: () => {
     if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      notificationAsync(NotificationFeedbackType.Warning);
     }
   },
 };

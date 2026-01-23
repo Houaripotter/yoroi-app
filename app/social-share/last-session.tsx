@@ -35,11 +35,11 @@ import {
   MapPinned,
   ArrowRight,
 } from 'lucide-react-native';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import { captureRef } from 'react-native-view-shot';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -204,20 +204,20 @@ export default function LastSessionScreen() {
 
   const takePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Autorise l\'accès à la caméra pour prendre une photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
+      const result = await launchCameraAsync({
         allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setBackgroundType('photo');
         // Détecter si l'image est en paysage (largeur > hauteur)
@@ -232,20 +232,20 @@ export default function LastSessionScreen() {
 
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission refusée', 'Autorise l\'accès à tes photos pour ajouter une image.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const result = await launchImageLibraryAsync({
         allowsEditing: true,
         quality: 0.9,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
         setBackgroundImage(asset.uri);
         setBackgroundType('photo');
         // Détecter si l'image est en paysage (largeur > hauteur)
@@ -266,7 +266,7 @@ export default function LastSessionScreen() {
     if (!cardRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       const uri = await captureRef(cardRef.current, {
@@ -274,8 +274,8 @@ export default function LastSessionScreen() {
         quality: 1,
       });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma séance',
         });
@@ -292,10 +292,10 @@ export default function LastSessionScreen() {
     if (!cardRef.current) return;
 
     setIsLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Autorise l\'accès à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         setIsLoading(false);
@@ -307,8 +307,8 @@ export default function LastSessionScreen() {
         quality: 1,
       });
 
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await saveToLibraryAsync(uri);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup('Sauvegardé !', 'Ta carte a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Error saving:', error);
@@ -440,7 +440,7 @@ export default function LastSessionScreen() {
                       elevation: isActive ? 4 : 0
                     }}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setBackgroundType(style.key as any);
                       if (style.key === 'photo') pickImage();
                       else setBackgroundImage(undefined);

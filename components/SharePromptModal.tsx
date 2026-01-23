@@ -16,7 +16,7 @@ import {
 import { Share2, X, Camera, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { BlurView } from 'expo-blur';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,12 +36,12 @@ export const SharePromptModal: React.FC<SharePromptModalProps> = ({
   const { colors, isDark } = useTheme();
 
   const handleShare = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     onShare();
   };
 
   const handleSkip = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onClose();
   };
 

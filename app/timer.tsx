@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import {
   Play,
@@ -279,7 +279,7 @@ export default function TimerScreen() {
         : type === 'heavy'
         ? Haptics.ImpactFeedbackStyle.Heavy
         : Haptics.ImpactFeedbackStyle.Medium;
-      Haptics.impactAsync(style);
+      impactAsync(style);
     }
   };
 

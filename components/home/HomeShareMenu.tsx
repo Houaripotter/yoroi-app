@@ -19,7 +19,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -41,9 +41,9 @@ export const HomeShareMenu: React.FC = () => {
     const toValue = isOpen ? 0 : 1;
     
     if (!isOpen) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
 
     Animated.spring(animation, {
@@ -57,7 +57,7 @@ export const HomeShareMenu: React.FC = () => {
   };
 
   const navigateToShare = (route: any) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
     toggleMenu();
     router.push(route);
   };

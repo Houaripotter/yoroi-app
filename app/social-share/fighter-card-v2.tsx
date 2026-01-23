@@ -22,11 +22,11 @@ import {
   Image as ImageIcon,
   X,
 } from 'lucide-react-native';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import * as ImagePicker from 'expo-image-picker';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { captureRef } from 'react-native-view-shot';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
@@ -156,21 +156,21 @@ export default function FighterCardV2Screen() {
 
   const takePhoto = async () => {
     try {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ton appareil photo.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      const result = await launchCameraAsync({
+        mediaTypes: MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
     } catch (error) {
       logger.error('Erreur photo:', error);
@@ -180,21 +180,21 @@ export default function FighterCardV2Screen() {
 
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie.', [{ text: 'OK', style: 'primary' }]);
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      const result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
         setBackgroundImage(result.assets[0].uri);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
     } catch (error) {
       logger.error('Erreur galerie:', error);
@@ -204,7 +204,7 @@ export default function FighterCardV2Screen() {
 
   const removePhoto = () => {
     setBackgroundImage(undefined);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
   };
 
   // ============================================
@@ -214,7 +214,7 @@ export default function FighterCardV2Screen() {
   const handleShare = async () => {
     try {
       setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       if (!cardRef.current) {
         showPopup('Erreur', 'Impossible de capturer la carte', [{ text: 'OK', style: 'primary' }]);
@@ -226,12 +226,12 @@ export default function FighterCardV2Screen() {
         quality: 1,
       });
 
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+      if (await isAvailableAsync()) {
+        await shareAsync(uri, {
           mimeType: 'image/png',
           dialogTitle: 'Partager ma Fiche Combattant Yoroi',
         });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       } else {
         showPopup('Erreur', 'Le partage n\'est pas disponible sur cet appareil', [{ text: 'OK', style: 'primary' }]);
       }
@@ -246,9 +246,9 @@ export default function FighterCardV2Screen() {
   const handleSave = async () => {
     try {
       setIsCapturing(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      const { status } = await requestPermissionsAsync();
       if (status !== 'granted') {
         showPopup('Permission requise', 'Yoroi a besoin d\'accéder à ta galerie pour sauvegarder l\'image.', [{ text: 'OK', style: 'primary' }]);
         return;
@@ -264,9 +264,9 @@ export default function FighterCardV2Screen() {
         quality: 1,
       });
 
-      await MediaLibrary.saveToLibraryAsync(uri);
+      await saveToLibraryAsync(uri);
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup('Sauvegardé', 'Ta Fiche Combattant a été ajoutée à ta galerie.', [{ text: 'OK', style: 'primary' }]);
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
@@ -406,7 +406,7 @@ export default function FighterCardV2Screen() {
               onPress={() => {
                 setFormat('stories');
                 setBackgroundImage(undefined);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
               }}
             >
               <Text
@@ -439,7 +439,7 @@ export default function FighterCardV2Screen() {
               onPress={() => {
                 setFormat('square');
                 setBackgroundImage(undefined);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
               }}
             >
               <Text

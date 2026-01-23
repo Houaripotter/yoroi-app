@@ -24,7 +24,7 @@ import {
   Platform,
 } from 'react-native';
 import { X, Check, Camera, ImageIcon, Play } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   SkillCategory,
   SkillStatus,
@@ -57,7 +57,7 @@ interface AddSkillModalProps {
   onPickVideo: () => void;
 }
 
-export default function AddSkillModal({
+export default React.memo(function AddSkillModal({
   visible,
   onClose,
   colors,
@@ -146,7 +146,7 @@ export default function AddSkillModal({
                       }
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setNewSkillStatus(status);
                     }}
                   >
@@ -224,7 +224,7 @@ export default function AddSkillModal({
       </KeyboardAvoidingView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   modalOverlay: {

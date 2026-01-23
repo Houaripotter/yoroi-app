@@ -13,7 +13,7 @@ import { ViewMode } from '@/hooks/useViewMode';
 import { Profile } from '@/lib/database';
 import { useTheme } from '@/lib/ThemeContext';
 import { BookOpen, Target, FileText, ChevronRight, Plus, Award, Brain, Zap } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useI18n } from '@/lib/I18nContext';
 
 interface HomeEssentielContentProps {
@@ -285,7 +285,7 @@ const QuickToolsRow: React.FC = () => {
           key={tool.id}
           style={[styles.quickToolCard, { backgroundColor: colors.backgroundCard }]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.push(tool.route as any);
           }}
           activeOpacity={0.85}

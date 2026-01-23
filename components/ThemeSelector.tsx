@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Palette, Sun, Moon, Smartphone, Check, Crown } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { ThemeColor, ThemeMode, isPremiumTheme, themeColors } from '@/constants/themes';
@@ -95,7 +95,7 @@ const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro
 
   const handlePress = () => {
     if (!isUnlocked) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      notificationAsync(NotificationFeedbackType.Warning);
       onPremiumAlert();
       return;
     }

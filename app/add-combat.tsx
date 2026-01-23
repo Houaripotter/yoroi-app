@@ -16,7 +16,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Calendar,
   Trophy,
@@ -102,7 +102,7 @@ export default function AddCombatScreen() {
     }
 
     setIsSaving(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       await addCombat({
@@ -178,7 +178,7 @@ export default function AddCombatScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setSelectedCompetitionId(null);
                 }}
               >
@@ -214,7 +214,7 @@ export default function AddCombatScreen() {
                     },
                   ]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     setSelectedCompetitionId(comp.id);
                   }}
                 >
@@ -324,7 +324,7 @@ export default function AddCombatScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   setResultat(res.value);
                 }}
                 activeOpacity={0.7}
@@ -366,7 +366,7 @@ export default function AddCombatScreen() {
                   },
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   setMethode(meth.value);
                 }}
                 activeOpacity={0.7}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, Easing, TouchableOpacity, Text } from 'react-native';
 import { LongPressGestureHandler, State } from 'react-native-gesture-handler';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import DraggableFlatList, {
   RenderItemParams,
   ScaleDecorator,
@@ -76,12 +76,12 @@ export const EditableHomeContainer: React.FC<EditableHomeContainerProps> = ({
   }, [editMode, sections]);
 
   const activateEditMode = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
     setEditMode(true);
   };
 
   const deactivateEditMode = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setEditMode(false);
     setDraggingSectionId(null);
     // Sauvegarder automatiquement
@@ -94,7 +94,7 @@ export const EditableHomeContainer: React.FC<EditableHomeContainerProps> = ({
       order: index,
     }));
     onSectionsChange(updatedSections);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<HomeSection>) => {

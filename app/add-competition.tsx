@@ -16,7 +16,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Calendar, MapPin, Trophy, Save } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -86,7 +86,7 @@ export default function AddCompetitionScreen() {
     }
 
     setIsSaving(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       const selectedCategory = weightCategories.find(c => c.id === categoriePoidsId);
@@ -209,7 +209,7 @@ export default function AddCompetitionScreen() {
                 ]}
                 onPress={() => {
                   setTypeEvenement(suggestion);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                 }}
                 activeOpacity={0.7}
               >
@@ -334,7 +334,7 @@ export default function AddCompetitionScreen() {
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setCategoriePoidsId(category.id);
                     }}
                     activeOpacity={0.7}

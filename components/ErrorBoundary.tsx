@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { logger } from '@/lib/logger';
-import * as Clipboard from 'expo-clipboard';
+import { setStringAsync, getStringAsync } from 'expo-clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ERROR_STORAGE_KEY = '@yoroi_crash_reports';
@@ -105,7 +105,7 @@ Date: ${new Date().toISOString()}
 ${errorReport}=== LOGS ===
 ${logs}`;
 
-      await Clipboard.setStringAsync(fullReport);
+      await setStringAsync(fullReport);
       Alert.alert(
         'Logs copiés',
         'Les logs ont été copiés dans le presse-papier. Tu peux les coller pour les envoyer au support.'

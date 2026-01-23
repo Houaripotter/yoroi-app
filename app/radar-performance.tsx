@@ -84,7 +84,7 @@ export default function RadarPerformanceScreen() {
           toValue: scoreValue,
           tension: 50,
           friction: 7,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }).start();
       }
     });

@@ -6,7 +6,7 @@
 import React, { useRef, useState } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { CorpsPage } from './pages/CorpsPage';
 import { EntrainementPage } from './pages/EntrainementPage';
 import { SantePage } from './pages/SantePage';
@@ -32,7 +32,7 @@ export const StatsTabView: React.FC = () => {
       x: pageIndex * SCREEN_WIDTH,
       animated: true,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   return (

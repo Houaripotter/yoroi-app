@@ -1,9 +1,9 @@
 import { RefObject } from 'react';
 import { View, Alert, Platform, Linking } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
-import * as Sharing from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import * as Haptics from 'expo-haptics';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
+import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import { safeOpenURL } from '@/lib/security/validators';
 
@@ -24,7 +24,7 @@ export const captureAndShare = async (
 ): Promise<string | null> => {
   try {
     if (options?.enableHaptics && Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     }
 
     if (!viewRef.current) {
@@ -39,8 +39,8 @@ export const captureAndShare = async (
     });
 
     // Vérifier si le partage est disponible
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, {
+    if (await isAvailableAsync()) {
+      await shareAsync(uri, {
         mimeType: 'image/png',
         dialogTitle: options?.dialogTitle || 'Partager ma carte Yoroi',
       });
@@ -69,7 +69,7 @@ export const captureAndSave = async (
 ): Promise<string | null> => {
   try {
     if (options?.enableHaptics && Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     }
 
     if (!viewRef.current) {
@@ -84,7 +84,7 @@ export const captureAndSave = async (
     });
 
     // Demander permission
-    const { status } = await MediaLibrary.requestPermissionsAsync();
+    const { status } = await requestPermissionsAsync();
 
     if (status !== 'granted') {
       Alert.alert(
@@ -108,10 +108,10 @@ export const captureAndSave = async (
     }
 
     // Sauvegarder dans la galerie
-    await MediaLibrary.saveToLibraryAsync(uri);
+    await saveToLibraryAsync(uri);
 
     if (options?.enableHaptics && Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     }
 
     Alert.alert('Sauvegardé !', options?.successMessage || 'Carte enregistrée dans ta galerie !');

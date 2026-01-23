@@ -5,7 +5,7 @@
 
 import { getProgressionItems, getPracticeLogsByItemId, PracticeLog, ProgressionItem } from './trainingJournalService';
 import * as FS from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import { shareAsync } from 'expo-sharing';
 
 // Type assertion pour expo-file-system
 const FileSystem = FS as typeof FS & {
@@ -47,8 +47,8 @@ export const exportTrainingToJSON = async (): Promise<string | null> => {
 
     await FileSystem.writeAsStringAsync(fileUri, jsonString);
 
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
+    if (await isAvailableAsync()) {
+      await shareAsync(fileUri);
       return fileUri;
     } else {
       Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
@@ -98,8 +98,8 @@ export const exportTrainingToCSV = async (sport?: string): Promise<string | null
 
     await FileSystem.writeAsStringAsync(fileUri, csvContent);
 
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
+    if (await isAvailableAsync()) {
+      await shareAsync(fileUri);
       return fileUri;
     } else {
       Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
@@ -193,8 +193,8 @@ export const generateTrainingTextReport = async (): Promise<string | null> => {
 
     await FileSystem.writeAsStringAsync(fileUri, report);
 
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
+    if (await isAvailableAsync()) {
+      await shareAsync(fileUri);
       return fileUri;
     } else {
       Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');
@@ -238,8 +238,8 @@ export const exportExerciseHistory = async (exerciseId: number, exerciseName: st
 
     await FileSystem.writeAsStringAsync(fileUri, content);
 
-    if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(fileUri);
+    if (await isAvailableAsync()) {
+      await shareAsync(fileUri);
       return fileUri;
     } else {
       Alert.alert('Erreur', 'Le partage de fichiers n\'est pas disponible');

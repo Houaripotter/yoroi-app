@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import * as Sharing from 'expo-sharing';
-import * as DocumentPicker from 'expo-document-picker';
+import { shareAsync } from 'expo-sharing';
+import { getDocumentAsync } from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
 import {
@@ -90,9 +90,9 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     );
 
     // Partager le fichier JSON
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(fileUri, {
+      await shareAsync(fileUri, {
         mimeType: 'application/json',
         dialogTitle: 'Sauvegarder dans ton Cloud',
         UTI: 'public.json',
@@ -139,9 +139,9 @@ export const exportDataToCSV = async (): Promise<boolean> => {
     });
 
     // Partager le fichier CSV
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(fileUri, {
+      await shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Exporter vers Excel/Numbers',
         UTI: 'public.comma-separated-values-text',
@@ -164,7 +164,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
 export const importDataFromJSON = async (): Promise<boolean> => {
   try {
     // Sélectionner un fichier
-    const result = await DocumentPicker.getDocumentAsync({
+    const result = await getDocumentAsync({
       type: 'application/json',
       copyToCacheDirectory: true,
     });
@@ -350,9 +350,9 @@ export const shareImage = async (viewRef: any, fileName: string = 'yoroi_card'):
     });
 
     // Partager l'image
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(uri, {
+      await shareAsync(uri, {
         mimeType: 'image/png',
         dialogTitle: 'Partager ma progression Yoroi',
       });
@@ -410,7 +410,7 @@ export const shareProgress = async (): Promise<boolean> => {
   try {
     const text = await generateShareText();
 
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
       // Sur iOS/Android, utiliser le sharing natif
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -447,9 +447,9 @@ export const shareStoryCard = async (viewRef: any, platform: 'instagram' | 'snap
     });
 
     // Partager l'image
-    const canShare = await Sharing.isAvailableAsync();
+    const canShare = await isAvailableAsync();
     if (canShare) {
-      await Sharing.shareAsync(uri, {
+      await shareAsync(uri, {
         mimeType: 'image/png',
         dialogTitle: 'Partager sur les réseaux sociaux',
       });
@@ -508,7 +508,7 @@ export const importAllData = async (
   try {
     const DocumentPicker = require('expo-document-picker');
 
-    const result = await DocumentPicker.getDocumentAsync({
+    const result = await getDocumentAsync({
       type: 'application/json',
       copyToCacheDirectory: true,
     });
@@ -647,11 +647,11 @@ export const exportTrainingsToCSV = async (): Promise<boolean> => {
     logger.info('Fichier CSV créé:', fileUri);
 
     // Vérifier si le partage est disponible
-    const isSharingAvailable = await Sharing.isAvailableAsync();
+    const isSharingAvailable = await isAvailableAsync();
 
     if (isSharingAvailable) {
       // Partager le fichier
-      await Sharing.shareAsync(fileUri, {
+      await shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Exporter les séances Yoroi',
         UTI: 'public.comma-separated-values-text',
@@ -763,10 +763,10 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
 
     logger.info('Fichier Excel CSV créé:', fileUri);
 
-    const isSharingAvailable = await Sharing.isAvailableAsync();
+    const isSharingAvailable = await isAvailableAsync();
 
     if (isSharingAvailable) {
-      await Sharing.shareAsync(fileUri, {
+      await shareAsync(fileUri, {
         mimeType: 'text/csv',
         dialogTitle: 'Exporter les séances Yoroi (Excel)',
         UTI: 'public.comma-separated-values-text',

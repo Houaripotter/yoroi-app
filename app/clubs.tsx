@@ -13,7 +13,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import {
   Plus,
   Edit3,
@@ -102,10 +102,10 @@ export default function ClubsScreen() {
 
   const requestPermission = async (type: 'camera' | 'gallery') => {
     if (type === 'camera') {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status } = await requestCameraPermissionsAsync();
       return status === 'granted';
     } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await requestMediaLibraryPermissionsAsync();
       return status === 'granted';
     }
   };
@@ -119,7 +119,7 @@ export default function ClubsScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
@@ -140,7 +140,7 @@ export default function ClubsScreen() {
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,

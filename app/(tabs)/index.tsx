@@ -16,7 +16,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   Scale,
   Droplets,
@@ -447,7 +447,7 @@ export default function HomeScreen() {
   };
 
   const addWater = (amount: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     const newValue = Math.max(0, hydration + amount);
     setHydration(newValue);
     saveHydration(newValue);
@@ -961,7 +961,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/training-journal');
               }}
               activeOpacity={0.8}
@@ -973,7 +973,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/infirmary');
               }}
               activeOpacity={0.8}
@@ -988,7 +988,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/challenges');
               }}
               activeOpacity={0.8}
@@ -1148,7 +1148,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/training-journal');
               }}
               activeOpacity={0.85}
@@ -1160,7 +1160,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/timer');
               }}
               activeOpacity={0.85}
@@ -1172,7 +1172,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/(tabs)/planning');
               }}
               activeOpacity={0.85}
@@ -1184,7 +1184,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/(tabs)/planning?tab=programme');
               }}
               activeOpacity={0.85}
@@ -1203,7 +1203,7 @@ export default function HomeScreen() {
             key={sectionId}
             style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              impactAsync(ImpactFeedbackStyle.Medium);
               handleNavigate('/infirmary');
             }}
             activeOpacity={0.85}
@@ -1229,7 +1229,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/energy');
               }}
               activeOpacity={0.85}
@@ -1261,7 +1261,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/savoir');
               }}
               activeOpacity={0.85}
@@ -1273,7 +1273,7 @@ export default function HomeScreen() {
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 handleNavigate('/calculators');
               }}
               activeOpacity={0.85}
@@ -1301,7 +1301,7 @@ export default function HomeScreen() {
                   }
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  impactAsync(ImpactFeedbackStyle.Medium);
                   setIsCompetitorMode(!isCompetitorMode);
                 }}
                 activeOpacity={0.85}
@@ -1338,7 +1338,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   handleNavigate('/fasting');
                 }}
                 activeOpacity={0.85}
@@ -1350,7 +1350,7 @@ export default function HomeScreen() {
               <TouchableOpacity
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  impactAsync(ImpactFeedbackStyle.Light);
                   handleNavigate('/photos');
                 }}
                 activeOpacity={0.85}
@@ -1367,7 +1367,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     handleNavigate('/cut-mode');
                   }}
                   activeOpacity={0.85}
@@ -1379,7 +1379,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     handleNavigate('/palmares');
                   }}
                   activeOpacity={0.85}
@@ -1391,7 +1391,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     handleNavigate('/hydration');
                   }}
                   activeOpacity={0.85}
@@ -1403,7 +1403,7 @@ export default function HomeScreen() {
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     handleNavigate('/body-composition');
                   }}
                   activeOpacity={0.85}

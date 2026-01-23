@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
+import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -39,8 +39,8 @@ const TAP_TIMEOUT = 2000; // Reset des taps après 2 secondes
  */
 async function verifyDevCode(inputCode: string): Promise<boolean> {
   try {
-    const inputHash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
+    const inputHash = await digestStringAsync(
+      CryptoDigestAlgorithm.SHA256,
       inputCode
     );
     return inputHash === DEV_CODE_HASH;

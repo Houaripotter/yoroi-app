@@ -10,7 +10,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function BMRCalculator({ visible, onClose }: Props) {
+export const BMRCalculator = React.memo(function BMRCalculator({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -99,7 +99,7 @@ export function BMRCalculator({ visible, onClose }: Props) {
       </View>
     </Modal>
   );
-}
+});
 
 const RADIUS = { sm: 8, md: 12, lg: 16 };
 

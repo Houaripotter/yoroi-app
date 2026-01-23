@@ -27,7 +27,7 @@ import {
   Bell,
   BellOff,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { format, subDays, Locale } from 'date-fns';
 import { fr, enUS, es, pt, de, it, ru, ar, zhCN } from 'date-fns/locale';
 
@@ -102,7 +102,7 @@ export default function SleepScreen() {
 
   const handleSave = async () => {
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       await addSleepEntry(bedTime, wakeTime, quality, notes);
       setShowAddModal(false);
       setBedTime('23:00');
@@ -120,12 +120,12 @@ export default function SleepScreen() {
     const newGoal = Math.max(300, Math.min(600, goal + minutes));
     setGoal(newGoal);
     await setSleepGoal(newGoal);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   const handleToggleNotifications = async (value: boolean) => {
     setNotificationsEnabled(value);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const settings = notificationService.getSettings();
     await notificationService.updateSettings({
@@ -149,7 +149,7 @@ export default function SleepScreen() {
       },
     });
     setShowNotificationSettings(false);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
     showPopup(t('sleep.saved'), t('sleep.reminderScheduled', { time: bedtimeReminder }), [{ text: 'OK', style: 'primary' }]);
   };
 
@@ -362,7 +362,7 @@ export default function SleepScreen() {
             <Text style={[styles.qualityLabel, { color: colors.textMuted }]}>{t('sleep.sleepQuality')}</Text>
             <View style={styles.starsRow}>
               {[1, 2, 3, 4, 5].map((i) => (
-                <TouchableOpacity key={i} onPress={() => { setQuality(i); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}>
+                <TouchableOpacity key={i} onPress={() => { setQuality(i); impactAsync(ImpactFeedbackStyle.Light); }}>
                   <Star size={28} color={i <= quality ? '#F59E0B' : colors.border} fill={i <= quality ? '#F59E0B' : 'transparent'} />
                 </TouchableOpacity>
               ))}

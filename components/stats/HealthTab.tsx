@@ -28,7 +28,7 @@ import { SPACING, RADIUS } from '@/constants/design';
 import { healthConnect, type HealthData } from '@/lib/healthConnect';
 import { getProfile } from '@/lib/database';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -70,7 +70,7 @@ export function HealthTab() {
 
   const handleConnect = async () => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       const success = await healthConnect.connect();
       if (success) {
         setIsConnected(true);
@@ -298,7 +298,7 @@ export function HealthTab() {
       <TouchableOpacity
         style={[styles.moreDetailsButton, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impactAsync(ImpactFeedbackStyle.Light);
           router.push('/health-metrics');
         }}
         activeOpacity={0.8}

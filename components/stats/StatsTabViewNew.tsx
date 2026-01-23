@@ -7,7 +7,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { DashboardPage } from './pages/DashboardPage';
 import { PoidsPage } from './pages/PoidsPage';
 import { CompositionPage } from './pages/CompositionPage';
@@ -101,7 +101,7 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
       x: pageIndex * SCREEN_WIDTH,
       animated: true,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   const handleNavigateToTab = (tabId: string) => {

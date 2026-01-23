@@ -16,7 +16,7 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, Check, Crown, Sparkles } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useDevMode } from '@/lib/DevModeContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
@@ -54,7 +54,7 @@ export default function LogoSelectionScreen() {
     const isUnlocked = isPro || !logoOption?.isPremium;
 
     if (!isUnlocked) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      notificationAsync(NotificationFeedbackType.Warning);
       showPopup(
         'Logo Premium',
         'Ce logo nécessite la version Premium.\n\nMode Créateur : Tapez 5 fois sur "Version 2.0.0" dans les Réglages pour débloquer.',
@@ -63,7 +63,7 @@ export default function LogoSelectionScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSelectedLogo(logoId);
   };
 
@@ -74,11 +74,11 @@ export default function LogoSelectionScreen() {
     }
 
     setIsSaving(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
       await saveSelectedLogo(selectedLogo);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       showPopup(
         'Logo mis a jour !',
         'Ton nouveau logo est maintenant actif.',

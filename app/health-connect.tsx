@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   ChevronLeft,
   Heart,
@@ -82,7 +82,7 @@ export default function HealthConnectScreen() {
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setIsConnecting(true);
 
     try {
@@ -161,7 +161,7 @@ export default function HealthConnectScreen() {
   };
 
   const handleDisconnect = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     showPopup(
       'Deconnecter ?',
@@ -183,7 +183,7 @@ export default function HealthConnectScreen() {
   const handleSync = async () => {
     if (isSyncing) return;
     
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setIsSyncing(true);
     
     try {

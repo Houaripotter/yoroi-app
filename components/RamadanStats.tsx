@@ -19,7 +19,7 @@ import {
   RamadanSettings,
 } from '@/lib/ramadanService';
 import { TrendingDown, TrendingUp, Droplet, Moon, Sun } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -114,7 +114,7 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
   // Ajouter de l'hydratation
   const handleAddHydration = async (amount: number) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       const newAmount = await addRamadanHydration(amount);
       setHydration(newAmount);
       if (onRefresh) onRefresh();

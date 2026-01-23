@@ -16,9 +16,9 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import * as StoreReview from 'expo-store-review';
-import * as Haptics from 'expo-haptics';
-import * as Crypto from 'expo-crypto';
+import { requestReview, isAvailableAsync } from 'expo-store-review';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
+import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   User,
@@ -606,7 +606,7 @@ export default function MoreScreen() {
       setVersionTapCount(newCount);
       
       if (newCount === 5) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         setVersionTapCount(0);
         
         // Demander le code secret
@@ -697,7 +697,7 @@ export default function MoreScreen() {
   // Toggle du bouton partage flottant
   const toggleShareButton = async (value: boolean) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       setShareButtonVisible(value);
       if (value) {
         await AsyncStorage.removeItem(SHARE_BUTTON_KEY);
@@ -977,10 +977,10 @@ export default function MoreScreen() {
     if (langCode === language) return;
 
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       await setLanguage(langCode);
       setLanguageModalVisible(false); // Ferme le modal si ouvert
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[MoreScreen] Error changing language:', error);
       showPopup(
@@ -1038,30 +1038,30 @@ export default function MoreScreen() {
     const newCount = secretGestureDone + 1;
     setSecretGestureDone(newCount);
     if (newCount >= 3) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       setShowCreatorInput(true);
       setSecretGestureDone(0);
     } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
   };
 
   const handleCreatorCodeSubmit = async () => {
     try {
-      const hash = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
+      const hash = await digestStringAsync(
+        CryptoDigestAlgorithm.SHA256,
         creatorCode
       );
       
       if (SECRET_HASHES.includes(hash)) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         setCreatorModeActive(true);
         await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
         await generateScreenshotDemoData();
         handleCloseCreatorModal();
         showPopup('Mode Créateur Activé', 'Bienvenue Germain.', [{ text: 'Merci', style: 'primary' }]);
       } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        notificationAsync(NotificationFeedbackType.Error);
         Alert.alert('Erreur', 'Code incorrect.');
         setCreatorCode('');
       }

@@ -25,7 +25,7 @@ import {
   Platform,
 } from 'react-native';
 import { ChevronLeft, X, Trash2, Check, Plus, Video, ExternalLink } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   Skill,
   SkillStatus,
@@ -65,7 +65,7 @@ interface SkillDetailModalProps {
   onRefreshSkill: (skill: Skill) => void;
 }
 
-export default function SkillDetailModal({
+export default React.memo(function SkillDetailModal({
   visible,
   onClose,
   skill,
@@ -219,7 +219,7 @@ export default function SkillDetailModal({
                       </Text>
                       <TouchableOpacity
                         onPress={async () => {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          impactAsync(ImpactFeedbackStyle.Light);
                           await deleteSkillNote(skill.id, note.id);
                           const updated = await getSkills();
                           const refreshed = updated.find(s => s.id === skill.id);
@@ -275,7 +275,7 @@ export default function SkillDetailModal({
       </SafeAreaView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   detailModalOverlay: {

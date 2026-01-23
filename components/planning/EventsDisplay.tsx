@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
@@ -38,7 +38,7 @@ const EventsDisplay: React.FC<EventsDisplayProps> = ({ groupedByCategory }) => {
       ...prev,
       [key]: !prev[key]
     }));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
   };
 
   const renderCategory = (
@@ -147,7 +147,7 @@ const EventsDisplay: React.FC<EventsDisplayProps> = ({ groupedByCategory }) => {
                       }}
                       onPress={() => router.push('/competitions')}
                       onReminderPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        impactAsync(ImpactFeedbackStyle.Light);
                         showPopup('Rappels', 'Les rappels J-30, J-7, J-1 et H-2 sont actives !', [{ text: 'OK', style: 'primary' }]);
                       }}
                     />

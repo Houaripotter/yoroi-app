@@ -16,7 +16,7 @@ import { ChevronLeft, X, Check, Clock } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { Club, Training } from '@/lib/database';
 import { getSessionTypesForSport, DURATION_PRESETS, getDefaultSessionType } from '@/lib/sessionTypes';
@@ -83,19 +83,19 @@ export function AddSessionModal({
   };
 
   const handleClose = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     reset();
     onClose();
   };
 
   const handleClubSelect = (club: Club) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedClub(club);
     setStep('details');
   };
 
   const handleBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setStep('club');
     setSelectedClub(null);
   };
@@ -113,7 +113,7 @@ export function AddSessionModal({
     if (!selectedClub || !date || isSaving) return;
 
     setIsSaving(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     const timeStr = format(startTime, 'HH:mm');
 
@@ -128,11 +128,11 @@ export function AddSessionModal({
         notes: note.trim() || undefined,
       });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       handleClose();
     } catch (error) {
       logger.error('Erreur sauvegarde:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
     } finally {
       setIsSaving(false);
     }
@@ -286,7 +286,7 @@ export function AddSessionModal({
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setSessionType(type);
                     }}
                   >
@@ -348,7 +348,7 @@ export function AddSessionModal({
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setDuration(preset.value);
                     }}
                   >

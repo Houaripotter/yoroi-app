@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { Zap, X, Dumbbell, ChevronRight, Battery, Flame } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -55,7 +55,7 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
       // Afficher le popup avec délai
       setTimeout(() => {
         setVisible(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         
         // Animation d'entrée
         Animated.parallel([
@@ -96,7 +96,7 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
   };
 
   const handleGoTrain = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
     handleClose();
     setTimeout(() => {
       router.push('/add-training');

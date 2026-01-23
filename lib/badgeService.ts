@@ -1,6 +1,6 @@
 import { BadgeId } from '@/types/badges';
 import { Alert, Platform } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import {
   unlockBadge as unlockBadgeLocal,
@@ -219,7 +219,7 @@ export const checkWorkoutBadges = async () => {
 // Afficher une notification pour un nouveau badge
 const showBadgeNotification = (badgeIds: BadgeId[]) => {
   if (Platform.OS !== 'web') {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
   }
 
   const badgeNames = badgeIds.map(id => {

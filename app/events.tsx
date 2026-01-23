@@ -20,7 +20,7 @@ import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { MapPin, ExternalLink, Search, ArrowLeft, Plus, Check } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -73,18 +73,13 @@ export default function EventsScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [searchQuery, setSearchQuery] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [selectedCategory, setSelectedCategory] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<CategoryFilter>('all');
-  const [selectedLocation, setSelectedLocation] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<LocationFilter>('monde');
-  const [selectedSportTag, setSelectedSportTag] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<SportTagFilter>('all');
-  const [savedEventIds, setSavedEventIds] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
+  const [selectedLocation, setSelectedLocation] = useState<LocationFilter>('monde');
+  const [selectedSportTag, setSelectedSportTag] = useState<SportTagFilter>('all');
+  const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Load saved events from AsyncStorage on mount
   useEffect(() => {
@@ -186,7 +181,7 @@ export default function EventsScreen() {
   // Add/Remove event from planning
   const toggleEventInPlanning = useCallback(async (event: SportEvent) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       const saved = await AsyncStorage.getItem(PLANNING_STORAGE_KEY);
       let savedEvents: SportEvent[] = saved ? JSON.parse(saved) : [];
@@ -225,7 +220,7 @@ export default function EventsScreen() {
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     safeOpenURL(link);
   }, []);
 
@@ -401,7 +396,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('monde');
           }}
         >
@@ -424,7 +419,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('europe');
           }}
         >
@@ -447,7 +442,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedLocation('france');
           }}
         >
@@ -473,7 +468,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('all');
           }}
         >
@@ -496,7 +491,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('combat');
           }}
         >
@@ -519,7 +514,7 @@ export default function EventsScreen() {
             },
           ]}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             setSelectedCategory('endurance');
           }}
         >
@@ -546,7 +541,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('all');
             }}
           >
@@ -569,7 +564,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('jjb');
             }}
           >
@@ -592,7 +587,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('grappling');
             }}
           >
@@ -619,7 +614,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('all');
             }}
           >
@@ -642,7 +637,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('hyrox');
             }}
           >
@@ -665,7 +660,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('marathon');
             }}
           >
@@ -688,7 +683,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('running');
             }}
           >
@@ -711,7 +706,7 @@ export default function EventsScreen() {
               },
             ]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setSelectedSportTag('trail');
             }}
           >

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Clock, Trophy, MapPin, Calendar, Scale } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { getNextCompetition } from '@/lib/fighterModeService';
@@ -47,12 +47,12 @@ export function CompetitionCountdownWidget() {
 
   const handlePress = () => {
     if (!nextCompetition) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       router.push('/competitions');
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push(`/competition-detail?id=${nextCompetition.id}`);
   };
 

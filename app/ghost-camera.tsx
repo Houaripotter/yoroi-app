@@ -17,8 +17,8 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Video, ResizeMode } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
+import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   ChevronLeft,
   Camera,
@@ -74,11 +74,11 @@ export default function GhostCameraScreen() {
   const loadGhostVideo = async () => {
     try {
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      const result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Videos,
         allowsEditing: true,
         quality: 1,
       });
@@ -101,7 +101,7 @@ export default function GhostCameraScreen() {
 
     try {
       if (Platform.OS !== 'web') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        impactAsync(ImpactFeedbackStyle.Heavy);
       }
 
       setIsRecording(true);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Camera, User } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -23,7 +23,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
 
   const pickImage = async () => {
     // Demander la permission
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await requestMediaLibraryPermissionsAsync();
 
     if (status !== 'granted') {
       showPopup(
@@ -35,7 +35,7 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
     }
 
     // Ouvrir la galerie avec crop
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const result = await launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,        // ← Permet le crop
       aspect: [1, 1],             // ← Carré
@@ -44,10 +44,10 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
 
     if (!result.canceled && result.assets[0]) {
       // Redimensionner l'image pour optimiser le stockage
-      const manipulated = await ImageManipulator.manipulateAsync(
+      const manipulated = await manipulateAsync(
         result.assets[0].uri,
         [{ resize: { width: 400, height: 400 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        { compress: 0.8, format: SaveFormat.JPEG }
       );
 
       setImage(manipulated.uri);
@@ -56,24 +56,24 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await requestCameraPermissionsAsync();
 
     if (status !== 'granted') {
       showPopup('Permission requise', 'Nous avons besoin d\'acceder a la camera.', [{ text: 'OK', style: 'primary' }]);
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets[0]) {
-      const manipulated = await ImageManipulator.manipulateAsync(
+      const manipulated = await manipulateAsync(
         result.assets[0].uri,
         [{ resize: { width: 400, height: 400 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        { compress: 0.8, format: SaveFormat.JPEG }
       );
 
       setImage(manipulated.uri);

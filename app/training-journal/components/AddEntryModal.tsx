@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { X, Calendar, Clock, Edit3 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   Benchmark,
   WeightUnit,
@@ -105,7 +105,7 @@ interface AddEntryModalProps {
   setNewEntryLevel: (level: string) => void;
 }
 
-export default function AddEntryModal(props: AddEntryModalProps) {
+export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
   const {
     visible,
     onClose,
@@ -592,7 +592,7 @@ export default function AddEntryModal(props: AddEntryModalProps) {
                       }
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      impactAsync(ImpactFeedbackStyle.Light);
                       setNewEntryRPE(val);
                     }}
                   >
@@ -619,7 +619,7 @@ export default function AddEntryModal(props: AddEntryModalProps) {
       </KeyboardAvoidingView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   modalOverlay: {

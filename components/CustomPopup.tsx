@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -44,7 +44,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = ({
   const { colors, isDark } = useTheme();
 
   const handleButtonPress = (button: PopupButton) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     // Fermer d'abord le popup actuel
     onClose();
     // Puis executer l'action apres un court delai pour permettre
@@ -177,7 +177,7 @@ export const useCustomPopup = () => {
     buttons?: PopupButton[],
     icon?: React.ReactNode
   ) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     // Format objet
     if (typeof titleOrOptions === 'object') {

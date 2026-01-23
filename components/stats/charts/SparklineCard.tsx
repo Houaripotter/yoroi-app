@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from '
 import { useTheme } from '@/lib/ThemeContext';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 import { ModernLineChart } from './ModernLineChart';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING_H = 16;
@@ -43,7 +43,7 @@ export const SparklineCard: React.FC<SparklineCardProps> = ({
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
     onPress?.();
   };

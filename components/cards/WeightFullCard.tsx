@@ -22,7 +22,7 @@ interface WeightFullCardProps {
   onPress?: () => void;
 }
 
-export const WeightFullCard: React.FC<WeightFullCardProps> = ({
+export const WeightFullCard = React.memo<WeightFullCardProps>(({
   currentWeight,
   targetWeight,
   startWeight,

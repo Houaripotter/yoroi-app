@@ -29,7 +29,7 @@ import {
   TrendingDown,
   Crown,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
 import { useTheme } from '@/lib/ThemeContext';
 import {
@@ -96,7 +96,7 @@ export default function ChallengesScreen() {
   const handleClaim = async (challenge: ActiveChallenge) => {
     if (!challenge?.progress?.completed || challenge?.progress?.claimed) return;
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
     const xp = await claimChallengeReward(challenge.id);
     
     if (xp > 0) {
@@ -155,7 +155,7 @@ export default function ChallengesScreen() {
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && { backgroundColor: colors.accent }]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setActiveTab(tab); }}
           >
             {getTabIcon(tab)}
             <Text style={[styles.tabText, { color: activeTab === tab ? colors.textOnGold : colors.textMuted }]}>

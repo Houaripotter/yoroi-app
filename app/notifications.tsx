@@ -10,7 +10,7 @@ import {
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   ChevronLeft,
   Bell,
@@ -74,7 +74,7 @@ export default function NotificationsScreen() {
   const updateSetting = async (key: string, value: any) => {
     if (!settings) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const newSettings = { ...settings };
 
@@ -92,7 +92,7 @@ export default function NotificationsScreen() {
   const updateCitationSetting = async (key: keyof CitationNotifSettings, value: any) => {
     if (!citationSettings) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const newSettings = { ...citationSettings, [key]: value };
     setCitationSettings(newSettings);
@@ -102,7 +102,7 @@ export default function NotificationsScreen() {
   const updateHealthTipSetting = async (key: keyof HealthTipSettings, value: any) => {
     if (!healthTipSettings) return;
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
 
     const newSettings = { ...healthTipSettings, [key]: value };
     setHealthTipSettings(newSettings);
@@ -110,7 +110,7 @@ export default function NotificationsScreen() {
   };
 
   const testNotification = async (type: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
 
     switch (type) {
       case 'training':

@@ -17,7 +17,7 @@ import {
   Dimensions,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -59,7 +59,7 @@ import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUserSettings } from '@/lib/storage';
-import * as WebBrowser from 'expo-web-browser';
+import { openBrowserAsync } from 'expo-web-browser';
 import { SessionCard } from '@/components/social-cards/SessionCard';
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/constants/design';
 import { useWindowDimensions, useIsSmallScreen } from '@/hooks/useWindowDimensions';
@@ -81,7 +81,7 @@ import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import logger from '@/lib/security/logger';
 import HealthConnect from '@/lib/healthConnect.ios';
 import { SharePromptModal } from '@/components/SharePromptModal';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
 import { SPORT_OPTIONS, DEFAULT_OPTIONS, SportOption } from '@/constants/sportOptions';
 
 // ============================================
@@ -628,7 +628,7 @@ export default function AddTrainingScreen() {
 
     if (calculated > 0) {
       setCalories(Math.round(calculated).toString());
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
     }
   };
 
@@ -731,7 +731,7 @@ export default function AddTrainingScreen() {
 
         const kcal = Math.round(met * userWeight * (durationVal / 60));
         updateStat('calories', kcal.toString());
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
       }
     };
 
@@ -1181,14 +1181,14 @@ export default function AddTrainingScreen() {
 
   // Fonctions pour gérer les photos de fond de carte
   const pickImageFromGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
@@ -1201,13 +1201,13 @@ export default function AddTrainingScreen() {
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await requestCameraPermissionsAsync();
     if (status !== 'granted') {
       showPopup('Permission refusée', 'Nous avons besoin de votre permission pour accéder à l\'appareil photo');
       return;
     }
 
-    const result = await ImagePicker.launchCameraAsync({
+    const result = await launchCameraAsync({
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
@@ -1611,7 +1611,7 @@ export default function AddTrainingScreen() {
                                         }}
                                         onPress={() => {
                                           setIsOutdoor(false);
-                                          Haptics.selectionAsync();
+                                          selectionAsync();
                                         }}
                                       >
                                         <Building2 size={24} color={!isOutdoor ? colors.accent : colors.textMuted} />
@@ -1635,7 +1635,7 @@ export default function AddTrainingScreen() {
                                         onPress={() => {
                                           setIsOutdoor(true);
                                           setSelectedClub(null); // Reset club if outdoor
-                                          Haptics.selectionAsync();
+                                          selectionAsync();
                                         }}
                                       >
                                         <Sun size={24} color={isOutdoor ? colors.accent : colors.textMuted} />
@@ -1925,7 +1925,7 @@ export default function AddTrainingScreen() {
                                             }
                                             setValidatedOptions(prev => ({ ...prev, [option.id]: true }));
                                             Keyboard.dismiss();
-                                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                                            notificationAsync(NotificationFeedbackType.Success);
                                           }}
                                           style={{
                                             backgroundColor: '#EF4444',
@@ -2082,7 +2082,7 @@ export default function AddTrainingScreen() {
                             if (customExerciseName.trim()) {
                               setExercises(prev => [...prev, { name: customExerciseName.trim(), sets: 0, reps: 0, weight: 0 }]);
                               setCustomExerciseName('');
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                              impactAsync(ImpactFeedbackStyle.Light);
                             }
                           }}
                         >
@@ -2099,7 +2099,7 @@ export default function AddTrainingScreen() {
                                 <Text style={{ fontWeight: '700', color: colors.textPrimary, fontSize: 14 }}>{ex.name}</Text>
                                 <TouchableOpacity onPress={() => {
                                   setExercises(prev => prev.filter((_, i) => i !== idx));
-                                  Haptics.selectionAsync();
+                                  selectionAsync();
                                 }}>
                                   <X size={18} color={colors.textMuted} />
                                 </TouchableOpacity>
@@ -2986,7 +2986,7 @@ export default function AddTrainingScreen() {
                 const storeUrl = Platform.OS === 'ios' 
                   ? 'https://apps.apple.com/app/id6757306612?action=write-review' 
                   : 'market://details?id=com.houari.yoroi';
-                await WebBrowser.openBrowserAsync(storeUrl);
+                await openBrowserAsync(storeUrl);
                 setShowHouariRateModal(false);
               }}
             >

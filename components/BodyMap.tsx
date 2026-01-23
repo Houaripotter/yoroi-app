@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
+import { setStringAsync, getStringAsync } from 'expo-clipboard';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   Eye,
   EyeOff,
@@ -220,18 +220,18 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
 
   const move = (dx: number, dy: number) => {
     if (!selectedZone) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     updateZone({ x: selectedZone.x + dx, y: selectedZone.y + dy });
   };
 
   const resize = (dw: number, dh: number) => {
     if (!selectedZone) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     updateZone({ w: Math.max(3, selectedZone.w + dw), h: Math.max(3, selectedZone.h + dh) });
   };
 
   const handleZonePress = (zone: BodyZone) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     if (debug) {
       setSelectedId(zone.id);
     } else {
@@ -242,7 +242,7 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
 
   const toggleView = (newView: 'front' | 'back') => {
     if (view !== newView) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       setSelectedId(null);
       setView(newView);
     }
@@ -263,16 +263,16 @@ export const BodyMap: React.FC<BodyMapProps> = memo(({ onZonePress, injuredZones
         `{ id: '${z.id}', label: '${z.label}', x: ${z.x}, y: ${z.y}, w: ${z.w}, h: ${z.h} },`
       ).join('\n');
 
-    await Clipboard.setStringAsync(code);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await setStringAsync(code);
+    notificationAsync(NotificationFeedbackType.Success);
     showPopup('Copie !', `${activeZones.length} zones copiees dans le presse-papier`, [{ text: 'OK', style: 'primary' }]);
   };
 
   const copySelectedZone = async () => {
     if (!selectedZone) return;
     const code = `{ id: '${selectedZone.id}', label: '${selectedZone.label}', x: ${selectedZone.x}, y: ${selectedZone.y}, w: ${selectedZone.w}, h: ${selectedZone.h} }`;
-    await Clipboard.setStringAsync(code);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await setStringAsync(code);
+    notificationAsync(NotificationFeedbackType.Success);
     showPopup('Copie !', `Zone "${selectedZone.label}" copiee`, [{ text: 'OK', style: 'primary' }]);
   };
 

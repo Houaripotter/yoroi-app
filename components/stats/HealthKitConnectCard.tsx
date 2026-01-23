@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Heart, ChevronRight } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface HealthKitConnectCardProps {
   onConnect: () => void;
@@ -22,7 +22,7 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
     }
     onConnect();
   };

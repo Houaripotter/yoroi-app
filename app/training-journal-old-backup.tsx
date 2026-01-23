@@ -35,7 +35,7 @@ import {
   Share2,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ProgressionItem,
   ProgressionStatus,
@@ -132,7 +132,7 @@ export default function TrainingJournalScreen() {
     }
 
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       createProgressionItem({
         type: newItemType,
         sport: newItemSport,
@@ -171,7 +171,7 @@ export default function TrainingJournalScreen() {
     if (!selectedItem) return;
 
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
       createPracticeLog({
         item_id: selectedItem.id,
         date: new Date().toISOString(),
@@ -210,7 +210,7 @@ export default function TrainingJournalScreen() {
           text: 'Confirmer',
           onPress: () => {
             try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              notificationAsync(NotificationFeedbackType.Success);
               updateItemStatus(item.id, newStatus);
               loadData();
             } catch (error) {
@@ -234,7 +234,7 @@ export default function TrainingJournalScreen() {
           style: 'destructive',
           onPress: () => {
             try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              notificationAsync(NotificationFeedbackType.Warning);
               deleteProgressionItem(item.id);
               loadData();
             } catch (error) {
@@ -268,7 +268,7 @@ export default function TrainingJournalScreen() {
   // Partager le graphique
   const handleShareProgress = async (item: ProgressionItem) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       // Afficher la modal avec la carte
       setShareItem(item);
@@ -299,7 +299,7 @@ export default function TrainingJournalScreen() {
         message: `Ma progression : ${item.name} - ${SPORT_LABELS[item.sport]}`,
       });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
     } catch (error) {
       logger.error('[SHARE] Erreur:', error);
       setShareModalVisible(false);
@@ -433,7 +433,7 @@ export default function TrainingJournalScreen() {
                 <TouchableOpacity
                   style={[styles.chartToggleBtn, { backgroundColor: `${colors.accent}15`, flex: 1 }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    impactAsync(ImpactFeedbackStyle.Light);
                     toggleChart(item.id);
                   }}
                   activeOpacity={0.7}
@@ -557,7 +557,7 @@ export default function TrainingJournalScreen() {
           <TouchableOpacity
             style={styles.sectionHeader}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setTodoOpen(!todoOpen);
             }}
           >
@@ -596,7 +596,7 @@ export default function TrainingJournalScreen() {
           <TouchableOpacity
             style={styles.sectionHeader}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setInProgressOpen(!inProgressOpen);
             }}
           >
@@ -635,7 +635,7 @@ export default function TrainingJournalScreen() {
           <TouchableOpacity
             style={styles.sectionHeader}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               setMasteredOpen(!masteredOpen);
             }}
           >

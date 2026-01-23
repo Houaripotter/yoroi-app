@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Path, G } from 'react-native-svg';
 import {
@@ -414,7 +414,7 @@ export default function DojoScreen() {
         <View style={styles.headerNav}>
           <TouchableOpacity
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              impactAsync(ImpactFeedbackStyle.Light);
               router.back();
             }}
             style={styles.backBtn}
@@ -541,7 +541,7 @@ export default function DojoScreen() {
                 isActive && { backgroundColor: isDark ? `${tab.color}20` : `${tab.color}15` },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                impactAsync(ImpactFeedbackStyle.Light);
                 setSelectedTab(tab.key as any);
               }}
               activeOpacity={0.7}
@@ -927,7 +927,7 @@ export default function DojoScreen() {
                 <TouchableOpacity
                   style={styles.emptyStateButton}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    impactAsync(ImpactFeedbackStyle.Medium);
                     setSelectedTab('badges');
                   }}
                 >

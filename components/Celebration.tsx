@@ -14,7 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { Audio } from 'expo-av';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -168,7 +168,7 @@ export const Celebration: React.FC<CelebrationProps> = ({
       xpScale.setValue(0.5);
 
       // Haptic feedback
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notificationAsync(NotificationFeedbackType.Success);
 
       // Jouer le son
       playSound();

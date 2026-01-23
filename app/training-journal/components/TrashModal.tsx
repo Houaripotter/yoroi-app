@@ -41,7 +41,7 @@ interface TrashModalProps {
   onEmptyTrash: () => void;
 }
 
-export default function TrashModal({
+export default React.memo(function TrashModal({
   visible,
   onClose,
   colors,
@@ -224,7 +224,7 @@ export default function TrashModal({
       </SafeAreaView>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

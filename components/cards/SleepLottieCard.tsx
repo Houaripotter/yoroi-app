@@ -18,7 +18,7 @@ interface SleepLottieCardProps {
   goal?: number;
 }
 
-export const SleepLottieCard: React.FC<SleepLottieCardProps> = ({
+export const SleepLottieCard = React.memo<SleepLottieCardProps>(({
   hours = 0,
   quality = 0,
   debt = 0,

@@ -32,7 +32,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import {
   ProgressionItem,
   PracticeLog,
@@ -96,7 +96,7 @@ export default function QuickLogMuscuScreen() {
         setRestTimeLeft((prev) => {
           if (prev <= 1) {
             setRestTimerActive(false);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            notificationAsync(NotificationFeedbackType.Success);
             return restTimerDefault;
           }
           return prev - 1;
@@ -151,7 +151,7 @@ export default function QuickLogMuscuScreen() {
   };
 
   const addSerie = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     const lastSerie = series[series.length - 1] || { reps: 10, weight: 60 };
     setSeries([
       ...series,
@@ -164,7 +164,7 @@ export default function QuickLogMuscuScreen() {
   };
 
   const removeSerie = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setSeries(series.filter((s) => s.id !== id));
   };
 
@@ -175,7 +175,7 @@ export default function QuickLogMuscuScreen() {
   };
 
   const incrementValue = (id: string, field: 'reps' | 'weight') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     const serie = series.find((s) => s.id === id);
     if (!serie) return;
 
@@ -184,7 +184,7 @@ export default function QuickLogMuscuScreen() {
   };
 
   const decrementValue = (id: string, field: 'reps' | 'weight') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     const serie = series.find((s) => s.id === id);
     if (!serie) return;
 
@@ -196,7 +196,7 @@ export default function QuickLogMuscuScreen() {
   };
 
   const completeSerie = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
     setSeries(
       series.map((s) => (s.id === id ? { ...s, completed: true } : s))
     );
@@ -207,12 +207,12 @@ export default function QuickLogMuscuScreen() {
   };
 
   const toggleRestTimer = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setRestTimerActive(!restTimerActive);
   };
 
   const resetRestTimer = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setRestTimerActive(false);
     setRestTimeLeft(restTimerDefault);
   };
@@ -232,7 +232,7 @@ export default function QuickLogMuscuScreen() {
       return;
     }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     // Créer ou récupérer l'item de progression
     let itemId = selectedExercise?.id;
@@ -314,7 +314,7 @@ export default function QuickLogMuscuScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
           style={styles.backButton}

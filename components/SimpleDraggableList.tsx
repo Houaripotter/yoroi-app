@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface DraggableItem {
   id: string;
@@ -31,7 +31,7 @@ export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
   const handleDragStart = (id: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    impactAsync(ImpactFeedbackStyle.Heavy);
     setDraggedItem(id);
   };
 
@@ -54,7 +54,7 @@ export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
       // Réattribuer les order
       const reordered = newItems.map((item, idx) => ({ ...item, order: idx }));
 
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
       onReorder(reordered);
     }
 

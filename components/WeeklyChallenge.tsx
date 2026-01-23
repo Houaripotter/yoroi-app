@@ -15,7 +15,7 @@ import {
   WeeklyChallenge as WeeklyChallengeType,
   Challenge,
 } from '@/lib/challenges';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -101,7 +101,7 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
     if (isClaiming || !challenge?.completed || challenge?.xpClaimed) return;
 
     setIsClaiming(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
 
     try {
       const result = await claimChallengeReward();

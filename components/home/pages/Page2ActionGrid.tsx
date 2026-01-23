@@ -26,7 +26,7 @@ import {
   BookMarked,
   Plus,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { getActionGridOrder, ActionGridItem } from '@/lib/actionGridCustomizationService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -97,7 +97,7 @@ export const Page2ActionGrid: React.FC = () => {
 
   // OPTIMISATION: Mémoriser le handler avec useCallback
   const handleItemPress = useCallback((item: ActionGridItem) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     router.push(item.route as any);
   }, []);
 

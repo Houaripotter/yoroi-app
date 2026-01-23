@@ -5,7 +5,7 @@ import { useTheme } from '@/lib/ThemeContext';
 
 type Gender = 'male' | 'female';
 
-export function IdealWeightCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export const IdealWeightCalculator = React.memo(function IdealWeightCalculator({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors } = useTheme();
   const [height, setHeight] = useState('');
   const [gender, setGender] = useState<Gender>('male');
@@ -59,7 +59,7 @@ export function IdealWeightCalculator({ visible, onClose }: { visible: boolean; 
       </View>
     </Modal>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
