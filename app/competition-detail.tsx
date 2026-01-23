@@ -50,11 +50,16 @@ export default function CompetitionDetailScreen() {
   const competitionId = params.id ?? '';
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [competition, setCompetition] = useState<Competition | null>(null);
-  const [combats, setCombats] = useState<Combat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [competition, setCompetition] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<Competition | null>(null);
+  const [combats, setCombats] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<Combat[]>([]);
+  const [loading, setLoading] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(true);
+  const [isDeleting, setIsDeleting] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [isNavigating, setIsNavigating] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
 
   useEffect(() => {
     loadCompetitionData();
@@ -64,7 +69,7 @@ export default function CompetitionDetailScreen() {
     // Validation du paramètre
     if (!competitionId || isNaN(parseInt(competitionId))) {
       showPopup('Erreur', 'Compétition non trouvée', [
-        { text: 'OK', style: 'primary', onPress: () => router.back() }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
       ]);
       setLoading(false);
       return;
@@ -81,7 +86,7 @@ export default function CompetitionDetailScreen() {
     } catch (error) {
       logger.error('Error loading competition:', error);
       showPopup('Erreur', 'Impossible de charger la compétition', [
-        { text: 'OK', style: 'primary', onPress: () => router.back() }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
       ]);
     } finally {
       setLoading(false);
@@ -105,7 +110,7 @@ export default function CompetitionDetailScreen() {
             try {
               await deleteCompetition(parseInt(competitionId));
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              router.back();
+              if (!isNavigating) { setIsNavigating(true); router.back(); }
             } catch (error) {
               logger.error('Error deleting competition:', error);
               showPopup('Erreur', 'Impossible de supprimer la compétition', [

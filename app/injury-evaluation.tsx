@@ -83,16 +83,22 @@ export default function InjuryEvaluationScreen() {
   const injuryId = params.injuryId ? parseInt(params.injuryId as string) : null;
   const isEditMode = injuryId !== null;
 
-  const [painType, setPainType] = useState<PainType | null>(null);
-  const [cause, setCause] = useState<InjuryCause | null>(null);
-  const [evaScore, setEvaScore] = useState(
+  const [painType, setPainType] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<PainType | null>(null);
+  const [cause, setCause] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<InjuryCause | null>(null);
+  const [evaScore, setEvaScore] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(
     params.existingEva ? parseInt(params.existingEva as string) : 5
   );
-  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState(
+  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(
     params.existingDuration ? parseInt(params.existingDuration as string) : 7
   );
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [isSubmitting, setIsSubmitting] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
 
   // Suggestion simple basée sur l'EVA (juste une aide, pas un avis médical)
   const getSuggestedDays = (eva: number): number => {
@@ -123,7 +129,7 @@ export default function InjuryEvaluationScreen() {
 
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showPopup('Blessure mise à jour', 'Les informations ont été modifiées avec succès.', [
-          { text: 'OK', style: 'primary', onPress: () => router.back() },
+          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } },
         ]);
       } else {
         // Mode création - créer une nouvelle blessure
@@ -149,7 +155,7 @@ export default function InjuryEvaluationScreen() {
           );
         }
 
-        router.back();
+        if (!isNavigating) { setIsNavigating(true); router.back(); }
       }
     } catch (error) {
       logger.error('[InjuryEvaluation] Erreur:', error);
@@ -174,7 +180,7 @@ export default function InjuryEvaluationScreen() {
             style={[styles.backButton, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.back();
+              if (!isNavigating) { setIsNavigating(true); router.back(); }
             }}
             activeOpacity={0.7}
           >

@@ -73,12 +73,18 @@ export default function EventsScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
-  const [selectedLocation, setSelectedLocation] = useState<LocationFilter>('monde');
-  const [selectedSportTag, setSelectedSportTag] = useState<SportTagFilter>('all');
-  const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [selectedCategory, setSelectedCategory] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<CategoryFilter>('all');
+  const [selectedLocation, setSelectedLocation] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<LocationFilter>('monde');
+  const [selectedSportTag, setSelectedSportTag] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<SportTagFilter>('all');
+  const [savedEventIds, setSavedEventIds] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(true);
 
   // Load saved events from AsyncStorage on mount
   useEffect(() => {
@@ -349,7 +355,7 @@ export default function EventsScreen() {
     <ScreenWrapper>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }} style={styles.backButton}>
           <ArrowLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>

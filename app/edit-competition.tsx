@@ -40,17 +40,28 @@ export default function EditCompetitionScreen() {
   const params = useLocalSearchParams();
   const competitionId = params.id as string;
 
-  const [loading, setLoading] = useState(true);
-  const [nom, setNom] = useState('');
-  const [lieu, setLieu] = useState('');
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [sport, setSport] = useState<Sport>('jjb');
-  const [typeEvenement, setTypeEvenement] = useState('');
-  const [showSportPicker, setShowSportPicker] = useState(false);
-  const [categoriePoidsId, setCategoriePoidsId] = useState('');
-  const [weightCategories, setWeightCategories] = useState<WeightCategory[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(true);
+  const [nom, setNom] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [lieu, setLieu] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [date, setDate] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(new Date());
+  const [showDatePicker, setShowDatePicker] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [sport, setSport] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<Sport>('jjb');
+  const [typeEvenement, setTypeEvenement] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [showSportPicker, setShowSportPicker] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [categoriePoidsId, setCategoriePoidsId] = useState
+  const [isNavigating, setIsNavigating] = useState(false);('');
+  const [weightCategories, setWeightCategories] = useState
+  const [isNavigating, setIsNavigating] = useState(false);<WeightCategory[]>([]);
+  const [isSaving, setIsSaving] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
 
   // Suggestions pour le type d'événement
   const typeSuggestions = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];
@@ -69,7 +80,7 @@ export default function EditCompetitionScreen() {
       const comp = await getCompetitionById(parseInt(competitionId));
       if (!comp) {
         showPopup('Erreur', 'Compétition introuvable', [
-          { text: 'OK', style: 'primary', onPress: () => router.back() }
+          { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
         ]);
         return;
       }
@@ -91,7 +102,7 @@ export default function EditCompetitionScreen() {
     } catch (error) {
       logger.error('Error loading competition:', error);
       showPopup('Erreur', 'Impossible de charger la compétition', [
-        { text: 'OK', style: 'primary', onPress: () => router.back() }
+        { text: 'OK', style: 'primary', onPress: () => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } } }
       ]);
     } finally {
       setLoading(false);
@@ -136,7 +147,7 @@ export default function EditCompetitionScreen() {
         poids_max: selectedCategory?.maxWeight,
       });
 
-      router.back();
+      if (!isNavigating) { setIsNavigating(true); router.back(); }
     } catch (error) {
       logger.error('Error updating competition:', error);
       showPopup('Erreur', 'Impossible de mettre à jour la compétition', [

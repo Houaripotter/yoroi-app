@@ -12,7 +12,8 @@ const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
 export default function LegalScreen() {
   const { colors, mode } = useTheme();
   const isDarkMode = mode === 'dark';
-  const [isAccepting, setIsAccepting] = useState(false);
+  const [isAccepting, setIsAccepting] = useState
+  const [isNavigating, setIsNavigating] = useState(false);(false);
 
   const handleAccept = async () => {
     if (isAccepting) return;
@@ -23,7 +24,7 @@ export default function LegalScreen() {
       await AsyncStorage.setItem(LEGAL_ACCEPTED_KEY, 'true');
 
       if (previouslyAccepted) {
-        router.back();
+        if (!isNavigating) { setIsNavigating(true); router.back(); }
         return;
       }
 
@@ -35,7 +36,7 @@ export default function LegalScreen() {
       }
     } catch (error) {
       logger.error('Erreur acceptation disclaimer:', error);
-      router.back();
+      if (!isNavigating) { setIsNavigating(true); router.back(); }
     } finally {
       setIsAccepting(false);
     }
@@ -45,7 +46,7 @@ export default function LegalScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => { if (!isNavigating) { setIsNavigating(true); if (!isNavigating) { setIsNavigating(true); router.back(); } } }} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Bienvenue</Text>
