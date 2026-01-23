@@ -117,6 +117,7 @@ export default function TrainingJournalScreen() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
 
   // Modal visibility
   const [showFabMenu, setShowFabMenu] = useState(false);
@@ -478,13 +479,17 @@ export default function TrainingJournalScreen() {
   // ============================================
 
   const handleQuickAddRecord = async (exerciseName: string, category: BenchmarkCategory, unit: BenchmarkUnit) => {
+    // Protection anti-spam
+    if (isQuickAdding) return;
+    setIsQuickAdding(true);
+
     try {
       // 1. Find if benchmark exists or create it
       let targetBenchmark: Benchmark | undefined | null = benchmarks.find(b => b.name === exerciseName);
       if (!targetBenchmark) {
         targetBenchmark = await createBenchmark(exerciseName, category, unit, undefined, undefined, selectedMuscleGroup || undefined);
       }
-      
+
       if (targetBenchmark) {
         setSelectedBenchmark(targetBenchmark);
         setIsExercisePickerVisible(false);
@@ -492,11 +497,15 @@ export default function TrainingJournalScreen() {
       }
     } catch (error) {
       console.error('Error in quick add:', error);
+    } finally {
+      setIsQuickAdding(false);
     }
   };
 
   const handleAddBenchmark = async () => {
-    if (isSubmitting) return; // Anti-spam protection
+    // Protection anti-spam dès le début
+    if (isSubmitting) return;
+
     if (!newBenchmarkName.trim()) {
       showPopup({
         title: 'Erreur',
@@ -506,8 +515,8 @@ export default function TrainingJournalScreen() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const result = await createBenchmark(newBenchmarkName, newBenchmarkCategory, newBenchmarkUnit);
       if (result) {
