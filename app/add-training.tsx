@@ -200,6 +200,7 @@ export default function AddTrainingScreen() {
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const [userRank, setUserRank] = useState<string>('Ashigaru');
   const [userLevel, setUserLevel] = useState<number>(0);
+  const [primarySportForObjective, setPrimarySportForObjective] = useState<string>('');
 
   // Charger les données utilisateur
   useEffect(() => {
@@ -347,11 +348,13 @@ export default function AddTrainingScreen() {
           sportCount = Math.min(sportUniqueDays.size + 1, daysElapsed);
           objective = selectedClub.sessions_per_week ? selectedClub.sessions_per_week * 52 : 150;
         } else if (selectedSports.length > 0) {
+          // Si un sport principal est défini (multi-sports), filtrer uniquement sur celui-ci
+          const targetSports = primarySportForObjective ? [primarySportForObjective] : selectedSports;
           const sportTrainings = allTrainings.filter((t: any) => {
             const tDate = new Date(t.date);
             if (tDate.getFullYear() !== currentYear) return false;
             const tSports = t.sport ? t.sport.split(',').map((s: string) => s.trim()) : [];
-            return tSports.some((s: string) => selectedSports.includes(s));
+            return tSports.some((s: string) => targetSports.includes(s));
           });
           const sportUniqueDays = new Set(sportTrainings.map((t: any) => new Date(t.date).toISOString().split('T')[0]));
           sportCount = Math.min(sportUniqueDays.size + 1, daysElapsed);
@@ -369,7 +372,7 @@ export default function AddTrainingScreen() {
     };
 
     updateContextualData();
-  }, [selectedClub, selectedSports]);
+  }, [selectedClub, selectedSports, primarySportForObjective]);
 
   // Calculer heure de fin
   const calculateEndTime = (): string => {
@@ -501,6 +504,12 @@ export default function AddTrainingScreen() {
       if (prev.includes(sportId)) {
         // Retirer le sport (peut retirer tous les sports)
         const newSports = prev.filter(s => s !== sportId);
+        // Mettre à jour le sport principal si nécessaire
+        if (primarySportForObjective === sportId && newSports.length > 0) {
+          setPrimarySportForObjective(newSports[0]);
+        } else if (newSports.length === 0) {
+          setPrimarySportForObjective('');
+        }
         // Nettoyer les options et entrées de ce sport
         setSelectedOptions(opts => {
           const newOpts = { ...opts };
@@ -539,7 +548,14 @@ export default function AddTrainingScreen() {
         setTimeout(() => {
           scrollViewRef.current?.scrollTo({ y: 0, animated: true });
         }, 100);
-        return [...prev, sportId];
+
+        // Définir le sport principal pour l'objectif annuel (le premier sélectionné par défaut)
+        const newSports = [...prev, sportId];
+        if (!primarySportForObjective && newSports.length === 1) {
+          setPrimarySportForObjective(sportId);
+        }
+
+        return newSports;
       }
     });
   };
@@ -1164,6 +1180,8 @@ export default function AddTrainingScreen() {
           const stats = optionStats[id];
           return {
             ...opt,
+            sport: sportId, // Ajouter le sport pour différenciation
+            sportName: getSportName(sportId), // Nom lisible du sport
             weight: stats?.weight,
             reps: stats?.reps,
             sets: stats?.sets,
@@ -2388,6 +2406,49 @@ export default function AddTrainingScreen() {
                                         </View>
                                       </>
                                     )}
+        {/* SÉLECTEUR SPORT PRINCIPAL POUR OBJECTIF ANNUEL */}
+        {selectedSports.length > 1 && (
+          <View style={{ padding: 16, backgroundColor: colors.backgroundCard, borderRadius: 16, marginTop: 20, borderWidth: 1, borderColor: colors.border }}>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 12, letterSpacing: 0.5 }}>
+              SPORT PRINCIPAL POUR OBJECTIF ANNUEL
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
+              Choisis quel sport afficher dans l'objectif annuel de ta carte de partage
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              {selectedSports.map(sportId => {
+                const sportName = getSportName(sportId);
+                const isSelected = primarySportForObjective === sportId;
+                return (
+                  <TouchableOpacity
+                    key={sportId}
+                    onPress={() => {
+                      setPrimarySportForObjective(sportId);
+                      lightHaptic();
+                    }}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? colors.accent : colors.background,
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                    }}
+                  >
+                    <Text style={{
+                      fontSize: 14,
+                      fontWeight: '700',
+                      color: isSelected ? colors.textOnAccent : colors.textPrimary
+                    }}>
+                      {sportName.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         {/* BOUTON SAVE */}
         {selectedSports.length > 0 && (
           <TouchableOpacity
@@ -2464,10 +2525,10 @@ export default function AddTrainingScreen() {
                             </View>
 
 
-                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 16 }}>
+                            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40, paddingHorizontal: 20 }}>
                               {validationStep === 2 && (
                                 <>
-                              <View style={{ width: '100%', maxWidth: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
+                              <View style={{ width: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
                                 <SessionCard
                                   training={{
                                     sport: selectedSports.join(','),
@@ -2564,7 +2625,7 @@ export default function AddTrainingScreen() {
                               {/* ÉTAPE 3: APERÇU AVEC PHOTO */}
                               {validationStep === 3 && (
                                 <>
-                              <View style={{ width: '100%', maxWidth: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
+                              <View style={{ width: 360, borderRadius: 24, overflow: 'hidden', shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20, elevation: 15, marginBottom: 30 }}>
                                 <SessionCard
                                   training={{
                                     sport: selectedSports.join(','),

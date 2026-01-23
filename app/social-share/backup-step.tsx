@@ -49,27 +49,27 @@ export default function BackupStepScreen() {
   return (
     <ScreenWrapper noPadding noContainer>
       {/* HEADER ÉTAPE 4 - SOMMET ABSOLU */}
-      <View style={{ 
-        backgroundColor: '#F2F2F7', 
-        borderBottomWidth: 1, 
+      <View style={{
+        backgroundColor: colors.background,
+        borderBottomWidth: 1,
         borderBottomColor: colors.border,
         zIndex: 999
       }}>
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.gold, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
             {/* Etapes Passées (Gold) */}
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />
-            <View style={{ width: 30, height: 2, backgroundColor: colors.gold }} />
-            
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
+            <View style={{ width: 30, height: 2, backgroundColor: colors.accent }} />
+
             {/* Etape 4 (Actuelle - Big Gold) */}
-            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.gold, shadowColor: colors.gold, shadowOpacity: 0.5, shadowRadius: 5 }} />
+            <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 5 }} />
           </View>
-          <Text style={{ fontSize: 18, fontWeight: '900', color: '#000000', marginTop: 4, letterSpacing: 1 }}>SÉCURISATION</Text>
+          <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginTop: 4, letterSpacing: 1 }}>SÉCURISATION</Text>
         </View>
       </View>
 
@@ -77,43 +77,43 @@ export default function BackupStepScreen() {
         
         {/* LOGO SYNC */}
         <View style={styles.iconContainer}>
-          <Cloud size={60} color={colors.gold} />
+          <Cloud size={60} color={colors.accent} />
           <View style={styles.shieldOverlay}>
             <Shield size={24} color="#10B981" fill="#10B981" />
           </View>
         </View>
 
-        <Text style={[styles.title, { color: '#000000' }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
           Sauvegarde ton Cloud ☁️
         </Text>
-        
-        <View style={[styles.warningBox, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}>
-          <Text style={styles.warningText}>
+
+        <View style={[styles.warningBox, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
+          <Text style={[styles.warningText, { color: colors.error }]}>
             Attention : YOROI fonctionne sans serveur pour respecter ta vie privée. Tes données sont uniquement sur ce téléphone.
           </Text>
         </View>
 
-        <View style={[styles.instructionCard, { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
-          <Text style={[styles.instructionTitle, { color: colors.gold }]}>MARCHE À SUIVRE :</Text>
+        <View style={[styles.instructionCard, { backgroundColor: colors.backgroundCard, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
+          <Text style={[styles.instructionTitle, { color: colors.accent }]}>MARCHE À SUIVRE :</Text>
           
           <View style={styles.stepRow}>
-            <FolderPlus size={20} color={colors.gold} />
-            <Text style={[styles.stepText, { color: '#000000' }]}>Cree un dossier <Text style={{fontWeight: '900'}}>"Yoroi_app Backup"</Text> dans ton iCloud Drive.</Text>
+            <FolderPlus size={20} color={colors.accent} />
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Cree un dossier <Text style={{fontWeight: '900'}}>"Yoroi_app Backup"</Text> dans ton iCloud Drive.</Text>
           </View>
 
           <View style={styles.stepRow}>
-            <Download size={20} color={colors.gold} />
-            <Text style={[styles.stepText, { color: '#000000' }]}>Clique sur le bouton ci-dessous pour generer ton fichier de sauvegarde.</Text>
+            <Download size={20} color={colors.accent} />
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Clique sur le bouton ci-dessous pour generer ton fichier de sauvegarde.</Text>
           </View>
 
           <View style={styles.stepRow}>
-            <Cloud size={20} color={colors.gold} />
-            <Text style={[styles.stepText, { color: '#000000' }]}>Enregistre ce fichier dans ton dossier iCloud pour ne jamais rien perdre.</Text>
+            <Cloud size={20} color={colors.accent} />
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Enregistre ce fichier dans ton dossier iCloud pour ne jamais rien perdre.</Text>
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={[styles.exportBtn, { backgroundColor: colors.gold }]}
+        <TouchableOpacity
+          style={[styles.exportBtn, { backgroundColor: colors.accent }]}
           onPress={handleExport}
           disabled={isExporting}
         >
@@ -180,7 +180,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   warningText: {
-    color: '#EF4444',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',

@@ -3,9 +3,18 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
-import { getAllMeasurements, getUserSettings } from './storage';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining } from './database';
+import {
+  getAllMeasurements,
+  getUserSettings,
+  getPhotosFromStorage,
+  getHomeLayout,
+  getSelectedLogo,
+  getAllHydrationEntries,
+  getHydrationSettings,
+} from './storage';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
+import { getUnlockedBadges } from './badges';
 import logger from '@/lib/security/logger';
 
 // ============================================

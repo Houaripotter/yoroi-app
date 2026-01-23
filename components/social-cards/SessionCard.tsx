@@ -52,11 +52,11 @@ interface SessionCardProps {
   weeklyCount?: number;
   yearlyObjective?: number;
   sessionsPerWeek?: number;
-  options?: { 
-    label: string, 
-    icon?: string, 
-    color?: string, 
-    weight?: string, 
+  options?: {
+    label: string,
+    icon?: string,
+    color?: string,
+    weight?: string,
     reps?: string,
     distance?: string,
     duration?: string,
@@ -66,7 +66,9 @@ interface SessionCardProps {
     watts?: string,
     resistance?: string,
     stairs?: string,
-    pace?: string
+    pace?: string,
+    sport?: string,
+    sportName?: string
   }[];
 }
 
@@ -144,7 +146,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
 
           <LinearGradient
             colors={keepPhotoClear
-              ? ['rgba(0,0,0,0.15)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.25)']
+              ? ['rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']
               : ['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
             style={styles.photoGradient}
           >
@@ -270,9 +272,21 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 {options && options.length > 0 ? (
                   options.map((opt, i) => {
                     const pace = opt.pace || getPace(opt.speed);
+                    // Vérifier si on change de sport (pour afficher un séparateur)
+                    const prevSport = i > 0 ? options[i - 1].sport : null;
+                    const showSportSeparator = opt.sport && opt.sport !== prevSport && opt.sportName;
+
                     return (
-                      <View key={i} style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
-                        <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
+                      <React.Fragment key={i}>
+                        {showSportSeparator && opt.sportName && (
+                          <View style={{ marginTop: i > 0 ? 8 : 0, marginBottom: 6 }}>
+                            <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', letterSpacing: 0.5 }}>
+                              {opt.sportName.toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                        <View style={[styles.exerciseRow, { borderBottomColor: borderColor }]}>
+                          <Text style={[styles.exerciseLabel, { color: txt }]} numberOfLines={1}>{opt.label.toUpperCase()}</Text>
                         <View style={styles.exerciseStats}>
                           {opt.weight && renderStyledStat(opt.weight, 'KG')}
                           {opt.reps && (
@@ -289,6 +303,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                           {opt.calories && renderStyledStat(opt.calories, 'KCAL')}
                         </View>
                       </View>
+                      </React.Fragment>
                     );
                   })
                 ) : (
@@ -327,7 +342,7 @@ const styles = StyleSheet.create({
   },
   photoHeader: {
     paddingHorizontal: 20,
-    paddingTop: 46,
+    paddingTop: 54,
     paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
