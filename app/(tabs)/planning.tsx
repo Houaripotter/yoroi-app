@@ -431,8 +431,10 @@ export default function PlanningScreen() {
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const events = await getFilteredEvents({ limit: 1000 });
+        // Ne charger que les événements à venir (futurs)
+        const events = await getFilteredEvents({ upcomingOnly: true, limit: 1000 });
         setAllCatalogEvents(events as SportEvent[]);
+        console.log('✅ Événements chargés:', events.length);
       } catch (error) {
         console.error('Error loading events:', error);
         setAllCatalogEvents([]);
@@ -1546,6 +1548,13 @@ export default function PlanningScreen() {
                       A L'HORIZON
                     </Text>
                     {savedExternalEvents
+                      .filter(event => {
+                        const eventDate = new Date(event.date_start);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        eventDate.setHours(0, 0, 0, 0);
+                        return eventDate >= today;
+                      })
                       .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime())
                       .map((event) => {
                         const eventDate = new Date(event.date_start);

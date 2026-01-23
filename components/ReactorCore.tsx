@@ -51,9 +51,12 @@ export const ReactorCore: React.FC<ReactorCoreProps> = ({
   const coreColor = getColor();
 
   useEffect(() => {
+    let pulseAnimation: Animated.CompositeAnimation | null = null;
+    let glowAnimation: Animated.CompositeAnimation | null = null;
+
     if (isOverload) {
       // Pulsation
-      Animated.loop(
+      pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseScale, {
             toValue: 1.15,
@@ -66,10 +69,11 @@ export const ReactorCore: React.FC<ReactorCoreProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      pulseAnimation.start();
 
       // Glow
-      Animated.loop(
+      glowAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(glowOpacity, {
             toValue: 0.8,
@@ -82,7 +86,8 @@ export const ReactorCore: React.FC<ReactorCoreProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      glowAnimation.start();
     } else {
       Animated.timing(pulseScale, {
         toValue: 1,
@@ -96,6 +101,15 @@ export const ReactorCore: React.FC<ReactorCoreProps> = ({
         useNativeDriver: true,
       }).start();
     }
+
+    return () => {
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
+      if (glowAnimation) {
+        glowAnimation.stop();
+      }
+    };
   }, [isOverload]);
 
   // Générer les segments

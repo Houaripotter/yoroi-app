@@ -1,0 +1,4517 @@
+[
+  {
+    "id": "run_2026_604",
+    "title": "10km de Paris Toulouse",
+    "date_start": "2026-01-24",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_435",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2026-01-25",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_177",
+    "title": "Bordeaux No-Gi International Open 2026",
+    "date_start": "2026-01-28",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_726",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2026-01-28",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_749",
+    "title": "EcoTrail Montpellier",
+    "date_start": "2026-01-28",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_395",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-01-31",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_636",
+    "title": "Semi-Marathon Lyon",
+    "date_start": "2026-01-31",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_715",
+    "title": "Marathon Nantes",
+    "date_start": "2026-01-31",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_494",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-02-03",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_290",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-02-07",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_101",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-02-10",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_53",
+    "title": "Marathon Paris",
+    "date_start": "2026-02-12",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_289",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-02-15",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_291",
+    "title": "Marathon Nantes",
+    "date_start": "2026-02-15",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_286",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2026-02-16",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_530",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2026-02-21",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_652",
+    "title": "Semi-Marathon Montpellier",
+    "date_start": "2026-02-26",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_401",
+    "title": "Semi-Marathon Nice",
+    "date_start": "2026-03-01",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_55",
+    "title": "Nantes National Pro 2026",
+    "date_start": "2026-03-05",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_621",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-03-06",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_358",
+    "title": "Marathon Marseille",
+    "date_start": "2026-03-07",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_579",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-03-09",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_362",
+    "title": "Nice World Masters 2026",
+    "date_start": "2026-03-15",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_247",
+    "title": "EcoTrail Bordeaux",
+    "date_start": "2026-03-17",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_445",
+    "title": "EcoTrail Marseille",
+    "date_start": "2026-03-17",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_293",
+    "title": "Strasbourg No-Gi International Open 2026",
+    "date_start": "2026-03-19",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_351",
+    "title": "EcoTrail Montpellier",
+    "date_start": "2026-03-20",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_15",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-03-23",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_797",
+    "title": "Marathon Bordeaux",
+    "date_start": "2026-03-26",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_798",
+    "title": "Marathon Montpellier",
+    "date_start": "2026-03-27",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_72",
+    "title": "Marathon Strasbourg",
+    "date_start": "2026-03-28",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_515",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2026-03-28",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_419",
+    "title": "Bordeaux National Pro 2026",
+    "date_start": "2026-04-01",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_207",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2026-04-02",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_498",
+    "title": "Marathon Montpellier",
+    "date_start": "2026-04-03",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_563",
+    "title": "EcoTrail Montpellier",
+    "date_start": "2026-04-07",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_737",
+    "title": "Marathon Marseille",
+    "date_start": "2026-04-07",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_9",
+    "title": "Paris European Championship 2026",
+    "date_start": "2026-04-08",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_353",
+    "title": "Semi-Marathon Paris",
+    "date_start": "2026-04-12",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_97",
+    "title": "Marathon Paris",
+    "date_start": "2026-04-13",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_790",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2026-04-13",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_230",
+    "title": "Semi-Marathon Montpellier",
+    "date_start": "2026-04-14",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_565",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-04-15",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_672",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-04-17",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_428",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-04-21",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_17",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2026-04-22",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_329",
+    "title": "EcoTrail Marseille",
+    "date_start": "2026-04-22",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_33",
+    "title": "EcoTrail Bordeaux",
+    "date_start": "2026-04-23",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_46",
+    "title": "UTMB World Series Nantes",
+    "date_start": "2026-04-27",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_211",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-04-28",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_412",
+    "title": "Montpellier Open Jiu-Jitsu Championship 2026",
+    "date_start": "2026-05-01",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_132",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-05-02",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_724",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-05-03",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_275",
+    "title": "Lille No-Gi International Open 2026",
+    "date_start": "2026-05-09",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_349",
+    "title": "Nice Open Jiu-Jitsu Championship 2026",
+    "date_start": "2026-05-09",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_506",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-05-11",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_287",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2026-05-16",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_727",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2026-05-19",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_337",
+    "title": "Marathon Paris",
+    "date_start": "2026-05-21",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_436",
+    "title": "EcoTrail Lyon",
+    "date_start": "2026-05-28",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_717",
+    "title": "10km de Paris Lille",
+    "date_start": "2026-05-30",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_189",
+    "title": "Marathon Marseille",
+    "date_start": "2026-05-31",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_105",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-06-01",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_523",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2026-06-02",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_182",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-06-03",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_340",
+    "title": "Marathon Nantes",
+    "date_start": "2026-06-04",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_21",
+    "title": "EcoTrail Lyon",
+    "date_start": "2026-06-07",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_80",
+    "title": "10km de Paris Lille",
+    "date_start": "2026-06-07",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_484",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2026-06-10",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_605",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-06-11",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_703",
+    "title": "Marathon Strasbourg",
+    "date_start": "2026-06-12",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_422",
+    "title": "Bordeaux European Championship 2026",
+    "date_start": "2026-06-16",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_365",
+    "title": "Strasbourg World Masters 2026",
+    "date_start": "2026-06-17",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_235",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-06-20",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_526",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2026-06-21",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_303",
+    "title": "Marathon Nantes",
+    "date_start": "2026-06-22",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_676",
+    "title": "EcoTrail Lille",
+    "date_start": "2026-06-22",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_725",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2026-06-22",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_590",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-06-23",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_536",
+    "title": "UTMB World Series Paris",
+    "date_start": "2026-06-24",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_541",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2026-06-24",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_564",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2026-06-24",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_795",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-06-24",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_64",
+    "title": "Semi-Marathon Marseille",
+    "date_start": "2026-06-27",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_346",
+    "title": "Semi-Marathon Lille",
+    "date_start": "2026-06-29",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_280",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2026-06-30",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_699",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-07-05",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_292",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2026-07-07",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_746",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2026-07-08",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_270",
+    "title": "Strasbourg European Championship 2026",
+    "date_start": "2026-07-10",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_582",
+    "title": "Semi-Marathon Nantes",
+    "date_start": "2026-07-16",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_137",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2026-07-17",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_209",
+    "title": "Montpellier Open Jiu-Jitsu Championship 2026",
+    "date_start": "2026-07-18",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_408",
+    "title": "Strasbourg No-Gi International Open 2026",
+    "date_start": "2026-07-19",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_555",
+    "title": "Semi-Marathon Montpellier",
+    "date_start": "2026-07-19",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_150",
+    "title": "Marathon Paris",
+    "date_start": "2026-07-20",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_288",
+    "title": "Nice European Championship 2026",
+    "date_start": "2026-07-21",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_45",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2026-07-21",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_710",
+    "title": "Semi-Marathon Paris",
+    "date_start": "2026-07-21",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_265",
+    "title": "Marathon Marseille",
+    "date_start": "2026-07-25",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_379",
+    "title": "Marathon Nantes",
+    "date_start": "2026-07-26",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_11",
+    "title": "EcoTrail Montpellier",
+    "date_start": "2026-07-31",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_306",
+    "title": "Marseille National Pro 2026",
+    "date_start": "2026-08-01",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_754",
+    "title": "EcoTrail Lyon",
+    "date_start": "2026-08-02",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_91",
+    "title": "10km de Paris Nice",
+    "date_start": "2026-08-10",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_154",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-08-11",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_226",
+    "title": "Montpellier World Masters 2026",
+    "date_start": "2026-08-14",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_546",
+    "title": "Semi-Marathon Paris",
+    "date_start": "2026-08-15",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_328",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2026-08-18",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_360",
+    "title": "Marathon Lyon",
+    "date_start": "2026-08-19",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_471",
+    "title": "UTMB World Series Lille",
+    "date_start": "2026-08-21",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_184",
+    "title": "Semi-Marathon Nantes",
+    "date_start": "2026-08-24",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_62",
+    "title": "Semi-Marathon Nice",
+    "date_start": "2026-08-27",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_26",
+    "title": "Lille European Championship 2026",
+    "date_start": "2026-08-28",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_794",
+    "title": "Semi-Marathon Lyon",
+    "date_start": "2026-08-31",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_229",
+    "title": "Marathon Paris",
+    "date_start": "2026-09-03",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_204",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2026-09-08",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_437",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-09-15",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_494",
+    "title": "Marseille No-Gi International Open 2026",
+    "date_start": "2026-09-18",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_556",
+    "title": "Marathon Marseille",
+    "date_start": "2026-09-19",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_560",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2026-09-21",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_581",
+    "title": "Marathon Bordeaux",
+    "date_start": "2026-09-23",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_390",
+    "title": "Bordeaux No-Gi International Open 2026",
+    "date_start": "2026-09-26",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_324",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2026-09-27",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_352",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2026-09-27",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_764",
+    "title": "10km de Paris Toulouse",
+    "date_start": "2026-09-30",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_459",
+    "title": "Bordeaux National Pro 2026",
+    "date_start": "2026-10-01",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_146",
+    "title": "Marathon Nantes",
+    "date_start": "2026-10-06",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_647",
+    "title": "UTMB World Series Paris",
+    "date_start": "2026-10-11",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_38",
+    "title": "EcoTrail Lille",
+    "date_start": "2026-10-16",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_739",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2026-10-16",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_373",
+    "title": "Marseille National Pro 2026",
+    "date_start": "2026-10-21",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_254",
+    "title": "EcoTrail Lille",
+    "date_start": "2026-10-21",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_681",
+    "title": "EcoTrail Marseille",
+    "date_start": "2026-10-21",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_297",
+    "title": "Marseille World Masters 2026",
+    "date_start": "2026-10-23",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_610",
+    "title": "10km de Paris Nantes",
+    "date_start": "2026-10-26",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_762",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-10-26",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_305",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2026-10-29",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_51",
+    "title": "UTMB World Series Lille",
+    "date_start": "2026-10-30",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_219",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2026-10-30",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_550",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2026-10-30",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_161",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-11-01",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_677",
+    "title": "10km de Paris Nice",
+    "date_start": "2026-11-04",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_492",
+    "title": "Marathon Lille",
+    "date_start": "2026-11-06",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_489",
+    "title": "Lyon World Masters 2026",
+    "date_start": "2026-11-09",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_488",
+    "title": "Semi-Marathon Lille",
+    "date_start": "2026-11-10",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_364",
+    "title": "EcoTrail Nice",
+    "date_start": "2026-11-11",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_394",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2026-11-11",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_700",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2026-11-12",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_589",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-11-18",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_458",
+    "title": "UTMB World Series Lille",
+    "date_start": "2026-11-19",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_584",
+    "title": "10km de Paris Nantes",
+    "date_start": "2026-11-22",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_687",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2026-11-25",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_357",
+    "title": "Montpellier National Pro 2026",
+    "date_start": "2026-11-26",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_385",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2026-11-30",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_799",
+    "title": "Marathon Toulouse",
+    "date_start": "2026-11-30",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_238",
+    "title": "Marseille National Pro 2026",
+    "date_start": "2026-12-01",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_567",
+    "title": "Marathon Montpellier",
+    "date_start": "2026-12-01",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_397",
+    "title": "Semi-Marathon Nantes",
+    "date_start": "2026-12-03",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_776",
+    "title": "Marathon Strasbourg",
+    "date_start": "2026-12-06",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_619",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2026-12-08",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_657",
+    "title": "Marathon Marseille",
+    "date_start": "2026-12-08",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_318",
+    "title": "UTMB World Series Nantes",
+    "date_start": "2026-12-10",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_757",
+    "title": "10km de Paris Lyon",
+    "date_start": "2026-12-11",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_69",
+    "title": "Marseille National Pro 2026",
+    "date_start": "2026-12-12",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_105",
+    "title": "Bordeaux Open Jiu-Jitsu Championship 2026",
+    "date_start": "2026-12-13",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_318",
+    "title": "Lyon European Championship 2026",
+    "date_start": "2026-12-13",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_531",
+    "title": "10km de Paris Paris",
+    "date_start": "2026-12-13",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_455",
+    "title": "Paris World Masters 2026",
+    "date_start": "2026-12-14",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_566",
+    "title": "Marathon Montpellier",
+    "date_start": "2026-12-14",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_767",
+    "title": "10km de Paris Marseille",
+    "date_start": "2026-12-15",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_469",
+    "title": "10km de Paris Lille",
+    "date_start": "2026-12-19",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_431",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2026-12-21",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_349",
+    "title": "EcoTrail Montpellier",
+    "date_start": "2026-12-23",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_281",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2026-12-25",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_14",
+    "title": "EcoTrail Paris",
+    "date_start": "2027-01-04",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_474",
+    "title": "Toulouse World Masters 2026",
+    "date_start": "2027-01-05",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_70",
+    "title": "UTMB World Series Bordeaux",
+    "date_start": "2027-01-10",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_402",
+    "title": "10km de Paris Nice",
+    "date_start": "2027-01-12",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_89",
+    "title": "Marseille No-Gi International Open 2026",
+    "date_start": "2027-01-13",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_363",
+    "title": "Lyon Open Jiu-Jitsu Championship 2026",
+    "date_start": "2027-01-15",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_215",
+    "title": "Montpellier National Pro 2026",
+    "date_start": "2027-01-24",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_133",
+    "title": "EcoTrail Bordeaux",
+    "date_start": "2027-01-27",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_390",
+    "title": "Semi-Marathon Lyon",
+    "date_start": "2027-01-27",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_608",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2027-01-29",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_319",
+    "title": "Semi-Marathon Marseille",
+    "date_start": "2027-01-31",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_126",
+    "title": "Nice World Masters 2026",
+    "date_start": "2027-02-04",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "IBJJF",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_144",
+    "title": "10km de Paris Nice",
+    "date_start": "2027-02-07",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_702",
+    "title": "UTMB World Series Paris",
+    "date_start": "2027-02-13",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_769",
+    "title": "UTMB World Series Paris",
+    "date_start": "2027-02-14",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_201",
+    "title": "10km de Paris Bordeaux",
+    "date_start": "2027-02-16",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_785",
+    "title": "EcoTrail Nice",
+    "date_start": "2027-02-17",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_692",
+    "title": "10km de Paris Nantes",
+    "date_start": "2027-02-22",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_169",
+    "title": "Semi-Marathon Strasbourg",
+    "date_start": "2027-02-24",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_262",
+    "title": "EcoTrail Nantes",
+    "date_start": "2027-02-24",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_472",
+    "title": "Marathon Paris",
+    "date_start": "2027-02-27",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_366",
+    "title": "10km de Paris Paris",
+    "date_start": "2027-03-02",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_224",
+    "title": "Marathon Paris",
+    "date_start": "2027-03-03",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_104",
+    "title": "Marathon Nantes",
+    "date_start": "2027-03-07",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_426",
+    "title": "Semi-Marathon Nice",
+    "date_start": "2027-03-07",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_525",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2027-03-11",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_3",
+    "title": "10km de Paris Lille",
+    "date_start": "2027-03-12",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_554",
+    "title": "Semi-Marathon Marseille",
+    "date_start": "2027-03-14",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_592",
+    "title": "Marathon Marseille",
+    "date_start": "2027-03-15",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_71",
+    "title": "Marathon Montpellier",
+    "date_start": "2027-03-16",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_79",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2027-03-18",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_459",
+    "title": "Marathon Montpellier",
+    "date_start": "2027-03-18",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_756",
+    "title": "10km de Paris Marseille",
+    "date_start": "2027-03-20",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_643",
+    "title": "10km de Paris Paris",
+    "date_start": "2027-03-22",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_368",
+    "title": "EcoTrail Marseille",
+    "date_start": "2027-03-23",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_322",
+    "title": "10km de Paris Nantes",
+    "date_start": "2027-03-26",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_433",
+    "title": "Toulouse National Pro 2026",
+    "date_start": "2027-03-28",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "CFJJB",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_25",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2027-03-31",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_363",
+    "title": "EcoTrail Bordeaux",
+    "date_start": "2027-04-01",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_177",
+    "title": "UTMB World Series Nice",
+    "date_start": "2027-04-06",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_644",
+    "title": "UTMB World Series Bordeaux",
+    "date_start": "2027-04-06",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_793",
+    "title": "UTMB World Series Lille",
+    "date_start": "2027-04-08",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_683",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2027-04-10",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_239",
+    "title": "10km de Paris Paris",
+    "date_start": "2027-04-11",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_227",
+    "title": "Marathon Bordeaux",
+    "date_start": "2027-04-13",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_68",
+    "title": "EcoTrail Marseille",
+    "date_start": "2027-04-15",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_193",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2027-04-16",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_455",
+    "title": "Semi-Marathon Nantes",
+    "date_start": "2027-04-16",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_602",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2027-04-16",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_514",
+    "title": "Marathon Montpellier",
+    "date_start": "2027-04-17",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_191",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2027-04-18",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_585",
+    "title": "Marathon Toulouse",
+    "date_start": "2027-04-18",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_467",
+    "title": "Nice National Pro 2026",
+    "date_start": "2027-04-19",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_433",
+    "title": "UTMB World Series Marseille",
+    "date_start": "2027-04-19",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_57",
+    "title": "Marathon Marseille",
+    "date_start": "2027-04-23",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_499",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2027-04-26",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_272",
+    "title": "UTMB World Series Nice",
+    "date_start": "2027-04-27",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_775",
+    "title": "10km de Paris Toulouse",
+    "date_start": "2027-04-27",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_781",
+    "title": "EcoTrail Lille",
+    "date_start": "2027-04-29",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_165",
+    "title": "UTMB World Series Lille",
+    "date_start": "2027-05-01",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_634",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2027-05-07",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_662",
+    "title": "EcoTrail Marseille",
+    "date_start": "2027-05-10",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_24",
+    "title": "UTMB World Series Nantes",
+    "date_start": "2027-05-12",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_752",
+    "title": "Marathon Paris",
+    "date_start": "2027-05-13",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_208",
+    "title": "UTMB World Series Nice",
+    "date_start": "2027-05-15",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_263",
+    "title": "Semi-Marathon Nantes",
+    "date_start": "2027-05-17",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_294",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2027-05-17",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_140",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2027-05-19",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_502",
+    "title": "Semi-Marathon Montpellier",
+    "date_start": "2027-05-20",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_509",
+    "title": "Semi-Marathon Montpellier",
+    "date_start": "2027-05-20",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_26",
+    "title": "UTMB World Series Bordeaux",
+    "date_start": "2027-05-23",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_65",
+    "title": "Marathon Paris",
+    "date_start": "2027-05-23",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_336",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2027-05-25",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_44",
+    "title": "UTMB World Series Montpellier",
+    "date_start": "2027-05-26",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_603",
+    "title": "10km de Paris Montpellier",
+    "date_start": "2027-05-27",
+    "location": {
+      "city": "Montpellier",
+      "country": "France",
+      "full_address": "Montpellier, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_73",
+    "title": "Marathon Marseille",
+    "date_start": "2027-05-31",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_160",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2027-06-02",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_374",
+    "title": "EcoTrail Nice",
+    "date_start": "2027-06-02",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "jjb_2026_53",
+    "title": "Nice National Pro 2026",
+    "date_start": "2027-06-04",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "combat",
+    "sport_tag": "jjb",
+    "registration_link": "https://smoothcomp.com",
+    "federation": "AJP",
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_143",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2027-06-09",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_463",
+    "title": "EcoTrail Nantes",
+    "date_start": "2027-06-10",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_741",
+    "title": "EcoTrail Nantes",
+    "date_start": "2027-06-12",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_56",
+    "title": "EcoTrail Lille",
+    "date_start": "2027-06-20",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_399",
+    "title": "10km de Paris Lille",
+    "date_start": "2027-06-20",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_106",
+    "title": "10km de Paris Nice",
+    "date_start": "2027-06-21",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_425",
+    "title": "Semi-Marathon Nice",
+    "date_start": "2027-06-21",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_92",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2027-06-23",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_606",
+    "title": "UTMB World Series Bordeaux",
+    "date_start": "2027-06-24",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_439",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2027-06-28",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_221",
+    "title": "EcoTrail Lille",
+    "date_start": "2027-06-29",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_267",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2027-07-01",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_275",
+    "title": "10km de Paris Marseille",
+    "date_start": "2027-07-01",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_482",
+    "title": "EcoTrail Bordeaux",
+    "date_start": "2027-07-02",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_218",
+    "title": "UTMB World Series Paris",
+    "date_start": "2027-07-03",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_124",
+    "title": "10km de Paris Lyon",
+    "date_start": "2027-07-04",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_409",
+    "title": "EcoTrail Strasbourg",
+    "date_start": "2027-07-10",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_559",
+    "title": "UTMB World Series Paris",
+    "date_start": "2027-07-10",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_456",
+    "title": "EcoTrail Toulouse",
+    "date_start": "2027-07-13",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_122",
+    "title": "10km de Paris Paris",
+    "date_start": "2027-07-14",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_601",
+    "title": "Semi-Marathon Bordeaux",
+    "date_start": "2027-07-14",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_558",
+    "title": "UTMB World Series Lille",
+    "date_start": "2027-07-16",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_576",
+    "title": "Marathon Lille",
+    "date_start": "2027-07-17",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_278",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2027-07-18",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_453",
+    "title": "EcoTrail Nantes",
+    "date_start": "2027-07-19",
+    "location": {
+      "city": "Nantes",
+      "country": "France",
+      "full_address": "Nantes, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_151",
+    "title": "EcoTrail Paris",
+    "date_start": "2027-07-20",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_333",
+    "title": "10km de Paris Marseille",
+    "date_start": "2027-07-24",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_371",
+    "title": "Marathon Toulouse",
+    "date_start": "2027-07-31",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_76",
+    "title": "UTMB World Series Strasbourg",
+    "date_start": "2027-08-03",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_691",
+    "title": "Marathon Marseille",
+    "date_start": "2027-08-03",
+    "location": {
+      "city": "Marseille",
+      "country": "France",
+      "full_address": "Marseille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_446",
+    "title": "Marathon Toulouse",
+    "date_start": "2027-08-07",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_778",
+    "title": "10km de Paris Strasbourg",
+    "date_start": "2027-08-07",
+    "location": {
+      "city": "Strasbourg",
+      "country": "France",
+      "full_address": "Strasbourg, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_16",
+    "title": "UTMB World Series Paris",
+    "date_start": "2027-08-09",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_450",
+    "title": "UTMB World Series Toulouse",
+    "date_start": "2027-08-09",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_362",
+    "title": "Marathon Lyon",
+    "date_start": "2027-08-11",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_646",
+    "title": "Semi-Marathon Toulouse",
+    "date_start": "2027-08-11",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_339",
+    "title": "EcoTrail Lyon",
+    "date_start": "2027-08-18",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_367",
+    "title": "EcoTrail Lyon",
+    "date_start": "2027-08-19",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "trail",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_185",
+    "title": "Semi-Marathon Paris",
+    "date_start": "2027-08-22",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_711",
+    "title": "10km de Paris Nice",
+    "date_start": "2027-08-23",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_1",
+    "title": "Semi-Marathon Lille",
+    "date_start": "2027-08-25",
+    "location": {
+      "city": "Lille",
+      "country": "France",
+      "full_address": "Lille, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_9",
+    "title": "Semi-Marathon Nice",
+    "date_start": "2027-08-30",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_54",
+    "title": "Marathon Bordeaux",
+    "date_start": "2027-08-30",
+    "location": {
+      "city": "Bordeaux",
+      "country": "France",
+      "full_address": "Bordeaux, France"
+    },
+    "category": "endurance",
+    "sport_tag": "running",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_391",
+    "title": "Marathon Nice",
+    "date_start": "2027-08-30",
+    "location": {
+      "city": "Nice",
+      "country": "France",
+      "full_address": "Nice, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_615",
+    "title": "10km de Paris Paris",
+    "date_start": "2027-09-03",
+    "location": {
+      "city": "Paris",
+      "country": "France",
+      "full_address": "Paris, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_660",
+    "title": "Marathon Toulouse",
+    "date_start": "2027-09-03",
+    "location": {
+      "city": "Toulouse",
+      "country": "France",
+      "full_address": "Toulouse, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  },
+  {
+    "id": "run_2026_109",
+    "title": "UTMB World Series Lyon",
+    "date_start": "2027-09-06",
+    "location": {
+      "city": "Lyon",
+      "country": "France",
+      "full_address": "Lyon, France"
+    },
+    "category": "endurance",
+    "sport_tag": "marathon",
+    "registration_link": "https://www.ahotu.com",
+    "federation": null,
+    "image_logo_url": null
+  }
+]

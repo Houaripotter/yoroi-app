@@ -240,15 +240,15 @@ export default function HomeScreen() {
     }
   }, [params.showRating]);
 
-  const handleCloseTutorial = async () => {
+  const handleCloseTutorial = useCallback(async () => {
     await markPageAsVisited('home');
     setShowTutorial(false);
-  };
+  }, []);
 
   // Fermer sans marquer comme vu (bouton "Plus tard")
-  const handleLaterTutorial = () => {
+  const handleLaterTutorial = useCallback(() => {
     setShowTutorial(false);
-  };
+  }, []);
 
   // Rafraîchir l'avatar quand la page devient active
   useFocusEffect(
@@ -428,31 +428,31 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const saveHydration = async (value: number) => {
+  const saveHydration = useCallback(async (value: number) => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
     }
-  };
+  }, []);
 
-  const animateWater = (value: number, goal: number = DEFAULT_HYDRATION_GOAL) => {
+  const animateWater = useCallback((value: number, goal: number = DEFAULT_HYDRATION_GOAL) => {
     Animated.spring(waterAnim, {
       toValue: Math.min(value / goal, 1),
       tension: 30,
       friction: 8,
       useNativeDriver: false,
     }).start();
-  };
+  }, [waterAnim]);
 
-  const addWater = (amount: number) => {
+  const addWater = useCallback((amount: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
     const newValue = Math.max(0, hydration + amount);
     setHydration(newValue);
     saveHydration(newValue);
     animateWater(newValue, hydrationGoal);
-  };
+  }, [hydration, hydrationGoal, saveHydration, animateWater]);
 
   // Protection navigation anti-spam
   const handleNavigate = useCallback((route: string) => {
@@ -460,7 +460,155 @@ export default function HomeScreen() {
     setIsNavigating(true);
     router.push(route as any);
     setTimeout(() => setIsNavigating(false), 1000);
-  }, [isNavigating, router]);
+  }, [isNavigating]);
+
+  // Handlers de navigation mémorisés pour éviter les callbacks inline
+  const handleNavigateProfile = useCallback(() => {
+    handleNavigate('/profile');
+  }, [handleNavigate]);
+
+  const handleNavigateAvatarSelection = useCallback(() => {
+    handleNavigate('/avatar-selection');
+  }, [handleNavigate]);
+
+  const handleNavigateActivityDetail = useCallback(() => {
+    handleNavigate('/activity-detail');
+  }, [handleNavigate]);
+
+  const handleNavigateGamification = useCallback(() => {
+    handleNavigate('/gamification');
+  }, [handleNavigate]);
+
+  const handleNavigateWeightStats = useCallback(() => {
+    handleNavigate('/(tabs)/stats?tab=poids');
+  }, [handleNavigate]);
+
+  const handleNavigateSleep = useCallback(() => {
+    handleNavigate('/sleep');
+  }, [handleNavigate]);
+
+  const handleNavigateCharge = useCallback(() => {
+    handleNavigate('/charge');
+  }, [handleNavigate]);
+
+  const handleNavigateTrainingJournal = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/training-journal');
+  }, [handleNavigate]);
+
+  const handleNavigateInfirmary = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/infirmary');
+  }, [handleNavigate]);
+
+  const handleNavigateChallenges = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/challenges');
+  }, [handleNavigate]);
+
+  const handleNavigateRadarPerformance = useCallback(() => {
+    handleNavigate('/radar-performance');
+  }, [handleNavigate]);
+
+  const handleNavigateHealthStats = useCallback(() => {
+    handleNavigate('/stats?tab=sante');
+  }, [handleNavigate]);
+
+  const handleNavigateAddWeight = useCallback(() => {
+    handleNavigate('/(tabs)/add');
+  }, [handleNavigate]);
+
+  const handleNavigateTimer = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/timer');
+  }, [handleNavigate]);
+
+  const handleNavigatePlanning = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/(tabs)/planning');
+  }, [handleNavigate]);
+
+  const handleNavigateProgramme = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/(tabs)/planning?tab=programme');
+  }, [handleNavigate]);
+
+  const handleNavigateEnergy = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/energy');
+  }, [handleNavigate]);
+
+  const handleNavigateSavoir = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/savoir');
+  }, [handleNavigate]);
+
+  const handleNavigateCalculators = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/calculators');
+  }, [handleNavigate]);
+
+  const handleToggleCompetitorMode = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Medium);
+    setIsCompetitorMode(!isCompetitorMode);
+  }, [isCompetitorMode]);
+
+  const handleNavigateFasting = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/fasting');
+  }, [handleNavigate]);
+
+  const handleNavigatePhotos = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/photos');
+  }, [handleNavigate]);
+
+  const handleNavigateCutMode = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/cut-mode');
+  }, [handleNavigate]);
+
+  const handleNavigatePalmares = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/palmares');
+  }, [handleNavigate]);
+
+  const handleNavigateHydration = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/hydration');
+  }, [handleNavigate]);
+
+  const handleNavigateBodyComposition = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    handleNavigate('/body-composition');
+  }, [handleNavigate]);
+
+  // Handlers pour les modaux
+  const handleCloseRanksModal = useCallback(() => {
+    setRanksModalVisible(false);
+  }, []);
+
+  const handleCloseLogoViewer = useCallback(() => {
+    setLogoViewerVisible(false);
+  }, []);
+
+  const handleCloseAvatarViewer = useCallback(() => {
+    setAvatarViewerVisible(false);
+  }, []);
+
+  const handleCloseWhatIsNew = useCallback(() => {
+    setShowWhatIsNew(false);
+  }, []);
+
+  const handleCloseRatingPopup = useCallback(async () => {
+    setShowRatingPopup(false);
+    await ratingService.onPopupDismissed();
+  }, []);
+
+  const handleRated = useCallback(async () => {
+    setShowRatingPopup(false);
+    await ratingService.onRated();
+  }, []);
 
   // Chargement des données
   const loadData = useCallback(async () => {
@@ -536,9 +684,9 @@ export default function HomeScreen() {
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   // Helper pour vérifier la visibilité d'une section
-  const isSectionVisible = (sectionId: string): boolean => {
+  const isSectionVisible = useCallback((sectionId: string): boolean => {
     return checkSectionVisible(homeSections, sectionId);
-  };
+  }, [homeSections]);
 
   // Rotation automatique des citations toutes les 5 minutes
   useEffect(() => {
@@ -571,15 +719,15 @@ export default function HomeScreen() {
   const trend = avgWeeklyLoss < -0.1 ? 'down' : avgWeeklyLoss > 0.1 ? 'up' : 'stable';
 
   // Salutation
-  const getGreeting = () => {
+  const getGreeting = useCallback(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Bonjour';
     if (hour >= 12 && hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
-  };
+  }, []);
 
   // Calcul Batterie Athlète
-  const calculateBatteryPercent = () => {
+  const calculateBatteryPercent = useCallback(() => {
     let score = 15; // Base minimum pour un nouvel utilisateur
     score += Math.min(streak * 2, 20);
     score += (hydration / hydrationGoal) * 15;
@@ -592,13 +740,13 @@ export default function HomeScreen() {
       else if (daysSince > 3) score -= 10;
     }
     return Math.max(0, Math.min(100, score));
-  };
+  }, [streak, hydration, hydrationGoal, sleepStats, trainings]);
 
   const batteryPercent = useMemo(() => calculateBatteryPercent(), [streak, hydration, hydrationGoal, sleepStats, trainings]);
   const last7Weights = useMemo(() => weightHistory.slice(0, 7).reverse(), [weightHistory]);
 
   // Partager le rapport
-  const shareReport = async () => {
+  const shareReport = useCallback(async () => {
     if (!weeklyReport) return;
     try {
       const text = formatReportForSharing(weeklyReport);
@@ -606,15 +754,15 @@ export default function HomeScreen() {
     } catch (error) {
       logger.error('Erreur partage:', error);
     }
-  };
+  }, [weeklyReport]);
 
   // Batterie status - avec icônes au lieu d'emojis
-  const getBatteryStatus = () => {
+  const getBatteryStatus = useCallback(() => {
     if (batteryPercent >= 80) return { color: '#10B981', label: 'Prêt à tout donner', iconType: 'flame' as const };
     if (batteryPercent >= 60) return { color: '#F59E0B', label: 'Bonne forme', iconType: 'zap' as const };
     if (batteryPercent >= 40) return { color: '#F97316', label: 'Fatigue modérée', iconType: 'activity' as const };
     return { color: '#EF4444', label: 'Repos nécessaire', iconType: 'moon' as const };
-  };
+  }, [batteryPercent]);
 
   // Animation batterie
   const batteryAnim = useRef(new Animated.Value(0)).current;
@@ -722,7 +870,7 @@ export default function HomeScreen() {
   }, []);
 
   // Rendu icône batterie status
-  const renderBatteryIcon = () => {
+  const renderBatteryIcon = useCallback(() => {
     const iconSize = 12;
     switch (batteryStatus.iconType) {
       case 'flame': return <Flame size={iconSize} color={batteryStatus.color} />;
@@ -730,10 +878,10 @@ export default function HomeScreen() {
       case 'activity': return <Activity size={iconSize} color={batteryStatus.color} />;
       case 'moon': return <Moon size={iconSize} color={batteryStatus.color} />;
     }
-  };
+  }, [batteryStatus]);
 
   // Rendu icône défi
-  const renderChallengeIcon = (iconName: string, color: string = colors.accent) => {
+  const renderChallengeIcon = useCallback((iconName: string, color: string = colors.accent) => {
     const iconSize = 20;
     switch (iconName) {
       case 'dumbbell': return <Dumbbell size={iconSize} color={color} />;
@@ -749,7 +897,7 @@ export default function HomeScreen() {
       case 'crown': return <Crown size={iconSize} color="#F59E0B" />;
       default: return <Target size={iconSize} color={color} />;
     }
-  };
+  }, [colors.accent, colors.success]);
 
   const batteryStatus = useMemo(() => getBatteryStatus(), [batteryPercent]);
 
@@ -771,7 +919,7 @@ export default function HomeScreen() {
               {/* Photo de profil (Gauche) */}
               <TouchableOpacity
                 style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
-                onPress={() => handleNavigate('/profile')}
+                onPress={handleNavigateProfile}
                 activeOpacity={0.8}
               >
                 {profile?.profile_photo ? (
@@ -797,7 +945,7 @@ export default function HomeScreen() {
               {/* Avatar (Droite) */}
               <TouchableOpacity
                 style={styles.avatarContainerRight}
-                onPress={() => handleNavigate('/avatar-selection')}
+                onPress={handleNavigateAvatarSelection}
                 activeOpacity={0.8}
               >
                 <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
@@ -861,14 +1009,14 @@ export default function HomeScreen() {
       case 'stats_compact':
         return (
           <View style={styles.statsRowCompact} key={sectionId}>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/activity-detail')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateActivityDetail}>
               <MaterialCommunityIcons name="walk" size={14} color="#3B82F6" />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={steps} style={[styles.statValueCompactHorizontal, { color: '#3B82F6' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>pas</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
               <Animated.View style={{ transform: [{ scale: streakFlameAnim }] }}>
                 <Flame size={14} color="#F97316" />
               </Animated.View>
@@ -877,14 +1025,14 @@ export default function HomeScreen() {
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>jours</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
               <Zap size={14} color={isDark ? colors.accent : '#000000'} />
               <View style={styles.statTextColumn}>
                 <AnimatedCounter value={level.level} style={[styles.statValueCompactHorizontal, { color: isDark ? colors.accent : '#000000' }]} duration={800} />
                 <Text style={[styles.statLabelCompact, { color: colors.textMuted }]}>niveau</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/gamification')}>
+            <TouchableOpacity style={[styles.statCardCompactHorizontal, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateGamification}>
               <Trophy size={14} color={rank?.color} />
               <View style={styles.statTextColumn}>
                 <AnimatedRank rank={rank?.name?.split(' ')[0] ?? ''} color={rank?.color} style={styles.statValueCompactHorizontal} delay={300} />
@@ -903,9 +1051,7 @@ export default function HomeScreen() {
               targetWeight={targetWeight ?? undefined}
               startWeight={weightHistory[0]?.weight ?? undefined}
               history={last7Weights.map(w => w.weight)}
-              onPress={() => {
-                handleNavigate('/(tabs)/stats?tab=poids');
-              }}
+              onPress={handleNavigateWeightStats}
             />
           </View>
         );
@@ -925,7 +1071,7 @@ export default function HomeScreen() {
                   onAddMl={(amountMl) => addWater(amountMl)}
                 />
               </View>
-              <TouchableOpacity onPress={() => handleNavigate('/sleep')} activeOpacity={0.9} style={styles.compactCard}>
+              <TouchableOpacity onPress={handleNavigateSleep} activeOpacity={0.9} style={styles.compactCard}>
                 <SleepLottieCard
                   hours={sleepStats?.lastNightDuration ? sleepStats.lastNightDuration / 60 : 0}
                   quality={sleepStats?.lastNightQuality ? (sleepStats.lastNightQuality / 5) * 100 : 0}
@@ -933,7 +1079,7 @@ export default function HomeScreen() {
                   goal={sleepGoal / 60}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleNavigate('/charge')} activeOpacity={0.9} style={styles.compactCard}>
+              <TouchableOpacity onPress={handleNavigateCharge} activeOpacity={0.9} style={styles.compactCard}>
                 <ChargeLottieCard
                   level={loadStats?.riskLevel || 'optimal'}
                   totalLoad={loadStats?.totalLoad || 0}
@@ -960,10 +1106,7 @@ export default function HomeScreen() {
           <View style={styles.quickToolsContainer} key={sectionId}>
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/training-journal');
-              }}
+              onPress={handleNavigateTrainingJournal}
               activeOpacity={0.8}
             >
               <BookOpen size={20} color="#F97316" strokeWidth={2} />
@@ -972,10 +1115,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/infirmary');
-              }}
+              onPress={handleNavigateInfirmary}
               activeOpacity={0.8}
             >
               <View style={styles.redCrossIconSmall}>
@@ -987,10 +1127,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.quickToolButton, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/challenges');
-              }}
+              onPress={handleNavigateChallenges}
               activeOpacity={0.8}
             >
               <Award size={20} color="#8B5CF6" strokeWidth={2} />
@@ -1002,7 +1139,7 @@ export default function HomeScreen() {
       case 'challenges':
         return (
           <AnimatedCard index={1} key={sectionId}>
-            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={() => handleNavigate('/challenges')} activeOpacity={0.8}>
+            <TouchableOpacity style={[styles.challengesCard, { backgroundColor: colors.backgroundCard }]} onPress={handleNavigateChallenges} activeOpacity={0.8}>
               <View style={styles.challengesHeader}>
                 <Target size={16} color={colors.accentText} />
                 <Text style={styles.sectionTitle}>DÉFIS DU JOUR</Text>
@@ -1043,7 +1180,7 @@ export default function HomeScreen() {
       case 'performance_radar':
         return (
           <AnimatedCard index={2} key={sectionId}>
-            <TouchableOpacity onPress={() => handleNavigate('/radar-performance')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={handleNavigateRadarPerformance} activeOpacity={0.8}>
               <PerformanceRadar />
             </TouchableOpacity>
           </AnimatedCard>
@@ -1052,7 +1189,7 @@ export default function HomeScreen() {
       case 'healthspan':
         return (
           <AnimatedCard index={3} key={sectionId}>
-            <TouchableOpacity onPress={() => handleNavigate('/stats?tab=sante')} activeOpacity={0.8}>
+            <TouchableOpacity onPress={handleNavigateHealthStats} activeOpacity={0.8}>
               <HealthspanChart screenshotMode={isScreenshotMode} />
             </TouchableOpacity>
           </AnimatedCard>
@@ -1113,8 +1250,8 @@ export default function HomeScreen() {
               weekData={last7Weights.map(w => w.weight)}
               weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
               trend={trend}
-              onAddWeight={() => handleNavigate('/(tabs)/add')}
-              onViewStats={() => handleNavigate('/(tabs)/stats?tab=poids')}
+              onAddWeight={handleNavigateAddWeight}
+              onViewStats={handleNavigateWeightStats}
             />
           </View>
         );
@@ -1147,10 +1284,7 @@ export default function HomeScreen() {
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/training-journal');
-              }}
+              onPress={handleNavigateTrainingJournal}
               activeOpacity={0.85}
             >
               <BookOpen size={24} color="#F97316" />
@@ -1159,10 +1293,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/timer');
-              }}
+              onPress={handleNavigateTimer}
               activeOpacity={0.85}
             >
               <Timer size={24} color={colors.accentText} />
@@ -1171,10 +1302,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/(tabs)/planning');
-              }}
+              onPress={handleNavigatePlanning}
               activeOpacity={0.85}
             >
               <Calendar size={24} color="#3B82F6" />
@@ -1183,10 +1311,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/(tabs)/planning?tab=programme');
-              }}
+              onPress={handleNavigateProgramme}
               activeOpacity={0.85}
             >
               <List size={24} color="#8B5CF6" />
@@ -1202,10 +1327,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={sectionId}
             style={[styles.blessuresBanner, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Medium);
-              handleNavigate('/infirmary');
-            }}
+            onPress={handleNavigateInfirmary}
             activeOpacity={0.85}
           >
             <View style={styles.blessuresCrossContainer}>
@@ -1228,10 +1350,7 @@ export default function HomeScreen() {
           <View style={styles.batteryToolsRowSingle} key={sectionId}>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/energy');
-              }}
+              onPress={handleNavigateEnergy}
               activeOpacity={0.85}
             >
               {/* Pile/Batterie horizontale allongée */}
@@ -1260,10 +1379,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/savoir');
-              }}
+              onPress={handleNavigateSavoir}
               activeOpacity={0.85}
             >
               <FlaskConical size={24} color="#8B5CF6" />
@@ -1272,10 +1388,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                handleNavigate('/calculators');
-              }}
+              onPress={handleNavigateCalculators}
               activeOpacity={0.85}
             >
               <Calculator size={24} color="#F59E0B" />
@@ -1300,10 +1413,7 @@ export default function HomeScreen() {
                     borderColor: colors.accent,
                   }
                 ]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Medium);
-                  setIsCompetitorMode(!isCompetitorMode);
-                }}
+                onPress={handleToggleCompetitorMode}
                 activeOpacity={0.85}
               >
                 {isCompetitorMode && nextEvent ? (
@@ -1337,10 +1447,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  handleNavigate('/fasting');
-                }}
+                onPress={handleNavigateFasting}
                 activeOpacity={0.85}
               >
                 <Clock size={24} color="#F97316" />
@@ -1349,10 +1456,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  handleNavigate('/photos');
-                }}
+                onPress={handleNavigatePhotos}
                 activeOpacity={0.85}
               >
                 <Camera size={24} color="#10B981" />
@@ -1366,10 +1470,7 @@ export default function HomeScreen() {
               <View style={[styles.batteryToolsRowSingle, { marginTop: 8 }]}>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    handleNavigate('/cut-mode');
-                  }}
+                  onPress={handleNavigateCutMode}
                   activeOpacity={0.85}
                 >
                   <TrendingDown size={24} color="#EF4444" />
@@ -1378,10 +1479,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    handleNavigate('/palmares');
-                  }}
+                  onPress={handleNavigatePalmares}
                   activeOpacity={0.85}
                 >
                   <Medal size={24} color="#F59E0B" />
@@ -1390,10 +1488,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    handleNavigate('/hydration');
-                  }}
+                  onPress={handleNavigateHydration}
                   activeOpacity={0.85}
                 >
                   <Droplets size={24} color="#06B6D4" />
@@ -1402,10 +1497,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.toolCardSmall, { backgroundColor: colors.backgroundCard }]}
-                  onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Light);
-                    handleNavigate('/body-composition');
-                  }}
+                  onPress={handleNavigateBodyComposition}
                   activeOpacity={0.85}
                 >
                   <Scale size={24} color="#8B5CF6" />
@@ -1420,7 +1512,75 @@ export default function HomeScreen() {
       default:
         return null;
     }
-  }, [colors, profile, dailyQuote, mode, hydration, sleepStats, bodyComposition, batteryFillPercent, isSectionVisible]);
+  }, [
+    colors,
+    profile,
+    dailyQuote,
+    mode,
+    hydration,
+    hydrationGoal,
+    sleepStats,
+    bodyComposition,
+    batteryFillPercent,
+    isSectionVisible,
+    handleNavigateProfile,
+    handleNavigateAvatarSelection,
+    handleNavigateActivityDetail,
+    handleNavigateGamification,
+    handleNavigateWeightStats,
+    handleNavigateSleep,
+    handleNavigateCharge,
+    handleNavigateTrainingJournal,
+    handleNavigateInfirmary,
+    handleNavigateChallenges,
+    handleNavigateRadarPerformance,
+    handleNavigateHealthStats,
+    handleNavigateAddWeight,
+    handleNavigateTimer,
+    handleNavigatePlanning,
+    handleNavigateProgramme,
+    handleNavigateEnergy,
+    handleNavigateSavoir,
+    handleNavigateCalculators,
+    handleToggleCompetitorMode,
+    handleNavigateFasting,
+    handleNavigatePhotos,
+    handleNavigateCutMode,
+    handleNavigatePalmares,
+    handleNavigateHydration,
+    handleNavigateBodyComposition,
+    addWater,
+    shareReport,
+    avatarRefreshTrigger,
+    getGreeting,
+    toggleMode,
+    isDark,
+    t,
+    quoteFadeAnim,
+    quoteScaleAnim,
+    quotePulseAnim,
+    streakFlameAnim,
+    steps,
+    streak,
+    level,
+    rank,
+    currentWeight,
+    targetWeight,
+    startWeight,
+    last7Weights,
+    trend,
+    sleepGoal,
+    loadStats,
+    trainings,
+    dailyChallenges,
+    renderChallengeIcon,
+    weeklyReport,
+    isScreenshotMode,
+    isCompetitorMode,
+    nextEvent,
+    toggleAnim,
+    batteryPercent,
+  ]);
 
   // Défis du jour formatés
   const formattedChallenges = useMemo(() => {
@@ -1487,23 +1647,23 @@ export default function HomeScreen() {
           totalSteps: 0, // Not available in WeeklyReport
         } : undefined}
         onAddWeight={() => handleNavigate('/(tabs)/add')}
-        onAddWater={(ml) => addWater(ml)}
+        onAddWater={addWater}
         onShareReport={shareReport}
         refreshTrigger={avatarRefreshTrigger}
       />
 
-      <RanksModal visible={ranksModalVisible} onClose={() => setRanksModalVisible(false)} currentStreak={streak} />
-      <LogoViewer visible={logoViewerVisible} onClose={() => setLogoViewerVisible(false)} />
+      <RanksModal visible={ranksModalVisible} onClose={handleCloseRanksModal} currentStreak={streak} />
+      <LogoViewer visible={logoViewerVisible} onClose={handleCloseLogoViewer} />
       <BatteryReadyPopup batteryPercent={batteryPercent} />
-      <AvatarViewerModal visible={avatarViewerVisible} onClose={() => setAvatarViewerVisible(false)} />
+      <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
       
       {/* Menu de partage social flottant */}
       <HomeShareMenu />
 
       {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
-      <UpdateChangelogModal 
-        visible={showWhatIsNew} 
-        onClose={() => setShowWhatIsNew(false)} 
+      <UpdateChangelogModal
+        visible={showWhatIsNew}
+        onClose={handleCloseWhatIsNew}
       />
 
       {/* Tutoriel de découverte */}
@@ -1519,14 +1679,8 @@ export default function HomeScreen() {
       {/* Pop-up de notation */}
       <RatingPopup
         visible={showRatingPopup}
-        onClose={async () => {
-          setShowRatingPopup(false);
-          await ratingService.onPopupDismissed();
-        }}
-        onRated={async () => {
-          setShowRatingPopup(false);
-          await ratingService.onRated();
-        }}
+        onClose={handleCloseRatingPopup}
+        onRated={handleRated}
       />
 
       {/* Bouton flottant de sauvegarde */}

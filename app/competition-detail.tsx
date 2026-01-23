@@ -50,16 +50,11 @@ export default function CompetitionDetailScreen() {
   const competitionId = params.id ?? '';
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const [competition, setCompetition] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<Competition | null>(null);
-  const [combats, setCombats] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<Combat[]>([]);
-  const [loading, setLoading] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(true);
-  const [isDeleting, setIsDeleting] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
-  const [isNavigating, setIsNavigating] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [competition, setCompetition] = useState<Competition | null>(null);
+  const [combats, setCombats] = useState<Combat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     loadCompetitionData();

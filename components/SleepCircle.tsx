@@ -43,8 +43,9 @@ export const SleepCircle: React.FC<SleepCircleProps> = ({
     });
 
     // Pulsation si critique
+    let pulseAnimation: Animated.CompositeAnimation | null = null;
     if (isCritical) {
-      Animated.loop(
+      pulseAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.15,
@@ -57,11 +58,15 @@ export const SleepCircle: React.FC<SleepCircleProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      pulseAnimation.start();
     }
 
     return () => {
       progressAnim.removeListener(listener);
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
     };
   }, [progress, isCritical]);
 

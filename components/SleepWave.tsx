@@ -43,9 +43,11 @@ export const SleepWave: React.FC<SleepWaveProps> = ({
   const gradientEnd = isCritical ? '#4C1D95' : '#5B21B6';
 
   useEffect(() => {
+    const animations: Animated.CompositeAnimation[] = [];
+
     // Animations des ZzZ
     const createZzzAnimation = (opacityAnim: Animated.Value, yAnim: Animated.Value, delay: number) => {
-      Animated.loop(
+      const animation = Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
           Animated.parallel([
@@ -73,13 +75,19 @@ export const SleepWave: React.FC<SleepWaveProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      animation.start();
+      return animation;
     };
 
-    createZzzAnimation(zzz1Opacity, zzz1Y, 0);
-    createZzzAnimation(zzz2Opacity, zzz2Y, 700);
-    createZzzAnimation(zzz3Opacity, zzz3Y, 1400);
-    createZzzAnimation(zzz4Opacity, zzz4Y, 2100);
+    animations.push(createZzzAnimation(zzz1Opacity, zzz1Y, 0));
+    animations.push(createZzzAnimation(zzz2Opacity, zzz2Y, 700));
+    animations.push(createZzzAnimation(zzz3Opacity, zzz3Y, 1400));
+    animations.push(createZzzAnimation(zzz4Opacity, zzz4Y, 2100));
+
+    return () => {
+      animations.forEach(anim => anim.stop());
+    };
   }, [debtHours]);
 
   // Générer l'onde (33% de hauteur, en bas)

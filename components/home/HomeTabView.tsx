@@ -158,17 +158,26 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
 
   // Animation de tremblement en mode édition
   useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+
     if (editMode) {
-      Animated.loop(
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(shakeAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
           Animated.timing(shakeAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
           Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
         ])
-      ).start();
+      );
+      animation.start();
     } else {
       shakeAnim.setValue(0);
     }
+
+    return () => {
+      if (animation) {
+        animation.stop();
+      }
+    };
   }, [editMode]);
 
   const loadPageOrder = async () => {

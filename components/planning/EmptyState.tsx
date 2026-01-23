@@ -86,7 +86,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
 
   useEffect(() => {
     // Animation de bounce pour l'icône
-    Animated.loop(
+    const bounceAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(bounceAnim, {
           toValue: -10,
@@ -101,10 +101,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    bounceAnimation.start();
 
     // Animation de pulse pour le cercle
-    Animated.loop(
+    const pulseAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.1,
@@ -119,7 +120,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    pulseAnimation.start();
 
     // Fade in
     Animated.timing(fadeAnim, {
@@ -127,6 +129,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
       duration: 600,
       useNativeDriver: true,
     }).start();
+
+    return () => {
+      bounceAnimation.stop();
+      pulseAnimation.stop();
+    };
   }, []);
 
   const Icon = config.icon;

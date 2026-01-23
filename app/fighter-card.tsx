@@ -81,16 +81,12 @@ export default function FighterCardScreen() {
   const { showPopup, PopupComponent } = useCustomPopup();
   const cardRef = useRef<View>(null);
 
-  const [stats, setStats] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<FighterStats | null>(null);
-  const [isLoading, setIsLoading] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(true);
-  const [isSaving, setIsSaving] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
-  const [goalsProgress, setGoalsProgress] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<GoalProgress[]>([]);
-  const [globalGoalStats, setGlobalGoalStats] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<GlobalGoalStats | null>(null);
+  const [stats, setStats] = useState<FighterStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [goalsProgress, setGoalsProgress] = useState<GoalProgress[]>([]);
+  const [globalGoalStats, setGlobalGoalStats] = useState<GlobalGoalStats | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Charger les stats du combattant
   useEffect(() => {

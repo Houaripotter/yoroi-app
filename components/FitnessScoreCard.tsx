@@ -69,8 +69,9 @@ export const FitnessScoreCard: React.FC<FitnessScoreCardProps> = ({
       }).start();
 
       // Pulse si excellent
+      let pulseAnimation: Animated.CompositeAnimation | null = null;
       if (data.level === 'excellent') {
-        Animated.loop(
+        pulseAnimation = Animated.loop(
           Animated.sequence([
             Animated.timing(pulseAnim, {
               toValue: 1.05,
@@ -85,8 +86,15 @@ export const FitnessScoreCard: React.FC<FitnessScoreCardProps> = ({
               useNativeDriver: true,
             }),
           ])
-        ).start();
+        );
+        pulseAnimation.start();
       }
+
+      return () => {
+        if (pulseAnimation) {
+          pulseAnimation.stop();
+        }
+      };
     }
   }, [data]);
 

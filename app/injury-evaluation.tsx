@@ -83,22 +83,17 @@ export default function InjuryEvaluationScreen() {
   const injuryId = params.injuryId ? parseInt(params.injuryId as string) : null;
   const isEditMode = injuryId !== null;
 
-  const [painType, setPainType] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<PainType | null>(null);
-  const [cause, setCause] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<InjuryCause | null>(null);
-  const [evaScore, setEvaScore] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(
+  const [painType, setPainType] = useState<PainType | null>(null);
+  const [cause, setCause] = useState<InjuryCause | null>(null);
+  const [evaScore, setEvaScore] = useState(
     params.existingEva ? parseInt(params.existingEva as string) : 5
   );
-  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(
+  const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState(
     params.existingDuration ? parseInt(params.existingDuration as string) : 7
   );
-  const [notes, setNotes] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [isSubmitting, setIsSubmitting] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Suggestion simple basée sur l'EVA (juste une aide, pas un avis médical)
   const getSuggestedDays = (eva: number): number => {

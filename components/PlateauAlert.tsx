@@ -58,9 +58,11 @@ export const PlateauAlert: React.FC<PlateauAlertProps> = ({
   }, []);
 
   useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+
     if (plateau) {
       // Animation de pulsation
-      Animated.loop(
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.02,
@@ -75,8 +77,15 @@ export const PlateauAlert: React.FC<PlateauAlertProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      animation.start();
     }
+
+    return () => {
+      if (animation) {
+        animation.stop();
+      }
+    };
   }, [plateau]);
 
   const checkPlateau = async () => {

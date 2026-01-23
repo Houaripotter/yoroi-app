@@ -13,6 +13,7 @@ import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
+import { importEventsFromJSON } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
@@ -150,6 +151,10 @@ export default function RootLayout() {
         // Initialiser la base de donnees SQLite
         await initDatabase();
         logger.info('Base de donnees initialisee');
+
+        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.)
+        await importEventsFromJSON();
+        logger.info('Catalogue d\'événements importé');
 
         // Migrer le système d'avatars V2
         await migrateAvatarSystem();

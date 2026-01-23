@@ -40,28 +40,18 @@ export default function EditCompetitionScreen() {
   const params = useLocalSearchParams();
   const competitionId = params.id as string;
 
-  const [loading, setLoading] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(true);
-  const [nom, setNom] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [lieu, setLieu] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [date, setDate] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(new Date());
-  const [showDatePicker, setShowDatePicker] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
-  const [sport, setSport] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<Sport>('jjb');
-  const [typeEvenement, setTypeEvenement] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [showSportPicker, setShowSportPicker] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
-  const [categoriePoidsId, setCategoriePoidsId] = useState
-  const [isNavigating, setIsNavigating] = useState(false);('');
-  const [weightCategories, setWeightCategories] = useState
-  const [isNavigating, setIsNavigating] = useState(false);<WeightCategory[]>([]);
-  const [isSaving, setIsSaving] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [loading, setLoading] = useState(true);
+  const [nom, setNom] = useState('');
+  const [lieu, setLieu] = useState('');
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [sport, setSport] = useState<Sport>('jjb');
+  const [typeEvenement, setTypeEvenement] = useState('');
+  const [showSportPicker, setShowSportPicker] = useState(false);
+  const [categoriePoidsId, setCategoriePoidsId] = useState('');
+  const [weightCategories, setWeightCategories] = useState<WeightCategory[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Suggestions pour le type d'événement
   const typeSuggestions = ['Combat', 'Match', 'Course', 'Compétition', 'Tournoi', 'Championnat'];

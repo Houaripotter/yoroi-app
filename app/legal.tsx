@@ -12,8 +12,8 @@ const LEGAL_ACCEPTED_KEY = '@yoroi_legal_accepted';
 export default function LegalScreen() {
   const { colors, mode } = useTheme();
   const isDarkMode = mode === 'dark';
-  const [isAccepting, setIsAccepting] = useState
-  const [isNavigating, setIsNavigating] = useState(false);(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const handleAccept = async () => {
     if (isAccepting) return;

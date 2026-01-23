@@ -101,6 +101,10 @@ function CentralBuzzerButton() {
   // Démarrer l'animation au montage
   React.useEffect(() => {
     startPulse();
+
+    return () => {
+      pulseAnim.stopAnimation();
+    };
   }, []);
 
   const handlePress = () => {

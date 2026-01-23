@@ -43,7 +43,7 @@ export const SleepCard: React.FC<SleepCardProps> = ({
     ]).start();
 
     // Courbe de respiration (infinie, lente avec easing naturel)
-    Animated.loop(
+    const breathAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(breathAnim, {
           toValue: 1,
@@ -58,7 +58,8 @@ export const SleepCard: React.FC<SleepCardProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    breathAnimation.start();
 
     // Animation de la barre de score
     const sleepScore = Math.min(Math.round((duration / goal) * 100), 100);
@@ -68,6 +69,10 @@ export const SleepCard: React.FC<SleepCardProps> = ({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
+
+    return () => {
+      breathAnimation.stop();
+    };
   }, [duration, goal]);
 
   // Style animé pour la courbe

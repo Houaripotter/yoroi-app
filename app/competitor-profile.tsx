@@ -62,13 +62,13 @@ export default function CompetitorProfileScreen() {
   const { colors } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [profile, setProfile] = useState<CompetitorProfile>({
-  const [isLoading, setIsLoading] = useState(false);
     gender: null,
     category: null,
     belt: null,
     currentWeight: null,
   });
   const [weightInput, setWeightInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     loadProfile();

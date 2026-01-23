@@ -138,12 +138,17 @@ export default function EnergyScreen() {
 
   // Animation pulse
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
         Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
   }, []);
 
   const getBatteryColor = () => {

@@ -114,8 +114,10 @@ export const ScoreFormeMini: React.FC<ScoreFormeMiniProps> = ({
 
   // Animation de pulsation si excellent score
   useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+
     if (score >= 80) {
-      Animated.loop(
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.05,
@@ -128,8 +130,15 @@ export const ScoreFormeMini: React.FC<ScoreFormeMiniProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      animation.start();
     }
+
+    return () => {
+      if (animation) {
+        animation.stop();
+      }
+    };
   }, [score]);
 
   const widthInterpolated = progressAnim.interpolate({

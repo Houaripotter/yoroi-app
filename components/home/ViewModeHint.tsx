@@ -83,6 +83,11 @@ export const ViewModeHint: React.FC<ViewModeHintProps> = ({ onDismiss }) => {
     );
     pulseLoop.start();
 
+    // Cleanup
+    return () => {
+      pulseLoop.stop();
+    };
+
     // Ne plus auto-dismiss - l'utilisateur doit cliquer pour fermer
   };
 

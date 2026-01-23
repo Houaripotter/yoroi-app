@@ -73,21 +73,25 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
 
   // Animations pour les effets
   useEffect(() => {
+    const animations: Animated.CompositeAnimation[] = [];
+
     // Animation particules
     if (currentCustomization.effect === 'gold_particles') {
-      Animated.loop(
+      const particleAnimation = Animated.loop(
         Animated.timing(particleAnim, {
           toValue: 1,
           duration: 3000,
           easing: Easing.linear,
           useNativeDriver: true,
         })
-      ).start();
+      );
+      particleAnimation.start();
+      animations.push(particleAnimation);
     }
 
     // Animation aura
     if (['blue_aura', 'gold_aura', 'fire_aura'].includes(currentCustomization.effect)) {
-      Animated.loop(
+      const auraAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(auraAnim, {
             toValue: 1,
@@ -102,22 +106,27 @@ export const CustomizableAvatar: React.FC<CustomizableAvatarProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      auraAnimation.start();
+      animations.push(auraAnimation);
     }
 
     // Animation rotation pour fonds animés
     if (['flames', 'lightning', 'cosmos', 'dragon'].includes(currentCustomization.background)) {
-      Animated.loop(
+      const rotateAnimation = Animated.loop(
         Animated.timing(rotateAnim, {
           toValue: 1,
           duration: 10000,
           easing: Easing.linear,
           useNativeDriver: true,
         })
-      ).start();
+      );
+      rotateAnimation.start();
+      animations.push(rotateAnimation);
     }
 
     return () => {
+      animations.forEach(anim => anim.stop());
       particleAnim.setValue(0);
       auraAnim.setValue(0);
       rotateAnim.setValue(0);

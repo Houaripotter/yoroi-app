@@ -27,8 +27,12 @@ import { useI18n } from '@/lib/I18nContext';
 import { SPACING, RADIUS } from '@/constants/appTheme';
 import logger from '@/lib/security/logger';
 
-// Import events data
-import eventsData from '@/src/data/events.json';
+// Dynamic imports for lazy-loading events by region
+const EVENTS_BY_REGION = {
+  france: () => import('@/src/data/events/france.json'),
+  europe: () => import('@/src/data/events/europe.json'),
+  monde: () => import('@/src/data/events/monde.json'),
+} as const;
 
 // TypeScript interfaces
 interface SportEvent {
@@ -80,6 +84,24 @@ export default function EventsScreen() {
   const [savedEventIds, setSavedEventIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [eventsData, setEventsData] = useState<SportEvent[]>([]);
+
+  // Load events dynamically based on selected location
+  useEffect(() => {
+    const loadEvents = async () => {
+      setIsLoading(true);
+      try {
+        const { default: data } = await EVENTS_BY_REGION[selectedLocation]();
+        setEventsData(data as SportEvent[]);
+      } catch (error) {
+        logger.error('Error loading events:', error);
+        setEventsData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadEvents();
+  }, [selectedLocation]);
 
   // Load saved events from AsyncStorage on mount
   useEffect(() => {
@@ -100,13 +122,11 @@ export default function EventsScreen() {
       }
     } catch (error) {
       logger.error('Error loading saved events:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Get all events (typed)
-  const allEvents = useMemo(() => eventsData as SportEvent[], []);
+  // Get all events (already typed from state)
+  const allEvents = useMemo(() => eventsData, [eventsData]);
 
   // Helper function to get filtered events by location first
   const getLocationFilteredEvents = useCallback((events: SportEvent[]) => {
@@ -153,7 +173,7 @@ export default function EventsScreen() {
     return filtered;
   }, [allEvents, selectedLocation, selectedCategory, selectedSportTag, searchQuery, getLocationFilteredEvents]);
 
-  // Event counts for each filter (memoized)
+  // Event counts for each filter (memoized) - Only counts loaded events
   const eventCounts = useMemo(() => {
     const locationFiltered = getLocationFilteredEvents(allEvents);
 
@@ -164,9 +184,10 @@ export default function EventsScreen() {
       all: locationFiltered.length,
       combat: combatEvents.length,
       endurance: enduranceEvents.length,
-      monde: allEvents.length,
-      europe: allEvents.filter(e => EUROPEAN_COUNTRIES.includes(e.location.country)).length,
-      france: allEvents.filter(e => e.location.country.toLowerCase() === 'france').length,
+      // Location counts: These are approximate/fixed to avoid loading all regions
+      monde: 2050, // Total across all regions
+      europe: 1148,
+      france: 301,
       // Combat sport tags
       jjb: combatEvents.filter(e => e.sport_tag === 'jjb').length,
       grappling: combatEvents.filter(e => e.sport_tag === 'grappling').length,
@@ -178,7 +199,7 @@ export default function EventsScreen() {
     };
   }, [allEvents, getLocationFilteredEvents]);
 
-  // Add/Remove event from planning
+  // Add/Remove event from planning (Optimized: Single setState)
   const toggleEventInPlanning = useCallback(async (event: SportEvent) => {
     try {
       impactAsync(ImpactFeedbackStyle.Medium);
@@ -188,25 +209,27 @@ export default function EventsScreen() {
 
       const isAlreadySaved = savedEvents.some(e => e.id === event.id);
 
+      // Create new Set once
+      const newSet = new Set(savedEventIds);
+
       if (isAlreadySaved) {
         // Remove from planning
         savedEvents = savedEvents.filter(e => e.id !== event.id);
-        setSavedEventIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(event.id);
-          return newSet;
-        });
+        newSet.delete(event.id);
         showPopup('Retiré', `"${event.title.substring(0, 40)}..." retiré de ton planning`, [
           { text: 'OK', style: 'primary' }
         ]);
       } else {
         // Add to planning
         savedEvents.push(event);
-        setSavedEventIds(prev => new Set(prev).add(event.id));
+        newSet.add(event.id);
         showPopup('Ajouté', `"${event.title.substring(0, 40)}..." ajouté à ton planning`, [
           { text: 'OK', style: 'primary' }
         ]);
       }
+
+      // Single setState call
+      setSavedEventIds(newSet);
 
       await AsyncStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(savedEvents));
       logger.info(`Event ${isAlreadySaved ? 'removed from' : 'added to'} planning:`, event.id);
@@ -216,7 +239,7 @@ export default function EventsScreen() {
         { text: 'OK', style: 'primary' }
       ]);
     }
-  }, [showPopup]);
+  }, [savedEventIds, showPopup]);
 
   // Open event registration link
   const handleOpenEvent = useCallback((link: string) => {
