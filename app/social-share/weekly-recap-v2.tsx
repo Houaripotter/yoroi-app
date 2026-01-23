@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
 import {
@@ -46,6 +47,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function WeeklyRecapV2Screen() {
   const { colors } = useTheme();
   const cardRef = useRef<View>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [backgroundImage, setBackgroundImage] = useState<string | undefined>(undefined);
@@ -281,8 +283,14 @@ export default function WeeklyRecapV2Screen() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Card Preview */}
-        <View style={styles.cardContainer}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Card Preview */}
+          <View style={styles.cardContainer}>
           <WeeklyRecapCardV2
             ref={cardRef}
             stats={stats}
@@ -318,6 +326,12 @@ export default function WeeklyRecapV2Screen() {
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setSelectedTemplate(key);
+                // Scroll auto si photo
+                if (key === 'photo') {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 100);
+                }
               }}
             >
               <Text style={[
@@ -398,10 +412,11 @@ export default function WeeklyRecapV2Screen() {
           </TouchableOpacity>
         </View>
 
-        {/* Close Button */}
-        <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
-          <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
-        </TouchableOpacity>
+          {/* Close Button */}
+          <TouchableOpacity style={styles.skipBtn} onPress={() => router.back()}>
+            <Text style={[styles.skipText, { color: colors.textMuted }]}>Fermer</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
       <PopupComponent />
     </ScreenWrapper>

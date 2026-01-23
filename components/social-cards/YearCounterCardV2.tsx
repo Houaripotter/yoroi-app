@@ -90,7 +90,7 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
             <View style={styles.photoHeader}>
 
               {/* PHOTO PROFIL (GAUCHE) + NOM */}
-              <View style={{ alignItems: 'center', gap: 4 }}>
+              <View style={{ alignItems: 'center', gap: 4, maxWidth: 100 }}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
                     <Image source={profileSource} style={styles.photoImage} resizeMode="cover" />
@@ -102,13 +102,13 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                 </View>
                 {username && (
                   keepPhotoClear ? (
-                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }}>
+                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={2}>
                         {username.toUpperCase()}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textAlign: 'center', maxWidth: 100 }} numberOfLines={2}>
                       {username.toUpperCase()}
                     </Text>
                   )
@@ -116,22 +116,22 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
               </View>
 
               {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
-              <View style={styles.avatarContainer}>
+              <View style={[styles.avatarContainer, { maxWidth: 100 }]}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
                 )}
                 {rank && userLevel !== undefined && userLevel !== null ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }}>
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }} numberOfLines={1}>
                       Niveau {userLevel}
                     </Text>
                   </View>
                 ) : rank ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
                   </View>
                 ) : null}
               </View>
@@ -192,10 +192,10 @@ export const YearCounterCardV2 = forwardRef<View, YearCounterCardV2Props>(
                   {stats.activityBreakdown.slice(0, 4).map((club, index) => (
                     <View key={index} style={[styles.clubBadge, { backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', borderColor }]}>
                       {club.clubLogo && (
-                        <Image source={club.clubLogo} style={{ width: 16, height: 16, borderRadius: 8, marginRight: 4 }} resizeMode="cover" />
+                        <Image source={club.clubLogo} style={{ width: 24, height: 24, borderRadius: 12, marginBottom: 4 }} resizeMode="cover" />
                       )}
-                      <Text style={{ color: txt, fontSize: 9, fontWeight: '800' }} numberOfLines={1}>{club.clubName}</Text>
-                      <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                      <Text style={{ color: txt, fontSize: 8, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{club.clubName}</Text>
+                      <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginTop: 3 }}>
                         <Text style={{ color: '#000', fontSize: 8, fontWeight: '900' }}>×{club.count}</Text>
                       </View>
                     </View>
@@ -358,13 +358,14 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   clubBadge: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    maxWidth: 150,
+    width: 70,
+    minHeight: 80,
   },
   statsRow: {
     flexDirection: 'row',

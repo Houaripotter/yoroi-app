@@ -371,11 +371,14 @@ class HealthConnectService {
       // Essayer de lire les pas du jour
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
-        from: today.getTime(),
-        to: new Date().getTime(),
-        limit: 1,
-      });
+
+      const queryOptions = this.createQueryOptions(today, new Date(), { limit: 1 });
+      if (!queryOptions) {
+        logger.warn('[HealthKit] Impossible de créer les options de requête pour la vérification');
+        return false;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', queryOptions);
 
       // Si on peut lire (même si vide), c'est que les permissions sont OK
       return true;
@@ -384,6 +387,29 @@ class HealthConnectService {
       logger.info('Permissions Apple Health pas encore accordées');
       return false;
     }
+  }
+
+  /**
+   * HELPER: Crée des options de requête sécurisées avec validation des timestamps
+   */
+  private createQueryOptions(fromDate: Date, toDate: Date, options: any = {}): any | null {
+    const fromTimestamp = fromDate.getTime();
+    const toTimestamp = toDate.getTime();
+
+    // ✅ VALIDATION: S'assurer que les timestamps sont des nombres valides
+    if (!fromTimestamp || !toTimestamp || isNaN(fromTimestamp) || isNaN(toTimestamp)) {
+      logger.error('[HealthKit] Timestamps invalides pour la requête', {
+        from: fromTimestamp,
+        to: toTimestamp
+      });
+      return null;
+    }
+
+    return {
+      from: fromTimestamp,
+      to: toTimestamp,
+      ...options
+    };
   }
 
   /**
@@ -443,12 +469,16 @@ class HealthConnectService {
   private async getIOSWeight(): Promise<HealthData['weight'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', queryOptions);
 
       if (samples && samples.length > 0) {
         const latest = samples[0];
@@ -467,12 +497,15 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) {
+        logger.error('[HealthKit] Impossible de créer les options de requête pour les steps');
+        return null;
+      }
+
       try {
         // Revenir à queryQuantitySamples pour compatibilité max
-        const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', {
-          from: today.getTime(),
-          to: new Date().getTime(),
-        });
+        const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', queryOptions);
 
         // ✅ PROTECTION: Vérifier que samples est bien un tableau et contient des données valides
         if (!samples || !Array.isArray(samples) || samples.length === 0) {
@@ -606,10 +639,12 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDietaryWater', {
-        from: today.getTime(),
-        to: new Date().getTime(),
-      });
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDietaryWater', queryOptions);
 
       if (samples && samples.length > 0) {
         // Apple Health retourne l'eau en litres, on convertit en millilitres
@@ -636,12 +671,15 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierHeartRate', {
-        from: today.getTime(),
-        to: new Date().getTime(),
+      const queryOptions = this.createQueryOptions(today, new Date(), {
         limit: 100, // Derniers 100 échantillons pour calculer moyenne/min/max
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierHeartRate', queryOptions);
 
       if (samples && samples.length > 0) {
         const values = samples.map((s: any) => s.quantity);
@@ -651,12 +689,15 @@ class HealthConnectService {
         const max = Math.max(...values);
 
         // Récupérer aussi le resting HR
-        const restingSamples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRestingHeartRate', {
-          from: today.getTime(),
-          to: new Date().getTime(),
+        const restingQueryOptions = this.createQueryOptions(today, new Date(), {
           limit: 1,
           ascending: false,
         });
+        if (!restingQueryOptions) {
+          return null;
+        }
+
+        const restingSamples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRestingHeartRate', restingQueryOptions);
 
         const resting = restingSamples && restingSamples.length > 0
           ? restingSamples[0].quantity
@@ -683,12 +724,15 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', {
-        from: today.getTime(),
-        to: new Date().getTime(),
+      const queryOptions = this.createQueryOptions(today, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierHeartRateVariabilitySDNN', queryOptions);
 
       if (samples && samples.length > 0) {
         return {
@@ -713,15 +757,14 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) {
+        return null;
+      }
+
       const [activeResult, basalResult] = await Promise.all([
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', {
-          from: today.getTime(),
-          to: new Date().getTime(),
-        }),
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBasalEnergyBurned', {
-          from: today.getTime(),
-          to: new Date().getTime(),
-        }),
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierActiveEnergyBurned', queryOptions),
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBasalEnergyBurned', queryOptions),
       ]);
 
       const active = activeResult && activeResult.length > 0
@@ -749,10 +792,12 @@ class HealthConnectService {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', {
-        from: today.getTime(),
-        to: new Date().getTime(),
-      });
+      const queryOptions = this.createQueryOptions(today, new Date());
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierDistanceWalkingRunning', queryOptions);
 
       if (samples && samples.length > 0) {
         const totalMeters = samples.reduce((sum: number, s: any) => sum + (s.quantity || 0), 0);
@@ -780,12 +825,16 @@ class HealthConnectService {
   private async getIOSVO2Max(): Promise<HealthData['vo2Max'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierVO2Max', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierVO2Max', queryOptions);
 
       if (samples && samples.length > 0) {
         return {
@@ -804,12 +853,16 @@ class HealthConnectService {
   private async getIOSOxygenSaturation(): Promise<HealthData['oxygenSaturation'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierOxygenSaturation', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierOxygenSaturation', queryOptions);
 
       if (samples && samples.length > 0) {
         // Apple Health retourne SpO2 en fraction (0.0-1.0), on convertit en %
@@ -829,12 +882,16 @@ class HealthConnectService {
   private async getIOSRespiratoryRate(): Promise<HealthData['respiratoryRate'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRespiratoryRate', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierRespiratoryRate', queryOptions);
 
       if (samples && samples.length > 0) {
         return {
@@ -853,12 +910,16 @@ class HealthConnectService {
   private async getIOSBodyTemperature(): Promise<HealthData['bodyTemperature'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyTemperature', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
         limit: 1,
         ascending: false,
       });
+      if (!queryOptions) {
+        return null;
+      }
+
+      const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyTemperature', queryOptions);
 
       if (samples && samples.length > 0) {
         // Apple Health stocke en Celsius
@@ -882,19 +943,18 @@ class HealthConnectService {
   private async getIOSBodyComposition(): Promise<HealthData['bodyComposition'] | null> {
     return this.queryHealthKit(async () => {
       const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const queryOptions = this.createQueryOptions(fromDate, new Date(), {
+        limit: 1,
+        ascending: false,
+      });
+      if (!queryOptions) {
+        return null;
+      }
+
       const [fatSamples, leanSamples] = await Promise.all([
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', {
-          from: fromDate.getTime(),
-          to: new Date().getTime(),
-          limit: 1,
-          ascending: false,
-        }),
-        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierLeanBodyMass', {
-          from: fromDate.getTime(),
-          to: new Date().getTime(),
-          limit: 1,
-          ascending: false,
-        }),
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', queryOptions),
+        HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierLeanBodyMass', queryOptions),
       ]);
 
       const bodyFatPercentage = fatSamples && fatSamples.length > 0

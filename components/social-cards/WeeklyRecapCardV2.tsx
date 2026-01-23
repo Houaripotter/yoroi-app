@@ -197,10 +197,10 @@ export const WeeklyRecapCardV2 = forwardRef<View, WeeklyRecapCardV2Props>(
                   {stats.clubs.slice(0, 4).map((club, index) => (
                     <View key={index} style={[styles.clubBadge, { backgroundColor: isWhite ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.08)', borderColor }]}>
                       {club.clubLogo && (
-                        <Image source={club.clubLogo} style={{ width: 16, height: 16, borderRadius: 8, marginRight: 4 }} resizeMode="cover" />
+                        <Image source={club.clubLogo} style={{ width: 24, height: 24, borderRadius: 12, marginBottom: 4 }} resizeMode="cover" />
                       )}
-                      <Text style={{ color: txt, fontSize: 9, fontWeight: '800' }} numberOfLines={1}>{club.clubName}</Text>
-                      <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginLeft: 4 }}>
+                      <Text style={{ color: txt, fontSize: 8, fontWeight: '800', textAlign: 'center' }} numberOfLines={2}>{club.clubName}</Text>
+                      <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, marginTop: 3 }}>
                         <Text style={{ color: '#000', fontSize: 8, fontWeight: '900' }}>×{club.count}</Text>
                       </View>
                     </View>
@@ -368,13 +368,14 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   clubBadge: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    maxWidth: 150,
+    width: 70,
+    minHeight: 80,
   },
   statsRow: {
     flexDirection: 'row',

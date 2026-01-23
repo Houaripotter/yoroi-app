@@ -164,7 +164,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.photoHeader}>
 
               {/* PHOTO PROFIL (GAUCHE) + NOM */}
-              <View style={{ alignItems: 'center', gap: 4 }}>
+              <View style={{ alignItems: 'center', gap: 4, maxWidth: 100 }}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
                     <Image source={profileSource} style={styles.photoImage} />
@@ -176,13 +176,13 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                 </View>
                 {userName && (
                   keepPhotoClear ? (
-                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }}>
+                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={2}>
                         {userName.toUpperCase()}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textAlign: 'center', maxWidth: 100 }} numberOfLines={2}>
                       {userName.toUpperCase()}
                     </Text>
                   )
@@ -190,22 +190,22 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
               </View>
 
               {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
-              <View style={styles.avatarContainer}>
+              <View style={[styles.avatarContainer, { maxWidth: 100 }]}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
                   </View>
                 )}
                 {rank && userLevel !== undefined && userLevel !== null ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }}>
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center', marginTop: 1 }} numberOfLines={1}>
                       Niveau {userLevel}
                     </Text>
                   </View>
                 ) : rank ? (
-                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4 }}>
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{rank.toUpperCase()}</Text>
+                  <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textAlign: 'center' }} numberOfLines={1}>{rank.toUpperCase()}</Text>
                   </View>
                 ) : null}
               </View>
