@@ -102,9 +102,10 @@ export function BadgeProvider({ children }: BadgeProviderProps) {
         <Celebration
           visible={!!celebratingBadge}
           type="milestone"
-          title="Badge debloque !"
+          title="Badge débloqué !"
           subtitle={`${celebratingBadge.name}\n${celebratingBadge.description}`}
           xpGained={celebratingBadge.xpReward}
+          icon="🏆"
           onClose={closeCelebration}
           autoClose={true}
           autoCloseDelay={5000}

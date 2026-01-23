@@ -123,18 +123,46 @@ export default function AddClubScreen() {
 
   return (
     <ScreenWrapper>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
-          <ChevronLeft size={24} color={colors.textPrimary} />
+      {/* En-tête avec retour */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, paddingHorizontal: 20 }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            backgroundColor: colors.backgroundElevated,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+            borderWidth: 1,
+            borderColor: colors.border
+          }}
+        >
+          <ChevronLeft size={24} color={colors.accent} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.textPrimary }}>Nouveau Club</Text>
+        <View>
+          <Text style={{ fontSize: 24, fontWeight: '900', color: colors.textPrimary, letterSpacing: 0.5 }}>Nouveau Club</Text>
+          <Text style={{ fontSize: 13, color: colors.textMuted, marginTop: 2 }}>Crée ton club en quelques étapes</Text>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 20 }}>
         
         {/* 1. NOM */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>1. Nom du club</Text>
-        <View style={{ backgroundColor: colors.card, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 }}>
+        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>1. NOM DU CLUB</Text>
+        <View style={{
+          backgroundColor: colors.backgroundCard,
+          padding: 18,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginBottom: 24,
+          shadowColor: colors.accent,
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4
+        }}>
           <TextInput
             style={{ fontSize: 18, fontWeight: '600', color: colors.textPrimary }}
             placeholder="Ex: Gracie Barra, Basic-Fit..."
@@ -145,8 +173,19 @@ export default function AddClubScreen() {
         </View>
 
         {/* 2. LOGO */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>2. Logo (Optionnel)</Text>
-        <View style={{ backgroundColor: colors.card, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 }}>
+        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>2. LOGO (OPTIONNEL)</Text>
+        <View style={{
+          backgroundColor: colors.backgroundCard,
+          padding: 18,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginBottom: 24,
+          shadowColor: colors.accent,
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4
+        }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
             <TouchableOpacity onPress={handlePickImage}>
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: selectedColor, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
@@ -181,10 +220,24 @@ export default function AddClubScreen() {
         </View>
 
         {/* 3. SPORT */}
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>3. Sport principal</Text>
-        
+        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>3. SPORT PRINCIPAL</Text>
+
         <View style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, height: 50, borderRadius: 16, paddingHorizontal: 12, gap: 10 }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.backgroundCard,
+            borderWidth: 1,
+            borderColor: colors.border,
+            height: 54,
+            borderRadius: 18,
+            paddingHorizontal: 16,
+            gap: 12,
+            shadowColor: colors.accent,
+            shadowOpacity: 0.05,
+            shadowRadius: 8,
+            elevation: 2
+          }}>
             <MaterialCommunityIcons name="magnify" size={24} color={colors.accent} />
             <TextInput
               style={{ flex: 1, color: colors.textPrimary, fontSize: 16 }}
