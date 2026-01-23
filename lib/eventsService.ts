@@ -115,9 +115,12 @@ export async function importEventsFromJSON(): Promise<void> {
       return;
     }
 
-    // Importer les données depuis le JSON
-    logger.info('Import des événements depuis JSON...');
-    const eventsData = require('@/src/data/events.json');
+    // Importer les données depuis les chunks JSON (optimisation mémoire)
+    logger.info('Import des événements depuis chunks JSON...');
+    const europeData = require('@/src/data/events/europe.json');
+    const franceData = require('@/src/data/events/france.json');
+    const mondeData = require('@/src/data/events/monde.json');
+    const eventsData = [...europeData, ...franceData, ...mondeData];
 
     // Insertion par batch pour meilleures performances
     const BATCH_SIZE = 100;
