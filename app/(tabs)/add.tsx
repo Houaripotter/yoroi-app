@@ -10,6 +10,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -945,7 +946,11 @@ export default function AddScreen() {
           onPress={handleSave}
           disabled={isSaving}
         >
-          <Check size={24} color={colors.textOnGold} />
+          {isSaving ? (
+            <ActivityIndicator size="small" color={colors.textOnGold} />
+          ) : (
+            <Check size={24} color={colors.textOnGold} />
+          )}
           <Text style={[
             styles.saveButtonText,
             { color: colors.textOnGold }
