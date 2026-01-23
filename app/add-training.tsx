@@ -551,13 +551,7 @@ export default function AddTrainingScreen() {
           scrollViewRef.current?.scrollTo({ y: 0, animated: true });
         }, 100);
 
-        // Définir le sport principal pour l'objectif annuel (le premier sélectionné par défaut)
-        const newSports = [...prev, sportId];
-        if (!primarySportForObjective && newSports.length === 1) {
-          setPrimarySportForObjective(sportId);
-        }
-
-        return newSports;
+        return [...prev, sportId];
       }
     });
   };
@@ -2664,8 +2658,7 @@ export default function AddTrainingScreen() {
                                   onPress={() => {
                                     lightHaptic();
                                     setShowValidationModal(false);
-                                    setCardBackgroundImage(null);
-                                    router.push('/social-share/last-session');
+                                    router.replace('/social-share/last-session');
                                   }}
                                 >
                                   <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />

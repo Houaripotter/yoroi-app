@@ -217,7 +217,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           {/* Message humble */}
           <Text style={[styles.humbleMessage, { color: colors.textSecondary }]}>
             {t('rating.humbleMessage') ||
-              "Excuse-moi de t'interrompre... Je sais que ton temps est précieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait énormément à faire grandir notre famille de warriors et à rendre l'app visible pour d'autres sportifs comme toi."}
+              "Excuse-moi de t'interrompre... Je sais que ton temps est précieux.\n\nMais si Yoroi t'aide dans ta progression, une petite note sur le Store m'aiderait énormément à faire grandir notre famille de warriors et à rendre l'app visible pour d'autres sportifs comme toi.\n\nSi je mérite les 5 étoiles, je t'en serais infiniment reconnaissant. ⭐⭐⭐⭐⭐"}
           </Text>
 
           {/* Statistique encourageante */}
@@ -227,6 +227,11 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               {t('rating.familyGrowing') || 'Chaque note aide la famille Yoroi à grandir !'}
             </Text>
           </View>
+
+          {/* Signature */}
+          <Text style={[styles.signature, { color: colors.textMuted }]}>
+            Houari - Développeur de l'app
+          </Text>
 
           {/* Boutons */}
           <View style={styles.buttonsContainer}>
@@ -429,6 +434,12 @@ const styles = StyleSheet.create({
   thankYou: {
     fontSize: 12,
     marginTop: 16,
+  },
+  signature: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
 

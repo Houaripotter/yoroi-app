@@ -152,7 +152,13 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
           >
             {/* DATE EN HAUT AU MILIEU */}
             <View style={{ position: 'absolute', top: 16, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
-              <Text style={styles.dateText}>{formattedDate}</Text>
+              {keepPhotoClear ? (
+                <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }}>
+                  <Text style={[styles.dateText, { color: GOLD_COLOR }]}>{formattedDate}</Text>
+                </View>
+              ) : (
+                <Text style={styles.dateText}>{formattedDate}</Text>
+              )}
             </View>
 
             <View style={styles.photoHeader}>
@@ -208,15 +214,6 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             </View>
             <Text style={styles.sportName}>{sportNameStr.toUpperCase()}</Text>
           </View>
-
-          {/* DUREE */}
-          <View style={styles.durationBadge}>
-            {(() => {
-              const h = Math.floor((training.duration_minutes || 0) / 60);
-              const m = (training.duration_minutes || 0) % 60;
-              return <Text style={styles.durationText}>{h > 0 ? `${h}H ${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
-            })()}
-          </View>
         </View>
 
         {/* 2. SECTION STATS & EXERCICES */}
@@ -227,7 +224,7 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
             <View style={styles.progressContainer}>
               <View style={styles.progressRow}>
                 <View style={styles.progressLeft}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={styles.chronoLabel}>OBJECTIF ANNUEL</Text>
                     <Text style={[styles.chronoLabel, { color: subTxt }]}>(ENTRAINEMENT)</Text>
                   </View>
@@ -237,21 +234,34 @@ export const SessionCard = React.forwardRef<View, SessionCardProps>(
                     <Text style={[styles.goldLargeNumber, { fontSize: 24 }]}>{safeObjective}</Text>
                     <Text style={[{ color: txt, fontSize: 16, fontWeight: '800' }]}> JOURS</Text>
                   </View>
+                  {/* Barre de progression sous l'objectif */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    <View style={{ width: 120, height: 8, backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+                      {/* Graduations */}
+                      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row' }}>
+                        {[25, 50, 75].map(mark => (
+                          <View key={mark} style={{ position: 'absolute', left: `${mark}%`, width: 1, height: '100%', backgroundColor: isWhite ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)' }} />
+                        ))}
+                      </View>
+                      <LinearGradient colors={[GOLD_COLOR, '#F59E0B']} start={{x:0, y:0}} end={{x:1, y:0}} style={{ height: '100%', width: `${progressPercent}%` }} />
+                    </View>
+                    <Text style={[{ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' }]}>{Math.round(progressPercent)}%</Text>
+                  </View>
                 </View>
                 <View style={styles.progressRight}>
-                  <View style={styles.percentContainer}>
-                    <Text style={styles.percentLarge}>{Math.round(progressPercent)}</Text>
-                    <Text style={[{ color: txt, fontSize: 18, fontWeight: '900' }]}>%</Text>
+                  <View style={{ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4 }}>
+                    {(() => {
+                      const h = Math.floor((training.duration_minutes || 0) / 60);
+                      const m = (training.duration_minutes || 0) % 60;
+                      return <Text style={{ color: '#000', fontWeight: '900', fontSize: 13 }}>{h > 0 ? `${h}H ${m > 0 ? m : ''}` : `${m} MIN`}</Text>;
+                    })()}
                   </View>
                   <View style={styles.yearProgressText}>
                     <Text style={styles.smallGoldText}>{yearlyCount}</Text>
                     <Text style={[{ color: txt, fontSize: 11, fontWeight: '900' }]}> / </Text>
-                    <Text style={styles.smallGoldText}>{safeObjective} JOURS</Text>
+                    <Text style={styles.smallGoldText}>365 JOURS</Text>
                   </View>
                 </View>
-              </View>
-              <View style={[styles.progressBar, { backgroundColor: isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' }]}>
-                <LinearGradient colors={[GOLD_COLOR, '#F59E0B']} start={{x:0, y:0}} end={{x:1, y:0}} style={{ height: '100%', width: `${progressPercent}%` }} />
               </View>
             </View>
           )}
@@ -342,7 +352,7 @@ const styles = StyleSheet.create({
   },
   photoHeader: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -383,7 +393,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    marginTop: -10,
+    marginTop: 4,
   },
   rankText: {
     color: '#000',
@@ -395,7 +405,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 16,
+    padding: 20,
+    paddingBottom: 24,
   },
   dateText: {
     color: GOLD_COLOR,

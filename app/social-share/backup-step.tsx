@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Modal,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +34,7 @@ export default function BackupStepScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [isExporting, setIsExporting] = useState(false);
-  const [isDone, setIsDone] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showRatingPopup, setShowRatingPopup] = useState(false);
 
   const handleExport = async () => {
@@ -41,7 +42,8 @@ export default function BackupStepScreen() {
     try {
       await exportDataToJSON();
       successHaptic();
-      setIsDone(true);
+      // Afficher le modal de succès
+      setShowSuccessModal(true);
     } catch (error) {
       console.error(error);
     } finally {
@@ -112,31 +114,31 @@ export default function BackupStepScreen() {
         </View>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Sauvegarde ton Cloud ☁️
+          Protège tes données ☁️
         </Text>
 
         <View style={[styles.warningBox, { backgroundColor: colors.error + '20', borderColor: colors.error }]}>
           <Text style={[styles.warningText, { color: colors.error }]}>
-            Attention : YOROI fonctionne sans serveur pour respecter ta vie privée. Tes données sont uniquement sur ce téléphone.
+            Attention : YOROI fonctionne sans serveur pour respecter ta vie privée. Tes données sont uniquement sur cet appareil.
           </Text>
         </View>
 
         <View style={[styles.instructionCard, { backgroundColor: colors.backgroundCard, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
           <Text style={[styles.instructionTitle, { color: colors.accent }]}>MARCHE À SUIVRE :</Text>
-          
+
           <View style={styles.stepRow}>
             <FolderPlus size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Cree un dossier <Text style={{fontWeight: '900'}}>"Yoroi_app Backup"</Text> dans ton iCloud Drive.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Crée un dossier <Text style={{fontWeight: '900'}}>"Yoroi_Backup"</Text> dans ton espace de stockage cloud.</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Download size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Clique sur le bouton ci-dessous pour generer ton fichier de sauvegarde.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Clique sur le bouton ci-dessous pour générer ton fichier de sauvegarde.</Text>
           </View>
 
           <View style={styles.stepRow}>
             <Cloud size={20} color={colors.accent} />
-            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Enregistre ce fichier dans ton dossier iCloud pour ne jamais rien perdre.</Text>
+            <Text style={[styles.stepText, { color: colors.textPrimary }]}>Enregistre ce fichier dans ton cloud pour ne jamais rien perdre.</Text>
           </View>
         </View>
 
@@ -151,13 +153,6 @@ export default function BackupStepScreen() {
           </Text>
         </TouchableOpacity>
 
-        {isDone && (
-          <View style={styles.successMsg}>
-            <CheckCircle size={20} color="#10B981" />
-            <Text style={{ color: '#10B981', fontWeight: '700' }}>Fichier prêt pour iCloud !</Text>
-          </View>
-        )}
-
         <TouchableOpacity
           style={styles.finishBtn}
           onPress={handleFinish}
@@ -168,6 +163,52 @@ export default function BackupStepScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Modal de succès après sauvegarde */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.backgroundCard }]}>
+            <View style={[styles.successIconContainer, { backgroundColor: '#10B98120' }]}>
+              <CheckCircle size={60} color="#10B981" strokeWidth={3} />
+            </View>
+
+            <Text style={[styles.successTitle, { color: colors.textPrimary }]}>
+              Bravo ! 🎉
+            </Text>
+
+            <Text style={[styles.successMessage, { color: colors.textSecondary }]}>
+              Ta sauvegarde a été générée avec succès !
+            </Text>
+
+            <View style={[styles.protectionBox, { backgroundColor: colors.accent + '15', borderColor: colors.accent }]}>
+              <Shield size={20} color={colors.accent} />
+              <Text style={[styles.protectionText, { color: colors.textPrimary }]}>
+                Tes données sont maintenant protégées en cas de perte, vol ou changement d'appareil.
+              </Text>
+            </View>
+
+            <Text style={[styles.reminderText, { color: colors.textMuted }]}>
+              💡 Pense à sauvegarder ce fichier dans ton cloud préféré (Google Drive, iCloud, Dropbox, etc.)
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.okButton, { backgroundColor: colors.accent }]}
+              onPress={() => {
+                setShowSuccessModal(false);
+                successHaptic();
+              }}
+            >
+              <Text style={[styles.okButtonText, { color: colors.textOnAccent }]}>
+                PARFAIT !
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Popup de notation */}
       <RatingPopup
@@ -258,7 +299,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   exportBtnText: {
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
   },
@@ -278,6 +319,77 @@ const styles = StyleSheet.create({
   finishBtnText: {
     fontSize: 13,
     fontWeight: '800',
+    letterSpacing: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  successIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  protectionBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  protectionText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  reminderText: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 18,
+  },
+  okButton: {
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  okButtonText: {
+    fontSize: 16,
+    fontWeight: '900',
     letterSpacing: 1,
   },
 });

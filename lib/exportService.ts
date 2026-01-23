@@ -94,7 +94,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     if (canShare) {
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/json',
-        dialogTitle: 'Sauvegarder sur iCloud Drive',
+        dialogTitle: 'Sauvegarder dans ton Cloud',
         UTI: 'public.json',
       });
     } else {

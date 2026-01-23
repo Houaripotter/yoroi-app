@@ -496,6 +496,7 @@ export default function LastSessionScreen() {
               training={lastTraining}
               backgroundImage={backgroundImage}
               backgroundType={backgroundType}
+              keepPhotoClear={!!backgroundImage}
               customLocation={customLocation}
               isLandscape={isLandscapeImage}
               userAvatar={userAvatar}
@@ -524,7 +525,7 @@ export default function LastSessionScreen() {
           <View style={{ gap: 15, marginTop: 20 }}>
             <TouchableOpacity style={[styles.shareBtn, { backgroundColor: colors.accent, paddingVertical: 20 }]} onPress={shareCard}>
               <Share2 size={24} color={colors.textOnAccent} />
-              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>PARTAGER SUR INSTAGRAM</Text>
+              <Text style={[styles.shareBtnText, { fontSize: 18, color: colors.textOnAccent }]}>PARTAGER SUR LES RÉSEAUX</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
