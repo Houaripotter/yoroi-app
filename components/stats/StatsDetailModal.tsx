@@ -34,6 +34,20 @@ const getPeriodDays = (period: Period): number => {
   }
 };
 
+interface SleepPhases {
+  deep: number;  // minutes
+  rem: number;   // minutes
+  core: number;  // minutes (light sleep)
+}
+
+interface SleepData {
+  startTime?: string;  // ISO string
+  endTime?: string;    // ISO string
+  duration: number;    // minutes
+  phases?: SleepPhases;
+  quality?: number;    // 0-100
+}
+
 interface StatsDetailModalProps {
   visible: boolean;
   onClose: () => void;
@@ -45,6 +59,7 @@ interface StatsDetailModalProps {
   icon: React.ReactNode;
   metricKey?: string;
   healthRange?: MetricRange; // Range directement passé (comme HistoryScrollCard)
+  sleepData?: SleepData; // Données enrichies pour le sommeil
 }
 
 export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
