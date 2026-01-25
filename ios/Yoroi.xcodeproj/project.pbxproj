@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DFF2BC883AB4C51061A957B /* YoroiLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A4787B1D7A5BF94EDB67AC /* YoroiLiveActivityManager.swift */; };
 		127F3D96FE25605F84ECFB4B /* libPods-Yoroi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5FF97E8541DE17085BCA2460 /* libPods-Yoroi.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		31CBAC614E4798B50A845936 /* YoroiLiveActivityManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 689A104AB646E26FEA94179D /* YoroiLiveActivityManager.m */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		3ED2D43AB21FD818ED5E03CE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
 		5A4FEF97B9E1CD1264B36DF9 /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */; };
@@ -20,6 +22,7 @@
 		B64A9174D61CA6826A1941F4 /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CB2E1F97A908BAB7451766D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
+		E254395B3FDBB07CC6600F09 /* TimerAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF7AC98A1D94D026F297D361 /* TimerAttributes.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -84,6 +87,8 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Yoroi/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Yoroi/Info.plist; sourceTree = "<group>"; };
 		5FF97E8541DE17085BCA2460 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		689A104AB646E26FEA94179D /* YoroiLiveActivityManager.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = YoroiLiveActivityManager.m; sourceTree = "<group>"; };
+		93A4787B1D7A5BF94EDB67AC /* YoroiLiveActivityManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = YoroiLiveActivityManager.swift; sourceTree = "<group>"; };
 		97493F3B2F1D10E400CC3C63 /* YoroiWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YoroiWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YoroiWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		97493F4F2F1D10E500CC3C63 /* YoroiWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YoroiWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,6 +98,7 @@
 		978975A92F26964100670B23 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Yoroi/SplashScreen.storyboard; sourceTree = "<group>"; };
 		AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		AF7AC98A1D94D026F297D361 /* TimerAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerAttributes.swift; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = WatchConnectivityBridge.m; sourceTree = "<group>"; };
 		D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = Yoroi/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -268,6 +274,9 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				169A522525B0F3110718B655 /* Pods */,
 				42A35AB7B583440D6ACBCBAD /* ExpoModulesProviders */,
+				93A4787B1D7A5BF94EDB67AC /* YoroiLiveActivityManager.swift */,
+				689A104AB646E26FEA94179D /* YoroiLiveActivityManager.m */,
+				AF7AC98A1D94D026F297D361 /* TimerAttributes.swift */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -586,11 +595,13 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -683,6 +694,9 @@
 				84E5E72A594D6616984C503F /* ExpoModulesProvider.swift in Sources */,
 				B64A9174D61CA6826A1941F4 /* WatchConnectivityBridge.swift in Sources */,
 				5A4FEF97B9E1CD1264B36DF9 /* WatchConnectivityBridge.m in Sources */,
+				0DFF2BC883AB4C51061A957B /* YoroiLiveActivityManager.swift in Sources */,
+				31CBAC614E4798B50A845936 /* YoroiLiveActivityManager.m in Sources */,
+				E254395B3FDBB07CC6600F09 /* TimerAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

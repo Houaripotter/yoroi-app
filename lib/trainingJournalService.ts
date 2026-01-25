@@ -114,8 +114,12 @@ export const initTrainingJournalDB = () => {
             'INTEGER'
           }`);
         } catch (e: any) {
-          // La colonne existe déjà, ignorer l'erreur
-          if (!e.message?.includes('duplicate column')) {
+          // La colonne existe déjà, ignorer l'erreur silencieusement
+          if (e.message?.includes('duplicate column')) {
+            // Colonne existe déjà, c'est normal, on ignore
+          } else {
+            // Autre erreur, on la log
+            logger.error(`[TRAINING_JOURNAL] Erreur ajout colonne ${column}:`, e);
           }
         }
       }

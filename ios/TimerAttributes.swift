@@ -20,6 +20,7 @@ import ActivityKit
 // Partagés entre l'app et le Widget Extension
 // ============================================
 
+@available(iOS 16.1, *)
 public struct TimerAttributes: ActivityAttributes {
   /// État dynamique du timer (mis à jour en temps réel)
   public struct ContentState: Codable, Hashable {

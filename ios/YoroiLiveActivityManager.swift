@@ -9,6 +9,7 @@ import Foundation
 import ActivityKit
 import React
 
+@available(iOS 16.1, *)
 @objc(YoroiLiveActivityManager)
 class YoroiLiveActivityManager: NSObject {
 

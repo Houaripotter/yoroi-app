@@ -116,9 +116,12 @@ export const initTrainingJournalDB = () => {
           }`);
           logger.info(`[TRAINING_JOURNAL] Colonne ${column} ajoutée`);
         } catch (e: any) {
-          // La colonne existe déjà, ignorer l'erreur
-          if (!e.message?.includes('duplicate column')) {
-            logger.info(`[TRAINING_JOURNAL] Colonne ${column} existe déjà`);
+          // La colonne existe déjà, ignorer l'erreur silencieusement
+          if (e.message?.includes('duplicate column')) {
+            // Colonne existe déjà, c'est normal, on ignore
+          } else {
+            // Autre erreur, on la log
+            logger.error(`[TRAINING_JOURNAL] Erreur ajout colonne ${column}:`, e);
           }
         }
       }
