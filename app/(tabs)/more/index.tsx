@@ -92,7 +92,7 @@ import { useI18n } from '@/lib/I18nContext';
 // Type pour la fonction de traduction
 type TranslateFunction = (key: string, options?: any) => string;
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
-import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
+import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited, resetAllTutorials } from '@/lib/featureDiscoveryService';
 
 // ============================================
 // ECRAN PLUS - DESIGN MODERNE
@@ -843,8 +843,36 @@ export default function MoreScreen() {
   const handleShowTutorial = async () => {
     showPopup(
       t('menu.tutorial'),
-      t('menu.tutorialComingSoon'),
-      [{ text: 'OK', style: 'primary' }]
+      'Tu vas être redirigé vers l\'accueil pour revoir tous les tutoriels depuis le début. Continue ?',
+      [
+        {
+          text: t('common.cancel'),
+          style: 'cancel'
+        },
+        {
+          text: 'Commencer',
+          style: 'primary',
+          onPress: async () => {
+            try {
+              // Réinitialiser tous les tutoriels
+              await resetAllTutorials();
+
+              // Rediriger vers l'accueil
+              router.push('/(tabs)');
+
+              // Feedback haptique
+              notificationAsync(NotificationFeedbackType.Success);
+            } catch (error) {
+              console.error('Error resetting tutorials:', error);
+              showPopup(
+                t('common.error'),
+                'Impossible de réinitialiser les tutoriels',
+                [{ text: 'OK', style: 'primary' }]
+              );
+            }
+          }
+        }
+      ]
     );
   };
 
