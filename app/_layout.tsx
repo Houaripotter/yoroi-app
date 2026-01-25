@@ -190,46 +190,37 @@ export default function RootLayout() {
           logger.error('Erreur création table events_catalog:', err);
         }
 
-        // ✅ APP READY - Afficher l'écran principal IMMÉDIATEMENT
+        // Migrer le système d'avatars V2
+        await migrateAvatarSystem();
+        logger.info('Migration avatars effectuee');
+
+        // Auto-import des compétitions IBJJF et CFJJB au premier lancement
+        await autoImportCompetitionsOnFirstLaunch();
+
+        // ✅ APP READY - Afficher l'écran principal
         setIsReady(true);
 
-        // ⏳ DIFFÉRÉ: Opérations non-critiques en arrière-plan (n'attendent pas)
-        // Ces opérations se lancent APRÈS que l'app soit visible
+        // ⏳ DIFFÉRÉ: Opérations lourdes en arrière-plan APRÈS affichage
         setTimeout(() => {
-          // Import événements
+          // Import événements (peut prendre du temps)
           importEventsFromJSON()
             .then(() => logger.info('✅ Catalogue événements importé'))
             .catch(err => logger.error('❌ Erreur import événements:', err));
-
-          // Migration avatars
-          migrateAvatarSystem()
-            .then(() => logger.info('✅ Migration avatars effectuée'))
-            .catch(err => logger.error('❌ Erreur migration avatars:', err));
-
-          // Auto-import compétitions
-          autoImportCompetitionsOnFirstLaunch()
-            .then(() => logger.info('✅ Auto-import compétitions effectué'))
-            .catch(err => logger.error('❌ Erreur auto-import:', err));
 
           // Notifications
           notificationService.initialize()
             .then(success => {
               if (success) {
                 logger.info('✅ Service notifications initialisé');
-                // Citations
-                return initCitationNotifications();
-              } else {
-                logger.warn('⚠️ Notifications non disponibles');
+                return Promise.all([
+                  initCitationNotifications(),
+                  initHealthTipNotifications()
+                ]);
               }
             })
-            .then(() => logger.info('✅ Notifications citations initialisées'))
+            .then(() => logger.info('✅ Notifications initialisées'))
             .catch(err => logger.error('❌ Erreur notifications:', err));
-
-          // Conseils santé
-          initHealthTipNotifications()
-            .then(() => logger.info('✅ Conseils santé initialisés'))
-            .catch(err => logger.error('❌ Erreur conseils santé:', err));
-        }, 500); // Délai de 500ms pour laisser l'UI se render d'abord
+        }, 100);
 
       } catch (error) {
         logger.error('❌ Erreur initialisation critique', error);
