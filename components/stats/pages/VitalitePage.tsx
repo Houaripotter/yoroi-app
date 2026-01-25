@@ -106,8 +106,15 @@ export const VitalitePage: React.FC = () => {
         const heartRateHistory = await healthConnect.getHeartRateHistory?.(days) || [];
         const hrvHistory = await healthConnect.getHRVHistory?.(days) || [];
 
+        // Filtrer les données invalides (trop élevées ou manifestement fausses)
+        const validSleepHistory = sleepHistory.filter((s: any) => {
+          const hours = (s.duration || 0) / 60;
+          // Rejeter les données invalides (> 16h ou < 1h)
+          return hours >= 1 && hours <= 16;
+        });
+
         setVitalHistory({
-          sleep: sleepHistory.map((s: any) => ({
+          sleep: validSleepHistory.map((s: any) => ({
             date: s.date,
             value: (s.duration || 0) / 60, // Convertir minutes en heures
           })).reverse(),
@@ -301,7 +308,7 @@ export const VitalitePage: React.FC = () => {
         {healthData?.sleep?.duration > 0 && (
           <View style={{ marginBottom: 16 }}>
             <SimpleMetricCard
-              value={healthData.sleep.duration}
+              value={healthData.sleep.duration / 60}
               min={SLEEP_DURATION_RANGES.min}
               max={SLEEP_DURATION_RANGES.max}
               zones={SLEEP_DURATION_RANGES.zones}
@@ -334,7 +341,7 @@ export const VitalitePage: React.FC = () => {
           >
             <MetricCard
               label={t('statsPages.vitality.totalDuration')}
-              value={healthData?.sleep?.duration || 0}
+              value={(healthData?.sleep?.duration || 0) / 60}
               unit="h"
               icon={<Moon size={24} color="#6366F1" strokeWidth={2.5} />}
               color="#6366F1"

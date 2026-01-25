@@ -678,8 +678,9 @@ class HealthConnectService {
           }
         });
 
-        // Limite de sécurité : une nuit ne peut pas faire plus de 16h
-        if (totalMinutes <= 0 || totalMinutes > 960) return null;
+        // Limite de sécurité : une nuit entre 3h et 16h
+        // Rejeter les données invalides ou estimations automatiques (< 3h)
+        if (totalMinutes < 180 || totalMinutes > 960) return null;
 
         const result: HealthData['sleep'] = {
           startTime: new Date(startTime).toISOString(),
