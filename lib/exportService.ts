@@ -15,7 +15,7 @@ import {
   saveHomeLayout,
   saveSelectedLogo,
 } from './storage';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
@@ -278,6 +278,32 @@ export const importDataFromJSON = async (): Promise<boolean> => {
           importedCount++;
         } catch (error) {
           logger.error('Erreur import club:', error);
+        }
+      }
+    }
+
+    // Importer les mensurations
+    if (importedData.measurements && Array.isArray(importedData.measurements)) {
+      for (const measurement of importedData.measurements) {
+        try {
+          await addMeasurementRecord({
+            chest: measurement.chest,
+            waist: measurement.waist,
+            navel: measurement.navel,
+            hips: measurement.hips,
+            left_arm: measurement.left_arm,
+            right_arm: measurement.right_arm,
+            left_thigh: measurement.left_thigh,
+            right_thigh: measurement.right_thigh,
+            left_calf: measurement.left_calf,
+            right_calf: measurement.right_calf,
+            shoulders: measurement.shoulders,
+            neck: measurement.neck,
+            date: measurement.date,
+          });
+          importedCount++;
+        } catch (error) {
+          logger.error('Erreur import measurement:', error);
         }
       }
     }

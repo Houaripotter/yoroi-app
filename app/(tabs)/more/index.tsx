@@ -75,9 +75,8 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { MoreTabView } from '@/components/more/MoreTabView';
-import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV } from '@/lib/exportService';
+import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV, importDataFromJSON } from '@/lib/exportService';
 import { scale, scaleModerate } from '@/constants/responsive';
-import { importAllData } from '@/lib/exportService';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { getWeightCategoriesBySportAndGender, WeightCategory, sportHasWeightCategories } from '@/lib/weightCategories';
 import { UserMode, Sport, SPORT_LABELS } from '@/lib/fighterMode';
@@ -889,27 +888,17 @@ export default function MoreScreen() {
   };
 
   const handleImport = async () => {
-    showPopup(
-      t('menu.importData'),
-      t('menu.importWarning'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('menu.chooseFile'),
-          style: 'primary',
-          onPress: async () => {
-            try {
-              await importAllData(async (data) => {
-                logger.info('Data to import:', data);
-              });
-            } catch (e) {
-              logger.info('Import error:', e);
-            }
-          }
-        },
-      ],
-      <AlertTriangle size={32} color="#F59E0B" />
-    );
+    try {
+      const success = await importDataFromJSON();
+      if (success) {
+        notificationAsync(NotificationFeedbackType.Success);
+        // Forcer un refresh de l'app en naviguant vers l'accueil
+        router.push('/(tabs)');
+      }
+    } catch (error) {
+      logger.error('Erreur import:', error);
+      notificationAsync(NotificationFeedbackType.Error);
+    }
   };
 
   const handleRate = async () => {
