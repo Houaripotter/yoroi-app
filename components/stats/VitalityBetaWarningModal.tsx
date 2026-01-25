@@ -14,7 +14,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { X, AlertTriangle, MessageSquare, Bug } from 'lucide-react-native';
+import { X, AlertTriangle, MessageSquare, Bug, ExternalLink } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';

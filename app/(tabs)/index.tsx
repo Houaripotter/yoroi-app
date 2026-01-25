@@ -106,6 +106,7 @@ import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
+import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -1691,6 +1692,9 @@ export default function HomeScreen() {
       >
         <Cloud size={20} color="#FFFFFF" />
       </TouchableOpacity> */}
+
+      {/* Bouton partage flottant */}
+      <ShareFloatingButton />
       </View>
     </ErrorBoundary>
   );

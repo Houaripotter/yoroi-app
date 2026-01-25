@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -898,9 +898,12 @@ export default function AddTrainingScreen() {
     );
   };
 
-  useEffect(() => {
-    loadClubs();
-  }, []);
+  // Recharger les clubs quand l'écran redevient actif (retour de add-club)
+  useFocusEffect(
+    useCallback(() => {
+      loadClubs();
+    }, [])
+  );
 
   const loadClubs = async () => {
     try {

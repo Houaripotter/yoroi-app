@@ -10,16 +10,16 @@ struct ContentView: View {
     @State private var selectedTab = 0
     
     // Couleurs par page pour les indicateurs
+    // ORDRE: Dashboard, Hydratation, Records, Timer, Poids, Résumé, Profil+Dojo, Réglages
     private let tabColors: [Color] = [
         .green,   // 0. Dashboard
         .blue,    // 1. Hydratation
-        .orange,  // 2. Poids
-        .yellow,  // 3. Records (Carnet) - DÉPLACÉ ICI
-        .cyan,    // 4. Résumé Stats
-        .red,     // 5. Timer
-        .orange,  // 6. Dojo
-        .purple,  // 7. Profil
-        .gray     // 8. Réglages
+        .yellow,  // 2. Records
+        .red,     // 3. Timer
+        .orange,  // 4. Poids
+        .cyan,    // 5. Résumé Stats
+        .purple,  // 6. Profil + Dojo
+        .gray     // 7. Réglages
     ]
 
     var body: some View {
@@ -32,40 +32,36 @@ struct ContentView: View {
                 // 1. Hydratation
                 HydrationView()
                     .tag(1)
-                
-                // 2. Poids (Graphique)
-                WeightView()
+
+                // 2. Records - 3ÈME POSITION
+                RecordsView()
                     .tag(2)
 
-                // 3. Records (Carnet) - DÉPLACÉ EN 3ÈME POSITION
-                RecordsView()
+                // 3. Timer
+                TimerView()
                     .tag(3)
 
-                // 4. Résumé Stats
-                SummaryStatsView()
+                // 4. Poids (Graphique)
+                WeightView()
                     .tag(4)
 
-                // 5. Timer
-                TimerView()
+                // 5. Résumé Stats
+                SummaryStatsView()
                     .tag(5)
-                
-                // 6. Dojo (Avatar)
-                DojoView()
+
+                // 6. Profil + Dojo combinés (scrollable)
+                ProfileDojoView()
                     .tag(6)
 
-                // 7. Profil (Badges)
-                ProfileView()
-                    .tag(7)
-
-                // 8. Réglages
+                // 7. Réglages
                 SettingsView()
-                    .tag(8)
+                    .tag(7)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            
+
             // INDICATEUR DE PAGE EN HAUT
             HStack(spacing: 4) {
-                ForEach(0..<9) { index in
+                ForEach(0..<8) { index in
                     Capsule()
                         .fill(selectedTab == index ? tabColors[index] : Color.white.opacity(0.2))
                         .frame(width: selectedTab == index ? 8 : 3, height: 3)

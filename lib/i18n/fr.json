@@ -819,6 +819,7 @@
     "xp": "XP",
     "xpToNext": "XP pour niveau suivant",
     "rank": "Rang",
+    "ranks": "Rangs",
     "badges": "Badges",
     "achievements": "Succès",
     "unlocked": "Débloqués",
@@ -835,10 +836,19 @@
     "toUnlock": "À débloquer",
     "viewBadges": "Voir les badges",
     "yourTimeline": "Ta timeline",
+    "timeline": "Timeline",
     "badge": "Badge",
     "dojo": "Dojo",
     "yourJourney": "Ton Parcours",
-    "ranksProgression": "Progression des rangs"
+    "ranksProgression": "Progression des rangs",
+    "lvl": "NV",
+    "next": "Suivant",
+    "remaining": "Restant",
+    "total": "Total",
+    "close": "Fermer",
+    "storyStartsHere": "Ton histoire commence ici",
+    "timelineDescription": "Complète des succès pour voir ton parcours",
+    "in": "dans"
   },
   "badges": {
     "myBadges": "Mes Badges",

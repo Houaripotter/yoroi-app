@@ -117,8 +117,10 @@ export const initTrainingJournalDB = () => {
           logger.info(`[TRAINING_JOURNAL] Colonne ${column} ajoutée`);
         } catch (e: any) {
           // La colonne existe déjà, ignorer l'erreur silencieusement
-          if (e.message?.includes('duplicate column')) {
-            // Colonne existe déjà, c'est normal, on ignore
+          // L'erreur peut être dans e.message ou dans la cause (format Expo SQLite)
+          const errorStr = String(e?.message || e || '').toLowerCase();
+          if (errorStr.includes('duplicate column') || errorStr.includes('duplicate')) {
+            // Colonne existe déjà, c'est normal, on ignore silencieusement
           } else {
             // Autre erreur, on la log
             logger.error(`[TRAINING_JOURNAL] Erreur ajout colonne ${column}:`, e);

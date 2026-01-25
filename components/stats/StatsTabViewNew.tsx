@@ -15,9 +15,10 @@ import { MensurationsPage } from './pages/MensurationsPage';
 import { DisciplinePage } from './pages/DisciplinePage';
 import { PerformancePage } from './pages/PerformancePage';
 import { VitalitePage } from './pages/VitalitePage';
-import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard } from 'lucide-react-native';
+import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard, AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { ScrollProvider } from '@/lib/ScrollContext';
 import { ShareFloatingButton } from './ShareFloatingButton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -187,8 +188,10 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
           const PageComponent = page.component;
           return (
             <View key={page.id} style={styles.page}>
-              {/* @ts-ignore - Some components might not expect the prop */}
-              <PageComponent onNavigateToTab={handleNavigateToTab} />
+              <ErrorBoundary>
+                {/* @ts-ignore - Some components might not expect the prop */}
+                <PageComponent onNavigateToTab={handleNavigateToTab} />
+              </ErrorBoundary>
             </View>
           );
         })}

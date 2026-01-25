@@ -6,6 +6,7 @@
 import Foundation
 import UserNotifications
 import WatchKit
+import Combine
 
 class WatchNotificationManager: NSObject, ObservableObject {
     static let shared = WatchNotificationManager()

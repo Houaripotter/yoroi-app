@@ -854,14 +854,9 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
           return (
             <>
-              {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST - Cliquable vers stats poids */}
-              <TouchableOpacity
-                onPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Light);
-                  router.push('/(tabs)/stats?tab=poids');
-                }}
-                activeOpacity={0.9}
-              >
+              {/* GRAPHIQUE SIMPLE SCROLLABLE AVEC FLATLIST */}
+              {/* TouchableOpacity supprimé pour permettre le scroll horizontal */}
+              <View>
                 <FlatList
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -970,7 +965,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                     );
                   }}
                 />
-              </TouchableOpacity>
+              </View>
             </>
           );
         }, [weightHistory, colors, userGoal])}
