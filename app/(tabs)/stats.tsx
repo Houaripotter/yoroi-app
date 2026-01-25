@@ -10,7 +10,6 @@ import { useLocalSearchParams } from 'expo-router';
 import { StatsTabViewNew } from '@/components/stats/StatsTabViewNew';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
-import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
 
 type StatsTab = 'discipline' | 'poids' | 'composition' | 'mesures' | 'vitalite' | 'performance' | 'sante';
 
@@ -64,9 +63,6 @@ export default function StatsScreen() {
           onSkip={handleLaterTutorial}
         />
       )}
-
-      {/* Bouton de partage flottant */}
-      <ShareFloatingButton />
     </View>
   );
 }
