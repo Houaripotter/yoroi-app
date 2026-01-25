@@ -144,15 +144,19 @@ export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // 🚀 AFFICHAGE IMMÉDIAT - 0 seconde d'écran noir
+    setIsReady(true);
+
+    // ⏳ TOUTES les initialisations en arrière-plan
     const init = async () => {
       try {
-        logger.info('Yoroi - Initialisation...');
+        logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ CRITIQUE: Initialiser la base de donnees SQLite
+        // ✅ Initialiser la base de donnees SQLite
         await initDatabase();
         logger.info('Base de donnees initialisee');
 
-        // ✅ CRITIQUE: Vérifier et créer la table events_catalog si elle n'existe pas
+        // ✅ Vérifier et créer la table events_catalog si elle n'existe pas
         try {
           const { openDatabase } = await import('@/lib/database');
           const db = await openDatabase();
@@ -196,35 +200,29 @@ export default function RootLayout() {
 
         // Auto-import des compétitions IBJJF et CFJJB au premier lancement
         await autoImportCompetitionsOnFirstLaunch();
+        logger.info('✅ Initialisations critiques terminées');
 
-        // ✅ APP READY - Afficher l'écran principal
-        setIsReady(true);
+        // Import événements (peut prendre du temps)
+        importEventsFromJSON()
+          .then(() => logger.info('✅ Catalogue événements importé'))
+          .catch(err => logger.error('❌ Erreur import événements:', err));
 
-        // ⏳ DIFFÉRÉ: Opérations lourdes en arrière-plan APRÈS affichage
-        setTimeout(() => {
-          // Import événements (peut prendre du temps)
-          importEventsFromJSON()
-            .then(() => logger.info('✅ Catalogue événements importé'))
-            .catch(err => logger.error('❌ Erreur import événements:', err));
-
-          // Notifications
-          notificationService.initialize()
-            .then(success => {
-              if (success) {
-                logger.info('✅ Service notifications initialisé');
-                return Promise.all([
-                  initCitationNotifications(),
-                  initHealthTipNotifications()
-                ]);
-              }
-            })
-            .then(() => logger.info('✅ Notifications initialisées'))
-            .catch(err => logger.error('❌ Erreur notifications:', err));
-        }, 100);
+        // Notifications
+        notificationService.initialize()
+          .then(success => {
+            if (success) {
+              logger.info('✅ Service notifications initialisé');
+              return Promise.all([
+                initCitationNotifications(),
+                initHealthTipNotifications()
+              ]);
+            }
+          })
+          .then(() => logger.info('✅ Notifications initialisées'))
+          .catch(err => logger.error('❌ Erreur notifications:', err));
 
       } catch (error) {
         logger.error('❌ Erreur initialisation critique', error);
-        setIsReady(true); // Afficher l'app quand même en cas d'erreur
       }
     };
 
