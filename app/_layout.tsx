@@ -20,6 +20,7 @@ import { initCitationNotifications } from '@/lib/citationNotificationService';
 import { initHealthTipNotifications, setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
+import { appleWatchService } from '@/lib/appleWatchService';
 
 // ============================================
 // PRODUCTION: Désactiver tous les console.log
@@ -153,6 +154,11 @@ export default function RootLayout() {
         initDatabase()
           .then(() => logger.info('Base de donnees initialisee'))
           .catch(err => logger.error('Erreur init database:', err));
+
+        // ✅ Initialiser Apple Watch Service (sync automatique iPhone ↔ Watch)
+        appleWatchService.init()
+          .then(() => logger.info('✅ Apple Watch Service initialisé et sync démarrée'))
+          .catch(err => logger.error('❌ Erreur Apple Watch Service:', err));
 
         // ✅ Créer table events_catalog (en arrière-plan)
         (async () => {

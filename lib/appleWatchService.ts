@@ -1,6 +1,6 @@
 //
 // appleWatchService.ts
-// Service pour communiquer avec l'Apple Watch
+// Service pour communiquer avec l'Apple Watch via WatchConnectivityBridge
 //
 
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
@@ -8,8 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
 import { addWeight } from './database';
 
-const WatchBridge = Platform.OS === 'ios' ? NativeModules.WatchBridge : null;
-const watchEmitter = WatchBridge ? new NativeEventEmitter(WatchBridge) : null;
+// CORRECTION: Utiliser WatchConnectivityBridge au lieu de WatchBridge qui n'existe pas!
+const WatchConnectivityBridge = Platform.OS === 'ios' ? NativeModules.WatchConnectivityBridge : null;
+const watchEmitter = WatchConnectivityBridge ? new NativeEventEmitter(WatchConnectivityBridge) : null;
 
 // ============================================
 // TYPES
@@ -32,6 +33,13 @@ export interface WatchData {
 
   // Pas
   stepsGoal: number;
+
+  // Avatar et Profil
+  userName?: string;
+  avatarConfig?: any;
+  profilePhotoBase64?: string;
+  level?: number;
+  rank?: string;
 
   // Timestamp
   timestamp: number;
@@ -59,6 +67,7 @@ class AppleWatchService {
   private listeners: Map<string, any> = new Map();
   private processingHydration = false;
   private processingWeight = false;
+  private syncInterval: NodeJS.Timeout | null = null;
 
   // ============================================
   // INITIALISATION
@@ -67,62 +76,102 @@ class AppleWatchService {
   /**
    * Initialiser le service et écouter les événements de la watch
    */
-  init() {
-    if (!watchEmitter) {
-      logger.warn('WatchBridge non disponible (pas iOS ou module absent)');
+  async init() {
+    if (!WatchConnectivityBridge) {
+      logger.warn('⚠️ WatchConnectivityBridge non disponible (pas iOS ou module absent)');
       return;
     }
 
-    logger.info('🎯 Initialisation AppleWatchService');
+    logger.info('🎯 Initialisation AppleWatchService avec WatchConnectivityBridge');
 
-    // Écouter les messages de la watch
-    this.listeners.set(
-      'onWatchMessage',
-      watchEmitter.addListener('onWatchMessage', (data) => {
-        logger.info('📩 Message de la watch:', data);
-        if (data.action === 'syncRequest') {
-          // La watch demande une sync
-          this.syncToWatch();
+    try {
+      // Activer la session WatchConnectivity
+      const activated = await WatchConnectivityBridge.activateSession();
+      if (activated) {
+        logger.info('✅ WatchConnectivity session activée');
+      }
+
+      // Vérifier si Watch disponible
+      const isAvailable = await WatchConnectivityBridge.isWatchAvailable();
+      logger.info(`📱 Watch disponible: ${isAvailable}`);
+
+      // Écouter les changements de reachability
+      this.listeners.set(
+        'onWatchReachabilityChanged',
+        watchEmitter?.addListener('onWatchReachabilityChanged', (status: WatchStatus) => {
+          logger.info('🔄 État watch changé:', status);
+          if (status.isReachable) {
+            // Watch à portée, sync immédiate!
+            this.syncToWatch();
+          }
+        })
+      );
+
+      // Écouter les messages de la watch
+      this.listeners.set(
+        'onWatchMessageReceived',
+        watchEmitter?.addListener('onWatchMessageReceived', async (message: any) => {
+          logger.info('📩 Message reçu de la watch:', message);
+
+          // Traiter les actions depuis la watch
+          if (message.action === 'syncRequest') {
+            await this.syncToWatch();
+          } else if (message.action === 'addHydration') {
+            await this.handleHydrationFromWatch(message.amount, message.timestamp);
+          } else if (message.action === 'addWeight') {
+            await this.handleWeightFromWatch(message.weight, message.timestamp);
+          }
+        })
+      );
+
+      // Écouter les données reçues
+      this.listeners.set(
+        'onWatchDataReceived',
+        watchEmitter?.addListener('onWatchDataReceived', async (event: any) => {
+          logger.info('📦 Données reçues de la watch:', event);
+        })
+      );
+
+      // Écouter les erreurs
+      this.listeners.set(
+        'onWatchError',
+        watchEmitter?.addListener('onWatchError', (error: any) => {
+          logger.error('❌ Erreur WatchConnectivity:', error);
+        })
+      );
+
+      // Sync initiale
+      await this.syncToWatch();
+
+      // Auto-sync toutes les 30 secondes si Watch reachable
+      this.syncInterval = setInterval(async () => {
+        try {
+          const isReachable = await WatchConnectivityBridge.isWatchReachable();
+          if (isReachable) {
+            await this.syncToWatch();
+          }
+        } catch (error) {
+          // Ignore errors during auto-sync
         }
-      })
-    );
+      }, 30000);
 
-    // Écouter les changements d'état
-    this.listeners.set(
-      'onWatchStateChanged',
-      watchEmitter.addListener('onWatchStateChanged', (state) => {
-        logger.info('🔄 État watch changé:', state);
-      })
-    );
-
-    // Ecouter l'ajout d'hydratation depuis la watch
-    this.listeners.set(
-      'onHydrationAdded',
-      watchEmitter.addListener('onHydrationAdded', async (data) => {
-        logger.info(`Hydratation ajoutee depuis la watch: +${data.amount}ml`);
-        await this.handleHydrationFromWatch(data.amount, data.timestamp);
-      })
-    );
-
-    // Ecouter l'ajout de poids depuis la watch
-    this.listeners.set(
-      'onWeightAdded',
-      watchEmitter.addListener('onWeightAdded', async (data) => {
-        logger.info(`Poids ajoute depuis la watch: ${data.weight}kg`);
-        await this.handleWeightFromWatch(data.weight, data.timestamp);
-      })
-    );
-
-    // Sync initiale
-    this.syncToWatch();
+      logger.info('✅ AppleWatchService initialisé avec succès');
+    } catch (error) {
+      logger.error('❌ Erreur initialisation AppleWatchService:', error);
+    }
   }
 
   /**
    * Nettoyer les listeners
    */
   cleanup() {
-    this.listeners.forEach((listener) => listener.remove());
+    this.listeners.forEach((listener) => listener?.remove());
     this.listeners.clear();
+
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+    }
   }
 
   // ============================================
@@ -133,7 +182,7 @@ class AppleWatchService {
    * Envoyer les données actuelles à la watch
    */
   async syncToWatch() {
-    if (!WatchBridge) {
+    if (!WatchConnectivityBridge) {
       return;
     }
 
@@ -141,17 +190,23 @@ class AppleWatchService {
       // Récupérer les données depuis AsyncStorage
       const watchData = await this.prepareWatchData();
 
-      // Envoyer à la watch
-      WatchBridge.syncDataToWatch(watchData);
+      // IMPORTANT: Utiliser updateApplicationContext pour sync robuste
+      // Les données seront reçues par la Watch même si elle est hors de portée
+      const success = await WatchConnectivityBridge.updateApplicationContext(watchData);
 
-      logger.info('✅ Données synchronisées vers la watch');
+      if (success) {
+        logger.info('✅ Données synchronisées vers la watch via updateApplicationContext');
+        logger.info(`   - Poids: ${watchData.currentWeight}kg`);
+        logger.info(`   - Hydratation: ${watchData.hydrationCurrent}/${watchData.hydrationGoal}ml`);
+        logger.info(`   - User: ${watchData.userName || 'N/A'}`);
+      }
     } catch (error) {
       logger.error('❌ Erreur sync vers watch:', error);
     }
   }
 
   /**
-   * Préparer les données à envoyer à la watch
+   * Préparer les données à envoyer à la watch (MEGA-PACK complet)
    */
   private async prepareWatchData(): Promise<WatchData> {
     // Hydratation
@@ -173,22 +228,35 @@ class AppleWatchService {
     };
 
     if (sleepEntriesStr) {
-      const sleepEntries = JSON.parse(sleepEntriesStr);
-      if (sleepEntries.length > 0) {
-        const lastSleep = sleepEntries[0];
-        sleepData = {
-          duration: lastSleep.duration || 450,
-          quality: lastSleep.quality || 5,
-          bedTime: lastSleep.bedTime || '23:15',
-          wakeTime: lastSleep.wakeTime || '06:45',
-        };
+      try {
+        const sleepEntries = JSON.parse(sleepEntriesStr);
+        if (sleepEntries.length > 0) {
+          const lastSleep = sleepEntries[0];
+          sleepData = {
+            duration: lastSleep.duration || 450,
+            quality: lastSleep.quality || 5,
+            bedTime: lastSleep.bedTime || '23:15',
+            wakeTime: lastSleep.wakeTime || '06:45',
+          };
+        }
+      } catch (e) {
+        // Ignore parse errors
       }
     }
 
     // Pas
     const stepsGoal = parseInt(await AsyncStorage.getItem('@yoroi_steps_goal') || '8000');
 
+    // Avatar et Profil
+    const userName = await AsyncStorage.getItem('@yoroi_user_name') || undefined;
+    const avatarConfigStr = await AsyncStorage.getItem('@yoroi_avatar_config');
+    const avatarConfig = avatarConfigStr ? JSON.parse(avatarConfigStr) : undefined;
+    const profilePhotoBase64 = await AsyncStorage.getItem('@yoroi_profile_photo_base64') || undefined;
+    const level = parseInt(await AsyncStorage.getItem('@yoroi_user_level') || '1');
+    const rank = await AsyncStorage.getItem('@yoroi_user_rank') || 'Débutant';
+
     return {
+      // Santé
       hydrationCurrent,
       hydrationGoal,
       currentWeight,
@@ -198,6 +266,14 @@ class AppleWatchService {
       sleepBedTime: sleepData.bedTime,
       sleepWakeTime: sleepData.wakeTime,
       stepsGoal,
+
+      // Profil
+      userName,
+      avatarConfig,
+      profilePhotoBase64,
+      level,
+      rank,
+
       timestamp: Date.now(),
     };
   }
@@ -240,12 +316,12 @@ class AppleWatchService {
       await AsyncStorage.setItem(`hydration_${today}`, newTotal.toString());
       await AsyncStorage.setItem(LAST_HYDRATION_KEY, now.toString());
 
-      logger.info(`Hydratation mise a jour: ${current}ml -> ${newTotal}ml`);
+      logger.info(`✅ Hydratation mise a jour: ${current}ml -> ${newTotal}ml`);
 
       // Re-sync vers la watch avec les nouvelles donnees
       await this.syncToWatch();
     } catch (error) {
-      logger.error('Erreur ajout hydratation:', error);
+      logger.error('❌ Erreur ajout hydratation:', error);
     } finally {
       this.processingHydration = false;
     }
@@ -289,12 +365,12 @@ class AppleWatchService {
       await AsyncStorage.setItem('@yoroi_current_weight', weight.toString());
       await AsyncStorage.setItem(LAST_WEIGHT_KEY, now.toString());
 
-      logger.info(`Poids sauvegarde dans la DB: ${weight}kg`);
+      logger.info(`✅ Poids sauvegarde dans la DB: ${weight}kg`);
 
       // Re-sync vers la watch
       await this.syncToWatch();
     } catch (error) {
-      logger.error('Erreur ajout poids:', error);
+      logger.error('❌ Erreur ajout poids:', error);
     } finally {
       this.processingWeight = false;
     }
@@ -308,17 +384,31 @@ class AppleWatchService {
    * Vérifier si la watch est connectée
    */
   async checkWatchStatus(): Promise<WatchStatus | null> {
-    if (!WatchBridge) {
+    if (!WatchConnectivityBridge) {
       return null;
     }
 
     try {
-      const status = await WatchBridge.isWatchReachable();
-      return status;
+      const isReachable = await WatchConnectivityBridge.isWatchReachable();
+      const isAvailable = await WatchConnectivityBridge.isWatchAvailable();
+
+      return {
+        isReachable,
+        isPaired: isAvailable,
+        isWatchAppInstalled: isAvailable,
+      };
     } catch (error) {
       logger.error('❌ Erreur vérification watch:', error);
       return null;
     }
+  }
+
+  /**
+   * Force la synchronisation immédiate (pour les settings de la Watch par exemple)
+   */
+  async forceSyncNow() {
+    logger.info('🔄 Force sync demandée');
+    await this.syncToWatch();
   }
 }
 
