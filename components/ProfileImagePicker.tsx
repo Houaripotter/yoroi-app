@@ -22,62 +22,80 @@ export const ProfileImagePicker: React.FC<ProfileImagePickerProps> = ({
   const [image, setImage] = useState<string | null>(currentImage || null);
 
   const pickImage = async () => {
-    // Demander la permission
-    const { status } = await requestMediaLibraryPermissionsAsync();
+    try {
+      // Demander la permission
+      const { status } = await requestMediaLibraryPermissionsAsync();
 
-    if (status !== 'granted') {
+      if (status !== 'granted') {
+        showPopup(
+          'Permission requise',
+          'Nous avons besoin d\'acceder a tes photos.',
+          [{ text: 'OK', style: 'primary' }]
+        );
+        return;
+      }
+
+      // Ouvrir la galerie avec crop
+      const result = await launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,        // ← Permet le crop
+        aspect: [1, 1],             // ← Carré
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        // Redimensionner l'image pour optimiser le stockage
+        const manipulated = await manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 400, height: 400 } }],
+          { compress: 0.8, format: SaveFormat.JPEG }
+        );
+
+        setImage(manipulated.uri);
+        onImageSelected(manipulated.uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
       showPopup(
-        'Permission requise',
-        'Nous avons besoin d\'acceder a tes photos.',
+        'Erreur',
+        'Impossible de charger la photo. Réessaye.',
         [{ text: 'OK', style: 'primary' }]
       );
-      return;
-    }
-
-    // Ouvrir la galerie avec crop
-    const result = await launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,        // ← Permet le crop
-      aspect: [1, 1],             // ← Carré
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      // Redimensionner l'image pour optimiser le stockage
-      const manipulated = await manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 400, height: 400 } }],
-        { compress: 0.8, format: SaveFormat.JPEG }
-      );
-
-      setImage(manipulated.uri);
-      onImageSelected(manipulated.uri);
     }
   };
 
   const takePhoto = async () => {
-    const { status } = await requestCameraPermissionsAsync();
+    try {
+      const { status } = await requestCameraPermissionsAsync();
 
-    if (status !== 'granted') {
-      showPopup('Permission requise', 'Nous avons besoin d\'acceder a la camera.', [{ text: 'OK', style: 'primary' }]);
-      return;
-    }
+      if (status !== 'granted') {
+        showPopup('Permission requise', 'Nous avons besoin d\'acceder a la camera.', [{ text: 'OK', style: 'primary' }]);
+        return;
+      }
 
-    const result = await launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+      const result = await launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      const manipulated = await manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 400, height: 400 } }],
-        { compress: 0.8, format: SaveFormat.JPEG }
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const manipulated = await manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 400, height: 400 } }],
+          { compress: 0.8, format: SaveFormat.JPEG }
+        );
+
+        setImage(manipulated.uri);
+        onImageSelected(manipulated.uri);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      showPopup(
+        'Erreur',
+        'Impossible de prendre la photo. Réessaye.',
+        [{ text: 'OK', style: 'primary' }]
       );
-
-      setImage(manipulated.uri);
-      onImageSelected(manipulated.uri);
     }
   };
 

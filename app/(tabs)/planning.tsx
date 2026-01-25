@@ -440,8 +440,9 @@ export default function PlanningScreen() {
     const loadEvents = async () => {
       setCatalogLoading(true);
       try {
-        // Ne charger que les événements à venir (futurs)
-        const events = await getFilteredEvents({ upcomingOnly: true, limit: 5000 });
+        // ⚡ PERFORMANCE: Charger seulement 50 événements (pagination future)
+        // Au lieu de 5000 qui bloquait l'UI pendant 1 minute
+        const events = await getFilteredEvents({ upcomingOnly: true, limit: 50 });
         setAllCatalogEvents(events as SportEvent[]);
         console.log('✅ Événements chargés:', events.length);
       } catch (error) {
@@ -451,7 +452,9 @@ export default function PlanningScreen() {
         setCatalogLoading(false);
       }
     };
-    loadEvents();
+
+    // ⚡ Charger en arrière-plan sans bloquer l'UI
+    setTimeout(() => loadEvents(), 100);
   }, []);
 
   // Filter catalog events
