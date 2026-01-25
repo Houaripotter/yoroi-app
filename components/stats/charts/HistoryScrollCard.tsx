@@ -3,11 +3,12 @@
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MetricRange } from '@/lib/healthRanges';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface HistoryDataPoint {
   date: string;
@@ -25,6 +26,7 @@ interface HistoryScrollCardProps {
   showEvolution?: boolean; // Affiche les badges EN HAUSSE/EN BAISSE/STABLE pour toute métrique
   evolutionGoal?: 'increase' | 'decrease' | 'stable'; // Quel type d'évolution est positif
   formatValue?: (value: number) => string; // Formatage personnalisé de la valeur (ex: "7h 30min")
+  onCardPress?: (item: HistoryDataPoint, index: number) => void; // Callback quand on clique sur une carte
 }
 
 const CARD_WIDTH = 130;
@@ -41,6 +43,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
   showEvolution,
   evolutionGoal = 'increase', // Par défaut, une augmentation est positive (ex: muscle)
   formatValue,
+  onCardPress,
 }) => {
   const { colors, isDark } = useTheme();
   const { locale, t } = useI18n();
@@ -153,7 +156,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
             : rawStatusLabel;
 
           return (
-            <View
+            <TouchableOpacity
               key={index}
               style={[
                 styles.card,
@@ -163,6 +166,12 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
                   borderWidth: 2,
                 },
               ]}
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                onCardPress?.(item, index);
+              }}
+              activeOpacity={onCardPress ? 0.7 : 1}
+              disabled={!onCardPress}
             >
               {/* Badge de statut - label complet (healthRange ou objectif poids) */}
               {statusLabel && (
@@ -208,7 +217,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
               <Text style={[styles.date, { color: colors.textMuted }]}>
                 {formatDate(item.date)}
               </Text>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>

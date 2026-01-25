@@ -141,66 +141,65 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   useFrameworkReady();
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true); // 🚀 AFFICHAGE IMMÉDIAT - démarrer à true
 
   useEffect(() => {
-    // 🚀 AFFICHAGE IMMÉDIAT - 0 seconde d'écran noir
-    setIsReady(true);
-
-    // ⏳ TOUTES les initialisations en arrière-plan
+    // ⏳ TOUTES les initialisations en arrière-plan (sans bloquer l'affichage)
     const init = async () => {
       try {
         logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ Initialiser la base de donnees SQLite
-        await initDatabase();
-        logger.info('Base de donnees initialisee');
+        // ✅ Initialiser la base de donnees SQLite (en arrière-plan)
+        initDatabase()
+          .then(() => logger.info('Base de donnees initialisee'))
+          .catch(err => logger.error('Erreur init database:', err));
 
-        // ✅ Vérifier et créer la table events_catalog si elle n'existe pas
-        try {
-          const { openDatabase } = await import('@/lib/database');
-          const db = await openDatabase();
-
-          // Vérifier si la table existe
-          const tableCheck = await db.getFirstAsync<{ count: number }>(
-            `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
-          );
-
-          if (!tableCheck || tableCheck.count === 0) {
-            logger.info('Création de la table events_catalog...');
-            await db.execAsync(`
-              CREATE TABLE IF NOT EXISTS events_catalog (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                date_start TEXT NOT NULL,
-                city TEXT,
-                country TEXT,
-                full_address TEXT,
-                category TEXT NOT NULL,
-                sport_tag TEXT NOT NULL,
-                registration_link TEXT,
-                federation TEXT,
-                image_logo_url TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-              );
-            `);
-            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
-            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
-            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
-            await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
-            logger.info('✅ Table events_catalog créée');
+        // ✅ Créer table events_catalog (en arrière-plan)
+        (async () => {
+          try {
+            const { openDatabase } = await import('@/lib/database');
+            const db = await openDatabase();
+            const tableCheck = await db.getFirstAsync<{ count: number }>(
+              `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
+            );
+            if (!tableCheck || tableCheck.count === 0) {
+              logger.info('Création de la table events_catalog...');
+              await db.execAsync(`
+                CREATE TABLE IF NOT EXISTS events_catalog (
+                  id TEXT PRIMARY KEY,
+                  title TEXT NOT NULL,
+                  date_start TEXT NOT NULL,
+                  city TEXT,
+                  country TEXT,
+                  full_address TEXT,
+                  category TEXT NOT NULL,
+                  sport_tag TEXT NOT NULL,
+                  registration_link TEXT,
+                  federation TEXT,
+                  image_logo_url TEXT,
+                  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                );
+              `);
+              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
+              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
+              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
+              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
+              logger.info('✅ Table events_catalog créée');
+            }
+          } catch (err) {
+            logger.error('Erreur création table events_catalog:', err);
           }
-        } catch (err) {
-          logger.error('Erreur création table events_catalog:', err);
-        }
+        })();
 
-        // Migrer le système d'avatars V2
-        await migrateAvatarSystem();
-        logger.info('Migration avatars effectuee');
+        // Migrer le système d'avatars V2 (en arrière-plan)
+        migrateAvatarSystem()
+          .then(() => logger.info('Migration avatars effectuee'))
+          .catch(err => logger.error('Erreur migration avatars:', err));
 
-        // Auto-import des compétitions IBJJF et CFJJB au premier lancement
-        await autoImportCompetitionsOnFirstLaunch();
-        logger.info('✅ Initialisations critiques terminées');
+        // Auto-import des compétitions (en arrière-plan)
+        autoImportCompetitionsOnFirstLaunch()
+          .then(() => logger.info('✅ Auto-import compétitions terminé'))
+          .catch(err => logger.error('Erreur auto-import compétitions:', err));
 
         // Import événements (peut prendre du temps)
         importEventsFromJSON()

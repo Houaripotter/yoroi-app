@@ -12,19 +12,16 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Linking,
   Dimensions,
 } from 'react-native';
-import { X, AlertTriangle, ExternalLink, MessageSquare, Bug } from 'lucide-react-native';
+import { X, AlertTriangle, MessageSquare, Bug } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// 🔗 LIEN BOÎTE À IDÉES - À REMPLACER PAR TON VRAI LIEN
-const FEEDBACK_URL = 'https://forms.gle/VOTRE_FORMULAIRE_GOOGLE'; // TODO: Remplacer par le vrai lien
 
 interface VitalityBetaWarningModalProps {
   visible: boolean;
@@ -42,20 +39,11 @@ export const VitalityBetaWarningModal: React.FC<VitalityBetaWarningModalProps> =
     onClose();
   };
 
-  const handleOpenFeedback = async () => {
-    try {
-      impactAsync(ImpactFeedbackStyle.Medium);
-      const canOpen = await Linking.canOpenURL(FEEDBACK_URL);
-
-      if (canOpen) {
-        await Linking.openURL(FEEDBACK_URL);
-        notificationAsync(NotificationFeedbackType.Success);
-      } else {
-        console.error('Cannot open feedback URL');
-      }
-    } catch (error) {
-      console.error('Error opening feedback:', error);
-    }
+  const handleOpenFeedback = () => {
+    impactAsync(ImpactFeedbackStyle.Medium);
+    onClose();
+    // Ouvrir l'écran Ideas avec la catégorie "bug" pour signaler les problèmes Vitalité
+    router.push({ pathname: '/ideas', params: { category: 'bug' } });
   };
 
   return (

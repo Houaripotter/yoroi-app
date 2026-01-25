@@ -25,7 +25,7 @@ import {
   Dumbbell,
   Zap,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
@@ -88,7 +88,7 @@ export default function EventDetailScreen() {
 
   const handleOpenLink = async () => {
     if (event.registration_link) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       try {
         await Linking.openURL(event.registration_link);
       } catch (error) {
@@ -104,7 +104,7 @@ export default function EventDetailScreen() {
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impactAsync(ImpactFeedbackStyle.Light);
             router.back();
           }}
         >

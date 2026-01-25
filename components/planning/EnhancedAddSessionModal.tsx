@@ -324,7 +324,12 @@ export function EnhancedAddSessionModal({
                    selectedClub?.sport.toLowerCase().includes('jiu-jitsu');
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={handleClose}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.overlay}

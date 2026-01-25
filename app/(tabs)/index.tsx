@@ -117,7 +117,7 @@ import { EssentielWeightCard } from '@/components/home/essentiel/EssentielWeight
 import { EssentielActivityCard } from '@/components/home/essentiel/EssentielActivityCard';
 import { EssentielWeekSummary } from '@/components/home/essentiel/EssentielWeekSummary';
 import { HomeTabView } from '@/components/home/HomeTabView';
-import { HomeShareMenu } from '@/components/home/HomeShareMenu';
+import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
 
 // Composants animés premium
 import AnimatedAvatar from '@/components/AnimatedAvatar';
@@ -1661,7 +1661,7 @@ export default function HomeScreen() {
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
       
       {/* Menu de partage social flottant */}
-      <HomeShareMenu />
+      <ShareFloatingButton />
 
       {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
       <UpdateChangelogModal

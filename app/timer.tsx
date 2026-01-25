@@ -275,10 +275,10 @@ export default function TimerScreen() {
   const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'medium') => {
     if (Platform.OS !== 'web') {
       const style = type === 'light'
-        ? Haptics.ImpactFeedbackStyle.Light
+        ? ImpactFeedbackStyle.Light
         : type === 'heavy'
-        ? Haptics.ImpactFeedbackStyle.Heavy
-        : Haptics.ImpactFeedbackStyle.Medium;
+        ? ImpactFeedbackStyle.Heavy
+        : ImpactFeedbackStyle.Medium;
       impactAsync(style);
     }
   };
