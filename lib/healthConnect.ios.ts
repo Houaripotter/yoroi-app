@@ -475,7 +475,7 @@ class HealthConnectService {
     const toTimestamp = toDate.getTime();
 
     // ✅ VALIDATION: S'assurer que les timestamps sont des nombres valides
-    if (!fromTimestamp || !toTimestamp || isNaN(fromTimestamp) || isNaN(toTimestamp)) {
+    if (isNaN(fromTimestamp) || isNaN(toTimestamp) || fromTimestamp === 0 || toTimestamp === 0) {
       logger.error('[HealthKit] Timestamps invalides pour la requête', {
         from: fromTimestamp,
         to: toTimestamp
@@ -483,10 +483,18 @@ class HealthConnectService {
       return null;
     }
 
+    // ✅ NETTOYAGE: Supprimer les propriétés undefined de options pour éviter les erreurs natives
+    const cleanOptions: any = {};
+    for (const key in options) {
+      if (options[key] !== undefined && options[key] !== null) {
+        cleanOptions[key] = options[key];
+      }
+    }
+
     return {
       from: fromTimestamp,
       to: toTimestamp,
-      ...options
+      ...cleanOptions
     };
   }
 

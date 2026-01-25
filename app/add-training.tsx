@@ -1311,6 +1311,8 @@ export default function AddTrainingScreen() {
         contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 150 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        bounces={false}
+        overScrollMode="never"
       >
 
         {/* 🔍 BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
