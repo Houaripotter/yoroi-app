@@ -1249,8 +1249,8 @@ export default function HomeScreen() {
             <EssentielWeightCard
               currentWeight={currentWeight || undefined}
               objective={targetWeight || undefined}
-              weekData={last7Weights.map(w => w.weight)}
-              weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']}
+              weekData={weightHistory.slice(0, 30).reverse().map(w => w.weight)} // 30 derniers jours au lieu de 7
+              weekLabels={['L', 'M', 'M', 'J', 'V', 'S', 'D']} // Les labels seront dupliqués
               trend={trend}
               onAddWeight={handleNavigateAddWeight}
               onViewStats={handleNavigateWeightStats}

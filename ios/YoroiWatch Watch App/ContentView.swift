@@ -14,9 +14,9 @@ struct ContentView: View {
         .green,   // 0. Dashboard
         .blue,    // 1. Hydratation
         .orange,  // 2. Poids
-        .cyan,    // 3. Résumé Stats
-        .red,     // 4. Timer
-        .yellow,  // 5. Carnet
+        .yellow,  // 3. Records (Carnet) - DÉPLACÉ ICI
+        .cyan,    // 4. Résumé Stats
+        .red,     // 5. Timer
         .orange,  // 6. Dojo
         .purple,  // 7. Profil
         .gray     // 8. Réglages
@@ -36,17 +36,17 @@ struct ContentView: View {
                 // 2. Poids (Graphique)
                 WeightView()
                     .tag(2)
-                
-                // 3. Résumé Stats
-                SummaryStatsView()
+
+                // 3. Records (Carnet) - DÉPLACÉ EN 3ÈME POSITION
+                RecordsView()
                     .tag(3)
 
-                // 4. Timer
-                TimerView()
+                // 4. Résumé Stats
+                SummaryStatsView()
                     .tag(4)
 
-                // 5. Carnet (Records)
-                RecordsView()
+                // 5. Timer
+                TimerView()
                     .tag(5)
                 
                 // 6. Dojo (Avatar)

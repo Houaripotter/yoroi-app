@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing, ScrollView } from 'react-native';
 import { TrendingUp, TrendingDown, Minus, Target, BarChart3, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
@@ -66,9 +66,9 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
   const chartColor = isDark ? '#A78BFA' : '#8B5CF6';
   const mutedColor = isDark ? '#64748B' : '#94A3B8';
 
-  // Données
-  const chartData = weekData.length > 0 ? weekData.slice(0, 7) : [];
-  const labels = weekLabels.slice(0, chartData.length);
+  // Données - AFFICHER TOUS LES POINTS (pas juste 7)
+  const chartData = weekData.length > 0 ? weekData : [];
+  const labels = weekLabels.slice(0, Math.min(chartData.length, 7)); // Labels pour les 7 premiers jours visibles
   const hasData = chartData.length > 0;
 
   // Prédiction basée sur la tendance
@@ -99,11 +99,16 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
   };
   const prediction = getPrediction();
 
-  // Générer le path pour la courbe
+  // Générer le path pour la courbe - LARGEUR DYNAMIQUE pour scroll horizontal
   const generateCurvePath = () => {
     if (!hasData) return { path: '', points: [], width: 0, height: 0 };
 
-    const width = screenWidth - 80;
+    // CORRECTION: Largeur dynamique basée sur le nombre de points
+    // Minimum 40px par point pour être scrollable
+    const pointWidth = 40;
+    const minWidth = screenWidth - 80;
+    const calculatedWidth = Math.max(chartData.length * pointWidth, minWidth);
+    const width = calculatedWidth;
     const height = 120;
     const maxVal = Math.max(...chartData);
     const minVal = Math.min(...chartData);
@@ -223,9 +228,16 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
             </View>
           </View>
 
-          <View style={styles.chartContainer}>
-            {/* Courbe SVG */}
-            <Svg width={chartWidth} height={chartHeight}>
+          {/* CORRECTION: ScrollView horizontal pour scroller le graphique */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chartScrollView}
+            contentContainerStyle={styles.chartScrollContent}
+          >
+            <View style={styles.chartContainer}>
+              {/* Courbe SVG */}
+              <Svg width={chartWidth} height={chartHeight}>
               <Defs>
                 <SvgLinearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <Stop offset="0%" stopColor={accentColor} stopOpacity="1" />
@@ -264,26 +276,27 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
                   strokeWidth={2}
                 />
               ))}
-            </Svg>
+              </Svg>
 
-            {/* Labels */}
-            <View style={styles.labelsRow}>
-              {labels.map((label, i) => (
-                <Text
-                  key={i}
-                  style={[
-                    styles.dayLabel,
-                    {
-                      color: i === labels.length - 1 ? accentColor : mutedColor,
-                      fontWeight: i === labels.length - 1 ? '700' : '600',
-                    },
-                  ]}
-                >
-                  {label}
-                </Text>
-              ))}
+              {/* Labels */}
+              <View style={styles.labelsRow}>
+                {labels.map((label, i) => (
+                  <Text
+                    key={i}
+                    style={[
+                      styles.dayLabel,
+                      {
+                        color: i === labels.length - 1 ? accentColor : mutedColor,
+                        fontWeight: i === labels.length - 1 ? '700' : '600',
+                      },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                ))}
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </View>
       )}
 
@@ -409,6 +422,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
+  },
+  chartScrollView: {
+    width: '100%',
+  },
+  chartScrollContent: {
+    paddingRight: 20,
   },
   chartContainer: {
     gap: 12,
