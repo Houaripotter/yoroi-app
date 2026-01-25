@@ -28,6 +28,7 @@ export interface WeightDraft {
   metabolicAge?: string;
   bmr?: string;
   waist?: string;
+  navel?: string;
   chest?: string;
   arm?: string;
   thigh?: string;

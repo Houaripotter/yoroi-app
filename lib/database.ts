@@ -181,6 +181,10 @@ export const initDatabase = async () => {
     await database.execAsync(`ALTER TABLE weekly_plan ADD COLUMN session_type TEXT;`);
   } catch (e) { /* colonne existe déjà */ }
 
+  try {
+    await database.execAsync(`ALTER TABLE measurements ADD COLUMN navel REAL;`);
+  } catch (e) { /* colonne existe déjà */ }
+
   // Table Planning Semaine Type
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS weekly_plan (
@@ -434,6 +438,7 @@ export interface Weight {
   created_at?: string;
   // Body measurements (optional, can be saved with weight)
   waist?: number;
+  navel?: number;
   chest?: number;
   arm?: number;
   thigh?: number;
@@ -446,6 +451,7 @@ export interface Measurement {
   id?: number;
   chest?: number;
   waist?: number;
+  navel?: number;
   hips?: number;
   left_arm?: number;
   right_arm?: number;
@@ -686,6 +692,21 @@ export const addWeight = async (data: Weight): Promise<number> => {
      data.metabolic_age || null, data.bmr || null, data.note || null,
      data.source || 'manual', data.date]
   );
+
+  // Sauvegarder les mensurations si présentes
+  const hasMeasurements = data.waist || data.navel || data.chest || data.arm || data.thigh ||
+                          data.hips || data.neck || data.calf;
+  if (hasMeasurements) {
+    await database.runAsync(
+      `INSERT INTO measurements (chest, waist, navel, hips, left_arm, right_arm, left_thigh,
+       right_thigh, left_calf, right_calf, neck, date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [data.chest || null, data.waist || null, data.navel || null, data.hips || null,
+       data.arm || null, data.arm || null, data.thigh || null, data.thigh || null,
+       data.calf || null, data.calf || null, data.neck || null, data.date]
+    );
+  }
+
   return result.lastInsertRowId;
 };
 
@@ -896,10 +917,10 @@ export const deleteClub = async (id: number): Promise<void> => {
 export const addMeasurementRecord = async (data: Measurement): Promise<number> => {
   const database = await openDatabase();
   const result = await database.runAsync(
-    `INSERT INTO measurements (chest, waist, hips, left_arm, right_arm, left_thigh,
+    `INSERT INTO measurements (chest, waist, navel, hips, left_arm, right_arm, left_thigh,
      right_thigh, left_calf, right_calf, shoulders, neck, date)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [data.chest || null, data.waist || null, data.hips || null, data.left_arm || null,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [data.chest || null, data.waist || null, data.navel || null, data.hips || null, data.left_arm || null,
      data.right_arm || null, data.left_thigh || null, data.right_thigh || null,
      data.left_calf || null, data.right_calf || null, data.shoulders || null,
      data.neck || null, data.date]

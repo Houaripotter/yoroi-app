@@ -105,6 +105,7 @@ export default function AddScreen() {
 
   // Measurements state - Complètes
   const [waist, setWaist] = useState('');
+  const [navel, setNavel] = useState('');
   const [chest, setChest] = useState('');
   const [arm, setArm] = useState('');
   const [thigh, setThigh] = useState('');
@@ -212,6 +213,7 @@ export default function AddScreen() {
                 if (draft.metabolicAge) setMetabolicAge(draft.metabolicAge);
                 if (draft.bmr) setBmr(draft.bmr);
                 if (draft.waist) setWaist(draft.waist);
+                if (draft.navel) setNavel(draft.navel);
                 if (draft.chest) setChest(draft.chest);
                 if (draft.arm) setArm(draft.arm);
                 if (draft.thigh) setThigh(draft.thigh);
@@ -254,6 +256,7 @@ export default function AddScreen() {
           metabolicAge,
           bmr,
           waist,
+          navel,
           chest,
           arm,
           thigh,
@@ -297,6 +300,7 @@ export default function AddScreen() {
     metabolicAge,
     bmr,
     waist,
+    navel,
     chest,
     arm,
     thigh,
@@ -320,7 +324,7 @@ export default function AddScreen() {
     const weight = weightInputRef.current?.getValue();
 
     // Vérifier si au moins une donnée est remplie (poids OU mensurations OU composition)
-    const hasMeasurements = waist || chest || arm || thigh || hips || neck || calf;
+    const hasMeasurements = waist || navel || chest || arm || thigh || hips || neck || calf;
     const hasComposition = fatPercent || musclePercent || waterPercent || boneMass || visceralFat || metabolicAge || bmr;
 
     if (!weight && !hasMeasurements && !hasComposition) {
@@ -347,6 +351,7 @@ export default function AddScreen() {
         metabolic_age: metabolicAge ? parseInt(metabolicAge) : undefined,
         bmr: bmr ? parseInt(bmr) : undefined,
         waist: waist ? parseFloat(waist) : undefined,
+        navel: navel ? parseFloat(navel) : undefined,
         chest: chest ? parseFloat(chest) : undefined,
         arm: arm ? parseFloat(arm) : undefined,
         thigh: thigh ? parseFloat(thigh) : undefined,
@@ -783,6 +788,14 @@ export default function AddScreen() {
             label={t('add.waist')}
             value={waist}
             onChangeText={setWaist}
+            placeholder="00"
+            suffix="cm"
+            color="#8B5CF6"
+          />
+          <InputRow
+            label={t('add.navel')}
+            value={navel}
+            onChangeText={setNavel}
             placeholder="00"
             suffix="cm"
             color="#8B5CF6"

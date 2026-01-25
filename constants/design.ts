@@ -313,6 +313,7 @@ export const BODY_COMP_COLORS = {
 export const MEASUREMENT_COLORS = {
   chest: c.chart1,
   waist: c.error,
+  navel: '#9333EA',
   hips: c.secondary,
   thighs: c.success,
   arms: c.chart3,

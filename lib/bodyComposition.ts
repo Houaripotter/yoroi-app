@@ -49,21 +49,22 @@ export interface BodyMeasurement {
   id: string;
   date: string;
   // Mensurations principales
-  chest?: number;        // Poitrine cm
+  chest?: number;        // Tour de poitrine cm
   waist?: number;        // Tour de taille cm
-  hips?: number;         // Hanches cm
+  navel?: number;        // Tour de nombril cm
+  hips?: number;         // Tour de hanches cm
   // Bras
-  rightArm?: number;     // Bras droit cm
-  leftArm?: number;      // Bras gauche cm
+  rightArm?: number;     // Tour de bras droit cm
+  leftArm?: number;      // Tour de bras gauche cm
   // Cuisses
-  rightThigh?: number;   // Cuisse droite cm
-  leftThigh?: number;    // Cuisse gauche cm
+  rightThigh?: number;   // Tour de cuisse droite cm
+  leftThigh?: number;    // Tour de cuisse gauche cm
   // Mollets
-  rightCalf?: number;    // Mollet droit cm
-  leftCalf?: number;     // Mollet gauche cm
+  rightCalf?: number;    // Tour de mollet droit cm
+  leftCalf?: number;     // Tour de mollet gauche cm
   // Autres
-  neck?: number;         // Cou cm
-  shoulders?: number;    // Épaules cm
+  neck?: number;         // Tour de cou cm
+  shoulders?: number;    // Tour d'épaules cm
 }
 
 // ============================================
