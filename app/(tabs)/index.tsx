@@ -512,7 +512,8 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateHealthStats = useCallback(() => {
-    handleNavigate('/stats?tab=vitalite');
+    // CORRECTION: L'onglet s'appelle 'sante' dans StatsTabViewNew, pas 'vitalite'
+    handleNavigate('/stats?tab=sante');
   }, [handleNavigate]);
 
   const handleNavigateAddWeight = useCallback(() => {

@@ -122,6 +122,12 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
 
     if (weeklyGoal < 1) {
       newErrors.weeklyGoal = 'Tu dois definir un objectif (minimum 1x/semaine)';
+      // CORRECTION: Afficher un popup pour que l'utilisateur sache POURQUOI ça ne marche pas
+      showPopup(
+        'Objectif requis',
+        'Tu dois définir un objectif hebdomadaire minimum de 1 séance par semaine pour créer un club.',
+        [{ text: 'OK', style: 'primary' }]
+      );
     }
 
     setErrors(newErrors);
