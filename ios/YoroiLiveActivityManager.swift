@@ -1,59 +1,59 @@
-/**
- * YoroiLiveActivityManager.swift
- * Native Module pour gérer les Live Activities (Dynamic Island) du Timer
- *
- * IMPORTANT: Ce fichier doit être ajouté dans Xcode:
- * 1. Ouvrir Yoroi.xcworkspace
- * 2. Clic droit sur Yoroi folder → Add Files to "Yoroi"
- * 3. Sélectionner ce fichier YoroiLiveActivityManager.swift
- * 4. Cocher "Copy items if needed" et "Yoroi" target
- */
+//
+//  YoroiLiveActivityManager.swift
+//  Yoroi
+//
+//  Module React Native pour contrôler les Live Activities (Dynamic Island)
+//
 
 import Foundation
 import ActivityKit
+import React
 
-// IMPORTANT: TimerAttributes est défini dans TimerAttributes.swift
-// Ce fichier doit être ajouté aux deux targets (Yoroi et YoroiTimerWidget)
-
-// ============================================
-// Native Module React Native
-// ============================================
 @objc(YoroiLiveActivityManager)
 class YoroiLiveActivityManager: NSObject {
 
-  private static var currentActivity: Activity<TimerAttributes>?
+  // Référence vers l'activité en cours
+  private var currentActivity: Activity<TimerAttributes>?
 
-  // ============================================
-  // DÉMARRER une Live Activity
-  // ============================================
+  // MARK: - Check Availability
+
   @objc
-  func startLiveActivity(
-    _ timerName: String,
-    mode: String,
-    totalTime: NSNumber,
-    resolver resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    // Vérifier si ActivityKit est disponible (iOS 16.1+)
+  func areActivitiesEnabled(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+    if #available(iOS 16.1, *) {
+      let enabled = ActivityAuthorizationInfo().areActivitiesEnabled
+      resolve(["enabled": enabled])
+    } else {
+      resolve(["enabled": false])
+    }
+  }
+
+  // MARK: - Start Activity
+
+  @objc
+  func startActivity(_ data: NSDictionary, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+
     guard #available(iOS 16.1, *) else {
-      reject("UNAVAILABLE", "Live Activities requires iOS 16.1 or later", nil)
+      reject("UNAVAILABLE", "Live Activities requires iOS 16.1+", nil)
       return
     }
 
-    // Arrêter l'activité existante si elle existe
-    if let existing = YoroiLiveActivityManager.currentActivity {
-      Task {
-        await existing.end(dismissalPolicy: .immediate)
-      }
+    // Extraire les données
+    guard let activityName = data["activityName"] as? String else {
+      reject("INVALID_DATA", "Missing activityName", nil)
+      return
     }
 
-    // Créer les attributs de la Live Activity
-    let attributes = TimerAttributes(timerName: timerName)
+    let elapsedSeconds = data["elapsedSeconds"] as? Int ?? 0
+    let isRunning = data["isRunning"] as? Bool ?? false
 
-    let initialState = TimerAttributes.ContentState(
-      remainingTime: totalTime.intValue,
-      totalTime: totalTime.intValue,
-      mode: mode,
+    // Créer les attributs
+    let attributes = TimerAttributes(timerName: activityName)
+
+    // Créer l'état initial
+    let contentState = TimerAttributes.ContentState(
+      remainingTime: elapsedSeconds,
+      totalTime: elapsedSeconds,
+      mode: activityName.lowercased(),
       isResting: false,
       roundNumber: nil,
       totalRounds: nil
@@ -61,120 +61,110 @@ class YoroiLiveActivityManager: NSObject {
 
     do {
       // Démarrer la Live Activity
-      let activity = try Activity<TimerAttributes>.request(
+      currentActivity = try Activity<TimerAttributes>.request(
         attributes: attributes,
-        contentState: initialState,
+        contentState: contentState,
         pushType: nil
       )
 
-      YoroiLiveActivityManager.currentActivity = activity
+      print("✅ Live Activity démarrée: \(currentActivity?.id ?? "unknown")")
 
-      resolve([
-        "activityId": activity.id,
-        "state": "active"
-      ])
+      resolve(["activityId": currentActivity?.id ?? "unknown"])
     } catch {
-      reject("START_ERROR", "Failed to start Live Activity: \(error.localizedDescription)", error)
+      print("❌ Erreur démarrage Live Activity: \(error)")
+      reject("START_ERROR", error.localizedDescription, error)
     }
   }
 
-  // ============================================
-  // METTRE À JOUR la Live Activity
-  // ============================================
+  // MARK: - Update Activity
+
   @objc
-  func updateLiveActivity(
-    _ remainingTime: NSNumber,
-    isResting: Bool,
-    roundNumber: NSNumber?,
-    totalRounds: NSNumber?,
-    resolver resolve: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
+  func updateActivity(_ data: NSDictionary, resolver resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+
     guard #available(iOS 16.1, *) else {
-      reject("UNAVAILABLE", "Live Activities requires iOS 16.1 or later", nil)
+      reject("UNAVAILABLE", "Live Activities requires iOS 16.1+", nil)
       return
     }
 
-    guard let activity = YoroiLiveActivityManager.currentActivity else {
-      reject("NO_ACTIVITY", "No active Live Activity found", nil)
+    guard let activity = currentActivity else {
+      reject("NO_ACTIVITY", "No Live Activity running", nil)
+      return
+    }
+
+    // Extraire les données à mettre à jour
+    let elapsedSeconds = data["elapsedSeconds"] as? Int
+    let isRunning = data["isRunning"] as? Bool
+    let isResting = data["isResting"] as? Bool ?? false
+    let roundNumber = data["roundNumber"] as? Int
+    let totalRounds = data["totalRounds"] as? Int
+
+    // Créer le nouvel état
+    var newContentState = activity.contentState
+
+    if let elapsed = elapsedSeconds {
+      newContentState.remainingTime = elapsed
+    }
+
+    newContentState.isResting = isResting
+    newContentState.roundNumber = roundNumber
+    newContentState.totalRounds = totalRounds
+
+    Task {
+      do {
+        await currentActivity?.update(using: newContentState)
+        resolve(["success": true])
+      } catch {
+        print("❌ Erreur mise à jour Live Activity: \(error)")
+        reject("UPDATE_ERROR", error.localizedDescription, error)
+      }
+    }
+  }
+
+  // MARK: - Stop Activity
+
+  @objc
+  func stopActivity(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
+
+    guard #available(iOS 16.1, *) else {
+      reject("UNAVAILABLE", "Live Activities requires iOS 16.1+", nil)
+      return
+    }
+
+    guard let activity = currentActivity else {
+      // Pas d'erreur si pas d'activité - c'est OK
+      resolve(["success": true])
       return
     }
 
     Task {
-      let updatedState = TimerAttributes.ContentState(
-        remainingTime: remainingTime.intValue,
-        totalTime: activity.contentState.totalTime,
-        mode: activity.contentState.mode,
-        isResting: isResting,
-        roundNumber: roundNumber?.intValue,
-        totalRounds: totalRounds?.intValue
-      )
-
-      await activity.update(using: updatedState)
-
-      resolve([
-        "activityId": activity.id,
-        "state": "updated"
-      ])
+      do {
+        // Mettre fin à l'activité immédiatement
+        await activity.end(dismissalPolicy: .immediate)
+        currentActivity = nil
+        print("✅ Live Activity arrêtée")
+        resolve(["success": true])
+      } catch {
+        print("❌ Erreur arrêt Live Activity: \(error)")
+        reject("STOP_ERROR", error.localizedDescription, error)
+      }
     }
   }
 
-  // ============================================
-  // ARRÊTER la Live Activity
-  // ============================================
+  // MARK: - Check if Running
+
   @objc
-  func endLiveActivity(
-    _ resolver: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    guard #available(iOS 16.1, *) else {
-      reject("UNAVAILABLE", "Live Activities requires iOS 16.1 or later", nil)
-      return
-    }
+  func isActivityRunning(_ resolve: @escaping RCTPromiseResolveBlock, rejecter reject: @escaping RCTPromiseRejectBlock) {
 
-    guard let activity = YoroiLiveActivityManager.currentActivity else {
-      resolve(["state": "no_activity"])
-      return
-    }
-
-    Task {
-      await activity.end(
-        using: activity.contentState,
-        dismissalPolicy: .default
-      )
-
-      YoroiLiveActivityManager.currentActivity = nil
-
-      resolve([
-        "activityId": activity.id,
-        "state": "ended"
-      ])
+    if #available(iOS 16.1, *) {
+      let isRunning = currentActivity != nil
+      resolve(["isRunning": isRunning])
+    } else {
+      resolve(["isRunning": false])
     }
   }
 
-  // ============================================
-  // VÉRIFIER si une Live Activity est active
-  // ============================================
-  @objc
-  func isLiveActivityActive(
-    _ resolver: @escaping RCTPromiseResolveBlock,
-    rejecter reject: @escaping RCTPromiseRejectBlock
-  ) {
-    guard #available(iOS 16.1, *) else {
-      resolve(["isActive": false, "reason": "unsupported"])
-      return
-    }
+  // MARK: - React Native Setup
 
-    let isActive = YoroiLiveActivityManager.currentActivity != nil
-    resolve([
-      "isActive": isActive,
-      "activityId": YoroiLiveActivityManager.currentActivity?.id ?? ""
-    ])
-  }
-
-  // ============================================
-  // Module Configuration
-  // ============================================
   @objc
   static func requiresMainQueueSetup() -> Bool {
     return false

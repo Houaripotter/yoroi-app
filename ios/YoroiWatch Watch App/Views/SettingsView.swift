@@ -14,10 +14,10 @@ struct SettingsView: View {
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("alwaysOnDisplay") private var alwaysOnDisplay = true
     @AppStorage("wakeOnWristRaise") private var wakeOnWristRaise = true
-    @AppStorage("syncInterval") private var syncInterval = 5 // minutes
+    @State private var syncInterval = 5 // minutes - Changed to @State
     @AppStorage("waterReminderEnabled") private var waterReminderEnabled = false
-    @AppStorage("waterReminderInterval") private var waterReminderInterval = 60 // minutes
-    @AppStorage("complicationUpdateInterval") private var complicationUpdateInterval = 15 // minutes
+    @State private var waterReminderInterval = 60 // minutes - Changed to @State
+    @State private var complicationUpdateInterval = 15 // minutes - Changed to @State
     @AppStorage("showCaloriesInComplication") private var showCaloriesInComplication = true
     @AppStorage("useMetricUnits") private var useMetricUnits = true
     @AppStorage("showHeartRateInComplication") private var showHeartRateInComplication = false
@@ -263,7 +263,7 @@ struct SettingsView: View {
                         Text("Hydratation")
                             .font(.system(size: 10))
                             .foregroundColor(.gray)
-                        Text("\(Int(healthManager.todayWaterIntake)) ml")
+                        Text("\(Int(healthManager.waterIntake)) ml")
                             .font(.system(size: 13, weight: .bold))
                     }
                 }

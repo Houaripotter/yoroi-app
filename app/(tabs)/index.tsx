@@ -513,7 +513,7 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateHealthStats = useCallback(() => {
-    handleNavigate('/stats?tab=sante');
+    handleNavigate('/stats?tab=vitalite');
   }, [handleNavigate]);
 
   const handleNavigateAddWeight = useCallback(() => {
@@ -1659,9 +1659,9 @@ export default function HomeScreen() {
       <LogoViewer visible={logoViewerVisible} onClose={handleCloseLogoViewer} />
       <BatteryReadyPopup batteryPercent={batteryPercent} />
       <AvatarViewerModal visible={avatarViewerVisible} onClose={handleCloseAvatarViewer} />
-      
-      {/* Menu de partage social flottant */}
-      <ShareFloatingButton />
+
+      {/* Bouton partage rond simple désactivé - utilisateur préfère l'ancien */}
+      {/* <ShareFloatingButton /> */}
 
       {/* MESSAGE DE MISE À JOUR ET DISCLAIMER PROFESSIONNEL (TON COMPOSANT) */}
       <UpdateChangelogModal
