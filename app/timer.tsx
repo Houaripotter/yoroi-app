@@ -363,11 +363,11 @@ export default function TimerScreen() {
       }
       setTimeRemaining(initialTime);
 
-      // Jouer le son de debut - gong pour combat, beep pour le reste
+      // Jouer le son de debut - gong pour combat, beep pour le reste (sans bloquer)
       if (mode === 'combat') {
-        await soundManager.playGong();
+        soundManager.playGong().catch(e => logger.error('Sound error:', e));
       } else {
-        await soundManager.playBeep();
+        soundManager.playBeep().catch(e => logger.error('Sound error:', e));
       }
 
       // Dynamic Island - Démarrer l'activité
@@ -376,9 +376,10 @@ export default function TimerScreen() {
       }
     }
 
-    // Garder l'ecran allume pendant le timer
-    await activateKeepAwakeAsync();
+    // Garder l'ecran allume pendant le timer (sans bloquer)
+    activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
 
+    // IMPORTANT: Démarrer le timer IMMÉDIATEMENT
     setTimerState('running');
   };
 
@@ -390,9 +391,9 @@ export default function TimerScreen() {
   };
 
   // Resume timer
-  const resumeTimer = async () => {
+  const resumeTimer = () => {
     triggerHaptic('light');
-    await activateKeepAwakeAsync();
+    activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
     setTimerState('running');
   };
 

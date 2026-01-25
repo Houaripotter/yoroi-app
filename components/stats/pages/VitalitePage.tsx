@@ -28,6 +28,8 @@ import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
 import { AppleHealthEstimationModal } from '../AppleHealthEstimationModal';
 import { EstimationBadge } from '../EstimationBadge';
+import { VitalityBetaWarningModal } from '../VitalityBetaWarningModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * Convertit les heures décimales en format lisible "Xh YYmin"
@@ -62,6 +64,9 @@ export const VitalitePage: React.FC = () => {
   // État pour la modal d'explication des estimations Apple
   const [showEstimationModal, setShowEstimationModal] = useState(false);
 
+  // État pour le modal d'avertissement bêta
+  const [showBetaWarning, setShowBetaWarning] = useState(false);
+
   const [vitalHistory, setVitalHistory] = useState<{
     sleep: any[];
     heartRate: any[];
@@ -70,7 +75,32 @@ export const VitalitePage: React.FC = () => {
 
   useEffect(() => {
     checkHealthKitConnection();
+    checkBetaWarning();
   }, []);
+
+  // Vérifier si on doit afficher l'avertissement bêta
+  const checkBetaWarning = async () => {
+    try {
+      const hasSeenWarning = await AsyncStorage.getItem('@yoroi_vitality_beta_warning_seen');
+      if (!hasSeenWarning) {
+        // Attendre 2 secondes après le chargement pour afficher le warning
+        setTimeout(() => {
+          setShowBetaWarning(true);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error checking beta warning:', error);
+    }
+  };
+
+  const handleCloseBetaWarning = async () => {
+    try {
+      await AsyncStorage.setItem('@yoroi_vitality_beta_warning_seen', 'true');
+      setShowBetaWarning(false);
+    } catch (error) {
+      console.error('Error saving beta warning:', error);
+    }
+  };
 
   useEffect(() => {
     if (isHealthKitConnected) {
@@ -652,6 +682,12 @@ export const VitalitePage: React.FC = () => {
       <AppleHealthEstimationModal
         visible={showEstimationModal}
         onClose={() => setShowEstimationModal(false)}
+      />
+
+      {/* Modal avertissement version bêta */}
+      <VitalityBetaWarningModal
+        visible={showBetaWarning}
+        onClose={handleCloseBetaWarning}
       />
     </ScrollView>
   );
