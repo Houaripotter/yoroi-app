@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,11 +18,13 @@ import {
   BarChart2,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SHARE_BUTTON_KEY = '@yoroi_stats_share_button_hidden';
 
 interface ShareOption {
   id: string;
@@ -35,7 +37,23 @@ interface ShareOption {
 export const HomeShareMenu: React.FC = () => {
   const { colors, isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const animation = useRef(new Animated.Value(0)).current;
+
+  // Vérifier si le bouton doit être affiché
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkVisibility = async () => {
+        try {
+          const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
+          setIsVisible(!hidden);
+        } catch (error) {
+          console.error('Error checking share button visibility:', error);
+        }
+      };
+      checkVisibility();
+    }, [])
+  );
 
   const toggleMenu = () => {
     const toValue = isOpen ? 0 : 1;
@@ -85,6 +103,9 @@ export const HomeShareMenu: React.FC = () => {
       colors: ['#10B981', '#059669'], // Green
     },
   ];
+
+  // Ne pas afficher si désactivé dans les réglages
+  if (!isVisible) return null;
 
   return (
     <View style={styles.container}>

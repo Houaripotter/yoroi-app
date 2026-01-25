@@ -70,6 +70,7 @@ import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
+import { HomeShareMenu } from '@/components/home/HomeShareMenu';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -2474,6 +2475,9 @@ export default function PlanningScreen() {
         onRated={handleRated}
         actionType="session"
       />
+
+      {/* Bouton de partage flottant */}
+      <HomeShareMenu />
 
       <PopupComponent />
       </View>

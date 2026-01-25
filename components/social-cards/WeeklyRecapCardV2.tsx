@@ -85,13 +85,13 @@ export const WeeklyRecapCardV2 = React.memo(forwardRef<View, WeeklyRecapCardV2Pr
     const calendarRowStyle = useMemo(() => ({ flexDirection: 'row' as const, justifyContent: 'space-around' as const, marginTop: 6 }), []);
     const dayContainerStyle = useMemo(() => ({ alignItems: 'center' as const, gap: 3 }), []);
     const dayNameStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 8, fontWeight: '900' as const }), []);
-    const dayDotBgStyle = useMemo((hasSessions: boolean) => ({
+    const dayDotBgStyle = (hasSessions: boolean) => ({
       backgroundColor: hasSessions ? GOLD_COLOR : (isWhite ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)')
-    }), [isWhite]);
-    const dayDotBorderStyle = useMemo((isToday: boolean) => ({
+    });
+    const dayDotBorderStyle = (isToday: boolean) => ({
       borderColor: isToday ? GOLD_COLOR : 'transparent',
       borderWidth: isToday ? 2 : 0
-    }), []);
+    });
     const daySessionsTextStyle = useMemo(() => ({ color: '#000', fontSize: 9, fontWeight: '900' as const }), []);
     const clubsMarginStyle = useMemo(() => ({ marginBottom: 6 }), []);
     const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
