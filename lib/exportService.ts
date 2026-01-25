@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { shareAsync } from 'expo-sharing';
+import { shareAsync, isAvailableAsync } from 'expo-sharing';
 import { getDocumentAsync } from 'expo-document-picker';
 import { captureRef } from 'react-native-view-shot';
 import { Platform, Alert } from 'react-native';
