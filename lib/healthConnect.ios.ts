@@ -1984,6 +1984,67 @@ class HealthConnectService {
   /**
    * Réinitialiser complètement la connexion et le cache
    */
+  /**
+   * ✏️ Écrire des données de sommeil dans Apple Santé
+   * Permet la saisie manuelle du sommeil
+   */
+  async writeSleepData(data: { startDate: Date; endDate: Date }): Promise<boolean> {
+    try {
+      if (!this.isConnected()) {
+        logger.error('[HealthKit] Not connected - cannot write sleep data');
+        return false;
+      }
+
+      const { startDate, endDate } = data;
+
+      // Validation
+      if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+        logger.error('[HealthKit] Invalid dates for sleep data');
+        return false;
+      }
+
+      if (endDate <= startDate) {
+        logger.error('[HealthKit] End date must be after start date');
+        return false;
+      }
+
+      const durationHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60);
+      if (durationHours > 16) {
+        logger.error('[HealthKit] Sleep duration too long (> 16h)');
+        return false;
+      }
+
+      if (durationHours < 0.1) {
+        logger.error('[HealthKit] Sleep duration too short (< 6min)');
+        return false;
+      }
+
+      logger.info('[HealthKit] Writing sleep data:', {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        duration: `${durationHours.toFixed(2)}h`,
+      });
+
+      // Utiliser ReactNativeHealthkit pour écrire le sommeil
+      const result = await ReactNativeHealthkit.saveSleepSample({
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        value: 'asleep', // Type de sommeil
+      });
+
+      if (result) {
+        logger.info('[HealthKit] ✅ Sleep data written successfully');
+        return true;
+      } else {
+        logger.error('[HealthKit] ❌ Failed to write sleep data');
+        return false;
+      }
+    } catch (error) {
+      logger.error('[HealthKit] Error writing sleep data:', error);
+      return false;
+    }
+  }
+
   async disconnect(): Promise<void> {
     try {
       await this.clearCache();
