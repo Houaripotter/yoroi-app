@@ -157,11 +157,11 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
     const progressPercentTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 12, fontWeight: '900' as const }), []);
     const durationBadgeStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 4, alignSelf: 'flex-end' as const }), []);
     const durationTextStyle = useMemo(() => ({ color: '#000', fontWeight: '900' as const, fontSize: 13 }), []);
-    const yearDaysSlashStyle = useMemo(() => ({ color: txt, fontSize: 13, fontWeight: '900' as const }), [txt]);
+    const yearDaysSlashStyle = { color: txt, fontSize: 13, fontWeight: '900' as const };
     const yearDaysNumberStyle = useMemo(() => ({ fontSize: 14 }), []);
     const detailsDividerGoldStyle = useMemo(() => ({ backgroundColor: GOLD_COLOR }), []);
     const scrollMaxHeightStyle = useMemo(() => ({ maxHeight: options && options.length > 7 ? 140 : undefined }), [options]);
-    const sportSeparatorMarginStyle = useMemo((i: number) => ({ marginTop: i > 0 ? 8 : 0, marginBottom: 6 }), []);
+    const sportSeparatorMarginStyle = (i: number) => ({ marginTop: i > 0 ? 8 : 0, marginBottom: 6 });
     const sportSeparatorTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, letterSpacing: 0.5 }), []);
     const exerciseRowBorderStyle = useMemo(() => ({ borderBottomColor: borderColor }), [borderColor]);
     const exerciseLabelStyle = useMemo(() => ({ color: txt }), [txt]);
