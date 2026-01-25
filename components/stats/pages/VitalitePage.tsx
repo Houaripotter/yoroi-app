@@ -109,7 +109,7 @@ export const VitalitePage: React.FC = () => {
         setVitalHistory({
           sleep: sleepHistory.map((s: any) => ({
             date: s.date,
-            value: s.duration || 0,
+            value: (s.duration || 0) / 60, // Convertir minutes en heures
           })).reverse(),
           heartRate: heartRateHistory.map((h: any) => ({
             date: h.date,
