@@ -296,7 +296,7 @@ struct SettingsView: View {
                         print("   - isConnected: \(WatchConnectivityManager.shared.isConnected)")
                         print("   - Pending Messages: \(WatchConnectivityManager.shared.pendingMessagesCount)")
                         print("   - Weight: \(healthManager.currentWeight)")
-                        print("   - Water: \(healthManager.todayWaterIntake)")
+                        print("   - Water: \(healthManager.waterIntake)")
                     }) {
                         Label("Afficher Logs", systemImage: "doc.text.magnifyingglass")
                             .font(.system(size: 12, weight: .semibold))
