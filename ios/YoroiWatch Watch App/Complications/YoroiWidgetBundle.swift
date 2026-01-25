@@ -1,13 +1,7 @@
 // ============================================
-// YOROI WATCH - Widget Bundle
-// Enregistre toutes les complications
+// YOROI WATCH - Widget Bundle (DÉSACTIVÉ)
 // ============================================
+// Ce fichier n'est plus utilisé - les complications sont dans YoroiComplications.swift
+// Le @main est dans YoroiWatchApp.swift uniquement
 
-#if os(watchOS)
-import WidgetKit
-import SwiftUI
-
-// ⚠️ PAS de @main ici - Les complications Watch sont auto-découvertes
-// Le @main est uniquement dans YoroiWatchApp.swift
-// Ce fichier n'est plus nécessaire avec watchOS 10+ - les widgets sont dans YoroiComplications.swift
-#endif
+// Fichier vide pour éviter les erreurs de compilation
