@@ -26,6 +26,8 @@ import { SLEEP_DURATION_RANGES, HRV_RANGES, RESTING_HEART_RATE_RANGES, getMetric
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
+import { AppleHealthEstimationModal } from '../AppleHealthEstimationModal';
+import { EstimationBadge } from '../EstimationBadge';
 
 /**
  * Convertit les heures décimales en format lisible "Xh YYmin"
@@ -56,6 +58,9 @@ export const VitalitePage: React.FC = () => {
     unit: string;
     icon: React.ReactNode;
   } | null>(null);
+
+  // État pour la modal d'explication des estimations Apple
+  const [showEstimationModal, setShowEstimationModal] = useState(false);
 
   const [vitalHistory, setVitalHistory] = useState<{
     sleep: any[];
@@ -309,6 +314,14 @@ export const VitalitePage: React.FC = () => {
         title={t('statsPages.vitality.sleep')}
         description={t('statsPages.clickToSeeChart')}
       >
+        {/* Badge Estimation Apple */}
+        <View style={{ marginBottom: 12 }}>
+          <EstimationBadge
+            onPress={() => setShowEstimationModal(true)}
+            variant="default"
+          />
+        </View>
+
         {healthData?.sleep?.phases && healthData.sleep.phases.length > 0 && (
           <SleepPhasesBar
             phases={healthData.sleep.phases}
@@ -390,6 +403,12 @@ export const VitalitePage: React.FC = () => {
           description={`${t('statsPages.vitality.sleepHistoryDesc')} ${getPeriodDescription(selectedPeriod)}`}
           containerStyle={{ paddingHorizontal: 0 }}
         >
+          <View style={{ paddingLeft: 16, marginBottom: 12 }}>
+            <EstimationBadge
+              onPress={() => setShowEstimationModal(true)}
+              variant="small"
+            />
+          </View>
           <View style={{ paddingLeft: 16 }}>
             <HistoryScrollCard
               data={vitalHistory.sleep}
@@ -628,6 +647,12 @@ export const VitalitePage: React.FC = () => {
           }
         />
       )}
+
+      {/* Modal explication estimations Apple */}
+      <AppleHealthEstimationModal
+        visible={showEstimationModal}
+        onClose={() => setShowEstimationModal(false)}
+      />
     </ScrollView>
   );
 };

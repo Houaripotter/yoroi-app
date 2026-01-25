@@ -148,11 +148,11 @@ export default function RootLayout() {
       try {
         logger.info('Yoroi - Initialisation...');
 
-        // Initialiser la base de donnees SQLite
+        // ✅ CRITIQUE: Initialiser la base de donnees SQLite
         await initDatabase();
         logger.info('Base de donnees initialisee');
 
-        // Vérifier et créer la table events_catalog si elle n'existe pas
+        // ✅ CRITIQUE: Vérifier et créer la table events_catalog si elle n'existe pas
         try {
           const { openDatabase } = await import('@/lib/database');
           const db = await openDatabase();
@@ -190,44 +190,51 @@ export default function RootLayout() {
           logger.error('Erreur création table events_catalog:', err);
         }
 
-        // Importer le catalogue d'événements sportifs (IBJJF, HYROX, etc.)
-        // Attendre 1 seconde pour être sûr que la table est créée
-        setTimeout(async () => {
-          try {
-            await importEventsFromJSON();
-            logger.info('✅ Catalogue d\'événements importé avec succès');
-          } catch (err) {
-            logger.error('❌ Erreur import événements:', err);
-          }
-        }, 1000);
+        // ✅ APP READY - Afficher l'écran principal IMMÉDIATEMENT
+        setIsReady(true);
 
-        // Migrer le système d'avatars V2
-        await migrateAvatarSystem();
-        logger.info('Migration avatars effectuee');
+        // ⏳ DIFFÉRÉ: Opérations non-critiques en arrière-plan (n'attendent pas)
+        // Ces opérations se lancent APRÈS que l'app soit visible
+        setTimeout(() => {
+          // Import événements
+          importEventsFromJSON()
+            .then(() => logger.info('✅ Catalogue événements importé'))
+            .catch(err => logger.error('❌ Erreur import événements:', err));
 
-        // Auto-import des compétitions IBJJF et CFJJB au premier lancement
-        await autoImportCompetitionsOnFirstLaunch();
+          // Migration avatars
+          migrateAvatarSystem()
+            .then(() => logger.info('✅ Migration avatars effectuée'))
+            .catch(err => logger.error('❌ Erreur migration avatars:', err));
 
-        // Initialiser le service de notifications
-        const notifInitialized = await notificationService.initialize();
-        if (notifInitialized) {
-          logger.info('Service de notifications initialisé');
-        } else {
-          logger.warn('Service de notifications non disponible (simulateur ou permissions refusées)');
-        }
+          // Auto-import compétitions
+          autoImportCompetitionsOnFirstLaunch()
+            .then(() => logger.info('✅ Auto-import compétitions effectué'))
+            .catch(err => logger.error('❌ Erreur auto-import:', err));
 
-        // Initialiser les notifications de citations (replanifie si nécessaire)
-        await initCitationNotifications();
-        logger.info('Notifications citations initialisées');
+          // Notifications
+          notificationService.initialize()
+            .then(success => {
+              if (success) {
+                logger.info('✅ Service notifications initialisé');
+                // Citations
+                return initCitationNotifications();
+              } else {
+                logger.warn('⚠️ Notifications non disponibles');
+              }
+            })
+            .then(() => logger.info('✅ Notifications citations initialisées'))
+            .catch(err => logger.error('❌ Erreur notifications:', err));
 
-        // Initialiser les conseils santé du soir
-        await initHealthTipNotifications();
-        logger.info('Conseils santé initialisés');
+          // Conseils santé
+          initHealthTipNotifications()
+            .then(() => logger.info('✅ Conseils santé initialisés'))
+            .catch(err => logger.error('❌ Erreur conseils santé:', err));
+        }, 500); // Délai de 500ms pour laisser l'UI se render d'abord
 
       } catch (error) {
-        logger.error('❌ Erreur initialisation', error);
+        logger.error('❌ Erreur initialisation critique', error);
+        setIsReady(true); // Afficher l'app quand même en cas d'erreur
       }
-      setIsReady(true);
     };
 
     init();

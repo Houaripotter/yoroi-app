@@ -41,12 +41,14 @@ export const HomeShareMenu: React.FC = () => {
   const animation = useRef(new Animated.Value(0)).current;
 
   // Vérifier si le bouton doit être affiché
+  // MASQUÉ PAR DÉFAUT - User trouve le bouton dérangeant
   useFocusEffect(
     React.useCallback(() => {
       const checkVisibility = async () => {
         try {
           const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
-          setIsVisible(!hidden);
+          // Pour afficher le bouton, il faut explicitement mettre 'false' dans AsyncStorage
+          setIsVisible(hidden === 'false');
         } catch (error) {
           console.error('Error checking share button visibility:', error);
         }
