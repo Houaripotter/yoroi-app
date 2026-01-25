@@ -30,6 +30,8 @@ import { AppleHealthEstimationModal } from '../AppleHealthEstimationModal';
 import { EstimationBadge } from '../EstimationBadge';
 import { VitalityBetaWarningModal } from '../VitalityBetaWarningModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { Plus } from 'lucide-react-native';
 
 /**
  * Convertit les heures décimales en format lisible "Xh YYmin"
@@ -344,8 +346,19 @@ export const VitalitePage: React.FC = () => {
         title={t('statsPages.vitality.sleep')}
         description={t('statsPages.clickToSeeChart')}
       >
-        {/* Badge Estimation Apple */}
-        <View style={{ marginBottom: 12 }}>
+        {/* Bouton saisir sommeil + Badge Estimation */}
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+          <TouchableOpacity
+            style={[styles.addSleepButton, { backgroundColor: colors.accent }]}
+            onPress={() => router.push('/sleep-input')}
+            activeOpacity={0.8}
+          >
+            <Plus size={16} color={colors.textOnAccent} strokeWidth={2.5} />
+            <Text style={[styles.addSleepButtonText, { color: colors.textOnAccent }]}>
+              Saisir mon sommeil
+            </Text>
+          </TouchableOpacity>
+
           <EstimationBadge
             onPress={() => setShowEstimationModal(true)}
             variant="default"
@@ -716,5 +729,23 @@ const styles = StyleSheet.create({
   hydrationContainer: {
     alignItems: 'center',
     marginBottom: 24,
+  },
+  addSleepButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  addSleepButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });
