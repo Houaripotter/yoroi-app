@@ -416,7 +416,7 @@ export default function BadgesScreen() {
                     colors={gradients.gold}
                     style={styles.xpBadge}
                   >
-                    <Text style={[styles.xpValue, { color: colors.background }]}>
+                    <Text style={[styles.xpValue, { color: '#1A1A1A' }]}>
                       +{selectedBadge.badge.xpReward} XP
                     </Text>
                   </LinearGradient>
