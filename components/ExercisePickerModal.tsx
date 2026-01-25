@@ -8,6 +8,8 @@ import {
   TextInput,
   ScrollView,
   Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { X, Plus, Search } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
@@ -69,11 +71,15 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
       animationType="slide"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable
-          style={[styles.modalContainer, { backgroundColor: colors.card }]}
-          onPress={(e) => e.stopPropagation()}
-        >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <Pressable style={styles.overlay} onPress={onClose}>
+          <Pressable
+            style={[styles.modalContainer, { backgroundColor: colors.card }]}
+            onPress={(e) => e.stopPropagation()}
+          >
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>
@@ -220,6 +226,7 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
           )}
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

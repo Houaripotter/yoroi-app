@@ -43,6 +43,7 @@ export const MensurationsPage: React.FC = () => {
   const [measurementHistory, setMeasurementHistory] = useState<{
     chest: any[];
     waist: any[];
+    navel: any[];
     hips: any[];
     shoulders: any[];
     left_arm: any[];
@@ -53,7 +54,7 @@ export const MensurationsPage: React.FC = () => {
     right_calf: any[];
     neck: any[];
   }>({
-    chest: [], waist: [], hips: [], shoulders: [],
+    chest: [], waist: [], navel: [], hips: [], shoulders: [],
     left_arm: [], right_arm: [],
     left_thigh: [], right_thigh: [],
     left_calf: [], right_calf: [],
@@ -99,7 +100,7 @@ export const MensurationsPage: React.FC = () => {
           .filter((m: any) => new Date(m.date) >= cutoffDate)
           .reverse();
 
-        const fields = ['chest', 'waist', 'hips', 'shoulders', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck'];
+        const fields = ['chest', 'waist', 'navel', 'hips', 'shoulders', 'left_arm', 'right_arm', 'left_thigh', 'right_thigh', 'left_calf', 'right_calf', 'neck'];
         const history: any = {};
 
         fields.forEach(field => {
@@ -235,6 +236,26 @@ export const MensurationsPage: React.FC = () => {
         </View>
 
         <View style={styles.grid}>
+          <TouchableOpacity
+            style={styles.gridItem}
+            onPress={() => setSelectedMetric({
+              key: 'navel',
+              label: t('statsPages.measurements.navel'),
+              color: '#9333EA',
+              unit: 'cm',
+              icon: <Ruler size={18} color="#9333EA" strokeWidth={2.5} />,
+            })}
+            activeOpacity={0.7}
+          >
+            <MetricCard
+              label={t('statsPages.measurements.navel')}
+              value={latestMeasurement?.navel || 0}
+              unit="cm"
+              icon={<Ruler size={24} color="#9333EA" strokeWidth={2.5} />}
+              color="#9333EA"
+            />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.gridItem}
             onPress={() => setSelectedMetric({
