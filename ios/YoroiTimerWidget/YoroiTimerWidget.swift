@@ -1,230 +1,143 @@
-/**
- * YoroiTimerWidget.swift
- * Widget Extension pour afficher le Timer dans le Dynamic Island
- *
- * IMPORTANT: Ce fichier doit faire partie d'une Widget Extension Target dans Xcode
- * Instructions complètes dans: /ios/DYNAMIC_ISLAND_SETUP.md
- */
+//
+//  YoroiTimerWidget.swift
+//  YoroiTimerWidget
+//
+//  Widget statique pour le Home Screen
+//
 
-import ActivityKit
 import WidgetKit
 import SwiftUI
 
 // ============================================
-// Vues pour le Dynamic Island
+// WIDGET STATIQUE (HOME SCREEN)
 // ============================================
 
-// Vue COMPACTE - Affichée quand le Dynamic Island est réduit
-struct CompactView: View {
-  let context: ActivityViewContext<TimerAttributes>
-
-  var body: some View {
-    HStack(spacing: 4) {
-      // Icône du mode
-      Image(systemName: getModeIcon(context.state.mode))
-        .font(.system(size: 14, weight: .bold))
-        .foregroundColor(.white)
-
-      // Temps restant
-      Text(formatTime(context.state.remainingTime))
-        .font(.system(size: 13, weight: .bold))
-        .foregroundColor(.white)
+struct Provider: TimelineProvider {
+    func placeholder(in context: Context) -> SimpleEntry {
+        SimpleEntry(date: Date(), workoutsToday: 0, streakDays: 0)
     }
-  }
-}
 
-// Vue MINIMALE - Affichée dans la capsule du Dynamic Island
-struct MinimalView: View {
-  let context: ActivityViewContext<TimerAttributes>
-
-  var body: some View {
-    Image(systemName: getModeIcon(context.state.mode))
-      .font(.system(size: 12, weight: .bold))
-      .foregroundColor(.white)
-  }
-}
-
-// Vue ÉTENDUE - Affichée quand l'utilisateur appuie sur le Dynamic Island
-struct ExpandedView: View {
-  let context: ActivityViewContext<TimerAttributes>
-
-  var body: some View {
-    VStack(spacing: 12) {
-      // Header avec nom du mode et round
-      HStack {
-        Image(systemName: getModeIcon(context.state.mode))
-          .font(.system(size: 20, weight: .bold))
-          .foregroundColor(.white)
-
-        Text(context.attributes.timerName)
-          .font(.system(size: 16, weight: .bold))
-          .foregroundColor(.white)
-
-        Spacer()
-
-        if let roundNumber = context.state.roundNumber,
-           let totalRounds = context.state.totalRounds {
-          Text("Round \(roundNumber)/\(totalRounds)")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(.white.opacity(0.8))
-        }
-      }
-
-      // Barre de progression
-      GeometryReader { geometry in
-        ZStack(alignment: .leading) {
-          // Background
-          RoundedRectangle(cornerRadius: 8)
-            .fill(Color.white.opacity(0.2))
-            .frame(height: 12)
-
-          // Progress
-          RoundedRectangle(cornerRadius: 8)
-            .fill(
-              context.state.isResting
-                ? Color.blue
-                : Color.green
-            )
-            .frame(
-              width: geometry.size.width * CGFloat(context.state.remainingTime) / CGFloat(context.state.totalTime),
-              height: 12
-            )
-        }
-      }
-      .frame(height: 12)
-
-      // Temps restant (grand)
-      HStack(alignment: .firstTextBaseline, spacing: 4) {
-        Text(formatTime(context.state.remainingTime))
-          .font(.system(size: 36, weight: .bold, design: .rounded))
-          .foregroundColor(.white)
-
-        if context.state.isResting {
-          Text("REPOS")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.blue)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.blue.opacity(0.2))
-            .cornerRadius(6)
-        } else {
-          Text("TRAVAIL")
-            .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.green)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.green.opacity(0.2))
-            .cornerRadius(6)
-        }
-      }
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+        let entry = SimpleEntry(date: Date(), workoutsToday: 0, streakDays: 0)
+        completion(entry)
     }
-    .padding(.horizontal, 16)
-    .padding(.vertical, 12)
-  }
-}
 
-// Vue de LOCK SCREEN - Affichée sur l'écran de verrouillage
-struct LockScreenView: View {
-  let context: ActivityViewContext<TimerAttributes>
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
+        var entries: [SimpleEntry] = []
 
-  var body: some View {
-    VStack(spacing: 8) {
-      HStack {
-        Image(systemName: getModeIcon(context.state.mode))
-          .font(.system(size: 16, weight: .bold))
-
-        Text(context.attributes.timerName)
-          .font(.system(size: 14, weight: .semibold))
-
-        Spacer()
-      }
-
-      HStack {
-        Text(formatTime(context.state.remainingTime))
-          .font(.system(size: 24, weight: .bold, design: .rounded))
-
-        Spacer()
-
-        if context.state.isResting {
-          Text("REPOS")
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(.blue)
+        // Mise à jour toutes les heures
+        let currentDate = Date()
+        for hourOffset in 0 ..< 5 {
+            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
+            let entry = SimpleEntry(date: entryDate, workoutsToday: 0, streakDays: 0)
+            entries.append(entry)
         }
 
-        if let roundNumber = context.state.roundNumber,
-           let totalRounds = context.state.totalRounds {
-          Text("\(roundNumber)/\(totalRounds)")
-            .font(.system(size: 12, weight: .semibold))
-        }
-      }
+        let timeline = Timeline(entries: entries, policy: .atEnd)
+        completion(timeline)
     }
-  }
 }
 
-// ============================================
-// Configuration du Widget
-// ============================================
-@main
+struct SimpleEntry: TimelineEntry {
+    let date: Date
+    let workoutsToday: Int
+    let streakDays: Int
+}
+
+struct YoroiTimerWidgetEntryView : View {
+    var entry: Provider.Entry
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Header
+            HStack {
+                Image(systemName: "flame.fill")
+                    .foregroundColor(.orange)
+                    .font(.system(size: 16, weight: .bold))
+
+                Text("YOROI")
+                    .font(.system(size: 14, weight: .black))
+                    .foregroundColor(.white)
+
+                Spacer()
+            }
+
+            Spacer()
+
+            // Stats
+            HStack(spacing: 20) {
+                VStack(spacing: 4) {
+                    Text("\(entry.workoutsToday)")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+
+                    Text("Workouts")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(.gray)
+                }
+
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 1, height: 40)
+
+                VStack(spacing: 4) {
+                    Text("\(entry.streakDays)")
+                        .font(.system(size: 24, weight: .heavy, design: .rounded))
+                        .foregroundColor(.orange)
+
+                    Text("Streak")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(.gray)
+                }
+            }
+
+            Spacer()
+
+            // Footer
+            Text(entry.date, style: .time)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.gray.opacity(0.6))
+        }
+        .padding()
+    }
+}
+
 struct YoroiTimerWidget: Widget {
-  var body: some WidgetConfiguration {
-    ActivityConfiguration(for: TimerAttributes.self) { context in
-      // Lock Screen View
-      LockScreenView(context: context)
-        .activityBackgroundTint(Color.black.opacity(0.5))
-        .activitySystemActionForegroundColor(Color.white)
+    let kind: String = "YoroiTimerWidget"
 
-    } dynamicIsland: { context in
-      DynamicIsland {
-        // Vue étendue (quand on appuie sur le Dynamic Island)
-        DynamicIslandExpandedRegion(.center) {
-          ExpandedView(context: context)
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            if #available(iOS 17.0, *) {
+                YoroiTimerWidgetEntryView(entry: entry)
+                    .containerBackground(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.black, Color.gray.opacity(0.8)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        for: .widget
+                    )
+            } else {
+                YoroiTimerWidgetEntryView(entry: entry)
+                    .padding()
+                    .background(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.black, Color.gray.opacity(0.8)]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
         }
-      } compactLeading: {
-        // Côté gauche de la vue compacte
-        Image(systemName: getModeIcon(context.state.mode))
-          .font(.system(size: 14, weight: .bold))
-          .foregroundColor(.white)
-      } compactTrailing: {
-        // Côté droit de la vue compacte
-        Text(formatTime(context.state.remainingTime))
-          .font(.system(size: 13, weight: .bold))
-          .foregroundColor(.white)
-      } minimal: {
-        // Vue minimale (icône seulement)
-        MinimalView(context: context)
-      }
-      .contentMargins(.horizontal, 12, for: .expanded)
+        .configurationDisplayName("Yoroi Stats")
+        .description("Vois tes stats d'entraînement rapidement")
+        .supportedFamilies([.systemSmall])
     }
-  }
 }
 
-// ============================================
-// Helpers
-// ============================================
-
-// Formater le temps en MM:SS
-func formatTime(_ seconds: Int) -> String {
-  let minutes = seconds / 60
-  let secs = seconds % 60
-  return String(format: "%d:%02d", minutes, secs)
-}
-
-// Obtenir l'icône SF Symbol selon le mode
-func getModeIcon(_ mode: String) -> String {
-  switch mode {
-  case "combat":
-    return "figure.boxing"
-  case "musculation":
-    return "dumbbell.fill"
-  case "tabata":
-    return "timer"
-  case "hiit":
-    return "flame.fill"
-  case "emom":
-    return "clock.fill"
-  case "amrap":
-    return "repeat"
-  default:
-    return "timer"
-  }
+#Preview(as: .systemSmall) {
+    YoroiTimerWidget()
+} timeline: {
+    SimpleEntry(date: .now, workoutsToday: 3, streakDays: 7)
+    SimpleEntry(date: .now, workoutsToday: 0, streakDays: 0)
 }

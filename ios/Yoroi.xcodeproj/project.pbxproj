@@ -14,6 +14,9 @@
 		5A4FEF97B9E1CD1264B36DF9 /* WatchConnectivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = BE53A28C46EDA8231701DDDE /* WatchConnectivityBridge.m */; };
 		84E5E72A594D6616984C503F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */; };
 		97493F412F1D10E400CC3C63 /* YoroiWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		978975A82F26964100670B23 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 978975A72F26964100670B23 /* WidgetKit.framework */; };
+		978975AA2F26964100670B23 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 978975A92F26964100670B23 /* SwiftUI.framework */; };
+		978975B92F26964400670B23 /* YoroiTimerWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 978975A62F26964100670B23 /* YoroiTimerWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B64A9174D61CA6826A1941F4 /* WatchConnectivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		CB2E1F97A908BAB7451766D5 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D5F367AE9C109447BE323B55 /* PrivacyInfo.xcprivacy */; };
@@ -42,6 +45,13 @@
 			remoteGlobalIDString = 97493F3F2F1D10E400CC3C63;
 			remoteInfo = "YoroiWatch Watch App";
 		};
+		978975B72F26964400670B23 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 978975A52F26964100670B23;
+			remoteInfo = YoroiTimerWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -56,6 +66,17 @@
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		978975BA2F26964400670B23 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				978975B92F26964400670B23 /* YoroiTimerWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +89,9 @@
 		97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YoroiWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		97493F4F2F1D10E500CC3C63 /* YoroiWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YoroiWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		97493F592F1D10E500CC3C63 /* YoroiWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YoroiWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		978975A62F26964100670B23 /* YoroiTimerWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = YoroiTimerWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		978975A72F26964100670B23 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		978975A92F26964100670B23 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Yoroi/SplashScreen.storyboard; sourceTree = "<group>"; };
 		AAAD64A3063ADB127BA85437 /* libPods-Yoroi.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Yoroi.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AEFFBA0DAE43D99E69BCEC64 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Yoroi/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
@@ -79,6 +103,16 @@
 		F11748442D0722820044C1D9 /* Yoroi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Yoroi-Bridging-Header.h"; path = "Yoroi/Yoroi-Bridging-Header.h"; sourceTree = "<group>"; };
 		F318D918766FFC115B8DA833 /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WatchConnectivityBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		978975BD2F26964400670B23 /* Exceptions for "YoroiTimerWidget" folder in "YoroiTimerWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 978975A52F26964100670B23 /* YoroiTimerWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */ = {
@@ -114,6 +148,18 @@
 			path = "YoroiWatch Watch AppUITests";
 			sourceTree = "<group>";
 		};
+		978975AB2F26964100670B23 /* YoroiTimerWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				978975BD2F26964400670B23 /* Exceptions for "YoroiTimerWidget" folder in "YoroiTimerWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = YoroiTimerWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +189,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		978975A32F26964100670B23 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				978975AA2F26964100670B23 /* SwiftUI.framework in Frameworks */,
+				978975A82F26964100670B23 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,6 +234,8 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				AAAD64A3063ADB127BA85437 /* libPods-Yoroi.a */,
+				978975A72F26964100670B23 /* WidgetKit.framework */,
+				978975A92F26964100670B23 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -206,6 +263,7 @@
 				97493F442F1D10E400CC3C63 /* YoroiWatch Watch App */,
 				97493F522F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
 				97493F5C2F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
+				978975AB2F26964100670B23 /* YoroiTimerWidget */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				169A522525B0F3110718B655 /* Pods */,
@@ -224,6 +282,7 @@
 				97493F402F1D10E400CC3C63 /* YoroiWatch Watch App.app */,
 				97493F4F2F1D10E500CC3C63 /* YoroiWatch Watch AppTests.xctest */,
 				97493F592F1D10E500CC3C63 /* YoroiWatch Watch AppUITests.xctest */,
+				978975A62F26964100670B23 /* YoroiTimerWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -260,10 +319,12 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				93D44DDE428D4ED75542F07D /* [CP] Embed Pods Frameworks */,
+				978975BA2F26964400670B23 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				978975B82F26964400670B23 /* PBXTargetDependency */,
 			);
 			name = Yoroi;
 			productName = Yoroi;
@@ -350,6 +411,26 @@
 			productReference = 97493F592F1D10E500CC3C63 /* YoroiWatch Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		978975A52F26964100670B23 /* YoroiTimerWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 978975BE2F26964400670B23 /* Build configuration list for PBXNativeTarget "YoroiTimerWidgetExtension" */;
+			buildPhases = (
+				978975A22F26964100670B23 /* Sources */,
+				978975A32F26964100670B23 /* Frameworks */,
+				978975A42F26964100670B23 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				978975AB2F26964100670B23 /* YoroiTimerWidget */,
+			);
+			name = YoroiTimerWidgetExtension;
+			productName = YoroiTimerWidgetExtension;
+			productReference = 978975A62F26964100670B23 /* YoroiTimerWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -377,6 +458,9 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 97493F3F2F1D10E400CC3C63;
 					};
+					978975A52F26964100670B23 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Yoroi" */;
@@ -397,6 +481,7 @@
 				97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */,
 				97493F4E2F1D10E500CC3C63 /* YoroiWatch Watch AppTests */,
 				97493F582F1D10E500CC3C63 /* YoroiWatch Watch AppUITests */,
+				978975A52F26964100670B23 /* YoroiTimerWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -436,6 +521,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		97493F572F1D10E500CC3C63 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		978975A42F26964100670B23 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -569,11 +661,13 @@
 				"${PODS_ROOT}/Target Support Files/Pods-Yoroi/Pods-Yoroi-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -622,6 +716,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		978975A22F26964100670B23 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -639,6 +740,11 @@
 			isa = PBXTargetDependency;
 			target = 97493F3F2F1D10E400CC3C63 /* YoroiWatch Watch App */;
 			targetProxy = 97493F5A2F1D10E500CC3C63 /* PBXContainerItemProxy */;
+		};
+		978975B82F26964400670B23 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 978975A52F26964100670B23 /* YoroiTimerWidgetExtension */;
+			targetProxy = 978975B72F26964400670B23 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1154,6 +1260,96 @@
 			};
 			name = Release;
 		};
+		978975BB2F26964400670B23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YoroiTimerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YoroiTimerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.YoroiTimerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		978975BC2F26964400670B23 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = YoroiTimerWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = YoroiTimerWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.houari.yoroi.YoroiTimerWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1207,6 +1403,15 @@
 			buildConfigurations = (
 				97493F6C2F1D10E500CC3C63 /* Debug */,
 				97493F6D2F1D10E500CC3C63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		978975BE2F26964400670B23 /* Build configuration list for PBXNativeTarget "YoroiTimerWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				978975BB2F26964400670B23 /* Debug */,
+				978975BC2F26964400670B23 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
