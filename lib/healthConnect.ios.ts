@@ -2045,6 +2045,161 @@ class HealthConnectService {
     }
   }
 
+  /**
+   * 🌙 Récupérer les détails complets du sommeil (phases, interruptions, qualité)
+   * Retourne toutes les données disponibles dans Apple Santé
+   */
+  async getSleepDetails(fromDate: Date, toDate: Date): Promise<{
+    totalDuration: number; // Durée totale en heures
+    stages: {
+      asleep: number; // Sommeil total (non spécifié)
+      awake: number; // Éveillé
+      core: number; // Sommeil léger
+      deep: number; // Sommeil profond
+      rem: number; // Sommeil paradoxal (REM)
+      inBed: number; // Au lit (mais pas endormi)
+    };
+    interruptions: number; // Nombre de fois réveillé
+    efficiency: number; // % de temps vraiment endormi (0-100)
+    bedTime: string | null; // Heure de coucher (ISO string)
+    wakeTime: string | null; // Heure de réveil (ISO string)
+    source: string; // "iPhone" ou "Apple Watch"
+  } | null> {
+    try {
+      if (!this.isConnected()) {
+        logger.error('[HealthKit] Not connected - cannot get sleep details');
+        return null;
+      }
+
+      logger.info('[HealthKit] Fetching sleep details from', fromDate, 'to', toDate);
+
+      // Récupérer tous les échantillons de sommeil
+      const samples = await ReactNativeHealthkit.querySamples({
+        identifier: 'HKCategoryTypeIdentifierSleepAnalysis',
+        from: fromDate.toISOString(),
+        to: toDate.toISOString(),
+        limit: 1000,
+        ascending: false,
+      });
+
+      if (!samples || samples.length === 0) {
+        logger.info('[HealthKit] No sleep data found');
+        return null;
+      }
+
+      logger.info(`[HealthKit] Found ${samples.length} sleep samples`);
+
+      // Initialiser les compteurs
+      const stages = {
+        asleep: 0,
+        awake: 0,
+        core: 0,
+        deep: 0,
+        rem: 0,
+        inBed: 0,
+      };
+
+      let interruptions = 0;
+      let bedTime: Date | null = null;
+      let wakeTime: Date | null = null;
+      let source = 'iPhone';
+
+      // Analyser chaque échantillon
+      for (const sample of samples) {
+        const start = new Date(sample.startDate);
+        const end = new Date(sample.endDate);
+        const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+
+        // Déterminer la source (Apple Watch vs iPhone)
+        if (sample.sourceName && sample.sourceName.toLowerCase().includes('watch')) {
+          source = 'Apple Watch';
+        }
+
+        // Première et dernière fois
+        if (!bedTime || start < bedTime) bedTime = start;
+        if (!wakeTime || end > wakeTime) wakeTime = end;
+
+        // Compter par type de sommeil
+        // Les valeurs possibles sont: 'inBed', 'asleep', 'awake', 'core', 'deep', 'rem'
+        const value = sample.value;
+
+        switch (value) {
+          case 'inBed':
+          case 'InBed':
+            stages.inBed += durationMinutes;
+            break;
+
+          case 'asleep':
+          case 'Asleep':
+          case 'asleepUnspecified':
+            stages.asleep += durationMinutes;
+            break;
+
+          case 'awake':
+          case 'Awake':
+            stages.awake += durationMinutes;
+            interruptions++;
+            break;
+
+          case 'core':
+          case 'Core':
+          case 'asleepCore':
+            stages.core += durationMinutes;
+            break;
+
+          case 'deep':
+          case 'Deep':
+          case 'asleepDeep':
+            stages.deep += durationMinutes;
+            break;
+
+          case 'rem':
+          case 'REM':
+          case 'asleepREM':
+            stages.rem += durationMinutes;
+            break;
+
+          default:
+            logger.warn(`[HealthKit] Unknown sleep value: ${value}`);
+            stages.asleep += durationMinutes;
+        }
+      }
+
+      // Convertir minutes en heures
+      const totalSleepMinutes = stages.asleep + stages.core + stages.deep + stages.rem;
+      const totalInBedMinutes = stages.inBed > 0 ? stages.inBed : totalSleepMinutes + stages.awake;
+
+      // Calculer l'efficacité (% de temps vraiment endormi)
+      const efficiency = totalInBedMinutes > 0
+        ? (totalSleepMinutes / totalInBedMinutes) * 100
+        : 0;
+
+      const result = {
+        totalDuration: totalSleepMinutes / 60, // Convertir en heures
+        stages: {
+          asleep: stages.asleep / 60,
+          awake: stages.awake / 60,
+          core: stages.core / 60,
+          deep: stages.deep / 60,
+          rem: stages.rem / 60,
+          inBed: stages.inBed / 60,
+        },
+        interruptions: Math.max(0, interruptions - 1), // -1 car le réveil final n'est pas une interruption
+        efficiency: Math.round(efficiency),
+        bedTime: bedTime ? bedTime.toISOString() : null,
+        wakeTime: wakeTime ? wakeTime.toISOString() : null,
+        source,
+      };
+
+      logger.info('[HealthKit] Sleep details:', result);
+
+      return result;
+    } catch (error) {
+      logger.error('[HealthKit] Error getting sleep details:', error);
+      return null;
+    }
+  }
+
   async disconnect(): Promise<void> {
     try {
       await this.clearCache();
