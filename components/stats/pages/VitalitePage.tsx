@@ -117,10 +117,12 @@ export const VitalitePage: React.FC = () => {
         const hrvHistory = await healthConnect.getHRVHistory?.(days) || [];
 
         // Filtrer les données invalides (trop élevées ou manifestement fausses)
+        // Cohérence avec healthConnect.ios.ts ligne 691: rejeter < 3h et > 16h
         const validSleepHistory = sleepHistory.filter((s: any) => {
           const hours = (s.duration || 0) / 60;
-          // Rejeter les données invalides (> 16h ou < 1h)
-          return hours >= 1 && hours <= 16;
+          // Rejeter les données invalides (> 16h ou < 3h)
+          // Apple Santé estime parfois des micro-siestes < 3h qui ne sont pas des vraies nuits
+          return hours >= 3 && hours <= 16;
         });
 
         setVitalHistory({
@@ -386,15 +388,18 @@ export const VitalitePage: React.FC = () => {
         <StatsSection
           title={t('statsPages.vitality.sleepHistory')}
           description={`${t('statsPages.vitality.sleepHistoryDesc')} ${getPeriodDescription(selectedPeriod)}`}
+          containerStyle={{ paddingHorizontal: 0 }}
         >
-          <HistoryScrollCard
-            data={vitalHistory.sleep}
-            unit="h"
-            healthRange={SLEEP_DURATION_RANGES}
-            color="#6366F1"
-            getStatus={(value) => getMetricStatus(value, SLEEP_DURATION_RANGES)}
-            formatValue={formatSleepDuration}
-          />
+          <View style={{ paddingLeft: 16 }}>
+            <HistoryScrollCard
+              data={vitalHistory.sleep}
+              unit="h"
+              healthRange={SLEEP_DURATION_RANGES}
+              color="#6366F1"
+              getStatus={(value) => getMetricStatus(value, SLEEP_DURATION_RANGES)}
+              formatValue={formatSleepDuration}
+            />
+          </View>
         </StatsSection>
       )}
 

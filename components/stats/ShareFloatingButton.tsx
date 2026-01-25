@@ -141,7 +141,9 @@ export const ShareFloatingButton: React.FC = () => {
   const checkVisibility = async () => {
     try {
       const hidden = await AsyncStorage.getItem(STORAGE_KEY);
-      if (!hidden) {
+      // MASQUÉ PAR DÉFAUT - User trouve le bouton pulsant dérangeant
+      // Pour l'afficher, il faut explicitement mettre 'false' dans AsyncStorage
+      if (hidden === 'false') {
         setIsHidden(false);
         // Animation d'entrée
         Animated.spring(slideAnim, {
