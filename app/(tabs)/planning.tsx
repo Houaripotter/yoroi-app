@@ -616,6 +616,33 @@ export default function PlanningScreen() {
     }
   }, [savedExternalEventIds, addExternalEventToSaved, removeExternalEventFromSaved]);
 
+  // ============================================
+  // OPTIMISATION: Calcul des événements groupés
+  // Éviter de recalculer à chaque render
+  // ============================================
+  const groupedEvents = useMemo(() => {
+    // Filtrer événements futurs
+    const futureEvents = savedExternalEvents.filter(event => {
+      const eventDate = new Date(event.date_start);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= today;
+    }).sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
+
+    // Grouper par sport_tag
+    const groupedBySport: Record<string, typeof futureEvents> = {};
+    futureEvents.forEach(event => {
+      const sport = event.sport_tag || 'autre';
+      if (!groupedBySport[sport]) {
+        groupedBySport[sport] = [];
+      }
+      groupedBySport[sport].push(event);
+    });
+
+    return { futureEvents, groupedBySport };
+  }, [savedExternalEvents]);
+
   // Open external event link
   const handleOpenExternalEvent = useCallback((link: string) => {
     if (link) {
@@ -1627,49 +1654,23 @@ export default function PlanningScreen() {
                 {/* Liste des RDV ajoutés */}
                 {savedExternalEvents.length > 0 ? (
                   <>
-                    {/* Grouper les événements par sport */}
-                    {(() => {
-                      const futureEvents = savedExternalEvents.filter(event => {
-                        const eventDate = new Date(event.date_start);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        eventDate.setHours(0, 0, 0, 0);
-                        return eventDate >= today;
-                      }).sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
-
-                      // Grouper par sport_tag
-                      const groupedBySport: Record<string, typeof futureEvents> = {};
-                      futureEvents.forEach(event => {
-                        const sport = event.sport_tag || 'autre';
-                        if (!groupedBySport[sport]) {
-                          groupedBySport[sport] = [];
-                        }
-                        groupedBySport[sport].push(event);
-                      });
-
+                    {/* Grouper les événements par sport - OPTIMISÉ avec useMemo */}
+                    {Object.keys(groupedEvents.groupedBySport).map(sportKey => {
                       // Get sport info from sports.ts
-                      const getSportInfo = (sportTag: string) => {
-                        const sport = getSportById(sportTag);
-                        if (sport) {
-                          return {
-                            label: sport.name,
-                            icon: sport.icon,
-                            color: sport.color,
-                          };
-                        }
-                        // Fallback pour les sports non trouvés
-                        return {
-                          label: sportTag.charAt(0).toUpperCase() + sportTag.slice(1),
-                          icon: 'trophy',
-                          color: '#6B7280',
-                        };
+                      const sport = getSportById(sportKey);
+                      const sportInfo = sport ? {
+                        label: sport.name,
+                        icon: sport.icon,
+                        color: sport.color,
+                      } : {
+                        label: sportKey.charAt(0).toUpperCase() + sportKey.slice(1),
+                        icon: 'trophy',
+                        color: '#6B7280',
                       };
 
-                      return Object.keys(groupedBySport).map(sportKey => {
-                        const sportInfo = getSportInfo(sportKey);
-                        const events = groupedBySport[sportKey];
+                      const events = groupedEvents.groupedBySport[sportKey];
 
-                        return (
+                      return (
                           <View key={sportKey}>
                             {/* Sport Header */}
                             <View style={[styles.sportHeader, { backgroundColor: sportInfo.color + '15', borderLeftColor: sportInfo.color }]}>
@@ -1775,8 +1776,7 @@ export default function PlanningScreen() {
                       })}
                           </View>
                         );
-                      });
-                    })()}
+                      })}
                   </>
                 ) : (
                   /* État vide */
