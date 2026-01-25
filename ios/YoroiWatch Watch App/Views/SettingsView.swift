@@ -8,14 +8,13 @@ import WatchKit
 
 struct SettingsView: View {
     @StateObject private var healthManager = HealthManager.shared
+    @StateObject private var notificationManager = WatchNotificationManager.shared
     @AppStorage("hapticEnabled") private var hapticEnabled = true
     @AppStorage("autoSyncEnabled") private var autoSyncEnabled = true
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("soundEnabled") private var soundEnabled = true
-    @AppStorage("alwaysOnDisplay") private var alwaysOnDisplay = true
-    @AppStorage("wakeOnWristRaise") private var wakeOnWristRaise = true
-    @State private var syncInterval = 5 // minutes - Changed to @State
     @AppStorage("waterReminderEnabled") private var waterReminderEnabled = false
+    @State private var syncInterval = 5 // minutes - Changed to @State
     @State private var waterReminderInterval = 60 // minutes - Changed to @State
     @State private var complicationUpdateInterval = 15 // minutes - Changed to @State
     @AppStorage("showCaloriesInComplication") private var showCaloriesInComplication = true
@@ -145,7 +144,12 @@ struct SettingsView: View {
                     .onChange(of: waterReminderEnabled) { newValue in
                         if hapticEnabled { WKInterfaceDevice.current().play(.click) }
                         if newValue {
+                            // IMPLÉMENTATION RÉELLE: Programmer les notifications locales
+                            notificationManager.scheduleHydrationReminders(intervalMinutes: waterReminderInterval)
                             if hapticEnabled { WKInterfaceDevice.current().play(.success) }
+                        } else {
+                            // Annuler les rappels si désactivé
+                            notificationManager.cancelHydrationReminders()
                         }
                     }
 
@@ -157,6 +161,12 @@ struct SettingsView: View {
                         Text("3 heures").tag(180)
                     }
                     .font(.system(size: 11, weight: .semibold))
+                    .onChange(of: waterReminderInterval) { newValue in
+                        // Mettre à jour les rappels quand l'intervalle change
+                        if waterReminderEnabled {
+                            notificationManager.scheduleHydrationReminders(intervalMinutes: newValue)
+                        }
+                    }
                 }
             }
 
@@ -168,18 +178,6 @@ struct SettingsView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .onChange(of: hapticEnabled) { newValue in
                         if newValue { WKInterfaceDevice.current().play(.click) }
-                    }
-
-                Toggle("Always-On Display", isOn: $alwaysOnDisplay)
-                    .font(.system(size: 12, weight: .semibold))
-                    .onChange(of: alwaysOnDisplay) { _ in
-                        if hapticEnabled { WKInterfaceDevice.current().play(.click) }
-                    }
-
-                Toggle("Wake on Wrist Raise", isOn: $wakeOnWristRaise)
-                    .font(.system(size: 12, weight: .semibold))
-                    .onChange(of: wakeOnWristRaise) { _ in
-                        if hapticEnabled { WKInterfaceDevice.current().play(.click) }
                     }
 
                 Toggle("Unités Métriques", isOn: $useMetricUnits)
@@ -358,15 +356,6 @@ struct SettingsView: View {
                     Spacer()
                     Text("2026.01.25")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.gray)
-                }
-
-                HStack {
-                    Text("Développeur")
-                        .font(.system(size: 11))
-                    Spacer()
-                    Text("Houari BOUKEROUCHA")
-                        .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.gray)
                 }
             }

@@ -229,7 +229,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
 
           {/* Signature */}
           <Text style={[styles.signature, { color: colors.textMuted }]}>
-            Houari - Développeur de l'app
+            Équipe Yoroi
           </Text>
 
           {/* Boutons */}
