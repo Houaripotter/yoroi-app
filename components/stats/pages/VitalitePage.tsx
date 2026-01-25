@@ -27,6 +27,16 @@ import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import { StatsExplanation } from '../StatsExplanation';
 
+/**
+ * Convertit les heures décimales en format lisible "Xh YYmin"
+ * Exemple: 7.5 => "7h 30min", 8 => "8h 00min", 0.75 => "0h 45min"
+ */
+const formatSleepDuration = (hours: number): string => {
+  const h = Math.floor(hours);
+  const min = Math.round((hours - h) * 60);
+  return `${h}h ${min.toString().padStart(2, '0')}min`;
+};
+
 export const VitalitePage: React.FC = () => {
   const { colors } = useTheme();
   const { t, language } = useI18n();
@@ -316,6 +326,7 @@ export const VitalitePage: React.FC = () => {
               title={t('statsPages.vitality.sleepDuration')}
               source={SLEEP_DURATION_RANGES.source}
               sourceUrl={SLEEP_DURATION_RANGES.sourceUrl}
+              formattedValue={formatSleepDuration(healthData.sleep.duration / 60)}
               onPress={() => setSelectedMetric({
                 key: 'sleep',
                 label: t('statsPages.vitality.sleepDuration'),
@@ -341,8 +352,8 @@ export const VitalitePage: React.FC = () => {
           >
             <MetricCard
               label={t('statsPages.vitality.totalDuration')}
-              value={(healthData?.sleep?.duration || 0) / 60}
-              unit="h"
+              value={formatSleepDuration((healthData?.sleep?.duration || 0) / 60)}
+              unit=""
               icon={<Moon size={24} color="#6366F1" strokeWidth={2.5} />}
               color="#6366F1"
             />
@@ -370,30 +381,20 @@ export const VitalitePage: React.FC = () => {
         </View>
       </StatsSection>
 
-      {/* Historique Sommeil - CLIQUABLE */}
+      {/* Historique Sommeil - SCROLLABLE */}
       {vitalHistory.sleep.length > 0 && (
         <StatsSection
           title={t('statsPages.vitality.sleepHistory')}
           description={`${t('statsPages.vitality.sleepHistoryDesc')} ${getPeriodDescription(selectedPeriod)}`}
         >
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setSelectedMetric({
-              key: 'sleep',
-              label: t('statsPages.vitality.sleep'),
-              color: '#6366F1',
-              unit: 'h',
-              icon: <Moon size={18} color="#6366F1" strokeWidth={2.5} />,
-            })}
-          >
-            <HistoryScrollCard
-              data={vitalHistory.sleep}
-              unit="h"
-              healthRange={SLEEP_DURATION_RANGES}
-              color="#6366F1"
-              getStatus={(value) => getMetricStatus(value, SLEEP_DURATION_RANGES)}
-            />
-          </TouchableOpacity>
+          <HistoryScrollCard
+            data={vitalHistory.sleep}
+            unit="h"
+            healthRange={SLEEP_DURATION_RANGES}
+            color="#6366F1"
+            getStatus={(value) => getMetricStatus(value, SLEEP_DURATION_RANGES)}
+            formatValue={formatSleepDuration}
+          />
         </StatsSection>
       )}
 

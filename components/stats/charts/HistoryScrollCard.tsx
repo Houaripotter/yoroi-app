@@ -24,6 +24,7 @@ interface HistoryScrollCardProps {
   userGoal?: 'lose' | 'maintain' | 'gain'; // Pour colorer selon objectif poids
   showEvolution?: boolean; // Affiche les badges EN HAUSSE/EN BAISSE/STABLE pour toute métrique
   evolutionGoal?: 'increase' | 'decrease' | 'stable'; // Quel type d'évolution est positif
+  formatValue?: (value: number) => string; // Formatage personnalisé de la valeur (ex: "7h 30min")
 }
 
 const CARD_WIDTH = 130;
@@ -39,6 +40,7 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
   userGoal,
   showEvolution,
   evolutionGoal = 'increase', // Par défaut, une augmentation est positive (ex: muscle)
+  formatValue,
 }) => {
   const { colors, isDark } = useTheme();
   const { locale, t } = useI18n();
@@ -173,11 +175,13 @@ export const HistoryScrollCard: React.FC<HistoryScrollCardProps> = ({
 
               {/* Valeur - couleur ajustée pour le contraste */}
               <Text style={[styles.value, { color: isLightColor(statusColor) && !isDark ? '#1a1a1a' : statusColor }]}>
-                {item.value.toFixed(1)}
+                {formatValue ? formatValue(item.value) : item.value.toFixed(1)}
               </Text>
-              <Text style={[styles.unit, { color: colors.textMuted }]}>
-                {unit}
-              </Text>
+              {!formatValue && (
+                <Text style={[styles.unit, { color: colors.textMuted }]}>
+                  {unit}
+                </Text>
+              )}
 
               {/* Barre de progression mini */}
               {healthRange && (

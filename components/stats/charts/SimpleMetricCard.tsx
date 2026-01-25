@@ -27,6 +27,7 @@ interface SimpleMetricCardProps {
   source?: string;
   sourceUrl?: string;
   onPress?: () => void;
+  formattedValue?: string; // Valeur formatée personnalisée (ex: "7h 30min")
 }
 
 export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
@@ -39,6 +40,7 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
   source,
   sourceUrl,
   onPress,
+  formattedValue,
 }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
@@ -83,9 +85,9 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
       {/* Valeur principale */}
       <View style={styles.valueSection}>
         <Text style={[styles.value, { color: statusColor }]}>
-          {value.toFixed(1)}
+          {formattedValue || value.toFixed(1)}
         </Text>
-        <Text style={[styles.unit, { color: colors.textMuted }]}>{unit}</Text>
+        {!formattedValue && <Text style={[styles.unit, { color: colors.textMuted }]}>{unit}</Text>}
       </View>
 
       {/* Barre simple avec indicateur */}
