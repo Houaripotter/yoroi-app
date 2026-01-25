@@ -71,8 +71,13 @@ export const ShareFloatingButton: React.FC = () => {
   const handleOptionPress = (template: 'year-counter' | 'weekly-recap' | 'monthly-recap') => {
     impactAsync(ImpactFeedbackStyle.Light);
     setIsMenuOpen(false);
-    // Navigation directe vers la carte de partage
-    router.push(`/share-card?template=${template}` as any);
+    // Navigation directe vers les cartes de partage existantes
+    const routes: Record<string, string> = {
+      'year-counter': '/social-share/year-counter-v2',
+      'weekly-recap': '/social-share/weekly-recap-v2',
+      'monthly-recap': '/social-share/monthly-recap-v2',
+    };
+    router.push(routes[template] as any);
   };
 
   // Ne rien afficher si désactivé dans les réglages

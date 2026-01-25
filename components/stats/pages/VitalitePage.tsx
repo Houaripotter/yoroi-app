@@ -304,7 +304,26 @@ export const VitalitePage: React.FC = () => {
         onPeriodChange={setSelectedPeriod}
       />
 
-      <StatsExplanation 
+      {/* Bannière Beta Warning permanente */}
+      <View style={[styles.betaBanner, { backgroundColor: colors.warning + '15', borderColor: colors.warning + '30' }]}>
+        <View style={styles.betaBannerHeader}>
+          <Text style={[styles.betaBannerTitle, { color: colors.warning }]}>⚠️ PAGE EN BETA</Text>
+        </View>
+        <Text style={[styles.betaBannerText, { color: colors.textSecondary }]}>
+          Les données peuvent être imprécises. L'estimation de sommeil Apple peut apparaître même sans Apple Watch.
+          Cette page est en cours de développement, des bugs peuvent survenir.
+        </Text>
+        <TouchableOpacity
+          style={[styles.betaBannerButton, { backgroundColor: colors.warning + '20' }]}
+          onPress={() => router.push('/ideas-box' as any)}
+        >
+          <Text style={[styles.betaBannerButtonText, { color: colors.warning }]}>
+            💡 Signaler un problème dans la Boîte à Idées
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <StatsExplanation
         title="Santé & Vitalité"
         text="Cette section regroupe tes indicateurs de récupération. Le Sommeil répare les tissus, l'Hydratation maintient tes performances, et le VRC (Variabilité de Fréquence Cardiaque) indique si ton système nerveux est prêt pour une séance intense."
         color="#EC4899"
@@ -747,5 +766,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  betaBanner: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  betaBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  betaBannerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  betaBannerText: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  betaBannerButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  betaBannerButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

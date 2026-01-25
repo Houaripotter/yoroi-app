@@ -15,6 +15,7 @@ import AvatarDisplay from '@/components/AvatarDisplay';
 import { HydrationCardFullWidth } from '@/components/cards/HydrationCardFullWidth';
 import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
 import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
+import { QuestsCard } from '@/components/QuestsCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -1198,6 +1199,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             )}
           </View>
         )}
+      </View>
+
+      {/* DÉFIS DU JOUR - Quêtes avec XP */}
+      <View style={{ marginBottom: 16, marginTop: 8 }}>
+        <QuestsCard />
       </View>
 
       {/* VITALS - Pleine largeur verticalement */}

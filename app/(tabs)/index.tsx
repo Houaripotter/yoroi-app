@@ -400,9 +400,10 @@ export default function HomeScreen() {
   // Personnalisation de l'accueil
   const [homeSections, setHomeSections] = useState<HomeSection[]>([]);
 
-  // Activité (pas)
+  // Activité (pas et calories)
   const [steps, setSteps] = useState(0);
   const [stepsGoal, setStepsGoal] = useState(10000);
+  const [calories, setCalories] = useState(0);
 
   // Hydratation functions
   const loadHydration = useCallback(async () => {
@@ -657,14 +658,18 @@ export default function HomeScreen() {
       const goal = await getSleepGoal();
       setSleepGoal(goal);
 
-      // Charger les pas depuis Apple Health
+      // Charger les pas et calories depuis Apple Health
       try {
         const stepsData = await HealthConnect.getTodaySteps();
         if (stepsData?.count) {
           setSteps(stepsData.count);
         }
+        const caloriesData = await HealthConnect.getTodayCalories();
+        if (caloriesData?.active) {
+          setCalories(Math.round(caloriesData.active));
+        }
       } catch (error) {
-        logger.info('Pas disponibles depuis Apple Health');
+        logger.info('Données activité non disponibles depuis Apple Health');
       }
 
       setTotalPoints(history.length * 10 + allTrainings.length * 25 + (streakDays >= 7 ? 50 : 0));
@@ -1639,7 +1644,7 @@ export default function HomeScreen() {
         workloadStatus={workloadStatus === 'none' ? undefined : workloadStatus}
         dailyChallenges={formattedChallenges}
         stepsGoal={stepsGoal}
-        calories={0}
+        calories={calories}
         bodyFat={isScreenshotMode ? 16.2 : bodyComposition?.bodyFat}
         muscleMass={isScreenshotMode ? 43.5 : bodyComposition?.muscleMass}
         waterPercentage={isScreenshotMode ? 58.4 : bodyComposition?.waterPercentage}
