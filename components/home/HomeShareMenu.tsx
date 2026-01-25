@@ -37,23 +37,16 @@ interface ShareOption {
 export const HomeShareMenu: React.FC = () => {
   const { colors, isDark } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
+  // DÉSACTIVÉ À VIE - L'utilisateur ne veut PAS ce type de bouton avec animation/croix
+  const [isVisible, setIsVisible] = useState(false);
   const animation = useRef(new Animated.Value(0)).current;
 
-  // Vérifier si le bouton doit être affiché
-  // MASQUÉ PAR DÉFAUT - Ce bouton n'est plus utilisé (remplacé par ShareFloatingButton)
+  // DÉSACTIVÉ - Ce bouton n'est plus utilisé
+  // L'utilisateur veut seulement le bouton simple rond noir dans Stats
   useFocusEffect(
     React.useCallback(() => {
-      const checkVisibility = async () => {
-        try {
-          const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
-          // Pour afficher ce bouton, il faut explicitement mettre 'show' dans AsyncStorage
-          setIsVisible(hidden === 'show');
-        } catch (error) {
-          console.error('Error checking share button visibility:', error);
-        }
-      };
-      checkVisibility();
+      // Ne rien faire - toujours masqué
+      setIsVisible(false);
     }, [])
   );
 

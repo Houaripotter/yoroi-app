@@ -17,6 +17,7 @@ import { PerformancePage } from './pages/PerformancePage';
 import { VitalitePage } from './pages/VitalitePage';
 import { Scale, Activity, Ruler, Flame, Award, Heart, LayoutDashboard } from 'lucide-react-native';
 import { ScrollProvider } from '@/lib/ScrollContext';
+import { ShareFloatingButton } from './ShareFloatingButton';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -192,6 +193,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
           );
         })}
       </ScrollView>
+
+      {/* Bouton partage flottant NOIR en bas à droite */}
+      <ShareFloatingButton />
       </View>
     </ScrollProvider>
   );
