@@ -243,7 +243,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     }
   };
 
-  const getQuestIcon = (questId: string) => {
+  const getQuestIcon = (questId: string | undefined) => {
+    if (!questId) return Star;
     if (questId.includes('hydration')) return Droplets;
     if (questId.includes('sleep')) return Moon;
     if (questId.includes('steps')) return Footprints;
@@ -257,7 +258,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     return Star;
   };
 
-  const getQuestColor = (questId: string) => {
+  const getQuestColor = (questId: string | undefined) => {
+    if (!questId) return '#FFD700';
     if (questId.includes('hydration')) return '#06B6D4';
     if (questId.includes('sleep')) return '#8B5CF6';
     if (questId.includes('steps')) return '#10B981';
@@ -442,7 +444,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             )}
             scrollEventThrottle={16}
           >
-          {currentQuests.quests.map((quest, index) => {
+          {currentQuests.quests.filter(q => q && q.id).map((quest, index) => {
             const IconComponent = getQuestIcon(quest.id);
             const questColor = getQuestColor(quest.id);
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);

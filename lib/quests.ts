@@ -783,10 +783,13 @@ export const getDailyQuestsProgress = async (): Promise<{
 }> => {
   const state = await loadQuestsState();
 
-  const quests = state.daily.quests.map(progress => {
-    const quest = DAILY_QUESTS.find(q => q.id === progress.questId)!;
-    return { ...quest, ...progress };
-  });
+  const quests = state.daily.quests
+    .map(progress => {
+      const quest = DAILY_QUESTS.find(q => q.id === progress.questId);
+      if (!quest) return null;
+      return { ...quest, ...progress };
+    })
+    .filter((q): q is Quest & QuestProgress => q !== null);
 
   return {
     quests,
@@ -804,10 +807,13 @@ export const getWeeklyQuestsProgress = async (): Promise<{
 }> => {
   const state = await loadQuestsState();
 
-  const quests = state.weekly.quests.map(progress => {
-    const quest = WEEKLY_QUESTS.find(q => q.id === progress.questId)!;
-    return { ...quest, ...progress };
-  });
+  const quests = state.weekly.quests
+    .map(progress => {
+      const quest = WEEKLY_QUESTS.find(q => q.id === progress.questId);
+      if (!quest) return null;
+      return { ...quest, ...progress };
+    })
+    .filter((q): q is Quest & QuestProgress => q !== null);
 
   return {
     quests,
@@ -825,10 +831,13 @@ export const getMonthlyQuestsProgress = async (): Promise<{
 }> => {
   const state = await loadQuestsState();
 
-  const quests = state.monthly.quests.map(progress => {
-    const quest = MONTHLY_QUESTS.find(q => q.id === progress.questId)!;
-    return { ...quest, ...progress };
-  });
+  const quests = state.monthly.quests
+    .map(progress => {
+      const quest = MONTHLY_QUESTS.find(q => q.id === progress.questId);
+      if (!quest) return null;
+      return { ...quest, ...progress };
+    })
+    .filter((q): q is Quest & QuestProgress => q !== null);
 
   return {
     quests,
