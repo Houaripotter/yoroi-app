@@ -1193,6 +1193,39 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <HealthspanChart />
       </View>
 
+      {/* ACTIVITÉ & CALORIES - SECTION RESTAURÉE */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 40 }}>
+        {/* Pas Total */}
+        <TouchableOpacity 
+          style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+          onPress={() => router.push('/activity-history?tab=steps')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.activityIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+            <MaterialCommunityIcons name="shoe-print" size={20} color="#3B82F6" />
+          </View>
+          <View>
+            <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
+            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Calories */}
+        <TouchableOpacity 
+          style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+          onPress={() => router.push('/activity-history?tab=calories')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.activityIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+            <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
+          </View>
+          <View>
+            <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('analysis.calories')}</Text>
+            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{Math.round(steps * 0.04).toLocaleString()} kcal</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+
         </View>
     </ScrollView>
   );
@@ -1709,5 +1742,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+
+  // ═══════════════════════════════════════════════
+  // ACTIVITY CARDS
+  // ═══════════════════════════════════════════════
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activityLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  activityValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
 });
