@@ -29,6 +29,7 @@ const MockHealthKit = {
   queryWorkoutSamples: async () => [],
   queryStatistics: async () => ({ sumQuantity: 0 }),
   saveQuantitySample: async () => true,
+  saveCategorySample: async () => true, // Pour l'écriture du sommeil
   saveWorkoutSample: async () => true,
 };
 

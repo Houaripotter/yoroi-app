@@ -280,6 +280,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
             rankColor={rankColor}
             currentWeight={currentWeight}
             targetWeight={targetWeight}
+            startWeight={startWeight}
             weightHistory={weightHistory}
             weightTrend={weightTrend}
             hydration={hydration}
@@ -322,10 +323,9 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header avec tabs circulaires - zIndex bas pour passer derrière le contenu */}
+      {/* Header avec tabs circulaires */}
       <View style={[styles.header, {
-        backgroundColor: 'transparent',
-        zIndex: 1,
+        backgroundColor: colors.background,
       }]}>
         <ScrollView
           ref={tabScrollRef}
@@ -380,7 +380,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
       </View>
 
 
-      {/* Horizontal Pager - zIndex élevé pour passer devant les onglets */}
+      {/* Horizontal Pager */}
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -393,7 +393,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         snapToAlignment="center"
         contentContainerStyle={styles.scrollContent}
         scrollEnabled={!editMode}
-        style={{ flex: 1, overflow: 'visible', zIndex: 10 }}
       >
         {/* Render pages in custom order */}
         {pageOrder.map((page) => (

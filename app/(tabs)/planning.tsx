@@ -399,14 +399,66 @@ export default function PlanningScreen() {
         mastered: carnetStats.skillsMastered,
         totalRecords: carnetStats.totalBenchmarks,
       });
-      // Garder les 6 dernières techniques/skills (2 lignes de 3)
-      const skills = await getSkills();
-      setRecentSkills(skills.slice(0, 6));
-      // Garder les 6 derniers records/benchmarks (2 lignes de 3)
-      const benchmarks = await getBenchmarks();
-      // Filter benchmarks that have entries (PRs)
-      const benchmarksWithPRs = benchmarks.filter(b => b.entries && b.entries.length > 0);
-      setRecentBenchmarks(benchmarksWithPRs.slice(0, 6));
+
+      // Check for screenshot mode
+      const isScreenshotMode = await AsyncStorage.getItem('@yoroi_journal_screenshot_mode') === 'true';
+
+      if (isScreenshotMode) {
+        // MOCK DATA FOR SCREENSHOTS
+        const mockBenchmarks: Benchmark[] = [
+          {
+            id: 'bench_1', name: 'Développé Couché', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'PECTORAUX',
+            entries: [
+              { id: 'e1', value: 100, reps: 5, date: new Date().toISOString(), rpe: 9, notes: 'Record personnel !' }
+            ]
+          },
+          {
+            id: 'bench_2', name: 'Squat', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'JAMBES',
+            entries: [
+              { id: 'e2', value: 140, reps: 3, date: new Date().toISOString(), rpe: 9, notes: 'Technique solide' }
+            ]
+          },
+          {
+            id: 'bench_3', name: '10km', category: 'running', unit: 'time', iconName: 'timer', color: '#3B82F6', createdAt: new Date().toISOString(), muscleGroup: 'CARDIO',
+            entries: [
+              { id: 'e3', value: 2400, date: new Date().toISOString(), duration: 40, distance: 10, notes: 'Allure 4:00/km' }
+            ]
+          }
+        ];
+
+        const mockSkills: Skill[] = [
+          {
+            id: 'skill_1', name: 'Triangle', category: 'jjb_soumission', status: 'mastered', drillCount: 150, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: []
+          },
+          {
+            id: 'skill_2', name: 'Passage Toreando', category: 'jjb_passage', status: 'in_progress', drillCount: 45, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: []
+          },
+          {
+            id: 'skill_3', name: 'Berimbolo', category: 'jjb_garde', status: 'to_learn', drillCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: []
+          }
+        ];
+
+        setRecentBenchmarks(mockBenchmarks);
+        setRecentSkills(mockSkills);
+        setJournalStats({
+          total: mockSkills.length,
+          in_progress: mockSkills.filter(s => s.status === 'in_progress').length,
+          mastered: mockSkills.filter(s => s.status === 'mastered').length,
+          totalRecords: mockBenchmarks.length,
+        });
+      } else {
+        // Garder les 6 dernières techniques/skills (2 lignes de 3)
+        const skills = await getSkills();
+        setRecentSkills(skills.slice(0, 6));
+        // Garder les 6 derniers records/benchmarks (2 lignes de 3)
+        const benchmarks = await getBenchmarks();
+        // Filter benchmarks that have entries (PRs)
+        const benchmarksWithPRs = benchmarks.filter(b => b.entries && b.entries.length > 0);
+        setRecentBenchmarks(benchmarksWithPRs.slice(0, 6));
+      }
     } catch (error) {
       console.error('Erreur chargement planning:', error);
     }

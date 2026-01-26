@@ -394,6 +394,53 @@ export default function TrainingJournalScreen() {
   // Load data
   const loadData = useCallback(async () => {
     try {
+      // Check for screenshot mode
+      const isScreenshotMode = await AsyncStorage.getItem('@yoroi_journal_screenshot_mode') === 'true';
+
+      if (isScreenshotMode) {
+        // MOCK DATA FOR SCREENSHOTS
+        const mockBenchmarks: Benchmark[] = [
+          {
+            id: 'bench_1', name: 'Développé Couché', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'PECTORAUX',
+            entries: [
+              { id: 'e1', value: 100, reps: 5, date: new Date().toISOString(), rpe: 9, notes: 'Record personnel !' },
+              { id: 'e2', value: 95, reps: 5, date: new Date(Date.now() - 86400000 * 7).toISOString(), rpe: 8 }
+            ]
+          },
+          {
+            id: 'bench_2', name: 'Squat', category: 'force', unit: 'kg', iconName: 'dumbbell', color: '#EF4444', createdAt: new Date().toISOString(), muscleGroup: 'JAMBES',
+            entries: [
+              { id: 'e3', value: 140, reps: 3, date: new Date().toISOString(), rpe: 9, notes: 'Technique solide' }
+            ]
+          },
+          {
+            id: 'bench_3', name: '10km', category: 'running', unit: 'time', iconName: 'timer', color: '#3B82F6', createdAt: new Date().toISOString(), muscleGroup: 'CARDIO',
+            entries: [
+              { id: 'e4', value: 2400, date: new Date().toISOString(), duration: 40, distance: 10, notes: 'Allure 4:00/km' }
+            ]
+          }
+        ];
+
+        const mockSkills: Skill[] = [
+          {
+            id: 'skill_1', name: 'Triangle', category: 'jjb_soumission', status: 'mastered', drillCount: 150, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: [{ id: 'n1', text: 'Bien couper l\'angle', date: new Date().toISOString() }]
+          },
+          {
+            id: 'skill_2', name: 'Passage Toreando', category: 'jjb_passage', status: 'in_progress', drillCount: 45, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: []
+          },
+          {
+            id: 'skill_3', name: 'Berimbolo', category: 'jjb_garde', status: 'to_learn', drillCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            notes: []
+          }
+        ];
+
+        setBenchmarks(mockBenchmarks);
+        setSkills(mockSkills);
+        return;
+      }
+
       const [fetchedBenchmarks, fetchedSkills] = await Promise.all([
         getBenchmarks(),
         getSkills(),

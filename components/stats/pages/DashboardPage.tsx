@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingTop: 0,
+    paddingTop: 8,
   },
   centered: {
     flex: 1,
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 20,
-    marginTop: -10,
+    marginTop: 0,
   },
   mainTitle: {
     fontSize: 28,

@@ -16,26 +16,39 @@ import logger from '@/lib/security/logger';
 
 export type QuestPeriod = 'daily' | 'weekly' | 'monthly';
 export type QuestId =
-  // Daily
+  // Daily (10)
   | 'daily_weigh'
   | 'daily_hydration'
   | 'daily_training'
   | 'daily_open_app'
   | 'daily_steps'
   | 'daily_sleep'
-  // Weekly
+  | 'daily_protein'
+  | 'daily_stretch'
+  | 'daily_meditation'
+  | 'daily_cardio'
+  // Weekly (10)
   | 'weekly_5_weighs'
   | 'weekly_4_trainings'
   | 'weekly_photo'
   | 'weekly_measurements'
   | 'weekly_7_streak'
   | 'weekly_hydration_streak'
-  // Monthly
+  | 'weekly_cardio_3'
+  | 'weekly_meal_prep'
+  | 'weekly_rest_day'
+  | 'weekly_protein_goal'
+  // Monthly (10)
   | 'monthly_lose_2kg'
   | 'monthly_20_trainings'
   | 'monthly_30_streak'
   | 'monthly_50_weighs'
-  | 'monthly_transformation';
+  | 'monthly_transformation'
+  | 'monthly_new_pr'
+  | 'monthly_sleep_quality'
+  | 'monthly_hydration_master'
+  | 'monthly_consistency'
+  | 'monthly_body_scan';
 
 export interface Quest {
   id: QuestId;
@@ -137,6 +150,45 @@ export const DAILY_QUESTS: Quest[] = [
     target: 7,
     unit: 'h',
   },
+  {
+    id: 'daily_protein',
+    title: 'Proteines',
+    description: 'Atteindre objectif proteines',
+    icon: '🥩',
+    xp: 25,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_stretch',
+    title: 'Mobilite',
+    description: '10 min d\'etirements',
+    icon: '🧘',
+    xp: 15,
+    period: 'daily',
+    target: 10,
+    unit: 'min',
+  },
+  {
+    id: 'daily_meditation',
+    title: 'Zen',
+    description: '5 min de meditation',
+    icon: '🧠',
+    xp: 20,
+    period: 'daily',
+    target: 5,
+    unit: 'min',
+  },
+  {
+    id: 'daily_cardio',
+    title: 'Cardio',
+    description: '20 min de cardio',
+    icon: '❤️',
+    xp: 35,
+    period: 'daily',
+    target: 20,
+    unit: 'min',
+  },
 ];
 
 export const WEEKLY_QUESTS: Quest[] = [
@@ -194,6 +246,42 @@ export const WEEKLY_QUESTS: Quest[] = [
     period: 'weekly',
     target: 5,
   },
+  {
+    id: 'weekly_cardio_3',
+    title: 'Cardio King',
+    description: '3 sessions cardio',
+    icon: '🏃',
+    xp: 130,
+    period: 'weekly',
+    target: 3,
+  },
+  {
+    id: 'weekly_meal_prep',
+    title: 'Prep Master',
+    description: 'Preparer ses repas',
+    icon: '🍱',
+    xp: 80,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_rest_day',
+    title: 'Recuperation',
+    description: 'Prendre 1 jour de repos',
+    icon: '🛋️',
+    xp: 50,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_protein_goal',
+    title: 'Proteines Pro',
+    description: '5 jours objectif prot.',
+    icon: '💪',
+    xp: 110,
+    period: 'weekly',
+    target: 5,
+  },
 ];
 
 export const MONTHLY_QUESTS: Quest[] = [
@@ -240,6 +328,51 @@ export const MONTHLY_QUESTS: Quest[] = [
     description: '4 photos transformation',
     icon: '📸',
     xp: 350,
+    period: 'monthly',
+    target: 4,
+  },
+  {
+    id: 'monthly_new_pr',
+    title: 'Record',
+    description: 'Battre un record perso',
+    icon: '🏆',
+    xp: 450,
+    period: 'monthly',
+    target: 1,
+  },
+  {
+    id: 'monthly_sleep_quality',
+    title: 'Dormeur Elite',
+    description: '20 nuits de 7h+',
+    icon: '🌙',
+    xp: 350,
+    period: 'monthly',
+    target: 20,
+  },
+  {
+    id: 'monthly_hydration_master',
+    title: 'Hydra Master',
+    description: '25 jours a 2L d\'eau',
+    icon: '💧',
+    xp: 400,
+    period: 'monthly',
+    target: 25,
+  },
+  {
+    id: 'monthly_consistency',
+    title: 'Consistance',
+    description: '4 semaines regulieres',
+    icon: '📅',
+    xp: 550,
+    period: 'monthly',
+    target: 4,
+  },
+  {
+    id: 'monthly_body_scan',
+    title: 'Analyse Complete',
+    description: '4 scans composition',
+    icon: '📊',
+    xp: 300,
     period: 'monthly',
     target: 4,
   },

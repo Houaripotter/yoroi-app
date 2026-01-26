@@ -39,6 +39,7 @@ interface Page1MonitoringProps {
   rankColor?: string;
   currentWeight?: number;
   targetWeight?: number;
+  startWeight?: number; // Poids de départ (premier poids enregistré ou poids de profil)
   weightHistory?: number[];
   weightTrend?: 'up' | 'down' | 'stable';
   hydration?: number;
@@ -221,6 +222,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   rankColor = '#94A3B8',
   currentWeight = 0,
   targetWeight = 0,
+  startWeight: propStartWeight,
   weightHistory = [],
   weightTrend = 'stable',
   hydration = 0,
@@ -485,7 +487,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   };
 
   const weightDiff = currentWeight - targetWeight;
-  const startWeight = weightHistory.length > 0 ? weightHistory[0] : currentWeight;
+  // Utiliser le startWeight passé en prop, sinon le poids le plus ancien de l'historique (dernier élément car trié du plus récent au plus ancien)
+  const startWeight = propStartWeight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1] : currentWeight);
   const totalLoss = startWeight - currentWeight;
   const progressPercentage = Math.abs(((startWeight - currentWeight) / (startWeight - targetWeight)) * 100);
 
@@ -761,7 +764,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           <WeightProgressWithCharacter
             currentWeight={currentWeight}
             targetWeight={targetWeight}
-            startWeight={weightHistory.length > 0 ? weightHistory[0] : currentWeight}
+            startWeight={startWeight}
             userGoal={userGoal}
             isDark={isDark}
             colors={colors}
@@ -847,7 +850,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* OPTIMISATION: Mémoriser les calculs de poids pour éviter recalcul à chaque render */}
         {useMemo(() => {
-          const last30Weights = weightHistory.slice(-30);
+          // Inverser pour avoir le plus récent à gauche (index 0 = aujourd'hui)
+          const last30Weights = weightHistory.slice(-30).reverse();
           const weights = last30Weights;
           const maxWeightValue = Math.max(...weights);
           const minWeightValue = Math.min(...weights);
@@ -878,16 +882,16 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   renderItem={({ item: weight, index }) => {
                     const heightPercent = ((weight - minWeightValue) / weightRange) * 100;
 
-                    // Calculer la date réelle
+                    // Calculer la date réelle (inversé: récent à gauche, ancien à droite)
                     const today = new Date();
-                    const daysAgo = last30Weights.length - 1 - index;
+                    const daysAgo = index; // index 0 = aujourd'hui (le plus récent)
                     const date = new Date(today);
                     date.setDate(date.getDate() - daysAgo);
                     const dayOfMonth = date.getDate();
                     const monthLabel = monthNames[date.getMonth()];
 
-                    // Calculer la variation
-                    const previousWeight = index > 0 ? last30Weights[index - 1] : null;
+                    // Calculer la variation (comparer avec le jour précédent = index + 1 car inversé)
+                    const previousWeight = index < last30Weights.length - 1 ? last30Weights[index + 1] : null;
                     const diff = previousWeight ? weight - previousWeight : 0;
                     const isGain = diff > 0.05;
                     const isLoss = diff < -0.05;

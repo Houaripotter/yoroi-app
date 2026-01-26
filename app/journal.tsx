@@ -142,15 +142,26 @@ export default function JournalScreen() {
   const [todayEntry, setTodayEntry] = useState<JournalEntry | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
 
   // Animation
   const saveAnim = useState(new Animated.Value(1))[0];
 
   // Load data
   useEffect(() => {
+    loadScreenshotMode();
     loadJournalEntries();
     loadMeasurements();
   }, []);
+
+  const loadScreenshotMode = async () => {
+    try {
+      const mode = await AsyncStorage.getItem('@yoroi_journal_screenshot_mode');
+      setIsScreenshotMode(mode === 'true');
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const loadJournalEntries = async () => {
     try {
@@ -577,6 +588,7 @@ export default function JournalScreen() {
                 )}
               </View>
 
+              {!isScreenshotMode && (
               <TouchableOpacity
                 style={[
                   styles.filterButton,
@@ -586,6 +598,7 @@ export default function JournalScreen() {
               >
                 <Filter size={18} color={showFilters ? colors.gold : colors.textMuted} />
               </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -668,12 +681,14 @@ export default function JournalScreen() {
                           </Text>
                         )}
                       </View>
+                      {!isScreenshotMode && (
                       <TouchableOpacity
                         onPress={() => deleteEntry(entry.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
                         <Trash2 size={18} color={colors.textMuted} />
                       </TouchableOpacity>
+                      )}
                     </View>
 
                     {isExpanded && entry.note && (

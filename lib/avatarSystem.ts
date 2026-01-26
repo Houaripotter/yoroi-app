@@ -30,6 +30,8 @@ export type AvatarPack =
   | 'ninja' | 'samurai' | 'boxer' | 'champion' | 'emperor' | 'ghost'
   | 'judoka' | 'karateka' | 'mma' | 'oni' | 'ronin' | 'shogun' | 'wrestler'
   | 'bjj'
+  // Nouveaux packs alternatifs ninja/samurai
+  | 'ninja_alt' | 'samurai_alt'
   // Packs de collection (3)
   | 'pack_combat' | 'pack_femmes' | 'pack_monstres';
 
@@ -347,6 +349,39 @@ const CHARACTER_IMAGES_BY_GENDER: Record<string, Record<AvatarGender, Record<Ava
       neutral: require('@/assets/avatars/samurai/samurai_neutral.png'),
       strong: require('@/assets/avatars/samurai/samurai_strong.png'),
       legendary: require('@/assets/avatars/samurai/samurai_legendary.png'),
+    },
+    female: {
+      down: require('@/assets/avatars/samurai/female/samurai_f_1.png'),
+      tired: require('@/assets/avatars/samurai/female/samurai_f_3.png'),
+      neutral: require('@/assets/avatars/samurai/female/samurai_f_5.png'),
+      strong: require('@/assets/avatars/samurai/female/samurai_f_7.png'),
+      legendary: require('@/assets/avatars/samurai/female/samurai_f_9.png'),
+    },
+  },
+  // Nouveaux packs ninja et samurai masculins (variantes)
+  ninja_alt: {
+    male: {
+      down: require('@/assets/avatars/ninja/male/ninja_m_1.png'),
+      tired: require('@/assets/avatars/ninja/male/ninja_m_3.png'),
+      neutral: require('@/assets/avatars/ninja/male/ninja_m_5.png'),
+      strong: require('@/assets/avatars/ninja/male/ninja_m_7.png'),
+      legendary: require('@/assets/avatars/ninja/male/ninja_m_9.png'),
+    },
+    female: {
+      down: require('@/assets/avatars/ninja/female/ninja_f_1.png'),
+      tired: require('@/assets/avatars/ninja/female/ninja_f_3.png'),
+      neutral: require('@/assets/avatars/ninja/female/ninja_f_5.png'),
+      strong: require('@/assets/avatars/ninja/female/ninja_f_7.png'),
+      legendary: require('@/assets/avatars/ninja/female/ninja_f_9.png'),
+    },
+  },
+  samurai_alt: {
+    male: {
+      down: require('@/assets/avatars/samurai/male/samurai_m_1.png'),
+      tired: require('@/assets/avatars/samurai/male/samurai_m_3.png'),
+      neutral: require('@/assets/avatars/samurai/male/samurai_m_5.png'),
+      strong: require('@/assets/avatars/samurai/male/samurai_m_7.png'),
+      legendary: require('@/assets/avatars/samurai/male/samurai_m_9.png'),
     },
     female: {
       down: require('@/assets/avatars/samurai/female/samurai_f_1.png'),

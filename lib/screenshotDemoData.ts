@@ -1670,6 +1670,52 @@ const generateCarnetData = async (): Promise<number> => {
 };
 
 // ============================================
+// GÉNÉRATION DES ENTRÉES DU JOURNAL (HUMEUR)
+// ============================================
+const generateJournalEntries = async () => {
+  const entries = [
+    {
+      id: 'journal_1',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      mood: 'excellent',
+      note: "Séance incroyable ce matin ! J'ai battu mon record personnel sur le squat. L'énergie était au rendez-vous. 🚀",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'journal_2',
+      date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
+      mood: 'good',
+      note: "Bonne récupération. J'ai bien dormi et je me sens prêt pour la semaine. Focus sur l'hydratation aujourd'hui.",
+      createdAt: subDays(new Date(), 1).toISOString(),
+    },
+    {
+      id: 'journal_3',
+      date: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
+      mood: 'good',
+      note: "Séance de cardio intense. Difficile au début mais fini en force. La discipline paie toujours.",
+      createdAt: subDays(new Date(), 2).toISOString(),
+    },
+    {
+      id: 'journal_4',
+      date: format(subDays(new Date(), 3), 'yyyy-MM-dd'),
+      mood: 'neutral',
+      note: "Journée de repos actif. Quelques étirements et marche légère.",
+      createdAt: subDays(new Date(), 3).toISOString(),
+    },
+    {
+      id: 'journal_5',
+      date: format(subDays(new Date(), 4), 'yyyy-MM-dd'),
+      mood: 'excellent',
+      note: "Super sensation au JJB ce soir. J'ai réussi à passer le triangle que je bosse depuis 2 semaines !",
+      createdAt: subDays(new Date(), 4).toISOString(),
+    }
+  ];
+
+  await AsyncStorage.setItem('@yoroi_journal_entries', JSON.stringify(entries));
+  logger.info(`${entries.length} entrées de journal générées`);
+};
+
+// ============================================
 // FONCTION PRINCIPALE : CHARGER LES DONNÉES
 // ============================================
 export const generateScreenshotDemoData = async (): Promise<{ success: boolean; error?: string }> => {
@@ -1862,7 +1908,11 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
       streak: 178,
     }));
 
-    // 25. Activer le mode screenshot
+    // 25. Générer les entrées du Journal (Humeur/Notes)
+    logger.info('📔 Génération du Journal (Humeur)...');
+    await generateJournalEntries();
+
+    // 26. Activer le mode screenshot
     await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
 
     logger.info('Mode Screenshot activé avec succès !');

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
+  ScrollView,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -266,7 +267,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   styles.tab,
                   {
                     backgroundColor: isActive
-                      ? 'rgba(255, 215, 0, 0.25)'
+                      ? '#FFD700'  // Fond jaune solide quand actif
                       : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
                     borderColor: isActive ? '#FFD700' : 'transparent'
                   }
@@ -280,7 +281,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 <Text style={[
                   styles.tabText,
                   {
-                    color: isActive ? '#B8860B' : colors.textMuted,
+                    color: isActive ? '#000000' : colors.textMuted,  // Texte noir quand actif
                     fontWeight: isActive ? '800' : '700'
                   }
                 ]}>
@@ -326,9 +327,14 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           </View>
         </View>
 
-        {/* Liste des quêtes (3 max affichées) */}
-        <View style={styles.questsList}>
-          {currentQuests.quests.slice(0, 3).map((quest, index) => {
+        {/* Liste des quêtes avec scroll (10 quêtes, 5 visibles) */}
+        <ScrollView
+          style={styles.questsScrollContainer}
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.questsList}>
+          {currentQuests.quests.map((quest, index) => {
             const IconComponent = getQuestIcon(quest.id);
             const questColor = getQuestColor(quest.id);
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);
@@ -365,6 +371,17 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     </Text>
                   </View>
 
+                  {/* Description de l'objectif */}
+                  <Text
+                    style={[
+                      styles.questDescription,
+                      { color: colors.textMuted }
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {quest.description}
+                  </Text>
+
                   {/* Mini barre de progression */}
                   {!quest.completed && quest.target > 1 && (
                     <View style={styles.questProgressContainer}>
@@ -392,7 +409,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
               </View>
             );
           })}
-        </View>
+          </View>
+        </ScrollView>
 
         {/* Footer avec badges à débloquer */}
         <View style={styles.footer}>
@@ -557,9 +575,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
   },
+  questsScrollContainer: {
+    maxHeight: 380, // Hauteur pour ~5 quêtes visibles
+    marginBottom: 16,
+  },
   questsList: {
     gap: 10,
-    marginBottom: 16,
   },
   questItem: {
     flexDirection: 'row',
@@ -586,6 +607,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     flex: 1,
+  },
+  questDescription: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
+    opacity: 0.8,
   },
   questTitleCompleted: {
     textDecorationLine: 'line-through',

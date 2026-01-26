@@ -1745,9 +1745,9 @@ export default function MoreScreen() {
               </Text>
             </View>
 
-            {/* MODES DE CAPTURE */}
+            {/* MODE GERMAIN */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ACTIVER UN MODE</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MODE SCREENSHOT</Text>
               <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
                 {/* Mode Global - Germain Del Jarret */}
@@ -1756,7 +1756,7 @@ export default function MoreScreen() {
                   onPress={async () => {
                     await generateScreenshotDemoData();
                     notificationAsync(NotificationFeedbackType.Success);
-                    showPopup('Mode Germain Activé', 'Toutes les données de démo ont été générées (6 mois de transformation, carnet rempli, etc.).', [{ text: 'Parfait', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                    showPopup('Mode Germain Activé', 'Données de démo générées avec succès ! Tu peux maintenant faire tes captures d\'écran.', [{ text: 'Parfait', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
                   }}
                   activeOpacity={0.7}
                 >
@@ -1764,104 +1764,8 @@ export default function MoreScreen() {
                     <User size={20} color={colors.accent} strokeWidth={2} />
                   </View>
                   <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Germain Complet</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Génère TOUT: poids, carnet, blessures...</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-              </View>
-            </View>
-
-            {/* ACCÈS RAPIDE */}
-            <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ACCÈS RAPIDE</Text>
-              <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-
-                {/* Carnet d'Entraînement */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/training-journal')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#F9731620' }]}>
-                    <BookOpen size={20} color="#F97316" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Carnet d'Entraînement</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Benchmarks, techniques et skills</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
-
-                {/* Mode Chirurgien - Infirmerie */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/infirmary')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#EF444420' }]}>
-                    <Heart size={20} color="#EF4444" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Chirurgien</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Infirmerie et suivi blessures</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
-
-                {/* Body Status */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/body-status')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#8B5CF620' }]}>
-                    <Activity size={20} color="#8B5CF6" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Body Status</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>État corporel et récupération</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
-
-                {/* Lab / Savoir */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/savoir')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#10B98120' }]}>
-                    <FlaskConical size={20} color="#10B981" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Lab</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Base de connaissances</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
-
-                {/* Screenshot Mode (Mock Screen) */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/screenshot-mode')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#3B82F620' }]}>
-                    <Camera size={20} color="#3B82F6" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mock Screen</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Écran d'accueil figé pour captures</Text>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Activer Mode Germain</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Génère un profil complet avec belles données</Text>
                   </View>
                   <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>

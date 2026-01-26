@@ -161,6 +161,24 @@ const STORAGE_KEYS = {
 // SERVICE iOS
 // ============================================
 
+// ============================================
+// APPLE HEALTHKIT ERROR CODES REFERENCE
+// ============================================
+// HKError codes from Apple documentation (HKError.h):
+//
+// Code 0 = errorNoError (no error)
+// Code 1 = errorHealthDataUnavailable (Health data not available on device)
+// Code 2 = errorHealthDataRestricted (Health data restricted by parental controls)
+// Code 3 = errorInvalidArgument (invalid argument passed to API)
+// Code 4 = errorAuthorizationNotDetermined (user hasn't responded to permission request)
+// Code 5 = errorAuthorizationDenied (user denied permission)
+// Code 6 = errorDatabaseInaccessible (Health app locked or database unavailable)
+// Code 7 = errorUserCanceled (user canceled the operation)
+// Code 8 = errorAnotherWorkoutSessionStarted (another workout session was started)
+// Code 9 = errorUserExitedWorkoutSession (user exited workout session)
+// Code 10 = errorRequiredAuthorizationDenied (required authorization was denied)
+// ============================================
+
 class HealthConnectService {
   private isInitialized = false;
   private syncStatus: SyncStatus = {
@@ -185,6 +203,87 @@ class HealthConnectService {
       workouts: false,
     },
   };
+
+  /**
+   * Check if the error is a HealthKit authorization/permission error
+   * Handles both numeric error codes and string-based error messages
+   *
+   * HKError codes:
+   * - Code 4 = errorAuthorizationNotDetermined
+   * - Code 5 = errorAuthorizationDenied
+   * - Code 6 = errorDatabaseInaccessible (Health app locked)
+   */
+  private isHealthKitAuthError(error: any): boolean {
+    const message = error?.message || '';
+    const code = error?.code;
+
+    return (
+      code === 4 ||
+      code === 5 ||
+      code === 6 ||
+      message.includes('Authorization') ||
+      message.includes('not authorized') ||
+      message.includes('Code=4') ||
+      message.includes('Code=5') ||
+      message.includes('Code=6')
+    );
+  }
+
+  /**
+   * Check if the error indicates HealthKit/Health data is unavailable on this device
+   *
+   * HKError codes:
+   * - Code 1 = errorHealthDataUnavailable
+   * - Code 2 = errorHealthDataRestricted (parental controls)
+   */
+  private isHealthKitUnavailableError(error: any): boolean {
+    const message = error?.message || '';
+    const code = error?.code;
+
+    return (
+      code === 1 ||
+      code === 2 ||
+      message.includes('not available') ||
+      message.includes('Health data unavailable') ||
+      message.includes('Health data restricted') ||
+      message.includes('Code=1') ||
+      message.includes('Code=2')
+    );
+  }
+
+  /**
+   * Check if the error indicates an invalid argument was passed to HealthKit API
+   *
+   * HKError codes:
+   * - Code 3 = errorInvalidArgument
+   */
+  private isHealthKitInvalidArgumentError(error: any): boolean {
+    const message = error?.message || '';
+    const code = error?.code;
+
+    return (
+      code === 3 ||
+      message.includes('invalid argument') ||
+      message.includes('Code=3')
+    );
+  }
+
+  /**
+   * Check if the error is a user cancellation error
+   *
+   * HKError codes:
+   * - Code 7 = errorUserCanceled
+   */
+  private isHealthKitUserCanceledError(error: any): boolean {
+    const message = error?.message || '';
+    const code = error?.code;
+
+    return (
+      code === 7 ||
+      message.includes('user cancel') ||
+      message.includes('Code=7')
+    );
+  }
 
   async initialize(): Promise<boolean> {
     if (Platform.OS !== 'ios') {
@@ -326,12 +425,12 @@ class HealthConnectService {
       });
       return true; // Si pas d'erreur = permission OK
     } catch (error: any) {
-      // Erreur de permission = refusée
-      if (
-        error?.message?.includes('Authorization') ||
-        error?.message?.includes('Code=5') ||
-        error?.message?.includes('not authorized')
-      ) {
+      // Erreur de permission = refusée (Code 4, 5, or 6)
+      if (this.isHealthKitAuthError(error)) {
+        return false;
+      }
+      // Erreur de disponibilité (Code 1 or 2) = données non disponibles sur cet appareil
+      if (this.isHealthKitUnavailableError(error)) {
         return false;
       }
       // Autres erreurs (pas de données, etc.) = permission OK
@@ -353,11 +452,12 @@ class HealthConnectService {
       });
       return true;
     } catch (error: any) {
-      if (
-        error?.message?.includes('Authorization') ||
-        error?.message?.includes('Code=5') ||
-        error?.message?.includes('not authorized')
-      ) {
+      // Erreur de permission = refusée (Code 4, 5, or 6)
+      if (this.isHealthKitAuthError(error)) {
+        return false;
+      }
+      // Erreur de disponibilité (Code 1 or 2) = données non disponibles sur cet appareil
+      if (this.isHealthKitUnavailableError(error)) {
         return false;
       }
       return true;
@@ -1744,6 +1844,30 @@ class HealthConnectService {
     const weightInKg = unit === 'lbs' ? weight * 0.453592 : weight;
 
     try {
+      // ✅ CHECK FOR DUPLICATES: Prevent writing same weight twice on same day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const existingWeights = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', {
+        from: today,
+        to: tomorrow,
+        limit: 10,
+      });
+
+      // Check if same weight (within 0.1kg tolerance) already exists today
+      if (existingWeights && existingWeights.length > 0) {
+        const alreadyExists = existingWeights.some(
+          (sample: any) => Math.abs(sample.quantity - weightInKg) < 0.1
+        );
+        if (alreadyExists) {
+          logger.info('[HealthKit] Weight already exists for today, skipping duplicate');
+          return true; // Already saved, consider it success
+        }
+      }
+
+      // Save the weight
       await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyMass', weightInKg, {
         start: new Date(),
         end: new Date(),
@@ -1788,6 +1912,30 @@ class HealthConnectService {
       // Apple Health attend un ratio (0-1), on convertit depuis le pourcentage
       const ratio = percentage / 100;
 
+      // ✅ CHECK FOR DUPLICATES: Prevent writing same body fat twice on same day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const existingBodyFat = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyFatPercentage', {
+        from: today,
+        to: tomorrow,
+        limit: 10,
+      });
+
+      // Check if same body fat (within 0.5% tolerance) already exists today
+      if (existingBodyFat && existingBodyFat.length > 0) {
+        const alreadyExists = existingBodyFat.some(
+          (sample: any) => Math.abs(sample.quantity - ratio) < 0.005 // 0.5% tolerance
+        );
+        if (alreadyExists) {
+          logger.info('[HealthKit] Body fat already exists for today, skipping duplicate');
+          return true; // Already saved, consider it success
+        }
+      }
+
+      // Save the body fat
       await HealthKit.saveQuantitySample('HKQuantityTypeIdentifierBodyFatPercentage', ratio, {
         start: new Date(),
         end: new Date(),
@@ -2004,7 +2152,7 @@ class HealthConnectService {
    */
   async writeSleepData(data: { startDate: Date; endDate: Date }): Promise<boolean> {
     try {
-      if (!this.isConnected()) {
+      if (!this.syncStatus.isConnected) {
         logger.error('[HealthKit] Not connected - cannot write sleep data');
         return false;
       }
@@ -2039,11 +2187,12 @@ class HealthConnectService {
         duration: `${durationHours.toFixed(2)}h`,
       });
 
-      // Utiliser ReactNativeHealthkit pour écrire le sommeil
-      const result = await ReactNativeHealthkit.saveSleepSample({
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        value: 'asleep', // Type de sommeil
+      // Utiliser HealthKit pour écrire le sommeil
+      // Note: @kingstinct/react-native-healthkit utilise saveCategorySample pour les données de catégorie comme le sommeil
+      // La valeur 1 correspond à HKCategoryValueSleepAnalysisAsleep
+      const result = await HealthKit.saveCategorySample('HKCategoryTypeIdentifierSleepAnalysis', 1, {
+        start: startDate,
+        end: endDate,
       });
 
       if (result) {
@@ -2080,18 +2229,17 @@ class HealthConnectService {
     source: string; // "iPhone" ou "Apple Watch"
   } | null> {
     try {
-      if (!this.isConnected()) {
+      if (!this.syncStatus.isConnected) {
         logger.error('[HealthKit] Not connected - cannot get sleep details');
         return null;
       }
 
       logger.info('[HealthKit] Fetching sleep details from', fromDate, 'to', toDate);
 
-      // Récupérer tous les échantillons de sommeil
-      const samples = await ReactNativeHealthkit.querySamples({
-        identifier: 'HKCategoryTypeIdentifierSleepAnalysis',
-        from: fromDate.toISOString(),
-        to: toDate.toISOString(),
+      // Récupérer tous les échantillons de sommeil en utilisant HealthKit (importé depuis le wrapper)
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
+        from: fromDate,
+        to: toDate,
         limit: 1000,
         ascending: false,
       });
