@@ -1371,44 +1371,7 @@ export default function TrainingJournalScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Info Banner - Stockage local + Nettoyage démo */}
-      {stats.totalBenchmarks > 0 && (
-        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-          <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: colors.backgroundCard,
-            borderRadius: 12,
-            padding: 12,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>
-                Stockage local • Aucun serveur
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleCleanDemoData}
-              style={{
-                backgroundColor: colors.accent + '15',
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 8,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Trash2 size={14} color={colors.accent} />
-              <Text style={{ fontSize: 11, color: colors.accent, fontWeight: '700' }}>
-                Nettoyer démo
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      {/* Info Banner supprimé - nettoyage disponible dans Menu */}
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -1533,13 +1496,18 @@ export default function TrainingJournalScreen() {
                 </View>
               </TouchableOpacity>
             ) : (
-              Object.keys(groupedBenchmarks).map((categoryName) => (
+              Object.keys(groupedBenchmarks).map((categoryName) => {
+                // Get the color from the first benchmark in this category
+                const firstBenchmark = Object.values(groupedBenchmarks[categoryName])[0]?.[0];
+                const categoryColor = firstBenchmark?.color || BENCHMARK_CATEGORIES[firstBenchmark?.category]?.color || '#EF4444';
+
+                return (
                 <View key={categoryName} style={{ marginBottom: 24 }}>
                   {/* CATEGORY HEADER (e.g. MUSCULATION, RUNNING) */}
                   <View style={[styles.mainCategoryHeader, { backgroundColor: colors.backgroundCard }]}>
-                    <Text style={[styles.mainCategoryText, { color: colors.accent }]}>{categoryName}</Text>
+                    <Text style={[styles.mainCategoryText, { color: categoryColor }]}>{categoryName}</Text>
                   </View>
-                  
+
                   {Object.keys(groupedBenchmarks[categoryName]).map((muscleGroup) => (
                     <View key={muscleGroup} style={{ marginTop: 12 }}>
                       {/* SUB HEADER (e.g. PECTORAUX, DOS) - only if it's Musculation or has a muscle group */}
@@ -1553,7 +1521,8 @@ export default function TrainingJournalScreen() {
                     </View>
                   ))}
                 </View>
-              ))
+              );
+              })
             )}
           </View>
         )}
