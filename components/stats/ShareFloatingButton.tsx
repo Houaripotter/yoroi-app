@@ -170,9 +170,9 @@ export const ShareFloatingButton: React.FC = () => {
           ]}
         >
           {isMenuOpen ? (
-            <X size={24} color={isDark ? '#FFFFFF' : '#000000'} strokeWidth={2.5} />
+            <X size={24} color={colors.textOnAccent} strokeWidth={2.5} />
           ) : (
-            <Share2 size={24} color={isDark ? '#FFFFFF' : '#000000'} strokeWidth={2.5} />
+            <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
           )}
         </TouchableOpacity>
       </View>
