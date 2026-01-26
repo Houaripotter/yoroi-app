@@ -212,7 +212,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       activeOpacity={0.95}
       onPress={() => {
         impactAsync(ImpactFeedbackStyle.Light);
-        router.push('/gamification');
+        router.push('/gamification?tab=defis');
       }}
     >
       <LinearGradient
@@ -266,9 +266,9 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   styles.tab,
                   {
                     backgroundColor: isActive
-                      ? `${colors.accent}30`
+                      ? 'rgba(255, 215, 0, 0.25)'
                       : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
-                    borderColor: isActive ? colors.accent : 'transparent'
+                    borderColor: isActive ? '#FFD700' : 'transparent'
                   }
                 ]}
                 onPress={() => {
@@ -279,7 +279,10 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
               >
                 <Text style={[
                   styles.tabText,
-                  { color: isActive ? colors.accent : colors.textMuted }
+                  {
+                    color: isActive ? '#B8860B' : colors.textMuted,
+                    fontWeight: isActive ? '800' : '700'
+                  }
                 ]}>
                   {tabLabels[tab]}
                 </Text>

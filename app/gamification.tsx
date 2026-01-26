@@ -14,7 +14,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -264,6 +264,7 @@ export default function DojoScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
 
   const [streak, setStreak] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -273,7 +274,9 @@ export default function DojoScreen() {
   const [hydrationDays, setHydrationDays] = useState(0);
   const [goalReached, setGoalReached] = useState(false);
 
-  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'defis' | 'historique'>('rangs');
+  // Tab initial depuis les params URL (defis quand on vient de QuestsCard)
+  const initialTab = (tab === 'defis' || tab === 'badges' || tab === 'rangs' || tab === 'historique') ? tab : 'rangs';
+  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'defis' | 'historique'>(initialTab);
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;

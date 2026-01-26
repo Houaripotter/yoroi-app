@@ -21,16 +21,21 @@ export type QuestId =
   | 'daily_hydration'
   | 'daily_training'
   | 'daily_open_app'
+  | 'daily_steps'
+  | 'daily_sleep'
   // Weekly
   | 'weekly_5_weighs'
   | 'weekly_4_trainings'
   | 'weekly_photo'
   | 'weekly_measurements'
   | 'weekly_7_streak'
+  | 'weekly_hydration_streak'
   // Monthly
   | 'monthly_lose_2kg'
   | 'monthly_20_trainings'
-  | 'monthly_30_streak';
+  | 'monthly_30_streak'
+  | 'monthly_50_weighs'
+  | 'monthly_transformation';
 
 export interface Quest {
   id: QuestId;
@@ -96,7 +101,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_training',
-    title: 'Athlète',
+    title: 'Athlete',
     description: 'Faire un entrainement',
     icon: '',
     xp: 50,
@@ -111,6 +116,26 @@ export const DAILY_QUESTS: Quest[] = [
     xp: 5,
     period: 'daily',
     target: 1,
+  },
+  {
+    id: 'daily_steps',
+    title: 'Marcheur',
+    description: 'Faire 10 000 pas',
+    icon: '👟',
+    xp: 30,
+    period: 'daily',
+    target: 10000,
+    unit: 'pas',
+  },
+  {
+    id: 'daily_sleep',
+    title: 'Repos',
+    description: 'Dormir 7h minimum',
+    icon: '😴',
+    xp: 15,
+    period: 'daily',
+    target: 7,
+    unit: 'h',
   },
 ];
 
@@ -160,6 +185,15 @@ export const WEEKLY_QUESTS: Quest[] = [
     period: 'weekly',
     target: 7,
   },
+  {
+    id: 'weekly_hydration_streak',
+    title: 'Hydrate',
+    description: '5 jours a 2L d\'eau',
+    icon: '💧',
+    xp: 120,
+    period: 'weekly',
+    target: 5,
+  },
 ];
 
 export const MONTHLY_QUESTS: Quest[] = [
@@ -190,6 +224,24 @@ export const MONTHLY_QUESTS: Quest[] = [
     xp: 600,
     period: 'monthly',
     target: 30,
+  },
+  {
+    id: 'monthly_50_weighs',
+    title: 'Assidu',
+    description: '25 pesees ce mois',
+    icon: '⚖️',
+    xp: 300,
+    period: 'monthly',
+    target: 25,
+  },
+  {
+    id: 'monthly_transformation',
+    title: 'Avant/Apres',
+    description: '4 photos transformation',
+    icon: '📸',
+    xp: 350,
+    period: 'monthly',
+    target: 4,
   },
 ];
 
