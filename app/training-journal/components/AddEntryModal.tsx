@@ -196,7 +196,11 @@ export default React.memo(function AddEntryModal(props: AddEntryModalProps) {
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-        <ScrollView style={{ maxHeight: '90%' }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={{ maxHeight: '90%', width: '100%' }}
+          contentContainerStyle={{ alignItems: 'center', paddingHorizontal: 16 }}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
@@ -629,12 +633,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: '90%',
+    width: '100%',
     maxWidth: 500,
     borderRadius: 24,
     padding: 24,
     marginVertical: 40,
-    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

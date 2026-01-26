@@ -159,19 +159,20 @@ export const ShareFloatingButton: React.FC = () => {
           })}
         </Animated.View>
 
-        {/* Bouton principal */}
+        {/* Bouton principal - couleur du thème */}
         <TouchableOpacity
           onPress={handleButtonPress}
           activeOpacity={0.8}
           style={[
             styles.button,
-            isMenuOpen && styles.buttonActive,
+            { backgroundColor: colors.accent },
+            isMenuOpen && { backgroundColor: isDark ? colors.accentDark || colors.accent : colors.accentDark || colors.accent },
           ]}
         >
           {isMenuOpen ? (
-            <X size={24} color="#FFFFFF" strokeWidth={2.5} />
+            <X size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
           ) : (
-            <Share2 size={24} color="#FFFFFF" strokeWidth={2.5} />
+            <Share2 size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
           )}
         </TouchableOpacity>
       </View>
