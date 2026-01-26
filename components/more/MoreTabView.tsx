@@ -2,36 +2,54 @@
 // MORE TAB VIEW - Navigation avec onglets circulaires
 // ============================================
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { User, Palette, Settings, Heart } from 'lucide-react-native';
+import { User, Palette, Settings, Heart, Camera } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface MoreTabViewProps {
   children: React.ReactNode[];
+  showCaptureTab?: boolean;
 }
 
 const PAGE_ICONS = [User, Palette, Settings, Heart];
 const PAGE_IDS = ['profile', 'appearance', 'data', 'support'];
 
-export const MoreTabView: React.FC<MoreTabViewProps> = ({ children }) => {
+export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureTab = false }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Create pages with translated titles
-  const PAGES = useMemo(() => [
-    { id: 'profile', title: t('menu.profileTab'), icon: User },
-    { id: 'appearance', title: t('menu.appearanceTab'), icon: Palette },
-    { id: 'data', title: t('menu.dataTab'), icon: Settings },
-    { id: 'support', title: t('menu.supportTab'), icon: Heart },
-  ], [t]);
+  // Create pages with translated titles - conditionally include capture tab
+  const PAGES = useMemo(() => {
+    const baseTabs = [
+      { id: 'profile', title: t('menu.profileTab'), icon: User },
+      { id: 'appearance', title: t('menu.appearanceTab'), icon: Palette },
+      { id: 'data', title: t('menu.dataTab'), icon: Settings },
+      { id: 'support', title: t('menu.supportTab'), icon: Heart },
+    ];
+
+    if (showCaptureTab) {
+      baseTabs.push({ id: 'capture', title: 'Capture', icon: Camera });
+    }
+
+    return baseTabs;
+  }, [t, showCaptureTab]);
+
   const tabScrollRef = useRef<ScrollView>(null);
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Reset to page 0 if capture tab is hidden while on it
+  useEffect(() => {
+    if (!showCaptureTab && currentPage === 4) {
+      setCurrentPage(0);
+      scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+    }
+  }, [showCaptureTab, currentPage]);
 
   // Calculer si tous les onglets rentrent dans l'écran
   const tabWidth = 44;

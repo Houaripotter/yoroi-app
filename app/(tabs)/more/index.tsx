@@ -1316,7 +1316,7 @@ export default function MoreScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <MoreTabView>
+      <MoreTabView showCaptureTab={screenshotMenuUnlocked}>
         {/* PAGE 1 - PROFIL */}
         <ScrollView
           style={styles.scrollView}
@@ -1419,30 +1419,6 @@ export default function MoreScreen() {
             </View>
           </View>
         )}
-
-          {/* MENU CREATEUR */}
-          {creatorModeActive && (
-            <View style={[styles.sectionContainer, { marginTop: 10 }]}>
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: colors.accent + '20', borderColor: colors.accent, borderWidth: 1, borderRadius: 16 }]}
-                onPress={() => router.push('/creator-mode')}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '30' }]}>
-                  <Sparkles size={20} color={colors.accent} strokeWidth={2.5} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, { color: colors.accent, fontWeight: '900' }]}>
-                    ✨ MENU CRÉATEUR
-                  </Text>
-                  <Text style={[styles.menuItemSublabel, { color: colors.accent }]}>
-                    Outils de screenshots & démo
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={colors.accent} />
-              </TouchableOpacity>
-            </View>
-          )}
 
           {/* PROFIL */}
           {renderSection(t('menu.profileAndGamification'), PROFILE_ITEMS)}
@@ -1687,21 +1663,100 @@ export default function MoreScreen() {
           {renderSection(t('menu.support'), SUPPORT_ITEMS)}
           {renderSection(t('menu.security'), SECURITY_ITEMS)}
 
-          {/* MENU SCREENSHOT SECRET - Visible uniquement si débloqué */}
-          {screenshotMenuUnlocked && (
+          {/* BIENTÔT DISPONIBLE */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.comingSoon')}</Text>
+          <TouchableOpacity
+            style={[styles.comingSoonCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => setUpcomingModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.comingSoonContent}>
+              <Zap size={24} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.comingSoonTitle, { color: colors.textPrimary }]}>
+                  {t('menu.newFeaturesComingSoon')}
+                </Text>
+                <Text style={[styles.comingSoonDesc, { color: colors.textSecondary }]}>
+                  {t('menu.clickToSeeRoadmap')}
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.textMuted} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* FOOTER */}
+        <View style={styles.footer}>
+          <View style={[styles.privacyCard, { backgroundColor: isDark ? '#1E293B' : '#F0FDF4' }]}>
+            <View style={styles.privacyIconContainer}>
+              <Shield size={20} color={isDark ? '#4ADE80' : '#16A34A'} />
+            </View>
+            <View style={styles.privacyContent}>
+              <Text style={[styles.privacyTitle, { color: isDark ? '#4ADE80' : '#16A34A' }]}>
+                {t('menu.private100')}
+              </Text>
+              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
+                {t('menu.privateDescription')}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.madeWith, { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }]}>
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
+            <Heart size={14} color="#EF4444" fill="#EF4444" />
+            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={handleVersionTap}
+            activeOpacity={1}
+          >
+            <Text style={{
+              color: colors.textMuted,
+              fontSize: 12,
+              marginTop: 12,
+              textAlign: 'center'
+            }}>
+              YOROI Version 2.0
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+
+        {/* PAGE 5 - CAPTURE (conditionnel) */}
+        {screenshotMenuUnlocked && (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
+            {/* HEADER */}
+            <View style={[styles.captureHeader, { backgroundColor: colors.accent + '15' }]}>
+              <Camera size={32} color={colors.accent} />
+              <Text style={[styles.captureHeaderTitle, { color: colors.accent }]}>
+                Mode Capture
+              </Text>
+              <Text style={[styles.captureHeaderSubtitle, { color: colors.textMuted }]}>
+                Outils pour screenshots App Store
+              </Text>
+            </View>
+
+            {/* MODES DE CAPTURE */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.accent }]}>MODE CAPTURE</Text>
-              <View style={[styles.sectionCard, {
-                backgroundColor: colors.card,
-                borderColor: colors.accent,
-                borderWidth: 1,
-              }]}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ACTIVER UN MODE</Text>
+              <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+
                 {/* Mode Global - Germain Del Jarret */}
                 <TouchableOpacity
                   style={[styles.menuItem, { backgroundColor: colors.card }]}
                   onPress={async () => {
                     await generateScreenshotDemoData();
-                    showPopup('Mode Germain Activé', 'Données de démo générées (6 mois de transformation).', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                    notificationAsync(NotificationFeedbackType.Success);
+                    showPopup('Mode Germain Activé', 'Toutes les données de démo ont été générées (6 mois de transformation, carnet rempli, etc.).', [{ text: 'Parfait', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
                   }}
                   activeOpacity={0.7}
                 >
@@ -1709,13 +1764,19 @@ export default function MoreScreen() {
                     <User size={20} color={colors.accent} strokeWidth={2} />
                   </View>
                   <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Germain</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Profil complet avec stats parfaites</Text>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Germain Complet</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Génère TOUT: poids, carnet, blessures...</Text>
                   </View>
                   <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>
 
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+              </View>
+            </View>
+
+            {/* ACCÈS RAPIDE */}
+            <View style={styles.sectionContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ACCÈS RAPIDE</Text>
+              <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
                 {/* Carnet d'Entraînement */}
                 <TouchableOpacity
@@ -1805,25 +1866,13 @@ export default function MoreScreen() {
                   <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>
 
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+              </View>
+            </View>
 
-                {/* Menu Créateur Complet */}
-                <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/creator-mode')}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.menuItemIcon, { backgroundColor: '#FBBF2420' }]}>
-                    <Sparkles size={20} color="#FBBF24" strokeWidth={2} />
-                  </View>
-                  <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Menu Créateur</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Tous les toggles et options</Text>
-                  </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+            {/* NETTOYAGE */}
+            <View style={styles.sectionContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>NETTOYAGE</Text>
+              <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
                 {/* Reset / Nettoyer */}
                 <TouchableOpacity
@@ -1831,7 +1880,7 @@ export default function MoreScreen() {
                   onPress={() => {
                     showPopup(
                       'Nettoyer les données',
-                      'Supprimer toutes les données de démo et désactiver le menu capture ?',
+                      'Supprimer toutes les données de démo et masquer l\'onglet Capture ?',
                       [
                         { text: 'Annuler', style: 'cancel' },
                         {
@@ -1843,7 +1892,8 @@ export default function MoreScreen() {
                             await AsyncStorage.removeItem('@yoroi_screenshot_mode');
                             setScreenshotMenuUnlocked(false);
                             setCreatorModeActive(false);
-                            showPopup('Nettoyé', 'Données de démo supprimées. Le menu est maintenant masqué.', [{ text: 'OK', style: 'primary' }]);
+                            notificationAsync(NotificationFeedbackType.Success);
+                            showPopup('Nettoyé', 'Données de démo supprimées. L\'onglet Capture est maintenant masqué.', [{ text: 'OK', style: 'primary' }]);
                           },
                         },
                       ],
@@ -1857,100 +1907,17 @@ export default function MoreScreen() {
                   </View>
                   <View style={styles.menuItemContent}>
                     <Text style={[styles.menuItemLabel, { color: '#EF4444' }]}>Nettoyer & Masquer</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Supprimer les données de démo</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Supprime les données et cache l'onglet</Text>
                   </View>
                   <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>
+
               </View>
             </View>
-          )}
 
-          {/* MENU CREATEUR - Visible uniquement si activé */}
-          {creatorModeActive && !screenshotMenuUnlocked && (
-            <View style={[styles.sectionContainer, { marginTop: 10 }]}>
-              <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: colors.accent + '20', borderColor: colors.accent, borderWidth: 1, borderRadius: 16 }]}
-                onPress={() => router.push('/creator-mode')}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '30' }]}>
-                  <Sparkles size={20} color={colors.accent} strokeWidth={2.5} />
-                </View>
-                <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, { color: colors.accent, fontWeight: '900' }]}>
-                    ✨ MENU CRÉATEUR
-                  </Text>
-                  <Text style={[styles.menuItemSublabel, { color: colors.accent }]}>
-                    Outils de screenshots & démo
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={colors.accent} />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* BIENTÔT DISPONIBLE */}
-        <View style={styles.sectionContainer}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.comingSoon')}</Text>
-          <TouchableOpacity
-            style={[styles.comingSoonCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => setUpcomingModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.comingSoonContent}>
-              <Zap size={24} color={colors.accent} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.comingSoonTitle, { color: colors.textPrimary }]}>
-                  {t('menu.newFeaturesComingSoon')}
-                </Text>
-                <Text style={[styles.comingSoonDesc, { color: colors.textSecondary }]}>
-                  {t('menu.clickToSeeRoadmap')}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={colors.textMuted} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* FOOTER */}
-        <View style={styles.footer}>
-          <View style={[styles.privacyCard, { backgroundColor: isDark ? '#1E293B' : '#F0FDF4' }]}>
-            <View style={styles.privacyIconContainer}>
-              <Shield size={20} color={isDark ? '#4ADE80' : '#16A34A'} />
-            </View>
-            <View style={styles.privacyContent}>
-              <Text style={[styles.privacyTitle, { color: isDark ? '#4ADE80' : '#16A34A' }]}>
-                {t('menu.private100')}
-              </Text>
-              <Text style={[styles.privacyText, { color: colors.textSecondary }]}>
-                {t('menu.privateDescription')}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.madeWith, { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }]}>
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.madeWithLove')}</Text>
-            <Heart size={14} color="#EF4444" fill="#EF4444" />
-            <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>{t('menu.inFrance')}</Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleVersionTap}
-            activeOpacity={1}
-          >
-            <Text style={{
-              color: colors.textMuted,
-              fontSize: 12,
-              marginTop: 12,
-              textAlign: 'center'
-            }}>
-              YOROI Version 2.0
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+            <View style={{ height: 100 }} />
+          </ScrollView>
+        )}
       </MoreTabView>
 
       {/* Modal - Sports Selection */}
@@ -3327,5 +3294,23 @@ const styles = StyleSheet.create({
   secretCodeButtonText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  // CAPTURE TAB HEADER
+  captureHeader: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 20,
+    gap: 8,
+  },
+  captureHeaderTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  captureHeaderSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
