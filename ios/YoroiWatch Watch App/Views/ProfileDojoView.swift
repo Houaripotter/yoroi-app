@@ -25,7 +25,7 @@ struct ProfileDojoView: View {
                 // SECTION PROFIL
                 // ============================================
 
-                // AVATAR + GRADE
+                // AVATAR + GRADE (Données synchronisées depuis iPhone)
                 VStack(spacing: 4) {
                     ZStack {
                         Circle()
@@ -38,21 +38,21 @@ struct ProfileDojoView: View {
                             .shadow(color: .purple, radius: 8)
                     }
 
-                    Text("SAMURAI")
+                    Text(healthManager.userRank.uppercased())
                         .font(.system(size: 14, weight: .black))
                         .foregroundColor(.white)
 
-                    Text("Niveau 12 • 1565 XP")
+                    Text("Niveau \(healthManager.userLevel)")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.purple)
                 }
                 .padding(.top, 10)
 
-                // STATS RÉSUMÉ
+                // STATS RÉSUMÉ (Données réelles)
                 HStack(spacing: 6) {
                     ProfileStatBox(label: "SÉRIE", value: "\(healthManager.streak)j", color: .orange)
                     ProfileStatBox(label: "SÉANCES", value: "\(healthManager.workoutHistory.count)", color: .green)
-                    ProfileStatBox(label: "BADGES", value: "7", color: .purple)
+                    ProfileStatBox(label: "NIVEAU", value: "\(healthManager.userLevel)", color: .purple)
                 }
                 .padding(.horizontal, 4)
 
@@ -66,11 +66,11 @@ struct ProfileDojoView: View {
                     .foregroundColor(.orange)
                     .padding(.top, 8)
 
-                // STATS COMBAT
+                // STATS (basées sur les données réelles)
                 HStack(spacing: 6) {
-                    DojoStatBox(label: "FORCE", value: "85", color: .red)
-                    DojoStatBox(label: "AGILITÉ", value: "72", color: .green)
-                    DojoStatBox(label: "MENTAL", value: "90", color: .purple)
+                    DojoStatBox(label: "POIDS", value: healthManager.currentWeight > 0 ? String(format: "%.1f", healthManager.currentWeight) : "-", color: .red)
+                    DojoStatBox(label: "EAU", value: String(format: "%.1f", healthManager.waterIntake / 1000), color: .blue)
+                    DojoStatBox(label: "PAS", value: "\(Int(healthManager.stepsToday / 1000))k", color: .green)
                 }
                 .padding(.horizontal, 4)
 
@@ -108,22 +108,22 @@ struct ProfileDojoView: View {
                 .cornerRadius(16)
                 .padding(.horizontal, 4)
 
-                // PROCHAIN RANG
+                // PROCHAIN NIVEAU
                 VStack(spacing: 4) {
-                    Text("PROCHAIN RANG")
+                    Text("PROCHAIN NIVEAU")
                         .font(.system(size: 8, weight: .black))
                         .foregroundColor(.gray)
 
                     HStack(spacing: 8) {
-                        Image(systemName: "crown.fill")
+                        Image(systemName: "arrow.up.circle.fill")
                             .foregroundColor(.yellow)
                             .font(.system(size: 16))
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("SHOGUN")
+                            Text("NIVEAU \(healthManager.userLevel + 1)")
                                 .font(.system(size: 12, weight: .black))
                                 .foregroundColor(.yellow)
-                            Text("Dans 435 XP")
+                            Text("Continue à t'entraîner!")
                                 .font(.system(size: 8))
                                 .foregroundColor(.gray)
                         }

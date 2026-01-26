@@ -273,7 +273,7 @@ export default function DojoScreen() {
   const [hydrationDays, setHydrationDays] = useState(0);
   const [goalReached, setGoalReached] = useState(false);
 
-  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'historique'>('rangs');
+  const [selectedTab, setSelectedTab] = useState<'rangs' | 'badges' | 'defis' | 'historique'>('rangs');
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -371,7 +371,7 @@ export default function DojoScreen() {
   const nextLevel = getNextLevel(totalPoints);
   const levelProgressData = getLevelProgress(totalPoints);
 
-  // Stats pour les badges
+  // Stats pour les badges et défis
   const stats = {
     weightsCount,
     trainingsCount,
@@ -379,6 +379,10 @@ export default function DojoScreen() {
     streak,
     hydrationDays,
     goalReached,
+    // Défis
+    trainedToday: false, // TODO: Calculer si entraînement fait aujourd'hui
+    weeklyWorkouts: Math.min(trainingsCount, 4), // Approximation
+    monthlyWorkouts: Math.min(trainingsCount, 20), // Approximation
   };
 
   const unlockedBadges = BADGES.filter(badge => badge.unlockCondition(stats));
@@ -530,6 +534,7 @@ export default function DojoScreen() {
         {[
           { key: 'rangs', icon: Trophy, label: t('gamification.ranks'), color: '#F59E0B' },
           { key: 'badges', icon: Award, label: t('gamification.badges'), color: '#8B5CF6' },
+          { key: 'defis', icon: Target, label: t('gamification.challenges') || 'Défis', color: '#10B981' },
           { key: 'historique', icon: Clock, label: t('gamification.timeline'), color: '#3B82F6' },
         ].map((tab) => {
           const isActive = selectedTab === tab.key;
@@ -905,6 +910,170 @@ export default function DojoScreen() {
                 })}
               </>
             )}
+          </View>
+        )}
+
+        {/* ═══════════════════════════════════════ */}
+        {/* TAB: DÉFIS */}
+        {/* ═══════════════════════════════════════ */}
+        {selectedTab === 'defis' && (
+          <View>
+            {/* Défis Quotidiens */}
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
+              <View style={styles.sectionCardHeader}>
+                <View style={[styles.sectionCardIcon, { backgroundColor: '#10B98120' }]}>
+                  <Flame size={20} color="#10B981" />
+                </View>
+                <Text style={[styles.sectionCardTitle, { color: colors.textPrimary }]}>
+                  {t('gamification.dailyChallenges') || 'Défis du jour'}
+                </Text>
+              </View>
+
+              {/* Défi 10k pas */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#3B82F620' }]}>
+                  <TrendingUp size={24} color="#3B82F6" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>10 000 pas</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Marche 10k pas aujourd'hui</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: '65%', backgroundColor: '#3B82F6' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+50 XP</Text>
+                </View>
+              </View>
+
+              {/* Défi Entraînement */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#8B5CF620' }]}>
+                  <Dumbbell size={24} color="#8B5CF6" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>Séance du jour</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Complète un entraînement</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: stats.trainedToday ? '100%' : '0%', backgroundColor: '#8B5CF6' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: stats.trainedToday ? '#10B98120' : '#FFD70020' }]}>
+                  <Text style={[styles.challengeXPText, { color: stats.trainedToday ? '#10B981' : '#000' }]}>
+                    {stats.trainedToday ? '✓' : '+30 XP'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Défi Hydratation */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#06B6D420' }]}>
+                  <Droplets size={24} color="#06B6D4" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>Hydratation</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Bois 2L d'eau</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: '40%', backgroundColor: '#06B6D4' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+20 XP</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Défis Hebdomadaires */}
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF', marginTop: 16 }]}>
+              <View style={styles.sectionCardHeader}>
+                <View style={[styles.sectionCardIcon, { backgroundColor: '#F59E0B20' }]}>
+                  <Star size={20} color="#F59E0B" />
+                </View>
+                <Text style={[styles.sectionCardTitle, { color: colors.textPrimary }]}>
+                  {t('gamification.weeklyChallenges') || 'Défis de la semaine'}
+                </Text>
+              </View>
+
+              {/* Défi 4 séances */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#F59E0B20' }]}>
+                  <Trophy size={24} color="#F59E0B" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>4 séances</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Entraîne-toi 4 fois cette semaine</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: `${Math.min(100, (stats.weeklyWorkouts || 0) / 4 * 100)}%`, backgroundColor: '#F59E0B' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+100 XP</Text>
+                </View>
+              </View>
+
+              {/* Défi 50k pas */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#10B98120' }]}>
+                  <TrendingUp size={24} color="#10B981" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>50 000 pas</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Marche 50k pas cette semaine</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: '45%', backgroundColor: '#10B981' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+150 XP</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Défis Mensuels */}
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF', marginTop: 16 }]}>
+              <View style={styles.sectionCardHeader}>
+                <View style={[styles.sectionCardIcon, { backgroundColor: '#EF444420' }]}>
+                  <Crown size={20} color="#EF4444" />
+                </View>
+                <Text style={[styles.sectionCardTitle, { color: colors.textPrimary }]}>
+                  {t('gamification.monthlyChallenges') || 'Défis du mois'}
+                </Text>
+              </View>
+
+              {/* Défi 20 séances */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#EF444420' }]}>
+                  <Flame size={24} color="#EF4444" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>20 séances</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Entraîne-toi 20 fois ce mois</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: `${Math.min(100, (stats.monthlyWorkouts || 0) / 20 * 100)}%`, backgroundColor: '#EF4444' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+500 XP</Text>
+                </View>
+              </View>
+
+              {/* Défi Streak 30 jours */}
+              <View style={[styles.challengeItem, { borderColor: colors.border }]}>
+                <View style={[styles.challengeIcon, { backgroundColor: '#F59E0B20' }]}>
+                  <Zap size={24} color="#F59E0B" />
+                </View>
+                <View style={styles.challengeInfo}>
+                  <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>30 jours de série</Text>
+                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>Maintiens ta série 30 jours</Text>
+                  <View style={[styles.challengeProgressBg, { backgroundColor: colors.border }]}>
+                    <View style={[styles.challengeProgressFill, { width: `${Math.min(100, (stats.streak || 0) / 30 * 100)}%`, backgroundColor: '#F59E0B' }]} />
+                  </View>
+                </View>
+                <View style={[styles.challengeXP, { backgroundColor: '#FFD70020' }]}>
+                  <Text style={styles.challengeXPText}>+300 XP</Text>
+                </View>
+              </View>
+            </View>
           </View>
         )}
 
@@ -1636,6 +1805,87 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+  },
+
+  // ═══════════════════════════════════════
+  // DÉFIS (CHALLENGES)
+  // ═══════════════════════════════════════
+  sectionCard: {
+    borderRadius: 20,
+    padding: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  sectionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  sectionCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  challengeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  challengeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  challengeInfo: {
+    flex: 1,
+  },
+  challengeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  challengeDesc: {
+    fontSize: 11,
+    marginBottom: 8,
+  },
+  challengeProgressBg: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  challengeProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  challengeXP: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  challengeXPText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#92400E',
   },
 
   // ═══════════════════════════════════════

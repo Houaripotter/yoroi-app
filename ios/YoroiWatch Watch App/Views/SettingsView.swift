@@ -350,7 +350,7 @@ struct SettingsView: View {
                     Text("Version")
                         .font(.system(size: 11))
                     Spacer()
-                    Text("1.0.1")
+                    Text("1.0")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.gray)
                 }
@@ -368,7 +368,7 @@ struct SettingsView: View {
             // VERSION & SECRET
             Section {
                 Button(action: handleVersionTap) {
-                    Text("Yoroi Watch • V1.0.1")
+                    Text("Yoroi Watch • V1.0")
                         .font(.system(size: 10, weight: .black))
                         .foregroundColor(.gray.opacity(0.5))
                         .frame(maxWidth: .infinity, alignment: .center)

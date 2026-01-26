@@ -58,12 +58,17 @@ interface QuestsSummary {
   xpEarned: number;
 }
 
+type TabType = 'day' | 'week' | 'month';
+
 export const QuestsCard: React.FC<QuestsCardProps> = ({
   onXPGained,
   onRefresh,
 }) => {
   const { colors, isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<TabType>('day');
   const [dailyQuests, setDailyQuests] = useState<QuestsSummary | null>(null);
+  const [weeklyQuests, setWeeklyQuests] = useState<QuestsSummary | null>(null);
+  const [monthlyQuests, setMonthlyQuests] = useState<QuestsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalXP, setTotalXP] = useState(0);
 
@@ -114,17 +119,28 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     try {
       setIsLoading(true);
       await checkAndUpdateQuests();
-      const daily = await getDailyQuestsProgress();
+
+      const [daily, weekly, monthly] = await Promise.all([
+        getDailyQuestsProgress(),
+        getWeeklyQuestsProgress(),
+        getMonthlyQuestsProgress(),
+      ]);
+
       setDailyQuests(daily);
-      setTotalXP(daily?.xpEarned || 0);
+      setWeeklyQuests(weekly);
+      setMonthlyQuests(monthly);
+
+      // Total XP selon l'onglet actif
+      const currentQuests = activeTab === 'day' ? daily : activeTab === 'week' ? weekly : monthly;
+      setTotalXP(currentQuests?.xpEarned || 0);
 
       // Animer la barre de progression
-      if (daily) {
+      if (currentQuests) {
         Animated.timing(progressAnim, {
-          toValue: daily.completed / daily.total,
+          toValue: currentQuests.completed / currentQuests.total,
           duration: 800,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: false, // REQUIS: utilisé pour interpoler width de barre (layout property)
+          useNativeDriver: false,
         }).start();
       }
     } catch (error) {
@@ -132,7 +148,21 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeTab]);
+
+  // Mise à jour animation quand on change d'onglet
+  useEffect(() => {
+    const currentQuests = activeTab === 'day' ? dailyQuests : activeTab === 'week' ? weeklyQuests : monthlyQuests;
+    if (currentQuests) {
+      setTotalXP(currentQuests.xpEarned || 0);
+      Animated.timing(progressAnim, {
+        toValue: currentQuests.completed / currentQuests.total,
+        duration: 400,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [activeTab, dailyQuests, weeklyQuests, monthlyQuests]);
 
   useEffect(() => {
     loadQuests();
@@ -156,7 +186,10 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     return '#FFD700';
   };
 
-  if (isLoading || !dailyQuests) {
+  // Quêtes selon onglet actif
+  const currentQuests = activeTab === 'day' ? dailyQuests : activeTab === 'week' ? weeklyQuests : monthlyQuests;
+
+  if (isLoading || !currentQuests) {
     return (
       <View style={[styles.container, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
         <View style={[styles.loadingBar, { backgroundColor: colors.border }]} />
@@ -164,9 +197,15 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     );
   }
 
-  const completedCount = dailyQuests.completed;
-  const totalCount = dailyQuests.total;
+  const completedCount = currentQuests.completed;
+  const totalCount = currentQuests.total;
   const progressPercent = (completedCount / totalCount) * 100;
+
+  const tabLabels: Record<TabType, string> = {
+    day: 'Jour',
+    week: 'Semaine',
+    month: 'Mois',
+  };
 
   return (
     <TouchableOpacity
@@ -198,11 +237,11 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             </Animated.View>
             <View>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Quêtes du jour
+                Quêtes
               </Text>
               <View style={styles.xpBadge}>
                 <Zap size={12} color="#FFD700" fill="#FFD700" />
-                <Text style={styles.xpText}>+{totalXP} XP disponibles</Text>
+                <Text style={styles.xpText}>+{totalXP} XP</Text>
               </View>
             </View>
           </View>
@@ -214,6 +253,35 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             </Text>
             <Text style={[styles.counterTotal, { color: colors.textMuted }]}>/{totalCount}</Text>
           </View>
+        </View>
+
+        {/* Tabs Jour/Semaine/Mois */}
+        <View style={styles.tabsRow}>
+          {(['day', 'week', 'month'] as TabType[]).map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                style={[
+                  styles.tab,
+                  isActive && styles.tabActive,
+                  { borderColor: isActive ? '#FFD700' : 'transparent' }
+                ]}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  setActiveTab(tab);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.tabText,
+                  { color: isActive ? '#FFD700' : colors.textMuted }
+                ]}>
+                  {tabLabels[tab]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Barre de progression animée */}
@@ -253,7 +321,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
         {/* Liste des quêtes (3 max affichées) */}
         <View style={styles.questsList}>
-          {dailyQuests.quests.slice(0, 3).map((quest, index) => {
+          {currentQuests.quests.slice(0, 3).map((quest, index) => {
             const IconComponent = getQuestIcon(quest.id);
             const questColor = getQuestColor(quest.id);
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);
@@ -386,7 +454,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  tabsRow: {
+    flexDirection: 'row',
     marginBottom: 16,
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+  },
+  tabActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   headerLeft: {
     flexDirection: 'row',

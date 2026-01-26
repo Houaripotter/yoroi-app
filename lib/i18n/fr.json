@@ -864,7 +864,11 @@
     "close": "Fermer",
     "storyStartsHere": "Ton histoire commence ici",
     "timelineDescription": "Complète des succès pour voir ton parcours",
-    "in": "dans"
+    "in": "dans",
+    "challenges": "Défis",
+    "dailyChallenges": "Défis du jour",
+    "weeklyChallenges": "Défis de la semaine",
+    "monthlyChallenges": "Défis du mois"
   },
   "badges": {
     "myBadges": "Mes Badges",

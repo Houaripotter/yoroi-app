@@ -14,9 +14,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 40;
 const GOLD_COLOR = '#D4AF37';
 
-const PHOTO_SECTION_HEIGHT = '65%';
-const STATS_SECTION_HEIGHT = '23%';
-const FOOTER_SECTION_HEIGHT = '12%';
+// Hauteurs fixes calculées sur ratio 16:9 pour éviter les débordements
+const PHOTO_SECTION_RATIO = 0.58;  // 58% pour la photo
+const STATS_SECTION_RATIO = 0.30;  // 30% pour les stats
+const FOOTER_SECTION_RATIO = 0.12; // 12% pour le footer
 const PROFILE_SIZE = 50;
 const AVATAR_SIZE = 50;
 
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photoSection: {
-    height: PHOTO_SECTION_HEIGHT,
+    flex: PHOTO_SECTION_RATIO * 10,  // Utiliser flex pour proportions exactes
     width: '100%',
     backgroundColor: '#111',
   },
@@ -368,10 +369,11 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   statsSection: {
-    flex: 1,
+    flex: STATS_SECTION_RATIO * 10,  // Utiliser flex pour proportions exactes
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
     justifyContent: 'center',
+    overflow: 'hidden',  // Éviter les débordements
   },
   sectionLabel: {
     fontSize: 8,
@@ -420,10 +422,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   footerSection: {
-    height: FOOTER_SECTION_HEIGHT,
+    flex: FOOTER_SECTION_RATIO * 10,  // Utiliser flex pour proportions exactes
     borderTopWidth: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
+    minHeight: 45,  // Hauteur minimale garantie
   },
 });
 

@@ -862,7 +862,11 @@
     "timelineDescription": "Complete achievements to see your journey",
     "viewBadges": "View Badges",
     "yourTimeline": "Your Timeline",
-    "in": "in"
+    "in": "in",
+    "challenges": "Challenges",
+    "dailyChallenges": "Daily Challenges",
+    "weeklyChallenges": "Weekly Challenges",
+    "monthlyChallenges": "Monthly Challenges"
   },
   "notifications": {
     "title": "Notifications",
