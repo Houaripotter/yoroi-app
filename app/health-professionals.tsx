@@ -34,7 +34,7 @@ import { COACHES, NUTRITIONISTS, OSTEOPATHS, Coach, Nutritionist, Osteopath } fr
 
 export default function HealthProfessionalsScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'kines' | 'nutritionists' | 'osteos'>('kines');
   const [selectedProfessional, setSelectedProfessional] = useState<Coach | Nutritionist | Osteopath | null>(null);
 
@@ -318,7 +318,7 @@ export default function HealthProfessionalsScreen() {
                   activeOpacity={0.7}
                 >
                   <MapPin size={20} color={colors.accent} strokeWidth={2} />
-                  <Text style={[styles.detailLocationText, { color: colors.accent }]}>
+                  <Text style={[styles.detailLocationText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                     {selectedProfessional.location}
                   </Text>
                   <ExternalLink size={16} color={colors.accent} />
@@ -421,7 +421,7 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, color
         {professional.instagram && (
           <View style={styles.instagramRow}>
             <ExternalLink size={14} color={colors.accent} />
-            <Text style={[styles.instagramHandle, { color: colors.accent }]}>{professional.instagram}</Text>
+            <Text style={[styles.instagramHandle, { color: isDark ? colors.accent : colors.textPrimary }]}>{professional.instagram}</Text>
           </View>
         )}
         {professional.featured && (

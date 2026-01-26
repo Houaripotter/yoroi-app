@@ -200,7 +200,7 @@ export default function LogoSelectionScreen() {
                 {option.isPremium && (
                   <View style={[styles.premiumTag, { backgroundColor: `${colors.accent}20` }]}>
                     <Crown size={10} color={colors.accent} />
-                    <Text style={[styles.premiumTagText, { color: colors.accent }]}>Premium</Text>
+                    <Text style={[styles.premiumTagText, { color: isDark ? colors.accent : colors.textPrimary }]}>Premium</Text>
                   </View>
                 )}
 

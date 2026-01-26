@@ -165,7 +165,7 @@ export default function AddClubScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 20 }}>
         
         {/* 1. NOM */}
-        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>1. NOM DU CLUB</Text>
+        <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>1. NOM DU CLUB</Text>
         <View style={{
           backgroundColor: colors.backgroundCard,
           padding: 18,
@@ -197,7 +197,7 @@ export default function AddClubScreen() {
         )}
 
         {/* 2. LOGO */}
-        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>2. LOGO (OPTIONNEL)</Text>
+        <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>2. LOGO (OPTIONNEL)</Text>
         <View style={{
           backgroundColor: colors.backgroundCard,
           padding: 18,
@@ -244,7 +244,7 @@ export default function AddClubScreen() {
         </View>
 
         {/* 3. SPORT */}
-        <Text style={[styles.sectionTitle, { color: colors.accent, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>3. SPORT PRINCIPAL</Text>
+        <Text style={[styles.sectionTitle, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800', fontSize: 14, letterSpacing: 1, marginBottom: 12 }]}>3. SPORT PRINCIPAL</Text>
 
         <View style={{ marginBottom: 16 }}>
           <View style={{

@@ -45,7 +45,7 @@ const getClubIcon = (type: string, color: string = '#999') => {
 
 export default function PartnersScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'coaches' | 'clubs'>('coaches');
   const [selectedPartner, setSelectedPartner] = useState<Coach | Club | null>(null);
   const [imageZoomed, setImageZoomed] = useState(false);
@@ -445,7 +445,7 @@ export default function PartnersScreen() {
                   activeOpacity={0.7}
                 >
                   <MapPin size={20} color={colors.accent} strokeWidth={2} />
-                  <Text style={[styles.detailLocationText, { color: colors.accent }]}>
+                  <Text style={[styles.detailLocationText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                     {selectedPartner.location}
                   </Text>
                   <ExternalLink size={16} color={colors.accent} />
@@ -520,7 +520,7 @@ const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, onPress }) => (
         {coach.instagram && (
           <View style={styles.instagramRow}>
             <ExternalLink size={14} color={colors.accent} />
-            <Text style={[styles.instagramHandle, { color: colors.accent }]}>{coach.instagram}</Text>
+            <Text style={[styles.instagramHandle, { color: isDark ? colors.accent : colors.textPrimary }]}>{coach.instagram}</Text>
           </View>
         )}
         {coach.featured && (
@@ -594,7 +594,7 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
         {club.instagram && (
           <View style={styles.instagramRow}>
             <ExternalLink size={14} color={colors.accent} />
-            <Text style={[styles.instagramHandle, { color: colors.accent }]}>
+            <Text style={[styles.instagramHandle, { color: isDark ? colors.accent : colors.textPrimary }]}>
               {Array.isArray(club.instagram)
                 ? `${club.instagram.length} comptes`
                 : club.instagram}

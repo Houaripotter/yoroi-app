@@ -367,7 +367,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
                 <Text style={[
                   styles.tabTitle,
                   {
-                    color: isActive ? colors.accent : colors.textMuted,
+                    color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted,
                     fontWeight: isActive ? '800' : '600',
                   }
                 ]}>

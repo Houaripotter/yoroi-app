@@ -94,7 +94,7 @@ const WEIGHT_CATEGORIES = {
 
 export default function CutModeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [cutData, setCutData] = useState<CutModeData | null>(null);
@@ -419,7 +419,7 @@ export default function CutModeScreen() {
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
                   Poids actuel
                 </Text>
-                <Text style={[styles.formValue, { color: colors.accent }]}>
+                <Text style={[styles.formValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                   {currentWeight > 0 ? `${currentWeight} kg` : 'Fais une pesée d\'abord'}
                 </Text>
               </View>
@@ -489,7 +489,7 @@ export default function CutModeScreen() {
                       <Text style={[styles.categoryName, { color: colors.textPrimary }]}>
                         {cat.name}
                       </Text>
-                      <Text style={[styles.categoryWeight, { color: colors.accent }]}>
+                      <Text style={[styles.categoryWeight, { color: isDark ? colors.accent : colors.textPrimary }]}>
                         {cat.maxKg} kg
                       </Text>
                     </TouchableOpacity>

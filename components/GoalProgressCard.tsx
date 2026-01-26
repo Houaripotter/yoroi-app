@@ -15,6 +15,7 @@ interface GoalProgressCardProps {
   globalStats: GlobalGoalStats;
   variant?: 'full' | 'compact' | 'mini';
   showYearlyStats?: boolean;
+  isDark?: boolean;
   colors: {
     background: string;
     backgroundLight: string;
@@ -32,6 +33,7 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
   globalStats,
   variant = 'full',
   showYearlyStats = true,
+  isDark = true,
   colors,
 }) => {
   const getStatusColor = (p: GoalProgress) => {
@@ -98,7 +100,7 @@ export const GoalProgressCard: React.FC<GoalProgressCardProps> = ({
           <Text style={[styles.compactTotal, { color: colors.textMuted }]}>
             {globalStats.totalWeeklyTarget}
           </Text>
-          <Text style={[styles.compactPercent, { color: colors.accent }]}>
+          <Text style={[styles.compactPercent, { color: isDark ? colors.accent : colors.textPrimary }]}>
             ({Math.round(globalStats.overallWeekPercent)}%)
           </Text>
         </View>

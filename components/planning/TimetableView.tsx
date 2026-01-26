@@ -35,7 +35,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
   onSessionPress,
   refreshTrigger,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const { weekSchedule, loading, refresh } = useWeekSchedule();
 
@@ -193,7 +193,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                     styles.dayHeaderColumn,
                     isRest && { backgroundColor: colors.accent + '20' }
                   ]}>
-                    <Text style={[styles.dayHeaderDate, { color: colors.accent }]}>
+                    <Text style={[styles.dayHeaderDate, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       {format(weekDates[dayIdx], 'd MMM', { locale: fr }).toUpperCase()}
                     </Text>
                     <Text style={[styles.dayHeaderDay, { color: colors.textPrimary }]}>
@@ -383,7 +383,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             ]}
           >
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { color: colors.accent }]}>
+              <Text style={[styles.summaryValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {weekSchedule.reduce((acc, day) => acc + day.sessions.length, 0)}
               </Text>
               <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
@@ -392,7 +392,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
             </View>
             <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
             <View style={styles.summaryItem}>
-              <Text style={[styles.summaryValue, { color: colors.accent }]}>
+              <Text style={[styles.summaryValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 ~
                 {Math.round(
                   weekSchedule.reduce(
@@ -424,7 +424,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                   <View style={styles.modalTimeCol} />
                   {DAYS_SHORT.map((day, idx) => (
                     <View key={day} style={styles.modalDayCol}>
-                      <Text style={[styles.modalDayText, { color: colors.accent }]}>
+                      <Text style={[styles.modalDayText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                         {day}
                       </Text>
                       <Text style={[styles.modalDayDate, { color: colors.textMuted }]}>
@@ -557,7 +557,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                                 }}
                               >
                                 <Plus size={14} color={colors.accentText} />
-                                <Text style={[styles.addButtonSmallText, { color: colors.accent }]}>
+                                <Text style={[styles.addButtonSmallText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                                   Ajouter
                                 </Text>
                               </TouchableOpacity>
@@ -813,7 +813,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                             {session.sessionTypes && session.sessionTypes.length > 0 && (
                               <View style={styles.sessionTypesRow}>
                                 {session.sessionTypes.map((type: string, i: number) => (
-                                  <Text key={i} style={[styles.sessionTypeTag, { color: colors.accent }]}>
+                                  <Text key={i} style={[styles.sessionTypeTag, { color: isDark ? colors.accent : colors.textPrimary }]}>
                                     {type}
                                   </Text>
                                 ))}

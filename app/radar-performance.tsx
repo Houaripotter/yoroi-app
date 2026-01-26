@@ -33,7 +33,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function RadarPerformanceScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [scores, setScores] = useState<RadarScores>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
   const [evolution, setEvolution] = useState<RadarEvolution | null>(null);
   const [insight, setInsight] = useState<RadarInsight | null>(null);
@@ -162,7 +162,7 @@ export default function RadarPerformanceScreen() {
         {/* Score global */}
         <View style={[styles.scoreCard, { backgroundColor: colors.backgroundCard }]}>
           <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>Score Global</Text>
-          <Text style={[styles.scoreValue, { color: colors.accent }]}>{avgScore}%</Text>
+          <Text style={[styles.scoreValue, { color: isDark ? colors.accent : colors.textPrimary }]}>{avgScore}%</Text>
           {evolution && evolution.average !== 0 && (
             <View style={[styles.evolutionBadge, { backgroundColor: trendColor + '15' }]}>
               <TrendIcon size={14} color={trendColor} />

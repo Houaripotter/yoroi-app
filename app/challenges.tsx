@@ -47,7 +47,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ChallengesScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [dailyChallenges, setDailyChallenges] = useState<ActiveChallenge[]>([]);
@@ -225,9 +225,9 @@ export default function ChallengesScreen() {
               <View style={styles.challengeFooter}>
                 <View style={[styles.rewardBadge, { backgroundColor: colors.accentMuted }]}>
                   <Gift size={12} color={colors.accentText} />
-                  <Text style={[styles.rewardText, { color: colors.accent }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
+                  <Text style={[styles.rewardText, { color: isDark ? colors.accent : colors.textPrimary }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
                   {challenge?.reward?.badge && (
-                    <Text style={[styles.rewardBadgeText, { color: colors.accent }]}>+ Badge</Text>
+                    <Text style={[styles.rewardBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>+ Badge</Text>
                   )}
                 </View>
 

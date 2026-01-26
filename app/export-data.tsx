@@ -166,7 +166,7 @@ export default function ExportDataScreen() {
           ]}
         >
           <Share2 size={20} color={colors.accent} />
-          <Text style={[styles.infoText, { color: colors.accent }]}>
+          <Text style={[styles.infoText, { color: isDark ? colors.accent : colors.textPrimary }]}>
             Exporte tes données pour les sauvegarder ou les analyser ailleurs
           </Text>
         </View>

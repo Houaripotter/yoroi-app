@@ -613,7 +613,7 @@ export const WeightStats: React.FC<WeightStatsProps> = ({ data }) => {
         {chartData.length > 0 && (
           <View style={styles.enlargeButton}>
             <Maximize2 size={16} color={colors.accent} />
-            <Text style={[styles.enlargeText, { color: colors.accent }]}>Appuyez pour agrandir</Text>
+            <Text style={[styles.enlargeText, { color: isDark ? colors.accent : colors.textPrimary }]}>Appuyez pour agrandir</Text>
           </View>
         )}
 

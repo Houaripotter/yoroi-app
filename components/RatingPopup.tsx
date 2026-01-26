@@ -255,7 +255,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               activeOpacity={0.7}
             >
               <Ionicons name="bulb-outline" size={20} color={colors.accent} />
-              <Text style={[styles.suggestionButtonText, { color: colors.accent }]}>
+              <Text style={[styles.suggestionButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {t('rating.suggestionButton') || "J'ai une idée / un problème"}
               </Text>
             </TouchableOpacity>

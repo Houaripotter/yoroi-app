@@ -168,7 +168,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
             />
             <Text style={[styles.appName, { color: colors.textPrimary }]}>YOROI</Text>
             <View style={[styles.versionBadge, { backgroundColor: colors.accent + '20' }]}>
-              <Text style={[styles.versionText, { color: colors.accent }]}>Version 2.0.0</Text>
+              <Text style={[styles.versionText, { color: isDark ? colors.accent : colors.textPrimary }]}>Version 2.0.0</Text>
             </View>
           </View>
 
@@ -195,7 +195,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
               Je m'excuse d'abord pour les soucis que tu as peut-être rencontrés récemment, notamment avec les notifications en pagaille.{'\n\n'}
               J'ai fait un gros travail sur l'app pour l'améliorer. Je suis seul sur ce projet et je fais de mon mieux pour te proposer la meilleure expérience possible.{'\n\n'}
               Si tu vois une erreur, même minime, je suis dispo sur{' '}
-              <Text style={{ fontWeight: '800', color: colors.accent }}>@Yoroiapp</Text>
+              <Text style={{ fontWeight: '800', color: isDark ? colors.accent : colors.textPrimary }}>@Yoroiapp</Text>
               {' '}ou dans la boîte à idées dans le menu.
             </Text>
           </View>
@@ -233,7 +233,7 @@ export const UpdateChangelogModal: React.FC<UpdateChangelogModalProps> = ({
 
           {/* Call to action */}
           <View style={[styles.ctaBox, { backgroundColor: colors.accent + '10', borderColor: colors.accent + '30' }]}>
-            <Text style={[styles.ctaTitle, { color: colors.accent }]}>
+            <Text style={[styles.ctaTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>
               Aide-moi à faire grandir Yoroi
             </Text>
             <Text style={[styles.ctaText, { color: colors.textMuted }]}>

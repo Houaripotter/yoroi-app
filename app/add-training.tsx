@@ -827,7 +827,7 @@ export default function AddTrainingScreen() {
               <Text style={{ fontSize: 9, fontWeight: '700', color: colors.textMuted, marginBottom: 2 }}>DISTANCE</Text>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 18, fontWeight: '900', color: colors.accent, minWidth: 40, padding: 0 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, minWidth: 40, padding: 0 }}
                   placeholder="0.0"
                   placeholderTextColor={colors.textMuted + '40'}
                   keyboardType="decimal-pad"
@@ -883,7 +883,7 @@ export default function AddTrainingScreen() {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                 <TextInput
-                  style={{ fontSize: 18, fontWeight: '900', color: colors.accent, minWidth: 40, padding: 0 }}
+                  style={{ fontSize: 18, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, minWidth: 40, padding: 0 }}
                   placeholder="0:00"
                   placeholderTextColor={colors.textMuted + '40'}
                   value={stats.pace}
@@ -1295,7 +1295,7 @@ export default function AddTrainingScreen() {
         zIndex: 999
       }}>
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 1 SUR 4</Text>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 1 SUR 4</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
             <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: colors.accent, shadowColor: colors.accent, shadowOpacity: 0.6, shadowRadius: 8, elevation: 8 }} />
             <View style={{ width: 30, height: 2, backgroundColor: colors.border }} />
@@ -1755,7 +1755,7 @@ export default function AddTrainingScreen() {
                               <View style={[styles.clubCardIcon, { backgroundColor: colors.backgroundElevated }]}>
                                 <Plus size={24} color={colors.accent} strokeWidth={2} />
                               </View>
-                              <Text style={[styles.clubCardName, { color: colors.accent }]}>
+                              <Text style={[styles.clubCardName, { color: isDark ? colors.accent : colors.textPrimary }]}>
                                 Créer
                               </Text>
                             </TouchableOpacity>
@@ -2492,7 +2492,7 @@ export default function AddTrainingScreen() {
               borderColor: primarySportError ? colors.error : colors.border
             }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 12, letterSpacing: 0.5 }}>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: isDark ? colors.accent : colors.textPrimary, marginBottom: 12, letterSpacing: 0.5 }}>
               SPORT PRINCIPAL POUR OBJECTIF ANNUEL
             </Text>
             <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>

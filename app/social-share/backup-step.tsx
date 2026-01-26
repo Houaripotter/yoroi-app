@@ -32,7 +32,7 @@ import ratingService from '@/lib/ratingService';
 import { RatingPopup } from '@/components/RatingPopup';
 
 export default function BackupStepScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -96,7 +96,7 @@ export default function BackupStepScreen() {
         zIndex: 999
       }}>
         <View style={{ paddingBottom: 10, paddingTop: 5, alignItems: 'center' }}>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
+          <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 4 SUR 4</Text>
           <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
             {/* Etapes Passées (Gold) */}
             <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent }} />
@@ -134,7 +134,7 @@ export default function BackupStepScreen() {
         </View>
 
         <View style={[styles.instructionCard, { backgroundColor: colors.backgroundCard, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }]}>
-          <Text style={[styles.instructionTitle, { color: colors.accent }]}>MARCHE À SUIVRE :</Text>
+          <Text style={[styles.instructionTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>MARCHE A SUIVRE :</Text>
 
           <View style={styles.stepRow}>
             <FolderPlus size={20} color={colors.accent} />

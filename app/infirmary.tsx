@@ -42,7 +42,7 @@ import {
 } from '@/constants/bodyZones';
 
 export default function InfirmaryScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const [injuries, setInjuries] = useState<Injury[]>([]);
   const [fitForDutyStatus, setFitForDutyStatus] = useState<any>(null);
@@ -266,7 +266,7 @@ export default function InfirmaryScreen() {
         {stats && stats.totalInjuries > 0 && (
           <View style={[styles.statsCard, { backgroundColor: colors.backgroundCard }]}>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.accent }]}>
+              <Text style={[styles.statValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {stats.activeInjuries}
               </Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>

@@ -163,8 +163,8 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
                 }}
                 activeOpacity={0.7}
               >
-                <Share2 size={18} color={isDark ? colors.accentText : '#000000'} strokeWidth={2} />
-                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : '#000000', fontWeight: '700' }]}>
+                <Share2 size={18} color={isDark ? colors.accentText : colors.textPrimary} strokeWidth={2} />
+                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '700' }]}>
                   {t('analysis.share')}
                 </Text>
               </TouchableOpacity>

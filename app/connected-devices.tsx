@@ -20,7 +20,7 @@ interface Device {
 
 export default function ConnectedDevicesScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const devices: Device[] = [
     {
@@ -91,7 +91,7 @@ export default function ConnectedDevicesScreen() {
                 </Text>
                 {device.comingSoon ? (
                   <View style={[styles.comingSoonBadge, { backgroundColor: colors.accent + '20' }]}>
-                    <Text style={[styles.comingSoonText, { color: colors.accent }]}>
+                    <Text style={[styles.comingSoonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       Bientôt disponible
                     </Text>
                   </View>

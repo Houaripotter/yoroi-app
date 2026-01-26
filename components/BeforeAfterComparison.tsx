@@ -43,7 +43,7 @@ const { width: screenWidth } = Dimensions.get('window');
 const SLIDER_WIDTH = screenWidth - 40;
 
 export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterComparisonProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [selectedBefore, setSelectedBefore] = useState<ProgressPhoto | null>(null);
@@ -543,7 +543,7 @@ export function BeforeAfterComparison({ visible, onClose, photos }: BeforeAfterC
                 {weightDifference !== null && weightDifference > 0 && (
                   <View style={[styles.motivationCard, { backgroundColor: colors.accent + '15' }]}>
                     <Text style={[styles.motivationEmoji]}></Text>
-                    <Text style={[styles.motivationText, { color: colors.accent }]}>
+                    <Text style={[styles.motivationText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       En prise de masse ! +{weightDifference.toFixed(1)} kg de muscle !
                     </Text>
                   </View>

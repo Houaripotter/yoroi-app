@@ -59,7 +59,7 @@ export const ProgrammeView: React.FC<ProgrammeViewProps> = ({
   onSessionPress,
   onToggleRest,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { weekSchedule, loading } = useWeekSchedule();
 
   // Calculer les totaux
@@ -101,7 +101,7 @@ export const ProgrammeView: React.FC<ProgrammeViewProps> = ({
           onPress={() => onAddSession('lun')}
         >
           <Plus size={18} color={colors.accentText} />
-          <Text style={[styles.addButtonText, { color: colors.accent }]}>
+          <Text style={[styles.addButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
             Ajouter
           </Text>
         </TouchableOpacity>
@@ -340,7 +340,7 @@ export const ProgrammeView: React.FC<ProgrammeViewProps> = ({
         style={[styles.summaryCard, { backgroundColor: colors.backgroundCard }]}
       >
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: colors.accent }]}>
+          <Text style={[styles.summaryValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
             {totalSessions}
           </Text>
           <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
@@ -351,7 +351,7 @@ export const ProgrammeView: React.FC<ProgrammeViewProps> = ({
           style={[styles.summaryDivider, { backgroundColor: colors.border }]}
         />
         <View style={styles.summaryItem}>
-          <Text style={[styles.summaryValue, { color: colors.accent }]}>
+          <Text style={[styles.summaryValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
             ~{totalHours}h
           </Text>
           <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>

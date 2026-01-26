@@ -18,6 +18,7 @@ interface SimpleDraggableListProps {
   renderIcon: (iconName: string, visible: boolean) => React.ReactNode;
   onToggleVisibility: (id: string) => void;
   colors: any;
+  isDark: boolean;
 }
 
 export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
@@ -26,6 +27,7 @@ export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
   renderIcon,
   onToggleVisibility,
   colors,
+  isDark,
 }) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
@@ -102,7 +104,7 @@ export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
                 {item.description}
               </Text>
               {item.mandatory && (
-                <Text style={[styles.mandatoryLabel, { color: colors.accent }]}>
+                <Text style={[styles.mandatoryLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>
                   Obligatoire
                 </Text>
               )}
@@ -110,8 +112,8 @@ export const SimpleDraggableList: React.FC<SimpleDraggableListProps> = ({
 
             {isDragging && (
               <View style={styles.dragIndicator}>
-                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700' }}>
-                  Glisse ici ↕️
+                <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '700' }}>
+                  Glisse ici
                 </Text>
               </View>
             )}

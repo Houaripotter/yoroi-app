@@ -55,7 +55,7 @@ const SPORT_CATEGORIES = {
 };
 
 export default function TrainingGoalsScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [goals, setGoals] = useState<TrainingGoal[]>([]);
   const [progressList, setProgressList] = useState<GoalProgress[]>([]);
@@ -326,7 +326,7 @@ export default function TrainingGoalsScreen() {
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                       {progress.monthCount}/{progress.monthTarget}
                     </Text>
-                    <Text style={[styles.statPercent, { color: colors.accent }]}>
+                    <Text style={[styles.statPercent, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       {Math.round(progress.monthPercent)}%
                     </Text>
                   </View>
@@ -337,7 +337,7 @@ export default function TrainingGoalsScreen() {
                     <Text style={[styles.statValue, { color: colors.textPrimary }]}>
                       {progress.yearCount}/{progress.yearTarget}
                     </Text>
-                    <Text style={[styles.statPercent, { color: colors.accent }]}>
+                    <Text style={[styles.statPercent, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       {Math.round(progress.yearPercent)}%
                     </Text>
                   </View>
@@ -387,7 +387,7 @@ export default function TrainingGoalsScreen() {
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => setSelectedSport(null)}>
-                      <Text style={[styles.changeText, { color: colors.accent }]}>
+                      <Text style={[styles.changeText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                         Changer
                       </Text>
                     </TouchableOpacity>

@@ -20,7 +20,7 @@ export const WeightEvolutionCard: React.FC<WeightEvolutionCardProps> = ({
   period,
   data,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const chartData = data.map(d => ({
     value: d.value,
@@ -37,7 +37,7 @@ export const WeightEvolutionCard: React.FC<WeightEvolutionCardProps> = ({
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {title}
         </Text>
-        <Text style={[styles.period, { color: colors.accent }]}>
+        <Text style={[styles.period, { color: isDark ? colors.accent : colors.textPrimary }]}>
           {period}
         </Text>
       </View>

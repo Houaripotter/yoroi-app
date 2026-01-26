@@ -43,7 +43,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   return (
     <View style={[styles.container, style]}>
       {showLabel && labelPosition === 'above' && (
-        <Text style={[styles.labelAbove, { color: colors.accent }]}>{clampedProgress.toFixed(0)}%</Text>
+        <Text style={[styles.labelAbove, { color: isDark ? colors.accent : colors.textPrimary }]}>{clampedProgress.toFixed(0)}%</Text>
       )}
       <View style={styles.row}>
         <View

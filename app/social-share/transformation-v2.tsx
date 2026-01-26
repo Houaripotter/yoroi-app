@@ -430,7 +430,7 @@ export default function TransformationV2Screen() {
                 ) : (
                   <>
                     <Download size={20} color={colors.accent} />
-                    <Text style={[styles.saveButtonText, { color: colors.accent }]}>
+                    <Text style={[styles.saveButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                       Sauvegarder
                     </Text>
                   </>
@@ -520,7 +520,7 @@ export default function TransformationV2Screen() {
                   setSelectedBefore(null);
                 }}
               >
-                <Text style={[styles.changeButtonText, { color: colors.accent }]}>Changer</Text>
+                <Text style={[styles.changeButtonText, { color: isDark ? colors.accent : colors.textPrimary }]}>Changer</Text>
               </TouchableOpacity>
             </View>
 

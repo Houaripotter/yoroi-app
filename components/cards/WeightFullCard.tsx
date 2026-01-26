@@ -204,7 +204,7 @@ export const WeightFullCard = React.memo<WeightFullCardProps>(({
 
         {/* Stats mini */}
         <View style={styles.statsRow}>
-          <Text style={[styles.statText, { color: colors.accent }]}>
+          <Text style={[styles.statText, { color: isDark ? colors.accent : colors.textPrimary }]}>
             {t('weightCard.objective')}: {target.toFixed(1)}kg
           </Text>
           <Text style={[styles.statText, { color: totalChange < 0 ? '#10B981' : '#EF4444' }]}>

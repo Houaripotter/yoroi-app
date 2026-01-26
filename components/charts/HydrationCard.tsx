@@ -15,7 +15,7 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({
   targetLiters,
   weekData,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const percentage = Math.min(Math.round((currentLiters / targetLiters) * 100), 100);
 
@@ -28,7 +28,7 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           💧 Hydratation
         </Text>
-        <Text style={[styles.value, { color: colors.accent }]}>
+        <Text style={[styles.value, { color: isDark ? colors.accent : colors.textPrimary }]}>
           {currentLiters}L
         </Text>
       </View>

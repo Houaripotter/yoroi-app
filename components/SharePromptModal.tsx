@@ -84,7 +84,7 @@ export const SharePromptModal: React.FC<SharePromptModalProps> = ({
               </View>
 
               {/* Sport name */}
-              <Text style={[styles.sportText, { color: colors.accent }]}>
+              <Text style={[styles.sportText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {sportName}
               </Text>
 

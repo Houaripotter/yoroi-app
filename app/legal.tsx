@@ -78,7 +78,7 @@ export default function LegalScreen() {
         </View>
 
         {/* Welcoming Title */}
-        <Text style={[styles.title, { color: colors.accent }]}>
+        <Text style={[styles.title, { color: isDarkMode ? colors.accent : colors.textPrimary }]}>
           Avant de commencer
         </Text>
 

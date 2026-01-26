@@ -69,7 +69,7 @@ const ICON_MAP: Record<string, any> = {
 
 export default function CustomizeHomeScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   const [sections, setSections] = useState<HomeSection[]>([]);
@@ -228,11 +228,11 @@ export default function CustomizeHomeScreen() {
 
       {/* Instructions */}
       <View style={[styles.instructionsCard, { backgroundColor: colors.accent + '15' }]}>
-        <Text style={[styles.instructionsText, { color: colors.accent }]}>
-          Utilise les flèches ↑ ↓ pour réorganiser les sections
+        <Text style={[styles.instructionsText, { color: isDark ? colors.accent : colors.textPrimary }]}>
+          Utilise les flèches pour reorganiser les sections
         </Text>
-        <Text style={[styles.instructionsSubtext, { color: colors.accent }]}>
-          Tape sur l'œil pour masquer/afficher
+        <Text style={[styles.instructionsSubtext, { color: isDark ? colors.accent : colors.textSecondary }]}>
+          Tape sur l'oeil pour masquer/afficher
         </Text>
       </View>
 

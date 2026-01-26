@@ -61,7 +61,7 @@ interface Plate {
 
 export default function QuickLogMuscuScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
@@ -431,8 +431,8 @@ export default function QuickLogMuscuScreen() {
               ]}
             >
               <Clock size={14} color={colors.accent} />
-              <Text style={[styles.ghostText, { color: colors.accent }]}>
-                Dernière fois : {lastLog.sets} x {lastLog.reps} reps @ {lastLog.weight}kg
+              <Text style={[styles.ghostText, { color: isDark ? colors.accent : colors.textPrimary }]}>
+                Derniere fois : {lastLog.sets} x {lastLog.reps} reps @ {lastLog.weight}kg
               </Text>
             </View>
           )}

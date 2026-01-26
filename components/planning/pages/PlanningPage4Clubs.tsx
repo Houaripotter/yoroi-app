@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 const CARD_PADDING = 16;
 
 export const PlanningPage4Clubs: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -97,7 +97,7 @@ export const PlanningPage4Clubs: React.FC = () => {
 
             {/* Compteur */}
             <View style={styles.clubCountBadge}>
-              <Text style={[styles.clubCountNumber, { color: colors.accent }]}>
+              <Text style={[styles.clubCountNumber, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {club.monthCount}
               </Text>
               <Text style={[styles.clubCountLabel, { color: colors.textMuted }]}>

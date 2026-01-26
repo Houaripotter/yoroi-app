@@ -59,7 +59,7 @@ interface CompetitorProfile {
 }
 
 export default function CompetitorProfileScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [profile, setProfile] = useState<CompetitorProfile>({
     gender: null,
@@ -336,8 +336,8 @@ export default function CompetitorProfileScreen() {
           <View style={[styles.summaryCard, { backgroundColor: colors.accent + '10', borderColor: colors.accent }]}>
             <View style={styles.summaryHeader}>
               <Trophy size={24} color={colors.accent} />
-              <Text style={[styles.summaryTitle, { color: colors.accent }]}>
-                Profil Compétiteur
+              <Text style={[styles.summaryTitle, { color: isDark ? colors.accent : colors.textPrimary }]}>
+                Profil Competiteur
               </Text>
             </View>
 

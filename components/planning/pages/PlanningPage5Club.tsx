@@ -19,7 +19,7 @@ export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
   leaderboard = [],
   challenges = [],
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Données d'exemple leaderboard
   const topUsers = [
@@ -224,7 +224,7 @@ export const PlanningPage5Club: React.FC<PlanningPage5ClubProps> = ({
               </View>
 
               <View style={styles.challengeFooter}>
-                <Text style={[styles.challengeReward, { color: colors.accent }]}>
+                <Text style={[styles.challengeReward, { color: isDark ? colors.accent : colors.textPrimary }]}>
                   {challenge.reward}
                 </Text>
                 <Text style={[styles.challengeDays, { color: colors.textMuted }]}>

@@ -71,7 +71,7 @@ const renderIcon = (iconName: string, color: string, size: number = 24) => {
 };
 
 export default function InjuryEvaluationScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const params = useLocalSearchParams();
   const { showPopup, PopupComponent } = useCustomPopup();
 
@@ -397,7 +397,7 @@ export default function InjuryEvaluationScreen() {
             </TouchableOpacity>
 
             <View style={[styles.durationDisplay, { backgroundColor: colors.backgroundElevated }]}>
-              <Text style={[styles.durationValue, { color: colors.accent }]}>
+              <Text style={[styles.durationValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {estimatedRecoveryDays}
               </Text>
               <Text style={[styles.durationLabel, { color: colors.textSecondary }]}>

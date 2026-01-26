@@ -34,7 +34,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function NutritionPlanScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   // Données utilisateur
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -264,7 +264,7 @@ export default function NutritionPlanScreen() {
                 <View style={[styles.caloriesIconBg, { backgroundColor: colors.accent + '15' }]}>
                   <Zap size={32} color={colors.accent} strokeWidth={2.5} />
                 </View>
-                <Text style={[styles.caloriesLabel, { color: colors.accent }]}>OBJECTIF CALORIQUE</Text>
+                <Text style={[styles.caloriesLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>OBJECTIF CALORIQUE</Text>
                 <View style={styles.caloriesValueContainer}>
                   <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>{results.goalCalories}</Text>
                   <Text style={[styles.caloriesUnit, { color: colors.textSecondary }]}>kcal</Text>
@@ -579,7 +579,7 @@ export default function NutritionPlanScreen() {
               <Text style={[styles.proteinRecTitle, { color: colors.textPrimary }]}>
                 Recommandation protéines (basée sur ton poids)
               </Text>
-              <Text style={[styles.proteinRecValue, { color: colors.accent }]}>
+              <Text style={[styles.proteinRecValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 {results.proteinRec.min}g - {results.proteinRec.max}g / jour
               </Text>
               <Text style={[styles.proteinRecNote, { color: colors.textMuted }]}>
@@ -641,7 +641,7 @@ export default function NutritionPlanScreen() {
                 <Text style={[styles.calculLabel, { color: colors.textPrimary, fontWeight: '700' }]}>
                   = OBJECTIF FINAL
                 </Text>
-                <Text style={[styles.calculValue, { color: colors.accent, fontWeight: '800' }]}>
+                <Text style={[styles.calculValue, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '800' }]}>
                   {results.goalCalories} kcal
                 </Text>
               </View>
@@ -677,7 +677,7 @@ export default function NutritionPlanScreen() {
                     <Text style={[styles.mealExample, { color: colors.textMuted }]}>{meal.example}</Text>
                   </View>
                   <View style={styles.mealCalories}>
-                    <Text style={[styles.mealCaloriesText, { color: colors.accent }]}>~{meal.calories}</Text>
+                    <Text style={[styles.mealCaloriesText, { color: isDark ? colors.accent : colors.textPrimary }]}>~{meal.calories}</Text>
                     <Text style={[styles.mealCaloriesUnit, { color: colors.textMuted }]}>kcal</Text>
                   </View>
                 </View>

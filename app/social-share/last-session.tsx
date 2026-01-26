@@ -379,7 +379,7 @@ export default function LastSessionScreen() {
               </TouchableOpacity>
 
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 13, fontWeight: '900', color: colors.accent, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 3 SUR 4</Text>
+                <Text style={{ fontSize: 13, fontWeight: '900', color: isDark ? colors.accent : colors.textPrimary, letterSpacing: 3, marginBottom: 8 }}>ÉTAPE 3 SUR 4</Text>
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 8 }}>
                   {/* Etape 1 & 2 (Passées - Gold) */}
                   <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold }} />

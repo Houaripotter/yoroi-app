@@ -67,7 +67,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
   onSave,
   editingClub,
 }) => {
-  const { colors, gradients } = useTheme();
+  const { colors, gradients, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // Form state
@@ -355,12 +355,12 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
                         <MaterialCommunityIcons
                           name={sport.icon as any}
                           size={22}
-                          color={selectedSport === sport.id ? colors.accent : colors.textPrimary}
+                          color={selectedSport === sport.id ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary}
                         />
                         <Text
                           style={[
                             styles.sportName,
-                            { color: selectedSport === sport.id ? colors.accent : colors.textPrimary },
+                            { color: selectedSport === sport.id ? (isDark ? colors.accent : colors.textPrimary) : colors.textPrimary },
                           ]}
                           numberOfLines={1}
                         >
@@ -438,7 +438,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
             )}
 
             {weeklyGoal > 0 && (
-              <Text style={[styles.goalInfo, { color: colors.accent }]}>
+              <Text style={[styles.goalInfo, { color: isDark ? colors.accent : colors.textPrimary }]}>
                 = {weeklyGoal * 4} / mois | {weeklyGoal * 52} / an
               </Text>
             )}

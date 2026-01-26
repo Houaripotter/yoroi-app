@@ -106,7 +106,7 @@ export function EnhancedAddSessionModal({
   onClose,
   onSave,
 }: EnhancedAddSessionModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   // Debug: afficher le nombre de clubs
@@ -668,8 +668,8 @@ export function EnhancedAddSessionModal({
                       ]}
                       onPress={() => setShowCustomMuscleInput(true)}
                     >
-                      <Plus size={14} color={colors.accent} />
-                      <Text style={[styles.tagText, { color: colors.accent }]}>
+                      <Plus size={14} color={isDark ? colors.accent : colors.textPrimary} />
+                      <Text style={[styles.tagText, { color: isDark ? colors.accent : colors.textPrimary }]}>
                         Autre
                       </Text>
                     </TouchableOpacity>
@@ -718,7 +718,7 @@ export function EnhancedAddSessionModal({
                         Sélection :
                       </Text>
                       <Text
-                        style={[styles.selectedValue, { color: colors.accent }]}
+                        style={[styles.selectedValue, { color: isDark ? colors.accent : colors.textPrimary }]}
                       >
                         {selectedMuscles
                           .map(

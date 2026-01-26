@@ -18,7 +18,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
   points,
   compact = false,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const level = getLevel(points);
   const { progress, pointsToNext } = getLevelProgress(points);
   const nextLevel = LEVELS.find(l => l.level === level.level + 1);
@@ -57,7 +57,7 @@ export const LevelProgress: React.FC<LevelProgressProps> = ({
             </Text>
           )}
           {pointsToNext === 0 && (
-            <Text style={[styles.pointsToNext, { color: colors.accent }]}>
+            <Text style={[styles.pointsToNext, { color: isDark ? colors.accent : colors.textPrimary }]}>
               Niveau max atteint !
             </Text>
           )}

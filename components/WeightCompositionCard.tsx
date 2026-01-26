@@ -22,7 +22,7 @@ export const WeightCompositionCard: React.FC<WeightCompositionCardProps> = ({
   water,
   boneMass,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const remaining = currentWeight && targetWeight
     ? Math.max(0, currentWeight - targetWeight)
@@ -72,10 +72,10 @@ export const WeightCompositionCard: React.FC<WeightCompositionCardProps> = ({
             </Text>
           </View>
           <View style={[styles.indicatorBox, { backgroundColor: colors.accentMuted }]}>
-            <Text style={[styles.indicatorValue, { color: colors.accent }]}>
+            <Text style={[styles.indicatorValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
               {remaining !== null ? `${remaining.toFixed(1)} kg` : '-- kg'}
             </Text>
-            <Text style={[styles.indicatorLabel, { color: colors.accent }]}>
+            <Text style={[styles.indicatorLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>
               Restant
             </Text>
           </View>

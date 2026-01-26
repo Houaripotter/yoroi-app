@@ -39,7 +39,7 @@ import {
 
 export default function QuickLogRunningScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
 
   // États
@@ -366,10 +366,10 @@ export default function QuickLogRunningScreen() {
           ]}
         >
           <Zap size={20} color={colors.accent} />
-          <Text style={[styles.paceLabel, { color: colors.accent }]}>
+          <Text style={[styles.paceLabel, { color: isDark ? colors.accent : colors.textPrimary }]}>
             Allure moyenne :
           </Text>
-          <Text style={[styles.paceValue, { color: colors.accent }]}>
+          <Text style={[styles.paceValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
             {pace()}
           </Text>
         </View>

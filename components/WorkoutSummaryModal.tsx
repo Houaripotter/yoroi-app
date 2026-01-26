@@ -36,7 +36,7 @@ export function WorkoutSummaryModal({
   onRestart,
   stats,
 }: WorkoutSummaryModalProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -94,7 +94,7 @@ export function WorkoutSummaryModal({
               {mode === 'fortime' && stats.forTimeResult !== undefined && (
                 <View style={styles.statBlock}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Temps final</Text>
-                  <Text style={[styles.statValue, { color: colors.accent }]}>
+                  <Text style={[styles.statValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                     {formatTime(stats.forTimeResult)}
                   </Text>
                 </View>
@@ -103,7 +103,7 @@ export function WorkoutSummaryModal({
               {mode === 'amrap' && stats.amrapRounds !== undefined && (
                 <View style={styles.statBlock}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>Rounds complétés</Text>
-                  <Text style={[styles.statValue, { color: colors.accent }]}>
+                  <Text style={[styles.statValue, { color: isDark ? colors.accent : colors.textPrimary }]}>
                     {stats.amrapRounds}
                   </Text>
                 </View>
