@@ -73,7 +73,7 @@ export const PlanningPage1Calendar: React.FC<PlanningPage1CalendarProps> = ({
             <View key={stat.id} style={styles.clubBadge}>
               <View style={[styles.clubBadgeIcon, { backgroundColor: colors.backgroundCard }]}>
                 {stat.logo_uri ? (
-                  <Image source={{ uri: stat.logo_uri }} style={styles.clubLogo} />
+                  <Image source={{ uri: stat.logo_uri }} style={styles.clubLogo} resizeMode="cover" />
                 ) : (
                   <Text style={styles.clubLogoFallback}>{stat.name.charAt(0)}</Text>
                 )}

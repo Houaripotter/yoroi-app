@@ -15,6 +15,7 @@ import {
   Image,
   StyleSheet,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,6 +90,14 @@ export default function AvatarSelectionScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [creatorModeActive, setCreatorModeActive] = useState(false);
 
+  // Modal de prévisualisation
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState<any>(null);
+  const [previewPack, setPreviewPack] = useState<AvatarPack | null>(null);
+  const [previewPackInfo, setPreviewPackInfo] = useState<PackWithStatus | null>(null);
+  const [previewState, setPreviewState] = useState<AvatarState | null>(null);
+  const [previewCharacter, setPreviewCharacter] = useState<CollectionCharacter | null>(null);
+
   // Charger les données
   useEffect(() => {
     loadData();
@@ -143,6 +152,78 @@ export default function AvatarSelectionScreen() {
   const levelToRankName = (level: AvatarLevel): string => {
     const names = ['Ashigaru', 'Bushi', 'Samouraï', 'Rōnin', 'Shōgun'];
     return `${names[level - 1] || 'Ashigaru'}`;
+  };
+
+  // Ouvrir la prévisualisation d'un avatar (pack de personnage)
+  const openPreviewCharacter = (pack: AvatarPack, packInfo: PackWithStatus, state: AvatarState) => {
+    if (!packInfo.isUnlocked) {
+      showPopup(
+        'Pack verrouillé',
+        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+      );
+      return;
+    }
+
+    const image = getAvatarImage(pack, state, undefined, selectedGender);
+    setPreviewImage(image);
+    setPreviewPack(pack);
+    setPreviewPackInfo(packInfo);
+    setPreviewState(state);
+    setPreviewCharacter(null);
+    setPreviewModalVisible(true);
+    impactAsync(ImpactFeedbackStyle.Light);
+  };
+
+  // Ouvrir la prévisualisation d'un personnage de collection
+  const openPreviewCollection = (pack: AvatarPack, packInfo: PackWithStatus, character: CollectionCharacter) => {
+    if (!packInfo.isUnlocked) {
+      showPopup(
+        'Pack verrouillé',
+        `Ce pack sera débloqué au rang ${levelToRankName(packInfo.requiredRankLevel as AvatarLevel)}. Continue ton entraînement pour le débloquer !`
+      );
+      return;
+    }
+
+    const image = getAvatarImage(pack, undefined, character, selectedGender);
+    setPreviewImage(image);
+    setPreviewPack(pack);
+    setPreviewPackInfo(packInfo);
+    setPreviewState(null);
+    setPreviewCharacter(character);
+    setPreviewModalVisible(true);
+    impactAsync(ImpactFeedbackStyle.Light);
+  };
+
+  // Confirmer la sélection depuis la prévisualisation
+  const confirmSelection = async () => {
+    if (!previewPack || !previewPackInfo) return;
+
+    try {
+      impactAsync(ImpactFeedbackStyle.Medium);
+
+      const success = previewCharacter
+        ? await setFullAvatarConfig(previewPack, selectedGender, previewCharacter)
+        : await setFullAvatarConfig(previewPack, selectedGender);
+
+      if (!success) {
+        showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+        return;
+      }
+
+      notificationAsync(NotificationFeedbackType.Success);
+      setPreviewModalVisible(false);
+
+      const label = previewState ? STATE_LABELS[previewState] : previewCharacter;
+      showPopup(
+        'Avatar équipé !',
+        `Tu as équipé ${previewPackInfo.name} ${label} !`
+      );
+
+      await loadData();
+    } catch (error) {
+      logger.error('[AvatarSelection] Erreur confirmation:', error);
+      showPopup('Erreur', 'Impossible de sauvegarder l\'avatar.');
+    }
   };
 
   // Sélection d'un état d'avatar (pack de personnage)
@@ -222,25 +303,24 @@ export default function AvatarSelectionScreen() {
     return (
       <TouchableOpacity
         key={`${pack}-${state}`}
-        onPress={() => handleSelectCharacterState(pack, packInfo, state)}
-        disabled={!isUnlocked}
+        onPress={() => openPreviewCharacter(pack, packInfo, state)}
         style={[
           styles.avatarContainer,
           {
             width: AVATAR_SIZE,
-            height: (AVATAR_SIZE * 1.5) + 30,
+            height: AVATAR_SIZE + 30,
           },
         ]}
       >
         <View
           style={[
-            styles.avatarImageContainer,
+            styles.avatarCircle,
             {
               width: AVATAR_SIZE,
-              height: AVATAR_SIZE * 1.5,
-              opacity: isUnlocked ? 1 : 0.3,
-              borderColor: isCurrent ? '#FFD700' : isDark ? '#374151' : '#D1D5DB',
-              borderWidth: isCurrent ? 3 : 2,
+              height: AVATAR_SIZE,
+              opacity: isUnlocked ? 1 : 0.4,
+              borderColor: isCurrent ? '#FFD700' : 'transparent',
+              borderWidth: isCurrent ? 3 : 0,
             },
           ]}
         >
@@ -248,8 +328,8 @@ export default function AvatarSelectionScreen() {
             <Image
               source={image}
               style={{
-                width: AVATAR_SIZE - 8,
-                height: (AVATAR_SIZE * 1.5) - 8,
+                width: AVATAR_SIZE - 12,
+                height: AVATAR_SIZE - 12,
               }}
               resizeMode="contain"
             />
@@ -257,15 +337,15 @@ export default function AvatarSelectionScreen() {
 
           {/* Cadenas si verrouillé */}
           {!isUnlocked && (
-            <View style={styles.lockOverlay}>
-              <Ionicons name="lock-closed" size={24} color="#9CA3AF" />
+            <View style={styles.lockOverlayCircle}>
+              <Ionicons name="lock-closed" size={18} color="#9CA3AF" />
             </View>
           )}
 
           {/* Badge actuel */}
           {isCurrent && (
-            <View style={styles.currentBadge}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+            <View style={styles.currentBadgeCircle}>
+              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
             </View>
           )}
         </View>
@@ -296,25 +376,24 @@ export default function AvatarSelectionScreen() {
     return (
       <TouchableOpacity
         key={`${pack}-${character}`}
-        onPress={() => handleSelectCollectionCharacter(pack, packInfo, character)}
-        disabled={!isUnlocked}
+        onPress={() => openPreviewCollection(pack, packInfo, character)}
         style={[
           styles.avatarContainer,
           {
             width: AVATAR_SIZE,
-            height: (AVATAR_SIZE * 1.5) + 30,
+            height: AVATAR_SIZE + 30,
           },
         ]}
       >
         <View
           style={[
-            styles.avatarImageContainer,
+            styles.avatarCircle,
             {
               width: AVATAR_SIZE,
-              height: AVATAR_SIZE * 1.5,
-              opacity: isUnlocked ? 1 : 0.3,
-              borderColor: isCurrent ? '#FFD700' : isDark ? '#374151' : '#D1D5DB',
-              borderWidth: isCurrent ? 3 : 2,
+              height: AVATAR_SIZE,
+              opacity: isUnlocked ? 1 : 0.4,
+              borderColor: isCurrent ? '#FFD700' : 'transparent',
+              borderWidth: isCurrent ? 3 : 0,
             },
           ]}
         >
@@ -322,8 +401,8 @@ export default function AvatarSelectionScreen() {
             <Image
               source={image}
               style={{
-                width: AVATAR_SIZE - 8,
-                height: (AVATAR_SIZE * 1.5) - 8,
+                width: AVATAR_SIZE - 12,
+                height: AVATAR_SIZE - 12,
               }}
               resizeMode="contain"
             />
@@ -331,15 +410,15 @@ export default function AvatarSelectionScreen() {
 
           {/* Cadenas si verrouillé */}
           {!isUnlocked && (
-            <View style={styles.lockOverlay}>
-              <Ionicons name="lock-closed" size={24} color="#9CA3AF" />
+            <View style={styles.lockOverlayCircle}>
+              <Ionicons name="lock-closed" size={18} color="#9CA3AF" />
             </View>
           )}
 
           {/* Badge actuel */}
           {isCurrent && (
-            <View style={styles.currentBadge}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+            <View style={styles.currentBadgeCircle}>
+              <Ionicons name="checkmark-circle" size={16} color="#10B981" />
             </View>
           )}
         </View>
@@ -536,6 +615,64 @@ export default function AvatarSelectionScreen() {
         </View>
       </ScrollView>
 
+      {/* Modal de prévisualisation */}
+      <Modal
+        visible={previewModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewModalVisible(false)}
+      >
+        <View style={styles.previewOverlay}>
+          <View style={[styles.previewContent, { backgroundColor: colors.card }]}>
+            {/* Fermer */}
+            <TouchableOpacity
+              style={styles.previewCloseButton}
+              onPress={() => setPreviewModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {/* Cercle blanc avec avatar agrandi */}
+            <View style={styles.previewCircle}>
+              {previewImage && (
+                <Image
+                  source={previewImage}
+                  style={styles.previewImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+
+            {/* Nom du pack et niveau */}
+            <Text style={[styles.previewTitle, { color: colors.text }]}>
+              {previewPackInfo?.name}
+            </Text>
+            <Text style={[styles.previewSubtitle, { color: colors.textSecondary }]}>
+              {previewState ? STATE_LABELS[previewState] : previewCharacter}
+            </Text>
+
+            {/* Bouton de validation */}
+            <TouchableOpacity
+              style={styles.previewValidateButton}
+              onPress={confirmSelection}
+            >
+              <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+              <Text style={styles.previewValidateText}>Équiper cet avatar</Text>
+            </TouchableOpacity>
+
+            {/* Bouton annuler */}
+            <TouchableOpacity
+              style={[styles.previewCancelButton, { borderColor: colors.border }]}
+              onPress={() => setPreviewModalVisible(false)}
+            >
+              <Text style={[styles.previewCancelText, { color: colors.textSecondary }]}>
+                Annuler
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <PopupComponent />
     </SafeAreaView>
   );
@@ -656,25 +793,30 @@ const styles = StyleSheet.create({
   avatarContainer: {
     alignItems: 'center',
   },
-  avatarImageContainer: {
-    borderRadius: 12,
+  avatarCircle: {
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  lockOverlay: {
+  lockOverlayCircle: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  currentBadge: {
+  currentBadgeCircle: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
+    bottom: 0,
+    right: 0,
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
     padding: 2,
@@ -697,5 +839,86 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+  },
+  // Modal de prévisualisation
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  previewContent: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+  },
+  previewCloseButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 8,
+    zIndex: 10,
+  },
+  previewCircle: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  previewImage: {
+    width: 180,
+    height: 180,
+  },
+  previewTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  previewSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  previewValidateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#10B981',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    width: '100%',
+    marginBottom: 12,
+  },
+  previewValidateText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  previewCancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    borderWidth: 1,
+    width: '100%',
+    alignItems: 'center',
+  },
+  previewCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

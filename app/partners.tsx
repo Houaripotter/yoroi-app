@@ -481,7 +481,7 @@ const CoachCard: React.FC<CoachCardProps> = ({ coach, colors, onPress }) => (
     {/* Photo */}
     <View style={[styles.coachPhoto, { backgroundColor: colors.backgroundLight }]}>
       {coach.imageUrl ? (
-        <Image source={coach.imageUrl} style={styles.coachImage} />
+        <Image source={coach.imageUrl} style={styles.coachImage} resizeMode="cover" />
       ) : (
         <View style={styles.coachPhotoPlaceholder}>
           <User size={32} color={colors.textMuted} strokeWidth={2} />
@@ -557,7 +557,7 @@ const ClubCard: React.FC<ClubCardProps> = ({ club, colors, onPress }) => (
     {/* Photo - Même style que les coachs */}
     <View style={[styles.clubPhoto, { backgroundColor: colors.backgroundLight }]}>
       {club.imageUrl ? (
-        <Image source={club.imageUrl} style={styles.clubImage} />
+        <Image source={club.imageUrl} style={styles.clubImage} resizeMode="cover" />
       ) : (
         <View style={styles.clubPhotoPlaceholder}>
           {getClubIcon(club.type, colors.textMuted)}

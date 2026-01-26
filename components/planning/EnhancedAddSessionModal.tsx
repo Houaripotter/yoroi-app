@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -202,25 +202,25 @@ export function EnhancedAddSessionModal({
     }
   };
 
-  // Toggle muscle (multi-sélection)
-  const toggleMuscle = (muscleId: string) => {
+  // Toggle muscle (multi-sélection) - Optimisé avec useCallback
+  const toggleMuscle = useCallback((muscleId: string) => {
     setSelectedMuscles((prev) =>
       prev.includes(muscleId)
         ? prev.filter((m) => m !== muscleId)
         : [...prev, muscleId]
     );
     impactAsync(ImpactFeedbackStyle.Light);
-  };
+  }, []);
 
-  // Toggle session type (multi-sélection)
-  const toggleSessionType = (typeId: string) => {
+  // Toggle session type (multi-sélection) - Optimisé avec useCallback
+  const toggleSessionType = useCallback((typeId: string) => {
     setSelectedSessionTypes((prev) =>
       prev.includes(typeId)
         ? prev.filter((t) => t !== typeId)
         : [...prev, typeId]
     );
     impactAsync(ImpactFeedbackStyle.Light);
-  };
+  }, []);
 
   // Ajouter un muscle personnalisé
   const handleAddCustomMuscle = () => {
@@ -303,8 +303,8 @@ export function EnhancedAddSessionModal({
     return format(d, 'EEEE d MMMM', { locale: fr });
   };
 
-  // Déterminer les types de séances selon le sport
-  const getSessionTypesForSport = () => {
+  // Déterminer les types de séances selon le sport - Optimisé avec useMemo
+  const sessionTypesForSport = useMemo(() => {
     if (!selectedClub) return [];
     const sport = selectedClub.sport.toLowerCase();
     if (sport.includes('muscu') || sport.includes('fitness')) {
@@ -315,13 +315,21 @@ export function EnhancedAddSessionModal({
       return MMA_SESSION_TYPES;
     }
     return [{ id: 'cours', label: 'Cours' }];
-  };
+  }, [selectedClub]);
 
-  const isMusculation = selectedClub?.sport.toLowerCase().includes('muscu') ||
-                        selectedClub?.sport.toLowerCase().includes('fitness');
-  const isCombat = selectedClub?.sport.toLowerCase().includes('jjb') ||
-                   selectedClub?.sport.toLowerCase().includes('mma') ||
-                   selectedClub?.sport.toLowerCase().includes('jiu-jitsu');
+  // Optimisé avec useMemo
+  const isMusculation = useMemo(() =>
+    selectedClub?.sport.toLowerCase().includes('muscu') ||
+    selectedClub?.sport.toLowerCase().includes('fitness'),
+    [selectedClub]
+  );
+
+  const isCombat = useMemo(() =>
+    selectedClub?.sport.toLowerCase().includes('jjb') ||
+    selectedClub?.sport.toLowerCase().includes('mma') ||
+    selectedClub?.sport.toLowerCase().includes('jiu-jitsu'),
+    [selectedClub]
+  );
 
   return (
     <Modal
@@ -451,6 +459,7 @@ export function EnhancedAddSessionModal({
                           <Image
                             source={display.source}
                             style={styles.clubLogoImage}
+                            resizeMode="cover"
                           />
                         ) : (
                           <View
@@ -577,7 +586,7 @@ export function EnhancedAddSessionModal({
                   : 'Type de séance'}
               </Text>
               <View style={styles.typeGrid}>
-                {getSessionTypesForSport().map((type) => {
+                {sessionTypesForSport.map((type) => {
                   const isSelected = selectedSessionTypes.includes(type.id);
                   return (
                     <TouchableOpacity

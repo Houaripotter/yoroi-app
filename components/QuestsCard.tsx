@@ -332,6 +332,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           style={styles.questsScrollContainer}
           nestedScrollEnabled={true}
           showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
         >
           <View style={styles.questsList}>
           {currentQuests.quests.map((quest, index) => {

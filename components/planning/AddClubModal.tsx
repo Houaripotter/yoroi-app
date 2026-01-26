@@ -272,7 +272,7 @@ export const AddClubModal: React.FC<AddClubModalProps> = ({
               }}
             >
               {logoUri ? (
-                <Image source={{ uri: logoUri }} style={styles.logoImage} />
+                <Image source={{ uri: logoUri }} style={styles.logoImage} resizeMode="cover" />
               ) : (
                 <View style={[styles.logoPlaceholder, { backgroundColor: selectedColor }]}>
                   <MaterialCommunityIcons

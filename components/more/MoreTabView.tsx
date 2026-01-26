@@ -7,19 +7,20 @@ import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSynt
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { User, Palette, Settings, Heart, Camera } from 'lucide-react-native';
+import { User, Palette, Settings, Heart, Sparkles } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface MoreTabViewProps {
   children: React.ReactNode[];
   showCaptureTab?: boolean;
+  creatorModeActive?: boolean;
 }
 
 const PAGE_ICONS = [User, Palette, Settings, Heart];
 const PAGE_IDS = ['profile', 'appearance', 'data', 'support'];
 
-export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureTab = false }) => {
+export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureTab = false, creatorModeActive = false }) => {
   const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -34,7 +35,7 @@ export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureT
     ];
 
     if (showCaptureTab) {
-      baseTabs.push({ id: 'capture', title: 'Capture', icon: Camera });
+      baseTabs.push({ id: 'creator', title: 'Créateur', icon: Sparkles });
     }
 
     return baseTabs;
@@ -105,6 +106,8 @@ export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureT
           {PAGES.map((page, index) => {
             const Icon = page.icon;
             const isActive = currentPage === index;
+            const isCreatorTab = page.id === 'creator';
+            const showCreatorBadge = isCreatorTab && creatorModeActive;
             return (
               <TouchableOpacity
                 key={page.id}
@@ -117,20 +120,25 @@ export const MoreTabView: React.FC<MoreTabViewProps> = ({ children, showCaptureT
                   {
                     backgroundColor: isActive
                       ? colors.accent
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                      : showCreatorBadge
+                        ? '#10B981'
+                        : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
                   },
                 ]}>
                   <Icon
                     size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
+                    color={isActive || showCreatorBadge ? colors.textOnAccent : colors.textMuted}
                     strokeWidth={2.5}
                   />
                 </View>
+                {showCreatorBadge && !isActive && (
+                  <View style={styles.activeBadge} />
+                )}
                 <Text style={[
                   styles.tabTitle,
                   {
-                    color: isActive ? colors.accent : colors.textMuted,
-                    fontWeight: isActive ? '800' : '600',
+                    color: isActive ? colors.accent : showCreatorBadge ? '#10B981' : colors.textMuted,
+                    fontWeight: isActive || showCreatorBadge ? '800' : '600',
                   }
                 ]}>
                   {page.title}
@@ -190,6 +198,7 @@ const styles = StyleSheet.create({
   tabWrapper: {
     alignItems: 'center',
     gap: 4,
+    position: 'relative',
   },
   circleTab: {
     width: 44,
@@ -197,6 +206,17 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  activeBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#0D1B2A',
   },
   tabTitle: {
     fontSize: 9,

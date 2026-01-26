@@ -635,8 +635,8 @@ export default function MoreScreen() {
       setSecretCode('');
 
       showPopup(
-        'Menu Débloqué',
-        'Le menu Screenshot est maintenant accessible dans l\'onglet Support. Tu peux accéder à tous les modes de capture.',
+        'Mode Créateur Débloqué',
+        'L\'onglet Créateur est maintenant accessible. Tu peux générer des données de démo pour tes captures App Store.',
         [{ text: 'Parfait', style: 'primary' }],
         <Sparkles size={32} color={colors.accent} />
       );
@@ -1316,7 +1316,7 @@ export default function MoreScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <MoreTabView showCaptureTab={screenshotMenuUnlocked}>
+      <MoreTabView showCaptureTab={screenshotMenuUnlocked} creatorModeActive={creatorModeActive}>
         {/* PAGE 1 - PROFIL */}
         <ScrollView
           style={styles.scrollView}
@@ -1726,7 +1726,7 @@ export default function MoreScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-        {/* PAGE 5 - CAPTURE (conditionnel) */}
+        {/* PAGE 5 - CRÉATEUR (conditionnel) */}
         {screenshotMenuUnlocked && (
           <ScrollView
             style={styles.scrollView}
@@ -1736,9 +1736,9 @@ export default function MoreScreen() {
           >
             {/* HEADER */}
             <View style={[styles.captureHeader, { backgroundColor: colors.accent + '15' }]}>
-              <Camera size={32} color={colors.accent} />
+              <Sparkles size={32} color={colors.accent} />
               <Text style={[styles.captureHeaderTitle, { color: colors.accent }]}>
-                Mode Capture
+                Mode Créateur
               </Text>
               <Text style={[styles.captureHeaderSubtitle, { color: colors.textMuted }]}>
                 Outils pour screenshots App Store
@@ -1784,7 +1784,7 @@ export default function MoreScreen() {
                   onPress={() => {
                     showPopup(
                       'Nettoyer les données',
-                      'Supprimer toutes les données de démo et masquer l\'onglet Capture ?',
+                      'Supprimer toutes les données de démo et masquer l\'onglet Créateur ?',
                       [
                         { text: 'Annuler', style: 'cancel' },
                         {
@@ -1797,7 +1797,7 @@ export default function MoreScreen() {
                             setScreenshotMenuUnlocked(false);
                             setCreatorModeActive(false);
                             notificationAsync(NotificationFeedbackType.Success);
-                            showPopup('Nettoyé', 'Données de démo supprimées. L\'onglet Capture est maintenant masqué.', [{ text: 'OK', style: 'primary' }]);
+                            showPopup('Nettoyé', 'Données de démo supprimées. L\'onglet Créateur est maintenant masqué.', [{ text: 'OK', style: 'primary' }]);
                           },
                         },
                       ],
@@ -2275,10 +2275,10 @@ export default function MoreScreen() {
               </View>
 
               <Text style={[styles.secretCodeTitle, { color: colors.textPrimary }]}>
-                Mode Screenshot
+                Mode Créateur
               </Text>
               <Text style={[styles.secretCodeSubtitle, { color: colors.textMuted }]}>
-                Entre le code secret pour débloquer les outils de capture et de démonstration.
+                Entre le code secret pour débloquer le mode créateur et les outils de démo.
               </Text>
 
               <TextInput

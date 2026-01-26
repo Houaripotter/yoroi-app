@@ -165,7 +165,7 @@ export function DayDetailModal({
                         {/* Logo/Couleur du club */}
                         <View style={[styles.sessionLogo, { backgroundColor: `${display.type === 'color' ? display.color : colors.backgroundElevated}20` }]}>
                           {display.type === 'image' ? (
-                            <Image source={display.source} style={styles.sessionLogoImage} />
+                            <Image source={display.source} style={styles.sessionLogoImage} resizeMode="cover" />
                           ) : (
                             <View style={[styles.sessionColorDot, { backgroundColor: display.color }]} />
                           )}

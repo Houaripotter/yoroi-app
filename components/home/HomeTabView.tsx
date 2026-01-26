@@ -2,7 +2,7 @@
 // YOROI - HOME TAB VIEW (iOS Style Horizontal Navigation)
 // ============================================
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, Modal, Animated, SafeAreaView } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -13,7 +13,6 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-nativ
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
 import { Page2ActionGrid } from './pages/Page2ActionGrid';
-import { Page3Performance } from './pages/Page3Performance';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -89,9 +88,10 @@ interface HomeTabViewProps {
 }
 
 // Default page IDs - titles are loaded dynamically via i18n
-const DEFAULT_PAGE_IDS = ['home', 'tools', 'performance'] as const;
+const DEFAULT_PAGE_IDS = ['home', 'tools'] as const;
 
-export const HomeTabView: React.FC<HomeTabViewProps> = ({
+// Composant HomeTabView optimisé avec React.memo
+export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   userName,
   profilePhoto,
   dailyQuote,
@@ -133,7 +133,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
   const getDefaultPages = (): PageItem[] => [
     { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
     { id: 'tools', title: t('tools.title'), icon: '', description: t('tools.subtitle') },
-    { id: 'performance', title: t('analysis.title'), icon: '', description: t('analysis.subtitle') },
   ];
 
   const [pageOrder, setPageOrder] = useState<PageItem[]>(getDefaultPages());
@@ -188,7 +187,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         const savedOrder: PageItem[] = JSON.parse(saved);
         // Filtrer les anciennes pages (stats, reports) pour migrer vers la nouvelle structure
         const validPages = savedOrder.filter(page =>
-          page.id === 'home' || page.id === 'tools' || page.id === 'performance'
+          page.id === 'home' || page.id === 'tools'
         );
         // Si des pages ont été filtrées, utiliser les nouvelles pages par défaut
         if (validPages.length < savedOrder.length) {
@@ -299,17 +298,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
         );
       case 'tools':
         return <Page2ActionGrid />;
-      case 'performance':
-        return (
-          <Page3Performance
-            dailyChallenges={dailyChallenges}
-            steps={steps}
-            stepsGoal={stepsGoal}
-            calories={calories}
-            weeklyReport={weeklyReport}
-            onShareReport={onShareReport}
-          />
-        );
       default:
         return null;
     }
@@ -323,60 +311,61 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header avec tabs circulaires */}
-      <View style={[styles.header, {
-        backgroundColor: colors.background,
-      }]}>
-        <ScrollView
-          ref={tabScrollRef}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          scrollEnabled={!allTabsFit}
-          contentContainerStyle={[
-            styles.tabsContent,
-            allTabsFit && styles.tabsContentCentered
-          ]}
-          style={styles.tabsScroll}
-        >
-          {pageOrder.map((page, index) => {
-            const isActive = currentPage === index;
-            const IconComponent = page.id === 'home' ? Home : page.id === 'tools' ? Grid : LineChart;
+      {/* Header avec tabs circulaires - fond limité au centre */}
+      <View style={styles.header} pointerEvents="box-none">
+        {/* Fond uniquement au centre pour les onglets */}
+        <View style={[styles.tabsBackground, { backgroundColor: colors.background }]}>
+          <ScrollView
+            ref={tabScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={!allTabsFit}
+            contentContainerStyle={[
+              styles.tabsContent,
+              allTabsFit && styles.tabsContentCentered
+            ]}
+            style={styles.tabsScroll}
+          >
+            {pageOrder.map((page, index) => {
+              const isActive = currentPage === index;
+              const IconComponent = page.id === 'home' ? Home : page.id === 'tools' ? Grid : LineChart;
 
-            return (
-              <TouchableOpacity
-                key={page.id}
-                style={styles.tabWrapper}
-                onPress={() => scrollToPage(index)}
-                onLongPress={handleLongPressDot}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.circleTab,
-                  {
-                    backgroundColor: isActive
-                      ? colors.accent
-                      : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
-                  },
-                ]}>
-                  <IconComponent
-                    size={18}
-                    color={isActive ? colors.textOnAccent : colors.textMuted}
-                    strokeWidth={2.5}
-                  />
-                </View>
-                <Text style={[
-                  styles.tabTitle,
-                  {
-                    color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted,
-                    fontWeight: isActive ? '800' : '600',
-                  }
-                ]}>
-                  {page.title}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              return (
+                <TouchableOpacity
+                  key={page.id}
+                  style={styles.tabWrapper}
+                  onPress={() => scrollToPage(index)}
+                  onLongPress={handleLongPressDot}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.circleTab,
+                    {
+                      backgroundColor: isActive
+                        ? colors.accent
+                        : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
+                    },
+                  ]}>
+                    <IconComponent
+                      size={18}
+                      color={isActive ? colors.textOnAccent : colors.textMuted}
+                      strokeWidth={2.5}
+                    />
+                  </View>
+                  <Text style={[
+                    styles.tabTitle,
+                    {
+                      color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted,
+                      fontWeight: isActive ? '800' : '600',
+                    }
+                  ]}>
+                    {page.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </View>
 
 
@@ -469,7 +458,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = ({
       </Modal>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -486,17 +475,31 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  // Header avec tabs circulaires
+  // Header avec tabs circulaires - fond limité au centre
   header: {
-    paddingTop: 60,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 52,
     paddingBottom: 0,
+    alignItems: 'center',
+    zIndex: 100,
+    // Pas de backgroundColor ici - transparent pour laisser voir les côtés
+  },
+  tabsBackground: {
+    // Fond limité au centre pour ne pas couper les cercles sur les côtés
+    borderRadius: 20,
+    paddingVertical: 4,
+    alignSelf: 'center',
+    // La largeur sera définie par le contenu des onglets
   },
   tabsScroll: {
     flexGrow: 0,
   },
   tabsContent: {
     paddingLeft: 16,
-    paddingRight: 80,
+    paddingRight: 16,
     gap: 12,
     alignItems: 'flex-start',
   },

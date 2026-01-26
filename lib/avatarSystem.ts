@@ -149,6 +149,8 @@ const PACK_METADATA: PackMetadata[] = [
   // NIVEAU 1 - ASHIGARU (Avatars de démarrage)
   { id: 'ninja', name: 'Ninja', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'samurai', name: 'Samouraï', type: 'character', requiredRankLevel: 1, category: 'male' },
+  { id: 'ninja_alt', name: 'Ninja 2', type: 'character', requiredRankLevel: 1, category: 'male' },
+  { id: 'samurai_alt', name: 'Samouraï 2', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'boxer', name: 'Boxeur', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'judoka', name: 'Judoka', type: 'character', requiredRankLevel: 1, category: 'male' },
   { id: 'bjj', name: 'BJJ', type: 'character', requiredRankLevel: 1, category: 'male' },

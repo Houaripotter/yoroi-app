@@ -223,7 +223,7 @@ export const SessionCard = React.memo(React.forwardRef<View, SessionCardProps>(
               <View style={profileLeftContainerStyle}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
-                    <Image source={profileSource} style={styles.photoImage} />
+                    <Image source={profileSource} style={styles.photoImage} resizeMode="cover" />
                   ) : (
                     <View style={styles.profilePlaceholder}>
                       <MaterialCommunityIcons name="account" size={28} color="#000" />

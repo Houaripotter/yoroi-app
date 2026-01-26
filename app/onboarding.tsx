@@ -793,7 +793,7 @@ export default function OnboardingScreen() {
                 onPress={handlePickPhoto}
               >
                 {profilePhoto ? (
-                  <Image source={{ uri: profilePhoto }} style={styles.photoImage} />
+                  <Image source={{ uri: profilePhoto }} style={styles.photoImage} resizeMode="cover" />
                 ) : (
                   <View style={styles.photoPlaceholder}>
                     <Camera size={40} color={colors.textMuted} />

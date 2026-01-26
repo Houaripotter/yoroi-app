@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange } from 'lucide-react-native';
+import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange, FileText } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -16,6 +16,8 @@ import { HydrationCardFullWidth } from '@/components/cards/HydrationCardFullWidt
 import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
 import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
 import { QuestsCard } from '@/components/QuestsCard';
+import { PerformanceRadar } from '@/components/PerformanceRadar';
+import { HealthspanChart } from '@/components/HealthspanChart';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -27,6 +29,14 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const IS_VERY_SMALL_SCREEN = SCREEN_WIDTH < 350; // Très petits téléphones
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
+
+interface WeeklyReport {
+  weightChange?: number;
+  trainingsCount?: number;
+  avgSleepHours?: number;
+  hydrationRate?: number;
+  totalSteps?: number;
+}
 
 interface Page1MonitoringProps {
   userName?: string;
@@ -52,8 +62,10 @@ interface Page1MonitoringProps {
   muscleMass?: number;
   waterPercentage?: number;
   userGoal?: 'lose' | 'maintain' | 'gain';
+  weeklyReport?: WeeklyReport;
   onAddWeight?: () => void;
   onAddWater?: (ml: number) => void;
+  onShareReport?: () => void;
   refreshTrigger?: number;
 }
 
@@ -69,7 +81,8 @@ interface WeightProgressProps {
   colors: any;
 }
 
-const WeightProgressWithCharacter: React.FC<WeightProgressProps> = ({
+// Composant optimisé avec React.memo
+const WeightProgressWithCharacter: React.FC<WeightProgressProps> = memo(({
   currentWeight,
   targetWeight,
   startWeight,
@@ -77,8 +90,8 @@ const WeightProgressWithCharacter: React.FC<WeightProgressProps> = ({
   isDark,
   colors,
 }) => {
-  // Calcul du pourcentage de progression
-  const calculateProgress = () => {
+  // Calcul du pourcentage de progression - Optimisé avec useMemo
+  const progress = useMemo(() => {
     if (targetWeight <= 0 || startWeight <= 0) return 50;
 
     if (userGoal === 'lose') {
@@ -93,19 +106,15 @@ const WeightProgressWithCharacter: React.FC<WeightProgressProps> = ({
       return Math.min(100, Math.max(0, (gained / totalToGain) * 100));
     }
     return 50;
-  };
+  }, [targetWeight, startWeight, currentWeight, userGoal]);
 
-  const progress = calculateProgress();
-
-  // Couleur selon la progression (rouge -> orange -> jaune -> vert)
-  const getProgressColor = (percent: number) => {
-    if (percent < 25) return '#EF4444'; // Rouge - loin
-    if (percent < 50) return '#F97316'; // Orange - commence
-    if (percent < 75) return '#EAB308'; // Jaune - se rapproche
+  // Couleur selon la progression - Optimisé avec useMemo
+  const progressColor = useMemo(() => {
+    if (progress < 25) return '#EF4444'; // Rouge - loin
+    if (progress < 50) return '#F97316'; // Orange - commence
+    if (progress < 75) return '#EAB308'; // Jaune - se rapproche
     return '#10B981'; // Vert - proche/atteint
-  };
-
-  const progressColor = getProgressColor(progress);
+  }, [progress]);
 
   return (
     <View style={progressStyles.container}>
@@ -154,7 +163,7 @@ const WeightProgressWithCharacter: React.FC<WeightProgressProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const progressStyles = StyleSheet.create({
   container: {
@@ -235,8 +244,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   muscleMass,
   waterPercentage,
   userGoal: propUserGoal,
+  weeklyReport,
   onAddWeight,
   onAddWater,
+  onShareReport,
   refreshTrigger = 0,
 }) => {
   const { colors, isDark } = useTheme();
@@ -1053,6 +1064,135 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         onPress={() => router.push('/charge')}
       />
       </View>
+
+      {/* RAPPORT HEBDOMADAIRE (Transféré de Analyse) */}
+      {weeklyReport && (
+        <View style={[styles.reportCard, { backgroundColor: colors.backgroundCard }]}>
+          <View style={styles.reportHeader}>
+            <View style={styles.reportTitleRow}>
+              <FileText size={24} color={colors.accentText} strokeWidth={2} />
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+                {t('analysis.weeklyReport')}
+              </Text>
+            </View>
+            {onShareReport && (
+              <TouchableOpacity
+                style={[styles.shareButton, { backgroundColor: `${colors.accent}15` }]}
+                onPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  onShareReport();
+                }}
+                activeOpacity={0.7}
+              >
+                <Share2 size={18} color={isDark ? colors.accentText : colors.textPrimary} strokeWidth={2} />
+                <Text style={[styles.shareButtonText, { color: isDark ? colors.accent : colors.textPrimary, fontWeight: '700' }]}>
+                  {t('analysis.share')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.reportStats}>
+            {/* Poids */}
+            {weeklyReport.weightChange !== undefined && (
+              <View style={styles.reportStat}>
+                <View style={styles.reportStatHeader}>
+                  <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
+                    {t('analysis.weightEvolution')}
+                  </Text>
+                  {(() => {
+                    const getTrendIconForReport = (value: number) => {
+                      if (value > 0) return TrendingUp;
+                      if (value < 0) return TrendingDown;
+                      return Minus;
+                    };
+                    const getTrendColorForReport = (value: number) => {
+                      if (value > 0) return '#10B981';
+                      if (value < 0) return '#EF4444';
+                      return '#94A3B8';
+                    };
+                    const TrendIcon = getTrendIconForReport(weeklyReport.weightChange);
+                    const trendColor = getTrendColorForReport(weeklyReport.weightChange);
+                    return (
+                      <TrendIcon size={16} color={trendColor} strokeWidth={2.5} />
+                    );
+                  })()}
+                </View>
+                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
+                  {weeklyReport.weightChange > 0 ? '+' : ''}{weeklyReport.weightChange.toFixed(1)} kg
+                </Text>
+              </View>
+            )}
+
+            {/* Entraînements */}
+            {weeklyReport.trainingsCount !== undefined && (
+              <View style={styles.reportStat}>
+                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
+                  {t('analysis.trainings')}
+                </Text>
+                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
+                  {weeklyReport.trainingsCount} {t('analysis.sessions')}
+                </Text>
+              </View>
+            )}
+
+            {/* Sommeil */}
+            {weeklyReport.avgSleepHours !== undefined && (
+              <View style={styles.reportStat}>
+                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
+                  {t('analysis.averageSleep')}
+                </Text>
+                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
+                  {weeklyReport.avgSleepHours.toFixed(1)}h {t('analysis.perNight')}
+                </Text>
+              </View>
+            )}
+
+            {/* Hydratation */}
+            {weeklyReport.hydrationRate !== undefined && (
+              <View style={styles.reportStat}>
+                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
+                  {t('analysis.hydrationRate')}
+                </Text>
+                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
+                  {Math.round(weeklyReport.hydrationRate)}%
+                </Text>
+              </View>
+            )}
+
+            {/* Pas Total */}
+            {weeklyReport.totalSteps !== undefined && (
+              <View style={styles.reportStat}>
+                <Text style={[styles.reportStatLabel, { color: colors.textMuted }]}>
+                  {t('analysis.totalSteps')}
+                </Text>
+                <Text style={[styles.reportStatValue, { color: colors.textPrimary }]}>
+                  {weeklyReport.totalSteps.toLocaleString()}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* CARD 1 - RADAR CHART (Transféré de Analyse) */}
+      <View style={[styles.radarCard, { backgroundColor: colors.backgroundCard }]}>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+          {t('analysis.athleteProfile')}
+        </Text>
+        <View style={styles.radarContainer}>
+          <PerformanceRadar size={240} />
+        </View>
+      </View>
+
+      {/* CARD 2 - HEALTHSPAN (Transféré de Analyse) */}
+      <View style={[styles.healthspanCard, { backgroundColor: colors.backgroundCard }]}>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
+          {t('analysis.healthLongevity')}
+        </Text>
+        <HealthspanChart />
+      </View>
+
         </View>
     </ScrollView>
   );
@@ -1079,11 +1219,11 @@ const styles = StyleSheet.create({
   },
   // Hero Header - Agrandi
   heroHeader: {
-    marginTop: -45,
+    marginTop: 0,
     marginBottom: 10,
     marginHorizontal: -CARD_PADDING,
     paddingHorizontal: 0,
-    zIndex: 100,
+    zIndex: 10,
   },
   heroTop: {
     flexDirection: 'row',
@@ -1092,17 +1232,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   avatarLarge: {
-    width: 105,
-    height: 105,
-    marginRight: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginRight: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -5,
+    marginTop: 55,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   profilePhotoLarge: {
-    width: 105,
-    height: 105,
-    borderRadius: 52.5,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -1112,8 +1258,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    marginLeft: 10,
-    marginTop: -5,
+    marginLeft: 2,
+    marginTop: 55,
   },
   profilePhotoImage: {
     width: '100%',
@@ -1123,7 +1269,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 65,
+    marginTop: 130,
   },
   greetingLarge: {
     fontSize: 13,

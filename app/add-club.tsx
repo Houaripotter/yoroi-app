@@ -214,7 +214,7 @@ export default function AddClubScreen() {
             <TouchableOpacity onPress={handlePickImage}>
               <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: selectedColor, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border, overflow: 'hidden' }}>
                 {logo ? (
-                  <Image source={{ uri: logo }} style={{ width: 80, height: 80 }} />
+                  <Image source={{ uri: logo }} style={{ width: 80, height: 80 }} resizeMode="contain" />
                 ) : (
                   selectedSport ? (
                     <View style={{ width: 80, height: 80, backgroundColor: selectedColor, justifyContent: 'center', alignItems: 'center' }}>

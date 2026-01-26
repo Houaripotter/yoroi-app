@@ -318,6 +318,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                                     styles.sessionLogoOnly,
                                     idx > 0 && { marginTop: -12 }
                                   ]}
+                                  resizeMode="cover"
                                 />
                               ) : (
                                 <View
@@ -508,6 +509,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                                         <Image
                                           source={logoSource}
                                           style={styles.modalClubLogoSmall}
+                                          resizeMode="cover"
                                         />
                                       ) : (
                                         <View
@@ -805,7 +807,7 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                       >
                         <View style={styles.sessionListItemLeft}>
                           {logoSource ? (
-                            <Image source={logoSource} style={styles.sessionListLogo} />
+                            <Image source={logoSource} style={styles.sessionListLogo} resizeMode="cover" />
                           ) : (
                             <View style={[styles.sessionListDot, { backgroundColor: session.clubColor }]} />
                           )}

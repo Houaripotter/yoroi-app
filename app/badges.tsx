@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Modal,
   Animated,
   Easing,
+  ListRenderItem,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,7 +44,8 @@ interface BadgeItemProps {
   onPress: () => void;
 }
 
-const BadgeItem: React.FC<BadgeItemProps> = ({ badgeProgress, onPress }) => {
+// Composant BadgeItem optimisé avec React.memo
+const BadgeItem: React.FC<BadgeItemProps> = memo(({ badgeProgress, onPress }) => {
   const { colors } = useTheme();
   const { badge, isUnlocked, progressPercent } = badgeProgress;
 
@@ -91,7 +93,7 @@ const BadgeItem: React.FC<BadgeItemProps> = ({ badgeProgress, onPress }) => {
       )}
     </TouchableOpacity>
   );
-};
+});
 
 interface CategorySectionProps {
   title: string;
@@ -101,7 +103,8 @@ interface CategorySectionProps {
   onBadgePress: (badge: BadgeProgress) => void;
 }
 
-const CategorySection: React.FC<CategorySectionProps> = ({
+// Composant CategorySection optimisé avec React.memo
+const CategorySection: React.FC<CategorySectionProps> = memo(({
   title,
   IconComponent,
   badges,
@@ -109,6 +112,11 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   onBadgePress,
 }) => {
   const { colors } = useTheme();
+
+  // Memoize le callback pour éviter les re-renders
+  const handleBadgePress = useCallback((badgeProgress: BadgeProgress) => {
+    onBadgePress(badgeProgress);
+  }, [onBadgePress]);
 
   return (
     <View style={styles.categorySection}>
@@ -131,13 +139,13 @@ const CategorySection: React.FC<CategorySectionProps> = ({
           <BadgeItem
             key={badgeProgress.badge.id}
             badgeProgress={badgeProgress}
-            onPress={() => onBadgePress(badgeProgress)}
+            onPress={() => handleBadgePress(badgeProgress)}
           />
         ))}
       </View>
     </View>
   );
-};
+});
 
 // Configuration des categories
 const CATEGORIES: { key: BadgeCategory; title: string; IconComponent: React.ComponentType<any>; badges: Badge[] }[] = [
@@ -223,85 +231,101 @@ export default function BadgesScreen() {
     });
   };
 
-  const getBadgesForCategory = (category: BadgeCategory): BadgeProgress[] => {
+  // Optimisé avec useMemo pour éviter recalculs
+  const getBadgesForCategory = useCallback((category: BadgeCategory): BadgeProgress[] => {
     return allBadges.filter((bp) => bp.badge.category === category);
-  };
+  }, [allBadges]);
 
-  const getUnlockedCountForCategory = (category: BadgeCategory): number => {
+  const getUnlockedCountForCategory = useCallback((category: BadgeCategory): number => {
     return allBadges.filter((bp) => bp.badge.category === category && bp.isUnlocked).length;
-  };
+  }, [allBadges]);
 
   const totalBadges = getTotalBadgesCount();
+
+  // Préparer les données pour FlatList
+  const categoriesData = useMemo(() => {
+    return CATEGORIES.map((cat) => ({
+      ...cat,
+      badges: getBadgesForCategory(cat.key),
+      unlockedCount: getUnlockedCountForCategory(cat.key),
+    }));
+  }, [getBadgesForCategory, getUnlockedCountForCategory]);
+
+  // Render item optimisé pour FlatList
+  const renderCategoryItem: ListRenderItem<typeof categoriesData[0]> = useCallback(({ item }) => (
+    <CategorySection
+      title={item.title}
+      IconComponent={item.IconComponent}
+      badges={item.badges}
+      unlockedCount={item.unlockedCount}
+      onBadgePress={handleBadgePress}
+    />
+  ), [handleBadgePress]);
+
+  // Key extractor optimisé
+  const keyExtractor = useCallback((item: typeof categoriesData[0]) => item.key, []);
+
+  // Header component pour FlatList
+  const ListHeaderComponent = useMemo(() => (
+    <Card variant="gold" style={styles.statsCard}>
+      <LinearGradient
+        colors={['#F5F0E6', '#EDE5D8']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.statsGradient}
+      >
+        <View style={styles.statsMainContent}>
+          <View style={[styles.statsIconContainer, { backgroundColor: '#D4AF3720' }]}>
+            <Award size={48} color="#D4AF37" strokeWidth={2.5} />
+          </View>
+          <View style={styles.statsTextContent}>
+            <Text style={[styles.statsCount, { color: '#1A1A1A' }]}>
+              {unlockedCount}/{totalBadges}
+            </Text>
+            <Text style={[styles.statsLabel, { color: '#666666' }]}>
+              BADGES DÉBLOQUÉS
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsProgressSection}>
+          <View style={[styles.statsProgressBg, { backgroundColor: '#D4AF3730' }]}>
+            <View
+              style={[
+                styles.statsProgressFill,
+                {
+                  backgroundColor: '#D4AF37',
+                  width: `${(unlockedCount / totalBadges) * 100}%`,
+                },
+              ]}
+            />
+          </View>
+          <Text style={[styles.statsProgressText, { color: '#8B7535' }]}>
+            {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
+          </Text>
+        </View>
+      </LinearGradient>
+    </Card>
+  ), [unlockedCount, totalBadges]);
 
   return (
     <ScreenWrapper noPadding>
       <Header title="Ma Collection" showBack />
 
-      <ScrollView
+      <FlatList
+        data={categoriesData}
+        renderItem={renderCategoryItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={<View style={{ height: 100 }} />}
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-      >
-        {/* HEADER STATS */}
-        <Card variant="gold" style={styles.statsCard}>
-          <LinearGradient
-            colors={['#F5F0E6', '#EDE5D8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statsGradient}
-          >
-            <View style={styles.statsMainContent}>
-              <View style={[styles.statsIconContainer, { backgroundColor: '#D4AF3720' }]}>
-                <Award size={48} color="#D4AF37" strokeWidth={2.5} />
-              </View>
-              <View style={styles.statsTextContent}>
-                <Text style={[styles.statsCount, { color: '#1A1A1A' }]}>
-                  {unlockedCount}/{totalBadges}
-                </Text>
-                <Text style={[styles.statsLabel, { color: '#666666' }]}>
-                  BADGES DÉBLOQUÉS
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.statsProgressSection}>
-              <View style={[styles.statsProgressBg, { backgroundColor: '#D4AF3730' }]}>
-                <View
-                  style={[
-                    styles.statsProgressFill,
-                    {
-                      backgroundColor: '#D4AF37',
-                      width: `${(unlockedCount / totalBadges) * 100}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={[styles.statsProgressText, { color: '#8B7535' }]}>
-                {Math.round((unlockedCount / totalBadges) * 100)}% Collection complète
-              </Text>
-            </View>
-          </LinearGradient>
-        </Card>
-
-        {/* CATEGORIES */}
-        {CATEGORIES.map((cat) => {
-          const categoryBadges = getBadgesForCategory(cat.key);
-          const categoryUnlocked = getUnlockedCountForCategory(cat.key);
-
-          return (
-            <CategorySection
-              key={cat.key}
-              title={cat.title}
-              IconComponent={cat.IconComponent}
-              badges={categoryBadges}
-              unlockedCount={categoryUnlocked}
-              onBadgePress={handleBadgePress}
-            />
-          );
-        })}
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        initialNumToRender={3}
+      />
 
       {/* MODAL BADGE DETAIL */}
       <Modal

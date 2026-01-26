@@ -57,6 +57,7 @@ import { getProfile, getWeights, getTrainings, calculateStreak } from '@/lib/dat
 import { AnimatedCard } from '@/components/AnimatedCard';
 import { AchievementCelebration } from '@/components/AchievementCelebration';
 import { getAchievementsHistory, getTodayAchievements, AchievementUnlock } from '@/lib/achievementsService';
+import AvatarDisplay from '@/components/AvatarDisplay';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
@@ -447,11 +448,8 @@ export default function DojoScreen() {
                 color={currentRank.color}
                 bgColor="rgba(255,255,255,0.15)"
               />
-              <View style={[styles.rankIconHero, { backgroundColor: currentRank.color }]}>
-                {React.createElement(RankIconMap[currentRank.icon] || Target, {
-                  size: 36,
-                  color: '#FFFFFF'
-                })}
+              <View style={[styles.rankIconHero, { backgroundColor: 'transparent' }]}>
+                <AvatarDisplay size="small" />
               </View>
             </View>
             <Text style={styles.rankNameHero}>{currentRank.name}</Text>
@@ -1435,7 +1433,7 @@ const styles = StyleSheet.create({
   // SCROLL VIEW
   // ═══════════════════════════════════════
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingTop: 20 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 },
 
   sectionTitle: {
     fontSize: 11,
