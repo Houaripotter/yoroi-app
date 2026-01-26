@@ -1076,7 +1076,22 @@ export default function PlanningScreen() {
 
                 {/* Mes Records - GRID 3 colonnes groupés par catégorie */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-                  <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Records</Text>
+                    <TouchableOpacity
+                      onPress={() => router.push('/training-journal')}
+                      style={{
+                        backgroundColor: '#EF4444',
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Plus size={14} color="#FFFFFF" strokeWidth={3} />
+                    </TouchableOpacity>
+                  </View>
                   <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
                     <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />
@@ -1275,7 +1290,22 @@ export default function PlanningScreen() {
 
             {/* Mes Techniques - GRID 3 colonnes groupées par catégorie */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-              <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Techniques</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={[styles.subsectionTitle, { color: colors.textSecondary, marginTop: 0 }]}>Mes Techniques</Text>
+                <TouchableOpacity
+                  onPress={() => router.push('/training-journal')}
+                  style={{
+                    backgroundColor: '#8B5CF6',
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Plus size={14} color="#FFFFFF" strokeWidth={3} />
+                </TouchableOpacity>
+              </View>
               <TouchableOpacity onPress={() => router.push('/training-journal')} style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={{ color: isDark ? colors.accent : colors.textPrimary, fontSize: 12, fontWeight: '600' }}>Voir tout</Text>
                 <ChevronRight size={14} color={isDark ? colors.accent : colors.textPrimary} />

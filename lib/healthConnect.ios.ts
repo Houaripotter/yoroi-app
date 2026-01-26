@@ -599,11 +599,12 @@ class HealthConnectService {
       try {
         // ✅ PROTECTION: Vérifier que HealthKit.queryQuantitySamples existe
         if (!HealthKit || typeof HealthKit.queryQuantitySamples !== 'function') {
-          logger.error('[HealthKit] Module HealthKit non disponible');
+          logger.info('[HealthKit] Module HealthKit non disponible sur ce device');
           return null;
         }
 
         // Revenir à queryQuantitySamples pour compatibilité max
+        // Note: Sur simulateur sans données, cette requête peut échouer silencieusement
         const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', queryOptions);
 
         // ✅ PROTECTION: Vérifier que samples est bien un tableau et contient des données valides
