@@ -104,7 +104,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function TrainingJournalScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
@@ -1438,14 +1438,14 @@ export default function TrainingJournalScreen() {
         contentContainerStyle={styles.globalFilterContent}
       >
         {[
-          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent },
-          { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444' },
-          { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6' },
-          { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4' },
-          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B' },
-          { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6' },
-          { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981' },
-          { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280' },
+          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: isDark ? '#FFFFFF' : '#000000' },
+          { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
+          { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
+          { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
+          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#000000' },
+          { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
+          { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
+          { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },
         ].map(filter => {
           const isSelected = globalFilter === filter.key;
           return (
@@ -1463,10 +1463,10 @@ export default function TrainingJournalScreen() {
                 setGlobalFilter(filter.key);
               }}
             >
-              {renderIcon(filter.iconName, 16, isSelected ? '#FFFFFF' : filter.color)}
+              {renderIcon(filter.iconName, 16, isSelected ? filter.textOnColor : filter.color)}
               <Text style={[
                 styles.globalFilterText,
-                { color: isSelected ? '#FFFFFF' : colors.textPrimary }
+                { color: isSelected ? filter.textOnColor : colors.textPrimary }
               ]}>
                 {filter.label}
               </Text>

@@ -468,13 +468,19 @@ class HealthConnectService {
   }
 
   /**
-   * HELPER: Crée des options de requête sécurisées avec validation des timestamps
+   * HELPER: Crée des options de requête sécurisées avec validation des dates
+   * @kingstinct/react-native-healthkit attend des objets Date, pas des timestamps
    */
   private createQueryOptions(fromDate: Date, toDate: Date, options: any = {}): any | null {
+    // ✅ VALIDATION: S'assurer que les dates sont valides
+    if (!fromDate || !toDate || !(fromDate instanceof Date) || !(toDate instanceof Date)) {
+      logger.error('[HealthKit] Dates invalides pour la requête');
+      return null;
+    }
+
     const fromTimestamp = fromDate.getTime();
     const toTimestamp = toDate.getTime();
 
-    // ✅ VALIDATION: S'assurer que les timestamps sont des nombres valides
     if (isNaN(fromTimestamp) || isNaN(toTimestamp) || fromTimestamp === 0 || toTimestamp === 0) {
       logger.error('[HealthKit] Timestamps invalides pour la requête', {
         from: fromTimestamp,
@@ -491,9 +497,10 @@ class HealthConnectService {
       }
     }
 
+    // ✅ @kingstinct/react-native-healthkit attend des objets Date
     return {
-      from: fromTimestamp,
-      to: toTimestamp,
+      from: fromDate,
+      to: toDate,
       ...cleanOptions
     };
   }
@@ -590,6 +597,12 @@ class HealthConnectService {
       }
 
       try {
+        // ✅ PROTECTION: Vérifier que HealthKit.queryQuantitySamples existe
+        if (!HealthKit || typeof HealthKit.queryQuantitySamples !== 'function') {
+          logger.error('[HealthKit] Module HealthKit non disponible');
+          return null;
+        }
+
         // Revenir à queryQuantitySamples pour compatibilité max
         const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierStepCount', queryOptions);
 

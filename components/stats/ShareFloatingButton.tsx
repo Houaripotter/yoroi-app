@@ -166,13 +166,13 @@ export const ShareFloatingButton: React.FC = () => {
           style={[
             styles.button,
             { backgroundColor: colors.accent },
-            isMenuOpen && { backgroundColor: isDark ? colors.accentDark || colors.accent : colors.accentDark || colors.accent },
+            isMenuOpen && { backgroundColor: colors.accentDark || colors.accent },
           ]}
         >
           {isMenuOpen ? (
-            <X size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
+            <X size={24} color={isDark ? '#FFFFFF' : '#000000'} strokeWidth={2.5} />
           ) : (
-            <Share2 size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
+            <Share2 size={24} color={isDark ? '#FFFFFF' : '#000000'} strokeWidth={2.5} />
           )}
         </TouchableOpacity>
       </View>
