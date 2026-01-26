@@ -601,7 +601,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {dailyQuote && (
           <Animated.View
             style={[
-              { paddingHorizontal: CARD_PADDING, marginTop: 4 },
+              { paddingHorizontal: CARD_PADDING, marginTop: -2 },
               { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
             ]}
           >
@@ -642,7 +642,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             activeOpacity={0.8}
           >
             <View style={[styles.compactIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-              <MaterialCommunityIcons name="shoe-print" size={18} color="#3B82F6" />
+              <MaterialCommunityIcons name="shoe-print" size={16} color="#3B82F6" />
             </View>
             <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
             <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
@@ -658,7 +658,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             activeOpacity={0.8}
           >
             <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <MaterialCommunityIcons name="fire" size={18} color="#EF4444" />
+              <MaterialCommunityIcons name="fire" size={16} color="#EF4444" />
             </View>
             <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()}</Text>
             <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
@@ -674,7 +674,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             activeOpacity={0.8}
           >
             <View style={[styles.compactIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
-              <Ionicons name="flame" size={18} color="#F97316" />
+              <Ionicons name="flame" size={16} color="#F97316" />
             </View>
             <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{streak}</Text>
             <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
@@ -1294,9 +1294,9 @@ const styles = StyleSheet.create({
   compactCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1304,22 +1304,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   compactIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   compactValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   compactLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 1,
   },
   statCardTouchable: {
     flex: 1,
