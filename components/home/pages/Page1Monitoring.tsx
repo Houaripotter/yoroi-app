@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
+import { getTrainings, Training } from '@/lib/database';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
@@ -254,7 +255,36 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const { t, locale } = useI18n();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
+  const [trainingCalories, setTrainingCalories] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Calculer les calories des entraînements du jour
+  useEffect(() => {
+    const loadTodayTrainings = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const trainings = await getTrainings(1); // Derniers 24h
+        const todayTrainings = trainings.filter(t => t.date === today);
+
+        let totalCals = 0;
+        todayTrainings.forEach(training => {
+          if (training.calories) {
+            totalCals += training.calories;
+          } else if (training.duration_minutes || training.duration) {
+            // Estimation: ~7 cal/min pour sport modéré, ajusté par intensité
+            const duration = training.duration_minutes || training.duration || 0;
+            const intensity = training.intensity || 5;
+            const calPerMin = 5 + (intensity * 0.5); // 5-10 cal/min selon intensité
+            totalCals += Math.round(duration * calPerMin);
+          }
+        });
+        setTrainingCalories(totalCals);
+      } catch (error) {
+        console.error('Erreur chargement calories:', error);
+      }
+    };
+    loadTodayTrainings();
+  }, [refreshTrigger]);
 
   // Localized greeting based on time
   const getGreeting = () => {
@@ -1221,7 +1251,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           </View>
           <View>
             <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('analysis.calories')}</Text>
-            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{Math.round(steps * 0.04).toLocaleString()} kcal</Text>
+            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()} kcal</Text>
           </View>
         </TouchableOpacity>
       </View>
