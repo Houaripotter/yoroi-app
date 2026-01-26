@@ -226,6 +226,18 @@ export default function OnboardingScreen() {
       ],
     },
     {
+      id: 'exercises',
+      icon: <Dumbbell size={64} color="#3B82F6" />,
+      title: '1000+ Exercices',
+      description: 'Bibliothèque massive avec plus de 1000 exercices pour tous les sports : Musculation, JJB, MMA, Boxe, Judo, Running, CrossFit, Lutte, Karaté, Muay Thai et plus encore.',
+      color: '#3B82F6',
+      highlights: [
+        { icon: <Dumbbell size={14} color="#3B82F6" />, text: 'Musculation : Tous les muscles' },
+        { icon: <Swords size={14} color="#3B82F6" />, text: 'Combat : JJB, MMA, Boxe, Judo' },
+        { icon: <Target size={14} color="#3B82F6" />, text: 'Recherche & filtres intelligents' },
+      ],
+    },
+    {
       id: 'tools',
       icon: <Timer size={64} color="#8B5CF6" />,
       title: 'Outils Pro',
