@@ -227,7 +227,12 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     if (questId.includes('sleep')) return Moon;
     if (questId.includes('steps')) return Footprints;
     if (questId.includes('training') || questId.includes('workout')) return Dumbbell;
-    if (questId.includes('weight')) return Target;
+    if (questId.includes('weight') || questId.includes('weigh')) return Target;
+    if (questId.includes('cardio')) return Flame;
+    if (questId.includes('protein')) return Zap;
+    if (questId.includes('breakfast')) return Star;
+    if (questId.includes('cold') || questId.includes('shower')) return Droplets;
+    if (questId.includes('stretch') || questId.includes('meditation')) return Sparkles;
     return Star;
   };
 
@@ -236,7 +241,13 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     if (questId.includes('sleep')) return '#8B5CF6';
     if (questId.includes('steps')) return '#10B981';
     if (questId.includes('training') || questId.includes('workout')) return '#F97316';
-    if (questId.includes('weight')) return '#EC4899';
+    if (questId.includes('weight') || questId.includes('weigh')) return '#EC4899';
+    if (questId.includes('cardio')) return '#EF4444';
+    if (questId.includes('protein')) return '#F59E0B';
+    if (questId.includes('breakfast')) return '#FBBF24';
+    if (questId.includes('cold') || questId.includes('shower')) return '#0EA5E9';
+    if (questId.includes('stretch')) return '#A855F7';
+    if (questId.includes('meditation')) return '#6366F1';
     return '#FFD700';
   };
 

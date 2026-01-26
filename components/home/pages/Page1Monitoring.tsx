@@ -861,8 +861,8 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* OPTIMISATION: Mémoriser les calculs de poids pour éviter recalcul à chaque render */}
         {useMemo(() => {
-          // Inverser pour avoir le plus récent à gauche (index 0 = aujourd'hui)
-          const last30Weights = weightHistory.slice(-30).reverse();
+          // Prendre les 30 derniers poids (le plus récent est à l'index 0 car weightHistory est trié DESC)
+          const last30Weights = weightHistory.slice(0, 30);
           const weights = last30Weights;
           const maxWeightValue = Math.max(...weights);
           const minWeightValue = Math.min(...weights);
@@ -1232,9 +1232,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   avatarLarge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     marginRight: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1246,9 +1246,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   profilePhotoLarge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -1589,6 +1589,7 @@ const styles = StyleSheet.create({
   // Vitals - Pleine largeur
   vitalsSection: {
     gap: 16,
+    marginBottom: 40, // Plus d'espace pour séparer les vitals du radar/rapport
   },
 
   // ═══════════════════════════════════════════════

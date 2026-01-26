@@ -16,7 +16,7 @@ import logger from '@/lib/security/logger';
 
 export type QuestPeriod = 'daily' | 'weekly' | 'monthly';
 export type QuestId =
-  // Daily (10)
+  // Daily (12)
   | 'daily_weigh'
   | 'daily_hydration'
   | 'daily_training'
@@ -27,6 +27,8 @@ export type QuestId =
   | 'daily_stretch'
   | 'daily_meditation'
   | 'daily_cardio'
+  | 'daily_breakfast'
+  | 'daily_cold_shower'
   // Weekly (10)
   | 'weekly_5_weighs'
   | 'weekly_4_trainings'
@@ -188,6 +190,24 @@ export const DAILY_QUESTS: Quest[] = [
     period: 'daily',
     target: 20,
     unit: 'min',
+  },
+  {
+    id: 'daily_breakfast',
+    title: 'Petit-dej Champion',
+    description: 'Prendre un petit-dejeuner sain',
+    icon: '🍳',
+    xp: 15,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_cold_shower',
+    title: 'Guerrier du Froid',
+    description: 'Finir par 30s d\'eau froide',
+    icon: '🧊',
+    xp: 25,
+    period: 'daily',
+    target: 1,
   },
 ];
 

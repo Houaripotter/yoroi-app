@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 120, height: 120 }, // Ajusté pour correspondre exactement à la photo de profil (120px)
+  sm: { width: 130, height: 130 }, // Ajusté pour correspondre exactement à la photo de profil (130px)
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
