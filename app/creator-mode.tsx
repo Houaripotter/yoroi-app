@@ -21,7 +21,7 @@ import {
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { generateScreenshotDemoData, clearScreenshotDemoData } from '@/lib/screenshotDemoData';
+import { generateScreenshotDemoData, clearScreenshotDemoData, DEMO_PROFILES, setActiveDemoProfile, DemoProfileKey } from '@/lib/screenshotDemoData';
 import { useCustomPopup } from '@/components/CustomPopup';
 import logger from '@/lib/security/logger';
 
@@ -33,6 +33,8 @@ export default function CreatorModeScreen() {
   const [isJournalScreenshotMode, setIsJournalScreenshotMode] = useState(false);
   const [isSurgeonMode, setIsSurgeonMode] = useState(false);
   const [isMockStatsMode, setIsMockStatsMode] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<DemoProfileKey>('germain');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -137,21 +139,72 @@ export default function CreatorModeScreen() {
           </Text>
         </View>
 
+        {/* SECTION PROFILS DÉMO */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PROFILS DE DÉMO</Text>
+          <Card style={styles.card}>
+            {Object.entries(DEMO_PROFILES).map(([key, profile]) => (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.profileItem,
+                  selectedProfile === key && { backgroundColor: colors.primary + '20', borderColor: colors.primary }
+                ]}
+                onPress={() => setSelectedProfile(key as DemoProfileKey)}
+              >
+                <View style={styles.profileInfo}>
+                  <Text style={[styles.profileName, { color: colors.textPrimary }]}>{profile.name}</Text>
+                  <Text style={[styles.profileDesc, { color: colors.textMuted }]}>{profile.description}</Text>
+                  <Text style={[styles.profileStats, { color: colors.textMuted }]}>
+                    {profile.start_weight}kg → {profile.target_weight}kg • {profile.sport.toUpperCase()}
+                  </Text>
+                </View>
+                {selectedProfile === key && (
+                  <CheckCircle size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={[styles.generateButton, { backgroundColor: colors.primary }, isGenerating && { opacity: 0.6 }]}
+              onPress={async () => {
+                if (isGenerating) return;
+                setIsGenerating(true);
+                setActiveDemoProfile(selectedProfile);
+                const result = await generateScreenshotDemoData();
+                setIsGenerating(false);
+                if (result.success) {
+                  setIsGlobalScreenshotMode(true);
+                  await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+                  showPopup('Profil Généré', `${DEMO_PROFILES[selectedProfile].name} est prêt ! Redémarre l'app.`, [{ text: 'OK', style: 'primary' }]);
+                } else {
+                  showPopup('Erreur', result.error || 'Erreur inconnue', [{ text: 'OK', style: 'cancel' }]);
+                }
+              }}
+              disabled={isGenerating}
+            >
+              <Text style={styles.generateButtonText}>
+                {isGenerating ? 'Génération...' : `Générer ${DEMO_PROFILES[selectedProfile].name}`}
+              </Text>
+            </TouchableOpacity>
+          </Card>
+        </View>
+
         {/* SECTION GLOBAL */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>GLOBAL</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ÉTAT ACTUEL</Text>
           <Card style={styles.card}>
             <View style={styles.row}>
               <View style={styles.iconBox}>
                 <Smartphone size={24} color={colors.primary} />
               </View>
               <View style={styles.info}>
-                <Text style={[styles.label, { color: colors.textPrimary }]}>Mode Screenshot Global</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Mode Screenshot Actif</Text>
                 <Text style={[styles.sublabel, { color: colors.textMuted }]}>
-                  Active le profil "Germain" (Stats parfaites)
+                  Données de démo chargées
                 </Text>
               </View>
-              <Switch 
+              <Switch
                 value={isGlobalScreenshotMode}
                 onValueChange={toggleGlobalScreenshotMode}
                 trackColor={{ false: colors.border, true: colors.primary }}
@@ -361,5 +414,41 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  profileItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    marginBottom: 8,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  profileDesc: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  profileStats: {
+    fontSize: 11,
+  },
+  generateButton: {
+    padding: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  generateButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

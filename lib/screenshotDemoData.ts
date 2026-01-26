@@ -11,16 +11,74 @@ import { createBenchmark, addBenchmarkEntry, createSkill } from './carnetService
 import type { BenchmarkCategory, BenchmarkUnit, SkillCategory, SkillStatus } from './carnetService';
 
 // ============================================
-// PROFIL DE DÉMONSTRATION - TRANSFORMATION INCROYABLE!
+// PROFILS DE DÉMONSTRATION DISPONIBLES
 // ============================================
-const DEMO_PROFILE = {
-  name: 'Germain Del Jarret',
-  height_cm: 182,
-  start_weight: 98.5, // Poids de départ
-  target_weight: 76.0, // Objectif final
-  sport: 'mma', // MMA + Musculation
-  mode: 'competitor',
-  startDate: subDays(new Date(), 180), // 6 MOIS de transformation
+export const DEMO_PROFILES = {
+  germain: {
+    name: 'Germain Del Jarret',
+    height_cm: 182,
+    start_weight: 98.5,
+    target_weight: 76.0,
+    sport: 'mma',
+    mode: 'competitor',
+    description: 'Transformation MMA - Fighter',
+  },
+  thomas: {
+    name: 'Thomas Silva',
+    height_cm: 178,
+    start_weight: 88.0,
+    target_weight: 77.0,
+    sport: 'jjb',
+    mode: 'competitor',
+    description: 'Champion JJB - Compétiteur',
+  },
+  houari: {
+    name: 'Houari',
+    height_cm: 175,
+    start_weight: 99.9,
+    target_weight: 75.0,
+    sport: 'musculation',
+    mode: 'standard',
+    description: 'Perte de poids - Transformation',
+  },
+  sarah: {
+    name: 'Sarah Fitness',
+    height_cm: 165,
+    start_weight: 72.0,
+    target_weight: 58.0,
+    sport: 'fitness',
+    mode: 'standard',
+    description: 'Fitness Femme - Tonification',
+  },
+  alex: {
+    name: 'Alex Warrior',
+    height_cm: 185,
+    start_weight: 105.0,
+    target_weight: 88.0,
+    sport: 'boxe',
+    mode: 'competitor',
+    description: 'Boxeur - Poids lourd → Mi-lourd',
+  },
+};
+
+export type DemoProfileKey = keyof typeof DEMO_PROFILES;
+
+// Profil actif par défaut
+let DEMO_PROFILE = {
+  ...DEMO_PROFILES.germain,
+  startDate: subDays(new Date(), 180),
+};
+
+// Fonction pour changer le profil actif
+export const setActiveDemoProfile = (profileKey: DemoProfileKey) => {
+  const profile = DEMO_PROFILES[profileKey];
+  if (profile) {
+    DEMO_PROFILE = {
+      ...profile,
+      startDate: subDays(new Date(), 180),
+    };
+    logger.info(`Profil démo changé: ${profile.name}`);
+  }
 };
 
 // ============================================
