@@ -18,9 +18,12 @@ import {
   checkAndUpdateQuests,
   addHydration,
   getDailyHydration,
+  completeQuest,
   Quest,
   QuestProgress,
+  QuestId,
 } from '@/lib/quests';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 import {
@@ -221,6 +224,24 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   useEffect(() => {
     loadQuests();
   }, [loadQuests]);
+
+  // Compléter une quête manuellement en tapant dessus
+  const handleQuestTap = async (quest: QuestWithProgress) => {
+    if (quest.completed) return; // Déjà complétée
+
+    impactAsync(ImpactFeedbackStyle.Medium);
+
+    try {
+      const result = await completeQuest(quest.id as QuestId);
+      if (result.success && result.xpEarned > 0) {
+        notificationAsync(NotificationFeedbackType.Success);
+        onXPGained?.(result.xpEarned);
+        loadQuests(); // Recharger pour mettre à jour l'affichage
+      }
+    } catch (error) {
+      logger.error('Erreur completion quete:', error);
+    }
+  };
 
   const getQuestIcon = (questId: string) => {
     if (questId.includes('hydration')) return Droplets;
@@ -427,12 +448,16 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);
 
             return (
-              <View
+              <TouchableOpacity
                 key={quest.id}
                 style={[
                   styles.questItem,
-                  { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }
+                  { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
+                  quest.completed && { opacity: 0.7 }
                 ]}
+                onPress={() => handleQuestTap(quest)}
+                activeOpacity={quest.completed ? 1 : 0.7}
+                disabled={quest.completed}
               >
                 <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
                   {quest.completed ? (
@@ -488,7 +513,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     {quest.completed ? '✓' : `+${quest.xp}`}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
           </ScrollView>

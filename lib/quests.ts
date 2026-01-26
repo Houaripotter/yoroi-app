@@ -16,7 +16,7 @@ import logger from '@/lib/security/logger';
 
 export type QuestPeriod = 'daily' | 'weekly' | 'monthly';
 export type QuestId =
-  // Daily (12)
+  // Daily (12) - Toutes complétables manuellement ou auto
   | 'daily_weigh'
   | 'daily_hydration'
   | 'daily_training'
@@ -28,8 +28,8 @@ export type QuestId =
   | 'daily_meditation'
   | 'daily_cardio'
   | 'daily_breakfast'
-  | 'daily_cold_shower'
-  // Weekly (10)
+  | 'daily_no_junk'
+  // Weekly (12)
   | 'weekly_5_weighs'
   | 'weekly_4_trainings'
   | 'weekly_photo'
@@ -39,18 +39,22 @@ export type QuestId =
   | 'weekly_cardio_3'
   | 'weekly_meal_prep'
   | 'weekly_rest_day'
-  | 'weekly_protein_goal'
-  // Monthly (10)
+  | 'weekly_check_stats'
+  | 'weekly_visit_dojo'
+  | 'weekly_share_progress'
+  // Monthly (12)
   | 'monthly_lose_2kg'
   | 'monthly_20_trainings'
   | 'monthly_30_streak'
-  | 'monthly_50_weighs'
+  | 'monthly_25_weighs'
   | 'monthly_transformation'
   | 'monthly_new_pr'
   | 'monthly_sleep_quality'
   | 'monthly_hydration_master'
   | 'monthly_consistency'
-  | 'monthly_body_scan';
+  | 'monthly_body_scan'
+  | 'monthly_level_up'
+  | 'monthly_perfect_week';
 
 export interface Quest {
   id: QuestId;
@@ -96,9 +100,18 @@ export interface QuestsState {
 
 export const DAILY_QUESTS: Quest[] = [
   {
+    id: 'daily_open_app',
+    title: 'Discipline',
+    description: 'Ouvrir l\'app quotidiennement',
+    icon: '📱',
+    xp: 5,
+    period: 'daily',
+    target: 1,
+  },
+  {
     id: 'daily_weigh',
     title: 'Pesee du jour',
-    description: 'Se peser une fois',
+    description: 'Se peser une fois (auto)',
     icon: '⚖️',
     xp: 10,
     period: 'daily',
@@ -107,7 +120,7 @@ export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_hydration',
     title: 'Hydratation',
-    description: 'Boire 2L d\'eau',
+    description: 'Boire 2L d\'eau (auto)',
     icon: '💧',
     xp: 20,
     period: 'daily',
@@ -117,29 +130,20 @@ export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_training',
     title: 'Athlete',
-    description: 'Faire un entrainement',
-    icon: '',
+    description: 'Faire un entrainement (auto)',
+    icon: '💪',
     xp: 50,
-    period: 'daily',
-    target: 1,
-  },
-  {
-    id: 'daily_open_app',
-    title: 'Discipline',
-    description: 'Ouvrir l\'app',
-    icon: '',
-    xp: 5,
     period: 'daily',
     target: 1,
   },
   {
     id: 'daily_steps',
     title: 'Marcheur',
-    description: 'Faire 10 000 pas',
+    description: 'Faire 8000 pas',
     icon: '👟',
-    xp: 30,
+    xp: 25,
     period: 'daily',
-    target: 10000,
+    target: 8000,
     unit: 'pas',
   },
   {
@@ -155,56 +159,53 @@ export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_protein',
     title: 'Proteines',
-    description: 'Atteindre objectif proteines',
+    description: 'Manger assez de proteines',
     icon: '🥩',
-    xp: 25,
+    xp: 20,
     period: 'daily',
     target: 1,
   },
   {
     id: 'daily_stretch',
     title: 'Mobilite',
-    description: '10 min d\'etirements',
+    description: 'Faire des etirements',
     icon: '🧘',
-    xp: 15,
-    period: 'daily',
-    target: 10,
-    unit: 'min',
-  },
-  {
-    id: 'daily_meditation',
-    title: 'Zen',
-    description: '5 min de meditation',
-    icon: '🧠',
-    xp: 20,
-    period: 'daily',
-    target: 5,
-    unit: 'min',
-  },
-  {
-    id: 'daily_cardio',
-    title: 'Cardio',
-    description: '20 min de cardio',
-    icon: '❤️',
-    xp: 35,
-    period: 'daily',
-    target: 20,
-    unit: 'min',
-  },
-  {
-    id: 'daily_breakfast',
-    title: 'Petit-dej Champion',
-    description: 'Prendre un petit-dejeuner sain',
-    icon: '🍳',
     xp: 15,
     period: 'daily',
     target: 1,
   },
   {
-    id: 'daily_cold_shower',
-    title: 'Guerrier du Froid',
-    description: 'Finir par 30s d\'eau froide',
-    icon: '🧊',
+    id: 'daily_meditation',
+    title: 'Zen',
+    description: 'Prendre un moment calme',
+    icon: '🧠',
+    xp: 15,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_cardio',
+    title: 'Cardio',
+    description: 'Faire du cardio',
+    icon: '❤️',
+    xp: 30,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_breakfast',
+    title: 'Petit-dej',
+    description: 'Prendre un bon petit-dejeuner',
+    icon: '🍳',
+    xp: 10,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_no_junk',
+    title: 'Clean Eating',
+    description: 'Eviter la malbouffe',
+    icon: '🥗',
     xp: 25,
     period: 'daily',
     target: 1,
@@ -215,8 +216,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_5_weighs',
     title: 'Regularite',
-    description: '5 pesees dans la semaine',
-    icon: '',
+    description: '5 pesees cette semaine (auto)',
+    icon: '⚖️',
     xp: 100,
     period: 'weekly',
     target: 5,
@@ -224,8 +225,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_4_trainings',
     title: 'Machine',
-    description: '4 entrainements',
-    icon: '',
+    description: '4 entrainements (auto)',
+    icon: '💪',
     xp: 150,
     period: 'weekly',
     target: 4,
@@ -233,7 +234,7 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_photo',
     title: 'Photographe',
-    description: 'Prendre une photo transformation',
+    description: 'Prendre une photo progres',
     icon: '📸',
     xp: 75,
     period: 'weekly',
@@ -241,8 +242,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_measurements',
-    title: 'Complet',
-    description: 'Mesurer ses mensurations',
+    title: 'Mensuration',
+    description: 'Mesurer son corps (auto)',
     icon: '📏',
     xp: 100,
     period: 'weekly',
@@ -250,9 +251,9 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_7_streak',
-    title: 'Streak',
-    description: '7 jours consecutifs',
-    icon: '',
+    title: 'Streak 7j',
+    description: '7 jours consecutifs (auto)',
+    icon: '🔥',
     xp: 200,
     period: 'weekly',
     target: 7,
@@ -260,7 +261,7 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_hydration_streak',
     title: 'Hydrate',
-    description: '5 jours a 2L d\'eau',
+    description: '5 jours bien hydrate',
     icon: '💧',
     xp: 120,
     period: 'weekly',
@@ -278,7 +279,7 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_meal_prep',
     title: 'Prep Master',
-    description: 'Preparer ses repas',
+    description: 'Preparer ses repas a l\'avance',
     icon: '🍱',
     xp: 80,
     period: 'weekly',
@@ -287,20 +288,38 @@ export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_rest_day',
     title: 'Recuperation',
-    description: 'Prendre 1 jour de repos',
+    description: 'Prendre 1 jour de repos complet',
     icon: '🛋️',
     xp: 50,
     period: 'weekly',
     target: 1,
   },
   {
-    id: 'weekly_protein_goal',
-    title: 'Proteines Pro',
-    description: '5 jours objectif prot.',
-    icon: '💪',
-    xp: 110,
+    id: 'weekly_check_stats',
+    title: 'Analyste',
+    description: 'Consulter ses statistiques',
+    icon: '📊',
+    xp: 40,
     period: 'weekly',
-    target: 5,
+    target: 1,
+  },
+  {
+    id: 'weekly_visit_dojo',
+    title: 'Sensei',
+    description: 'Visiter le Dojo',
+    icon: '🥋',
+    xp: 30,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_share_progress',
+    title: 'Influenceur',
+    description: 'Partager sa progression',
+    icon: '📤',
+    xp: 60,
+    period: 'weekly',
+    target: 1,
   },
 ];
 
@@ -334,7 +353,7 @@ export const MONTHLY_QUESTS: Quest[] = [
     target: 30,
   },
   {
-    id: 'monthly_50_weighs',
+    id: 'monthly_25_weighs',
     title: 'Assidu',
     description: '25 pesees ce mois',
     icon: '⚖️',
@@ -395,6 +414,24 @@ export const MONTHLY_QUESTS: Quest[] = [
     xp: 300,
     period: 'monthly',
     target: 4,
+  },
+  {
+    id: 'monthly_level_up',
+    title: 'Level Up',
+    description: 'Monter de niveau',
+    icon: '⬆️',
+    xp: 500,
+    period: 'monthly',
+    target: 1,
+  },
+  {
+    id: 'monthly_perfect_week',
+    title: 'Semaine Parfaite',
+    description: 'Completer toutes les quetes quotidiennes pendant 7 jours',
+    icon: '✨',
+    xp: 750,
+    period: 'monthly',
+    target: 1,
   },
 ];
 
