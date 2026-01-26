@@ -209,6 +209,8 @@ export default function HomeScreen() {
 
   // Vérifier si c'est la première visite ou une mise à jour
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
     const checkFirstVisit = async () => {
       try {
         // 1. Gérer le message de mise à jour (What's New)
@@ -223,7 +225,7 @@ export default function HomeScreen() {
         // 2. Gérer le tutoriel home
         const visited = await hasVisitedPage('home');
         if (!visited && !showWhatIsNew) {
-          setTimeout(() => setShowTutorial(true), 1000);
+          timer = setTimeout(() => setShowTutorial(true), 1000);
         }
       } catch (error) {
         logger.error('Erreur vérification première visite:', error);
@@ -231,15 +233,25 @@ export default function HomeScreen() {
       }
     };
     checkFirstVisit();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   // Afficher la popup de notation après navigation depuis l'étape 4
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
     if (params.showRating === 'true') {
-      setTimeout(() => {
+      timer = setTimeout(() => {
         setShowRatingPopup(true);
       }, 500);
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [params.showRating]);
 
   const handleCloseTutorial = useCallback(async () => {

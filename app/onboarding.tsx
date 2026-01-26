@@ -303,8 +303,8 @@ export default function OnboardingScreen() {
       quality: 0.7,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setProfilePhoto(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setProfilePhoto(result.assets?.[0]?.uri || null);
     }
   };
 
@@ -321,8 +321,8 @@ export default function OnboardingScreen() {
       quality: 0.7,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setProfilePhoto(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setProfilePhoto(result.assets?.[0]?.uri || null);
     }
   };
 
@@ -429,7 +429,7 @@ export default function OnboardingScreen() {
   const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0 && viewableItems[0].index !== undefined) {
+    if (viewableItems?.length > 0 && viewableItems?.[0]?.index !== undefined) {
       setCurrentIndex(viewableItems[0].index);
     }
   }).current;

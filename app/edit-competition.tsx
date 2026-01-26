@@ -37,8 +37,24 @@ export default function EditCompetitionScreen() {
   const { colors, isDark } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const params = useLocalSearchParams();
-  const competitionId = params.id as string;
+  const params = useLocalSearchParams<{ id?: string }>();
+
+  // Safe parameter extraction with validation
+  const competitionId = params.id || '';
+
+  // Early return if no valid id
+  if (!competitionId) {
+    return (
+      <ScreenWrapper>
+        <Header title="Erreur" showBack />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 16, textAlign: 'center' }}>
+            Compétition non trouvée. Veuillez réessayer.
+          </Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   const [loading, setLoading] = useState(true);
   const [nom, setNom] = useState('');

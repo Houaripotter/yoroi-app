@@ -32,6 +32,7 @@ import {
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 // ============================================
 // ECRAN COLLECTION DE BADGES
@@ -153,6 +154,7 @@ export default function BadgesScreen() {
   const [unlockedCount, setUnlockedCount] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<BadgeProgress | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
 
   // Animations
   const modalScale = useRef(new Animated.Value(0.5)).current;
@@ -177,26 +179,30 @@ export default function BadgesScreen() {
   );
 
   const handleBadgePress = (badgeProgress: BadgeProgress) => {
-    setSelectedBadge(badgeProgress);
-    setModalVisible(true);
+    if (isProcessing) return;
 
-    // Animation d'entree
-    modalScale.setValue(0.5);
-    modalOpacity.setValue(0);
+    executeOnce(async () => {
+      setSelectedBadge(badgeProgress);
+      setModalVisible(true);
 
-    Animated.parallel([
-      Animated.spring(modalScale, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-      Animated.timing(modalOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
+      // Animation d'entree
+      modalScale.setValue(0.5);
+      modalOpacity.setValue(0);
+
+      Animated.parallel([
+        Animated.spring(modalScale, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(modalOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   };
 
   const closeModal = () => {

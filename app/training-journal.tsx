@@ -95,6 +95,7 @@ import SkillDetailModal from './training-journal/components/SkillDetailModal';
 import TrashModal from './training-journal/components/TrashModal';
 import AddBenchmarkModal from './training-journal/components/AddBenchmarkModal';
 import AddSkillModal from './training-journal/components/AddSkillModal';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -108,6 +109,7 @@ export default function TrainingJournalScreen() {
   const { t, locale } = useI18n();
   const { isWatchAvailable, syncRecords } = useWatch();
   const { showPopup, PopupComponent } = useCustomPopup();
+  const { isProcessing: isModalProcessing, executeOnce: executeModalOnce } = usePreventDoubleClick({ delay: 500 });
 
   // TODO: Migrate to useTrainingJournal hook (WIP)
   // For now, keep local state management
@@ -1269,9 +1271,13 @@ export default function TrainingJournalScreen() {
           <TouchableOpacity
             style={[styles.fabMenuItem, { backgroundColor: '#8B5CF6' }]}
             onPress={() => {
-              setShowFabMenu(false);
-              setShowAddSkillModal(true);
+              if (isModalProcessing) return;
+              executeModalOnce(async () => {
+                setShowFabMenu(false);
+                setShowAddSkillModal(true);
+              });
             }}
+            disabled={isModalProcessing}
           >
             <BookOpen size={22} color="#FFFFFF" />
             <Text style={styles.fabMenuText}>Technique (Savoir)</Text>
@@ -1294,8 +1300,12 @@ export default function TrainingJournalScreen() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Carnet d'Entrainement</Text>
         <TouchableOpacity
-          onPress={() => setShowTrashModal(true)}
+          onPress={() => {
+            if (isModalProcessing) return;
+            executeModalOnce(async () => setShowTrashModal(true));
+          }}
           style={styles.trashButton}
+          disabled={isModalProcessing}
         >
           <Trash2 size={22} color={colors.textPrimary} />
           {trashCount > 0 && (
@@ -1537,7 +1547,11 @@ export default function TrainingJournalScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.addSectionBtn, { backgroundColor: '#8B5CF620' }]}
-                onPress={() => setShowAddSkillModal(true)}
+                onPress={() => {
+                  if (isModalProcessing) return;
+                  executeModalOnce(async () => setShowAddSkillModal(true));
+                }}
+                disabled={isModalProcessing}
               >
                 <Plus size={16} color="#8B5CF6" strokeWidth={3} />
               </TouchableOpacity>
@@ -1583,9 +1597,13 @@ export default function TrainingJournalScreen() {
                 <TouchableOpacity
                   style={[styles.emptySkills, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                   onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Medium);
-                    setShowAddSkillModal(true);
+                    if (isModalProcessing) return;
+                    executeModalOnce(async () => {
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                      setShowAddSkillModal(true);
+                    });
                   }}
+                  disabled={isModalProcessing}
                 >
                   <Target size={48} color={colors.textMuted} />
                   <Text style={[styles.emptySkillsTitle, { color: colors.textPrimary, fontSize: 16, fontWeight: '600', marginTop: 8 }]}>
@@ -1607,11 +1625,15 @@ export default function TrainingJournalScreen() {
                 <TouchableOpacity
                   style={[styles.createCustomSkillCard, { backgroundColor: colors.backgroundCard, borderColor: '#8B5CF6' }]}
                   onPress={() => {
-                    impactAsync(ImpactFeedbackStyle.Medium);
-                    setNewSkillName(searchQuery.trim());
-                    setSearchQuery('');
-                    setShowAddSkillModal(true);
+                    if (isModalProcessing) return;
+                    executeModalOnce(async () => {
+                      impactAsync(ImpactFeedbackStyle.Medium);
+                      setNewSkillName(searchQuery.trim());
+                      setSearchQuery('');
+                      setShowAddSkillModal(true);
+                    });
                   }}
+                  disabled={isModalProcessing}
                 >
                   <View style={[styles.createCustomIcon, { backgroundColor: '#8B5CF620' }]}>
                     <Plus size={28} color="#8B5CF6" strokeWidth={2} />
@@ -1637,10 +1659,14 @@ export default function TrainingJournalScreen() {
       <TouchableOpacity
         style={[styles.fab, { backgroundColor: colors.accent }]}
         onPress={() => {
-          impactAsync(ImpactFeedbackStyle.Medium);
-          setShowFabMenu(true);
+          if (isModalProcessing) return;
+          executeModalOnce(async () => {
+            impactAsync(ImpactFeedbackStyle.Medium);
+            setShowFabMenu(true);
+          });
         }}
         activeOpacity={0.8}
+        disabled={isModalProcessing}
       >
         <Plus size={28} color={colors.textOnGold} strokeWidth={2.5} />
       </TouchableOpacity>

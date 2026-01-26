@@ -39,7 +39,7 @@ export default function AddClubScreen() {
     });
 
     if (!result.canceled) {
-      setLogo(result.assets[0].uri);
+      setLogo(result.assets?.[0]?.uri || null);
     }
   };
 

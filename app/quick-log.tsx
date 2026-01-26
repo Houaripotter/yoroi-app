@@ -26,6 +26,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -79,25 +80,30 @@ export default function QuickLogScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
 
   const handleSelectActivity = (activityId: ActivityType) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
+    if (isProcessing) return;
 
-    // Router vers l'écran de saisie spécifique
-    switch (activityId) {
-      case 'musculation':
-        router.push('/quick-log-muscu');
-        break;
-      case 'running':
-        router.push('/quick-log-running');
-        break;
-      case 'combat':
-        router.push('/quick-log-combat');
-        break;
-      case 'autre':
-        router.push('/quick-log-other');
-        break;
-    }
+    executeOnce(async () => {
+      impactAsync(ImpactFeedbackStyle.Medium);
+
+      // Router vers l'écran de saisie spécifique
+      switch (activityId) {
+        case 'musculation':
+          router.push('/quick-log-muscu');
+          break;
+        case 'running':
+          router.push('/quick-log-running');
+          break;
+        case 'combat':
+          router.push('/quick-log-combat');
+          break;
+        case 'autre':
+          router.push('/quick-log-other');
+          break;
+      }
+    });
   };
 
   const renderIcon = (activity: ActivityOption, size: number) => {
@@ -203,10 +209,14 @@ export default function QuickLogScreen() {
             }
           ]}
           onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/training-journal');
+            if (isProcessing) return;
+            executeOnce(async () => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/training-journal');
+            });
           }}
           activeOpacity={0.7}
+          disabled={isProcessing}
         >
           <MaterialCommunityIcons name="notebook" size={20} color={colors.accent} />
           <Text style={[styles.fullJournalText, { color: colors.textPrimary }]}>

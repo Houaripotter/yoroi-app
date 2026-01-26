@@ -83,8 +83,8 @@ export default function GhostCameraScreen() {
         quality: 1,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        setGhostVideo(result.assets[0].uri);
+      if (!result.canceled && result.assets?.[0]) {
+        setGhostVideo(result.assets?.[0]?.uri);
         setIsPlaying(true);
       }
     } catch (error) {

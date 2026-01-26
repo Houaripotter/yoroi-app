@@ -72,24 +72,32 @@ const renderIcon = (iconName: string, color: string, size: number = 24) => {
 
 export default function InjuryEvaluationScreen() {
   const { colors, isDark } = useTheme();
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{
+    zoneId?: string;
+    zoneView?: string;
+    zoneName?: string;
+    injuryId?: string;
+    existingEva?: string;
+    existingDuration?: string;
+  }>();
   const { showPopup, PopupComponent } = useCustomPopup();
 
-  const zoneId = params.zoneId as string;
-  const zoneView = params.zoneView as 'front' | 'back';
-  const zoneName = decodeURIComponent(params.zoneName as string);
+  // Safe parameter extraction with validation
+  const zoneId = params.zoneId || 'unknown';
+  const zoneView = (params.zoneView === 'front' || params.zoneView === 'back') ? params.zoneView : 'front';
+  const zoneName = params.zoneName ? decodeURIComponent(params.zoneName) : 'Zone inconnue';
 
   // Mode édition si injuryId est présent
-  const injuryId = params.injuryId ? parseInt(params.injuryId as string) : null;
+  const injuryId = params.injuryId ? parseInt(params.injuryId, 10) : null;
   const isEditMode = injuryId !== null;
 
   const [painType, setPainType] = useState<PainType | null>(null);
   const [cause, setCause] = useState<InjuryCause | null>(null);
   const [evaScore, setEvaScore] = useState(
-    params.existingEva ? parseInt(params.existingEva as string) : 5
+    params.existingEva ? parseInt(params.existingEva, 10) : 5
   );
   const [estimatedRecoveryDays, setEstimatedRecoveryDays] = useState(
-    params.existingDuration ? parseInt(params.existingDuration as string) : 7
+    params.existingDuration ? parseInt(params.existingDuration, 10) : 7
   );
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

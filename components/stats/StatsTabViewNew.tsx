@@ -59,10 +59,12 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
 
   // Naviguer vers l'onglet initial si spécifié
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
     if (initialTab) {
       const tabIndex = PAGE_DEFS.findIndex(p => p.id === initialTab);
       if (tabIndex >= 0) {
-        setTimeout(() => {
+        timer = setTimeout(() => {
           scrollViewRef.current?.scrollTo({
             x: tabIndex * SCREEN_WIDTH,
             animated: false,
@@ -71,6 +73,10 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
         }, 100);
       }
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [initialTab]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

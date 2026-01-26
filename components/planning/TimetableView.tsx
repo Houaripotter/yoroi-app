@@ -46,13 +46,19 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
 
   // Recharger les données quand refreshTrigger change
   React.useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
     if (refreshTrigger && refreshTrigger > 0) {
       logger.info('🔄 TimetableView: Refresh déclenché par trigger', refreshTrigger);
       // Petit délai pour s'assurer que la DB est à jour
-      setTimeout(() => {
+      timer = setTimeout(() => {
         refresh();
       }, 300);
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [refreshTrigger, refresh]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSession, setSelectedSession] = useState<{ day: string; session: any } | null>(null);

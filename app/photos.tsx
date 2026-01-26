@@ -184,9 +184,9 @@ export default function PhotosScreen() {
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets[0]) {
+      if (!result.canceled && result.assets?.[0]) {
         // Ouvrir le modal pour entrer le poids
-        setPendingPhotoUri(result.assets[0].uri);
+        setPendingPhotoUri(result.assets?.[0]?.uri);
         const latestWeight = await getLatestWeight();
 
         logger.info('Dernier poids trouvé:', latestWeight?.weight);
@@ -216,9 +216,9 @@ export default function PhotosScreen() {
         quality: 0.8,
       });
 
-      if (!result.canceled && result.assets[0]) {
+      if (!result.canceled && result.assets?.[0]) {
         // Ouvrir le modal pour entrer le poids
-        setPendingPhotoUri(result.assets[0].uri);
+        setPendingPhotoUri(result.assets?.[0]?.uri);
         const latestWeight = await getLatestWeight();
 
         logger.info('Dernier poids trouvé:', latestWeight?.weight);

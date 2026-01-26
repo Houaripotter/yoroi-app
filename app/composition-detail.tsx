@@ -126,12 +126,14 @@ const METRICS = [
 export default function CompositionDetailScreen() {
   const { colors } = useTheme();
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{ metric?: string }>();
+
+  // Safe parameter extraction with validation
+  const validMetricIds = METRICS.map(m => m.id);
+  const initialMetric = params.metric && validMetricIds.includes(params.metric) ? params.metric : 'weight';
 
   // État
-  const [selectedMetric, setSelectedMetric] = useState(
-    (params.metric as string) || 'weight'
-  );
+  const [selectedMetric, setSelectedMetric] = useState(initialMetric);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [compositionData, setCompositionData] = useState<BodyComposition[]>([]);
 

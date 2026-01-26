@@ -346,7 +346,7 @@ export default function DojoScreen() {
       setTodayAchievements(today);
 
       if (profile && weights.length > 0) {
-        const currentWeight = weights[0].weight;
+        const currentWeight = weights?.[0]?.weight || 75;
         const targetWeight = profile.target_weight;
         if (targetWeight && currentWeight <= targetWeight) {
           setGoalReached(true);

@@ -87,7 +87,7 @@ export default function EnergyScreen() {
 
       // Jours depuis dernier entraînement
       let daysSinceLast: number | null = null;
-      if (allTrainings.length > 0) {
+      if (allTrainings.length > 0 && allTrainings[0]?.date) {
         const lastDate = new Date(allTrainings[0].date);
         daysSinceLast = differenceInDays(new Date(), lastDate);
         setLastTrainingDays(daysSinceLast);

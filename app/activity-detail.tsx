@@ -188,13 +188,13 @@ export default function ActivityDetailScreen() {
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Clock size={20} color="#10B981" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{totalHours.toFixed(1)}h</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{(totalHours || 0).toFixed(1)}h</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Volume total</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.backgroundCard }]}>
             <Calendar size={20} color="#F59E0B" />
-            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{avgSessionsPerWeek.toFixed(1)}</Text>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>{(avgSessionsPerWeek || 0).toFixed(1)}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>Séances/sem.</Text>
           </View>
 

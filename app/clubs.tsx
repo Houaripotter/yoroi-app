@@ -126,8 +126,8 @@ export default function ClubsScreen() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setLogoUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setLogoUri(result.assets?.[0]?.uri || null);
     }
   };
 
@@ -146,8 +146,8 @@ export default function ClubsScreen() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setLogoUri(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setLogoUri(result.assets?.[0]?.uri || null);
     }
   };
 

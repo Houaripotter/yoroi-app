@@ -163,7 +163,13 @@ export const getHomeLayout = async (): Promise<HomeSection[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.HOME_LAYOUT);
     if (data) {
-      const saved = JSON.parse(data) as HomeSection[];
+      let saved: HomeSection[] = [];
+      try {
+        saved = JSON.parse(data) as HomeSection[];
+      } catch (parseError) {
+        console.error('JSON parse error in getHomeLayout:', parseError);
+        return DEFAULT_HOME_SECTIONS;
+      }
       // Merge avec les sections par défaut pour ajouter les nouvelles sections
       const merged = DEFAULT_HOME_SECTIONS.map(def => {
         const found = saved.find(s => s.id === def.id);
@@ -740,7 +746,12 @@ export const getUserGear = async (): Promise<UserGear[]> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_GEAR);
     if (data) {
-      return JSON.parse(data);
+      try {
+        return JSON.parse(data);
+      } catch (parseError) {
+        console.error('JSON parse error in getUserGear:', parseError);
+        return [];
+      }
     }
     // Initialiser avec 3 équipements par défaut si vide
     const defaultGear: UserGear[] = [
@@ -833,11 +844,16 @@ export const getUserBodyStatus = async (): Promise<BodyStatusData> => {
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_BODY_STATUS);
     if (data) {
-      return JSON.parse(data);
+      try {
+        return JSON.parse(data);
+      } catch (parseError) {
+        console.error('JSON parse error in getUserBodyStatus:', parseError);
+        return {};
+      }
     }
     return {};
   } catch (error) {
-    console.error('❌ Erreur lecture statut corporel:', error);
+    console.error('Erreur lecture statut corporel:', error);
     return {};
   }
 };
@@ -984,7 +1000,7 @@ export const importData = async (): Promise<boolean> => {
     }
 
     let fileContent: string;
-    
+
     if (Platform.OS === 'web') {
       // Sur le web, lire via fetch
       const response = await fetch(uri);
@@ -992,11 +1008,25 @@ export const importData = async (): Promise<boolean> => {
     } else {
       fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.UTF8 });
     }
-    
-    const backup: BackupData = JSON.parse(fileContent);
+
+    let backup: BackupData;
+    try {
+      backup = JSON.parse(fileContent);
+    } catch (parseError) {
+      console.error('JSON parse error in importData:', parseError);
+      Alert.alert('Erreur', 'Le fichier de sauvegarde contient des données JSON invalides.');
+      return false;
+    }
 
     if (!backup || backup.version !== 1) {
       Alert.alert('Erreur', 'Le fichier de sauvegarde est invalide ou corrompu.');
+      return false;
+    }
+
+    // Validate array contents
+    if (!Array.isArray(backup.measurements) || !Array.isArray(backup.workouts) ||
+        !Array.isArray(backup.photos) || !Array.isArray(backup.badges)) {
+      Alert.alert('Erreur', 'Le fichier de sauvegarde contient des données invalides.');
       return false;
     }
 
@@ -1148,26 +1178,27 @@ export const calculateRecommendedHydration = (weightKg: number): number => {
  * Obtient les paramètres d'hydratation
  */
 export const getHydrationSettings = async (): Promise<HydrationSettings> => {
+  const defaultSettings: HydrationSettings = {
+    dailyGoal: 2.5,
+    reminderEnabled: false,
+    reminderInterval: 120,
+    trainingDayBonus: 0.5,
+  };
   try {
     const data = await AsyncStorage.getItem(STORAGE_KEYS.HYDRATION_SETTINGS);
     if (data) {
-      return JSON.parse(data);
+      try {
+        return JSON.parse(data);
+      } catch (parseError) {
+        console.error('JSON parse error in getHydrationSettings:', parseError);
+        return defaultSettings;
+      }
     }
     // Paramètres par défaut
-    return {
-      dailyGoal: 2.5, // Valeur par défaut, sera recalculée avec le poids
-      reminderEnabled: false,
-      reminderInterval: 120, // 2 heures
-      trainingDayBonus: 0.5,
-    };
+    return defaultSettings;
   } catch (error) {
-    console.error('❌ Erreur lecture paramètres hydratation:', error);
-    return {
-      dailyGoal: 2.5,
-      reminderEnabled: false,
-      reminderInterval: 120,
-      trainingDayBonus: 0.5,
-    };
+    console.error('Erreur lecture paramètres hydratation:', error);
+    return defaultSettings;
   }
 };
 

@@ -92,8 +92,9 @@ export const WeightFullCard = React.memo<WeightFullCardProps>(({
 
   // Données graphique
   const chartData = history.length > 0 ? history.slice(-7) : [currentWeight];
-  const maxWeight = Math.max(...chartData, target);
-  const minWeight = Math.min(...chartData, target);
+  const allValues = [...chartData, target].filter(v => typeof v === 'number' && !isNaN(v));
+  const maxWeight = allValues.length > 0 ? Math.max(...allValues) : currentWeight;
+  const minWeight = allValues.length > 0 ? Math.min(...allValues) : currentWeight;
   const range = maxWeight - minWeight || 1;
   const padding = range * 0.2;
 

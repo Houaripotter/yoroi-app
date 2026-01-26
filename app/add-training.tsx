@@ -229,7 +229,7 @@ export default function AddTrainingScreen() {
 
         // Charger le dernier poids
         if (weights && weights.length > 0) {
-          setUserWeight(weights[0].weight);
+          setUserWeight(weights?.[0]?.weight || 75);
         }
 
         // Charger l'avatar
@@ -1198,8 +1198,8 @@ export default function AddTrainingScreen() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setCardBackgroundImage(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setCardBackgroundImage(result.assets?.[0]?.uri || null);
       lightHaptic();
     }
   };
@@ -1217,8 +1217,8 @@ export default function AddTrainingScreen() {
       quality: 0.8,
     });
 
-    if (!result.canceled && result.assets[0]) {
-      setCardBackgroundImage(result.assets[0].uri);
+    if (!result.canceled && result.assets?.[0]) {
+      setCardBackgroundImage(result.assets?.[0]?.uri || null);
       lightHaptic();
     }
   };

@@ -135,7 +135,7 @@ export default function CutModeScreen() {
       // Charger le poids actuel
       const weights = await getWeights();
       if (weights.length > 0) {
-        setCurrentWeight(weights[0].weight);
+        setCurrentWeight(weights?.[0]?.weight || currentWeight);
       }
     } catch (error) {
       logger.error('Erreur chargement cut mode:', error);

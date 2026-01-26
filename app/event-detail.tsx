@@ -61,20 +61,54 @@ const getCategoryColor = (category: string) => {
 export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{
+    id?: string;
+    title?: string;
+    date_start?: string;
+    city?: string;
+    country?: string;
+    category?: string;
+    sport_tag?: string;
+    registration_link?: string;
+    federation?: string;
+  }>();
 
-  // Récupérer les données de l'événement depuis les params
+  // Safe parameter extraction with defaults
   const event = {
-    id: params.id as string,
-    title: params.title as string,
-    date_start: params.date_start as string,
-    city: params.city as string,
-    country: params.country as string,
-    category: params.category as string,
-    sport_tag: params.sport_tag as string,
-    registration_link: params.registration_link as string,
-    federation: params.federation as string,
+    id: params.id || '',
+    title: params.title || 'Événement',
+    date_start: params.date_start || new Date().toISOString(),
+    city: params.city || 'Lieu inconnu',
+    country: params.country || '',
+    category: params.category || 'autre',
+    sport_tag: params.sport_tag || 'autre',
+    registration_link: params.registration_link || '',
+    federation: params.federation || '',
   };
+
+  // Early return if no valid event id
+  if (!params.id) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + SPACING.md, backgroundColor: '#6B7280' }]}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.sportTag}>ERREUR</Text>
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ color: colors.textPrimary, fontSize: 16, textAlign: 'center' }}>
+            Événement non trouvé. Veuillez réessayer.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const SportIcon = getSportIcon(event.sport_tag);
   const categoryColor = getCategoryColor(event.category);

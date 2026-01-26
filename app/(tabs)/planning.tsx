@@ -151,13 +151,19 @@ export default function PlanningScreen() {
 
   // Vérifier si c'est la première visite
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
     const checkFirstVisit = async () => {
       const visited = await hasVisitedPage('planning');
       if (!visited) {
-        setTimeout(() => setShowTutorial(true), 1000);
+        timer = setTimeout(() => setShowTutorial(true), 1000);
       }
     };
     checkFirstVisit();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const handleCloseTutorial = async () => {

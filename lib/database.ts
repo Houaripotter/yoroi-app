@@ -693,6 +693,10 @@ export const addWeight = async (data: Weight): Promise<number> => {
      data.source || 'manual', data.date]
   );
 
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert weight record');
+  }
+
   // Sauvegarder les mensurations si présentes
   const hasMeasurements = data.waist || data.navel || data.chest || data.arm || data.thigh ||
                           data.hips || data.neck || data.calf;
@@ -765,10 +769,13 @@ export const addTraining = async (data: Training): Promise<number> => {
     [data.club_id || null, data.sport, data.session_type || null, data.date,
      data.start_time || null, data.duration_minutes || null,
      data.notes || null, data.muscles || null, exercisesJson, data.technique_rating || null,
-     data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null, 
+     data.is_outdoor ? 1 : 0, data.distance || null, data.calories || null,
      data.intensity || null, data.rounds || null, data.round_duration || null,
      data.pente || null, data.speed || null, data.resistance || null, data.watts || null, data.cadence || null]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert training record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -881,6 +888,9 @@ export const addClub = async (data: Club): Promise<number> => {
     `INSERT INTO clubs (name, sport, logo_uri, color) VALUES (?, ?, ?, ?)`,
     [data.name, data.sport, data.logo_uri || null, data.color || null]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert club record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -925,6 +935,9 @@ export const addMeasurementRecord = async (data: Measurement): Promise<number> =
      data.left_calf || null, data.right_calf || null, data.shoulders || null,
      data.neck || null, data.date]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert measurement record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -975,6 +988,9 @@ export const addWeeklyPlanItem = async (data: WeeklyPlan): Promise<number> => {
     [data.day_of_week, data.club_id || null, data.sport, data.time || null,
      data.duration_minutes || null, data.muscles || null, data.is_rest_day ? 1 : 0]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert weekly plan item');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1014,6 +1030,9 @@ export const addPhoto = async (data: Photo): Promise<number> => {
     [data.uri, data.weight || null, data.fat_percent || null,
      data.muscle_percent || null, data.date, data.is_blurred ? 1 : 0]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert photo record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1068,6 +1087,9 @@ export const addInjury = async (data: Injury): Promise<number> => {
     [data.zone_id, data.zone_view, data.pain_type, data.cause, data.eva_score,
      data.notes || null, data.date, data.status, data.fit_for_duty]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert injury record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1127,6 +1149,9 @@ export const addEvaHistory = async (data: InjuryEvaHistory): Promise<number> => 
      VALUES (?, ?, ?, ?)`,
     [data.injury_id, data.eva_score, data.date, data.notes || null]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert EVA history record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1157,6 +1182,9 @@ export const addTreatment = async (data: InjuryTreatment): Promise<number> => {
     [data.injury_id, data.treatment_type, data.custom_description || null,
      data.date, data.completed ? 1 : 0, data.notes || null]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert treatment record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1193,6 +1221,9 @@ export const addReminder = async (data: TreatmentReminder): Promise<number> => {
     [data.injury_id, data.treatment_type, data.frequency, data.time || null,
      data.next_reminder_date, data.enabled ? 1 : 0]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert reminder record');
+  }
   return result.lastInsertRowId;
 };
 
@@ -1529,6 +1560,9 @@ export const addCompetition = async (competition: Omit<Competition, 'id' | 'crea
       competition.lien_inscription || null,
     ]
   );
+  if (!result?.lastInsertRowId) {
+    throw new Error('Failed to insert competition record');
+  }
   return result.lastInsertRowId;
 };
 

@@ -25,6 +25,7 @@ import { UserClub } from '@/lib/storage';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import logger from '@/lib/security/logger';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -101,6 +102,7 @@ export default function HistoryScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
+  const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
 
   const fetchHistoryRecords = useCallback(async () => {
     setLoading(true);
@@ -169,9 +171,13 @@ export default function HistoryScreen() {
   };
 
   const handleDayPress = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
-    setSelectedDate(dateString);
-    setModalVisible(true);
+    if (isProcessing) return;
+
+    executeOnce(async () => {
+      const dateString = date.toISOString().split('T')[0];
+      setSelectedDate(dateString);
+      setModalVisible(true);
+    });
   };
 
   const getCurrentActivitiesForDate = (date: string): WorkoutType[] => {
@@ -815,7 +821,8 @@ export default function HistoryScreen() {
                     <View style={styles.multiLineChartContainer}>
                       {allMeasurementsChartData.map((item, index) => {
                         if (item.data.length < 2) return null;
-                        const maxDataLength = Math.max(...allMeasurementsChartData.map(d => d.data.length));
+                        const dataLengths = allMeasurementsChartData.map(d => d.data.length);
+                        const maxDataLength = dataLengths.length > 0 ? Math.max(...dataLengths) : 0;
                         return (
                           <View
                             key={item.metric.key}

@@ -21,6 +21,7 @@ import { Header } from '@/components/ui/Header';
 import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import logger from '@/lib/security/logger';
+import { usePreventDoubleClick } from '@/hooks/usePreventDoubleClick';
 
 type BodyZoneStatus = 'ok' | 'warning' | 'injury';
 type BodyZone = 'neck' | 'shoulders' | 'back' | 'elbows' | 'wrists' | 'hips' | 'knees' | 'ankles';
@@ -52,6 +53,7 @@ export default function BodyStatusScreen() {
   const { colors, isDark } = useTheme();
   const { showPopup, PopupComponent } = useCustomPopup();
   const [bodyStatus, setBodyStatus] = useState<BodyStatusData>({});
+  const { isProcessing, executeOnce } = usePreventDoubleClick({ delay: 500 });
 
   // Helper pour obtenir le label traduit d'une zone
   const getZoneLabel = (zoneKey: BodyZone): string => {
@@ -77,18 +79,22 @@ export default function BodyStatusScreen() {
   }, []);
 
   const handleZonePress = (zone: BodyZone) => {
-    const currentStatus = bodyStatus[zone];
-    setSelectedZone(zone);
-    if (currentStatus) {
-      setSelectedStatus(currentStatus.status);
-      setPainLevel(currentStatus.pain || 5);
-      setMedicalNote(currentStatus.note || '');
-    } else {
-      setSelectedStatus('ok');
-      setPainLevel(5);
-      setMedicalNote('');
-    }
-    setModalVisible(true);
+    if (isProcessing) return;
+
+    executeOnce(async () => {
+      const currentStatus = bodyStatus[zone];
+      setSelectedZone(zone);
+      if (currentStatus) {
+        setSelectedStatus(currentStatus.status);
+        setPainLevel(currentStatus.pain || 5);
+        setMedicalNote(currentStatus.note || '');
+      } else {
+        setSelectedStatus('ok');
+        setPainLevel(5);
+        setMedicalNote('');
+      }
+      setModalVisible(true);
+    });
   };
 
   const handleSaveStatus = async () => {

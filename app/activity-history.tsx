@@ -37,7 +37,9 @@ export default function ActivityHistoryScreen() {
   const { t, locale } = useI18n();
   const params = useLocalSearchParams<{ tab?: string }>();
 
-  const [activeTab, setActiveTab] = useState<Tab>((params.tab as Tab) || 'steps');
+  // Safe parameter extraction with validation
+  const initialTab: Tab = (params.tab === 'steps' || params.tab === 'calories') ? params.tab : 'steps';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [period, setPeriod] = useState<Period>('30d');
   const [isLoading, setIsLoading] = useState(false);
 
