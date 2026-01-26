@@ -585,25 +585,23 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             style={styles.avatarLarge}
           >
             <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
-            {/* Rang et Niveau style Samouraï */}
-            <View style={styles.samuraiRankContainer}>
-              <View style={[styles.samuraiRankBadge, { borderColor: rankColor }]}>
-                <Text style={[styles.samuraiRankText, { color: rankColor }]}>
-                  {rankName}
-                </Text>
-              </View>
-              <Text style={[styles.samuraiLevelText, { color: colors.textMuted }]}>
-                第{level}級
+            {/* Rang et Niveau */}
+            <View style={styles.rankLevelContainer}>
+              <Text style={[styles.rankText, { color: colors.textPrimary }]}>
+                {rankName}
+              </Text>
+              <Text style={[styles.levelText, { color: colors.textMuted }]}>
+                Niveau {level}
               </Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* CITATION MOTIVANTE - TRÈS TRÈS COLLÉE AU HEADER */}
+        {/* CITATION MOTIVANTE */}
         {dailyQuote && (
           <Animated.View
             style={[
-              { paddingHorizontal: CARD_PADDING, marginTop: 10 },
+              { paddingHorizontal: CARD_PADDING, marginTop: 4 },
               { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
             ]}
           >
@@ -632,60 +630,54 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Fond qui couvre les onglets quand on scrolle */}
         <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
-        {/* STATS ROW - Style Cards Premium */}
+        {/* STATS ROW - 3 Cards côte à côte */}
         <View style={styles.activityStatsRow}>
           {/* Pas */}
           <TouchableOpacity
-            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/activity-history?tab=steps');
             }}
             activeOpacity={0.8}
           >
-            <View style={[styles.activityIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-              <MaterialCommunityIcons name="shoe-print" size={20} color="#3B82F6" />
+            <View style={[styles.compactIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <MaterialCommunityIcons name="shoe-print" size={18} color="#3B82F6" />
             </View>
-            <View>
-              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
-              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
-            </View>
+            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
+            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
           </TouchableOpacity>
 
           {/* Calories */}
           <TouchableOpacity
-            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/activity-history?tab=calories');
             }}
             activeOpacity={0.8}
           >
-            <View style={[styles.activityIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
+            <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+              <MaterialCommunityIcons name="fire" size={18} color="#EF4444" />
             </View>
-            <View>
-              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>Calories</Text>
-              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()} kcal</Text>
-            </View>
+            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()}</Text>
+            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
           </TouchableOpacity>
 
           {/* Série */}
           <TouchableOpacity
-            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
+            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/records');
             }}
             activeOpacity={0.8}
           >
-            <View style={[styles.activityIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
-              <Ionicons name="flame" size={20} color="#F97316" />
+            <View style={[styles.compactIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
+              <Ionicons name="flame" size={18} color="#F97316" />
             </View>
-            <View>
-              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
-              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{streak} jours</Text>
-            </View>
+            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{streak}</Text>
+            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -1234,29 +1226,19 @@ const styles = StyleSheet.create({
     marginTop: 55,
     marginLeft: 2,
   },
-  samuraiRankContainer: {
+  rankLevelContainer: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
-  samuraiRankBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderWidth: 1.5,
-    borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+  rankText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  samuraiRankText: {
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    fontStyle: 'italic',
-  },
-  samuraiLevelText: {
+  levelText: {
     fontSize: 11,
-    fontWeight: '600',
-    marginTop: 4,
-    letterSpacing: 1,
+    fontWeight: '500',
+    marginTop: 2,
   },
   profilePhotoLarge: {
     width: 130,
@@ -1304,10 +1286,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   activityStatsRow: {
-    flexDirection: 'column',
-    gap: 10,
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 16,
     zIndex: 200,
+  },
+  compactCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  compactIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  compactValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  compactLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
   },
   statCardTouchable: {
     flex: 1,
