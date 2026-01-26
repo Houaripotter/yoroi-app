@@ -307,6 +307,22 @@
     "sleep": "Sommeil",
     "calm": "Calme"
   },
+  "activity": {
+    "historyTitle": "Historique Activité",
+    "steps": "Pas",
+    "calories": "Calories",
+    "todaySteps": "Pas aujourd'hui",
+    "todayCalories": "Calories brûlées",
+    "stepsUnit": "pas",
+    "avgPerDay": "Moyenne/jour",
+    "totalPeriod": "Total période",
+    "stepsEvolution": "Évolution des pas",
+    "caloriesEvolution": "Évolution des calories",
+    "activeCalories": "Calories actives (hors métabolisme de base)",
+    "noStepsData": "Aucune donnée de pas disponible",
+    "noCaloriesData": "Aucune donnée de calories disponible",
+    "connectHealth": "Connectez Apple Santé pour voir vos données"
+  },
   "stats": {
     "title": "Statistiques",
     "body": "Corps",

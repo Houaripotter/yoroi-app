@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Flame, Footprints } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { router } from 'expo-router';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 interface EssentielActivityCardProps {
   steps?: number;
@@ -30,8 +32,15 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
 
       {/* Stats */}
       <View style={styles.statsRow}>
-        {/* Pas */}
-        <View style={styles.statItem}>
+        {/* Pas - cliquable vers historique */}
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=steps');
+          }}
+          activeOpacity={0.7}
+        >
           <View style={styles.statIcon}>
             <Footprints size={20} color="#3B82F6" />
           </View>
@@ -41,13 +50,20 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
             </Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>pas</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Séparateur */}
         <View style={[styles.separator, { backgroundColor: colors.border }]} />
 
-        {/* Calories */}
-        <View style={styles.statItem}>
+        {/* Calories - cliquable vers historique */}
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=calories');
+          }}
+          activeOpacity={0.7}
+        >
           <View style={[styles.statIcon, { backgroundColor: '#FEF3C7' }]}>
             <Flame size={20} color="#F97316" />
           </View>
@@ -55,7 +71,7 @@ export const EssentielActivityCard: React.FC<EssentielActivityCardProps> = ({
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{calories != null ? calories : '--'}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>kcal actives</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Barre de progression globale */}

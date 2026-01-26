@@ -15,6 +15,7 @@ import {
   Switch,
   Keyboard,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -1308,15 +1309,20 @@ export default function AddTrainingScreen() {
         </View>
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scrollView}
-        contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 150 }]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        bounces={false}
-        overScrollMode="never"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 0}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.scrollView}
+          contentContainerStyle={[styles.content, { paddingTop: 20, paddingBottom: 150 }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          overScrollMode="never"
+        >
 
         {/* 🔍 BARRE DE RECHERCHE - UNIQUEMENT ÉTAPE 1 */}
         {(selectedSports.length === 0 || showAddSportSection) && (
@@ -2568,7 +2574,8 @@ export default function AddTrainingScreen() {
         )}
 
         <View style={{ height: 100 }} />
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Exercise Picker Modal */}
       <ExercisePickerModal

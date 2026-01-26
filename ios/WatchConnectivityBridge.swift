@@ -100,8 +100,12 @@ public class WatchConnectivityBridge: RCTEventEmitter {
         }
 
         do {
-            try WCSession.default.updateApplicationContext(context)
-            print("🚀 [BRIDGE] Application Context mis à jour: \(context.keys)")
+            // Ajouter le nom de l'iPhone au contexte
+            var enrichedContext = context
+            enrichedContext["deviceName"] = UIDevice.current.name
+
+            try WCSession.default.updateApplicationContext(enrichedContext)
+            print("🚀 [BRIDGE] Application Context mis à jour: \(enrichedContext.keys)")
             resolve(true)
         } catch {
             reject("UPDATE_ERROR", error.localizedDescription, error)

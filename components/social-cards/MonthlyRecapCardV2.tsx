@@ -67,7 +67,7 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
     const dateTopContainerStyle = useMemo(() => ({ position: 'absolute' as const, top: 8, left: 0, right: 0, alignItems: 'center' as const, zIndex: 10 }), []);
     const dateBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }), []);
     const dateColorStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
-    const profileLeftContainerStyle = useMemo(() => ({ alignItems: 'flex-start' as const, gap: 4, maxWidth: 100 }), []);
+    const profileLeftContainerStyle = useMemo(() => ({ alignItems: 'center' as const, gap: 4 }), []);
     const usernameBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }), []);
     const usernameTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
     const usernameShadowStyle = useMemo(() => ({
@@ -298,9 +298,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   photoHeader: {
-    paddingLeft: 8,
-    paddingRight: 12,
-    paddingTop: 28,
+    paddingHorizontal: 16,
+    paddingTop: 32,
     paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',

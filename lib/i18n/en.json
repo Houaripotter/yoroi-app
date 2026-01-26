@@ -306,6 +306,22 @@
     "sleep": "Sleep",
     "calm": "Calm"
   },
+  "activity": {
+    "historyTitle": "Activity History",
+    "steps": "Steps",
+    "calories": "Calories",
+    "todaySteps": "Steps today",
+    "todayCalories": "Calories burned",
+    "stepsUnit": "steps",
+    "avgPerDay": "Average/day",
+    "totalPeriod": "Total period",
+    "stepsEvolution": "Steps evolution",
+    "caloriesEvolution": "Calories evolution",
+    "activeCalories": "Active calories (excluding basal metabolism)",
+    "noStepsData": "No steps data available",
+    "noCaloriesData": "No calories data available",
+    "connectHealth": "Connect Apple Health to see your data"
+  },
   "stats": {
     "title": "Statistics",
     "body": "Body",

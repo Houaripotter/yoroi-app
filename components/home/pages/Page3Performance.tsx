@@ -12,6 +12,7 @@ import { CheckCircle2, Circle, Activity, Footprints, Flame, FileText, Share2, Tr
 import AnimatedCounter from '@/components/AnimatedCounter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { router } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_PADDING = 20;
@@ -87,42 +88,60 @@ export const Page3Performance: React.FC<Page3PerformanceProps> = ({
         {t('analysis.dailyActivity')}
       </Text>
       <View style={styles.activityRow}>
-        {/* Pas Card */}
-        <LinearGradient
-          colors={['#3B82F6', '#2563EB']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.activityCard}
+        {/* Pas Card - cliquable vers historique */}
+        <TouchableOpacity
+          style={styles.activityCardTouchable}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=steps');
+          }}
+          activeOpacity={0.8}
         >
-          <Footprints size={28} color="#FFFFFF" strokeWidth={2.5} />
-          <View style={styles.activityContent}>
-            <AnimatedCounter
-              value={steps}
-              style={styles.activityValue}
-              duration={800}
-            />
-            <Text style={styles.activityGoal}>/ {stepsGoal}</Text>
-          </View>
-          <Text style={styles.activityLabel}>{t('analysis.steps')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#3B82F6', '#2563EB']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.activityCard}
+          >
+            <Footprints size={28} color="#FFFFFF" strokeWidth={2.5} />
+            <View style={styles.activityContent}>
+              <AnimatedCounter
+                value={steps}
+                style={styles.activityValue}
+                duration={800}
+              />
+              <Text style={styles.activityGoal}>/ {stepsGoal}</Text>
+            </View>
+            <Text style={styles.activityLabel}>{t('analysis.steps')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-        {/* Calories Card */}
-        <LinearGradient
-          colors={['#F97316', '#EA580C']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.activityCard}
+        {/* Calories Card - cliquable vers historique */}
+        <TouchableOpacity
+          style={styles.activityCardTouchable}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=calories');
+          }}
+          activeOpacity={0.8}
         >
-          <Flame size={28} color="#FFFFFF" strokeWidth={2.5} />
-          <View style={styles.activityContent}>
-            <AnimatedCounter
-              value={calories}
-              style={styles.activityValue}
-              duration={800}
-            />
-          </View>
-          <Text style={styles.activityLabel}>{t('analysis.calories')}</Text>
-        </LinearGradient>
+          <LinearGradient
+            colors={['#F97316', '#EA580C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.activityCard}
+          >
+            <Flame size={28} color="#FFFFFF" strokeWidth={2.5} />
+            <View style={styles.activityContent}>
+              <AnimatedCounter
+                value={calories}
+                style={styles.activityValue}
+                duration={800}
+              />
+            </View>
+            <Text style={styles.activityLabel}>{t('analysis.calories')}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
 
       {/* RAPPORT HEBDOMADAIRE */}
@@ -331,6 +350,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 20,
+  },
+  activityCardTouchable: {
+    flex: 1,
   },
   activityCard: {
     flex: 1,

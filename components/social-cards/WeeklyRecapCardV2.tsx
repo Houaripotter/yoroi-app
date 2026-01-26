@@ -301,8 +301,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   photoHeader: {
-    paddingHorizontal: 12,
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingTop: 32,
     paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',

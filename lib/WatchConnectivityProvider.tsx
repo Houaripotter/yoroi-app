@@ -25,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addWeight, getProfile } from '@/lib/database';
 import { getBenchmarks, addBenchmarkEntry } from '@/lib/carnetService';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Device from 'expo-device';
 
 // VERSIONING
 const APP_VERSION = '2.0.0';
@@ -833,8 +834,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
       }
 
       const megaPack: any = {
-        v: DATA_FORMAT_VERSION, // ← NOUVEAU: Version du format
-        appVersion: APP_VERSION, // ← NOUVEAU: Version de l'app
+        v: DATA_FORMAT_VERSION,
+        appVersion: APP_VERSION,
         w: parseFloat(weight || '0'),
         wi: parseFloat(waterIntake || '0'),
         s: parseInt(streak || '0'),
@@ -843,7 +844,8 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         lv: level ? parseInt(level) : 1,
         rk: rank || 'Novice',
         ts: Date.now(),
-        fr: true
+        fr: true,
+        deviceName: Device.modelName || 'iPhone'
       };
 
       // VALIDATION complète

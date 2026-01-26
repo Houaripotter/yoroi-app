@@ -193,7 +193,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 colors={['#FFD700', '#FFA500']}
                 style={styles.iconGradient}
               >
-                <Target size={22} color="#FFFFFF" strokeWidth={2.5} />
+                <Target size={22} color="#000000" strokeWidth={2.5} />
               </LinearGradient>
             </Animated.View>
             <View>
@@ -308,9 +308,9 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   )}
                 </View>
 
-                {/* XP Reward */}
-                <View style={[styles.xpReward, { backgroundColor: quest.completed ? '#10B98120' : '#FFD70020' }]}>
-                  <Text style={[styles.xpRewardText, { color: quest.completed ? '#10B981' : '#FFD700' }]}>
+                {/* XP Reward - TEXTE NOIR sur fond jaune */}
+                <View style={[styles.xpReward, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
+                  <Text style={[styles.xpRewardText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
                     {quest.completed ? '✓' : `+${quest.xp}`}
                   </Text>
                 </View>

@@ -19,6 +19,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .disconnected
     @Published var lastSyncDate: Date?
     @Published var pendingMessagesCount: Int = 0
+    @Published var pairedDeviceName: String = "iPhone"
 
     // MARK: - Private Properties
     private var session: WCSession?
@@ -350,38 +351,77 @@ extension WatchConnectivityManager: WCSessionDelegate {
         DispatchQueue.main.async {
             print("📦 Application Context reçu de l'iPhone: \(applicationContext.keys)")
 
-            if let weight = applicationContext["weight"] as? Double {
+            // --- GESTION COMPATIBILITÉ (Clés longues & courtes) ---
+
+            // 1. POIDS (Clé: "weight" ou "w")
+            if let weight = applicationContext["weight"] as? Double ?? applicationContext["w"] as? Double {
                 NotificationCenter.default.post(name: .didReceiveWeightUpdate, object: weight)
             }
 
-            if let water = applicationContext["waterIntake"] as? Double {
+            // 2. HYDRATATION (Clé: "waterIntake" ou "wi")
+            if let water = applicationContext["waterIntake"] as? Double ?? applicationContext["wi"] as? Double {
                 NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: water)
             }
             
-            // Sync Avatar et Nom
-            if let avatarConfig = applicationContext["avatarConfig"] as? [String: Any] {
+            // 3. AVATAR CONFIG (Clé: "avatarConfig" ou "ac")
+            if let avatarConfig = applicationContext["avatarConfig"] as? [String: Any] ?? applicationContext["ac"] as? [String: Any] {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["avatarConfig": avatarConfig])
             }
 
-            if let userName = applicationContext["userName"] as? String {
+            // 4. NOM UTILISATEUR (Clé: "userName" ou "un")
+            if let userName = applicationContext["userName"] as? String ?? applicationContext["un"] as? String {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["userName": userName])
             }
 
-            // Sync Photo de profil (base64)
-            if let photoBase64 = applicationContext["profilePhotoBase64"] as? String {
+            // 5. PHOTO PROFIL (Clé: "profilePhotoBase64" ou "pp")
+            // Note: "pp" est souvent envoyé si la photo est < 75KB. Sinon c'est un transfert de fichier.
+            if let photoBase64 = applicationContext["profilePhotoBase64"] as? String ?? applicationContext["pp"] as? String {
                 if let photoData = Data(base64Encoded: photoBase64) {
                     NotificationCenter.default.post(name: .didReceiveProfilePhotoUpdate, object: photoData)
-                    print("📸 Photo de profil reçue (\(photoData.count) bytes)")
+                    print("📸 Photo de profil reçue via Context (\(photoData.count) bytes)")
                 }
             }
 
-            // Sync Level et Rank
-            if let level = applicationContext["level"] as? Int {
+            // 6. NIVEAU & RANG (Clés: "level"/"lv", "rank"/"rk")
+            if let level = applicationContext["level"] as? Int ?? applicationContext["lv"] as? Int {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["level": level])
             }
 
-            if let rank = applicationContext["rank"] as? String {
+            if let rank = applicationContext["rank"] as? String ?? applicationContext["rk"] as? String {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["rank": rank])
+            }
+            
+            // 7. STREAK (Clé: "streak" ou "s")
+            if let streak = applicationContext["streak"] as? Int ?? applicationContext["s"] as? Int {
+                NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["streak": streak])
+            }
+
+            // Nom de l'appareil iPhone
+            if let deviceName = applicationContext["deviceName"] as? String {
+                self.pairedDeviceName = deviceName
+                self.lastSyncDate = Date()
+            }
+        }
+    }
+
+    // MARK: - File Transfer (Pour les grosses photos de profil)
+    func session(_ session: WCSession, didReceive file: WCSessionFile) {
+        DispatchQueue.main.async {
+            print("📁 Fichier reçu de l'iPhone: \(file.fileURL)")
+            
+            // Vérifier les métadonnées pour savoir ce que c'est
+            if let metadata = file.metadata {
+                if metadata["type"] as? String == "profilePhoto" {
+                    // C'est la photo de profil !
+                    do {
+                        // Il faut copier le fichier car il est supprimé après la fin de la session
+                        let data = try Data(contentsOf: file.fileURL)
+                        NotificationCenter.default.post(name: .didReceiveProfilePhotoUpdate, object: data)
+                        print("📸 Photo de profil (Fichier) traitée avec succès: \(data.count) bytes")
+                    } catch {
+                        print("❌ Erreur lecture fichier photo: \(error.localizedDescription)")
+                    }
+                }
             }
         }
     }

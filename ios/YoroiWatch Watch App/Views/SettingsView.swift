@@ -57,10 +57,15 @@ struct SettingsView: View {
                         .foregroundColor(WatchConnectivityManager.shared.isReachable ? .green : .orange)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(WatchConnectivityManager.shared.isReachable ? "iPhone Connecté" : "iPhone Déconnecté")
-                            .font(.system(size: 11, weight: .semibold))
+                        if WatchConnectivityManager.shared.isReachable {
+                            Text("\(WatchConnectivityManager.shared.pairedDeviceName) Connecté")
+                                .font(.system(size: 11, weight: .semibold))
+                        } else {
+                            Text("\(WatchConnectivityManager.shared.pairedDeviceName) Déconnecté")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
 
-                        if let lastSync = lastSyncTime {
+                        if let lastSync = WatchConnectivityManager.shared.lastSyncDate ?? lastSyncTime {
                             Text("Sync: \(timeAgoString(from: lastSync))")
                                 .font(.system(size: 9))
                                 .foregroundColor(.gray)

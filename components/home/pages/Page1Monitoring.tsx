@@ -579,12 +579,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
         {/* STATS COMPACT ROW - Gradient Cards avec navigation */}
         <View style={styles.statsRow}>
-        {/* Pas - navigation vers vitalité */}
+        {/* Pas - navigation vers historique d'activité */}
         <TouchableOpacity
           style={styles.statCardTouchable}
           onPress={() => {
             impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/vitality-detail');
+            router.push('/activity-history?tab=steps');
           }}
           activeOpacity={0.8}
         >
