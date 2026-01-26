@@ -585,13 +585,15 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             style={styles.avatarLarge}
           >
             <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
-            {/* Rang et Niveau sous l'avatar */}
-            <View style={styles.avatarRankContainer}>
-              <Text style={[styles.avatarRankText, { color: rankColor }]}>
-                {rankName}
-              </Text>
-              <Text style={styles.avatarLevelText}>
-                Niv. {level}
+            {/* Rang et Niveau style Samouraï */}
+            <View style={styles.samuraiRankContainer}>
+              <View style={[styles.samuraiRankBadge, { borderColor: rankColor }]}>
+                <Text style={[styles.samuraiRankText, { color: rankColor }]}>
+                  {rankName}
+                </Text>
+              </View>
+              <Text style={[styles.samuraiLevelText, { color: colors.textMuted }]}>
+                第{level}級
               </Text>
             </View>
           </TouchableOpacity>
@@ -630,81 +632,60 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Fond qui couvre les onglets quand on scrolle */}
         <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
-        {/* STATS ROW - 3 Cards : Pas | Calories | Série */}
-        <View style={styles.statsRow}>
+        {/* STATS ROW - Style Cards Premium */}
+        <View style={styles.activityStatsRow}>
           {/* Pas */}
           <TouchableOpacity
-            style={styles.statCardTouchable3}
+            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/activity-history?tab=steps');
             }}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#3B82F6', '#2563EB']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.statCardGradient}
-            >
-              <MaterialCommunityIcons name="walk" size={12} color="#FFFFFF" />
-              <AnimatedCounter
-                value={steps}
-                style={styles.statValueWhite}
-                duration={800}
-              />
-              <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
-            </LinearGradient>
+            <View style={[styles.activityIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <MaterialCommunityIcons name="shoe-print" size={20} color="#3B82F6" />
+            </View>
+            <View>
+              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
+              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Calories */}
           <TouchableOpacity
-            style={styles.statCardTouchable3}
+            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/activity-history?tab=calories');
             }}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#EF4444', '#DC2626']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.statCardGradient}
-            >
-              <MaterialCommunityIcons name="fire" size={12} color="#FFFFFF" />
-              <AnimatedCounter
-                value={Math.round(steps * 0.04) + trainingCalories}
-                style={styles.statValueWhite}
-                duration={800}
-              />
-              <Text style={styles.statLabelWhite}>kcal</Text>
-            </LinearGradient>
+            <View style={[styles.activityIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+              <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
+            </View>
+            <View>
+              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>Calories</Text>
+              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()} kcal</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Série */}
           <TouchableOpacity
-            style={styles.statCardTouchable3}
+            style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/records');
             }}
             activeOpacity={0.8}
           >
-            <LinearGradient
-              colors={['#F97316', '#EA580C']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.statCardGradient}
-            >
-              <Ionicons name="flame" size={12} color="#FFFFFF" />
-              <AnimatedCounter
-                value={streak}
-                style={styles.statValueWhite}
-                duration={800}
-              />
-              <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
-            </LinearGradient>
+            <View style={[styles.activityIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
+              <Ionicons name="flame" size={20} color="#F97316" />
+            </View>
+            <View>
+              <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
+              <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{streak} jours</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -1248,34 +1229,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   avatarLarge: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    marginRight: 2,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 55,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    marginLeft: 2,
   },
-  avatarRankContainer: {
+  samuraiRankContainer: {
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
   },
-  avatarRankText: {
-    fontSize: 11,
-    fontWeight: '700',
+  samuraiRankBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1.5,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  samuraiRankText: {
+    fontSize: 12,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 2,
+    fontStyle: 'italic',
   },
-  avatarLevelText: {
-    fontSize: 10,
+  samuraiLevelText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#9CA3AF',
-    marginTop: 1,
+    marginTop: 4,
+    letterSpacing: 1,
   },
   profilePhotoLarge: {
     width: 130,
@@ -1321,6 +1302,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     zIndex: 200,
     paddingHorizontal: 2,
+  },
+  activityStatsRow: {
+    flexDirection: 'column',
+    gap: 10,
+    marginBottom: 16,
+    zIndex: 200,
   },
   statCardTouchable: {
     flex: 1,
