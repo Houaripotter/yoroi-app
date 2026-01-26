@@ -19,6 +19,7 @@ import {
   addHydration,
   getDailyHydration,
   completeQuest,
+  uncompleteQuest,
   Quest,
   QuestProgress,
   QuestId,
@@ -225,21 +226,29 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     loadQuests();
   }, [loadQuests]);
 
-  // Compléter une quête manuellement en tapant dessus
+  // Toggle une quête - compléter ou désélectionner
   const handleQuestTap = async (quest: QuestWithProgress) => {
-    if (quest.completed) return; // Déjà complétée
-
     impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
-      const result = await completeQuest(quest.id as QuestId);
-      if (result.success && result.xpEarned > 0) {
-        notificationAsync(NotificationFeedbackType.Success);
-        onXPGained?.(result.xpEarned);
-        loadQuests(); // Recharger pour mettre à jour l'affichage
+      if (quest.completed) {
+        // Désélectionner la quête
+        const result = await uncompleteQuest(quest.id as QuestId);
+        if (result.success) {
+          notificationAsync(NotificationFeedbackType.Warning);
+          loadQuests();
+        }
+      } else {
+        // Compléter la quête
+        const result = await completeQuest(quest.id as QuestId);
+        if (result.success && result.xpEarned > 0) {
+          notificationAsync(NotificationFeedbackType.Success);
+          onXPGained?.(result.xpEarned);
+          loadQuests();
+        }
       }
     } catch (error) {
-      logger.error('Erreur completion quete:', error);
+      logger.error('Erreur toggle quete:', error);
     }
   };
 
@@ -455,11 +464,10 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 style={[
                   styles.questItem,
                   { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
-                  quest.completed && { opacity: 0.7 }
+                  quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
                 ]}
                 onPress={() => handleQuestTap(quest)}
-                activeOpacity={quest.completed ? 1 : 0.7}
-                disabled={quest.completed}
+                activeOpacity={0.7}
               >
                 <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
                   {quest.completed ? (

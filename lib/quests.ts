@@ -176,9 +176,9 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_meditation',
-    title: 'Zen',
-    description: 'Prendre un moment calme',
-    icon: '🧠',
+    title: 'Zen / Spirituel',
+    description: 'Meditation, priere ou moment avec soi-meme',
+    icon: '🙏',
     xp: 15,
     period: 'daily',
     target: 1,
@@ -765,6 +765,49 @@ export const completeQuest = async (questId: QuestId): Promise<{ success: boolea
 
   const result = await updateQuestProgress(questId, quest.target);
   return { success: result.completed, xpEarned: result.xpEarned };
+};
+
+export const uncompleteQuest = async (questId: QuestId): Promise<{ success: boolean; xpRemoved: number }> => {
+  const state = await loadQuestsState();
+  const quest = ALL_QUESTS.find(q => q.id === questId);
+
+  if (!quest) {
+    return { success: false, xpRemoved: 0 };
+  }
+
+  let periodState: typeof state.daily | typeof state.weekly | typeof state.monthly;
+
+  switch (quest.period) {
+    case 'daily':
+      periodState = state.daily;
+      break;
+    case 'weekly':
+      periodState = state.weekly;
+      break;
+    case 'monthly':
+      periodState = state.monthly;
+      break;
+  }
+
+  const questProgress = periodState.quests.find(q => q.questId === questId);
+
+  if (!questProgress || !questProgress.completed) {
+    return { success: false, xpRemoved: 0 };
+  }
+
+  // Retirer la completion
+  questProgress.completed = false;
+  questProgress.completedAt = undefined;
+  questProgress.current = 0;
+
+  // Retirer les XP
+  const xpRemoved = quest.xp;
+  periodState.totalXpEarned = Math.max(0, periodState.totalXpEarned - xpRemoved);
+  state.totalXp = Math.max(0, state.totalXp - xpRemoved);
+
+  await saveQuestsState(state);
+
+  return { success: true, xpRemoved };
 };
 
 // ═══════════════════════════════════════════════
