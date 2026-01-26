@@ -315,7 +315,7 @@ export const VitalitePage: React.FC = () => {
         </Text>
         <TouchableOpacity
           style={[styles.betaBannerButton, { backgroundColor: colors.warning + '20' }]}
-          onPress={() => router.push('/ideas-box' as any)}
+          onPress={() => router.push('/ideas' as any)}
         >
           <Text style={[styles.betaBannerButtonText, { color: colors.warning }]}>
             💡 Signaler un problème dans la Boîte à Idées

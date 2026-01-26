@@ -8,14 +8,16 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var healthManager = HealthManager.shared
     @State private var selectedTab = 0
-    
+    @State private var showBetaAlert = true
+    @AppStorage("hasSeenBetaAlert") private var hasSeenBetaAlert = false
+
     // Couleurs par page pour les indicateurs
-    // ORDRE: Dashboard, Hydratation, Records, Timer, Poids, Résumé, Profil+Dojo, Réglages
+    // ORDRE: Records, Timer, Dashboard, Hydratation, Poids, Résumé, Profil+Dojo, Réglages
     private let tabColors: [Color] = [
-        .green,   // 0. Dashboard
-        .blue,    // 1. Hydratation
-        .yellow,  // 2. Records
-        .red,     // 3. Timer
+        .yellow,  // 0. Records (PREMIER)
+        .red,     // 1. Timer (DEUXIÈME)
+        .green,   // 2. Dashboard
+        .blue,    // 3. Hydratation
         .orange,  // 4. Poids
         .cyan,    // 5. Résumé Stats
         .purple,  // 6. Profil + Dojo
@@ -25,20 +27,20 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TabView(selection: $selectedTab) {
-                // 0. Dashboard
-                DashboardView(selectedTab: $selectedTab)
+                // 0. RECORDS - PREMIÈRE PAGE
+                RecordsView()
                     .tag(0)
 
-                // 1. Hydratation
-                HydrationView()
+                // 1. TIMER - DEUXIÈME PAGE
+                TimerView()
                     .tag(1)
 
-                // 2. Records - 3ÈME POSITION
-                RecordsView()
+                // 2. Dashboard
+                DashboardView(selectedTab: $selectedTab)
                     .tag(2)
 
-                // 3. Timer
-                TimerView()
+                // 3. Hydratation
+                HydrationView()
                     .tag(3)
 
                 // 4. Poids (Graphique)
@@ -73,6 +75,18 @@ struct ContentView: View {
         }
         .onAppear {
             healthManager.requestAuthorization()
+            // Afficher l'alerte beta si pas encore vue
+            if !hasSeenBetaAlert {
+                showBetaAlert = true
+            }
+        }
+        .alert("⚠️ Version BETA", isPresented: $showBetaAlert) {
+            Button("J'ai compris") {
+                hasSeenBetaAlert = true
+                showBetaAlert = false
+            }
+        } message: {
+            Text("Cette app Apple Watch est en cours de développement.\n\n• Aucune donnée n'est synchronisée avec l'iPhone\n• Les fonctionnalités sont limitées\n• Des bugs peuvent survenir\n\nMerci de ta patience !")
         }
     }
 }

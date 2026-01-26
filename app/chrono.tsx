@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Header } from '@/components/ui/Header';
 import { useTheme } from '@/lib/ThemeContext';
 import { successHaptic } from '@/lib/haptics';
+import { timerNotifications } from '@/lib/timerNotifications';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -423,7 +424,11 @@ export default function ChronoScreen() {
     warned10secRef.current = false;
     lastMinuteRef.current = 0;
 
+    // Calculer la durée initiale pour la notification
+    let notificationDuration = 0;
+
     if (mode === 'repos') {
+      notificationDuration = reposDuration;
       setTimer((prev) => ({
         ...prev,
         isRunning: true,
@@ -431,6 +436,7 @@ export default function ChronoScreen() {
         timeRemaining: reposDuration,
       }));
     } else {
+      notificationDuration = mode === 'amrap' ? amrapDuration * 60 : timer.workDuration;
       setTimer((prev) => ({
         ...prev,
         isRunning: true,
@@ -441,9 +447,28 @@ export default function ChronoScreen() {
         currentMinute: 1,
       }));
     }
-  }, [mode, amrapDuration, reposDuration]);
+
+    // PLANIFIER NOTIFICATION QUAND TIMER TERMINE (pour arrière-plan)
+    if (notificationDuration > 0) {
+      const titles: Record<string, string> = {
+        combat: 'Round terminé !',
+        tabata: 'Phase terminée !',
+        emom: 'EMOM terminé !',
+        amrap: 'AMRAP terminé !',
+        repos: 'Repos terminé !',
+        custom: 'Timer terminé !',
+      };
+      timerNotifications.scheduleTimerFinishedNotification(
+        titles[mode] || 'Timer terminé !',
+        mode === 'repos' ? 'Go go go ! Prochaine série !' : 'Excellent travail !',
+        notificationDuration
+      ).catch(e => logger.error('Notification error:', e));
+    }
+  }, [mode, amrapDuration, reposDuration, timer.workDuration]);
 
   const pauseTimer = () => {
+    // Annuler la notification planifiée
+    timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     setTimer((prev) => ({ ...prev, isRunning: false }));
   };
 
@@ -452,6 +477,8 @@ export default function ChronoScreen() {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+    // Annuler la notification planifiée
+    timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     initializeTimer(mode);
   };
 

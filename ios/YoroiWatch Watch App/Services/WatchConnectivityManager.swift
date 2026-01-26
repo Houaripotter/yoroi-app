@@ -93,19 +93,51 @@ class WatchConnectivityManager: NSObject, ObservableObject {
 
     // MARK: - Public Methods
 
+    /// S'assure que la session WCSession est activée
+    func ensureSessionActivated() {
+        guard WCSession.isSupported() else {
+            print("❌ WCSession not supported on this device")
+            return
+        }
+
+        let session = WCSession.default
+        if session.activationState != .activated {
+            print("🔌 [WCManager] Activating WCSession...")
+            session.delegate = self
+            session.activate()
+        } else {
+            print("✅ [WCManager] WCSession already activated")
+            DispatchQueue.main.async {
+                self.isConnected = true
+                self.isReachable = session.isReachable
+                self.connectionStatus = session.isReachable ? .connected : .disconnected
+            }
+        }
+    }
+
     /// Envoie des données à l'iPhone avec garantie de livraison (transferUserInfo)
     /// Idéal pour le poids, les records, l'hydratation
     func transferToiPhone<T: Codable>(_ data: T, forKey key: String) {
-        guard let session = session else { return }
-        
+        guard let session = session else {
+            print("⚠️ [WCManager] Session is nil")
+            return
+        }
+
+        // Vérifier que la session est activée
+        guard session.activationState == .activated else {
+            print("⚠️ [WCManager] Session not activated, activating now...")
+            ensureSessionActivated()
+            return
+        }
+
         // Encoder les données
         guard let encoded = try? JSONEncoder().encode(data) else { return }
         let userInfo = [key: encoded]
-        
+
         // transferUserInfo est géré par iOS/WatchOS en arrière-plan
         // et garantit la livraison même si l'app est fermée
         session.transferUserInfo(userInfo)
-        
+
         DispatchQueue.main.async {
             self.lastSyncDate = Date()
             print("🚀 Données envoyées via transferUserInfo: \(key)")
@@ -116,6 +148,15 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     /// Utilisé pour les actions qui demandent une réponse immédiate
     func sendToiPhone<T: Codable>(_ data: T, forKey key: String, completion: ((Bool) -> Void)? = nil) {
         guard let session = session else {
+            print("⚠️ [WCManager] Session is nil for sendToiPhone")
+            completion?(false)
+            return
+        }
+
+        // Vérifier que la session est activée
+        guard session.activationState == .activated else {
+            print("⚠️ [WCManager] Session not activated for sendToiPhone")
+            ensureSessionActivated()
             completion?(false)
             return
         }
@@ -396,6 +437,47 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: ["streak": streak])
             }
 
+            // 8. RECORDS / CARNET D'ENTRAINEMENT (Clé: "recordsUpdate")
+            if let recordsUpdate = applicationContext["recordsUpdate"] as? [String: Any] {
+                if let recordsArray = recordsUpdate["records"] as? [[String: Any]] {
+                    // Convertir le tableau de dictionnaires en ExerciseRecords
+                    var exerciseRecords: [ExerciseRecord] = []
+                    for dict in recordsArray {
+                        if let exercise = dict["exercise"] as? String,
+                           let weight = dict["weight"] as? Double,
+                           let reps = dict["reps"] as? Int,
+                           let dateStr = dict["date"] as? String,
+                           let category = dict["category"] as? String {
+
+                            let muscleGroup = dict["muscleGroup"] as? String ?? "GÉNÉRAL"
+
+                            // Parser la date ISO
+                            let formatter = ISO8601DateFormatter()
+                            let date = formatter.date(from: dateStr) ?? Date()
+
+                            let record = ExerciseRecord(
+                                exercise: exercise,
+                                weight: weight,
+                                reps: reps,
+                                date: date,
+                                category: category,
+                                muscleGroup: muscleGroup
+                            )
+                            exerciseRecords.append(record)
+                        }
+                    }
+
+                    // Poster la notification avec les records
+                    if !exerciseRecords.isEmpty {
+                        // Encoder en Data pour le handler existant
+                        if let encoded = try? JSONEncoder().encode(exerciseRecords) {
+                            NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: encoded)
+                            print("📊 Records reçus via Context: \(exerciseRecords.count) exercices")
+                        }
+                    }
+                }
+            }
+
             // Nom de l'appareil iPhone
             if let deviceName = applicationContext["deviceName"] as? String {
                 self.pairedDeviceName = deviceName
@@ -438,11 +520,47 @@ extension WatchConnectivityManager: WCSessionDelegate {
             if let hydrationData = userInfo["hydrationUpdate"] as? Data {
                 NotificationCenter.default.post(name: .didReceiveHydrationUpdate, object: hydrationData)
             }
-            
-            if let recordsData = userInfo["recordsUpdate"] as? Data {
+
+            // RECORDS: Gérer le format { recordsUpdate: { records: [...], timestamp: ... } }
+            if let recordsUpdate = userInfo["recordsUpdate"] as? [String: Any] {
+                if let recordsArray = recordsUpdate["records"] as? [[String: Any]] {
+                    var exerciseRecords: [ExerciseRecord] = []
+                    for dict in recordsArray {
+                        if let exercise = dict["exercise"] as? String,
+                           let weight = dict["weight"] as? Double,
+                           let reps = dict["reps"] as? Int,
+                           let dateStr = dict["date"] as? String,
+                           let category = dict["category"] as? String {
+
+                            let muscleGroup = dict["muscleGroup"] as? String ?? "GÉNÉRAL"
+                            let formatter = ISO8601DateFormatter()
+                            let date = formatter.date(from: dateStr) ?? Date()
+
+                            let record = ExerciseRecord(
+                                exercise: exercise,
+                                weight: weight,
+                                reps: reps,
+                                date: date,
+                                category: category,
+                                muscleGroup: muscleGroup
+                            )
+                            exerciseRecords.append(record)
+                        }
+                    }
+
+                    if !exerciseRecords.isEmpty {
+                        if let encoded = try? JSONEncoder().encode(exerciseRecords) {
+                            NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: encoded)
+                            print("📊 Records reçus via UserInfo: \(exerciseRecords.count) exercices")
+                        }
+                    }
+                }
+            }
+            // Fallback: ancien format (Data directe)
+            else if let recordsData = userInfo["recordsUpdate"] as? Data {
                 NotificationCenter.default.post(name: .didReceiveRecordsUpdate, object: recordsData)
             }
-            
+
             // Nouveau: Gestion Avatar et Contexte global
             if let avatarData = userInfo["avatarConfig"] as? [String: Any] {
                 NotificationCenter.default.post(name: .didReceiveAvatarUpdate, object: avatarData)

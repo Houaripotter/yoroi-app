@@ -10,24 +10,25 @@ import WidgetKit
 
 @main
 struct YoroiWatchApp: App {
-    @StateObject private var healthManager = HealthManager.shared
-    
-    // Initialiser le gestionnaire de connexion immédiatement
+    // Utiliser les singletons directement
+    private let healthManager = HealthManager.shared
     private let connectivityManager = WatchConnectivityManager.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    // S'assurer que la session WCSession est activée au démarrage
+                    print("🚀 [APP] ContentView appeared, ensuring WCSession...")
+                    connectivityManager.ensureSessionActivated()
+                }
         }
     }
 
     init() {
-        // CORRECTION: Retirer reload automatique au launch
-        // Les complications se rafraîchissent déjà automatiquement via leur timeline
-        // Ce reload inutile consomme de la batterie
-        // WidgetCenter.shared.reloadAllTimelines()
-
-        // Pour forcer un reload, le faire seulement quand les données changent
-        // via WatchConnectivityManager ou HealthManager
+        // Forcer l'initialisation des singletons au lancement
+        print("🚀 [APP] YoroiWatchApp init - initializing singletons...")
+        _ = HealthManager.shared
+        _ = WatchConnectivityManager.shared
     }
 }

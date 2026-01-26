@@ -1187,16 +1187,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               </TouchableOpacity>
             </Animated.View>
 
-            {/* Dismiss X button - only when menu is closed */}
-            {!showShareMenu && (
-              <TouchableOpacity
-                style={[styles.shareButtonDismiss, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}
-                onPress={handleDismissShareButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <X size={20} color={colors.textMuted} strokeWidth={3} />
-              </TouchableOpacity>
-            )}
           </View>
         )}
       </View>

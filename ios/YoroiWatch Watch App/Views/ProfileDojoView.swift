@@ -70,7 +70,7 @@ struct ProfileDojoView: View {
                 HStack(spacing: 6) {
                     DojoStatBox(label: "POIDS", value: healthManager.currentWeight > 0 ? String(format: "%.1f", healthManager.currentWeight) : "-", color: .red)
                     DojoStatBox(label: "EAU", value: String(format: "%.1f", healthManager.waterIntake / 1000), color: .blue)
-                    DojoStatBox(label: "PAS", value: "\(Int(healthManager.stepsToday / 1000))k", color: .green)
+                    DojoStatBox(label: "PAS", value: "\(healthManager.steps / 1000)k", color: .green)
                 }
                 .padding(.horizontal, 4)
 

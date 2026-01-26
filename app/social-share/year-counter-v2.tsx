@@ -36,7 +36,7 @@ import { useYearStats } from '@/lib/social-cards/useYearStats';
 import logger from '@/lib/security/logger';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { getProfile, calculateStreak } from '@/lib/database';
-import { getAvatarConfig } from '@/lib/avatarSystem';
+import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { getCurrentRank } from '@/lib/ranks';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -78,11 +78,19 @@ export default function YearCounterV2Screen() {
 
         if (profile) {
           setUserName(profile.name || '');
-          setUserPhoto(profile.photo || null);
+          if (profile.profile_photo) {
+            setUserPhoto(profile.profile_photo);
+          }
         }
 
-        if (avatarConfig && avatarConfig.selectedAvatar) {
-          setUserAvatar(avatarConfig.selectedAvatar);
+        if (avatarConfig) {
+          const image = getAvatarImage(
+            avatarConfig.pack,
+            avatarConfig.state,
+            avatarConfig.collectionCharacter,
+            avatarConfig.gender
+          );
+          setUserAvatar(image);
         }
 
         const rank = getCurrentRank(streak);

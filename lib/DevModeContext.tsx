@@ -28,7 +28,7 @@ interface DevModeContextType {
 // ============================================
 
 // Hash SHA-256 du code secret (ne pas stocker le code en clair)
-const DEV_CODE_HASH = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; // Hash de code à 4 chiffres
+const DEV_CODE_HASH = 'a29f7cbfdfd1e85b6a9d62adbc8c5cbdfab817a6c2ed7a3671fa22c9e51c7be2'; // Hash SHA-256 de "2022"
 const STORAGE_KEY = '@yoroi_dev_mode';
 const TAP_THRESHOLD = 5; // Nombre de taps pour afficher le champ de code
 const TAP_TIMEOUT = 2000; // Reset des taps après 2 secondes

@@ -965,27 +965,57 @@ export const syncCarnetToWatch = async () => {
     const data = await AsyncStorage.getItem('yoroi_benchmarks_v2');
     if (!data) return;
     const benchmarks: Benchmark[] = JSON.parse(data);
-    
+
     // Préparer les données simplifiées pour la montre
-    const watchRecords = benchmarks.map(b => {
-      const pr = getBenchmarkPR(b);
-      return {
-        exercise: b.name,
-        weight: pr?.value || 0,
-        reps: pr?.reps || 0,
-        date: pr?.date || new Date().toISOString(),
-        category: b.category.toUpperCase(),
-        muscleGroup: b.muscleGroup || 'GÉNÉRAL'
-      };
-    });
-    
+    // On envoie TOUS les records (pas juste les PRs) pour avoir l'historique complet
+    const watchRecords: Array<{
+      exercise: string;
+      weight: number;
+      reps: number;
+      date: string;
+      category: string;
+      muscleGroup: string;
+    }> = [];
+
+    for (const b of benchmarks) {
+      // Envoyer toutes les entrées, pas juste le PR
+      for (const entry of b.entries) {
+        watchRecords.push({
+          exercise: b.name,
+          weight: entry.value || 0,
+          reps: entry.reps || 0,
+          date: entry.date || new Date().toISOString(),
+          category: b.category.toUpperCase(),
+          muscleGroup: b.muscleGroup || 'GÉNÉRAL'
+        });
+      }
+    }
+
+    // Limiter à 100 records max pour éviter les problèmes de taille
+    const recordsToSend = watchRecords.slice(0, 100);
+
+    // Méthode 1: updateApplicationContext (sync immédiate si Watch à portée)
     await WatchConnectivity.updateApplicationContext({
       recordsUpdate: {
-        records: watchRecords,
+        records: recordsToSend,
         timestamp: Date.now()
       }
     });
-    console.log('📡 Carnet synchronisé vers Apple Watch');
+
+    // Méthode 2: transferUserInfo (garantie de livraison, même si Watch hors portée)
+    try {
+      await WatchConnectivity.transferUserInfo({
+        recordsUpdate: {
+          records: recordsToSend,
+          timestamp: Date.now()
+        }
+      });
+    } catch (transferError) {
+      // Ignorer les erreurs de transferUserInfo, updateApplicationContext suffit souvent
+      console.log('transferUserInfo error (non-blocking):', transferError);
+    }
+
+    console.log(`📡 Carnet synchronisé vers Apple Watch (${recordsToSend.length} records)`);
   } catch (e) {
     console.warn('Échec sync carnet vers Watch:', e);
   }

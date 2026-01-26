@@ -7,6 +7,7 @@ import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './security/logger';
 import { addWeight } from './database';
+import { syncCarnetToWatch } from './carnetService';
 
 // CORRECTION: Utiliser WatchConnectivityBridge au lieu de WatchBridge qui n'existe pas!
 const WatchConnectivityBridge = Platform.OS === 'ios' ? NativeModules.WatchConnectivityBridge : null;
@@ -140,8 +141,16 @@ class AppleWatchService {
         })
       );
 
-      // Sync initiale
+      // Sync initiale (données de santé + carnet)
       await this.syncToWatch();
+
+      // Sync du carnet d'entraînement (records)
+      try {
+        await syncCarnetToWatch();
+        logger.info('📊 Carnet synchronisé vers Apple Watch');
+      } catch (carnetError) {
+        logger.warn('⚠️ Échec sync carnet:', carnetError);
+      }
 
       // Auto-sync toutes les 30 secondes si Watch reachable
       this.syncInterval = setInterval(async () => {
@@ -149,6 +158,8 @@ class AppleWatchService {
           const isReachable = await WatchConnectivityBridge.isWatchReachable();
           if (isReachable) {
             await this.syncToWatch();
+            // Sync aussi le carnet périodiquement
+            await syncCarnetToWatch();
           }
         } catch (error) {
           // Ignore errors during auto-sync
@@ -409,6 +420,30 @@ class AppleWatchService {
   async forceSyncNow() {
     logger.info('🔄 Force sync demandée');
     await this.syncToWatch();
+  }
+
+  /**
+   * Force la synchronisation du carnet d'entraînement (records)
+   */
+  async forceSyncCarnet() {
+    logger.info('🔄 Force sync carnet demandée');
+    try {
+      await syncCarnetToWatch();
+      logger.info('✅ Carnet synchronisé avec succès');
+      return true;
+    } catch (error) {
+      logger.error('❌ Échec sync carnet:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Force la synchronisation complète (santé + carnet)
+   */
+  async forceFullSync() {
+    logger.info('🔄 Force full sync demandée');
+    await this.syncToWatch();
+    await this.forceSyncCarnet();
   }
 }
 

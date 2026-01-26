@@ -5,6 +5,7 @@
 
 import SwiftUI
 import Combine
+import WatchKit
 
 enum TimerMode: String, CaseIterable, Identifiable {
     case rest = "REPOS"
@@ -307,6 +308,8 @@ struct TimerView: View {
     private func handlePhaseEnd() {
         if currentMode == .rest || currentMode == .breathing || currentMode == .stretching {
             SoundManager.shared.playSound(named: "beep")
+            // VIBRATION FORTE quand timer terminé
+            WKInterfaceDevice.current().play(.notification)
             stopTimer()
             return
         }
@@ -318,6 +321,8 @@ struct TimerView: View {
             remainingTime = currentMode == .combat ? 60 : 10
             selectedDuration = remainingTime
             SoundManager.shared.playSound(named: currentMode == .combat ? "gong" : "beep")
+            // VIBRATION FORTE pour changement de phase
+            WKInterfaceDevice.current().play(.notification)
         } else {
             // Fin du repos -> Nouveau Round
             if currentRound < totalRounds {
@@ -326,9 +331,12 @@ struct TimerView: View {
                 remainingTime = currentMode == .combat ? 300 : 20
                 selectedDuration = remainingTime
                 SoundManager.shared.playSound(named: currentMode == .combat ? "gong" : "beep")
+                // VIBRATION pour nouveau round
+                WKInterfaceDevice.current().play(.start)
             } else {
-                // Fin de session
+                // Fin de session - VIBRATION TRIPLE FORTE
                 SoundManager.shared.playSound(named: currentMode == .combat ? "gong" : "beep")
+                WKInterfaceDevice.current().play(.success)
                 stopTimer()
             }
         }

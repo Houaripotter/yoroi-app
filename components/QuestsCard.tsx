@@ -264,8 +264,12 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 key={tab}
                 style={[
                   styles.tab,
-                  isActive && styles.tabActive,
-                  { borderColor: isActive ? '#FFD700' : 'transparent' }
+                  {
+                    backgroundColor: isActive
+                      ? `${colors.accent}30`
+                      : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+                    borderColor: isActive ? colors.accent : 'transparent'
+                  }
                 ]}
                 onPress={() => {
                   impactAsync(ImpactFeedbackStyle.Light);
@@ -275,7 +279,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
               >
                 <Text style={[
                   styles.tabText,
-                  { color: isActive ? '#FFD700' : colors.textMuted }
+                  { color: isActive ? colors.accent : colors.textMuted }
                 ]}>
                   {tabLabels[tab]}
                 </Text>
@@ -468,10 +472,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
   },
   tabActive: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    // Style dynamique appliqué inline
   },
   tabText: {
     fontSize: 13,

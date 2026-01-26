@@ -40,6 +40,7 @@ import { RPEModal } from '@/components/RPEModal';
 import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
 import { useLiveActivity } from '@/lib/hooks/useLiveActivity';
+import { timerNotifications } from '@/lib/timerNotifications';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -374,6 +375,15 @@ export default function TimerScreen() {
       if (isIslandAvailable) {
         startActivity(mode.toUpperCase()).catch(e => logger.error('LiveActivity Error:', e));
       }
+
+      // PLANIFIER NOTIFICATION QUAND TIMER TERMINE (pour arrière-plan)
+      if (mode !== 'fortime' && initialTime > 0) {
+        timerNotifications.scheduleTimerFinishedNotification(
+          mode === 'musculation' ? 'Repos terminé !' : 'Timer terminé !',
+          mode === 'musculation' ? 'Go go go ! Prochaine série !' : 'Excellent travail !',
+          initialTime
+        ).catch(e => logger.error('Notification error:', e));
+      }
     }
 
     // Garder l'ecran allume pendant le timer (sans bloquer)
@@ -387,6 +397,8 @@ export default function TimerScreen() {
   const pauseTimer = () => {
     triggerHaptic('light');
     deactivateKeepAwake();
+    // Annuler la notification planifiée
+    timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
     setTimerState('paused');
   };
 
@@ -394,6 +406,14 @@ export default function TimerScreen() {
   const resumeTimer = () => {
     triggerHaptic('light');
     activateKeepAwakeAsync().catch(e => logger.error('KeepAwake error:', e));
+    // Replanifier la notification avec le temps restant
+    if (mode !== 'fortime' && timeRemaining > 0) {
+      timerNotifications.scheduleTimerFinishedNotification(
+        mode === 'musculation' ? 'Repos terminé !' : 'Timer terminé !',
+        mode === 'musculation' ? 'Go go go ! Prochaine série !' : 'Excellent travail !',
+        timeRemaining
+      ).catch(e => logger.error('Notification error:', e));
+    }
     setTimerState('running');
   };
 
@@ -402,6 +422,9 @@ export default function TimerScreen() {
     triggerHaptic('medium');
     deactivateKeepAwake();
     setTimerState('idle');
+
+    // Annuler la notification planifiée
+    timerNotifications.cancelNotification().catch(e => logger.error('Cancel notification error:', e));
 
     // Arrêter la Live Activity
     if (isIslandAvailable) {
