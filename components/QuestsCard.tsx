@@ -226,29 +226,67 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     loadQuests();
   }, [loadQuests]);
 
-  // Toggle une quête - compléter ou désélectionner
+  // Naviguer vers l'écran approprié pour remplir la quête
+  const getQuestRoute = (questId: string): string | null => {
+    // Routes pour chaque type de quête
+    const routes: Record<string, string> = {
+      // Daily
+      'daily_weigh': '/add-measurement',
+      'daily_hydration': '/hydration',
+      'daily_training': '/(tabs)/planning',
+      'daily_steps': '/health-metrics',
+      'daily_sleep': '/sleep-input',
+      'daily_protein': '/quick-nutrition',
+      'daily_cardio': '/(tabs)/planning',
+      'daily_breakfast': '/quick-nutrition',
+      // Weekly
+      'weekly_5_weighs': '/add-measurement',
+      'weekly_4_trainings': '/(tabs)/planning',
+      'weekly_photo': '/(tabs)/more/photos',
+      'weekly_measurements': '/measurements',
+      'weekly_cardio_3': '/(tabs)/planning',
+      'weekly_check_stats': '/stats',
+      'weekly_visit_dojo': '/(tabs)/dojo',
+      'weekly_share_progress': '/share-hub',
+      // Monthly
+      'monthly_lose_2kg': '/add-measurement',
+      'monthly_20_trainings': '/(tabs)/planning',
+      'monthly_transformation': '/(tabs)/more/photos',
+      'monthly_new_pr': '/records',
+      'monthly_body_scan': '/body-composition',
+    };
+    return routes[questId] || null;
+  };
+
+  // Gérer le tap sur une quête
   const handleQuestTap = async (quest: QuestWithProgress) => {
     impactAsync(ImpactFeedbackStyle.Medium);
 
-    try {
-      if (quest.completed) {
-        // Désélectionner la quête
-        const result = await uncompleteQuest(quest.id as QuestId);
-        if (result.success) {
-          notificationAsync(NotificationFeedbackType.Warning);
-          loadQuests();
+    const route = getQuestRoute(quest.id);
+
+    if (route) {
+      // Naviguer vers l'écran pour remplir la quête
+      router.push(route as any);
+    } else {
+      // Quête manuelle - toggle compléter/désélectionner
+      try {
+        if (quest.completed) {
+          const result = await uncompleteQuest(quest.id as QuestId);
+          if (result.success) {
+            notificationAsync(NotificationFeedbackType.Warning);
+            loadQuests();
+          }
+        } else {
+          const result = await completeQuest(quest.id as QuestId);
+          if (result.success && result.xpEarned > 0) {
+            notificationAsync(NotificationFeedbackType.Success);
+            onXPGained?.(result.xpEarned);
+            loadQuests();
+          }
         }
-      } else {
-        // Compléter la quête
-        const result = await completeQuest(quest.id as QuestId);
-        if (result.success && result.xpEarned > 0) {
-          notificationAsync(NotificationFeedbackType.Success);
-          onXPGained?.(result.xpEarned);
-          loadQuests();
-        }
+      } catch (error) {
+        logger.error('Erreur toggle quete:', error);
       }
-    } catch (error) {
-      logger.error('Erreur toggle quete:', error);
     }
   };
 
@@ -467,6 +505,18 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
                 ]}
                 onPress={() => handleQuestTap(quest)}
+                onLongPress={async () => {
+                  // Long press = désélectionner
+                  if (quest.completed) {
+                    impactAsync(ImpactFeedbackStyle.Heavy);
+                    const result = await uncompleteQuest(quest.id as QuestId);
+                    if (result.success) {
+                      notificationAsync(NotificationFeedbackType.Warning);
+                      loadQuests();
+                    }
+                  }
+                }}
+                delayLongPress={500}
                 activeOpacity={0.7}
               >
                 <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
