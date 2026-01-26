@@ -465,7 +465,10 @@ class HealthManager: ObservableObject {
 
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
 
-        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, _ in
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, error in
+            if let error = error {
+                print("❌ HealthKit query error (calories): \(error.localizedDescription)")
+            }
             guard let sum = result?.sumQuantity() else {
                 self?.removeQuery(query)
                 return
@@ -485,7 +488,10 @@ class HealthManager: ObservableObject {
               let type = HKQuantityType.quantityType(forIdentifier: .oxygenSaturation) else { return }
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, error in
+            if let error = error {
+                print("❌ HealthKit query error (SpO2): \(error.localizedDescription)")
+            }
             guard let sample = samples?.first as? HKQuantitySample else {
                 self?.removeQuery(query)
                 return
@@ -505,7 +511,10 @@ class HealthManager: ObservableObject {
         guard let healthStore = healthStore else { return }
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(sampleType: .workoutType(), predicate: nil, limit: 5, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+        let query = HKSampleQuery(sampleType: .workoutType(), predicate: nil, limit: 5, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, error in
+            if let error = error {
+                print("❌ HealthKit query error (workouts): \(error.localizedDescription)")
+            }
             guard let workouts = samples as? [HKWorkout] else {
                 self?.removeQuery(query)
                 return
@@ -534,7 +543,10 @@ class HealthManager: ObservableObject {
               let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return }
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, error in
+            if let error = error {
+                print("❌ HealthKit query error (heart rate): \(error.localizedDescription)")
+            }
             guard let sample = samples?.first as? HKQuantitySample else {
                 self?.removeQuery(query)
                 return
@@ -559,7 +571,10 @@ class HealthManager: ObservableObject {
 
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
 
-        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, _ in
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, error in
+            if let error = error {
+                print("❌ HealthKit query error (steps): \(error.localizedDescription)")
+            }
             guard let sum = result?.sumQuantity() else {
                 self?.removeQuery(query)
                 return
@@ -579,7 +594,10 @@ class HealthManager: ObservableObject {
               let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return }
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 7, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, _ in
+        let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 7, sortDescriptors: [sortDescriptor]) { [weak self] query, samples, error in
+            if let error = error {
+                print("❌ HealthKit query error (weight): \(error.localizedDescription)")
+            }
             guard let samples = samples as? [HKQuantitySample] else {
                 self?.removeQuery(query)
                 return
@@ -617,7 +635,10 @@ class HealthManager: ObservableObject {
 
         let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
 
-        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, _ in
+        let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { [weak self] query, result, error in
+            if let error = error {
+                print("❌ HealthKit query error (water): \(error.localizedDescription)")
+            }
             guard let sum = result?.sumQuantity() else {
                 self?.removeQuery(query)
                 return
@@ -645,7 +666,10 @@ class HealthManager: ObservableObject {
 
         let predicate = HKQuery.predicateForSamples(withStart: yesterday, end: now, options: .strictStartDate)
 
-        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { [weak self] query, samples, _ in
+        let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { [weak self] query, samples, error in
+            if let error = error {
+                print("❌ HealthKit query error (sleep): \(error.localizedDescription)")
+            }
             guard let sleepSamples = samples as? [HKCategorySample] else {
                 self?.removeQuery(query)
                 return
