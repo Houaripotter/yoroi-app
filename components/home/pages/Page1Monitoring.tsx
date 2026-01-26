@@ -585,6 +585,15 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             style={styles.avatarLarge}
           >
             <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
+            {/* Rang et Niveau sous l'avatar */}
+            <View style={styles.avatarRankContainer}>
+              <Text style={[styles.avatarRankText, { color: rankColor }]}>
+                {rankName}
+              </Text>
+              <Text style={styles.avatarLevelText}>
+                Niv. {level}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -621,106 +630,83 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Fond qui couvre les onglets quand on scrolle */}
         <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
-        {/* STATS COMPACT ROW - Gradient Cards avec navigation */}
+        {/* STATS ROW - 3 Cards : Pas | Calories | Série */}
         <View style={styles.statsRow}>
-        {/* Pas - navigation vers historique d'activité */}
-        <TouchableOpacity
-          style={styles.statCardTouchable}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/activity-history?tab=steps');
-          }}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#3B82F6', '#2563EB']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statCardGradient}
+          {/* Pas */}
+          <TouchableOpacity
+            style={styles.statCardTouchable3}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/activity-history?tab=steps');
+            }}
+            activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="walk" size={10} color="#FFFFFF" />
-            <AnimatedCounter
-              value={steps}
-              style={styles.statValueWhite}
-              duration={800}
-            />
-            <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['#3B82F6', '#2563EB']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <MaterialCommunityIcons name="walk" size={12} color="#FFFFFF" />
+              <AnimatedCounter
+                value={steps}
+                style={styles.statValueWhite}
+                duration={800}
+              />
+              <Text style={styles.statLabelWhite}>{t('home.stepsLabel')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        {/* Série - navigation vers records */}
-        <TouchableOpacity
-          style={styles.statCardTouchable}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/records');
-          }}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#F97316', '#EA580C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statCardGradient}
+          {/* Calories */}
+          <TouchableOpacity
+            style={styles.statCardTouchable3}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/activity-history?tab=calories');
+            }}
+            activeOpacity={0.8}
           >
-            <Ionicons name="flame" size={10} color="#FFFFFF" />
-            <AnimatedCounter
-              value={streak}
-              style={styles.statValueWhite}
-              duration={800}
-            />
-            <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={['#EF4444', '#DC2626']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <MaterialCommunityIcons name="fire" size={12} color="#FFFFFF" />
+              <AnimatedCounter
+                value={Math.round(steps * 0.04) + trainingCalories}
+                style={styles.statValueWhite}
+                duration={800}
+              />
+              <Text style={styles.statLabelWhite}>kcal</Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        {/* Niveau - navigation vers gamification */}
-        <TouchableOpacity
-          style={styles.statCardTouchable}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/gamification');
-          }}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statCardGradient}
+          {/* Série */}
+          <TouchableOpacity
+            style={styles.statCardTouchable3}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/records');
+            }}
+            activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="lightning-bolt" size={10} color="#FFFFFF" />
-            <AnimatedCounter
-              value={level}
-              style={styles.statValueWhite}
-              duration={800}
-            />
-            <Text style={styles.statLabelWhite}>{t('home.levelLabel')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* Rang - navigation vers gamification */}
-        <TouchableOpacity
-          style={styles.statCardTouchable}
-          onPress={() => {
-            impactAsync(ImpactFeedbackStyle.Light);
-            router.push('/gamification');
-          }}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={[colors.accent, `${colors.accent}DD`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statCardGradient}
-          >
-            <MaterialCommunityIcons name="trophy" size={10} color={colors.textOnAccent} />
-            <Text style={[styles.statValueWhite, { color: colors.textOnAccent }]} numberOfLines={1} ellipsizeMode="tail">
-              {rankName}
-            </Text>
-            <Text style={[styles.statLabelWhite, { color: colors.textOnAccent }]}>{t('home.rankLabel')}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+            <LinearGradient
+              colors={['#F97316', '#EA580C']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statCardGradient}
+            >
+              <Ionicons name="flame" size={12} color="#FFFFFF" />
+              <AnimatedCounter
+                value={streak}
+                style={styles.statValueWhite}
+                duration={800}
+              />
+              <Text style={styles.statLabelWhite}>{t('home.streakLabel')}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
 
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
       <View style={[styles.weightCardPremium, { backgroundColor: colors.backgroundCard }]}>
@@ -1216,44 +1202,11 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       </View>
 
       {/* CARD 2 - HEALTHSPAN (Transféré de Analyse) */}
-      <View style={[styles.healthspanCard, { backgroundColor: colors.backgroundCard }]}>
+      <View style={[styles.healthspanCard, { backgroundColor: colors.backgroundCard, marginBottom: 40 }]}>
         <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
           {t('analysis.healthLongevity')}
         </Text>
         <HealthspanChart />
-      </View>
-
-      {/* ACTIVITÉ & CALORIES - SECTION RESTAURÉE */}
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 40 }}>
-        {/* Pas Total */}
-        <TouchableOpacity 
-          style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
-          onPress={() => router.push('/activity-history?tab=steps')}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.activityIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-            <MaterialCommunityIcons name="shoe-print" size={20} color="#3B82F6" />
-          </View>
-          <View>
-            <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
-            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Calories */}
-        <TouchableOpacity 
-          style={[styles.activityCard, { backgroundColor: colors.backgroundCard, flex: 1 }]}
-          onPress={() => router.push('/activity-history?tab=calories')}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.activityIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-            <MaterialCommunityIcons name="fire" size={20} color="#EF4444" />
-          </View>
-          <View>
-            <Text style={[styles.activityLabel, { color: colors.textMuted }]}>{t('analysis.calories')}</Text>
-            <Text style={[styles.activityValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()} kcal</Text>
-          </View>
-        </TouchableOpacity>
       </View>
 
         </View>
@@ -1308,6 +1261,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  avatarRankContainer: {
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  avatarRankText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  avatarLevelText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#9CA3AF',
+    marginTop: 1,
+  },
   profilePhotoLarge: {
     width: 130,
     height: 130,
@@ -1355,6 +1324,10 @@ const styles = StyleSheet.create({
   },
   statCardTouchable: {
     flex: 1,
+  },
+  statCardTouchable3: {
+    flex: 1,
+    marginHorizontal: 3,
   },
   statCardGradient: {
     alignItems: 'center',
