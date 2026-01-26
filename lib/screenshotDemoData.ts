@@ -1726,6 +1726,26 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     await initDatabase();
     const database = await openDatabase();
 
+    // 1b. Forcer les migrations critiques pour trainings
+    const criticalMigrations = [
+      'ALTER TABLE trainings ADD COLUMN distance REAL;',
+      'ALTER TABLE trainings ADD COLUMN calories INTEGER;',
+      'ALTER TABLE trainings ADD COLUMN intensity INTEGER;',
+      'ALTER TABLE trainings ADD COLUMN rounds INTEGER;',
+      'ALTER TABLE trainings ADD COLUMN round_duration INTEGER;',
+      'ALTER TABLE trainings ADD COLUMN is_outdoor INTEGER DEFAULT 0;',
+      'ALTER TABLE trainings ADD COLUMN pente REAL;',
+      'ALTER TABLE trainings ADD COLUMN speed REAL;',
+      'ALTER TABLE trainings ADD COLUMN session_types TEXT;',
+      'ALTER TABLE trainings ADD COLUMN technical_theme TEXT;',
+    ];
+    for (const migration of criticalMigrations) {
+      try {
+        await database.execAsync(migration);
+      } catch (e) { /* colonne existe déjà */ }
+    }
+    logger.info('Migrations trainings vérifiées');
+
     // 2. Sauvegarder le profil dans AsyncStorage
     await AsyncStorage.removeItem('@yoroi_user_name');
     await AsyncStorage.removeItem('@yoroi_user_settings');
