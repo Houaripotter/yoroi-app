@@ -28,6 +28,7 @@ import {
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
+import { safeOpenURL } from '@/lib/security/validators';
 
 // Icônes par sport
 const getSportIcon = (sportTag: string) => {
@@ -124,7 +125,7 @@ export default function EventDetailScreen() {
     if (event.registration_link) {
       impactAsync(ImpactFeedbackStyle.Medium);
       try {
-        await Linking.openURL(event.registration_link);
+        await safeOpenURL(event.registration_link);
       } catch (error) {
         console.error('Erreur ouverture lien:', error);
       }

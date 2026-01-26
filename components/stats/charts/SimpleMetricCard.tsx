@@ -4,7 +4,8 @@
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { TrendingUp, TrendingDown, Minus, ExternalLink, ChevronRight } from 'lucide-react-native';
@@ -156,7 +157,7 @@ export const SimpleMetricCard: React.FC<SimpleMetricCardProps> = ({
       {source && (
         <TouchableOpacity
           style={styles.sourceRow}
-          onPress={() => sourceUrl && Linking.openURL(sourceUrl)}
+          onPress={() => sourceUrl && safeOpenURL(sourceUrl)}
           disabled={!sourceUrl}
           activeOpacity={0.7}
         >

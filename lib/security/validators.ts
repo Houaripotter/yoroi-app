@@ -481,6 +481,7 @@ const ALLOWED_URL_SCHEMES = [
   'sms:',
   'x-apple-health:',
   'app-settings:',
+  'app-prefs:',  // iOS Settings URLs (e.g., App-Prefs:HEALTH)
   'market:',
   'itms-apps:',
   'maps:',

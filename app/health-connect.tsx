@@ -10,6 +10,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -117,7 +118,7 @@ export default function HealthConnectScreen() {
               'Tu as refusé l\'accès à Apple Santé. Pour que YOROI fonctionne, tu dois autoriser l\'accès.\n\nVa dans Réglages > Santé > Partage de données > YOROI et active toutes les permissions.',
               [
                 { text: 'Annuler', style: 'cancel' },
-                { text: 'Ouvrir Réglages', onPress: () => Linking.openURL('App-Prefs:HEALTH'), style: 'primary' }
+                { text: 'Ouvrir Réglages', onPress: () => safeOpenURL('App-Prefs:HEALTH'), style: 'primary' }
               ]
             );
             break;
@@ -204,9 +205,9 @@ export default function HealthConnectScreen() {
 
   const openHealthApp = () => {
     if (Platform.OS === 'ios') {
-      Linking.openURL('x-apple-health://');
+      safeOpenURL('x-apple-health://');
     } else {
-      Linking.openURL('market://details?id=com.google.android.apps.fitness');
+      safeOpenURL('market://details?id=com.google.android.apps.fitness');
     }
   };
 

@@ -693,6 +693,7 @@ export function EnhancedAddSessionModal({
                         onChangeText={setCustomMuscle}
                         onSubmitEditing={handleAddCustomMuscle}
                         autoFocus
+                        maxLength={50}
                       />
                       <TouchableOpacity
                         style={[
@@ -756,6 +757,7 @@ export function EnhancedAddSessionModal({
                     placeholderTextColor={colors.textSecondary}
                     value={technicalTheme}
                     onChangeText={setTechnicalTheme}
+                    maxLength={100}
                   />
 
                   {/* Suggestions rapides */}
@@ -995,6 +997,7 @@ export function EnhancedAddSessionModal({
                 onChangeText={setNote}
                 multiline
                 numberOfLines={3}
+                maxLength={500}
               />
 
               {/* Bouton Sauvegarder */}

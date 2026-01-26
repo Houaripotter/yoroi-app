@@ -1033,6 +1033,7 @@ export default function ChronoScreen() {
                 placeholderTextColor="rgba(255,255,255,0.5)"
                 value={customPresetName}
                 onChangeText={setCustomPresetName}
+                maxLength={50}
               />
               <TouchableOpacity
                 style={styles.savePresetButton}

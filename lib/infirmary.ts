@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 // ============================================
 // TYPES
@@ -124,13 +125,51 @@ export const INJURY_TYPES = [
 const STORAGE_KEY = '@yoroi_injuries';
 
 class InfirmaryService {
+  private migrationDone = false;
+
+  /**
+   * Migre les données de AsyncStorage vers SecureStorage (une seule fois)
+   */
+  private async migrateFromAsyncStorage(): Promise<void> {
+    if (this.migrationDone) return;
+
+    try {
+      // Vérifier si des données existent déjà dans SecureStorage
+      const secureData = await secureStorage.getItem(STORAGE_KEY);
+      if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+        this.migrationDone = true;
+        return;
+      }
+
+      // Essayer de récupérer les anciennes données depuis AsyncStorage
+      const oldData = await AsyncStorage.getItem(STORAGE_KEY);
+      if (oldData) {
+        const parsed = JSON.parse(oldData);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Migrer vers SecureStorage
+          await secureStorage.setItem(STORAGE_KEY, parsed);
+          // Supprimer les anciennes données
+          await AsyncStorage.removeItem(STORAGE_KEY);
+          logger.info('[Infirmary] Migration vers SecureStorage réussie');
+        }
+      }
+    } catch (error) {
+      logger.error('[Infirmary] Erreur migration:', error);
+    }
+
+    this.migrationDone = true;
+  }
+
   /**
    * Obtenir toutes les blessures
    */
   async getAllInjuries(): Promise<Injury[]> {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
+      // Assurer la migration au premier accès
+      await this.migrateFromAsyncStorage();
+
+      const data = await secureStorage.getItem(STORAGE_KEY);
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       logger.error('[Infirmary] Erreur chargement blessures:', error);
       return [];
@@ -165,7 +204,7 @@ class InfirmaryService {
 
     const injuries = await this.getAllInjuries();
     injuries.push(newInjury);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(injuries));
+    await secureStorage.setItem(STORAGE_KEY, injuries);
 
     return newInjury;
   }
@@ -179,7 +218,7 @@ class InfirmaryService {
 
     if (index !== -1) {
       injuries[index] = { ...injuries[index], ...updates };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(injuries));
+      await secureStorage.setItem(STORAGE_KEY, injuries);
     }
   }
 
@@ -206,7 +245,7 @@ class InfirmaryService {
         injury.status = 'healing';
       }
 
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(injuries));
+      await secureStorage.setItem(STORAGE_KEY, injuries);
     }
   }
 
@@ -225,7 +264,7 @@ class InfirmaryService {
       };
 
       injury.treatments.push(newTreatment);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(injuries));
+      await secureStorage.setItem(STORAGE_KEY, injuries);
     }
   }
 
@@ -248,7 +287,7 @@ class InfirmaryService {
   async deleteInjury(injuryId: string): Promise<void> {
     const injuries = await this.getAllInjuries();
     const filtered = injuries.filter(i => i.id !== injuryId);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    await secureStorage.setItem(STORAGE_KEY, filtered);
   }
 
   /**

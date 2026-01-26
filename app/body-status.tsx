@@ -358,10 +358,10 @@ export default function BodyStatusScreen() {
               <View style={styles.noteSection}>
                 <Text style={[styles.noteLabel, { color: colors.textPrimary }]}>{t('screens.bodyStatus.medicalNoteLabel')}</Text>
                 <TextInput
-                  style={[styles.noteInput, { 
-                    backgroundColor: colors.backgroundElevated, 
-                    color: colors.textPrimary, 
-                    borderColor: colors.border 
+                  style={[styles.noteInput, {
+                    backgroundColor: colors.backgroundElevated,
+                    color: colors.textPrimary,
+                    borderColor: colors.border
                   }]}
                   placeholder={t('screens.bodyStatus.medicalNotePlaceholder')}
                   placeholderTextColor={colors.textMuted}
@@ -369,6 +369,7 @@ export default function BodyStatusScreen() {
                   onChangeText={setMedicalNote}
                   multiline
                   numberOfLines={3}
+                  maxLength={1000}
                 />
               </View>
             )}

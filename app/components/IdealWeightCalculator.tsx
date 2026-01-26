@@ -40,7 +40,7 @@ export const IdealWeightCalculator = React.memo(function IdealWeightCalculator({
           <View style={styles.inputRow}>
             <Text style={{ color: colors.textSecondary }}>Taille</Text>
             <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={height} onChangeText={setHeight} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.textMuted} />
+              <TextInput style={[styles.input, { color: colors.textPrimary }]} value={height} onChangeText={setHeight} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.textMuted} maxLength={3} />
               <Text style={{ color: colors.textMuted }}>cm</Text>
             </View>
           </View>

@@ -8,7 +8,6 @@ import {
   Dimensions,
   StatusBar,
   Image,
-  Linking,
   NativeScrollEvent,
   NativeSyntheticEvent,
   TextInput,
@@ -16,6 +15,7 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useI18n } from '@/lib/I18nContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -656,7 +656,7 @@ export default function PlanningScreen() {
   const handleOpenExternalEvent = useCallback((link: string) => {
     if (link) {
       impactAsync(ImpactFeedbackStyle.Light);
-      Linking.openURL(link);
+      safeOpenURL(link);
     }
   }, []);
 

@@ -62,7 +62,6 @@ const STORAGE_KEYS = {
   MEASUREMENTS: '@yoroi_measurements',
   WORKOUTS: '@yoroi_workouts',
   PHOTOS: '@yoroi_photos',
-  PHOTOS_DATA: '@yoroi_photos_data', // Stockage base64 pour fallback
   USER_SETTINGS: '@yoroi_user_settings',
   USER_BADGES: '@yoroi_user_badges',
   USER_CLUBS: '@yoroi_user_clubs',
@@ -252,7 +251,6 @@ export interface Photo {
   id: string;
   date: string;
   file_uri: string;
-  base64?: string; // Fallback pour web/simulateur
   weight?: number;
   notes?: string;
   created_at: string;
@@ -399,11 +397,81 @@ const saveData = async <T>(key: string, data: T[]): Promise<boolean> => {
 };
 
 // ============================================
+// SECURE STORAGE HELPERS FOR HEALTH DATA
+// ============================================
+
+let measurementsMigrationDone = false;
+
+/**
+ * Migre les mesures de AsyncStorage vers SecureStorage (une seule fois)
+ * Avec rétrocompatibilité: lit d'abord SecureStorage, puis AsyncStorage
+ */
+const migrateMeasurementsToSecureStorage = async (): Promise<void> => {
+  if (measurementsMigrationDone) return;
+
+  try {
+    // Vérifier si des données existent déjà dans SecureStorage
+    const secureData = await secureStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      measurementsMigrationDone = true;
+      return;
+    }
+
+    // Essayer de récupérer les anciennes données depuis AsyncStorage
+    const oldData = await AsyncStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Migrer vers SecureStorage
+        await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, parsed);
+        // Supprimer les anciennes données
+        await AsyncStorage.removeItem(STORAGE_KEYS.MEASUREMENTS);
+        logger.info('[Storage] Migration mesures vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[Storage] Erreur migration mesures:', error);
+  }
+
+  measurementsMigrationDone = true;
+};
+
+/**
+ * Récupère les données de mesures depuis SecureStorage
+ */
+const getSecureMeasurements = async (): Promise<Measurement[]> => {
+  try {
+    // Assurer la migration au premier accès
+    await migrateMeasurementsToSecureStorage();
+
+    const data = await secureStorage.getItem(STORAGE_KEYS.MEASUREMENTS);
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage sécurisé mesures:`, error);
+    logger.error(`Erreur secureStorage.getItem (measurements):`, error);
+    return [];
+  }
+};
+
+/**
+ * Sauvegarde les données de mesures dans SecureStorage
+ */
+const saveSecureMeasurements = async (data: Measurement[]): Promise<boolean> => {
+  try {
+    return await secureStorage.setItem(STORAGE_KEYS.MEASUREMENTS, data);
+  } catch (error) {
+    console.warn(`⚠️ ERREUR CRITIQUE - Sauvegarde stockage sécurisé mesures:`, error);
+    logger.error(`Erreur secureStorage.setItem (measurements):`, error);
+    return false;
+  }
+};
+
+// ============================================
 // GESTION DES MESURES
 // ============================================
 
 export const getAllMeasurements = async (): Promise<Measurement[]> => {
-  const measurements = await getData<Measurement>(STORAGE_KEYS.MEASUREMENTS);
+  const measurements = await getSecureMeasurements();
   return measurements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
@@ -420,7 +488,7 @@ export const getMeasurementsByPeriod = async (days: number): Promise<Measurement
 };
 
 export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'created_at'>): Promise<Measurement> => {
-  const measurements = await getData<Measurement>(STORAGE_KEYS.MEASUREMENTS);
+  const measurements = await getSecureMeasurements();
 
   const newMeasurement: Measurement = {
     ...measurement,
@@ -429,29 +497,29 @@ export const addMeasurement = async (measurement: Omit<Measurement, 'id' | 'crea
   };
 
   measurements.push(newMeasurement);
-  await saveData(STORAGE_KEYS.MEASUREMENTS, measurements);
+  await saveSecureMeasurements(measurements);
 
   return newMeasurement;
 };
 
 export const updateMeasurement = async (id: string, updates: Partial<Measurement>): Promise<boolean> => {
-  const measurements = await getData<Measurement>(STORAGE_KEYS.MEASUREMENTS);
+  const measurements = await getSecureMeasurements();
   const index = measurements.findIndex(m => m.id === id);
 
   if (index === -1) return false;
 
   measurements[index] = { ...measurements[index], ...updates };
-  return await saveData(STORAGE_KEYS.MEASUREMENTS, measurements);
+  return await saveSecureMeasurements(measurements);
 };
 
 export const deleteMeasurement = async (id: string): Promise<boolean> => {
-  const measurements = await getData<Measurement>(STORAGE_KEYS.MEASUREMENTS);
+  const measurements = await getSecureMeasurements();
   const filtered = measurements.filter(m => m.id !== id);
-  return await saveData(STORAGE_KEYS.MEASUREMENTS, filtered);
+  return await saveSecureMeasurements(filtered);
 };
 
 export const deleteAllMeasurements = async (): Promise<boolean> => {
-  return await saveData(STORAGE_KEYS.MEASUREMENTS, []);
+  return await saveSecureMeasurements([]);
 };
 
 // ============================================
@@ -513,7 +581,8 @@ export const deleteAllWorkouts = async (): Promise<boolean> => {
 // ============================================
 
 /**
- * Sauvegarde une photo - fonctionne sur toutes les plateformes
+ * Sauvegarde une photo - stocke uniquement le file_uri (protégé par iOS sandbox)
+ * SECURITE: Pas de stockage base64 - les photos restent dans le système de fichiers sécurisé
  */
 export const savePhotoToStorage = async (
   sourceUri: string,
@@ -524,11 +593,10 @@ export const savePhotoToStorage = async (
   try {
     const id = generateId();
     const photosDir = await ensurePhotosDirectoryExists();
-    
+
     let finalUri = sourceUri;
-    let base64Data: string | undefined;
-    
-    // Si FileSystem disponible (mobile natif), copier le fichier
+
+    // Si FileSystem disponible (mobile natif), copier le fichier dans le dossier sécurisé
     if (photosDir && Platform.OS !== 'web') {
       try {
         const filename = `photo_${id}.jpg`;
@@ -537,17 +605,7 @@ export const savePhotoToStorage = async (
         finalUri = destinationUri;
       } catch (copyError) {
         console.warn('Impossible de copier, utilisation de l\'URI original:', copyError);
-        // Fallback : utiliser l'URI d'origine
-      }
-    } else {
-      // Mode web/simulateur : essayer de lire en base64
-      if (Platform.OS !== 'web' && FileSystem.EncodingType) {
-        try {
-          base64Data = await FileSystem.readAsStringAsync(sourceUri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
-        } catch (b64Error) {
-        }
+        // Fallback : utiliser l'URI d'origine (toujours dans le sandbox iOS)
       }
     }
 
@@ -555,7 +613,6 @@ export const savePhotoToStorage = async (
       id,
       date,
       file_uri: finalUri,
-      base64: base64Data,
       weight,
       notes,
       created_at: new Date().toISOString(),
@@ -623,6 +680,25 @@ export const deleteAllPhotos = async (): Promise<boolean> => {
   }
 
   return await saveData(STORAGE_KEYS.PHOTOS, []);
+};
+
+/**
+ * Migration: Supprime les données base64 des photos existantes
+ * SECURITE: Les photos ne doivent être stockées que comme file_uri (protégées par iOS sandbox)
+ * Cette fonction nettoie les anciennes données base64 qui auraient pu être stockées
+ */
+export const migratePhotosRemoveBase64 = async (): Promise<void> => {
+  try {
+    const photos = await getPhotosFromStorage();
+    if (photos.length > 0) {
+      // Supprimer le champ base64 de chaque photo
+      const cleanedPhotos = photos.map(({ base64, ...rest }: Photo & { base64?: string }) => rest);
+      await AsyncStorage.setItem(STORAGE_KEYS.PHOTOS, JSON.stringify(cleanedPhotos));
+      console.log(`Migration: base64 supprimé de ${photos.length} photos`);
+    }
+  } catch (error) {
+    console.error('Migration error (remove base64):', error);
+  }
 };
 
 // ============================================
@@ -905,8 +981,9 @@ export const unlockBadge = async (badgeId: string): Promise<boolean> => {
 
 export const exportData = async (): Promise<boolean> => {
   try {
+    const measurements = await getSecureMeasurements();
     const stats = {
-      measurements: (await getData(STORAGE_KEYS.MEASUREMENTS)).length,
+      measurements: measurements.length,
       workouts: (await getData(STORAGE_KEYS.WORKOUTS)).length,
       photos: (await getData(STORAGE_KEYS.PHOTOS)).length,
     };
@@ -915,7 +992,7 @@ export const exportData = async (): Promise<boolean> => {
       version: 1,
       date: new Date().toISOString(),
       stats,
-      measurements: await getData(STORAGE_KEYS.MEASUREMENTS),
+      measurements: measurements,
       workouts: await getData(STORAGE_KEYS.WORKOUTS),
       photos: await getData(STORAGE_KEYS.PHOTOS),
       settings: await getUserSettings(),
@@ -1046,10 +1123,10 @@ export const importData = async (): Promise<boolean> => {
     }
 
     // Importer les données
-    await saveData(STORAGE_KEYS.MEASUREMENTS, backup.measurements || []);
+    await saveSecureMeasurements(backup.measurements || []);
     await saveData(STORAGE_KEYS.WORKOUTS, backup.workouts || []);
     await saveData(STORAGE_KEYS.PHOTOS, backup.photos || []);
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(backup.settings || {}));
+    await secureStorage.setItem(STORAGE_KEYS.USER_SETTINGS, backup.settings || {});
     await saveData(STORAGE_KEYS.USER_BADGES, backup.badges || []);
 
     Alert.alert('Succès', 'Données restaurées avec succès !');

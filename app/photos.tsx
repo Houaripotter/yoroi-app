@@ -725,6 +725,7 @@ export default function PhotosScreen() {
               keyboardType="decimal-pad"
               editable={!useCurrentWeight}
               selectTextOnFocus
+              maxLength={6}
             />
 
             <View style={styles.modalButtons}>

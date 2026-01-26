@@ -3,7 +3,8 @@
 // ============================================
 
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform, Linking } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -356,7 +357,7 @@ export const StatsDetailModal: React.FC<StatsDetailModalProps> = ({
                     style={[styles.scienceSourceContainer, { backgroundColor: metricRange.sourceUrl ? colors.accent + '15' : 'transparent' }]}
                     onPress={() => {
                       if (metricRange.sourceUrl) {
-                        Linking.openURL(metricRange.sourceUrl);
+                        safeOpenURL(metricRange.sourceUrl);
                       }
                     }}
                     disabled={!metricRange.sourceUrl}

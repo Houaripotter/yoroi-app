@@ -405,6 +405,7 @@ export default function EventsScreen() {
           placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          maxLength={100}
         />
       </View>
 

@@ -4,7 +4,8 @@
 // ============================================
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -139,7 +140,7 @@ export const MetricRangeIndicator: React.FC<MetricRangeIndicatorProps> = ({
           style={styles.sourceContainer}
           onPress={() => {
             if (range.sourceUrl) {
-              Linking.openURL(range.sourceUrl);
+              safeOpenURL(range.sourceUrl);
             }
           }}
           disabled={!range.sourceUrl}

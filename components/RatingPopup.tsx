@@ -14,8 +14,8 @@ import {
   Dimensions,
   Platform,
   Image,
-  Linking,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,7 +112,7 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
           android: 'https://play.google.com/store/apps/details?id=com.yoroi.app', // Remplacer par ton ID
         });
         if (storeUrl) {
-          await Linking.openURL(storeUrl);
+          await safeOpenURL(storeUrl);
         }
       }
       onRated();

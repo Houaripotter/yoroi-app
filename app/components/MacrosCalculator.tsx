@@ -67,11 +67,12 @@ export const MacrosCalculator = React.memo(function MacrosCalculator({ visible, 
             const [label, unit] = item.split(':');
             const value = label === 'Poids' ? weight : label === 'Taille' ? height : age;
             const setter = label === 'Poids' ? setWeight : label === 'Taille' ? setHeight : setAge;
+            const maxLen = label === 'Age' ? 3 : 5;
             return (
               <View key={label} style={styles.inputRow}>
                 <Text style={{ color: colors.textSecondary }}>{label}</Text>
                 <View style={[styles.inputContainer, { backgroundColor: colors.cardHover }]}>
-                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={setter} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.textMuted} />
+                  <TextInput style={[styles.input, { color: colors.textPrimary }]} value={value} onChangeText={setter} keyboardType="decimal-pad" placeholder="0" placeholderTextColor={colors.textMuted} maxLength={maxLen} />
                   <Text style={{ color: colors.textMuted }}>{unit}</Text>
                 </View>
               </View>

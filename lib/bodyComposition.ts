@@ -16,9 +16,80 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
+import secureStorage from '@/lib/security/secureStorage';
 
 const BODY_COMP_KEY = '@yoroi_body_composition';
 const MEASUREMENTS_KEY = '@yoroi_measurements';
+
+// Migration flags
+let bodyCompMigrationDone = false;
+let measurementsMigrationDone = false;
+
+/**
+ * Migre les données de composition corporelle de AsyncStorage vers SecureStorage
+ */
+const migrateBodyCompFromAsyncStorage = async (): Promise<void> => {
+  if (bodyCompMigrationDone) return;
+
+  try {
+    // Vérifier si des données existent déjà dans SecureStorage
+    const secureData = await secureStorage.getItem(BODY_COMP_KEY);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      bodyCompMigrationDone = true;
+      return;
+    }
+
+    // Essayer de récupérer les anciennes données depuis AsyncStorage
+    const oldData = await AsyncStorage.getItem(BODY_COMP_KEY);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Migrer vers SecureStorage
+        await secureStorage.setItem(BODY_COMP_KEY, parsed);
+        // Supprimer les anciennes données
+        await AsyncStorage.removeItem(BODY_COMP_KEY);
+        logger.info('[BodyComposition] Migration vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[BodyComposition] Erreur migration:', error);
+  }
+
+  bodyCompMigrationDone = true;
+};
+
+/**
+ * Migre les mensurations de AsyncStorage vers SecureStorage
+ */
+const migrateMeasurementsFromAsyncStorage = async (): Promise<void> => {
+  if (measurementsMigrationDone) return;
+
+  try {
+    // Vérifier si des données existent déjà dans SecureStorage
+    const secureData = await secureStorage.getItem(MEASUREMENTS_KEY);
+    if (secureData && Array.isArray(secureData) && secureData.length > 0) {
+      measurementsMigrationDone = true;
+      return;
+    }
+
+    // Essayer de récupérer les anciennes données depuis AsyncStorage
+    const oldData = await AsyncStorage.getItem(MEASUREMENTS_KEY);
+    if (oldData) {
+      const parsed = JSON.parse(oldData);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Migrer vers SecureStorage
+        await secureStorage.setItem(MEASUREMENTS_KEY, parsed);
+        // Supprimer les anciennes données
+        await AsyncStorage.removeItem(MEASUREMENTS_KEY);
+        logger.info('[BodyComposition] Migration mensurations vers SecureStorage réussie');
+      }
+    }
+  } catch (error) {
+    logger.error('[BodyComposition] Erreur migration mensurations:', error);
+  }
+
+  measurementsMigrationDone = true;
+};
 
 // ============================================
 // TYPES
@@ -73,9 +144,11 @@ export interface BodyMeasurement {
 
 export const getAllBodyCompositions = async (): Promise<BodyComposition[]> => {
   try {
-    const stored = await AsyncStorage.getItem(BODY_COMP_KEY);
-    if (!stored) return [];
-    const data = JSON.parse(stored);
+    // Assurer la migration au premier accès
+    await migrateBodyCompFromAsyncStorage();
+
+    const data = await secureStorage.getItem(BODY_COMP_KEY);
+    if (!data || !Array.isArray(data)) return [];
     return data.sort((a: BodyComposition, b: BodyComposition) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
@@ -98,7 +171,7 @@ export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Pro
       id: `bc_${Date.now()}`,
     };
     all.unshift(newEntry);
-    await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(all));
+    await secureStorage.setItem(BODY_COMP_KEY, all);
     return newEntry;
   } catch (error) {
     logger.error('Error adding body composition:', error);
@@ -112,7 +185,7 @@ export const updateBodyComposition = async (id: string, data: Partial<BodyCompos
     const index = all.findIndex(item => item.id === id);
     if (index !== -1) {
       all[index] = { ...all[index], ...data };
-      await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(all));
+      await secureStorage.setItem(BODY_COMP_KEY, all);
     }
   } catch (error) {
     logger.error('Error updating body composition:', error);
@@ -124,7 +197,7 @@ export const deleteBodyComposition = async (id: string): Promise<void> => {
   try {
     const all = await getAllBodyCompositions();
     const filtered = all.filter(item => item.id !== id);
-    await AsyncStorage.setItem(BODY_COMP_KEY, JSON.stringify(filtered));
+    await secureStorage.setItem(BODY_COMP_KEY, filtered);
   } catch (error) {
     logger.error('Error deleting body composition:', error);
     throw error;
@@ -137,9 +210,11 @@ export const deleteBodyComposition = async (id: string): Promise<void> => {
 
 export const getAllMeasurements = async (): Promise<BodyMeasurement[]> => {
   try {
-    const stored = await AsyncStorage.getItem(MEASUREMENTS_KEY);
-    if (!stored) return [];
-    const data = JSON.parse(stored);
+    // Assurer la migration au premier accès
+    await migrateMeasurementsFromAsyncStorage();
+
+    const data = await secureStorage.getItem(MEASUREMENTS_KEY);
+    if (!data || !Array.isArray(data)) return [];
     return data.sort((a: BodyMeasurement, b: BodyMeasurement) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
@@ -162,7 +237,7 @@ export const addMeasurement = async (data: Omit<BodyMeasurement, 'id'>): Promise
       id: `m_${Date.now()}`,
     };
     all.unshift(newEntry);
-    await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(all));
+    await secureStorage.setItem(MEASUREMENTS_KEY, all);
     return newEntry;
   } catch (error) {
     logger.error('Error adding measurement:', error);
@@ -176,7 +251,7 @@ export const updateMeasurement = async (id: string, data: Partial<BodyMeasuremen
     const index = all.findIndex(item => item.id === id);
     if (index !== -1) {
       all[index] = { ...all[index], ...data };
-      await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(all));
+      await secureStorage.setItem(MEASUREMENTS_KEY, all);
     }
   } catch (error) {
     logger.error('Error updating measurement:', error);
@@ -188,7 +263,7 @@ export const deleteMeasurement = async (id: string): Promise<void> => {
   try {
     const all = await getAllMeasurements();
     const filtered = all.filter(item => item.id !== id);
-    await AsyncStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(filtered));
+    await secureStorage.setItem(MEASUREMENTS_KEY, filtered);
   } catch (error) {
     logger.error('Error deleting measurement:', error);
     throw error;

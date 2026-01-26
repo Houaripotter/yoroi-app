@@ -5,13 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
   Dimensions,
   Modal,
   TextInput,
   Switch,
   Alert,
 } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -498,7 +498,7 @@ const getSupportItems = (t: TranslateFunction): MenuItem[] => [
     label: t('menu.appStore') || 'YOROI sur l\'App Store',
     sublabel: t('menu.appStoreDescription') || 'Voir l\'app sur l\'App Store',
     Icon: Apple,
-    onPress: () => Linking.openURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612'),
+    onPress: () => safeOpenURL('https://apps.apple.com/fr/app/yoroi-suivi-poids-sport/id6757306612'),
     iconColor: '#007AFF',
     iconBg: '#007AFF20',
   },
@@ -507,7 +507,7 @@ const getSupportItems = (t: TranslateFunction): MenuItem[] => [
     label: t('menu.instagram') || 'Instagram',
     sublabel: t('menu.instagramDescription') || '@yoroiapp',
     Icon: Camera,
-    onPress: () => Linking.openURL('https://www.instagram.com/yoroiapp'),
+    onPress: () => safeOpenURL('https://www.instagram.com/yoroiapp'),
     iconColor: '#E4405F',
     iconBg: '#E4405F20',
   },
@@ -516,7 +516,7 @@ const getSupportItems = (t: TranslateFunction): MenuItem[] => [
     label: t('menu.privacyPolicy') || 'Politique de confidentialite',
     sublabel: t('menu.privacyPolicyDescription') || 'Conditions et confidentialite',
     Icon: Shield,
-    onPress: () => Linking.openURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'),
+    onPress: () => safeOpenURL('https://easy-woodwind-a70.notion.site/Yoroi-App-2d950188283880dbbd44d7e5abefecbb'),
     iconColor: '#10B981',
     iconBg: '#10B98120',
   },
@@ -911,7 +911,7 @@ export default function MoreScreen() {
     try {
       // Ouvrir directement la page App Store pour notation
       const appStoreURL = 'https://apps.apple.com/us/app/yoroi-suivi-poids-sport/id6757306612';
-      await Linking.openURL(appStoreURL);
+      await safeOpenURL(appStoreURL);
     } catch (e) {
       logger.error('Rate error:', e);
       showPopup(t('common.error'), t('errors.unknownError'), [{ text: 'OK', style: 'primary' }]);

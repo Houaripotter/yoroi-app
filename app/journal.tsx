@@ -465,6 +465,7 @@ export default function JournalScreen() {
               multiline
               numberOfLines={4}
               textAlignVertical="top"
+              maxLength={1000}
             />
 
             {/* Save Button */}
@@ -567,6 +568,7 @@ export default function JournalScreen() {
                   onChangeText={setSearchQuery}
                   placeholder="Rechercher..."
                   placeholderTextColor={colors.textMuted}
+                  maxLength={100}
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity onPress={() => setSearchQuery('')}>

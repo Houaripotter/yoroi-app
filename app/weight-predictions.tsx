@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { safeOpenURL } from '@/lib/security/validators';
 import { Stack, router } from 'expo-router';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
@@ -25,7 +26,7 @@ export default function WeightPredictionsScreen() {
   const prediction90Days = currentWeight - (weeklyLoss / 7) * 90;
 
   const openStudy = (url: string) => {
-    Linking.openURL(url);
+    safeOpenURL(url);
   };
 
   return (
