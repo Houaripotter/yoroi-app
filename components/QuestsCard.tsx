@@ -7,6 +7,7 @@ import {
   Animated,
   Easing,
   ScrollView,
+  PanResponder,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,7 +29,6 @@ import {
   Trophy,
   Star,
   Zap,
-  ChevronRight,
   Droplets,
   Moon,
   Footprints,
@@ -37,7 +37,8 @@ import {
   Gift,
   Lock,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 
@@ -72,12 +73,66 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   const [monthlyQuests, setMonthlyQuests] = useState<QuestsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalXP, setTotalXP] = useState(0);
+  const questsScrollRef = useRef<ScrollView>(null);
+  const [scrollContentHeight, setScrollContentHeight] = useState(1000); // Valeur par défaut pour éviter 0
+  const [containerHeight, setContainerHeight] = useState(380);
+  const scrollOffset = useRef(new Animated.Value(0)).current;
+  const currentScrollValue = useRef(0); // Pour suivre la valeur sans listener asynchrone
+
+  useEffect(() => {
+    const id = scrollOffset.addListener(({ value }) => {
+      currentScrollValue.current = value;
+    });
+    return () => scrollOffset.removeListener(id);
+  }, []);
 
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
 
+  // PanResponder pour le scroll custom (Slider vertical)
+  const panResponderStart = useRef(0);
+  
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        impactAsync(ImpactFeedbackStyle.Light);
+        panResponderStart.current = currentScrollValue.current;
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        const trackHeight = 380 - 16; // Hauteur conteneur moins padding
+        const thumbHeight = 40;
+        const scrollableTrack = trackHeight - thumbHeight;
+        
+        if (scrollableTrack <= 0) return;
+
+        const maxScroll = Math.max(0, scrollContentHeight - containerHeight);
+        if (maxScroll <= 0) return;
+
+        const ratio = maxScroll / scrollableTrack;
+        const deltaScroll = gestureState.dy * ratio;
+        
+        const newScroll = Math.max(0, Math.min(maxScroll, panResponderStart.current + deltaScroll));
+        
+        questsScrollRef.current?.scrollTo({ y: newScroll, animated: false });
+      },
+      onPanResponderRelease: () => {
+        // Fin du geste
+      },
+    })
+  ).current;
+
+  // Calculer la position du thumb en fonction du scroll réel
+  const thumbPosition = scrollOffset.interpolate({
+    inputRange: [0, Math.max(1, scrollContentHeight - containerHeight)],
+    outputRange: [0, 380 - 16 - 40], // trackHeight - thumbHeight
+    extrapolate: 'clamp',
+  });
+
+  // ... (animations pulse & glow inchangées)
   // Animation pulse pour l'icône
   useEffect(() => {
     Animated.loop(
@@ -105,17 +160,18 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         Animated.timing(glowAnim, {
           toValue: 1,
           duration: 2000,
-          useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
+          useNativeDriver: false,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
           duration: 2000,
-          useNativeDriver: false, // REQUIS: utilisé pour interpoler opacity (pourrait être true mais gardé false pour cohérence)
+          useNativeDriver: false,
         }),
       ])
     ).start();
   }, []);
 
+  // ... (loadQuests inchangé)
   const loadQuests = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -131,11 +187,9 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       setWeeklyQuests(weekly);
       setMonthlyQuests(monthly);
 
-      // Total XP selon l'onglet actif
       const currentQuests = activeTab === 'day' ? daily : activeTab === 'week' ? weekly : monthly;
       setTotalXP(currentQuests?.xpEarned || 0);
 
-      // Animer la barre de progression
       if (currentQuests) {
         Animated.timing(progressAnim, {
           toValue: currentQuests.completed / currentQuests.total,
@@ -151,7 +205,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     }
   }, [activeTab]);
 
-  // Mise à jour animation quand on change d'onglet
   useEffect(() => {
     const currentQuests = activeTab === 'day' ? dailyQuests : activeTab === 'week' ? weeklyQuests : monthlyQuests;
     if (currentQuests) {
@@ -187,7 +240,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     return '#FFD700';
   };
 
-  // Quêtes selon onglet actif
   const currentQuests = activeTab === 'day' ? dailyQuests : activeTab === 'week' ? weeklyQuests : monthlyQuests;
 
   if (isLoading || !currentQuests) {
@@ -209,13 +261,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.95}
-      onPress={() => {
-        impactAsync(ImpactFeedbackStyle.Light);
-        router.push('/gamification?tab=defis');
-      }}
-    >
+    <View>
       <LinearGradient
         colors={isDark
           ? ['#1A1A2E', '#16213E', '#0F3460']
@@ -227,7 +273,13 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       >
         {/* Header Gaming */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          <TouchableOpacity 
+            style={styles.headerLeft}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/gamification?tab=defis');
+            }}
+          >
             <Animated.View style={[styles.iconWrapper, { transform: [{ scale: pulseAnim }] }]}>
               <LinearGradient
                 colors={['#FFD700', '#FFA500']}
@@ -245,9 +297,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 <Text style={styles.xpText}>+{totalXP} XP</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          {/* Compteur circulaire */}
           <View style={styles.counterCircle}>
             <Text style={[styles.counterValue, { color: completedCount === totalCount ? '#10B981' : '#FFD700' }]}>
               {completedCount}
@@ -256,7 +307,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           </View>
         </View>
 
-        {/* Tabs Jour/Semaine/Mois */}
+        {/* Tabs */}
         <View style={styles.tabsRow}>
           {(['day', 'week', 'month'] as TabType[]).map((tab) => {
             const isActive = activeTab === tab;
@@ -267,7 +318,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   styles.tab,
                   {
                     backgroundColor: isActive
-                      ? '#FFD700'  // Fond jaune solide quand actif
+                      ? '#FFD700'
                       : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
                     borderColor: isActive ? '#FFD700' : 'transparent'
                   }
@@ -281,7 +332,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 <Text style={[
                   styles.tabText,
                   {
-                    color: isActive ? '#000000' : colors.textMuted,  // Texte noir quand actif
+                    color: isActive ? '#000000' : colors.textMuted,
                     fontWeight: isActive ? '800' : '700'
                   }
                 ]}>
@@ -292,7 +343,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           })}
         </View>
 
-        {/* Barre de progression animée */}
+        {/* Barre de progression */}
         <View style={styles.progressSection}>
           <View style={[styles.progressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
             <Animated.View
@@ -313,8 +364,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 style={styles.progressGradient}
               />
             </Animated.View>
-
-            {/* Étoiles sur la barre */}
             {[0.25, 0.5, 0.75, 1].map((pos, i) => (
               <View key={i} style={[styles.progressStar, { left: `${pos * 100 - 3}%` }]}>
                 <Star
@@ -327,14 +376,40 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           </View>
         </View>
 
-        {/* Liste des quêtes avec scroll (10 quêtes, 5 visibles) */}
-        <ScrollView
-          style={styles.questsScrollContainer}
-          nestedScrollEnabled={true}
-          showsVerticalScrollIndicator={true}
-          scrollEnabled={true}
-        >
-          <View style={styles.questsList}>
+        {/* Scroll Wrapper avec Slider Latéral à GAUCHE */}
+        <View style={styles.scrollWrapper}>
+          {/* TRACK DE SCROLL TACTILE À GAUCHE */}
+          <View
+            style={[styles.sideTrackContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
+            {...panResponder.panHandlers}
+          >
+            <Animated.View
+              style={[
+                styles.sideTrackThumb,
+                {
+                  backgroundColor: '#FFD700',
+                  transform: [{ translateY: thumbPosition }]
+                }
+              ]}
+            />
+          </View>
+
+          <ScrollView
+            ref={questsScrollRef}
+            style={styles.questsScroll}
+            contentContainerStyle={styles.questsList}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={true}
+            bounces={true}
+            onContentSizeChange={(w, h) => setScrollContentHeight(h)}
+            onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollOffset } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
+          >
           {currentQuests.quests.map((quest, index) => {
             const IconComponent = getQuestIcon(quest.id);
             const questColor = getQuestColor(quest.id);
@@ -348,7 +423,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }
                 ]}
               >
-                {/* Icône avec état */}
                 <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
                   {quest.completed ? (
                     <CheckCircle2 size={20} color="#10B981" fill="#10B98130" />
@@ -357,7 +431,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   )}
                 </View>
 
-                {/* Contenu */}
                 <View style={styles.questContent}>
                   <View style={styles.questTitleRow}>
                     <Text
@@ -372,7 +445,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     </Text>
                   </View>
 
-                  {/* Description de l'objectif */}
                   <Text
                     style={[
                       styles.questDescription,
@@ -383,7 +455,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     {quest.description}
                   </Text>
 
-                  {/* Mini barre de progression */}
                   {!quest.completed && quest.target > 1 && (
                     <View style={styles.questProgressContainer}>
                       <View style={[styles.questProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
@@ -401,7 +472,6 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   )}
                 </View>
 
-                {/* XP Reward - TEXTE NOIR sur fond jaune */}
                 <View style={[styles.xpReward, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
                   <Text style={[styles.xpRewardText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
                     {quest.completed ? '✓' : `+${quest.xp}`}
@@ -410,10 +480,10 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
               </View>
             );
           })}
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
 
-        {/* Footer avec badges à débloquer */}
+        {/* Footer */}
         <View style={styles.footer}>
           <View style={styles.badgesPreview}>
             <View style={styles.badgesList}>
@@ -442,13 +512,15 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             </Text>
           </View>
 
-          <View style={styles.seeAllButton}>
+          <TouchableOpacity 
+            style={styles.seeAllButton}
+            onPress={() => router.push('/gamification?tab=defis')}
+          >
             <Text style={styles.seeAllText}>Voir tout</Text>
             <ChevronRight size={16} color="#FFD700" />
-          </View>
+          </TouchableOpacity>
         </View>
 
-        {/* Effet brillance */}
         {completedCount === totalCount && (
           <View style={styles.completedOverlay}>
             <Sparkles size={20} color="#FFD700" />
@@ -456,7 +528,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           </View>
         )}
       </LinearGradient>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -576,9 +648,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
   },
-  questsScrollContainer: {
-    maxHeight: 380, // Hauteur pour ~5 quêtes visibles
+  scrollWrapper: {
+    height: 380,
+    flexDirection: 'row',
     marginBottom: 16,
+  },
+  questsScroll: {
+    flex: 1,
+    paddingLeft: 8,
+  },
+  sideTrackContainer: {
+    width: 20,
+    height: '100%',
+    marginRight: 4,
+    borderRadius: 10,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  sideTrackThumb: {
+    width: 12,
+    height: 50,
+    borderRadius: 6,
   },
   questsList: {
     gap: 10,
