@@ -3,7 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array/>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).health.refresh</string>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER).health.processing</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
