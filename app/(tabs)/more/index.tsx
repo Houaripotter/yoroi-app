@@ -597,45 +597,54 @@ export default function MoreScreen() {
 
   // ... (autres etats) ...
 
-  // Version Tap Logic
+  // Version Tap Logic - 5 taps pour débloquer le menu screenshot secret
   const handleVersionTap = () => {
     const now = Date.now();
     if (now - lastTapTime < 500) {
       const newCount = versionTapCount + 1;
       setVersionTapCount(newCount);
-      
+
+      // Feedback léger à chaque tap
+      if (newCount >= 2 && newCount < 5) {
+        impactAsync(ImpactFeedbackStyle.Light);
+      }
+
       if (newCount === 5) {
         notificationAsync(NotificationFeedbackType.Success);
         setVersionTapCount(0);
-        
-        // Demander le code secret
-        Alert.prompt(
-          'Accès Créateur',
-          'Entrez le code secret pour activer les outils de démonstration :',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            {
-              text: 'Valider',
-              onPress: async (code: any) => {
-                if (code === '2022') {
-                  setCreatorModeActive(true);
-                  await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
-                  await generateScreenshotDemoData();
-                  
-                  showPopup('Mode Activé', 'Mode Germain Del Jarret activé avec succès ! Les données ont été mises à jour.', [{ text: 'Génial', style: 'primary' }]);
-                } else {
-                  Alert.alert('Erreur', 'Code incorrect.');
-                }
-              }
-            }
-          ],
-          'plain-text'
-        );
+
+        // Ouvrir le modal de code secret
+        setSecretCode('');
+        setShowSecretCodeModal(true);
       }
     } else {
       setVersionTapCount(1);
     }
     setLastTapTime(now);
+  };
+
+  // Validation du code secret pour le menu screenshot
+  const handleSecretCodeSubmit = async () => {
+    if (secretCode === '2022') {
+      notificationAsync(NotificationFeedbackType.Success);
+      setScreenshotMenuUnlocked(true);
+      setCreatorModeActive(true);
+      await AsyncStorage.setItem('@yoroi_screenshot_menu_unlocked', 'true');
+      await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+      setShowSecretCodeModal(false);
+      setSecretCode('');
+
+      showPopup(
+        'Menu Débloqué',
+        'Le menu Screenshot est maintenant accessible dans l\'onglet Support. Tu peux accéder à tous les modes de capture.',
+        [{ text: 'Parfait', style: 'primary' }],
+        <Sparkles size={32} color={colors.accent} />
+      );
+    } else {
+      notificationAsync(NotificationFeedbackType.Error);
+      showPopup('Code Incorrect', 'Le code saisi n\'est pas valide.', [{ text: 'Réessayer', style: 'primary' }], <AlertCircle size={32} color="#EF4444" />);
+      setSecretCode('');
+    }
   };
 
   // Mode Competiteur state
@@ -724,6 +733,11 @@ export default function MoreScreen() {
   const [secretGestureDone, setSecretGestureDone] = useState(0); // Geste secret: taper 3x sur le titre
   const [shareButtonVisible, setShareButtonVisible] = useState(true); // Bouton partage flottant
 
+  // Menu Screenshot secret
+  const [screenshotMenuUnlocked, setScreenshotMenuUnlocked] = useState(false);
+  const [showSecretCodeModal, setShowSecretCodeModal] = useState(false);
+  const [secretCode, setSecretCode] = useState('');
+
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
     'f5903f51e341a783e69ffc2d9b335048716f5f040a782a2e1e1e14f8767e8c23',
@@ -731,11 +745,15 @@ export default function MoreScreen() {
     'b1ab1e892617f210425f658cf1d361b5489028c8771b56d845fe1c62c1fbc8b0',
   ];
 
-  // Charger l'état du mode créateur
+  // Charger l'état du mode créateur et du menu screenshot
   useEffect(() => {
     const loadCreatorMode = async () => {
       const mode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
       setCreatorModeActive(mode === 'true');
+
+      // Charger l'état du menu screenshot secret
+      const screenshotMenu = await AsyncStorage.getItem('@yoroi_screenshot_menu_unlocked');
+      setScreenshotMenuUnlocked(screenshotMenu === 'true');
     };
     loadCreatorMode();
   }, []);
@@ -1402,26 +1420,26 @@ export default function MoreScreen() {
           </View>
         )}
 
-          {/* URGENCE NETTOYAGE (Germain Del Jarret) */}
+          {/* MENU CREATEUR */}
           {creatorModeActive && (
             <View style={[styles.sectionContainer, { marginTop: 10 }]}>
               <TouchableOpacity
-                style={[styles.menuItem, { backgroundColor: '#EF444420', borderColor: '#EF4444', borderWidth: 1, borderRadius: 16 }]}
-                onPress={handlePurgeData}
+                style={[styles.menuItem, { backgroundColor: colors.accent + '20', borderColor: colors.accent, borderWidth: 1, borderRadius: 16 }]}
+                onPress={() => router.push('/creator-mode')}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuItemIcon, { backgroundColor: '#EF444430' }]}>
-                  <Trash2 size={20} color="#EF4444" strokeWidth={2.5} />
+                <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '30' }]}>
+                  <Sparkles size={20} color={colors.accent} strokeWidth={2.5} />
                 </View>
                 <View style={styles.menuItemContent}>
-                  <Text style={[styles.menuItemLabel, { color: '#EF4444', fontWeight: '900' }]}>
-                    ⚠️ URGENCE : NETTOYER TOUT
+                  <Text style={[styles.menuItemLabel, { color: colors.accent, fontWeight: '900' }]}>
+                    ✨ MENU CRÉATEUR
                   </Text>
-                  <Text style={[styles.menuItemSublabel, { color: '#EF4444' }]}>
-                    Supprime Germain et ses fausses données
+                  <Text style={[styles.menuItemSublabel, { color: colors.accent }]}>
+                    Outils de screenshots & démo
                   </Text>
                 </View>
-                <ChevronRight size={18} color="#EF4444" />
+                <ChevronRight size={18} color={colors.accent} />
               </TouchableOpacity>
             </View>
           )}
@@ -1669,6 +1687,208 @@ export default function MoreScreen() {
           {renderSection(t('menu.support'), SUPPORT_ITEMS)}
           {renderSection(t('menu.security'), SECURITY_ITEMS)}
 
+          {/* MENU SCREENSHOT SECRET - Visible uniquement si débloqué */}
+          {screenshotMenuUnlocked && (
+            <View style={styles.sectionContainer}>
+              <Text style={[styles.sectionTitle, { color: colors.accent }]}>MODE CAPTURE</Text>
+              <View style={[styles.sectionCard, {
+                backgroundColor: colors.card,
+                borderColor: colors.accent,
+                borderWidth: 1,
+              }]}>
+                {/* Mode Global - Germain Del Jarret */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={async () => {
+                    await generateScreenshotDemoData();
+                    showPopup('Mode Germain Activé', 'Données de démo générées (6 mois de transformation).', [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '20' }]}>
+                    <User size={20} color={colors.accent} strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Germain</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Profil complet avec stats parfaites</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Carnet d'Entraînement */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/training-journal')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#F9731620' }]}>
+                    <BookOpen size={20} color="#F97316" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Carnet d'Entraînement</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Benchmarks, techniques et skills</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Mode Chirurgien - Infirmerie */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/infirmary')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#EF444420' }]}>
+                    <Heart size={20} color="#EF4444" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Chirurgien</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Infirmerie et suivi blessures</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Body Status */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/body-status')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#8B5CF620' }]}>
+                    <Activity size={20} color="#8B5CF6" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Body Status</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>État corporel et récupération</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Lab / Savoir */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/savoir')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#10B98120' }]}>
+                    <FlaskConical size={20} color="#10B981" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mode Lab</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Base de connaissances</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Screenshot Mode (Mock Screen) */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/screenshot-mode')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#3B82F620' }]}>
+                    <Camera size={20} color="#3B82F6" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Mock Screen</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Écran d'accueil figé pour captures</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Menu Créateur Complet */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => router.push('/creator-mode')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#FBBF2420' }]}>
+                    <Sparkles size={20} color="#FBBF24" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Menu Créateur</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Tous les toggles et options</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+
+                <View style={[styles.itemDivider, { backgroundColor: colors.border }]} />
+
+                {/* Reset / Nettoyer */}
+                <TouchableOpacity
+                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  onPress={() => {
+                    showPopup(
+                      'Nettoyer les données',
+                      'Supprimer toutes les données de démo et désactiver le menu capture ?',
+                      [
+                        { text: 'Annuler', style: 'cancel' },
+                        {
+                          text: 'Nettoyer',
+                          style: 'destructive',
+                          onPress: async () => {
+                            await clearScreenshotDemoData();
+                            await AsyncStorage.removeItem('@yoroi_screenshot_menu_unlocked');
+                            await AsyncStorage.removeItem('@yoroi_screenshot_mode');
+                            setScreenshotMenuUnlocked(false);
+                            setCreatorModeActive(false);
+                            showPopup('Nettoyé', 'Données de démo supprimées. Le menu est maintenant masqué.', [{ text: 'OK', style: 'primary' }]);
+                          },
+                        },
+                      ],
+                      <Trash2 size={32} color="#EF4444" />
+                    );
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.menuItemIcon, { backgroundColor: '#EF444420' }]}>
+                    <Trash2 size={20} color="#EF4444" strokeWidth={2} />
+                  </View>
+                  <View style={styles.menuItemContent}>
+                    <Text style={[styles.menuItemLabel, { color: '#EF4444' }]}>Nettoyer & Masquer</Text>
+                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Supprimer les données de démo</Text>
+                  </View>
+                  <ChevronRight size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* MENU CREATEUR - Visible uniquement si activé */}
+          {creatorModeActive && !screenshotMenuUnlocked && (
+            <View style={[styles.sectionContainer, { marginTop: 10 }]}>
+              <TouchableOpacity
+                style={[styles.menuItem, { backgroundColor: colors.accent + '20', borderColor: colors.accent, borderWidth: 1, borderRadius: 16 }]}
+                onPress={() => router.push('/creator-mode')}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '30' }]}>
+                  <Sparkles size={20} color={colors.accent} strokeWidth={2.5} />
+                </View>
+                <View style={styles.menuItemContent}>
+                  <Text style={[styles.menuItemLabel, { color: colors.accent, fontWeight: '900' }]}>
+                    ✨ MENU CRÉATEUR
+                  </Text>
+                  <Text style={[styles.menuItemSublabel, { color: colors.accent }]}>
+                    Outils de screenshots & démo
+                  </Text>
+                </View>
+                <ChevronRight size={18} color={colors.accent} />
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* BIENTÔT DISPONIBLE */}
         <View style={styles.sectionContainer}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('menu.comingSoon')}</Text>
@@ -1727,27 +1947,6 @@ export default function MoreScreen() {
               YOROI Version 2.0
             </Text>
           </TouchableOpacity>
-
-          {/* Mode Créateur activé - BOUTON VISIBLE UNIQUEMENT QUAND ACTIF */}
-          {creatorModeActive && (
-            <View style={{ marginTop: 16, gap: 10 }}>
-              <TouchableOpacity
-                onPress={async () => {
-                  await AsyncStorage.removeItem('@yoroi_screenshot_mode');
-                  setCreatorModeActive(false);
-                  showPopup('Mode Désactivé', 'Les données de démo ont été retirées.', [{ text: 'OK', style: 'primary' }]);
-                }}
-                style={{
-                  backgroundColor: '#EF4444',
-                  paddingVertical: 14,
-                  borderRadius: 12,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Désactiver Mode Germain</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         <View style={{ height: 40 }} />
@@ -2174,6 +2373,78 @@ export default function MoreScreen() {
                   ]}
                 >
                   {t('common.deleteAll')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal - Code Secret Screenshot */}
+      <Modal
+        visible={showSecretCodeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSecretCodeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, maxWidth: 340 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                Accès Mode Capture
+              </Text>
+              <TouchableOpacity onPress={() => setShowSecretCodeModal(false)}>
+                <X size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={[styles.secretCodeIconContainer, { backgroundColor: colors.accent + '15' }]}>
+                <Camera size={40} color={colors.accent} />
+              </View>
+
+              <Text style={[styles.secretCodeTitle, { color: colors.textPrimary }]}>
+                Mode Screenshot
+              </Text>
+              <Text style={[styles.secretCodeSubtitle, { color: colors.textMuted }]}>
+                Entre le code secret pour débloquer les outils de capture et de démonstration.
+              </Text>
+
+              <TextInput
+                style={[
+                  styles.secretCodeInput,
+                  {
+                    backgroundColor: colors.backgroundElevated,
+                    borderColor: colors.border,
+                    color: colors.textPrimary,
+                  },
+                ]}
+                value={secretCode}
+                onChangeText={setSecretCode}
+                placeholder="Code secret"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                maxLength={4}
+                secureTextEntry
+                autoFocus
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.secretCodeButton,
+                  {
+                    backgroundColor: secretCode.length === 4 ? colors.accent : colors.backgroundElevated,
+                    opacity: secretCode.length === 4 ? 1 : 0.5,
+                  },
+                ]}
+                onPress={handleSecretCodeSubmit}
+                disabled={secretCode.length !== 4}
+              >
+                <Text style={[
+                  styles.secretCodeButtonText,
+                  { color: secretCode.length === 4 ? colors.textOnAccent : colors.textMuted },
+                ]}>
+                  Débloquer
                 </Text>
               </TouchableOpacity>
             </View>
@@ -3013,5 +3284,48 @@ const styles = StyleSheet.create({
   modeLabel: {
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  // SECRET CODE MODAL
+  secretCodeIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  secretCodeTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  secretCodeSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  secretCodeInput: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: 8,
+    marginBottom: 20,
+  },
+  secretCodeButton: {
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  secretCodeButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
