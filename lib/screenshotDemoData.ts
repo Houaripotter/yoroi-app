@@ -108,12 +108,10 @@ const generateTrainings = async (clubIds: ClubIds) => {
   let count = 0;
 
   const now = new Date();
-  const startDate = new Date(now.getFullYear(), 0, 1); // 1er Janvier
-  const endDate = now; // Jusqu'à aujourd'hui
+  const days = 60; // 2 mois d'entraînements seulement
+  const startDate = subDays(now, days);
 
-  const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  logger.info(`Génération de l'entraînement intensif pour Germain Del Jarret (${days} jours)`);
+  logger.info(`Génération des entraînements Germain Del Jarret (${days} derniers jours)`);
 
   for (let i = 0; i < days; i++) {
     const date = addDays(startDate, i);

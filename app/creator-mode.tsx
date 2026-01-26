@@ -4,15 +4,20 @@ import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { Header } from '@/components/ui/Header';
 import { useTheme } from '@/lib/ThemeContext';
 import { Card } from '@/components/ui/Card';
-import { 
-  Camera, 
-  Trash2, 
-  BookOpen, 
-  Activity, 
-  User, 
+import {
+  Camera,
+  Trash2,
+  BookOpen,
+  Activity,
+  User,
   Smartphone,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Syringe,
+  BarChart3,
+  Dumbbell,
+  Moon,
+  Heart
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -26,6 +31,8 @@ export default function CreatorModeScreen() {
   
   const [isGlobalScreenshotMode, setIsGlobalScreenshotMode] = useState(false);
   const [isJournalScreenshotMode, setIsJournalScreenshotMode] = useState(false);
+  const [isSurgeonMode, setIsSurgeonMode] = useState(false);
+  const [isMockStatsMode, setIsMockStatsMode] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -35,9 +42,15 @@ export default function CreatorModeScreen() {
     try {
       const globalMode = await AsyncStorage.getItem('@yoroi_screenshot_mode');
       setIsGlobalScreenshotMode(globalMode === 'true');
-      
+
       const journalMode = await AsyncStorage.getItem('@yoroi_journal_screenshot_mode');
       setIsJournalScreenshotMode(journalMode === 'true');
+
+      const surgeonMode = await AsyncStorage.getItem('@yoroi_surgeon_mode');
+      setIsSurgeonMode(surgeonMode === 'true');
+
+      const mockStats = await AsyncStorage.getItem('@yoroi_mock_stats_mode');
+      setIsMockStatsMode(mockStats === 'true');
     } catch (e) {
       logger.error('Error loading creator settings', e);
     }
@@ -84,6 +97,26 @@ export default function CreatorModeScreen() {
   const toggleJournalScreenshotMode = async (value: boolean) => {
     setIsJournalScreenshotMode(value);
     await AsyncStorage.setItem('@yoroi_journal_screenshot_mode', String(value));
+  };
+
+  const toggleSurgeonMode = async (value: boolean) => {
+    setIsSurgeonMode(value);
+    await AsyncStorage.setItem('@yoroi_surgeon_mode', String(value));
+    showPopup(
+      value ? 'Mode Chirurgien Activé' : 'Mode Chirurgien Désactivé',
+      value ? 'Tu peux maintenant manipuler les données de blessures et BodyMap.' : 'Mode normal restauré.',
+      [{ text: 'OK', style: 'primary' }]
+    );
+  };
+
+  const toggleMockStatsMode = async (value: boolean) => {
+    setIsMockStatsMode(value);
+    await AsyncStorage.setItem('@yoroi_mock_stats_mode', String(value));
+    showPopup(
+      value ? 'Stats Mock Activées' : 'Stats Mock Désactivées',
+      value ? 'Les graphiques afficheront des données parfaites.' : 'Retour aux vraies données.',
+      [{ text: 'OK', style: 'primary' }]
+    );
   };
 
   const openJournal = () => {
@@ -160,9 +193,55 @@ export default function CreatorModeScreen() {
           </Card>
         </View>
 
+        {/* MODE CHIRURGIEN */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>BLESSURES & BODYMAP</Text>
+          <Card style={styles.card}>
+            <View style={styles.row}>
+              <View style={[styles.iconBox, { backgroundColor: '#EF444420' }]}>
+                <Syringe size={24} color="#EF4444" />
+              </View>
+              <View style={styles.info}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Mode Chirurgien</Text>
+                <Text style={[styles.sublabel, { color: colors.textMuted }]}>
+                  Manipuler EVA et données blessures
+                </Text>
+              </View>
+              <Switch
+                value={isSurgeonMode}
+                onValueChange={toggleSurgeonMode}
+                trackColor={{ false: colors.border, true: '#EF4444' }}
+              />
+            </View>
+          </Card>
+        </View>
+
+        {/* STATS MOCK */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STATISTIQUES</Text>
+          <Card style={styles.card}>
+            <View style={styles.row}>
+              <View style={[styles.iconBox, { backgroundColor: '#8B5CF620' }]}>
+                <BarChart3 size={24} color="#8B5CF6" />
+              </View>
+              <View style={styles.info}>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Stats Mock</Text>
+                <Text style={[styles.sublabel, { color: colors.textMuted }]}>
+                  Graphiques avec données parfaites
+                </Text>
+              </View>
+              <Switch
+                value={isMockStatsMode}
+                onValueChange={toggleMockStatsMode}
+                trackColor={{ false: colors.border, true: '#8B5CF6' }}
+              />
+            </View>
+          </Card>
+        </View>
+
         {/* OTHER TOOLS */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>AUTRES</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>OUTILS</Text>
           
           <TouchableOpacity 
             style={[styles.menuItem, { backgroundColor: colors.card }]}
@@ -176,15 +255,19 @@ export default function CreatorModeScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.menuItem, { backgroundColor: '#EF444420', marginTop: 10 }]}
             onPress={async () => {
               await clearScreenshotDemoData();
               await AsyncStorage.removeItem('@yoroi_screenshot_mode');
               await AsyncStorage.removeItem('@yoroi_journal_screenshot_mode');
+              await AsyncStorage.removeItem('@yoroi_surgeon_mode');
+              await AsyncStorage.removeItem('@yoroi_mock_stats_mode');
               setIsGlobalScreenshotMode(false);
               setIsJournalScreenshotMode(false);
-              showPopup('Reset', 'Tout est remis à zéro.', [{ text: 'OK', style: 'primary' }]);
+              setIsSurgeonMode(false);
+              setIsMockStatsMode(false);
+              showPopup('Reset', 'Tous les modes sont désactivés.', [{ text: 'OK', style: 'primary' }]);
             }}
           >
              <View style={[styles.iconBox, { backgroundColor: '#EF4444' }]}>
