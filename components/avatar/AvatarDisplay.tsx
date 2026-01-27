@@ -83,6 +83,8 @@ export default function AvatarDisplay({
       setIsLoading(false);
     } catch (error) {
       logger.error('[AvatarDisplay] Erreur chargement avatar:', error);
+      // ✅ FIX: Utiliser l'image par défaut en cas d'erreur
+      setImagePath(require('@/assets/avatars/samurai/samurai_neutral.png'));
       setIsLoading(false);
     }
   };
@@ -113,18 +115,15 @@ export default function AvatarDisplay({
       );
     }
 
-    if (!imagePath) {
-      return (
-        <View style={containerStyle} />
-      );
-    }
+    // ✅ FIX: Utiliser image par défaut si imagePath est null
+    const imageSource = imagePath || require('@/assets/avatars/samurai/samurai_neutral.png');
 
     return (
       <View style={containerStyle}>
         <Image
-          source={imagePath}
+          source={imageSource}
           // Taille réduite à 85% pour voir l'avatar en entier dans le cercle sans couper
-          style={{ width: '85%', height: '85%' }} 
+          style={{ width: '85%', height: '85%' }}
           resizeMode="contain"
         />
       </View>

@@ -57,6 +57,9 @@ const AnimatedAvatar = ({ source, size = 80, children }: AnimatedAvatarProps) =>
     };
   }, []);
 
+  // ✅ FIX: borderRadius dynamique pour cercle parfait
+  const dynamicBorderRadius = size / 2;
+
   return (
     <Animated.View
       style={[
@@ -64,6 +67,7 @@ const AnimatedAvatar = ({ source, size = 80, children }: AnimatedAvatarProps) =>
         {
           width: size,
           height: size,
+          borderRadius: dynamicBorderRadius,
           transform: [{ scale }],
           opacity,
         },
@@ -74,7 +78,7 @@ const AnimatedAvatar = ({ source, size = 80, children }: AnimatedAvatarProps) =>
       ) : source ? (
         <Image
           source={source}
-          style={[styles.avatar, { width: size, height: size }]}
+          style={[styles.avatar, { width: size, height: size, borderRadius: dynamicBorderRadius }]}
         />
       ) : null}
     </Animated.View>
