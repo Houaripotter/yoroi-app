@@ -42,7 +42,9 @@ import {
   Lock,
   CheckCircle2,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Camera,
+  BookOpen
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 
@@ -239,6 +241,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       'daily_protein': '/quick-nutrition',
       'daily_cardio': '/(tabs)/planning',
       'daily_breakfast': '/quick-nutrition',
+      'daily_photo': '/(tabs)/more/photos',
+      'daily_read_article': '/(tabs)/savoir',
       // Weekly
       'weekly_5_weighs': '/add-measurement',
       'weekly_4_trainings': '/(tabs)/planning',
@@ -292,6 +296,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
   const getQuestIcon = (questId: string | undefined) => {
     if (!questId) return Star;
+    if (questId.includes('photo')) return Camera;
+    if (questId.includes('read') || questId.includes('article')) return BookOpen;
     if (questId.includes('hydration')) return Droplets;
     if (questId.includes('sleep')) return Moon;
     if (questId.includes('steps')) return Footprints;
@@ -307,6 +313,8 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
   const getQuestColor = (questId: string | undefined) => {
     if (!questId) return '#FFD700';
+    if (questId.includes('photo')) return '#E879F9'; // Rose/violet pour photo
+    if (questId.includes('read') || questId.includes('article')) return '#22D3EE'; // Cyan pour lecture
     if (questId.includes('hydration')) return '#06B6D4';
     if (questId.includes('sleep')) return '#8B5CF6';
     if (questId.includes('steps')) return '#10B981';

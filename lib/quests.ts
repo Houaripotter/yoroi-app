@@ -16,7 +16,7 @@ import logger from '@/lib/security/logger';
 
 export type QuestPeriod = 'daily' | 'weekly' | 'monthly';
 export type QuestId =
-  // Daily (12) - Toutes complétables manuellement ou auto
+  // Daily (14) - Toutes complétables manuellement ou auto
   | 'daily_weigh'
   | 'daily_hydration'
   | 'daily_training'
@@ -29,6 +29,8 @@ export type QuestId =
   | 'daily_cardio'
   | 'daily_breakfast'
   | 'daily_no_junk'
+  | 'daily_photo'
+  | 'daily_read_article'
   // Weekly (12)
   | 'weekly_5_weighs'
   | 'weekly_4_trainings'
@@ -207,6 +209,24 @@ export const DAILY_QUESTS: Quest[] = [
     description: 'Eviter la malbouffe',
     icon: '🥗',
     xp: 25,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_photo',
+    title: 'Snapshot',
+    description: 'Prendre une photo progres',
+    icon: '📸',
+    xp: 20,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_read_article',
+    title: 'Dormir Moins Bete',
+    description: 'Lire un article dans Savoir',
+    icon: '📚',
+    xp: 15,
     period: 'daily',
     target: 1,
   },
