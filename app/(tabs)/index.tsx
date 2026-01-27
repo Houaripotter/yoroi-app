@@ -418,35 +418,70 @@ export default function HomeScreen() {
   const [calories, setCalories] = useState(0);
 
   // Hydratation functions
+  // ✅ FIX: Charger depuis Apple Health EN PRIORITÉ, puis AsyncStorage en fallback
   const loadHydration = useCallback(async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const [stored, goalStored] = await Promise.all([
-        AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`),
-        AsyncStorage.getItem(HYDRATION_GOAL_KEY),
-      ]);
 
-      // Charger l'objectif (ou utiliser la valeur par défaut)
-      if (goalStored) {
-        const goal = parseFloat(goalStored); // goalStored est déjà en ml
-        setHydrationGoal(goal);
+      // 1. Charger l'objectif depuis AsyncStorage
+      const goalStored = await AsyncStorage.getItem(HYDRATION_GOAL_KEY);
+      const goal = goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL;
+      setHydrationGoal(goal);
+
+      // 2. ✅ PRIORITÉ: Essayer Apple Health d'abord
+      let hydrationValue = 0;
+      let sourceUsed = 'none';
+
+      try {
+        const healthKitData = await HealthConnect.getTodayHydration();
+        if (healthKitData && healthKitData.amount > 0) {
+          hydrationValue = healthKitData.amount; // Déjà en ml
+          sourceUsed = 'HealthKit';
+          logger.info(`[Hydratation] Apple Health: ${hydrationValue}ml`);
+        }
+      } catch (healthKitError) {
+        logger.info('[Hydratation] Apple Health non disponible, fallback AsyncStorage');
       }
 
-      // Charger la valeur actuelle
-      if (stored) {
-        const value = parseInt(stored, 10);
-        setHydration(value);
-        animateWater(value, goalStored ? parseFloat(goalStored) : DEFAULT_HYDRATION_GOAL);
+      // 3. Fallback: AsyncStorage si HealthKit n'a pas de données
+      if (hydrationValue === 0) {
+        const stored = await AsyncStorage.getItem(`${HYDRATION_KEY}_${today}`);
+        if (stored) {
+          hydrationValue = parseInt(stored, 10);
+          sourceUsed = 'AsyncStorage';
+          logger.info(`[Hydratation] AsyncStorage: ${hydrationValue}ml`);
+        }
       }
+
+      // 4. Mettre à jour l'UI
+      if (hydrationValue > 0) {
+        setHydration(hydrationValue);
+        animateWater(hydrationValue, goal);
+      }
+
+      logger.info(`[Hydratation] Source utilisée: ${sourceUsed}, Valeur: ${hydrationValue}ml`);
     } catch (error) {
       logger.error('Erreur hydratation:', error);
     }
   }, []);
 
-  const saveHydration = useCallback(async (value: number) => {
+  // ✅ FIX: Sauvegarder dans AsyncStorage ET Apple Health
+  const saveHydration = useCallback(async (value: number, amountAdded?: number) => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
+
+      // 1. Toujours sauvegarder dans AsyncStorage (backup local)
       await AsyncStorage.setItem(`${HYDRATION_KEY}_${today}`, value.toString());
+
+      // 2. ✅ NOUVEAU: Écrire dans Apple Health si on ajoute de l'eau
+      if (amountAdded && amountAdded > 0) {
+        try {
+          await HealthConnect.writeHydration(amountAdded);
+          logger.info(`[Hydratation] +${amountAdded}ml écrit dans Apple Health`);
+        } catch (healthKitError) {
+          logger.info('[Hydratation] Écriture Apple Health échouée (permissions?)');
+        }
+      }
     } catch (error) {
       logger.error('Erreur sauvegarde hydratation:', error);
     }
@@ -461,11 +496,13 @@ export default function HomeScreen() {
     }).start();
   }, [waterAnim]);
 
+  // ✅ FIX: Écrire aussi dans Apple Health
   const addWater = useCallback((amount: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
     const newValue = Math.max(0, hydration + amount);
     setHydration(newValue);
-    saveHydration(newValue);
+    // Passer le montant ajouté pour l'écrire dans Apple Health
+    saveHydration(newValue, amount > 0 ? amount : undefined);
     animateWater(newValue, hydrationGoal);
   }, [hydration, hydrationGoal, saveHydration, animateWater]);
 

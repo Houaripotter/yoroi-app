@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import logger from '@/lib/security/logger';
 import secureStorage from '@/lib/security/secureStorage';
+import { healthConnect } from '@/lib/healthConnect';
 
 const BODY_COMP_KEY = '@yoroi_body_composition';
 const MEASUREMENTS_KEY = '@yoroi_measurements';
@@ -158,11 +159,71 @@ export const getAllBodyCompositions = async (): Promise<BodyComposition[]> => {
   }
 };
 
+// ✅ FIX: Lire aussi depuis Apple Health et fusionner les données
 export const getLatestBodyComposition = async (): Promise<BodyComposition | null> => {
-  const all = await getAllBodyCompositions();
-  return all.length > 0 ? all[0] : null;
+  try {
+    // 1. Récupérer les données locales (SecureStorage)
+    const all = await getAllBodyCompositions();
+    const localData = all.length > 0 ? all[0] : null;
+
+    // 2. ✅ NOUVEAU: Récupérer les données Apple Health
+    let healthKitData: { bodyFatPercentage?: number; leanBodyMass?: number; date?: string } | null = null;
+    try {
+      healthKitData = await healthConnect.getBodyComposition();
+      if (healthKitData) {
+        logger.info('[BodyComposition] Apple Health data:', healthKitData);
+      }
+    } catch (healthKitError) {
+      logger.info('[BodyComposition] Apple Health non disponible');
+    }
+
+    // 3. Si pas de données locales mais données HealthKit, créer une entrée
+    if (!localData && healthKitData) {
+      return {
+        id: `hk_${Date.now()}`,
+        date: healthKitData.date || new Date().toISOString(),
+        weight: 0, // Non disponible depuis HealthKit directement ici
+        bodyFatPercent: healthKitData.bodyFatPercentage || 0,
+        muscleMass: healthKitData.leanBodyMass || 0,
+        boneMass: 0,
+        waterPercent: 0,
+        visceralFat: 0,
+      };
+    }
+
+    // 4. Si données locales ET HealthKit, fusionner (HealthKit prioritaire si plus récent)
+    if (localData && healthKitData) {
+      const localDate = new Date(localData.date).getTime();
+      const healthKitDate = healthKitData.date ? new Date(healthKitData.date).getTime() : 0;
+
+      // HealthKit est plus récent ? Utiliser ses valeurs
+      if (healthKitDate > localDate) {
+        logger.info('[BodyComposition] Utilisation données Apple Health (plus récentes)');
+        return {
+          ...localData,
+          bodyFatPercent: healthKitData.bodyFatPercentage ?? localData.bodyFatPercent,
+          muscleMass: healthKitData.leanBodyMass ?? localData.muscleMass,
+          date: healthKitData.date || localData.date,
+        };
+      }
+
+      // Sinon, enrichir les données locales avec HealthKit si valeurs manquantes
+      return {
+        ...localData,
+        bodyFatPercent: localData.bodyFatPercent || healthKitData.bodyFatPercentage || 0,
+        muscleMass: localData.muscleMass || healthKitData.leanBodyMass || 0,
+      };
+    }
+
+    return localData;
+  } catch (error) {
+    logger.error('[BodyComposition] Erreur:', error);
+    const all = await getAllBodyCompositions();
+    return all.length > 0 ? all[0] : null;
+  }
 };
 
+// ✅ FIX: Écrire aussi dans Apple Health
 export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Promise<BodyComposition> => {
   try {
     const all = await getAllBodyCompositions();
@@ -172,6 +233,17 @@ export const addBodyComposition = async (data: Omit<BodyComposition, 'id'>): Pro
     };
     all.unshift(newEntry);
     await secureStorage.setItem(BODY_COMP_KEY, all);
+
+    // ✅ NOUVEAU: Écrire dans Apple Health
+    if (data.bodyFatPercent && data.bodyFatPercent > 0) {
+      try {
+        await healthConnect.writeBodyFat(data.bodyFatPercent);
+        logger.info(`[BodyComposition] Body fat ${data.bodyFatPercent}% écrit dans Apple Health`);
+      } catch (healthKitError) {
+        logger.info('[BodyComposition] Écriture Apple Health échouée (permissions?)');
+      }
+    }
+
     return newEntry;
   } catch (error) {
     logger.error('Error adding body composition:', error);
