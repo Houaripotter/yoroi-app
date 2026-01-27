@@ -274,6 +274,7 @@ export default function DojoScreen() {
   const [photosCount, setPhotosCount] = useState(0);
   const [hydrationDays, setHydrationDays] = useState(0);
   const [goalReached, setGoalReached] = useState(false);
+  const [trainedToday, setTrainedToday] = useState(false);
 
   // Tab initial depuis les params URL (defis quand on vient de QuestsCard)
   const initialTab = (tab === 'defis' || tab === 'badges' || tab === 'rangs' || tab === 'historique') ? tab : 'rangs';
@@ -346,6 +347,11 @@ export default function DojoScreen() {
       setAchievementsHistory(history);
       setTodayAchievements(today);
 
+      // Calculer si entraînement fait aujourd'hui
+      const todayDate = new Date().toISOString().split('T')[0];
+      const hasTodayTraining = trainings.some((t: any) => t.date === todayDate);
+      setTrainedToday(hasTodayTraining);
+
       if (profile && weights.length > 0) {
         const currentWeight = weights?.[0]?.weight || 75;
         const targetWeight = profile.target_weight;
@@ -384,7 +390,7 @@ export default function DojoScreen() {
     hydrationDays,
     goalReached,
     // Défis
-    trainedToday: false, // TODO: Calculer si entraînement fait aujourd'hui
+    trainedToday,
     weeklyWorkouts: Math.min(trainingsCount, 4), // Approximation
     monthlyWorkouts: Math.min(trainingsCount, 20), // Approximation
   };

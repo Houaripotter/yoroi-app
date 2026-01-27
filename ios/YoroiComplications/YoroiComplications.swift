@@ -13,7 +13,7 @@ import SwiftUI
 class YoroiDataStore {
     static let shared = YoroiDataStore()
 
-    private let userDefaults = UserDefaults(suiteName: "group.com.houari.yoroi")
+    private let userDefaults = UserDefaults(suiteName: "group.com.yoroi.app")
 
     var streak: Int {
         userDefaults?.integer(forKey: "streak") ?? 0

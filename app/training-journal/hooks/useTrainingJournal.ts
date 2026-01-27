@@ -213,11 +213,25 @@ export function useTrainingJournal(): UseTrainingJournalReturn {
 
       setBenchmarks(benchmarksData);
       setSkills(skillsData);
+
+      // Calculer les drills hebdomadaires/mensuels basé sur les skills récemment actifs
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const weeklyDrills = skillsData
+        .filter(s => new Date(s.updatedAt) >= oneWeekAgo)
+        .reduce((sum, s) => sum + Math.min(s.drillCount, 10), 0); // Cap à 10 par skill pour estimation
+
+      const monthlyDrills = skillsData
+        .filter(s => new Date(s.updatedAt) >= oneMonthAgo)
+        .reduce((sum, s) => sum + s.drillCount, 0);
+
       setStats({
         ...statsData,
         totalSkills: statsData.totalSkills,
-        weeklyDrills: 0, // TODO: Calculate from date filtering
-        monthlyDrills: 0, // TODO: Calculate from date filtering
+        weeklyDrills,
+        monthlyDrills,
       });
       setTrashBenchmarks(trashBenchmarksData);
       setTrashSkills(trashSkillsData);

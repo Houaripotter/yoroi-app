@@ -16,6 +16,7 @@ import {
   Image,
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
+import { APP_CONFIG } from '@/lib/appConfig';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,17 +108,14 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
         await requestReview();
       } else {
         // Fallback vers le store
-        const storeUrl = Platform.select({
-          ios: 'https://apps.apple.com/app/idXXXXXXXXXX', // Remplacer par ton ID
-          android: 'https://play.google.com/store/apps/details?id=com.yoroi.app', // Remplacer par ton ID
-        });
+        const storeUrl = APP_CONFIG.getReviewUrl();
         if (storeUrl) {
           await safeOpenURL(storeUrl);
         }
       }
       onRated();
     } catch (error) {
-      console.log('Error requesting review:', error);
+      // Silently fail - review request is not critical
     }
 
     onClose();

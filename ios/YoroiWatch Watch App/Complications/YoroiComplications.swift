@@ -9,7 +9,7 @@ import SwiftUI
 // MARK: - TIMELINE PROVIDER (Générique)
 struct YoroiTimelineProvider: TimelineProvider {
     // Clé pour accéder aux données partagées
-    let suiteName = "group.com.houari.yoroi"
+    let suiteName = "group.com.yoroi.app"
     
     func placeholder(in context: Context) -> YoroiEntry {
         YoroiEntry(date: Date(), timerActive: false, timerDuration: 0, lastRecord: "Bench Press: 100kg", waterLevel: 1500, rank: "Samouraï")

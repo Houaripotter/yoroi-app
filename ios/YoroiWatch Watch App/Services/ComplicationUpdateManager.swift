@@ -9,7 +9,7 @@ import WidgetKit
 class ComplicationUpdateManager {
     static let shared = ComplicationUpdateManager()
 
-    private let defaults = UserDefaults(suiteName: "group.com.houari.yoroi")
+    private let defaults = UserDefaults(suiteName: "group.com.yoroi.app")
 
     private init() {}
 
