@@ -419,6 +419,15 @@ const getHealthItems = (t: TranslateFunction): MenuItem[] => [
     iconColor: '#10B981',
     iconBg: '#10B98120',
   },
+  {
+    id: 'watch-debug',
+    label: 'Debug Apple Watch',
+    sublabel: 'Tester la sync iPhone-Watch',
+    Icon: Watch,
+    route: '/watch-debug',
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
+  },
 ];
 
 

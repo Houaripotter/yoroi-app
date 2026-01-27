@@ -93,6 +93,7 @@ import { BatteryReadyPopup } from '@/components/BatteryReadyPopup';
 import { PerformanceRadar } from '@/components/PerformanceRadar';
 import { HealthspanChart } from '@/components/HealthspanChart';
 import { HydrationCard2 } from '@/components/cards/HydrationCard2';
+import { WatchSyncService } from '@/lib/watchSyncService';
 import { WeightLottieCard } from '@/components/cards/WeightLottieCard';
 import { WeightFullCard } from '@/components/cards/WeightFullCard';
 import { SleepLottieCard } from '@/components/cards/SleepLottieCard';
@@ -496,7 +497,7 @@ export default function HomeScreen() {
     }).start();
   }, [waterAnim]);
 
-  // ✅ FIX: Écrire aussi dans Apple Health
+  // ✅ FIX: Écrire dans Apple Health ET sync vers Apple Watch
   const addWater = useCallback((amount: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
     const newValue = Math.max(0, hydration + amount);
@@ -504,6 +505,11 @@ export default function HomeScreen() {
     // Passer le montant ajouté pour l'écrire dans Apple Health
     saveHydration(newValue, amount > 0 ? amount : undefined);
     animateWater(newValue, hydrationGoal);
+
+    // ✅ NOUVEAU: Sync vers Apple Watch
+    WatchSyncService.syncHydration(newValue, hydrationGoal).catch(() => {
+      // Silencieux si Watch non disponible
+    });
   }, [hydration, hydrationGoal, saveHydration, animateWater]);
 
   // Protection navigation anti-spam
@@ -731,6 +737,22 @@ export default function HomeScreen() {
       } catch {
         setReadinessScore(0);
       }
+
+      // ✅ NOUVEAU: Sync initiale vers Apple Watch (en arrière-plan)
+      WatchSyncService.initialize().then(() => {
+        // Sync les données principales vers la Watch
+        WatchSyncService.syncAllData({
+          userName: profileData?.name,
+          weight: weight?.weight,
+          streak: streakDays,
+          level: getLevel(history, allTrainings).level,
+          rank: getCurrentRank(streakDays)?.name,
+        }).catch(() => {
+          // Silencieux si Watch non disponible
+        });
+      }).catch(() => {
+        // Module Watch non disponible
+      });
     } catch (error) {
       logger.error('Erreur:', error);
     } finally {
