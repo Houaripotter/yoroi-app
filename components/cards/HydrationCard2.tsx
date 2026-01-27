@@ -31,7 +31,9 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
   const percentage = goalMl > 0 ? Math.min((currentMl / goalMl) * 100, 100) : 0;
   // Hauteur de la bouteille en pixels (doit correspondre au style bottleBody)
   const BOTTLE_HEIGHT = 75;
-  const waterHeight = (percentage / 100) * BOTTLE_HEIGHT;
+  // ✅ FIX: Hauteur minimale de 3px si on a de l'eau, pour toujours voir quelque chose
+  const rawWaterHeight = (percentage / 100) * BOTTLE_HEIGHT;
+  const waterHeight = currentMl > 0 ? Math.max(3, rawWaterHeight) : 0;
   logger.info('💧 HYDRATION V2 RENDER:', { currentMl, goalMl, goalInLiters, percentage, waterHeight });
   const goalReached = goalMl > 0 && currentMl >= goalMl;
 
@@ -69,18 +71,20 @@ export const HydrationCard2 = React.memo<HydrationCard2Props>(({
     logger.info('💧 PROPS CHANGED:', { currentMl, goalMl, percentage, waterHeight });
   }, [currentMl, goalMl]);
 
-  // Animer la hauteur de l'eau quand currentMl change
+  // ✅ FIX: Animer la hauteur de l'eau quand currentMl change
+  // Force une animation même pour les petites valeurs
   useEffect(() => {
-    logger.info(`💧 ANIMATING WATER HEIGHT to: ${waterHeight} from currentMl: ${currentMl}`);
-    Animated.spring(waterHeightAnim, {
+    logger.info(`💧 ANIMATING WATER HEIGHT to: ${waterHeight} from currentMl: ${currentMl}, goalMl: ${goalMl}`);
+
+    // Utiliser timing pour des animations plus fiables
+    Animated.timing(waterHeightAnim, {
       toValue: waterHeight,
-      tension: 40,
-      friction: 8,
+      duration: 500,
       useNativeDriver: false, // REQUIS: anime 'height' (layout property non supportée par native driver)
     }).start(() => {
-      logger.info('💧 ANIMATION COMPLETED');
+      logger.info(`💧 ANIMATION COMPLETED - waterHeight: ${waterHeight}px`);
     });
-  }, [currentMl, goalMl]);
+  }, [currentMl, goalMl, waterHeight]);
 
   // Détecter quand l'objectif est atteint
   useEffect(() => {
