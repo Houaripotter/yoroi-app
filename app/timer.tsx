@@ -37,6 +37,7 @@ import { soundManager } from '@/lib/sounds';
 import { RepsWeightModal } from '@/components/RepsWeightModal';
 import { WorkoutSummaryModal } from '@/components/WorkoutSummaryModal';
 import { RPEModal } from '@/components/RPEModal';
+import { TimerAlarmOverlay } from '@/components/TimerAlarmOverlay';
 import { roninModeService, RONIN_THEME } from '@/lib/roninMode';
 import { saveTrainingLoad } from '@/lib/trainingLoadService';
 import { useLiveActivity } from '@/lib/hooks/useLiveActivity';
@@ -233,6 +234,7 @@ export default function TimerScreen() {
   const [timeRemaining, setTimeRemaining] = useState(90);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showRPEModal, setShowRPEModal] = useState(false);
+  const [showAlarmOverlay, setShowAlarmOverlay] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null);
 
   // Refs
@@ -248,7 +250,7 @@ export default function TimerScreen() {
     };
   }, []);
 
-  // Desactiver keep-awake quand le timer se termine et afficher summary
+  // Desactiver keep-awake quand le timer se termine et afficher alarm overlay
   useEffect(() => {
     if (timerState === 'finished') {
       deactivateKeepAwake();
@@ -256,12 +258,19 @@ export default function TimerScreen() {
       if (isIslandAvailable) {
         stopActivity().catch(e => logger.error('LiveActivity Stop Error:', e));
       }
-      // Afficher le summary après 1.5s (laisser le son victory jouer)
-      setTimeout(() => {
-        setShowSummaryModal(true);
-      }, 1500);
+      // Afficher l'overlay alarme plein écran
+      setShowAlarmOverlay(true);
     }
   }, [timerState, isIslandAvailable]);
+
+  // Handler pour fermer l'alarme et afficher le summary
+  const handleDismissAlarm = useCallback(() => {
+    setShowAlarmOverlay(false);
+    // Afficher le summary après fermeture de l'alarme
+    setTimeout(() => {
+      setShowSummaryModal(true);
+    }, 300);
+  }, []);
 
   // Enregistrer le temps de début du workout
   useEffect(() => {
@@ -1816,6 +1825,14 @@ export default function TimerScreen() {
         durationMinutes={getWorkoutDurationMinutes()}
         onClose={handleRPESkip}
         onSubmit={handleRPESubmit}
+      />
+
+      {/* Timer Alarm Overlay - Full Screen Alert */}
+      <TimerAlarmOverlay
+        visible={showAlarmOverlay}
+        onDismiss={handleDismissAlarm}
+        message={mode === 'musculation' ? 'REPOS TERMINÉ' : 'TIMER TERMINÉ'}
+        subMessage={mode === 'musculation' ? 'Prochaine série !' : 'Excellent travail !'}
       />
     </View>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTrainings, getWeights, Training } from '@/lib/database';
+import { getClubLogoSource } from '@/lib/sports';
 import logger from '@/lib/security/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -10,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface ClubTrainingCount {
   clubId?: number;
   clubName: string;
-  clubLogo?: string;
+  clubLogo?: any;  // Image source (result of getClubLogoSource)
   clubColor?: string;
   sport: string;
   count: number;
@@ -257,7 +258,7 @@ export const useMonthStats = (
           clubCountsMap.set(key, {
             clubId: t.club_id,
             clubName: t.club_name || t.sport,
-            clubLogo: t.club_logo,
+            clubLogo: t.club_logo ? getClubLogoSource(t.club_logo) : null,
             clubColor: t.club_color,
             sport: t.sport,
             count: 1,

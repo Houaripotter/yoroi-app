@@ -15,13 +15,13 @@ import type { BenchmarkCategory, BenchmarkUnit, SkillCategory, SkillStatus } fro
 // ============================================
 export const DEMO_PROFILES = {
   germain: {
-    name: 'Germain Del Jarret',
+    name: 'Germain',
     height_cm: 182,
-    start_weight: 98.5,
-    target_weight: 76.0,
+    start_weight: 115.0,
+    target_weight: 83.0,
     sport: 'mma',
     mode: 'competitor',
-    description: 'Transformation MMA - Fighter',
+    description: 'Transformation 1 an - Fighter',
   },
   thomas: {
     name: 'Thomas Silva',
@@ -82,37 +82,77 @@ export const setActiveDemoProfile = (profileKey: DemoProfileKey) => {
 };
 
 // ============================================
-// GÉNÉRATION DES PESÉES (6 mois) - TRANSFORMATION EXTRÊME!
+// GÉNÉRATION DES PESÉES (1 an) - TRANSFORMATION RÉALISTE GERMAIN
 // ============================================
 const generateWeights = () => {
   const weights = [];
-  const days = 180; // 6 MOIS DE DONNÉES - SANS TROU!
-  const startWeight = 98.5; 
-  const endWeight = 76.2; 
-  const totalLoss = startWeight - endWeight;
 
-  for (let i = 0; i <= days; i++) {
-    const date = subDays(new Date(), days - i);
+  // Utiliser le profil actif
+  const startWeight = DEMO_PROFILE.start_weight;
+  const targetWeight = DEMO_PROFILE.target_weight;
+  const totalLoss = startWeight - targetWeight;
 
-    // Courbe de perte de poids constante et sans trou
-    const progress = i / days;
-    // Ajout d'une courbe sinus pour des variations réalistes mais sans trou
-    const baseWeight = startWeight - (totalLoss * progress);
-    const variation = (Math.sin(i * 0.2) * 0.5) + (Math.cos(i * 0.1) * 0.3);
-    const weight = baseWeight + variation;
+  // Date de début: 1er janvier 2025
+  const startDate = new Date('2025-01-01');
+  const today = new Date();
+  const totalDays = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    // Composition corporelle SANS TROU
-    weights.push({
-      date: format(date, 'yyyy-MM-dd'),
-      weight: Math.round(weight * 10) / 10,
-      bodyFat: Math.round((28 - (progress * 13.5)) * 10) / 10, // 28% → 14.5%
-      muscleMass: Math.round((38 + (progress * 6)) * 10) / 10, // 38% → 44%
-      water: Math.round((52 + (progress * 8)) * 10) / 10,     // 52% → 60%
-      boneMass: Math.round((3.1 + (progress * 0.4)) * 10) / 10,
-      visceralFat: Math.round((14 - (progress * 8))),
-      bmr: Math.round(1750 + (progress * 300)),
-      metabolicAge: Math.round(38 - (progress * 12)),
-    });
+  // Générer des pesées espacées de façon réaliste (pas tous les jours!)
+  // En moyenne 3-4 pesées par semaine
+  let lastWeightDate = startDate;
+  let currentWeight = startWeight;
+
+  for (let day = 0; day <= totalDays; day++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(currentDate.getDate() + day);
+
+    // Espacer les pesées: 2-4 jours entre chaque
+    const daysSinceLast = Math.floor((currentDate.getTime() - lastWeightDate.getTime()) / (1000 * 60 * 60 * 24));
+    const shouldWeigh = daysSinceLast >= 2 && (daysSinceLast >= 4 || Math.random() > 0.4);
+
+    if (shouldWeigh || day === 0 || day === totalDays) {
+      const progress = day / Math.max(365, totalDays); // Progression sur 1 an
+
+      // Courbe de perte réaliste avec phases
+      let baseWeight;
+      if (progress < 0.15) {
+        // Phase rapide début (motivation haute) - perte de ~1kg/semaine
+        baseWeight = startWeight - (totalLoss * progress * 1.5);
+      } else if (progress < 0.5) {
+        // Phase stable - perte constante ~0.7kg/semaine
+        baseWeight = startWeight - (totalLoss * 0.225) - (totalLoss * (progress - 0.15) * 0.9);
+      } else if (progress < 0.7) {
+        // Petit plateau - perte ralentie
+        baseWeight = startWeight - (totalLoss * 0.54) - (totalLoss * (progress - 0.5) * 0.5);
+      } else {
+        // Phase finale - perte modérée jusqu'à objectif
+        baseWeight = startWeight - (totalLoss * 0.64) - (totalLoss * (progress - 0.7) * 1.2);
+      }
+
+      // Variations naturelles (fluctuations eau, digestion, etc.)
+      const variation = (Math.sin(day * 0.3) * 0.6) + (Math.cos(day * 0.15) * 0.4) + (Math.random() - 0.5) * 0.4;
+      currentWeight = Math.max(baseWeight + variation, targetWeight);
+
+      // Progression composition corporelle
+      const bodyFatStart = 32;
+      const bodyFatEnd = 16;
+      const muscleStart = 35;
+      const muscleEnd = 44;
+
+      weights.push({
+        date: format(currentDate, 'yyyy-MM-dd'),
+        weight: Math.round(currentWeight * 10) / 10,
+        bodyFat: Math.round((bodyFatStart - (progress * (bodyFatStart - bodyFatEnd))) * 10) / 10,
+        muscleMass: Math.round((muscleStart + (progress * (muscleEnd - muscleStart))) * 10) / 10,
+        water: Math.round((50 + (progress * 10)) * 10) / 10,
+        boneMass: Math.round((3.0 + (progress * 0.5)) * 10) / 10,
+        visceralFat: Math.round(16 - (progress * 9)),
+        bmr: Math.round(1650 + (progress * 350)),
+        metabolicAge: Math.round(42 - (progress * 15)),
+      });
+
+      lastWeightDate = currentDate;
+    }
   }
 
   return weights;
@@ -1821,13 +1861,48 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
       [DEMO_PROFILE.name, DEMO_PROFILE.height_cm, DEMO_PROFILE.start_weight, DEMO_PROFILE.target_weight, startDate, 'homme']
     );
     
-    // Synchroniser avec les paramètres utilisateur globaux
+    // Synchroniser avec les paramètres utilisateur globaux avec emploi du temps
+    const weeklyRoutine = {
+      'Lundi': [
+        { time: '06:30', activity: 'Cardio à jeun (30min)' },
+        { time: '12:00', activity: 'Musculation - Pecs/Triceps' },
+        { time: '19:00', activity: 'MMA - Sparring' },
+      ],
+      'Mardi': [
+        { time: '07:00', activity: 'Course à pied (8km)' },
+        { time: '18:30', activity: 'JJB - Technique' },
+      ],
+      'Mercredi': [
+        { time: '06:30', activity: 'HIIT - Circuit' },
+        { time: '12:00', activity: 'Musculation - Dos/Biceps' },
+        { time: '20:00', activity: 'Boxe - Sac' },
+      ],
+      'Jeudi': [
+        { time: '07:00', activity: 'Natation (1h)' },
+        { time: '19:00', activity: 'MMA - Wrestling' },
+      ],
+      'Vendredi': [
+        { time: '06:30', activity: 'Cardio - Vélo' },
+        { time: '12:00', activity: 'Musculation - Jambes' },
+        { time: '18:30', activity: 'JJB - Roulades' },
+      ],
+      'Samedi': [
+        { time: '09:00', activity: 'MMA - Sparring complet' },
+        { time: '15:00', activity: 'Récupération - Stretching' },
+      ],
+      'Dimanche': [
+        { time: '10:00', activity: 'Récupération active - Marche' },
+        { time: '18:00', activity: 'Mobilité & Yoga' },
+      ],
+    };
+
     await AsyncStorage.setItem('@yoroi_user_settings', JSON.stringify({
       username: DEMO_PROFILE.name,
       gender: 'male',
       height: DEMO_PROFILE.height_cm,
       targetWeight: DEMO_PROFILE.target_weight,
       onboardingCompleted: true,
+      weekly_routine: weeklyRoutine,
     }));
 
     logger.info(`Profil créé: ${DEMO_PROFILE.name}`);

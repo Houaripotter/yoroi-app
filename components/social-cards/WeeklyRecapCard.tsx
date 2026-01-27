@@ -81,8 +81,8 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
 
             <View style={styles.photoHeader}>
 
-              {/* PHOTO PROFIL (GAUCHE) + NOM */}
-              <View style={{ alignItems: 'center', gap: 4 }}>
+              {/* PHOTO PROFIL (GAUCHE) + NOM - SYMMETRIC WIDTH 80px */}
+              <View style={{ width: 80, alignItems: 'center', gap: 4 }}>
                 <View style={styles.profileContainer}>
                   {profileSource ? (
                     <Image source={profileSource} style={styles.photoImage} />
@@ -94,21 +94,21 @@ export const WeeklyRecapCard = React.memo(React.forwardRef<View, WeeklyRecapCard
                 </View>
                 {userName && (
                   keepPhotoClear ? (
-                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                      <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' }}>
+                    <View style={{ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, maxWidth: 75 }}>
+                      <Text style={{ color: GOLD_COLOR, fontSize: 9, fontWeight: '900', textAlign: 'center' }} numberOfLines={2}>
                         {userName.toUpperCase()}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ color: GOLD_COLOR, fontSize: 10, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>
+                    <Text style={{ color: GOLD_COLOR, fontSize: 9, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2, textAlign: 'center', maxWidth: 75 }} numberOfLines={2}>
                       {userName.toUpperCase()}
                     </Text>
                   )
                 )}
               </View>
 
-              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU */}
-              <View style={styles.avatarContainer}>
+              {/* AVATAR YOROI (DROITE) + RANG + NIVEAU - SYMMETRIC WIDTH 80px */}
+              <View style={[styles.avatarContainer, { width: 80 }]}>
                 {userAvatar && (
                   <View style={styles.avatarCircle}>
                     <Image source={avatarSource} style={styles.photoImage} resizeMode="contain" />
@@ -265,6 +265,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: 4,
   },
   avatarCircle: {

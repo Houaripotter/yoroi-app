@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Modal,
   View,
@@ -11,38 +11,81 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { X, Plus, Search } from 'lucide-react-native';
+import { X, Plus, Search, Dumbbell } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { Exercise } from '@/lib/database';
-import { EXERCISES, MUSCLE_GROUPS, getAllMuscleGroups } from '@/lib/exercises';
+import { EXERCISE_LIBRARY, ExerciseDefinition, getExerciseCount } from '@/constants/exerciseLibrary';
 
 interface ExercisePickerModalProps {
   visible: boolean;
   onClose: () => void;
   onAddExercise: (exercise: Exercise) => void;
+  sport?: string; // Pour filtrer par sport si besoin
 }
 
-export function ExercisePickerModal({ visible, onClose, onAddExercise }: ExercisePickerModalProps) {
+// Mapping des catégories vers des labels lisibles
+const CATEGORY_LABELS: Record<string, string> = {
+  musculation: 'Musculation',
+  cardio: 'Cardio',
+  jjb: 'JJB',
+  mma: 'MMA',
+  boxe: 'Boxe',
+  judo: 'Judo',
+  muay_thai: 'Muay Thai',
+  karate: 'Karaté',
+  lutte: 'Lutte',
+  crossfit: 'CrossFit',
+  running: 'Running',
+  natation: 'Natation',
+  velo: 'Vélo',
+  yoga: 'Yoga',
+  pilates: 'Pilates',
+};
+
+// Obtenir toutes les catégories uniques
+const getAllCategories = (): { id: string; name: string }[] => {
+  const categories = new Set<string>();
+  EXERCISE_LIBRARY.forEach(ex => categories.add(ex.category));
+  return Array.from(categories).map(cat => ({
+    id: cat,
+    name: CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1),
+  }));
+};
+
+// Obtenir tous les muscles/groupes uniques pour une catégorie
+const getMusclesForCategory = (category: string | null): { id: string; name: string }[] => {
+  const muscles = new Set<string>();
+  EXERCISE_LIBRARY.forEach(ex => {
+    if (!category || ex.category === category) {
+      if (ex.muscle) muscles.add(ex.muscle);
+    }
+  });
+  return Array.from(muscles).map(m => ({ id: m, name: m }));
+};
+
+export function ExercisePickerModal({ visible, onClose, onAddExercise, sport }: ExercisePickerModalProps) {
   const { colors } = useTheme();
-  const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
-  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseDefinition | null>(null);
   const [sets, setSets] = useState('3');
   const [reps, setReps] = useState('10');
   const [weight, setWeight] = useState('0');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const exerciseCount = getExerciseCount();
+  const categories = useMemo(() => getAllCategories(), []);
+  const muscles = useMemo(() => getMusclesForCategory(selectedCategory), [selectedCategory]);
+
   const handleAdd = () => {
     if (!selectedExercise) return;
 
-    const exercise = EXERCISES.find(e => e.id === selectedExercise);
-    if (!exercise) return;
-
     onAddExercise({
-      name: exercise.name,
+      name: selectedExercise.name,
       sets: parseInt(sets) || 0,
       reps: parseInt(reps) || 0,
       weight: parseFloat(weight) || 0,
-      muscle_group: exercise.muscle_group,
+      muscle_group: selectedExercise.muscle || selectedExercise.category,
     });
 
     // Reset form
@@ -55,14 +98,22 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
   };
 
   // Filter exercises
-  const filteredExercises = EXERCISES.filter(exercise => {
-    const matchesSearch = searchQuery === '' ||
-      exercise.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMuscleGroup = !selectedMuscleGroup || exercise.muscle_group === selectedMuscleGroup;
-    return matchesSearch && matchesMuscleGroup;
-  });
+  const filteredExercises = useMemo(() => {
+    return EXERCISE_LIBRARY.filter(exercise => {
+      const matchesSearch = searchQuery === '' ||
+        exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (exercise.muscle && exercise.muscle.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesCategory = !selectedCategory || exercise.category === selectedCategory;
+      const matchesMuscle = !selectedMuscle || exercise.muscle === selectedMuscle;
+      return matchesSearch && matchesCategory && matchesMuscle;
+    }).slice(0, 100); // Limiter à 100 résultats pour la performance
+  }, [searchQuery, selectedCategory, selectedMuscle]);
 
-  const muscleGroups = getAllMuscleGroups();
+  const resetFilters = () => {
+    setSelectedCategory(null);
+    setSelectedMuscle(null);
+    setSearchQuery('');
+  };
 
   return (
     <Modal
@@ -82,9 +133,17 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
           >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
-              Ajouter un exercice
-            </Text>
+            <View>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>
+                Ajouter un exercice
+              </Text>
+              <View style={styles.countBadge}>
+                <Dumbbell size={12} color={colors.gold} />
+                <Text style={[styles.countText, { color: colors.textMuted }]}>
+                  {exerciseCount} exercices disponibles
+                </Text>
+              </View>
+            </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -95,82 +154,165 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
             <Search size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.textPrimary }]}
-              placeholder="Rechercher un exercice..."
+              placeholder="Rechercher parmi 1000+ exercices..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoCorrect={false}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
 
-          {/* Muscle groups filter */}
+          {/* Category filter */}
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>CATÉGORIE</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.muscleGroupsScroll}
-            contentContainerStyle={styles.muscleGroupsContent}
+            style={styles.filtersScroll}
+            contentContainerStyle={styles.filtersContent}
           >
             <TouchableOpacity
               style={[
-                styles.muscleGroupChip,
-                { backgroundColor: !selectedMuscleGroup ? colors.gold : colors.background, borderColor: colors.border },
+                styles.filterChip,
+                { backgroundColor: !selectedCategory ? colors.gold : colors.background, borderColor: colors.border },
               ]}
-              onPress={() => setSelectedMuscleGroup(null)}
+              onPress={() => { setSelectedCategory(null); setSelectedMuscle(null); }}
             >
-              <Text style={[styles.muscleGroupText, { color: !selectedMuscleGroup ? '#FFF' : colors.textPrimary }]}>
+              <Text style={[styles.filterChipText, { color: !selectedCategory ? '#FFF' : colors.textPrimary }]}>
                 Tous
               </Text>
             </TouchableOpacity>
-            {muscleGroups.map((group) => (
+            {categories.map((cat) => (
               <TouchableOpacity
-                key={group.id}
+                key={cat.id}
                 style={[
-                  styles.muscleGroupChip,
+                  styles.filterChip,
                   {
-                    backgroundColor: selectedMuscleGroup === group.id ? colors.gold : colors.background,
+                    backgroundColor: selectedCategory === cat.id ? colors.gold : colors.background,
                     borderColor: colors.border,
                   },
                 ]}
-                onPress={() => setSelectedMuscleGroup(group.id)}
+                onPress={() => { setSelectedCategory(cat.id); setSelectedMuscle(null); }}
               >
                 <Text
                   style={[
-                    styles.muscleGroupText,
-                    { color: selectedMuscleGroup === group.id ? '#FFF' : colors.textPrimary },
+                    styles.filterChipText,
+                    { color: selectedCategory === cat.id ? '#FFF' : colors.textPrimary },
                   ]}
                 >
-                  {group.name}
+                  {cat.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
+          {/* Muscle filter (only if category selected) */}
+          {selectedCategory && muscles.length > 0 && (
+            <>
+              <Text style={[styles.filterLabel, { color: colors.textMuted }]}>MUSCLE / GROUPE</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.filtersScroll}
+                contentContainerStyle={styles.filtersContent}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: !selectedMuscle ? colors.accent : colors.background, borderColor: colors.border },
+                  ]}
+                  onPress={() => setSelectedMuscle(null)}
+                >
+                  <Text style={[styles.filterChipText, { color: !selectedMuscle ? '#FFF' : colors.textPrimary }]}>
+                    Tous
+                  </Text>
+                </TouchableOpacity>
+                {muscles.map((muscle) => (
+                  <TouchableOpacity
+                    key={muscle.id}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: selectedMuscle === muscle.id ? colors.accent : colors.background,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedMuscle(muscle.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        { color: selectedMuscle === muscle.id ? '#FFF' : colors.textPrimary },
+                      ]}
+                    >
+                      {muscle.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          )}
+
+          {/* Results count */}
+          <View style={styles.resultsHeader}>
+            <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>
+              {filteredExercises.length === 100 ? '100+' : filteredExercises.length} résultat{filteredExercises.length !== 1 ? 's' : ''}
+            </Text>
+            {(selectedCategory || selectedMuscle || searchQuery) && (
+              <TouchableOpacity onPress={resetFilters}>
+                <Text style={[styles.resetText, { color: colors.gold }]}>Réinitialiser</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {/* Exercises list */}
           <ScrollView style={styles.exercisesList} showsVerticalScrollIndicator={false}>
-            {filteredExercises.map((exercise) => (
-              <TouchableOpacity
-                key={exercise.id}
-                style={[
-                  styles.exerciseOption,
-                  {
-                    backgroundColor: selectedExercise === exercise.id ? colors.goldMuted : colors.background,
-                    borderColor: selectedExercise === exercise.id ? colors.gold : colors.border,
-                  },
-                ]}
-                onPress={() => setSelectedExercise(exercise.id)}
-              >
-                <Text
+            {filteredExercises.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  Aucun exercice trouvé
+                </Text>
+                <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+                  Essaie un autre terme de recherche
+                </Text>
+              </View>
+            ) : (
+              filteredExercises.map((exercise, index) => (
+                <TouchableOpacity
+                  key={`${exercise.name}-${index}`}
                   style={[
-                    styles.exerciseOptionName,
-                    { color: selectedExercise === exercise.id ? colors.gold : colors.textPrimary },
+                    styles.exerciseOption,
+                    {
+                      backgroundColor: selectedExercise?.name === exercise.name ? colors.goldMuted : colors.background,
+                      borderColor: selectedExercise?.name === exercise.name ? colors.gold : colors.border,
+                    },
                   ]}
+                  onPress={() => setSelectedExercise(exercise)}
                 >
-                  {exercise.name}
-                </Text>
-                <Text style={[styles.exerciseOptionMuscle, { color: colors.textMuted }]}>
-                  {MUSCLE_GROUPS[exercise.muscle_group as keyof typeof MUSCLE_GROUPS]}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    style={[
+                      styles.exerciseOptionName,
+                      { color: selectedExercise?.name === exercise.name ? colors.gold : colors.textPrimary },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {exercise.name}
+                  </Text>
+                  <View style={styles.exerciseMeta}>
+                    <Text style={[styles.exerciseOptionMuscle, { color: colors.textMuted }]}>
+                      {exercise.muscle || exercise.category}
+                    </Text>
+                    <Text style={[styles.exerciseUnit, { color: colors.textMuted }]}>
+                      {exercise.unit === 'reps' ? '• Reps' : exercise.unit === 'time' ? '• Temps' : exercise.unit === 'km' ? '• KM' : '• Mètres'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </ScrollView>
 
           {/* Input fields */}
@@ -189,12 +331,14 @@ export function ExercisePickerModal({ visible, onClose, onAddExercise }: Exercis
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Reps</Text>
+                <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                  {selectedExercise.unit === 'reps' ? 'Reps' : selectedExercise.unit === 'time' ? 'Secondes' : selectedExercise.unit === 'km' ? 'KM' : 'Mètres'}
+                </Text>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.textPrimary }]}
                   value={reps}
                   onChangeText={setReps}
-                  keyboardType="number-pad"
+                  keyboardType="decimal-pad"
                   placeholder="10"
                   placeholderTextColor={colors.textMuted}
                 />
@@ -243,17 +387,27 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 40,
-    maxHeight: '85%',
+    maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 16,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  countBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  countText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   closeButton: {
     padding: 4,
@@ -272,22 +426,43 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
   },
-  muscleGroupsScroll: {
-    marginBottom: 16,
+  filterLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginTop: 4,
+  },
+  filtersScroll: {
+    marginBottom: 12,
     marginHorizontal: -20,
   },
-  muscleGroupsContent: {
+  filtersContent: {
     paddingHorizontal: 20,
     gap: 8,
   },
-  muscleGroupChip: {
+  filterChip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
   },
-  muscleGroupText: {
+  filterChipText: {
     fontSize: 13,
+    fontWeight: '600',
+  },
+  resultsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  resultsCount: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  resetText: {
+    fontSize: 12,
     fontWeight: '600',
   },
   exercisesList: {
@@ -305,8 +480,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
+  exerciseMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   exerciseOptionMuscle: {
     fontSize: 12,
+  },
+  exerciseUnit: {
+    fontSize: 11,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  emptySubtext: {
+    fontSize: 13,
   },
   inputsContainer: {
     flexDirection: 'row',

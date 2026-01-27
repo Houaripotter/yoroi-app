@@ -68,15 +68,21 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
     const dateTopContainerStyle = useMemo(() => ({ position: 'absolute' as const, top: 8, left: 0, right: 0, alignItems: 'center' as const, zIndex: 10 }), []);
     const dateBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 }), []);
     const dateColorStyle = useMemo(() => ({ color: GOLD_COLOR }), []);
-    const profileLeftContainerStyle = useMemo(() => ({ alignItems: 'center' as const, gap: 4 }), []);
-    const usernameBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, maxWidth: 100 }), []);
-    const usernameTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
-    const usernameShadowStyle = useMemo(() => ({
-      color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const,
-      textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
-      textAlign: 'center' as const, maxWidth: 100
+    // SYMMETRIC ALIGNMENT: Both containers have same fixed width (80px fits "ASHIGARU" + padding)
+    const SIDE_CONTAINER_WIDTH = 80;
+    const profileLeftContainerStyle = useMemo(() => ({
+      width: SIDE_CONTAINER_WIDTH,
+      alignItems: 'center' as const,
+      gap: 4
     }), []);
-    const avatarRightContainerStyle = useMemo(() => ({ maxWidth: 100 }), []);
+    const usernameBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, maxWidth: 75 }), []);
+    const usernameTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 9, fontWeight: '900' as const, textAlign: 'center' as const }), []);
+    const usernameShadowStyle = useMemo(() => ({
+      color: GOLD_COLOR, fontSize: 9, fontWeight: '900' as const,
+      textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2,
+      textAlign: 'center' as const, maxWidth: 75
+    }), []);
+    const avatarRightContainerStyle = useMemo(() => ({ width: SIDE_CONTAINER_WIDTH }), []);
     const rankBackdropStyle = useMemo(() => ({ backgroundColor: 'rgba(0,0,0,0.85)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginTop: 4, maxWidth: 100 }), []);
     const rankTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const }), []);
     const rankLevelTextStyle = useMemo(() => ({ color: GOLD_COLOR, fontSize: 10, fontWeight: '900' as const, textAlign: 'center' as const, marginTop: 1 }), []);
@@ -240,7 +246,7 @@ export const MonthlyRecapCardV2 = React.memo(forwardRef<View, MonthlyRecapCardV2
                   {stats.clubTrainings.slice(0, 4).map((club, index) => (
                     <View key={index} style={[styles.clubBadge, clubBadgeBgStyle]}>
                       {club.clubLogo && (
-                        <Image source={{ uri: club.clubLogo }} style={clubLogoStyle} resizeMode="cover" />
+                        <Image source={club.clubLogo} style={clubLogoStyle} resizeMode="cover" />
                       )}
                       <Text style={clubNameStyle} numberOfLines={2}>{club.clubName}</Text>
                       <View style={clubCountBadgeStyle}>
@@ -323,6 +329,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: 4,
   },
   avatarCircle: {

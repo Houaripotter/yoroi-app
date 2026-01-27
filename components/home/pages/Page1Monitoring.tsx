@@ -533,6 +533,34 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const totalLoss = startWeight - currentWeight;
   const progressPercentage = Math.abs(((startWeight - currentWeight) / (startWeight - targetWeight)) * 100);
 
+  // Calcul du taux de perte mensuel RÉALISTE
+  // On utilise les 30 derniers jours de données si disponibles
+  const calculateMonthlyLossRate = () => {
+    if (weightHistory.length < 2) return 0;
+
+    // Prendre les pesées des 30 derniers jours max
+    const recentWeights = weightHistory.slice(0, Math.min(30, weightHistory.length));
+    if (recentWeights.length < 2) return 0;
+
+    // Différence entre la plus ancienne et la plus récente des 30 derniers jours
+    const oldestRecent = recentWeights[recentWeights.length - 1];
+    const newest = recentWeights[0];
+    const monthlyLoss = oldestRecent - newest;
+
+    // Limiter à un maximum de 4 kg/mois (perte saine max)
+    return Math.min(Math.max(monthlyLoss, -2), 4);
+  };
+
+  const monthlyLossRate = calculateMonthlyLossRate();
+
+  // Fonction pour calculer les prédictions avec limites
+  const calculatePrediction = (months: number) => {
+    const predicted = currentWeight - (monthlyLossRate * months);
+    // Limites: minimum 40kg ET ne pas descendre sous l'objectif
+    const minWeight = Math.max(40, targetWeight);
+    return Math.max(predicted, minWeight);
+  };
+
   const getTrendIcon = () => {
     if (weightTrend === 'down') return TrendingDown;
     if (weightTrend === 'up') return TrendingUp;
@@ -992,7 +1020,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionItem}>
               <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.30days')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {(currentWeight - totalLoss).toFixed(1)} kg
+                {calculatePrediction(1).toFixed(1)} kg
               </Text>
             </View>
 
@@ -1001,7 +1029,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionItem}>
               <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.90days')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {(currentWeight - totalLoss * 3).toFixed(1)} kg
+                {calculatePrediction(3).toFixed(1)} kg
               </Text>
             </View>
 
@@ -1010,7 +1038,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionItem}>
               <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.6months')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {(currentWeight - totalLoss * 6).toFixed(1)} kg
+                {calculatePrediction(6).toFixed(1)} kg
               </Text>
             </View>
 
@@ -1019,7 +1047,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={styles.predictionItem}>
               <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.1year')}</Text>
               <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {(currentWeight - totalLoss * 12).toFixed(1)} kg
+                {calculatePrediction(12).toFixed(1)} kg
               </Text>
             </View>
           </View>

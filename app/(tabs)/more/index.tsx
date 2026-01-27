@@ -84,7 +84,7 @@ import { getUserMode, setUserMode as saveUserMode } from '@/lib/fighterModeServi
 import { resetAllData } from '@/lib/storage';
 // Screenshot mode is now handled via /screenshot-mode route only
 import { getHomeCustomization, saveHomeCustomization, isSectionVisible, HomeSection } from '@/lib/homeCustomizationService';
-import { generateScreenshotDemoData, clearScreenshotDemoData, isScreenshotModeEnabled } from '@/lib/screenshotDemoData';
+import { generateScreenshotDemoData, clearScreenshotDemoData, isScreenshotModeEnabled, DEMO_PROFILES, setActiveDemoProfile, DemoProfileKey } from '@/lib/screenshotDemoData';
 import logger from '@/lib/security/logger';
 import { useI18n } from '@/lib/I18nContext';
 
@@ -737,6 +737,8 @@ export default function MoreScreen() {
   const [screenshotMenuUnlocked, setScreenshotMenuUnlocked] = useState(false);
   const [showSecretCodeModal, setShowSecretCodeModal] = useState(false);
   const [secretCode, setSecretCode] = useState('');
+  const [selectedDemoProfile, setSelectedDemoProfile] = useState<DemoProfileKey>('germain');
+  const [isGeneratingDemo, setIsGeneratingDemo] = useState(false);
 
   // Hash des codes secrets valides (ne jamais stocker les codes en clair)
   const SECRET_HASHES = [
@@ -1745,29 +1747,85 @@ export default function MoreScreen() {
               </Text>
             </View>
 
-            {/* MODE GERMAIN */}
+            {/* PROFILS DE DÉMO */}
             <View style={styles.sectionContainer}>
-              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>MODE SCREENSHOT</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PROFILS DE DÉMO</Text>
               <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
 
-                {/* Mode Global - Germain Del Jarret */}
+                {/* Liste des profils */}
+                {Object.entries(DEMO_PROFILES).map(([key, profile]) => (
+                  <TouchableOpacity
+                    key={key}
+                    style={[
+                      styles.menuItem,
+                      {
+                        backgroundColor: selectedDemoProfile === key ? colors.primary + '15' : colors.card,
+                        borderLeftWidth: selectedDemoProfile === key ? 3 : 0,
+                        borderLeftColor: colors.primary,
+                      }
+                    ]}
+                    onPress={() => setSelectedDemoProfile(key as DemoProfileKey)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.menuItemIcon, { backgroundColor: selectedDemoProfile === key ? colors.primary + '30' : colors.accent + '20' }]}>
+                      <User size={20} color={selectedDemoProfile === key ? colors.primary : colors.accent} strokeWidth={2} />
+                    </View>
+                    <View style={styles.menuItemContent}>
+                      <Text style={[styles.menuItemLabel, { color: selectedDemoProfile === key ? colors.primary : colors.textPrimary }]}>{profile.name}</Text>
+                      <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>{profile.description}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
+                        {profile.start_weight}kg → {profile.target_weight}kg • {profile.sport.toUpperCase()}
+                      </Text>
+                    </View>
+                    {selectedDemoProfile === key && (
+                      <CheckCircle size={20} color={colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+
+                {/* Bouton Générer */}
                 <TouchableOpacity
-                  style={[styles.menuItem, { backgroundColor: colors.card }]}
+                  style={[
+                    styles.menuItem,
+                    {
+                      backgroundColor: colors.primary,
+                      marginTop: 12,
+                      borderRadius: 12,
+                      opacity: isGeneratingDemo ? 0.6 : 1,
+                    }
+                  ]}
                   onPress={async () => {
-                    await generateScreenshotDemoData();
-                    notificationAsync(NotificationFeedbackType.Success);
-                    showPopup('Mode Germain Activé', 'Données de démo générées avec succès ! Tu peux maintenant faire tes captures d\'écran.', [{ text: 'Parfait', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                    if (isGeneratingDemo) return;
+                    setIsGeneratingDemo(true);
+                    setActiveDemoProfile(selectedDemoProfile);
+                    const result = await generateScreenshotDemoData();
+                    setIsGeneratingDemo(false);
+                    if (result.success) {
+                      setCreatorModeActive(true);
+                      await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
+                      notificationAsync(NotificationFeedbackType.Success);
+                      showPopup(
+                        `${DEMO_PROFILES[selectedDemoProfile].name} Activé`,
+                        'Données de démo générées avec succès ! Redémarre l\'app pour voir les changements.',
+                        [{ text: 'Parfait', style: 'primary' }],
+                        <CheckCircle size={32} color="#10B981" />
+                      );
+                    } else {
+                      showPopup('Erreur', result.error || 'Erreur lors de la génération', [{ text: 'OK', style: 'cancel' }], <AlertCircle size={32} color="#EF4444" />);
+                    }
                   }}
+                  disabled={isGeneratingDemo}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.menuItemIcon, { backgroundColor: colors.accent + '20' }]}>
-                    <User size={20} color={colors.accent} strokeWidth={2} />
+                  <View style={[styles.menuItemIcon, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                    <Sparkles size={20} color="#FFF" strokeWidth={2} />
                   </View>
                   <View style={styles.menuItemContent}>
-                    <Text style={[styles.menuItemLabel, { color: colors.textPrimary }]}>Activer Mode Germain</Text>
-                    <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>Génère un profil complet avec belles données</Text>
+                    <Text style={[styles.menuItemLabel, { color: '#FFF' }]}>
+                      {isGeneratingDemo ? 'Génération en cours...' : `Générer ${DEMO_PROFILES[selectedDemoProfile].name}`}
+                    </Text>
+                    <Text style={[styles.menuItemSublabel, { color: 'rgba(255,255,255,0.7)' }]}>Génère un profil complet avec belles données</Text>
                   </View>
-                  <ChevronRight size={18} color={colors.textMuted} />
                 </TouchableOpacity>
 
               </View>

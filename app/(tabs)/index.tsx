@@ -962,10 +962,10 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Avatar (Droite) */}
+              {/* Avatar (Droite) - Clique pour aller au Dojo */}
               <TouchableOpacity
                 style={styles.avatarContainerRight}
-                onPress={handleNavigateAvatarSelection}
+                onPress={handleNavigateGamification}
                 activeOpacity={0.8}
               >
                 <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />

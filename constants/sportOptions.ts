@@ -345,29 +345,34 @@ export const SPORT_OPTIONS: Record<string, SportOption[]> = {
   // RUNNING
   // ═══════════════════════════════════════════
   running: [
-    // DISTANCES
-    { id: 'r_5k', label: '5 KM', icon: 'run', color: '#3B82F6', group: 'DISTANCES' },
-    { id: 'r_10k', label: '10 KM', icon: 'run-fast', color: '#3B82F6', group: 'DISTANCES' },
-    { id: 'r_semi', label: 'Semi-Marathon', icon: 'trophy', color: '#3B82F6', group: 'DISTANCES' },
-    { id: 'r_mara', label: 'Marathon', icon: 'medal', color: '#3B82F6', group: 'DISTANCES' },
-    // TYPE
-    { id: 'r_endu', label: 'Endurance', icon: 'clock-outline', color: '#10B981', group: 'TYPE' },
-    { id: 'r_long', label: 'Sortie Longue', icon: 'map-marker-distance', color: '#10B981', group: 'TYPE' },
-    { id: 'r_frac', label: 'Fractionné', icon: 'chart-line', color: '#EF4444', group: 'TYPE' },
-    { id: 'r_tempo', label: 'Tempo Run', icon: 'speedometer', color: '#F59E0B', group: 'TYPE' },
-    { id: 'r_fart', label: 'Fartlek', icon: 'shuffle', color: '#8B5CF6', group: 'TYPE' },
-    { id: 'r_recup', label: 'Récupération', icon: 'sleep', color: '#06B6D4', group: 'TYPE' },
-    { id: 'r_sprint', label: 'Sprint', icon: 'flash', color: '#DC2626', group: 'TYPE' },
-    { id: 'r_cotes', label: 'Côtes', icon: 'trending-up', color: '#F97316', group: 'TYPE' },
-    // LIEU
-    { id: 'r_trai', label: 'Trail', icon: 'terrain', color: '#F97316', group: 'LIEU' },
-    { id: 'r_trea', label: 'Tapis', icon: 'run-fast', color: '#8B5CF6', group: 'LIEU' },
-    { id: 'r_piste', label: 'Piste', icon: 'stadium', color: '#10B981', group: 'LIEU' },
-    { id: 'r_route', label: 'Route', icon: 'road', color: '#3B82F6', group: 'LIEU' },
-    // ALLURE
-    { id: 'r_easy', label: 'Allure Facile', icon: 'tortoise', color: '#10B981', group: 'ALLURE' },
-    { id: 'r_mod', label: 'Allure Modérée', icon: 'run', color: '#F59E0B', group: 'ALLURE' },
-    { id: 'r_race', label: 'Allure Course', icon: 'run-fast', color: '#EF4444', group: 'ALLURE' },
+    // SÉANCE - Type d'entraînement
+    { id: 'r_endu', label: 'Endurance Fondamentale', icon: 'clock-outline', color: '#10B981', group: 'SÉANCE' },
+    { id: 'r_long', label: 'Sortie Longue', icon: 'map-marker-distance', color: '#10B981', group: 'SÉANCE' },
+    { id: 'r_recup', label: 'Footing Récup', icon: 'sleep', color: '#06B6D4', group: 'SÉANCE' },
+    { id: 'r_frac', label: 'Fractionné', icon: 'chart-line', color: '#EF4444', group: 'SÉANCE' },
+    { id: 'r_tempo', label: 'Tempo / Seuil', icon: 'speedometer', color: '#F59E0B', group: 'SÉANCE' },
+    { id: 'r_fart', label: 'Fartlek', icon: 'shuffle', color: '#8B5CF6', group: 'SÉANCE' },
+    { id: 'r_cotes', label: 'Côtes / Dénivelé', icon: 'trending-up', color: '#F97316', group: 'SÉANCE' },
+    { id: 'r_sprint', label: 'VMA / Sprint', icon: 'flash', color: '#DC2626', group: 'SÉANCE' },
+    { id: 'r_ppg', label: 'PPG (Renfo)', icon: 'arm-flex', color: '#8B5CF6', group: 'SÉANCE' },
+    // OBJECTIF - Distance cible
+    { id: 'r_5k', label: '5 KM', icon: 'run', color: '#3B82F6', group: 'OBJECTIF' },
+    { id: 'r_10k', label: '10 KM', icon: 'run-fast', color: '#3B82F6', group: 'OBJECTIF' },
+    { id: 'r_semi', label: 'Semi-Marathon', icon: 'trophy', color: '#3B82F6', group: 'OBJECTIF' },
+    { id: 'r_mara', label: 'Marathon', icon: 'medal', color: '#EAB308', group: 'OBJECTIF' },
+    { id: 'r_ultra', label: 'Ultra', icon: 'infinity', color: '#DC2626', group: 'OBJECTIF' },
+    // TERRAIN - Surface de course
+    { id: 'r_route', label: 'Route', icon: 'road', color: '#3B82F6', group: 'TERRAIN' },
+    { id: 'r_piste', label: 'Piste Athlé', icon: 'stadium', color: '#10B981', group: 'TERRAIN' },
+    { id: 'r_trai', label: 'Trail / Chemin', icon: 'terrain', color: '#F97316', group: 'TERRAIN' },
+    { id: 'r_trea', label: 'Tapis', icon: 'run-fast', color: '#8B5CF6', group: 'TERRAIN' },
+    { id: 'r_sable', label: 'Sable / Plage', icon: 'beach', color: '#EAB308', group: 'TERRAIN' },
+    // INTENSITÉ - Niveau d'effort
+    { id: 'r_z1', label: 'Zone 1 (Récup)', icon: 'heart-outline', color: '#10B981', group: 'INTENSITÉ' },
+    { id: 'r_z2', label: 'Zone 2 (Endu)', icon: 'heart', color: '#3B82F6', group: 'INTENSITÉ' },
+    { id: 'r_z3', label: 'Zone 3 (Tempo)', icon: 'heart-pulse', color: '#F59E0B', group: 'INTENSITÉ' },
+    { id: 'r_z4', label: 'Zone 4 (Seuil)', icon: 'heart-flash', color: '#F97316', group: 'INTENSITÉ' },
+    { id: 'r_z5', label: 'Zone 5 (VMA)', icon: 'heart-broken', color: '#DC2626', group: 'INTENSITÉ' },
   ],
 
   trail: [

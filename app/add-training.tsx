@@ -16,6 +16,8 @@ import {
   Keyboard,
   Dimensions,
   KeyboardAvoidingView,
+  findNodeHandle,
+  UIManager,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { impactAsync, notificationAsync, selectionAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
@@ -591,6 +593,27 @@ export default function AddTrainingScreen() {
     );
   };
 
+  // Helper: Scroller vers l'input focalisé quand le clavier apparaît
+  const scrollToFocusedInput = useCallback((event: any) => {
+    if (!scrollViewRef.current) return;
+    const node = event.target;
+    if (node && scrollViewRef.current) {
+      // Utiliser setTimeout pour attendre que le clavier soit entièrement ouvert
+      setTimeout(() => {
+        node.measureLayout(
+          findNodeHandle(scrollViewRef.current),
+          (x: number, y: number, width: number, height: number) => {
+            // Scroller pour que l'input soit visible au centre de l'écran visible
+            // On scrolle pour que l'input soit à environ 100px du haut (plus agressif)
+            const targetY = Math.max(0, y - 100);
+            scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+          },
+          () => {} // onFail
+        );
+      }, 350); // Attendre un peu plus pour que le clavier soit bien ouvert
+    }
+  }, []);
+
   // Obtenir les options pour un sport
   const getOptionsForSport = (sportId: string): SportOption[] => {
     return SPORT_OPTIONS[sportId] || DEFAULT_OPTIONS;
@@ -780,6 +803,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.duration}
                   onChangeText={(v) => updateStat('duration', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN</Text>
@@ -799,6 +823,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.speed}
                   onChangeText={(v) => updateStat('speed', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM/H</Text>
@@ -814,6 +839,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.pente}
                   onChangeText={(v) => updateStat('pente', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={3}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>%</Text>
@@ -833,6 +859,7 @@ export default function AddTrainingScreen() {
                   keyboardType="decimal-pad"
                   value={stats.distance}
                   onChangeText={(v) => updateStat('distance', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={5}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KM</Text>
@@ -853,6 +880,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.calories}
                   onChangeText={(v) => updateStat('calories', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={5}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>KCAL</Text>
@@ -872,6 +900,7 @@ export default function AddTrainingScreen() {
                   keyboardType="number-pad"
                   value={stats.stairs}
                   onChangeText={(v) => updateStat('stairs', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={4}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>FLOORS</Text>
@@ -888,6 +917,7 @@ export default function AddTrainingScreen() {
                   placeholderTextColor={colors.textMuted + '40'}
                   value={stats.pace}
                   onChangeText={(v) => updateStat('pace', v)}
+                  onFocus={scrollToFocusedInput}
                   maxLength={6}
                 />
                 <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MIN/KM</Text>
@@ -1312,7 +1342,7 @@ export default function AddTrainingScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 30}
       >
         <ScrollView
           ref={scrollViewRef}
@@ -1992,6 +2022,7 @@ export default function AddTrainingScreen() {
                                                 keyboardType="decimal-pad"
                                                 value={stats.weight}
                                                 onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, weight: val } }))}
+                                                onFocus={scrollToFocusedInput}
                                               />
                                               <Text style={{ color: colors.textMuted, fontSize: 12 }}>x</Text>
                                               <TextInput
@@ -2001,6 +2032,7 @@ export default function AddTrainingScreen() {
                                                 keyboardType="number-pad"
                                                 value={stats.reps}
                                                 onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...stats, reps: val } }))}
+                                                onFocus={scrollToFocusedInput}
                                               />
                                             </View>
                                             <TouchableOpacity
@@ -2030,13 +2062,13 @@ export default function AddTrainingScreen() {
                                         {isCombat && (
                                           <View style={{ marginTop: 10 }}>
                                             <TextInput
-                                              style={{ 
-                                                backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF', 
-                                                padding: 10, 
-                                                borderRadius: 8, 
-                                                color: colors.textPrimary, 
+                                              style={{
+                                                backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFF',
+                                                padding: 10,
+                                                borderRadius: 8,
+                                                color: colors.textPrimary,
                                                 fontSize: 12,
-                                                borderWidth: 1, 
+                                                borderWidth: 1,
                                                 borderColor: colors.border,
                                                 minHeight: 40,
                                                 textAlignVertical: 'top'
@@ -2046,6 +2078,7 @@ export default function AddTrainingScreen() {
                                               multiline
                                               value={optionStats[option.id]?.notes || ''}
                                               onChangeText={(val) => setOptionStats(prev => ({ ...prev, [option.id]: { ...prev[option.id], notes: val } }))}
+                                              onFocus={scrollToFocusedInput}
                                             />
                                           </View>
                                         )}
@@ -2077,9 +2110,11 @@ export default function AddTrainingScreen() {
                       <View style={{ flexDirection: 'row', gap: 10 }}>
                                           <TextInput
                                             style={[styles.notesInput, { flex: 1, minHeight: 50, marginBottom: 0, paddingVertical: 10, color: colors.textPrimary }]}
-                                            placeholder="Ex: 50 tractions, Sparring intensif..."                          placeholderTextColor={colors.textMuted}
+                                            placeholder="Ex: 50 tractions, Sparring intensif..."
+                                            placeholderTextColor={colors.textMuted}
                           value={customExerciseName}
                           onChangeText={setCustomExerciseName}
+                          onFocus={scrollToFocusedInput}
                         />
                         <TouchableOpacity 
                           style={{ 
@@ -2336,6 +2371,7 @@ export default function AddTrainingScreen() {
                         const minutes = duration % 60;
                         setDuration(hours * 60 + minutes);
                       }}
+                      onFocus={scrollToFocusedInput}
                       maxLength={2}
                     />
                     <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>HEURES</Text>
@@ -2352,6 +2388,7 @@ export default function AddTrainingScreen() {
                         const hours = Math.floor(duration / 60);
                         setDuration(hours * 60 + minutes);
                       }}
+                      onFocus={scrollToFocusedInput}
                       maxLength={2}
                     />
                     <Text style={{ fontSize: 10, fontWeight: '700', color: colors.textMuted }}>MINUTES</Text>
@@ -2380,6 +2417,7 @@ export default function AddTrainingScreen() {
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
+                  onFocus={scrollToFocusedInput}
                   maxLength={2}
                 />
               </View>
@@ -2392,6 +2430,7 @@ export default function AddTrainingScreen() {
                   placeholder="5"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="number-pad"
+                  onFocus={scrollToFocusedInput}
                   maxLength={2}
                 />
               </View>
