@@ -44,6 +44,7 @@ interface Page1MonitoringProps {
   profilePhoto?: string | null;
   dailyQuote?: string | null;
   steps?: number;
+  calories?: number; // ✅ FIX: Calories depuis Apple Health
   streak?: number;
   level?: number;
   rankName?: string;
@@ -226,6 +227,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   profilePhoto,
   dailyQuote,
   steps = 0,
+  calories = 0, // ✅ FIX: Calories depuis Apple Health
   streak = 0,
   level = 1,
   rankName = 'Novice',
@@ -688,7 +690,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
               <MaterialCommunityIcons name="fire" size={16} color="#EF4444" />
             </View>
-            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{(Math.round(steps * 0.04) + trainingCalories).toLocaleString()}</Text>
+            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{((calories > 0 ? calories : Math.round(steps * 0.04)) + trainingCalories).toLocaleString()}</Text>
             <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
           </TouchableOpacity>
 

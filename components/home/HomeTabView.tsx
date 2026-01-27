@@ -273,6 +273,7 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             profilePhoto={profilePhoto}
             dailyQuote={dailyQuote}
             steps={steps}
+            calories={calories}
             streak={streak}
             level={level}
             rankName={rankName}
