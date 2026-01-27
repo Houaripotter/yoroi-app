@@ -117,25 +117,8 @@ class HealthManager: ObservableObject {
         )
     }
 
-    private func setupObservers() {
-        // ... vos autres observers ...
-        
-        NotificationCenter.default.addObserver(forName: .didReceiveAvatarUpdate, object: nil, queue: .main) { notification in
-            if let config = notification.object as? [String: Any] {
-                self.avatarName = config["name"] as? String ?? "samurai"
-                // On pourrait aussi mettre à jour level et rank ici
-                print("👤 [YoroiWatch] Avatar mis à jour: \(self.avatarName)")
-            }
-        }
-        
-        NotificationCenter.default.addObserver(forName: .didReceiveDataFromiPhone, object: nil, queue: .main) { notification in
-            if let data = notification.object as? Data {
-                // Si ce sont des données d'image
-                self.profilePhotoData = data
-                print("📸 [YoroiWatch] Photo de profil reçue")
-            }
-        }
-    }
+    // ✅ SUPPRIMÉ: setupObservers() - code dupliqué avec init()
+    // Les observers sont maintenant tous dans init() pour éviter les doublons
 
     // MARK: - Handlers iPhone Sync
 
@@ -195,22 +178,56 @@ class HealthManager: ObservableObject {
     }
 
     @objc private func handleWeightUpdate(_ notification: Notification) {
-        guard let data = notification.object as? Data else { return }
-        if let weight = try? JSONDecoder().decode(Double.self, from: data) {
-            DispatchQueue.main.async {
-                self.currentWeight = weight
-                print("⚖️ Poids sync depuis iPhone: \(weight)kg")
-            }
+        // ✅ FIX: Accepter à la fois Data (JSON) et Double (valeur directe)
+        var weight: Double? = nil
+
+        if let directValue = notification.object as? Double {
+            // Cas 1: Valeur Double directe (depuis mega-pack ou context)
+            weight = directValue
+        } else if let data = notification.object as? Data {
+            // Cas 2: Data JSON encodé
+            weight = try? JSONDecoder().decode(Double.self, from: data)
+        } else if let dict = notification.object as? [String: Any], let w = dict["weight"] as? Double {
+            // Cas 3: Dictionnaire avec clé "weight"
+            weight = w
+        }
+
+        guard let finalWeight = weight else {
+            print("⚠️ handleWeightUpdate: format non reconnu - \(type(of: notification.object))")
+            return
+        }
+
+        DispatchQueue.main.async {
+            self.currentWeight = finalWeight
+            self.savePersistedData()
+            print("⚖️ Poids sync depuis iPhone: \(finalWeight)kg")
         }
     }
 
     @objc private func handleHydrationUpdate(_ notification: Notification) {
-        guard let data = notification.object as? Data else { return }
-        if let amount = try? JSONDecoder().decode(Double.self, from: data) {
-            DispatchQueue.main.async {
-                self.waterIntake = amount
-                print("💧 Hydratation sync depuis iPhone: \(amount)ml")
-            }
+        // ✅ FIX: Accepter à la fois Data (JSON) et Double (valeur directe)
+        var amount: Double? = nil
+
+        if let directValue = notification.object as? Double {
+            // Cas 1: Valeur Double directe
+            amount = directValue
+        } else if let data = notification.object as? Data {
+            // Cas 2: Data JSON encodé
+            amount = try? JSONDecoder().decode(Double.self, from: data)
+        } else if let dict = notification.object as? [String: Any], let w = dict["waterIntake"] as? Double {
+            // Cas 3: Dictionnaire avec clé "waterIntake"
+            amount = w
+        }
+
+        guard let finalAmount = amount else {
+            print("⚠️ handleHydrationUpdate: format non reconnu - \(type(of: notification.object))")
+            return
+        }
+
+        DispatchQueue.main.async {
+            self.waterIntake = finalAmount
+            self.savePersistedData()
+            print("💧 Hydratation sync depuis iPhone: \(finalAmount)ml")
         }
     }
 
