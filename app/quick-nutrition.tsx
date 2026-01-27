@@ -3,8 +3,9 @@
 // ============================================
 // Guide nutritionnel rapide pour combattants
 // Pre/Post entrainement, jour de combat
+// Calculs basés sur des études scientifiques
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +13,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  Linking,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,9 +30,48 @@ import {
   Droplets,
   Flame,
   Target,
+  ExternalLink,
+  Info,
+  Scale,
+  Ruler,
+  Activity,
 } from 'lucide-react-native';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
 import { useTheme } from '@/lib/ThemeContext';
+import { getUserSettings } from '@/lib/storage';
+import { getAllMeasurements } from '@/lib/storage';
+import logger from '@/lib/security/logger';
+
+// ============================================
+// SOURCES SCIENTIFIQUES
+// ============================================
+
+const SCIENTIFIC_SOURCES = {
+  protein: {
+    title: 'Apport en protéines pour athlètes',
+    study: 'Position Stand ISSN (2017)',
+    recommendation: '1.6 - 2.2g/kg de poids corporel',
+    url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8',
+  },
+  carbs: {
+    title: 'Glucides pour la performance',
+    study: 'Burke et al. (2011) - Journal of Sports Sciences',
+    recommendation: '5-7g/kg pour activité modérée, 7-10g/kg pour entraînement intense',
+    url: 'https://www.tandfonline.com/doi/abs/10.1080/02640414.2011.585473',
+  },
+  hydration: {
+    title: 'Hydratation optimale',
+    study: 'American College of Sports Medicine (2007)',
+    recommendation: '30-35ml/kg de poids corporel par jour',
+    url: 'https://journals.lww.com/acsm-msse/fulltext/2007/02000/exercise_and_fluid_replacement.22.aspx',
+  },
+  timing: {
+    title: 'Timing nutritionnel',
+    study: 'Kerksick et al. (2017) - ISSN Position Stand',
+    recommendation: 'Protéines + glucides dans les 2h post-entraînement',
+    url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0189-4',
+  },
+};
 
 // ============================================
 // TYPES & DATA
@@ -187,20 +228,97 @@ export default function QuickNutritionScreen() {
 
   const [selectedPhase, setSelectedPhase] = useState<NutritionPhase>('pre_training');
   const [bodyWeight, setBodyWeight] = useState('75');
+  const [bodyHeight, setBodyHeight] = useState('175');
+  const [activityLevel, setActivityLevel] = useState<'low' | 'moderate' | 'high' | 'intense'>('moderate');
+  const [isLoadingUserData, setIsLoadingUserData] = useState(true);
+
+  // Charger les données utilisateur au démarrage
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      // Récupérer les settings utilisateur
+      const settings = await getUserSettings();
+      if (settings.height) {
+        setBodyHeight(String(settings.height));
+      }
+
+      // Récupérer le dernier poids enregistré
+      const measurements = await getAllMeasurements();
+      if (measurements.length > 0) {
+        // Trier par date décroissante et prendre le plus récent
+        const sorted = [...measurements].sort((a, b) =>
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setBodyWeight(String(sorted[0].weight));
+      }
+    } catch (error) {
+      logger.error('[QuickNutrition] Erreur chargement données:', error);
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  };
 
   const currentPhase = useMemo(() => {
     const phase = NUTRITION_PHASES.find(p => p.id === selectedPhase);
     return phase ? phase : NUTRITION_PHASES[0];
   }, [selectedPhase]);
 
-  // Calculer les besoins en proteines
+  // Calculer les besoins en proteines (ISSN 2017: 1.6-2.2g/kg)
   const proteinNeeds = useMemo(() => {
     const weight = parseFloat(bodyWeight) || 75;
     return {
       min: Math.round(weight * 1.6),
       max: Math.round(weight * 2.2),
+      perKg: '1.6-2.2',
     };
   }, [bodyWeight]);
+
+  // Calculer les besoins en glucides selon l'activité
+  const carbNeeds = useMemo(() => {
+    const weight = parseFloat(bodyWeight) || 75;
+    const carbsPerKg = {
+      low: { min: 3, max: 5 },
+      moderate: { min: 5, max: 7 },
+      high: { min: 6, max: 10 },
+      intense: { min: 8, max: 12 },
+    };
+    const range = carbsPerKg[activityLevel];
+    return {
+      min: Math.round(weight * range.min),
+      max: Math.round(weight * range.max),
+      perKg: `${range.min}-${range.max}`,
+    };
+  }, [bodyWeight, activityLevel]);
+
+  // Calculer les besoins en eau (30-35ml/kg)
+  const waterNeeds = useMemo(() => {
+    const weight = parseFloat(bodyWeight) || 75;
+    return {
+      min: Math.round((weight * 30) / 1000 * 10) / 10,
+      max: Math.round((weight * 35) / 1000 * 10) / 10,
+    };
+  }, [bodyWeight]);
+
+  // Calculer les besoins caloriques approximatifs (Harris-Benedict)
+  const calorieNeeds = useMemo(() => {
+    const weight = parseFloat(bodyWeight) || 75;
+    const height = parseFloat(bodyHeight) || 175;
+    // Formule Harris-Benedict simplifiée (moyenne homme/femme)
+    const bmr = 10 * weight + 6.25 * height - 5 * 30 + 5; // Âge estimé 30 ans
+    const multipliers = { low: 1.2, moderate: 1.55, high: 1.725, intense: 1.9 };
+    const tdee = Math.round(bmr * multipliers[activityLevel]);
+    return {
+      bmr: Math.round(bmr),
+      tdee,
+    };
+  }, [bodyWeight, bodyHeight, activityLevel]);
+
+  const openSource = (url: string) => {
+    Linking.openURL(url).catch(err => logger.error('[QuickNutrition] Erreur ouverture URL:', err));
+  };
 
   const PhaseIcon = currentPhase.icon;
 
@@ -278,37 +396,203 @@ export default function QuickNutritionScreen() {
           </View>
         </LinearGradient>
 
+        {/* Données Personnelles */}
+        <View style={[styles.userDataCard, { backgroundColor: colors.card }]}>
+          <View style={styles.userDataHeader}>
+            <Info size={18} color={colors.primary} />
+            <Text style={[styles.userDataTitle, { color: colors.textPrimary }]}>
+              Tes Données
+            </Text>
+          </View>
+
+          <View style={styles.userDataRow}>
+            <View style={styles.userDataItem}>
+              <Scale size={16} color={colors.textSecondary} />
+              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>Poids</Text>
+              <View style={[styles.userDataInputContainer, { backgroundColor: colors.cardHover }]}>
+                <TextInput
+                  style={[styles.userDataInput, { color: colors.textPrimary }]}
+                  value={bodyWeight}
+                  onChangeText={setBodyWeight}
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+                <Text style={[styles.userDataUnit, { color: colors.textMuted }]}>kg</Text>
+              </View>
+            </View>
+
+            <View style={styles.userDataItem}>
+              <Ruler size={16} color={colors.textSecondary} />
+              <Text style={[styles.userDataLabel, { color: colors.textSecondary }]}>Taille</Text>
+              <View style={[styles.userDataInputContainer, { backgroundColor: colors.cardHover }]}>
+                <TextInput
+                  style={[styles.userDataInput, { color: colors.textPrimary }]}
+                  value={bodyHeight}
+                  onChangeText={setBodyHeight}
+                  keyboardType="decimal-pad"
+                  maxLength={3}
+                />
+                <Text style={[styles.userDataUnit, { color: colors.textMuted }]}>cm</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Niveau d'activité */}
+          <Text style={[styles.activityLabel, { color: colors.textSecondary }]}>
+            Niveau d'activité
+          </Text>
+          <View style={styles.activityRow}>
+            {[
+              { id: 'low', label: 'Léger' },
+              { id: 'moderate', label: 'Modéré' },
+              { id: 'high', label: 'Élevé' },
+              { id: 'intense', label: 'Intense' },
+            ].map((level) => (
+              <TouchableOpacity
+                key={level.id}
+                style={[
+                  styles.activityButton,
+                  {
+                    backgroundColor: activityLevel === level.id ? colors.primary : colors.cardHover,
+                    borderColor: activityLevel === level.id ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setActivityLevel(level.id as any)}
+              >
+                <Text
+                  style={[
+                    styles.activityButtonText,
+                    { color: activityLevel === level.id ? '#FFF' : colors.textSecondary },
+                  ]}
+                >
+                  {level.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Besoins Calculés */}
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+          Tes Besoins Quotidiens
+        </Text>
+
         {/* Protein Calculator */}
         <View style={[styles.proteinCard, { backgroundColor: colors.card }]}>
           <View style={styles.proteinHeader}>
-            <Egg size={20} color={colors.gold} />
+            <Egg size={20} color="#22C55E" />
             <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
-              Besoins en Proteines
+              Protéines
             </Text>
-          </View>
-          <View style={styles.proteinInput}>
-            <Text style={[styles.proteinLabel, { color: colors.textSecondary }]}>
-              Ton poids:
-            </Text>
-            <View style={[styles.weightInputContainer, { backgroundColor: colors.cardHover }]}>
-              <TextInput
-                style={[styles.weightInput, { color: colors.textPrimary }]}
-                value={bodyWeight}
-                onChangeText={setBodyWeight}
-                keyboardType="decimal-pad"
-                maxLength={5}
-              />
-              <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.sourceButton}
+              onPress={() => openSource(SCIENTIFIC_SOURCES.protein.url)}
+            >
+              <ExternalLink size={14} color={colors.primary} />
+            </TouchableOpacity>
           </View>
           <View style={styles.proteinResult}>
-            <Text style={[styles.proteinValue, { color: colors.gold }]}>
+            <Text style={[styles.proteinValue, { color: '#22C55E' }]}>
               {proteinNeeds.min} - {proteinNeeds.max}g
             </Text>
             <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
-              par jour (1.6-2.2g/kg)
+              par jour ({proteinNeeds.perKg}g/kg)
             </Text>
           </View>
+          <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
+            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+              📚 {SCIENTIFIC_SOURCES.protein.study}
+            </Text>
+          </View>
+        </View>
+
+        {/* Carbs Calculator */}
+        <View style={[styles.proteinCard, { backgroundColor: colors.card }]}>
+          <View style={styles.proteinHeader}>
+            <Zap size={20} color="#F59E0B" />
+            <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
+              Glucides
+            </Text>
+            <TouchableOpacity
+              style={styles.sourceButton}
+              onPress={() => openSource(SCIENTIFIC_SOURCES.carbs.url)}
+            >
+              <ExternalLink size={14} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.proteinResult}>
+            <Text style={[styles.proteinValue, { color: '#F59E0B' }]}>
+              {carbNeeds.min} - {carbNeeds.max}g
+            </Text>
+            <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
+              par jour ({carbNeeds.perKg}g/kg pour activité {activityLevel === 'low' ? 'légère' : activityLevel === 'moderate' ? 'modérée' : activityLevel === 'high' ? 'élevée' : 'intense'})
+            </Text>
+          </View>
+          <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
+            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+              📚 {SCIENTIFIC_SOURCES.carbs.study}
+            </Text>
+          </View>
+        </View>
+
+        {/* Water Calculator */}
+        <View style={[styles.proteinCard, { backgroundColor: colors.card }]}>
+          <View style={styles.proteinHeader}>
+            <Droplets size={20} color="#06B6D4" />
+            <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
+              Hydratation
+            </Text>
+            <TouchableOpacity
+              style={styles.sourceButton}
+              onPress={() => openSource(SCIENTIFIC_SOURCES.hydration.url)}
+            >
+              <ExternalLink size={14} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.proteinResult}>
+            <Text style={[styles.proteinValue, { color: '#06B6D4' }]}>
+              {waterNeeds.min} - {waterNeeds.max}L
+            </Text>
+            <Text style={[styles.proteinSubtext, { color: colors.textMuted }]}>
+              par jour (30-35ml/kg)
+            </Text>
+          </View>
+          <View style={[styles.sourceInfo, { backgroundColor: colors.cardHover }]}>
+            <Text style={[styles.sourceText, { color: colors.textSecondary }]}>
+              📚 {SCIENTIFIC_SOURCES.hydration.study}
+            </Text>
+          </View>
+        </View>
+
+        {/* Calories Calculator */}
+        <View style={[styles.proteinCard, { backgroundColor: colors.card }]}>
+          <View style={styles.proteinHeader}>
+            <Flame size={20} color="#EF4444" />
+            <Text style={[styles.proteinTitle, { color: colors.textPrimary }]}>
+              Calories (estimation)
+            </Text>
+          </View>
+          <View style={styles.caloriesRow}>
+            <View style={styles.caloriesItem}>
+              <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
+                Métabolisme de base
+              </Text>
+              <Text style={[styles.caloriesValue, { color: colors.textPrimary }]}>
+                {calorieNeeds.bmr} kcal
+              </Text>
+            </View>
+            <View style={styles.caloriesItem}>
+              <Text style={[styles.caloriesLabel, { color: colors.textSecondary }]}>
+                Besoin total
+              </Text>
+              <Text style={[styles.caloriesValue, { color: '#EF4444' }]}>
+                {calorieNeeds.tdee} kcal
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.caloriesNote, { color: colors.textMuted }]}>
+            * Estimation basée sur Harris-Benedict. Ajuste selon tes résultats.
+          </Text>
         </View>
 
         {/* Meals */}
@@ -482,11 +766,78 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  // User Data Card
+  userDataCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  userDataHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  userDataTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  userDataRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  userDataItem: {
+    flex: 1,
+    gap: 6,
+  },
+  userDataLabel: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  userDataInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  userDataInput: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+  userDataUnit: {
+    fontSize: 14,
+  },
+  activityLabel: {
+    fontSize: 12,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  activityButton: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  activityButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
   // Protein Card
   proteinCard: {
     borderRadius: 16,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   proteinHeader: {
     flexDirection: 'row',
@@ -497,34 +848,14 @@ const styles = StyleSheet.create({
   proteinTitle: {
     fontSize: 15,
     fontWeight: '700',
+    flex: 1,
   },
-  proteinInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  proteinLabel: {
-    fontSize: 14,
-  },
-  weightInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-  weightInput: {
-    fontSize: 18,
-    fontWeight: '700',
-    width: 50,
-    textAlign: 'center',
-    paddingVertical: 8,
-  },
-  weightUnit: {
-    fontSize: 14,
+  sourceButton: {
+    padding: 6,
   },
   proteinResult: {
     alignItems: 'center',
+    marginBottom: 12,
   },
   proteinValue: {
     fontSize: 28,
@@ -533,6 +864,35 @@ const styles = StyleSheet.create({
   proteinSubtext: {
     fontSize: 12,
     marginTop: 2,
+  },
+  sourceInfo: {
+    padding: 10,
+    borderRadius: 8,
+  },
+  sourceText: {
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  caloriesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  caloriesItem: {
+    alignItems: 'center',
+  },
+  caloriesLabel: {
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  caloriesValue: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  caloriesNote: {
+    fontSize: 10,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 
   // Section Title

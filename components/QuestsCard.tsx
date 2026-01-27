@@ -244,33 +244,33 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       // Daily (15) - Routes triées par XP
       'daily_weigh': '/add-measurement',
       'daily_breakfast': '/quick-nutrition',
-      'daily_read_article': '/(tabs)/savoir',
+      'daily_read_article': '/savoir',
       'daily_sleep': '/sleep-input',
       'daily_hydration': '/hydration',
       'daily_protein': '/quick-nutrition',
       'daily_photo': '/(tabs)/more/photos',
       'daily_steps': '/health-metrics',
-      'daily_cardio': '/(tabs)/planning',
-      'daily_training': '/(tabs)/planning',
+      'daily_cardio': '/add-training',
+      'daily_training': '/add-training',
       // daily_open_app, daily_stretch, daily_meditation, daily_no_junk, daily_cold_shower = manuelles
 
       // Weekly (15) - Routes triées par XP
-      'weekly_visit_dojo': '/(tabs)/dojo',
+      'weekly_visit_dojo': '/gamification',
       'weekly_check_stats': '/(tabs)/stats',
       'weekly_share_progress': '/share-hub',
       'weekly_photo': '/(tabs)/more/photos',
-      'weekly_read_articles': '/(tabs)/savoir',
+      'weekly_read_articles': '/savoir',
       'weekly_5_weighs': '/add-measurement',
       'weekly_measurements': '/measurements',
-      'weekly_cardio_3': '/(tabs)/planning',
-      'weekly_4_trainings': '/(tabs)/planning',
+      'weekly_cardio_3': '/add-training',
+      'weekly_4_trainings': '/add-training',
       // weekly_rest_day, weekly_try_new, weekly_meal_prep, weekly_no_sugar, weekly_hydration_streak, weekly_7_streak = manuelles
 
       // Monthly (15) - Routes triées par XP
       'monthly_25_weighs': '/add-measurement',
       'monthly_body_scan': '/body-composition',
       'monthly_transformation': '/(tabs)/more/photos',
-      'monthly_20_trainings': '/(tabs)/planning',
+      'monthly_20_trainings': '/add-training',
       'monthly_new_pr': '/records',
       'monthly_lose_2kg': '/add-measurement',
       // monthly_invite_friend, monthly_sleep_quality, monthly_hydration_master, monthly_all_daily, monthly_consistency, monthly_perfect_week, monthly_30_streak, monthly_level_up, monthly_best_version = manuelles

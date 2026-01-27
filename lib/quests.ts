@@ -157,7 +157,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_stretch',
-    title: 'Mobilite',
+    title: 'Etirement',
     description: 'Faire des etirements',
     icon: '🧘',
     xp: 15,
@@ -231,7 +231,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_cold_shower',
-    title: 'Guerrier',
+    title: 'Douche Froide',
     description: 'Prendre une douche froide',
     icon: '🥶',
     xp: 30,
@@ -361,7 +361,7 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_cardio_3',
-    title: 'Cardio King',
+    title: 'Cardio Pro',
     description: '3 sessions cardio',
     icon: '🏃',
     xp: 130,
@@ -419,7 +419,7 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_sleep_quality',
-    title: 'Dormeur Elite',
+    title: 'Sommeil Elite',
     description: '20 nuits de 7h+',
     icon: '🌙',
     xp: 350,
