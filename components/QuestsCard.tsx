@@ -214,7 +214,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         }).start();
       }
     } catch (error) {
-      logger.error('Erreur chargement quêtes:', error);
+      logger.error('Erreur chargement défis:', error);
     } finally {
       setIsLoading(false);
     }
@@ -237,9 +237,9 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     loadQuests();
   }, [loadQuests]);
 
-  // Naviguer vers l'écran approprié pour remplir la quête
+  // Naviguer vers l'écran approprié pour remplir la défi
   const getQuestRoute = (questId: string): string | null => {
-    // Routes pour chaque type de quête (null = quête manuelle à cocher)
+    // Routes pour chaque type de défi (null = défi manuelle à cocher)
     const routes: Record<string, string> = {
       // Daily (15) - Routes triées par XP
       'daily_weigh': '/add-measurement',
@@ -278,14 +278,14 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     return routes[questId] || null;
   };
 
-  // Gérer le tap sur une quête
+  // Gérer le tap sur une défi
   const handleQuestTap = async (quest: QuestWithProgress) => {
     impactAsync(ImpactFeedbackStyle.Medium);
 
     const route = getQuestRoute(quest.id);
 
     if (route) {
-      // Naviguer vers l'écran pour remplir la quête
+      // Naviguer vers l'écran pour remplir la défi
       router.push(route as any);
     } else {
       // Quête manuelle - toggle compléter/désélectionner
@@ -305,7 +305,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
           }
         }
       } catch (error) {
-        logger.error('Erreur toggle quete:', error);
+        logger.error('Erreur toggle defi:', error);
       }
     }
   };
@@ -453,7 +453,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             </Animated.View>
             <View>
               <Text style={[styles.title, { color: colors.textPrimary }]}>
-                Quêtes
+                Défis
               </Text>
               <View style={styles.xpBadge}>
                 <Zap size={12} color="#FFD700" fill="#FFD700" />
@@ -702,7 +702,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         {completedCount === totalCount && (
           <View style={styles.completedOverlay}>
             <Sparkles size={20} color="#FFD700" />
-            <Text style={styles.completedText}>Toutes les quêtes terminées !</Text>
+            <Text style={styles.completedText}>Toutes les défis terminées !</Text>
           </View>
         )}
       </LinearGradient>

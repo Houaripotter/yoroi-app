@@ -107,11 +107,11 @@ export interface QuestsState {
 // DEFINITIONS DES QUETES
 // ═══════════════════════════════════════════════
 
-// ✅ 15 quêtes quotidiennes - Triées par XP (5 → 50)
+// ✅ 15 défis quotidiens - Triés par XP (5 → 50)
 export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_open_app',
-    title: 'Check-in',
+    title: 'Fidele',
     description: 'Ouvrir l\'app',
     icon: '📱',
     xp: 5,
@@ -120,7 +120,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_weigh',
-    title: 'La Balance',
+    title: 'Discipline',
     description: 'Se peser',
     icon: '⚖️',
     xp: 10,
@@ -130,7 +130,7 @@ export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_breakfast',
     title: 'Fuel Up',
-    description: 'Prendre un petit-dej',
+    description: 'Petit-dej',
     icon: '🍳',
     xp: 10,
     period: 'daily',
@@ -138,8 +138,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_read_article',
-    title: '1 min Culture',
-    description: 'Lire un article',
+    title: 'Big Brain',
+    description: '1 article',
     icon: '📚',
     xp: 15,
     period: 'daily',
@@ -147,7 +147,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_sleep',
-    title: 'Bien Dormi',
+    title: 'Recharge',
     description: 'Dormir 7h+',
     icon: '😴',
     xp: 15,
@@ -157,8 +157,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_stretch',
-    title: 'Mobilite',
-    description: 'Faire des etirements',
+    title: 'Flexible',
+    description: 'S\'etirer',
     icon: '🧘',
     xp: 15,
     period: 'daily',
@@ -166,8 +166,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_meditation',
-    title: 'Reset Mental',
-    description: 'Meditation ou moment calme',
+    title: 'Zen Mode',
+    description: 'Mediter',
     icon: '🙏',
     xp: 15,
     period: 'daily',
@@ -175,8 +175,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_hydration',
-    title: '2L d\'eau',
-    description: 'Boire 2 litres',
+    title: 'Hydrated',
+    description: 'Boire 2L',
     icon: '💧',
     xp: 20,
     period: 'daily',
@@ -185,8 +185,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_protein',
-    title: 'Prot\' du jour',
-    description: 'Manger assez de proteines',
+    title: 'Protein Up',
+    description: 'Tes proteines',
     icon: '🥩',
     xp: 20,
     period: 'daily',
@@ -194,8 +194,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_photo',
-    title: 'Selfie Shape',
-    description: 'Prendre une photo progres',
+    title: 'Glow Up',
+    description: 'Photo progres',
     icon: '📸',
     xp: 20,
     period: 'daily',
@@ -203,8 +203,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_no_junk',
-    title: 'Manger Clean',
-    description: 'Eviter la malbouffe',
+    title: 'Clean Eater',
+    description: 'Manger sain',
     icon: '🥗',
     xp: 25,
     period: 'daily',
@@ -212,8 +212,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_steps',
-    title: '8000 Pas',
-    description: 'Marcher 8000 pas',
+    title: 'Walker',
+    description: '8000 pas',
     icon: '👟',
     xp: 25,
     period: 'daily',
@@ -222,8 +222,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_cardio',
-    title: 'Cardio Done',
-    description: 'Faire du cardio',
+    title: 'Cardio Beast',
+    description: 'Faire cardio',
     icon: '❤️',
     xp: 30,
     period: 'daily',
@@ -231,7 +231,7 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_cold_shower',
-    title: 'Ice Mode',
+    title: 'Ice Cold',
     description: 'Douche froide',
     icon: '🥶',
     xp: 30,
@@ -240,8 +240,8 @@ export const DAILY_QUESTS: Quest[] = [
   },
   {
     id: 'daily_training',
-    title: 'Seance Validee',
-    description: 'Faire un entrainement',
+    title: 'Beast Mode',
+    description: 'S\'entrainer',
     icon: '💪',
     xp: 50,
     period: 'daily',
@@ -249,12 +249,12 @@ export const DAILY_QUESTS: Quest[] = [
   },
 ];
 
-// ✅ 15 quêtes hebdomadaires - Triées par XP (30 → 200)
+// ✅ 15 défis hebdomadaires - Triés par XP (30 → 200)
 export const WEEKLY_QUESTS: Quest[] = [
   {
     id: 'weekly_visit_dojo',
-    title: 'Voir le Dojo',
-    description: 'Visiter le Dojo',
+    title: 'Dojo Vibes',
+    description: 'Voir le Dojo',
     icon: '🥋',
     xp: 30,
     period: 'weekly',
@@ -262,8 +262,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_check_stats',
-    title: 'Mes Stats',
-    description: 'Consulter ses statistiques',
+    title: 'Data Lover',
+    description: 'Tes stats',
     icon: '📊',
     xp: 40,
     period: 'weekly',
@@ -271,8 +271,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_rest_day',
-    title: 'Jour Off',
-    description: '1 jour de repos complet',
+    title: 'Recovery',
+    description: 'Jour de repos',
     icon: '🛋️',
     xp: 50,
     period: 'weekly',
@@ -280,8 +280,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_share_progress',
-    title: 'Partage',
-    description: 'Partager sa progression',
+    title: 'Influenceur',
+    description: 'Partager',
     icon: '📤',
     xp: 60,
     period: 'weekly',
@@ -289,8 +289,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_try_new',
-    title: 'Nouvel Exo',
-    description: 'Essayer un nouvel exercice',
+    title: 'Explorer',
+    description: 'Nouvel exo',
     icon: '🆕',
     xp: 60,
     period: 'weekly',
@@ -298,8 +298,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_photo',
-    title: 'Photo Weekly',
-    description: 'Prendre une photo progres',
+    title: 'Weekly Snap',
+    description: 'Photo semaine',
     icon: '📸',
     xp: 75,
     period: 'weekly',
@@ -307,8 +307,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_meal_prep',
-    title: 'Meal Prep',
-    description: 'Preparer ses repas',
+    title: 'Meal Prepper',
+    description: 'Preparer repas',
     icon: '🍱',
     xp: 80,
     period: 'weekly',
@@ -316,8 +316,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_read_articles',
-    title: '3 Articles',
-    description: 'Lire 3 articles',
+    title: 'Bookworm',
+    description: '3 articles',
     icon: '📖',
     xp: 90,
     period: 'weekly',
@@ -325,8 +325,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_5_weighs',
-    title: '5 Pesees',
-    description: '5 pesees cette semaine',
+    title: 'Consistent',
+    description: '5 pesees',
     icon: '⚖️',
     xp: 100,
     period: 'weekly',
@@ -334,8 +334,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_measurements',
-    title: 'Mensurations',
-    description: 'Prendre ses mesures',
+    title: 'Body Scan',
+    description: 'Mensurations',
     icon: '📏',
     xp: 100,
     period: 'weekly',
@@ -343,8 +343,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_no_sugar',
-    title: 'No Sugar 3j',
-    description: '3 jours sans sucre ajoute',
+    title: 'Sugar Free',
+    description: '3j sans sucre',
     icon: '🍭',
     xp: 110,
     period: 'weekly',
@@ -352,8 +352,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_hydration_streak',
-    title: '5j Hydrate',
-    description: '5 jours bien hydrate',
+    title: 'Hydra Pro',
+    description: '5j hydrate',
     icon: '💧',
     xp: 120,
     period: 'weekly',
@@ -361,8 +361,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_cardio_3',
-    title: '3x Cardio',
-    description: '3 sessions cardio',
+    title: 'Cardio King',
+    description: '3x cardio',
     icon: '🏃',
     xp: 130,
     period: 'weekly',
@@ -370,8 +370,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_4_trainings',
-    title: '4 Seances',
-    description: '4 entrainements',
+    title: 'Iron Will',
+    description: '4 seances',
     icon: '💪',
     xp: 150,
     period: 'weekly',
@@ -379,8 +379,8 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
   {
     id: 'weekly_7_streak',
-    title: '7j d\'affilee',
-    description: '7 jours consecutifs',
+    title: 'On Fire',
+    description: '7j d\'affilee',
     icon: '🔥',
     xp: 200,
     period: 'weekly',
@@ -388,12 +388,12 @@ export const WEEKLY_QUESTS: Quest[] = [
   },
 ];
 
-// ✅ 15 quêtes mensuelles - Triées par XP (200 → 700)
+// ✅ 15 défis mensuels - Triés par XP (200 → 700)
 export const MONTHLY_QUESTS: Quest[] = [
   {
     id: 'monthly_invite_friend',
-    title: 'Invite un Pote',
-    description: 'Inviter un ami sur YOROI',
+    title: 'Ambassador',
+    description: 'Inviter un ami',
     icon: '👥',
     xp: 200,
     period: 'monthly',
@@ -401,8 +401,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_25_weighs',
-    title: '25 Pesees',
-    description: '25 pesees ce mois',
+    title: 'Dedicated',
+    description: '25 pesees',
     icon: '⚖️',
     xp: 300,
     period: 'monthly',
@@ -410,8 +410,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_body_scan',
-    title: 'Body Check',
-    description: '4 scans corporels',
+    title: 'Full Scan',
+    description: '4 body checks',
     icon: '📊',
     xp: 300,
     period: 'monthly',
@@ -419,8 +419,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_sleep_quality',
-    title: '20 Bonnes Nuits',
-    description: '20 nuits de 7h+',
+    title: 'Sleep Master',
+    description: '20 bonnes nuits',
     icon: '🌙',
     xp: 350,
     period: 'monthly',
@@ -428,8 +428,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_transformation',
-    title: '4 Photos',
-    description: '4 photos transformation',
+    title: 'Transformer',
+    description: '4 photos',
     icon: '📸',
     xp: 350,
     period: 'monthly',
@@ -437,8 +437,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_20_trainings',
-    title: '20 Seances',
-    description: '20 entrainements ce mois',
+    title: 'Titan',
+    description: '20 seances',
     icon: '🏋️',
     xp: 400,
     period: 'monthly',
@@ -446,8 +446,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_hydration_master',
-    title: '25j Hydrate',
-    description: '25 jours a 2L d\'eau',
+    title: 'Aqua King',
+    description: '25j hydrate',
     icon: '💧',
     xp: 400,
     period: 'monthly',
@@ -455,8 +455,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_new_pr',
-    title: 'Nouveau Record',
-    description: 'Battre un record perso',
+    title: 'Record Breaker',
+    description: 'Nouveau PR',
     icon: '🏆',
     xp: 450,
     period: 'monthly',
@@ -464,8 +464,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_lose_2kg',
-    title: '-2kg',
-    description: 'Perdre 2kg ce mois',
+    title: 'Shredded',
+    description: 'Perdre 2kg',
     icon: '🎯',
     xp: 500,
     period: 'monthly',
@@ -474,8 +474,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_all_daily',
-    title: '10 Jours Parfaits',
-    description: 'Toutes les quetes du jour 10 fois',
+    title: 'Perfectionist',
+    description: '10 jours parfaits',
     icon: '💯',
     xp: 500,
     period: 'monthly',
@@ -483,8 +483,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_consistency',
-    title: '4 Semaines Clean',
-    description: '4 semaines regulieres',
+    title: 'Rock Solid',
+    description: '4 semaines',
     icon: '📅',
     xp: 550,
     period: 'monthly',
@@ -492,8 +492,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_perfect_week',
-    title: 'Semaine 100%',
-    description: '7 jours toutes quetes OK',
+    title: 'Flawless',
+    description: 'Semaine parfaite',
     icon: '✨',
     xp: 600,
     period: 'monthly',
@@ -501,8 +501,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_30_streak',
-    title: '30j Non-Stop',
-    description: '30 jours sans interruption',
+    title: 'Unstoppable',
+    description: '30j non-stop',
     icon: '🔥',
     xp: 600,
     period: 'monthly',
@@ -510,7 +510,7 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_level_up',
-    title: 'Niveau Superieur',
+    title: 'Evolved',
     description: 'Monter de rang',
     icon: '⬆️',
     xp: 650,
@@ -519,8 +519,8 @@ export const MONTHLY_QUESTS: Quest[] = [
   },
   {
     id: 'monthly_best_version',
-    title: 'Best Shape',
-    description: 'Atteindre un objectif majeur',
+    title: 'Legend',
+    description: 'Objectif majeur',
     icon: '👑',
     xp: 700,
     period: 'monthly',

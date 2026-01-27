@@ -317,7 +317,7 @@ export default function DojoScreen() {
   const [achievementsHistory, setAchievementsHistory] = useState<AchievementUnlock[]>([]);
   const [todayAchievements, setTodayAchievements] = useState<AchievementUnlock[]>([]);
 
-  // Quêtes
+  // Défis
   type QuestWithProgress = Quest & QuestProgress;
   const [dailyQuests, setDailyQuests] = useState<QuestWithProgress[]>([]);
   const [weeklyQuests, setWeeklyQuests] = useState<QuestWithProgress[]>([]);
