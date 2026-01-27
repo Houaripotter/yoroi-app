@@ -16,47 +16,54 @@ import logger from '@/lib/security/logger';
 
 export type QuestPeriod = 'daily' | 'weekly' | 'monthly';
 export type QuestId =
-  // Daily (14) - Toutes complétables manuellement ou auto
-  | 'daily_weigh'
-  | 'daily_hydration'
-  | 'daily_training'
-  | 'daily_open_app'
-  | 'daily_steps'
-  | 'daily_sleep'
-  | 'daily_protein'
-  | 'daily_stretch'
-  | 'daily_meditation'
-  | 'daily_cardio'
-  | 'daily_breakfast'
-  | 'daily_no_junk'
-  | 'daily_photo'
-  | 'daily_read_article'
-  // Weekly (12)
-  | 'weekly_5_weighs'
-  | 'weekly_4_trainings'
-  | 'weekly_photo'
-  | 'weekly_measurements'
-  | 'weekly_7_streak'
-  | 'weekly_hydration_streak'
-  | 'weekly_cardio_3'
-  | 'weekly_meal_prep'
-  | 'weekly_rest_day'
-  | 'weekly_check_stats'
-  | 'weekly_visit_dojo'
-  | 'weekly_share_progress'
-  // Monthly (12)
-  | 'monthly_lose_2kg'
-  | 'monthly_20_trainings'
-  | 'monthly_30_streak'
-  | 'monthly_25_weighs'
-  | 'monthly_transformation'
-  | 'monthly_new_pr'
-  | 'monthly_sleep_quality'
-  | 'monthly_hydration_master'
-  | 'monthly_consistency'
-  | 'monthly_body_scan'
-  | 'monthly_level_up'
-  | 'monthly_perfect_week';
+  // Daily (15) - Triées par XP (5 → 50)
+  | 'daily_open_app'       // 5 XP
+  | 'daily_weigh'          // 10 XP
+  | 'daily_breakfast'      // 10 XP
+  | 'daily_read_article'   // 15 XP
+  | 'daily_sleep'          // 15 XP
+  | 'daily_stretch'        // 15 XP
+  | 'daily_meditation'     // 15 XP
+  | 'daily_hydration'      // 20 XP
+  | 'daily_protein'        // 20 XP
+  | 'daily_photo'          // 20 XP
+  | 'daily_no_junk'        // 25 XP
+  | 'daily_steps'          // 25 XP
+  | 'daily_cardio'         // 30 XP
+  | 'daily_cold_shower'    // 30 XP (NOUVEAU)
+  | 'daily_training'       // 50 XP
+  // Weekly (15) - Triées par XP (30 → 200)
+  | 'weekly_visit_dojo'    // 30 XP
+  | 'weekly_check_stats'   // 40 XP
+  | 'weekly_rest_day'      // 50 XP
+  | 'weekly_share_progress'// 60 XP
+  | 'weekly_try_new'       // 60 XP (NOUVEAU)
+  | 'weekly_photo'         // 75 XP
+  | 'weekly_meal_prep'     // 80 XP
+  | 'weekly_read_articles' // 90 XP (NOUVEAU)
+  | 'weekly_5_weighs'      // 100 XP
+  | 'weekly_measurements'  // 100 XP
+  | 'weekly_no_sugar'      // 110 XP (NOUVEAU)
+  | 'weekly_hydration_streak' // 120 XP
+  | 'weekly_cardio_3'      // 130 XP
+  | 'weekly_4_trainings'   // 150 XP
+  | 'weekly_7_streak'      // 200 XP
+  // Monthly (15) - Triées par XP (200 → 700)
+  | 'monthly_invite_friend'// 200 XP (NOUVEAU)
+  | 'monthly_25_weighs'    // 300 XP
+  | 'monthly_body_scan'    // 300 XP
+  | 'monthly_sleep_quality'// 350 XP
+  | 'monthly_transformation'// 350 XP
+  | 'monthly_20_trainings' // 400 XP
+  | 'monthly_hydration_master' // 400 XP
+  | 'monthly_new_pr'       // 450 XP
+  | 'monthly_lose_2kg'     // 500 XP
+  | 'monthly_all_daily'    // 500 XP (NOUVEAU)
+  | 'monthly_consistency'  // 550 XP
+  | 'monthly_perfect_week' // 600 XP
+  | 'monthly_30_streak'    // 600 XP
+  | 'monthly_level_up'     // 650 XP
+  | 'monthly_best_version';// 700 XP (NOUVEAU)
 
 export interface Quest {
   id: QuestId;
@@ -100,6 +107,7 @@ export interface QuestsState {
 // DEFINITIONS DES QUETES
 // ═══════════════════════════════════════════════
 
+// ✅ 15 quêtes quotidiennes - Triées par XP (5 → 50)
 export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_open_app',
@@ -113,16 +121,62 @@ export const DAILY_QUESTS: Quest[] = [
   {
     id: 'daily_weigh',
     title: 'Pesee du jour',
-    description: 'Se peser une fois (auto)',
+    description: 'Se peser une fois',
     icon: '⚖️',
     xp: 10,
     period: 'daily',
     target: 1,
   },
   {
+    id: 'daily_breakfast',
+    title: 'Petit-dej',
+    description: 'Prendre un bon petit-dejeuner',
+    icon: '🍳',
+    xp: 10,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_read_article',
+    title: 'Dormir Moins Bete',
+    description: 'Lire un article dans Savoir',
+    icon: '📚',
+    xp: 15,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_sleep',
+    title: 'Repos',
+    description: 'Dormir 7h minimum',
+    icon: '😴',
+    xp: 15,
+    period: 'daily',
+    target: 7,
+    unit: 'h',
+  },
+  {
+    id: 'daily_stretch',
+    title: 'Mobilite',
+    description: 'Faire des etirements',
+    icon: '🧘',
+    xp: 15,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_meditation',
+    title: 'Zen / Spirituel',
+    description: 'Meditation, priere ou moment de recueillement',
+    icon: '🙏',
+    xp: 15,
+    period: 'daily',
+    target: 1,
+  },
+  {
     id: 'daily_hydration',
     title: 'Hydratation',
-    description: 'Boire 2L d\'eau (auto)',
+    description: 'Boire 2L d\'eau',
     icon: '💧',
     xp: 20,
     period: 'daily',
@@ -130,11 +184,29 @@ export const DAILY_QUESTS: Quest[] = [
     unit: 'L',
   },
   {
-    id: 'daily_training',
-    title: 'Athlete',
-    description: 'Faire un entrainement (auto)',
-    icon: '💪',
-    xp: 50,
+    id: 'daily_protein',
+    title: 'Proteines',
+    description: 'Manger assez de proteines',
+    icon: '🥩',
+    xp: 20,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_photo',
+    title: 'Snapshot',
+    description: 'Prendre une photo progres',
+    icon: '📸',
+    xp: 20,
+    period: 'daily',
+    target: 1,
+  },
+  {
+    id: 'daily_no_junk',
+    title: 'Clean Eating',
+    description: 'Eviter la malbouffe',
+    icon: '🥗',
+    xp: 25,
     period: 'daily',
     target: 1,
   },
@@ -149,43 +221,6 @@ export const DAILY_QUESTS: Quest[] = [
     unit: 'pas',
   },
   {
-    id: 'daily_sleep',
-    title: 'Repos',
-    description: 'Dormir 7h minimum',
-    icon: '😴',
-    xp: 15,
-    period: 'daily',
-    target: 7,
-    unit: 'h',
-  },
-  {
-    id: 'daily_protein',
-    title: 'Proteines',
-    description: 'Manger assez de proteines',
-    icon: '🥩',
-    xp: 20,
-    period: 'daily',
-    target: 1,
-  },
-  {
-    id: 'daily_stretch',
-    title: 'Mobilite',
-    description: 'Faire des etirements',
-    icon: '🧘',
-    xp: 15,
-    period: 'daily',
-    target: 1,
-  },
-  {
-    id: 'daily_meditation',
-    title: 'Zen / Spirituel',
-    description: 'Meditation, priere ou moment avec soi-meme',
-    icon: '🙏',
-    xp: 15,
-    period: 'daily',
-    target: 1,
-  },
-  {
     id: 'daily_cardio',
     title: 'Cardio',
     description: 'Faire du cardio',
@@ -195,61 +230,71 @@ export const DAILY_QUESTS: Quest[] = [
     target: 1,
   },
   {
-    id: 'daily_breakfast',
-    title: 'Petit-dej',
-    description: 'Prendre un bon petit-dejeuner',
-    icon: '🍳',
-    xp: 10,
+    id: 'daily_cold_shower',
+    title: 'Guerrier',
+    description: 'Prendre une douche froide',
+    icon: '🥶',
+    xp: 30,
     period: 'daily',
     target: 1,
   },
   {
-    id: 'daily_no_junk',
-    title: 'Clean Eating',
-    description: 'Eviter la malbouffe',
-    icon: '🥗',
-    xp: 25,
-    period: 'daily',
-    target: 1,
-  },
-  {
-    id: 'daily_photo',
-    title: 'Snapshot',
-    description: 'Prendre une photo progres',
-    icon: '📸',
-    xp: 20,
-    period: 'daily',
-    target: 1,
-  },
-  {
-    id: 'daily_read_article',
-    title: 'Dormir Moins Bete',
-    description: 'Lire un article dans Savoir',
-    icon: '📚',
-    xp: 15,
+    id: 'daily_training',
+    title: 'Athlete',
+    description: 'Faire un entrainement',
+    icon: '💪',
+    xp: 50,
     period: 'daily',
     target: 1,
   },
 ];
 
+// ✅ 15 quêtes hebdomadaires - Triées par XP (30 → 200)
 export const WEEKLY_QUESTS: Quest[] = [
   {
-    id: 'weekly_5_weighs',
-    title: 'Regularite',
-    description: '5 pesees cette semaine (auto)',
-    icon: '⚖️',
-    xp: 100,
+    id: 'weekly_visit_dojo',
+    title: 'Sensei',
+    description: 'Visiter le Dojo',
+    icon: '🥋',
+    xp: 30,
     period: 'weekly',
-    target: 5,
+    target: 1,
   },
   {
-    id: 'weekly_4_trainings',
-    title: 'Machine',
-    description: '4 entrainements (auto)',
-    icon: '💪',
-    xp: 150,
+    id: 'weekly_check_stats',
+    title: 'Analyste',
+    description: 'Consulter ses statistiques',
+    icon: '📊',
+    xp: 40,
     period: 'weekly',
-    target: 4,
+    target: 1,
+  },
+  {
+    id: 'weekly_rest_day',
+    title: 'Recuperation',
+    description: 'Prendre 1 jour de repos complet',
+    icon: '🛋️',
+    xp: 50,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_share_progress',
+    title: 'Influenceur',
+    description: 'Partager sa progression',
+    icon: '📤',
+    xp: 60,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_try_new',
+    title: 'Explorateur',
+    description: 'Essayer un nouvel exercice',
+    icon: '🆕',
+    xp: 60,
+    period: 'weekly',
+    target: 1,
   },
   {
     id: 'weekly_photo',
@@ -261,22 +306,49 @@ export const WEEKLY_QUESTS: Quest[] = [
     target: 1,
   },
   {
+    id: 'weekly_meal_prep',
+    title: 'Prep Master',
+    description: 'Preparer ses repas a l\'avance',
+    icon: '🍱',
+    xp: 80,
+    period: 'weekly',
+    target: 1,
+  },
+  {
+    id: 'weekly_read_articles',
+    title: 'Erudit',
+    description: 'Lire 3 articles dans Savoir',
+    icon: '📖',
+    xp: 90,
+    period: 'weekly',
+    target: 3,
+  },
+  {
+    id: 'weekly_5_weighs',
+    title: 'Regularite',
+    description: '5 pesees cette semaine',
+    icon: '⚖️',
+    xp: 100,
+    period: 'weekly',
+    target: 5,
+  },
+  {
     id: 'weekly_measurements',
     title: 'Mensuration',
-    description: 'Mesurer son corps (auto)',
+    description: 'Mesurer son corps',
     icon: '📏',
     xp: 100,
     period: 'weekly',
     target: 1,
   },
   {
-    id: 'weekly_7_streak',
-    title: 'Streak 7j',
-    description: '7 jours consecutifs (auto)',
-    icon: '🔥',
-    xp: 200,
+    id: 'weekly_no_sugar',
+    title: 'Detox Sucre',
+    description: '3 jours sans sucre ajoute',
+    icon: '🍭',
+    xp: 110,
     period: 'weekly',
-    target: 7,
+    target: 3,
   },
   {
     id: 'weekly_hydration_streak',
@@ -297,80 +369,35 @@ export const WEEKLY_QUESTS: Quest[] = [
     target: 3,
   },
   {
-    id: 'weekly_meal_prep',
-    title: 'Prep Master',
-    description: 'Preparer ses repas a l\'avance',
-    icon: '🍱',
-    xp: 80,
+    id: 'weekly_4_trainings',
+    title: 'Machine',
+    description: '4 entrainements',
+    icon: '💪',
+    xp: 150,
     period: 'weekly',
-    target: 1,
+    target: 4,
   },
   {
-    id: 'weekly_rest_day',
-    title: 'Recuperation',
-    description: 'Prendre 1 jour de repos complet',
-    icon: '🛋️',
-    xp: 50,
+    id: 'weekly_7_streak',
+    title: 'Streak 7j',
+    description: '7 jours consecutifs',
+    icon: '🔥',
+    xp: 200,
     period: 'weekly',
-    target: 1,
-  },
-  {
-    id: 'weekly_check_stats',
-    title: 'Analyste',
-    description: 'Consulter ses statistiques',
-    icon: '📊',
-    xp: 40,
-    period: 'weekly',
-    target: 1,
-  },
-  {
-    id: 'weekly_visit_dojo',
-    title: 'Sensei',
-    description: 'Visiter le Dojo',
-    icon: '🥋',
-    xp: 30,
-    period: 'weekly',
-    target: 1,
-  },
-  {
-    id: 'weekly_share_progress',
-    title: 'Influenceur',
-    description: 'Partager sa progression',
-    icon: '📤',
-    xp: 60,
-    period: 'weekly',
-    target: 1,
+    target: 7,
   },
 ];
 
+// ✅ 15 quêtes mensuelles - Triées par XP (200 → 700)
 export const MONTHLY_QUESTS: Quest[] = [
   {
-    id: 'monthly_lose_2kg',
-    title: 'Transformation',
-    description: 'Perdre 2 kg',
-    icon: '',
-    xp: 500,
+    id: 'monthly_invite_friend',
+    title: 'Ambassadeur',
+    description: 'Inviter un ami a utiliser YOROI',
+    icon: '👥',
+    xp: 200,
     period: 'monthly',
-    target: 2,
-    unit: 'kg',
-  },
-  {
-    id: 'monthly_20_trainings',
-    title: 'Titan',
-    description: '20 entrainements',
-    icon: '',
-    xp: 400,
-    period: 'monthly',
-    target: 20,
-  },
-  {
-    id: 'monthly_30_streak',
-    title: 'Marathonien',
-    description: '30 jours de streak',
-    icon: '',
-    xp: 600,
-    period: 'monthly',
-    target: 30,
+    target: 1,
   },
   {
     id: 'monthly_25_weighs',
@@ -382,6 +409,24 @@ export const MONTHLY_QUESTS: Quest[] = [
     target: 25,
   },
   {
+    id: 'monthly_body_scan',
+    title: 'Analyse Complete',
+    description: '4 scans composition corporelle',
+    icon: '📊',
+    xp: 300,
+    period: 'monthly',
+    target: 4,
+  },
+  {
+    id: 'monthly_sleep_quality',
+    title: 'Dormeur Elite',
+    description: '20 nuits de 7h+',
+    icon: '🌙',
+    xp: 350,
+    period: 'monthly',
+    target: 20,
+  },
+  {
     id: 'monthly_transformation',
     title: 'Avant/Apres',
     description: '4 photos transformation',
@@ -391,20 +436,11 @@ export const MONTHLY_QUESTS: Quest[] = [
     target: 4,
   },
   {
-    id: 'monthly_new_pr',
-    title: 'Record',
-    description: 'Battre un record perso',
-    icon: '🏆',
-    xp: 450,
-    period: 'monthly',
-    target: 1,
-  },
-  {
-    id: 'monthly_sleep_quality',
-    title: 'Dormeur Elite',
-    description: '20 nuits de 7h+',
-    icon: '🌙',
-    xp: 350,
+    id: 'monthly_20_trainings',
+    title: 'Titan',
+    description: '20 entrainements ce mois',
+    icon: '🏋️',
+    xp: 400,
     period: 'monthly',
     target: 20,
   },
@@ -418,38 +454,75 @@ export const MONTHLY_QUESTS: Quest[] = [
     target: 25,
   },
   {
+    id: 'monthly_new_pr',
+    title: 'Record',
+    description: 'Battre un record personnel',
+    icon: '🏆',
+    xp: 450,
+    period: 'monthly',
+    target: 1,
+  },
+  {
+    id: 'monthly_lose_2kg',
+    title: 'Objectif Poids',
+    description: 'Atteindre un objectif de -2kg',
+    icon: '🎯',
+    xp: 500,
+    period: 'monthly',
+    target: 2,
+    unit: 'kg',
+  },
+  {
+    id: 'monthly_all_daily',
+    title: 'Perfectionniste',
+    description: 'Completer toutes les quetes du jour 10 fois',
+    icon: '💯',
+    xp: 500,
+    period: 'monthly',
+    target: 10,
+  },
+  {
     id: 'monthly_consistency',
     title: 'Consistance',
-    description: '4 semaines regulieres',
+    description: '4 semaines regulieres d\'entrainement',
     icon: '📅',
     xp: 550,
     period: 'monthly',
     target: 4,
   },
   {
-    id: 'monthly_body_scan',
-    title: 'Analyse Complete',
-    description: '4 scans composition',
-    icon: '📊',
-    xp: 300,
+    id: 'monthly_perfect_week',
+    title: 'Semaine Parfaite',
+    description: '7 jours de suite toutes quetes completees',
+    icon: '✨',
+    xp: 600,
     period: 'monthly',
-    target: 4,
+    target: 7,
+  },
+  {
+    id: 'monthly_30_streak',
+    title: 'Marathonien',
+    description: '30 jours de streak sans interruption',
+    icon: '🔥',
+    xp: 600,
+    period: 'monthly',
+    target: 30,
   },
   {
     id: 'monthly_level_up',
     title: 'Level Up',
-    description: 'Monter de niveau',
+    description: 'Monter d\'un niveau de rang',
     icon: '⬆️',
-    xp: 500,
+    xp: 650,
     period: 'monthly',
     target: 1,
   },
   {
-    id: 'monthly_perfect_week',
-    title: 'Semaine Parfaite',
-    description: 'Completer toutes les quetes quotidiennes pendant 7 jours',
-    icon: '✨',
-    xp: 750,
+    id: 'monthly_best_version',
+    title: 'Meilleure Version',
+    description: 'Atteindre un objectif personnel majeur',
+    icon: '👑',
+    xp: 700,
     period: 'monthly',
     target: 1,
   },

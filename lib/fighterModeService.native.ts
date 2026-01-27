@@ -26,11 +26,37 @@ const STORAGE_KEY_BELT = '@yoroi_belt';
 const isNativePlatform = Platform.OS === 'ios' || Platform.OS === 'android';
 let SQLite: any = null;
 let db: any = null;
+let tablesInitialized = false;
 
 if (isNativePlatform) {
   SQLite = require('expo-sqlite');
   db = SQLite.openDatabaseSync('yoroi.db');
 }
+
+// ✅ FIX: S'assurer que la table competitions existe
+const ensureCompetitionsTable = () => {
+  if (!isNativePlatform || !db || tablesInitialized) return;
+
+  try {
+    db.runSync(`
+      CREATE TABLE IF NOT EXISTS competitions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nom TEXT NOT NULL,
+        date TEXT NOT NULL,
+        lieu TEXT,
+        sport TEXT NOT NULL,
+        categorie_poids TEXT,
+        poids_max REAL,
+        statut TEXT DEFAULT 'a_venir',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    tablesInitialized = true;
+    logger.info('[FighterMode] Table competitions initialisée');
+  } catch (error) {
+    logger.error('[FighterMode] Erreur création table competitions:', error);
+  }
+};
 
 // ============================================
 // USER PROFILE & MODE
@@ -132,6 +158,7 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 
 export const getCompetitions = async (): Promise<Competition[]> => {
   try {
+    ensureCompetitionsTable(); // ✅ FIX: S'assurer que la table existe
     const result = db.getAllSync(
       'SELECT * FROM competitions ORDER BY date ASC'
     );
@@ -265,6 +292,7 @@ export const getCompetitionById = async (id: number): Promise<Competition | null
 
 export const addCompetition = async (competition: Omit<Competition, 'id' | 'created_at'>): Promise<number> => {
   try {
+    ensureCompetitionsTable(); // ✅ FIX: S'assurer que la table existe
     const result = db.runSync(
       `INSERT INTO competitions (nom, date, lieu, sport, categorie_poids, poids_max, statut)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,

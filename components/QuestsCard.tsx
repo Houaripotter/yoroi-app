@@ -44,7 +44,16 @@ import {
   Sparkles,
   ChevronRight,
   Camera,
-  BookOpen
+  BookOpen,
+  Snowflake,
+  Users,
+  Crown,
+  Calendar,
+  TrendingUp,
+  Coffee,
+  Salad,
+  Sofa,
+  Share2
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 
@@ -230,34 +239,41 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
   // Naviguer vers l'écran approprié pour remplir la quête
   const getQuestRoute = (questId: string): string | null => {
-    // Routes pour chaque type de quête
+    // Routes pour chaque type de quête (null = quête manuelle à cocher)
     const routes: Record<string, string> = {
-      // Daily
+      // Daily (15) - Routes triées par XP
       'daily_weigh': '/add-measurement',
-      'daily_hydration': '/hydration',
-      'daily_training': '/(tabs)/planning',
-      'daily_steps': '/health-metrics',
-      'daily_sleep': '/sleep-input',
-      'daily_protein': '/quick-nutrition',
-      'daily_cardio': '/(tabs)/planning',
       'daily_breakfast': '/quick-nutrition',
-      'daily_photo': '/(tabs)/more/photos',
       'daily_read_article': '/(tabs)/savoir',
-      // Weekly
-      'weekly_5_weighs': '/add-measurement',
-      'weekly_4_trainings': '/(tabs)/planning',
+      'daily_sleep': '/sleep-input',
+      'daily_hydration': '/hydration',
+      'daily_protein': '/quick-nutrition',
+      'daily_photo': '/(tabs)/more/photos',
+      'daily_steps': '/health-metrics',
+      'daily_cardio': '/(tabs)/planning',
+      'daily_training': '/(tabs)/planning',
+      // daily_open_app, daily_stretch, daily_meditation, daily_no_junk, daily_cold_shower = manuelles
+
+      // Weekly (15) - Routes triées par XP
+      'weekly_visit_dojo': '/(tabs)/dojo',
+      'weekly_check_stats': '/(tabs)/stats',
+      'weekly_share_progress': '/share-hub',
       'weekly_photo': '/(tabs)/more/photos',
+      'weekly_read_articles': '/(tabs)/savoir',
+      'weekly_5_weighs': '/add-measurement',
       'weekly_measurements': '/measurements',
       'weekly_cardio_3': '/(tabs)/planning',
-      'weekly_check_stats': '/stats',
-      'weekly_visit_dojo': '/(tabs)/dojo',
-      'weekly_share_progress': '/share-hub',
-      // Monthly
-      'monthly_lose_2kg': '/add-measurement',
-      'monthly_20_trainings': '/(tabs)/planning',
-      'monthly_transformation': '/(tabs)/more/photos',
-      'monthly_new_pr': '/records',
+      'weekly_4_trainings': '/(tabs)/planning',
+      // weekly_rest_day, weekly_try_new, weekly_meal_prep, weekly_no_sugar, weekly_hydration_streak, weekly_7_streak = manuelles
+
+      // Monthly (15) - Routes triées par XP
+      'monthly_25_weighs': '/add-measurement',
       'monthly_body_scan': '/body-composition',
+      'monthly_transformation': '/(tabs)/more/photos',
+      'monthly_20_trainings': '/(tabs)/planning',
+      'monthly_new_pr': '/records',
+      'monthly_lose_2kg': '/add-measurement',
+      // monthly_invite_friend, monthly_sleep_quality, monthly_hydration_master, monthly_all_daily, monthly_consistency, monthly_perfect_week, monthly_30_streak, monthly_level_up, monthly_best_version = manuelles
     };
     return routes[questId] || null;
   };
@@ -296,36 +312,94 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
   const getQuestIcon = (questId: string | undefined) => {
     if (!questId) return Star;
-    if (questId.includes('photo')) return Camera;
+    // Photo / Transformation
+    if (questId.includes('photo') || questId.includes('transformation')) return Camera;
+    // Lecture / Articles
     if (questId.includes('read') || questId.includes('article')) return BookOpen;
+    // Hydratation
     if (questId.includes('hydration')) return Droplets;
+    // Sommeil
     if (questId.includes('sleep')) return Moon;
+    // Pas / Steps
     if (questId.includes('steps')) return Footprints;
+    // Training / Workout
     if (questId.includes('training') || questId.includes('workout')) return Dumbbell;
-    if (questId.includes('weight') || questId.includes('weigh')) return Target;
+    // Poids / Pesée
+    if (questId.includes('weight') || questId.includes('weigh') || questId.includes('lose')) return Target;
+    // Cardio
     if (questId.includes('cardio')) return Flame;
+    // Protéines
     if (questId.includes('protein')) return Zap;
-    if (questId.includes('breakfast')) return Star;
-    if (questId.includes('cold') || questId.includes('shower')) return Droplets;
+    // Petit-déjeuner
+    if (questId.includes('breakfast')) return Coffee;
+    // Douche froide
+    if (questId.includes('cold') || questId.includes('shower')) return Snowflake;
+    // Stretch / Méditation
     if (questId.includes('stretch') || questId.includes('meditation')) return Sparkles;
+    // Repos
+    if (questId.includes('rest')) return Sofa;
+    // Share / Partage
+    if (questId.includes('share')) return Share2;
+    // Inviter ami
+    if (questId.includes('invite') || questId.includes('friend')) return Users;
+    // Record / PR
+    if (questId.includes('record') || questId.includes('pr') || questId.includes('new_pr')) return Trophy;
+    // Level up / Best version
+    if (questId.includes('level') || questId.includes('best')) return Crown;
+    // Streak
+    if (questId.includes('streak')) return Flame;
+    // Consistency / Calendar
+    if (questId.includes('consistency') || questId.includes('perfect')) return Calendar;
+    // Clean eating / no junk / no sugar
+    if (questId.includes('junk') || questId.includes('sugar') || questId.includes('clean')) return Salad;
+    // Default
     return Star;
   };
 
   const getQuestColor = (questId: string | undefined) => {
     if (!questId) return '#FFD700';
-    if (questId.includes('photo')) return '#E879F9'; // Rose/violet pour photo
-    if (questId.includes('read') || questId.includes('article')) return '#22D3EE'; // Cyan pour lecture
+    // Photo / Transformation - Rose
+    if (questId.includes('photo') || questId.includes('transformation')) return '#E879F9';
+    // Lecture / Articles - Cyan
+    if (questId.includes('read') || questId.includes('article')) return '#22D3EE';
+    // Hydratation - Bleu
     if (questId.includes('hydration')) return '#06B6D4';
+    // Sommeil - Violet
     if (questId.includes('sleep')) return '#8B5CF6';
+    // Pas - Vert
     if (questId.includes('steps')) return '#10B981';
+    // Training - Orange
     if (questId.includes('training') || questId.includes('workout')) return '#F97316';
-    if (questId.includes('weight') || questId.includes('weigh')) return '#EC4899';
+    // Poids - Rose
+    if (questId.includes('weight') || questId.includes('weigh') || questId.includes('lose')) return '#EC4899';
+    // Cardio - Rouge
     if (questId.includes('cardio')) return '#EF4444';
+    // Protéines - Jaune
     if (questId.includes('protein')) return '#F59E0B';
+    // Petit-déjeuner - Jaune doré
     if (questId.includes('breakfast')) return '#FBBF24';
+    // Douche froide - Bleu glace
     if (questId.includes('cold') || questId.includes('shower')) return '#0EA5E9';
+    // Stretch - Violet clair
     if (questId.includes('stretch')) return '#A855F7';
+    // Méditation - Indigo
     if (questId.includes('meditation')) return '#6366F1';
+    // Repos - Gris bleuté
+    if (questId.includes('rest')) return '#64748B';
+    // Share - Vert
+    if (questId.includes('share')) return '#22C55E';
+    // Inviter ami - Bleu
+    if (questId.includes('invite') || questId.includes('friend')) return '#3B82F6';
+    // Record - Or
+    if (questId.includes('record') || questId.includes('pr') || questId.includes('new_pr')) return '#FFD700';
+    // Level up / Best - Or royal
+    if (questId.includes('level') || questId.includes('best')) return '#FCD34D';
+    // Streak - Orange feu
+    if (questId.includes('streak')) return '#F97316';
+    // Consistency - Emeraude
+    if (questId.includes('consistency') || questId.includes('perfect')) return '#059669';
+    // Clean eating - Vert lime
+    if (questId.includes('junk') || questId.includes('sugar') || questId.includes('clean')) return '#84CC16';
     return '#FFD700';
   };
 
