@@ -107,6 +107,7 @@ import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
+import { addHydration as addHydrationToQuests } from '@/lib/quests';
 import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
 
 // Mode Essentiel
@@ -497,7 +498,7 @@ export default function HomeScreen() {
     }).start();
   }, [waterAnim]);
 
-  // ✅ FIX: Écrire dans Apple Health ET sync vers Apple Watch
+  // ✅ FIX: Écrire dans Apple Health, sync Watch ET mettre à jour les quêtes
   const addWater = useCallback((amount: number) => {
     impactAsync(ImpactFeedbackStyle.Light);
     const newValue = Math.max(0, hydration + amount);
@@ -510,6 +511,14 @@ export default function HomeScreen() {
     WatchSyncService.syncHydration(newValue, hydrationGoal).catch(() => {
       // Silencieux si Watch non disponible
     });
+
+    // ✅ FIX: Mettre à jour la quête d'hydratation (en litres)
+    if (amount > 0) {
+      const litersToAdd = amount / 1000;
+      addHydrationToQuests(litersToAdd).catch(() => {
+        // Silencieux si erreur
+      });
+    }
   }, [hydration, hydrationGoal, saveHydration, animateWater]);
 
   // Protection navigation anti-spam
