@@ -410,6 +410,15 @@ const getHealthItems = (t: TranslateFunction): MenuItem[] => [
     iconColor: '#EC4899',
     iconBg: '#EC489920',
   },
+  {
+    id: 'health-diagnostic',
+    label: 'Diagnostic Sante',
+    sublabel: 'Verifier HealthKit et Watch',
+    Icon: Activity,
+    route: '/health-diagnostic',
+    iconColor: '#10B981',
+    iconBg: '#10B98120',
+  },
 ];
 
 

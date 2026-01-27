@@ -751,15 +751,42 @@ class HealthConnectService {
   private async getIOSSleep(): Promise<HealthData['sleep'] | null> {
     return this.queryHealthKit(async () => {
       const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      // ✅ FIX: Regarder 48h en arrière au lieu de 24h pour capturer le sommeil de la nuit précédente
+      const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+      logger.info('[HealthKit] Requête sommeil: de', twoDaysAgo.toISOString(), 'à', now.toISOString());
 
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
-        from: yesterday.getTime(),
+        from: twoDaysAgo.getTime(),
         to: now.getTime(),
-        limit: 100,
+        limit: 500, // ✅ FIX: Augmenter la limite de 100 à 500
       });
 
+      logger.info('[HealthKit] Échantillons sommeil bruts:', samples?.length || 0);
+
       if (samples && samples.length > 0) {
+        // ✅ FIX: Filtrer les sources pour ne garder que les vraies données (Apple Watch, pas estimations iPhone)
+        const filteredSamples = samples.filter((s: any) => {
+          const source = s.sourceRevision?.source?.name || s.device?.name || '';
+          const bundleId = s.sourceRevision?.source?.bundleIdentifier || '';
+
+          // Accepter: Apple Watch, Santé (données manuelles), apps tierces de sommeil
+          // Rejeter: com.apple.health.sleep-analysis-time (estimations automatiques iPhone)
+          const isAutoEstimation = bundleId.includes('sleep-analysis-time') ||
+                                   bundleId.includes('com.apple.health') && !source.toLowerCase().includes('watch');
+
+          if (isAutoEstimation) {
+            logger.info('[HealthKit] Ignoré estimation auto:', source, bundleId);
+          }
+
+          return !isAutoEstimation;
+        });
+
+        logger.info('[HealthKit] Échantillons sommeil filtrés (vrais):', filteredSamples.length);
+
+        // Si pas de vraies données, essayer quand même avec toutes les données
+        const samplesToUse = filteredSamples.length > 0 ? filteredSamples : samples;
+
         let totalMinutes = 0;
         let awakeMinutes = 0;
         let remMinutes = 0;
@@ -768,14 +795,31 @@ class HealthConnectService {
         let inBedMinutes = 0;
 
         // Trier les échantillons par date de début
-        const sortedSamples = [...samples].sort((a: any, b: any) =>
+        const sortedSamples = [...samplesToUse].sort((a: any, b: any) =>
           new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
         );
 
-        const startTime = sortedSamples[0].startDate;
-        const endTime = sortedSamples[sortedSamples.length - 1].endDate;
+        // ✅ FIX: Grouper par nuit (prendre la nuit la plus récente)
+        const lastNightStart = new Date(now);
+        lastNightStart.setHours(18, 0, 0, 0); // 18h hier = début de la "nuit"
+        lastNightStart.setDate(lastNightStart.getDate() - 1);
 
-        sortedSamples.forEach((s: any) => {
+        const lastNightSamples = sortedSamples.filter((s: any) => {
+          const sampleStart = new Date(s.startDate).getTime();
+          return sampleStart >= lastNightStart.getTime();
+        });
+
+        const finalSamples = lastNightSamples.length > 0 ? lastNightSamples : sortedSamples;
+
+        if (finalSamples.length === 0) {
+          logger.info('[HealthKit] Aucun échantillon de sommeil pour la nuit dernière');
+          return null;
+        }
+
+        const startTime = finalSamples[0].startDate;
+        const endTime = finalSamples[finalSamples.length - 1].endDate;
+
+        finalSamples.forEach((s: any) => {
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
           if (duration <= 0) return;
 
@@ -800,9 +844,20 @@ class HealthConnectService {
           }
         });
 
-        // Limite de sécurité : une nuit entre 3h et 16h
-        // Rejeter les données invalides ou estimations automatiques (< 3h)
-        if (totalMinutes < 180 || totalMinutes > 960) return null;
+        logger.info('[HealthKit] Sommeil calculé:', {
+          total: Math.round(totalMinutes),
+          deep: Math.round(deepMinutes),
+          rem: Math.round(remMinutes),
+          core: Math.round(coreMinutes),
+          awake: Math.round(awakeMinutes),
+        });
+
+        // ✅ FIX: Assouplir la limite minimum de 3h à 1h pour ne pas rater les siestes/nuits courtes
+        // Limite de sécurité : une nuit entre 1h et 16h
+        if (totalMinutes < 60 || totalMinutes > 960) {
+          logger.info('[HealthKit] Sommeil rejeté (durée invalide):', totalMinutes, 'minutes');
+          return null;
+        }
 
         const result: HealthData['sleep'] = {
           startTime: new Date(startTime).toISOString(),
@@ -819,6 +874,8 @@ class HealthConnectService {
         };
         return result;
       }
+
+      logger.info('[HealthKit] Aucune donnée de sommeil trouvée');
       return null;
     }, 'sleep');
   }
@@ -1464,7 +1521,7 @@ class HealthConnectService {
     return [];
   }
 
-  async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number }>> {
+  async getWeightHistory(days: number = 30): Promise<Array<{ date: string; value: number; source?: string }>> {
     if (DEMO_MODE && __DEV__) return DemoData.getDemoWeightHistory(days);
 
     // ✅ VÉRIFIER QUE HealthKit EST CHARGÉ
@@ -1478,17 +1535,26 @@ class HealthConnectService {
       fromDate.setDate(fromDate.getDate() - days);
       fromDate.setHours(0, 0, 0, 0);
 
+      logger.info('[HealthKit] getWeightHistory: Requête sur', days, 'jours, depuis', fromDate.toISOString());
+
       const samples = await HealthKit.queryQuantitySamples('HKQuantityTypeIdentifierBodyMass', {
         from: fromDate.getTime(),
         to: new Date().getTime(),
         ascending: true,
+        limit: 1000, // ✅ FIX: Ajouter une limite explicite
       });
 
+      logger.info('[HealthKit] getWeightHistory: Échantillons reçus:', samples?.length || 0);
+
       if (samples && samples.length > 0) {
-        return samples.map((s: any) => ({
+        const result = samples.map((s: any) => ({
           date: new Date(s.startDate).toISOString().split('T')[0],
           value: Math.round(s.quantity * 10) / 10,
+          source: s.sourceRevision?.source?.name || s.device?.name || 'Unknown',
         }));
+
+        logger.info('[HealthKit] getWeightHistory: Poids trouvés:', result.length);
+        return result;
       }
     } catch (error) {
       logger.error('Erreur lecture historique poids:', error);
@@ -1504,6 +1570,7 @@ class HealthConnectService {
     awake: number;
     total: number;
     duration?: number;
+    source?: string; // ✅ NOUVEAU: Ajouter la source pour debug
   }>> {
     if (DEMO_MODE && __DEV__) return DemoData.getDemoSleepHistory(days);
 
@@ -1518,24 +1585,49 @@ class HealthConnectService {
       fromDate.setDate(fromDate.getDate() - days);
       fromDate.setHours(0, 0, 0, 0);
 
+      logger.info('[HealthKit] getSleepHistory: Requête sur', days, 'jours, depuis', fromDate.toISOString());
+
       const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
         from: fromDate.getTime(),
         to: new Date().getTime(),
-        limit: 500,
+        limit: 2000, // ✅ FIX: Augmenter de 500 à 2000
       });
 
-      if (samples && samples.length > 0) {
-        // Grouper par date - prendre les données brutes d'Apple Santé
-        const sleepByDate: { [key: string]: { deep: number; rem: number; core: number; awake: number; total: number } } = {};
+      logger.info('[HealthKit] getSleepHistory: Échantillons bruts reçus:', samples?.length || 0);
 
-        samples.forEach((s: any) => {
+      if (samples && samples.length > 0) {
+        // ✅ FIX: Filtrer les estimations automatiques iPhone
+        const filteredSamples = samples.filter((s: any) => {
+          const source = s.sourceRevision?.source?.name || s.device?.name || '';
+          const bundleId = s.sourceRevision?.source?.bundleIdentifier || '';
+
+          // Rejeter les estimations automatiques d'Apple
+          const isAutoEstimation = bundleId.includes('sleep-analysis-time') ||
+                                   (bundleId.includes('com.apple.health') && !source.toLowerCase().includes('watch'));
+
+          return !isAutoEstimation;
+        });
+
+        logger.info('[HealthKit] getSleepHistory: Échantillons après filtrage:', filteredSamples.length);
+
+        // Utiliser les données filtrées si disponibles, sinon toutes les données
+        const samplesToUse = filteredSamples.length > 0 ? filteredSamples : samples;
+
+        // Grouper par date - prendre les données brutes d'Apple Santé
+        const sleepByDate: { [key: string]: { deep: number; rem: number; core: number; awake: number; total: number; sources: Set<string> } } = {};
+
+        samplesToUse.forEach((s: any) => {
           const date = new Date(s.endDate).toISOString().split('T')[0];
           const duration = (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) / 60000;
           if (duration <= 0) return;
 
           if (!sleepByDate[date]) {
-            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0 };
+            sleepByDate[date] = { deep: 0, rem: 0, core: 0, awake: 0, total: 0, sources: new Set() };
           }
+
+          // Tracker la source
+          const source = s.sourceRevision?.source?.name || s.device?.name || 'Unknown';
+          sleepByDate[date].sources.add(source);
 
           switch (s.value) {
             case 1: sleepByDate[date].total += duration; break;
@@ -1546,7 +1638,7 @@ class HealthConnectService {
           }
         });
 
-        return Object.keys(sleepByDate)
+        const result = Object.keys(sleepByDate)
           .filter(date => sleepByDate[date].total > 0)
           .map(date => ({
             date,
@@ -1556,8 +1648,12 @@ class HealthConnectService {
             awake: Math.round(sleepByDate[date].awake),
             total: Math.round(sleepByDate[date].total),
             duration: Math.round(sleepByDate[date].total),
+            source: Array.from(sleepByDate[date].sources).join(', '),
           }))
           .sort((a, b) => a.date.localeCompare(b.date));
+
+        logger.info('[HealthKit] getSleepHistory: Résultat final:', result.length, 'jours de données');
+        return result;
       }
     } catch (error) {
       logger.error('Erreur lecture historique sommeil:', error);
@@ -2393,6 +2489,126 @@ class HealthConnectService {
     } catch (error) {
       logger.error('Erreur déconnexion:', error);
     }
+  }
+
+  // ============================================
+  // ✅ NOUVEAU: FONCTION DE DIAGNOSTIC COMPLÈTE
+  // ============================================
+  async runDiagnostic(): Promise<{
+    healthKitAvailable: boolean;
+    isConnected: boolean;
+    permissions: any;
+    recentData: {
+      sleep: number;
+      weight: number;
+      steps: number;
+      heartRate: number;
+    };
+    errors: string[];
+    recommendations: string[];
+  }> {
+    const errors: string[] = [];
+    const recommendations: string[] = [];
+
+    logger.info('========================================');
+    logger.info('[HealthKit] DÉMARRAGE DIAGNOSTIC COMPLET');
+    logger.info('========================================');
+
+    // 1. Vérifier si HealthKit est disponible
+    const healthKitAvailable = await this.isAvailable();
+    logger.info('[Diagnostic] HealthKit disponible:', healthKitAvailable);
+
+    if (!healthKitAvailable) {
+      errors.push('HealthKit non disponible sur cet appareil');
+      recommendations.push('Vérifiez que vous êtes sur un appareil iOS physique (pas simulateur)');
+    }
+
+    // 2. Vérifier la connexion
+    const isConnected = this.syncStatus.isConnected;
+    logger.info('[Diagnostic] Connecté:', isConnected);
+
+    if (!isConnected) {
+      errors.push('Non connecté à Apple Health');
+      recommendations.push('Allez dans Réglages > Confidentialité > Santé > Yoroi et activez toutes les permissions');
+    }
+
+    // 3. Tester les requêtes
+    let sleepCount = 0;
+    let weightCount = 0;
+    let stepsCount = 0;
+    let heartRateCount = 0;
+
+    try {
+      // Test sommeil (30 jours)
+      const sleepHistory = await this.getSleepHistory(30);
+      sleepCount = sleepHistory.length;
+      logger.info('[Diagnostic] Sommeil trouvé:', sleepCount, 'jours');
+
+      if (sleepCount === 0) {
+        errors.push('Aucune donnée de sommeil trouvée sur 30 jours');
+        recommendations.push('Portez votre Apple Watch la nuit pour enregistrer le sommeil');
+        recommendations.push('Vérifiez que le Suivi du sommeil est activé sur votre Apple Watch');
+      }
+    } catch (e) {
+      errors.push('Erreur lecture sommeil: ' + (e as Error).message);
+    }
+
+    try {
+      // Test poids (90 jours)
+      const weightHistory = await this.getWeightHistory(90);
+      weightCount = weightHistory.length;
+      logger.info('[Diagnostic] Poids trouvé:', weightCount, 'mesures');
+
+      if (weightCount === 0) {
+        errors.push('Aucune donnée de poids trouvée sur 90 jours');
+        recommendations.push('Ajoutez votre poids manuellement dans Apple Santé ou utilisez une balance connectée');
+      }
+    } catch (e) {
+      errors.push('Erreur lecture poids: ' + (e as Error).message);
+    }
+
+    try {
+      // Test pas (aujourd'hui)
+      const steps = await this.getTodaySteps();
+      stepsCount = steps?.count || 0;
+      logger.info('[Diagnostic] Pas aujourd\'hui:', stepsCount);
+    } catch (e) {
+      errors.push('Erreur lecture pas: ' + (e as Error).message);
+    }
+
+    try {
+      // Test fréquence cardiaque
+      const heartRate = await this.getTodayHeartRate();
+      heartRateCount = heartRate?.average || 0;
+      logger.info('[Diagnostic] FC moyenne:', heartRateCount);
+
+      if (heartRateCount === 0) {
+        recommendations.push('Portez votre Apple Watch pour enregistrer la fréquence cardiaque');
+      }
+    } catch (e) {
+      errors.push('Erreur lecture FC: ' + (e as Error).message);
+    }
+
+    // Résumé
+    logger.info('========================================');
+    logger.info('[HealthKit] FIN DIAGNOSTIC');
+    logger.info('Erreurs:', errors.length);
+    logger.info('Recommandations:', recommendations.length);
+    logger.info('========================================');
+
+    return {
+      healthKitAvailable,
+      isConnected,
+      permissions: this.syncStatus.permissions,
+      recentData: {
+        sleep: sleepCount,
+        weight: weightCount,
+        steps: stepsCount,
+        heartRate: heartRateCount,
+      },
+      errors,
+      recommendations,
+    };
   }
 }
 
