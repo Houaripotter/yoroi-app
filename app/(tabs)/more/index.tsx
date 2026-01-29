@@ -436,27 +436,9 @@ const getHealthItems = (t: TranslateFunction): MenuItem[] => [
 // ============================================
 const getBackupItems = (t: TranslateFunction): MenuItem[] => [
   {
-    id: 'icloud-sync',
-    label: t('menu.icloudSync'),
-    sublabel: t('menu.icloudSyncDescription'),
-    Icon: RefreshCw,
-    onPress: () => {},
-    iconColor: '#3B82F6',
-    iconBg: '#3B82F620',
-  },
-  {
-    id: 'exportPdf',
-    label: t('menu.pdfReport'),
-    sublabel: t('menu.pdfReportDescription'),
-    Icon: FileText,
-    onPress: () => {},
-    iconColor: '#F97316',
-    iconBg: '#F9731620',
-  },
-  {
     id: 'export',
-    label: t('menu.export'),
-    sublabel: t('menu.exportDescription'),
+    label: 'Sauvegarder',
+    sublabel: 'Backup complet (photos, logos, séances)',
     Icon: Download,
     onPress: () => {},
     iconColor: '#10B981',
@@ -464,12 +446,30 @@ const getBackupItems = (t: TranslateFunction): MenuItem[] => [
   },
   {
     id: 'import',
-    label: t('menu.import'),
-    sublabel: t('menu.importDescription'),
+    label: 'Restaurer',
+    sublabel: 'Importer un backup ou CSV éditable',
     Icon: Upload,
     onPress: () => {},
     iconColor: '#6366F1',
     iconBg: '#6366F120',
+  },
+  {
+    id: 'export-editable',
+    label: 'Export Éditable',
+    sublabel: 'Modifier tes données sur ordinateur',
+    Icon: FileText,
+    onPress: () => {},
+    iconColor: '#F97316',
+    iconBg: '#F9731620',
+  },
+  {
+    id: 'exportPdf',
+    label: t('menu.pdfReport'),
+    sublabel: t('menu.pdfReportDescription'),
+    Icon: FileText,
+    onPress: () => {},
+    iconColor: '#8B5CF6',
+    iconBg: '#8B5CF620',
   },
 ];
 
@@ -1215,6 +1215,10 @@ export default function MoreScreen() {
     }
     if (item.id === 'exportPdf') {
       handleExportPDF();
+      return;
+    }
+    if (item.id === 'export-editable') {
+      handleExportEditable();
       return;
     }
     if (item.id === 'tutorial') {
