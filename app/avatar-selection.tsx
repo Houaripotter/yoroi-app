@@ -335,10 +335,10 @@ export default function AvatarSelectionScreen() {
           <Image
             source={image || TEST_IMAGE}
             style={{
-              width: AVATAR_SIZE - 6,
-              height: AVATAR_SIZE - 6,
+              width: AVATAR_SIZE - 4,
+              height: AVATAR_SIZE - 4,
             }}
-            resizeMode="cover"
+            resizeMode="contain"
             onError={(e) => logger.warn(`[AvatarSelection] Image error for ${pack}/${state}: ${e.nativeEvent.error}`)}
           />
 
@@ -407,10 +407,10 @@ export default function AvatarSelectionScreen() {
           <Image
             source={image || TEST_IMAGE}
             style={{
-              width: AVATAR_SIZE - 6,
-              height: AVATAR_SIZE - 6,
+              width: AVATAR_SIZE - 4,
+              height: AVATAR_SIZE - 4,
             }}
-            resizeMode="cover"
+            resizeMode="contain"
             onError={(e) => logger.warn(`[AvatarSelection] Collection image error for ${pack}/${character}: ${e.nativeEvent.error}`)}
           />
 
