@@ -62,11 +62,8 @@ export const SmartRemindersSettings: React.FC = () => {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Forcer une re-analyse des habitudes
   const handleRefreshHabits = async () => {

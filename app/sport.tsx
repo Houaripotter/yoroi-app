@@ -162,11 +162,8 @@ export default function SportScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Calcul du résumé hebdomadaire (doit être avant le return conditionnel)
   const weeklySummary = useMemo(() => {

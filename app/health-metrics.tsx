@@ -204,11 +204,8 @@ export default function HealthMetricsScreen() {
     }
   }, [period]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadHealthData();
-    }, [loadHealthData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadHealthData(); }, []);
 
   const handleConnect = async () => {
     try {

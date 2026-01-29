@@ -180,11 +180,8 @@ export default function BadgesScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadBadges();
-    }, [loadBadges])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadBadges(); }, []);
 
   const handleBadgePress = (badgeProgress: BadgeProgress) => {
     if (isProcessing) return;

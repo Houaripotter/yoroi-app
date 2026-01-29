@@ -259,11 +259,8 @@ export default function BodyCompositionScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   const handleSave = async () => {
     if (!weight || !bodyFat) {

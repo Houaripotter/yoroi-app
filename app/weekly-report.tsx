@@ -57,7 +57,8 @@ export default function WeeklyReportScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { loadReport(); }, [loadReport]));
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadReport(); }, []);
 
   const handleShare = async () => {
     if (!report) return;

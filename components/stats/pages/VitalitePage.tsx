@@ -32,6 +32,7 @@ import { VitalityBetaWarningModal } from '../VitalityBetaWarningModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
+import { HealthspanChart } from '@/components/HealthspanChart';
 
 /**
  * Convertit les heures décimales en format lisible "Xh YYmin"
@@ -328,6 +329,16 @@ export const VitalitePage: React.FC = () => {
         text="Cette section regroupe tes indicateurs de récupération. Le Sommeil répare les tissus, l'Hydratation maintient tes performances, et le VRC (Variabilité de Fréquence Cardiaque) indique si ton système nerveux est prêt pour une séance intense."
         color="#EC4899"
       />
+
+      {/* TENDANCE SANTÉ */}
+      <StatsSection
+        title="Tendance Santé"
+        description="Évolution sur les 7 derniers jours"
+      >
+        <View style={styles.healthspanCard}>
+          <HealthspanChart />
+        </View>
+      </StatsSection>
 
       {/* Graphique de tendance principal */}
       <StatsSection
@@ -799,5 +810,9 @@ const styles = StyleSheet.create({
   betaBannerButtonText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  healthspanCard: {
+    alignItems: 'center',
+    paddingVertical: 16,
   },
 });

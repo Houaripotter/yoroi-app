@@ -929,12 +929,8 @@ export default function AddTrainingScreen() {
     );
   };
 
-  // Recharger les clubs quand l'écran redevient actif (retour de add-club)
-  useFocusEffect(
-    useCallback(() => {
-      loadClubs();
-    }, [])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadClubs(); }, []);
 
   const loadClubs = async () => {
     try {

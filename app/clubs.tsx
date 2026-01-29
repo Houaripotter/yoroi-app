@@ -68,11 +68,8 @@ export default function ClubsScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadClubs();
-    }, [loadClubs])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadClubs(); }, []);
 
   const resetForm = () => {
     setName('');

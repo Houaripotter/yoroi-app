@@ -90,63 +90,55 @@ export interface NotificationSettings {
 
 const STORAGE_KEY = '@yoroi_notification_settings';
 
+// ═══════════════════════════════════════════════════════════
+// TOUT EST DÉSACTIVÉ PAR DÉFAUT - SAUF LES CITATIONS
+// Seul le service citationNotificationService gère les citations
+// ═══════════════════════════════════════════════════════════
 const DEFAULT_SETTINGS: NotificationSettings = {
-  enabled: false, // TOUT DÉSACTIVÉ PAR DÉFAUT - L'utilisateur active ce qu'il veut
+  enabled: false, // MASTER SWITCH OFF - ne jamais activer automatiquement
   training: {
-    enabled: false, // Désactivé - l'utilisateur choisit
+    enabled: false, // OFF
     time: '18:00',
-    days: [1, 2, 3, 4, 5], // Lundi à vendredi
+    days: [],
   },
   hydration: {
-    enabled: false, // DÉSACTIVÉ - trop de notifs
-    useSlots: true,
-    interval: 2,
+    enabled: false, // OFF - AUCUNE notification hydratation
+    useSlots: false,
+    interval: 24, // Une seule par jour max si jamais activé
     startTime: '08:00',
-    endTime: '22:00',
+    endTime: '08:00',
     slots: {
-      morning: {
-        enabled: false, // DÉSACTIVÉ
-        time: '09:00',
-        amount: 750, // ml
-      },
-      afternoon: {
-        enabled: false, // DÉSACTIVÉ
-        time: '14:00',
-        amount: 750, // ml
-      },
-      evening: {
-        enabled: false, // DÉSACTIVÉ
-        time: '19:00',
-        amount: 750, // ml
-      },
+      morning: { enabled: false, time: '09:00', amount: 750 },
+      afternoon: { enabled: false, time: '14:00', amount: 750 },
+      evening: { enabled: false, time: '19:00', amount: 750 },
     },
   },
   weighing: {
-    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
+    enabled: false, // OFF
     time: '07:00',
-    days: [1, 3, 5], // Lundi, mercredi, vendredi
+    days: [],
   },
   streak: {
-    enabled: false, // DÉSACTIVÉ - peut être stressant
+    enabled: false, // OFF - AUCUNE notification "ne casse pas ta série"
     time: '20:00',
   },
   sleep: {
-    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
+    enabled: false, // OFF
     bedtimeReminder: '22:30',
-    days: [0, 1, 2, 3, 4, 5, 6],
+    days: [],
   },
   socialCards: {
-    enabled: false, // DÉSACTIVÉ - l'utilisateur choisit
+    enabled: false, // OFF
     weeklyTime: '10:00',
     monthlyTime: '10:00',
   },
   briefing: {
-    enabled: false, // DÉSACTIVÉ - trop intrusif le matin
+    enabled: false, // OFF
     time: '07:30',
-    days: [0, 1, 2, 3, 4, 5, 6],
+    days: [],
   },
   smartReminders: {
-    enabled: false, // DÉSACTIVÉ - peut être trop intrusif
+    enabled: false, // OFF - AUCUNE analyse des habitudes
     missedTrainingAlert: false,
     restDaySuggestion: false,
     frequencyAlert: false,
@@ -273,23 +265,30 @@ class NotificationService {
       // Charger les paramètres sauvegardés
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved) {
-        this.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        // Force désactivation des notifications non voulues même si elles étaient activées
+        this.settings = {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          // FORCE OFF - Ces notifications ne doivent JAMAIS s'envoyer
+          streak: { ...DEFAULT_SETTINGS.streak, enabled: false },
+          hydration: { ...DEFAULT_SETTINGS.hydration, enabled: false },
+          smartReminders: { ...DEFAULT_SETTINGS.smartReminders, enabled: false },
+          briefing: { ...DEFAULT_SETTINGS.briefing, enabled: false },
+        };
+        // Sauvegarder les paramètres forcés
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
       }
 
-      // Demander les permissions
-      const hasPermission = await this.requestPermissions();
-      if (!hasPermission) {
-        logger.info('Permissions notifications refusées');
-        return false;
-      }
+      // Annuler TOUTES les notifications existantes pour partir propre
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      logger.info('[NotificationService] Toutes les notifications annulées');
 
-      // Programmer les notifications
-      if (this.settings.enabled) {
-        await this.scheduleAllNotifications();
-      }
+      // Ne PAS programmer de nouvelles notifications sauf si explicitement demandé
+      // Les citations sont gérées séparément par citationNotificationService
 
       this.isInitialized = true;
-      logger.info('NotificationService initialisé');
+      logger.info('NotificationService initialisé (mode minimal)');
       return true;
     } catch (error) {
       logger.error('Erreur init notifications:', error);

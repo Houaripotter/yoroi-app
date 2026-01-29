@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange, FileText } from 'lucide-react-native';
+import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange, FileText, BookOpen, Timer, Calculator, Clock, Camera, User, Palette, Trophy, Utensils, Bell, Heart, Users, BookMarked, Plus, Medal, ListChecks, Moon, Crown } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -16,9 +16,8 @@ import { HydrationCardFullWidth } from '@/components/cards/HydrationCardFullWidt
 import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
 import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
 import { QuestsCard } from '@/components/QuestsCard';
-import { PerformanceRadar } from '@/components/PerformanceRadar';
-import { HealthspanChart } from '@/components/HealthspanChart';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getActionGridOrder, ActionGridItem } from '@/lib/actionGridCustomizationService';
 import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
@@ -70,6 +69,207 @@ interface Page1MonitoringProps {
   onShareReport?: () => void;
   refreshTrigger?: number;
 }
+
+// ============================================
+// COMPOSANT GRILLE D'OUTILS (4 colonnes)
+// ============================================
+const TOOLS_GRID_PADDING = 12;
+const TOOLS_GRID_GAP = 10;
+const TOOLS_COLUMNS = 4;
+const toolCardWidth = (SCREEN_WIDTH - TOOLS_GRID_PADDING * 2 - TOOLS_GRID_GAP * (TOOLS_COLUMNS - 1)) / TOOLS_COLUMNS;
+
+const ICON_MAP: { [key: string]: React.ComponentType<any> } = {
+  'BookOpen': BookOpen,
+  'Timer': Timer,
+  'BookMarked': BookMarked,
+  'Calculator': Calculator,
+  'Clock': Clock,
+  'Camera': Camera,
+  'Share2': Share2,
+  'User': User,
+  'Palette': Palette,
+  'Sparkles': Sparkles,
+  'Trophy': Trophy,
+  'Utensils': Utensils,
+  'Bell': Bell,
+  'Heart': Heart,
+  'Users': Users,
+  'Plus': Plus,
+  'Medal': Medal,
+  'ListChecks': ListChecks,
+  'Moon': Moon,
+  'Crown': Crown,
+  'Target': Target,
+};
+
+const getIconComponent = (iconName: string) => {
+  return ICON_MAP[iconName] || BookOpen;
+};
+
+// Map tool IDs to translation keys
+const TOOL_TRANSLATION_KEYS: { [key: string]: { label: string } } = {
+  'blessures': { label: 'tools.injuries' },
+  'infirmerie': { label: 'tools.injuries' },
+  'timer': { label: 'tools.timer' },
+  'carnet': { label: 'tools.journal' },
+  'calculateurs': { label: 'tools.calculators' },
+  'jeune': { label: 'tools.fasting' },
+  'nutrition': { label: 'tools.nutrition' },
+  'health': { label: 'tools.appleHealth' },
+  'savoir': { label: 'tools.knowledge' },
+  'dojo': { label: 'tools.myDojo' },
+  'notifications': { label: 'tools.notifications' },
+  'partager': { label: 'tools.share' },
+  'clubs': { label: 'tools.clubsCoach' },
+  'competiteur': { label: 'tools.compete' },
+  'profil': { label: 'tools.profile' },
+  'themes': { label: 'tools.themes' },
+  'photos': { label: 'tools.photos' },
+};
+
+const ToolsGrid: React.FC = memo(() => {
+  const { colors, isDark } = useTheme();
+  const { t } = useI18n();
+  const [gridItems, setGridItems] = useState<ActionGridItem[]>([]);
+
+  useEffect(() => {
+    loadGridOrder();
+  }, []);
+
+  const loadGridOrder = async () => {
+    const items = await getActionGridOrder();
+    setGridItems(items);
+  };
+
+  const handleItemPress = useCallback((item: ActionGridItem) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    router.push(item.route as any);
+  }, []);
+
+  // Organiser en rangées de 4
+  const rows = useMemo(() => {
+    const result: ActionGridItem[][] = [];
+    for (let i = 0; i < gridItems.length; i += TOOLS_COLUMNS) {
+      result.push(gridItems.slice(i, i + TOOLS_COLUMNS));
+    }
+    return result;
+  }, [gridItems]);
+
+  return (
+    <View style={toolsGridStyles.container}>
+      {rows.map((row, rowIndex) => (
+        <View key={`row-${rowIndex}`} style={toolsGridStyles.row}>
+          {row.map((item) => {
+            const Icon = getIconComponent(item.icon);
+            return (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() => handleItemPress(item)}
+                style={toolsGridStyles.gridItemWrapper}
+                activeOpacity={0.85}
+              >
+                <View style={[toolsGridStyles.gridItem, { backgroundColor: colors.backgroundCard }]}>
+                  <View style={[toolsGridStyles.iconCircle, { backgroundColor: `${item.color}15` }]}>
+                    {item.id === 'infirmerie' ? (
+                      <View style={toolsGridStyles.redCross}>
+                        <View style={[toolsGridStyles.crossVertical, { backgroundColor: item.color }]} />
+                        <View style={[toolsGridStyles.crossHorizontal, { backgroundColor: item.color }]} />
+                      </View>
+                    ) : (
+                      <Icon size={18} color={item.color} strokeWidth={2.5} />
+                    )}
+                  </View>
+                  <Text style={[toolsGridStyles.label, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {item.label}
+                  </Text>
+                  <Text style={[toolsGridStyles.description, { color: colors.textMuted }]} numberOfLines={1}>
+                    {item.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          {row.length < TOOLS_COLUMNS &&
+            Array.from({ length: TOOLS_COLUMNS - row.length }).map((_, i) => (
+              <View key={`empty-${i}`} style={{ width: toolCardWidth }} />
+            ))}
+        </View>
+      ))}
+    </View>
+  );
+});
+
+const toolsGridStyles = StyleSheet.create({
+  container: {
+    marginTop: 12,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: TOOLS_GRID_GAP,
+  },
+  gridItemWrapper: {
+    width: toolCardWidth,
+    borderRadius: 14,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  gridItem: {
+    aspectRatio: 0.8,
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.03)',
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  redCross: {
+    width: 20,
+    height: 20,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossVertical: {
+    position: 'absolute',
+    width: 6,
+    height: 20,
+    borderRadius: 2,
+  },
+  crossHorizontal: {
+    position: 'absolute',
+    width: 20,
+    height: 6,
+    borderRadius: 2,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '800', // Plus gras
+    textAlign: 'center',
+    letterSpacing: 0,
+    lineHeight: 13,
+  },
+  description: {
+    fontSize: 9,
+    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 11,
+    opacity: 0.6,
+  },
+});
 
 // ============================================
 // COMPOSANT BARRE DE PROGRESSION POIDS (Simple avec couleurs)
@@ -259,6 +459,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const [trainingCalories, setTrainingCalories] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+
 
   // Calculer les calories des entraînements du jour
   useEffect(() => {
@@ -580,6 +781,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
   return (
     <ScrollView
+      ref={scrollViewRef}
       style={[styles.container, { backgroundColor: colors.background, overflow: 'visible' }]}
       contentContainerStyle={[styles.scrollContent, { overflow: 'visible' }]}
       showsVerticalScrollIndicator={false}
@@ -610,11 +812,14 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </Text>
           </View>
 
-          <TouchableOpacity
-            onPress={() => router.push('/avatar-selection')}
-            style={styles.avatarLarge}
-          >
-            <AvatarDisplay size="small" refreshTrigger={refreshTrigger} />
+          {/* Avatar - MÊME STYLE que la photo de profil */}
+          <View style={styles.avatarContainer}>
+            <TouchableOpacity
+              onPress={() => router.push('/avatar-selection')}
+              style={[styles.avatarCircle, { backgroundColor: '#FFFFFF', borderColor: isDark ? '#FFFFFF' : '#000000' }]}
+            >
+              <AvatarDisplay size="sm" refreshTrigger={refreshTrigger} />
+            </TouchableOpacity>
             {/* Rang et Niveau */}
             <View style={styles.rankLevelContainer}>
               <Text style={[styles.rankText, { color: colors.textPrimary }]}>
@@ -624,7 +829,7 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                 Niveau {level}
               </Text>
             </View>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* CITATION MOTIVANTE */}
@@ -660,57 +865,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Fond qui couvre les onglets quand on scrolle */}
         <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
-        {/* STATS ROW - 3 Cards côte à côte */}
-        <View style={styles.activityStatsRow}>
-          {/* Pas */}
-          <TouchableOpacity
-            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/activity-history?tab=steps');
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.compactIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-              <MaterialCommunityIcons name="shoe-print" size={16} color="#3B82F6" />
-            </View>
-            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
-            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
-          </TouchableOpacity>
-
-          {/* Calories */}
-          <TouchableOpacity
-            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/activity-history?tab=calories');
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-              <MaterialCommunityIcons name="fire" size={16} color="#EF4444" />
-            </View>
-            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{((calories > 0 ? calories : Math.round(steps * 0.04)) + trainingCalories).toLocaleString()}</Text>
-            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
-          </TouchableOpacity>
-
-          {/* Série */}
-          <TouchableOpacity
-            style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/records');
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.compactIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
-              <Ionicons name="flame" size={16} color="#F97316" />
-            </View>
-            <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{streak}</Text>
-            <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
-          </TouchableOpacity>
-        </View>
-
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
       <View style={[styles.weightCardPremium, { backgroundColor: colors.backgroundCard }]}>
         <TouchableOpacity
@@ -729,35 +883,42 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               <Ionicons name="fitness" size={18} color="#FFFFFF" />
             </LinearGradient>
             <View>
-              <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
-                {t('home.currentWeight')}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Target size={12} color="#EF4444" strokeWidth={2.5} />
-                <Text style={[styles.weightSubtitle, { color: colors.textMuted }]}>
-                  {t('home.objective')} {targetWeight} kg
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
+                  Poids Actuel
+                </Text>
+                <View style={[styles.goalModeBadge, {
+                  backgroundColor: userGoal === 'lose' ? '#EF444420' : userGoal === 'gain' ? '#22C55E20' : '#F59E0B20',
+                  borderWidth: 1,
+                  borderColor: userGoal === 'lose' ? '#EF444440' : userGoal === 'gain' ? '#22C55E40' : '#F59E0B40'
+                }]}>
+                  <Text style={[styles.goalModeText, {
+                    color: userGoal === 'lose' ? '#EF4444' : userGoal === 'gain' ? '#22C55E' : '#F59E0B'
+                  }]}>
+                    {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de masse' : 'Maintien'}
+                  </Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Target size={14} color={colors.accent} strokeWidth={2.5} />
+                <Text style={[styles.weightSubtitle, { color: colors.textSecondary }]}>
+                  Objectif : <Text style={{ fontWeight: '800', color: colors.textPrimary }}>{targetWeight} kg</Text>
                 </Text>
               </View>
             </View>
           </View>
 
-          <View style={[styles.trendBadge, { backgroundColor: `${trendColor}15` }]}>
-            <TrendIcon size={12} color={trendColor} strokeWidth={2.5} />
-            <Text style={[styles.trendText, { color: trendColor }]}>
-              {Math.abs(totalLoss).toFixed(1)} kg
-            </Text>
-          </View>
         </View>
 
-        {/* Ligne optimisée: Évolution - Poids - Reste */}
+        {/* Ligne optimisée: Perdu (vert) - Poids - Restant (rouge) */}
         <View style={styles.weightOptimizedRow}>
-          {/* Évolution à gauche */}
+          {/* Perdu à gauche - VERT */}
           <View style={styles.weightSideMetric}>
             <Text style={[styles.metricTopLabel, { color: '#10B981' }]}>
-              {getWeightLabel()}
+              {userGoal === 'lose' ? 'PERDU' : userGoal === 'gain' ? 'PRIS' : 'ÉVOLUTION'}
             </Text>
             <Text style={[styles.metricTopValue, { color: '#10B981' }]}>
-              {totalLoss >= 0 ? '-' : '+'}{Math.abs(totalLoss).toFixed(1)} kg
+              {userGoal === 'lose' ? '-' : '+'}{Math.abs(totalLoss).toFixed(1)} kg
             </Text>
           </View>
 
@@ -771,18 +932,19 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </View>
           </View>
 
-          {/* Reste à droite */}
+          {/* Restant à droite - ROUGE */}
           <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#10B981' : '#F59E0B' }]}>{t('home.remaining')}</Text>
+            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#10B981' : '#EF4444' }]}>
+              {Math.abs(weightDiff) <= 0.1 ? 'ATTEINT' : 'RESTE'}
+            </Text>
             {Math.abs(weightDiff) <= 0.1 ? (
-              // Objectif atteint - Célébration!
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Sparkles size={14} color="#10B981" strokeWidth={2.5} />
                 <Text style={[styles.metricTopValue, { color: '#10B981' }]}>0 kg</Text>
-                <Sparkles size={14} color="#F59E0B" strokeWidth={2.5} />
+                <Sparkles size={14} color="#FFD700" strokeWidth={2.5} />
               </View>
             ) : (
-              <Text style={[styles.metricTopValue, { color: '#F59E0B' }]}>
+              <Text style={[styles.metricTopValue, { color: '#EF4444' }]}>
                 {Math.abs(weightDiff).toFixed(1)} kg
               </Text>
             )}
@@ -1005,55 +1167,57 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           );
         }, [weightHistory, colors, userGoal])}
 
-        {/* Prédictions */}
-        <TouchableOpacity
-          style={[styles.predictionsContainer, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}
-          onPress={() => router.push('/weight-predictions')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.predictionsHeader}>
-            <TrendingUp size={14} color="#8B5CF6" strokeWidth={2.5} />
-            <Text style={[styles.predictionsTitle, { color: '#8B5CF6' }]}>
-              {t('home.predictions.title')}
-            </Text>
-          </View>
-
-          <View style={styles.predictionsRow}>
-            <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.30days')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {calculatePrediction(1).toFixed(1)} kg
+        {/* Prédictions - Afficher seulement si on a des données de poids */}
+        {weightHistory.length >= 2 && currentWeight > 0 && (
+          <TouchableOpacity
+            style={[styles.predictionsContainer, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)' }]}
+            onPress={() => router.push('/weight-predictions')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.predictionsHeader}>
+              <TrendingUp size={14} color="#8B5CF6" strokeWidth={2.5} />
+              <Text style={[styles.predictionsTitle, { color: '#8B5CF6' }]}>
+                {t('home.predictions.title')}
               </Text>
             </View>
 
-            <View style={styles.predictionDivider} />
+            <View style={styles.predictionsRow}>
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.30days')}</Text>
+                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                  {calculatePrediction(1).toFixed(1)} kg
+                </Text>
+              </View>
 
-            <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.90days')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {calculatePrediction(3).toFixed(1)} kg
-              </Text>
+              <View style={styles.predictionDivider} />
+
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.90days')}</Text>
+                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                  {calculatePrediction(3).toFixed(1)} kg
+                </Text>
+              </View>
+
+              <View style={styles.predictionDivider} />
+
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.6months')}</Text>
+                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                  {calculatePrediction(6).toFixed(1)} kg
+                </Text>
+              </View>
+
+              <View style={styles.predictionDivider} />
+
+              <View style={styles.predictionItem}>
+                <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.1year')}</Text>
+                <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
+                  {calculatePrediction(12).toFixed(1)} kg
+                </Text>
+              </View>
             </View>
-
-            <View style={styles.predictionDivider} />
-
-            <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.6months')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {calculatePrediction(6).toFixed(1)} kg
-              </Text>
-            </View>
-
-            <View style={styles.predictionDivider} />
-
-            <View style={styles.predictionItem}>
-              <Text style={[styles.predictionLabel, { color: colors.textMuted }]}>{t('home.predictions.1year')}</Text>
-              <Text style={[styles.predictionValue, { color: colors.textPrimary }]}>
-                {calculatePrediction(12).toFixed(1)} kg
-              </Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        )}
 
         {/* BOUTON SHARE SUPPRIMÉ - utiliser celui dans QuestsCard */}
       </View>
@@ -1194,22 +1358,66 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         </View>
       )}
 
-      {/* CARD 1 - RADAR CHART (Transféré de Analyse) */}
-      <View style={[styles.radarCard, { backgroundColor: colors.backgroundCard }]}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-          {t('analysis.athleteProfile')}
-        </Text>
-        <View style={styles.radarContainer}>
-          <PerformanceRadar size={240} />
-        </View>
+      {/* STATS ROW - PAS / KCAL / SÉRIE - Déplacé en bas */}
+      <View style={styles.activityStatsRow}>
+        {/* Pas */}
+        <TouchableOpacity
+          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=steps');
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.compactIcon, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+            <MaterialCommunityIcons name="shoe-print" size={18} color="#3B82F6" />
+          </View>
+          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
+          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.stepsLabel')}</Text>
+        </TouchableOpacity>
+
+        {/* Calories */}
+        <TouchableOpacity
+          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/activity-history?tab=calories');
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.compactIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+            <MaterialCommunityIcons name="fire" size={18} color="#EF4444" />
+          </View>
+          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{((calories > 0 ? calories : Math.round(steps * 0.04)) + trainingCalories).toLocaleString()}</Text>
+          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>kcal</Text>
+        </TouchableOpacity>
+
+        {/* Série */}
+        <TouchableOpacity
+          style={[styles.compactCard, { backgroundColor: colors.backgroundCard }]}
+          onPress={() => {
+            impactAsync(ImpactFeedbackStyle.Light);
+            router.push('/records');
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.compactIcon, { backgroundColor: 'rgba(249, 115, 22, 0.1)' }]}>
+            <Ionicons name="flame" size={18} color="#F97316" />
+          </View>
+          <Text style={[styles.compactValue, { color: colors.textPrimary }]}>{streak}</Text>
+          <Text style={[styles.compactLabel, { color: colors.textMuted }]}>{t('home.streakLabel')}</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* CARD 2 - HEALTHSPAN (Transféré de Analyse) */}
-      <View style={[styles.healthspanCard, { backgroundColor: colors.backgroundCard, marginBottom: 40 }]}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-          {t('analysis.healthLongevity')}
+      {/* GRILLE OUTILS - 4 colonnes */}
+      <View style={styles.toolsSection}>
+        <Text style={[styles.toolsSectionTitle, { color: colors.textPrimary }]}>
+          {t('tools.title')}
         </Text>
-        <HealthspanChart />
+        <Text style={[styles.toolsSectionSubtitle, { color: colors.textMuted }]}>
+          {t('tools.subtitle')}
+        </Text>
+        <ToolsGrid />
       </View>
 
         </View>
@@ -1236,12 +1444,12 @@ const styles = StyleSheet.create({
     marginHorizontal: -CARD_PADDING,
     paddingHorizontal: CARD_PADDING,
   },
-  // Hero Header - Agrandi
+  // Hero Header - Bien positionné sous le Dynamic Island
   heroHeader: {
-    marginTop: 0,
+    marginTop: 5,
     marginBottom: 10,
     marginHorizontal: -CARD_PADDING,
-    paddingHorizontal: 0,
+    paddingHorizontal: 0, // Pas de padding, les cercles gèrent leur espacement
     zIndex: 10,
   },
   heroTop: {
@@ -1250,30 +1458,47 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: 0,
   },
-  avatarLarge: {
+  // Container pour avatar + texte rang/niveau
+  avatarContainer: {
+    alignItems: 'center',
+    marginTop: 45, // MÊME que profilePhotoLarge
+    marginRight: 8, // Proche du bord droit
+  },
+  // Cercle avatar - IDENTIQUE à profilePhotoLarge
+  avatarCircle: {
+    width: 90, // MÊME taille
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 55,
-    marginLeft: 2,
+    overflow: 'hidden',
+    borderWidth: 2, // MÊME bordure
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   rankLevelContainer: {
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 8,
   },
   rankText: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    fontStyle: 'italic', // Style calligraphique
   },
   levelText: {
-    fontSize: 11,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
     marginTop: 2,
+    fontStyle: 'italic', // Style calligraphique
   },
   profilePhotoLarge: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: 90, // MÊME TAILLE que l'avatar
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -1283,8 +1508,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    marginLeft: 2,
-    marginTop: 55,
+    marginLeft: 8, // Proche du bord gauche (MÊME que avatar à droite)
+    marginTop: 45, // MÊME position que avatar
   },
   profilePhotoImage: {
     width: '100%',
@@ -1294,17 +1519,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 130,
+    marginTop: 60, // Descendre sous Dynamic Island
   },
   greetingLarge: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   userNameLarge: {
     fontSize: 26,
     fontWeight: '900',
-    letterSpacing: -1,
+    letterSpacing: -0.8,
   },
 
   // Stats Row - Gradient Cards (compact moderne)
@@ -1324,32 +1549,34 @@ const styles = StyleSheet.create({
   compactCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 14,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
   compactIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   compactValue: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
     letterSpacing: -0.5,
   },
   compactLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    marginTop: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statCardTouchable: {
     flex: 1,
@@ -1425,6 +1652,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
+  },
+  goalModeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  goalModeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   trendBadge: {
     flexDirection: 'row',
@@ -1807,5 +2044,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.5,
+  },
+
+  // ═══════════════════════════════════════════════
+  // SECTION OUTILS
+  // ═══════════════════════════════════════════════
+  toolsSection: {
+    marginTop: 24,
+    marginBottom: 20,
+  },
+  toolsSectionTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.8,
+    marginBottom: 4,
+  },
+  toolsSectionSubtitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 16,
   },
 });

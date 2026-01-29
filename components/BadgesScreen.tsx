@@ -78,13 +78,12 @@ export function BadgesScreen({ visible, onClose }: BadgesScreenProps) {
     }
   }, [t, showPopup]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (visible) {
-        fetchUnlockedBadges();
-      }
-    }, [visible, fetchUnlockedBadges])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => {
+    if (visible) {
+      fetchUnlockedBadges();
+    }
+  }, [visible]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

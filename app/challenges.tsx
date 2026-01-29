@@ -91,7 +91,8 @@ export default function ChallengesScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   const handleClaim = async (challenge: ActiveChallenge) => {
     if (!challenge?.progress?.completed || challenge?.progress?.claimed) return;

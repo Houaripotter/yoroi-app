@@ -75,11 +75,8 @@ export default function RecordsScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadRecords(true);
-    }, [loadRecords])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadRecords(true); }, []);
 
   // Rafraichir manuellement
   const handleRefresh = async () => {

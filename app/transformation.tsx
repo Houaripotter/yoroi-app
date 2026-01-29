@@ -73,11 +73,8 @@ export default function TransformationScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadPhotos();
-    }, [loadPhotos])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadPhotos(); }, []);
 
   // Formater la date
   const formatDate = (dateString: string) => {

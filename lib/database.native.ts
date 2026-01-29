@@ -263,6 +263,24 @@ export const initDatabase = async () => {
     );
   `);
 
+  // Migrations: Ajouter les colonnes manquantes pour les bases existantes
+  const competitionsColumnsToAdd = [
+    'type_evenement TEXT',
+    'lien_inscription TEXT',
+    'resultat TEXT',
+    'placement TEXT',
+    'adversaires INTEGER',
+    'victoires INTEGER',
+    'defaites INTEGER',
+    'notes TEXT',
+    'temps_total TEXT',
+  ];
+  for (const column of competitionsColumnsToAdd) {
+    try {
+      await database.execAsync(`ALTER TABLE competitions ADD COLUMN ${column};`);
+    } catch (e) { /* colonne existe déjà */ }
+  }
+
   // Table Combats
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS combats (

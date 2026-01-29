@@ -90,7 +90,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   const [totalXP, setTotalXP] = useState(0);
   const questsScrollRef = useRef<ScrollView>(null);
   const [scrollContentHeight, setScrollContentHeight] = useState(1000); // Valeur par défaut pour éviter 0
-  const [containerHeight, setContainerHeight] = useState(380);
+  const [containerHeight, setContainerHeight] = useState(480);
   const scrollOffset = useRef(new Animated.Value(0)).current;
   const currentScrollValue = useRef(0); // Pour suivre la valeur sans listener asynchrone
 
@@ -118,7 +118,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
         panResponderStart.current = currentScrollValue.current;
       },
       onPanResponderMove: (evt, gestureState) => {
-        const trackHeight = 380 - 16; // Hauteur conteneur moins padding
+        const trackHeight = 480 - 16; // Hauteur conteneur moins padding
         const thumbHeight = 40;
         const scrollableTrack = trackHeight - thumbHeight;
         
@@ -143,7 +143,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   // Calculer la position du thumb en fonction du scroll réel
   const thumbPosition = scrollOffset.interpolate({
     inputRange: [0, Math.max(1, scrollContentHeight - containerHeight)],
-    outputRange: [0, 380 - 16 - 40], // trackHeight - thumbHeight
+    outputRange: [0, 480 - 16 - 40], // trackHeight - thumbHeight
     extrapolate: 'clamp',
   });
 
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
     top: -4,
   },
   scrollWrapper: {
-    height: 380,
+    height: 480, // Augmenté pour afficher 7 défis
     flexDirection: 'row',
     marginBottom: 16,
   },

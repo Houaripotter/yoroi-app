@@ -83,11 +83,8 @@ export default function TrainingGoalsScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   const handleAddGoal = async () => {
     if (!selectedSport) return;

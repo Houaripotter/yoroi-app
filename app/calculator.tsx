@@ -219,9 +219,9 @@ export default function CalculatorScreen() {
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.backgroundElevated, color: colors.textPrimary, borderColor: colors.border }]}
                   value={weight}
-                  onChangeText={setWeight}
-                  placeholder="Ex: 85"
-                  keyboardType="numeric"
+                  onChangeText={(text) => setWeight(text.replace(',', '.'))}
+                  placeholder="Ex: 85.5"
+                  keyboardType="decimal-pad"
                   placeholderTextColor={colors.textMuted}
                 />
               </View>

@@ -114,11 +114,8 @@ export default function InjuryDetailScreen() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [injuryId])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, [injuryId]);
 
   const handleUpdateEva = async () => {
     if (newEva === null || newEva === injury?.eva_score) return;

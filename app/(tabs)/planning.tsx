@@ -77,6 +77,7 @@ import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
 // ============================================
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const DAYS_FR = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
 type ViewMode = 'calendar' | 'programme' | 'clubs' | 'competitions' | 'journal';
@@ -464,12 +465,11 @@ export default function PlanningScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-      loadSavedExternalEvents();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => {
+    loadData();
+    loadSavedExternalEvents();
+  }, []);
 
   // Plus de redirection automatique - le carnet s'affiche maintenant dans le swipe
 
@@ -919,10 +919,11 @@ export default function PlanningScreen() {
           isScrollingRef.current = false;
         }, 100);
 
-        // Calculer la largeur totale des onglets
-        const tabWidth = 44;
-        const tabGap = 12;
-        const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+        // Calculer la largeur totale des onglets (responsive)
+        const tabWidth = IS_SMALL_SCREEN ? 38 : 44;
+        const tabGap = IS_SMALL_SCREEN ? 6 : 12;
+        const tabPadding = IS_SMALL_SCREEN ? 16 : 32;
+        const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + tabPadding;
 
         // Si tous les onglets rentrent dans l'écran, ne pas scroller
         if (totalTabsWidth <= SCREEN_WIDTH) {
@@ -930,7 +931,7 @@ export default function PlanningScreen() {
         }
 
         // Sinon, auto-scroll pour centrer l'onglet actif
-        const scrollOffset = currentIndex * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + 16;
+        const scrollOffset = currentIndex * (tabWidth + tabGap) - SCREEN_WIDTH / 2 + (tabWidth / 2) + (IS_SMALL_SCREEN ? 8 : 16);
         tabScrollRef.current?.scrollTo({
           x: Math.max(0, scrollOffset),
           animated: true,
@@ -951,17 +952,19 @@ export default function PlanningScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           scrollEnabled={(() => {
-            const tabWidth = 44;
-            const tabGap = 12;
-            const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+            const tabWidth = IS_SMALL_SCREEN ? 38 : 44;
+            const tabGap = IS_SMALL_SCREEN ? 6 : 12;
+            const tabPadding = IS_SMALL_SCREEN ? 16 : 32;
+            const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + tabPadding;
             return totalTabsWidth > SCREEN_WIDTH;
           })()}
           contentContainerStyle={[
             styles.tabsContent,
             (() => {
-              const tabWidth = 44;
-              const tabGap = 12;
-              const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + 32;
+              const tabWidth = IS_SMALL_SCREEN ? 38 : 44;
+              const tabGap = IS_SMALL_SCREEN ? 6 : 12;
+              const tabPadding = IS_SMALL_SCREEN ? 16 : 32;
+              const totalTabsWidth = (tabs.length * (tabWidth + tabGap)) + tabPadding;
               return totalTabsWidth <= SCREEN_WIDTH && styles.tabsContentCentered;
             })()
           ]}
@@ -2683,33 +2686,34 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   tabsContent: {
-    paddingLeft: 16,
-    paddingRight: 80,
-    gap: 12,
+    paddingLeft: IS_SMALL_SCREEN ? 8 : 16,
+    paddingRight: IS_SMALL_SCREEN ? 40 : 80,
+    gap: IS_SMALL_SCREEN ? 6 : 12,
     alignItems: 'flex-start',
   },
   tabsContentCentered: {
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: IS_SMALL_SCREEN ? 8 : 16,
+    paddingRight: IS_SMALL_SCREEN ? 8 : 16,
     justifyContent: 'center',
     flexGrow: 1,
   },
   tabWrapper: {
     alignItems: 'center',
-    gap: 4,
+    gap: IS_SMALL_SCREEN ? 2 : 4,
   },
   circleTab: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: IS_SMALL_SCREEN ? 38 : 44,
+    height: IS_SMALL_SCREEN ? 38 : 44,
+    borderRadius: IS_SMALL_SCREEN ? 19 : 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabTitle: {
-    fontSize: 9,
+    fontSize: IS_SMALL_SCREEN ? 8 : 9,
     fontWeight: '600',
     letterSpacing: 0.2,
     textAlign: 'center',
+    maxWidth: IS_SMALL_SCREEN ? 50 : undefined,
   },
   descriptionContainer: {
     paddingHorizontal: 16,

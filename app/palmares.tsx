@@ -41,11 +41,8 @@ export default function PalmaresScreen() {
   const [filter, setFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCombats();
-    }, [])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadCombats(); }, []);
 
   const loadCombats = async () => {
     try {

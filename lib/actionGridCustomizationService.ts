@@ -1,5 +1,6 @@
 // ============================================
 // YOROI - SERVICE PERSONNALISATION GRILLE OUTILS
+// Organisé par thèmes de 4 outils
 // ============================================
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,176 +16,229 @@ export interface ActionGridItem {
   color: string;
   route: string;
   order: number;
+  theme?: string; // Thème de l'outil
 }
 
-// Configuration par défaut - Organisée par thème logique (3 par ligne)
+// Configuration par défaut - Organisée par thème (4 par ligne)
 export const DEFAULT_ACTION_GRID_ITEMS: ActionGridItem[] = [
   // ═══════════════════════════════════════════════════════════
-  // LIGNE 1 - ENTRAÎNEMENT
+  // THÈME 1 - ENTRAÎNEMENT (4 outils)
   // ═══════════════════════════════════════════════════════════
   {
     id: 'timer',
     label: 'Timer',
-    description: 'Chronomètres séances',
+    description: 'Chrono séance',
     icon: 'Timer',
     color: '#4ECDC4',
     route: '/timer',
     order: 0,
+    theme: 'training',
   },
   {
     id: 'carnet',
     label: 'Carnet',
-    description: 'Journal d\'entraînement',
+    description: 'Journal',
     icon: 'BookOpen',
     color: '#F97316',
     route: '/training-journal',
     order: 1,
+    theme: 'training',
   },
   {
     id: 'competiteur',
     label: 'Compète',
-    description: 'Espace compétitions',
+    description: 'À venir',
     icon: 'Trophy',
     color: '#EF4444',
     route: '/competitor-space',
     order: 2,
+    theme: 'training',
+  },
+  {
+    id: 'records',
+    label: 'Records',
+    description: 'Tes PR',
+    icon: 'Medal',
+    color: '#FFD700',
+    route: '/records',
+    order: 3,
+    theme: 'training',
   },
 
   // ═══════════════════════════════════════════════════════════
-  // LIGNE 2 - SANTÉ & CORPS
+  // THÈME 2 - SANTÉ & CORPS (4 outils)
   // ═══════════════════════════════════════════════════════════
-  {
-    id: 'health',
-    label: 'Apple Health',
-    description: 'Sync données santé',
-    icon: 'Heart',
-    color: '#EC4899',
-    route: '/health-connect',
-    order: 3,
-  },
   {
     id: 'infirmerie',
     label: 'Infirmerie',
-    description: 'Suivi de vos blessures',
+    description: 'Blessures',
     icon: 'Plus',
     color: '#DC2626',
     route: '/infirmary',
     order: 4,
+    theme: 'health',
   },
   {
     id: 'nutrition',
     label: 'Nutrition',
-    description: 'Plans alimentaires',
+    description: 'Repas',
     icon: 'Utensils',
     color: '#10B981',
     route: '/nutrition-plan',
     order: 5,
-  },
-
-  // ═══════════════════════════════════════════════════════════
-  // LIGNE 3 - CALCULS & OUTILS
-  // ═══════════════════════════════════════════════════════════
-  {
-    id: 'calculateurs',
-    label: 'Calculs',
-    description: 'Outils de calcul sportif',
-    icon: 'Calculator',
-    color: '#F59E0B',
-    route: '/calculators',
-    order: 6,
+    theme: 'health',
   },
   {
     id: 'jeune',
     label: 'Jeûne',
-    description: 'Suivi jeûne intermittent',
+    description: 'Intermittent',
     icon: 'Clock',
     color: '#A855F7',
     route: '/fasting',
+    order: 6,
+    theme: 'health',
+  },
+  {
+    id: 'sommeil',
+    label: 'Sommeil',
+    description: 'Suivi nuits',
+    icon: 'Moon',
+    color: '#6366F1',
+    route: '/sleep-tracker',
     order: 7,
+    theme: 'health',
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // THÈME 3 - OUTILS & CALCULS (4 outils)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: 'calculateurs',
+    label: 'Calculs',
+    description: 'IMC, 1RM',
+    icon: 'Calculator',
+    color: '#F59E0B',
+    route: '/calculators',
+    order: 8,
+    theme: 'tools',
   },
   {
     id: 'savoir',
     label: 'Savoir',
-    description: 'Articles et connaissances',
+    description: 'Articles',
     icon: 'BookMarked',
     color: '#8B5CF6',
     route: '/savoir',
-    order: 8,
+    order: 9,
+    theme: 'tools',
+  },
+  {
+    id: 'routines',
+    label: 'Routines',
+    description: 'Warm-up',
+    icon: 'ListChecks',
+    color: '#14B8A6',
+    route: '/routines',
+    order: 10,
+    theme: 'tools',
+  },
+  {
+    id: 'objectifs',
+    label: 'Objectifs',
+    description: 'Mes buts',
+    icon: 'Target',
+    color: '#EF4444',
+    route: '/goals',
+    order: 11,
+    theme: 'tools',
   },
 
   // ═══════════════════════════════════════════════════════════
-  // LIGNE 4 - GAMIFICATION & SOCIAL
+  // THÈME 4 - SOCIAL & GAMIFICATION (4 outils)
   // ═══════════════════════════════════════════════════════════
   {
     id: 'dojo',
     label: 'Mon Dojo',
-    description: 'XP, badges, avatars',
+    description: 'XP & Badges',
     icon: 'Sparkles',
     color: '#FBBF24',
     route: '/gamification',
-    order: 9,
+    order: 12,
+    theme: 'social',
   },
   {
     id: 'clubs',
     label: 'Clubs & Coach',
-    description: 'Partenaires et salles',
+    description: 'Partenaires',
     icon: 'Users',
     color: '#818CF8',
     route: '/partners',
-    order: 10,
+    order: 13,
+    theme: 'social',
   },
   {
     id: 'partager',
     label: 'Partager',
-    description: 'Partage tes résultats',
+    description: 'Résultats',
     icon: 'Share2',
     color: '#EC4899',
     route: '/share-hub',
-    order: 11,
+    order: 14,
+    theme: 'social',
+  },
+  {
+    id: 'classement',
+    label: 'Ranking',
+    description: 'Top players',
+    icon: 'Crown',
+    color: '#F59E0B',
+    route: '/leaderboard',
+    order: 15,
+    theme: 'social',
   },
 
   // ═══════════════════════════════════════════════════════════
-  // LIGNE 5 - PERSONNALISATION
+  // THÈME 5 - PERSONNALISATION (4 outils)
   // ═══════════════════════════════════════════════════════════
   {
     id: 'profil',
     label: 'Profil',
-    description: 'Paramètres personnels',
+    description: 'Paramètres',
     icon: 'User',
     color: '#60A5FA',
     route: '/profile',
-    order: 12,
+    order: 16,
+    theme: 'settings',
   },
   {
     id: 'themes',
     label: 'Thèmes',
-    description: 'Personnalisation visuelle',
+    description: 'Apparence',
     icon: 'Palette',
     color: '#A78BFA',
     route: '/appearance',
-    order: 13,
+    order: 17,
+    theme: 'settings',
   },
   {
     id: 'photos',
     label: 'Photos',
-    description: 'Galerie de progression',
+    description: 'Transfo',
     icon: 'Camera',
     color: '#F472B6',
     route: '/photos',
-    order: 14,
+    order: 18,
+    theme: 'settings',
   },
-
-  // ═══════════════════════════════════════════════════════════
-  // LIGNE 6 - NOTIFICATIONS
-  // ═══════════════════════════════════════════════════════════
   {
     id: 'notifications',
     label: 'Notifs',
-    description: 'Rappels et alertes',
+    description: 'Alertes',
     icon: 'Bell',
     color: '#F59E0B',
     route: '/notifications',
-    order: 15,
+    order: 19,
+    theme: 'settings',
   },
 ];
 

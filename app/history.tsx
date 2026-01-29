@@ -131,11 +131,8 @@ export default function HistoryScreen() {
     setLoading(false);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchHistoryRecords();
-    }, [fetchHistoryRecords])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { fetchHistoryRecords(); }, []);
 
   // Calendrier mensuel
   const calendarData = useMemo(() => {

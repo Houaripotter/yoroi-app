@@ -266,54 +266,61 @@ export default function HomeScreen() {
     setShowTutorial(false);
   }, []);
 
-  // Rafraîchir l'avatar quand la page devient active
-  useFocusEffect(
-    useCallback(() => {
-      setAvatarRefreshTrigger((prev) => prev + 1);
-    }, [])
-  );
+  // Rafraîchir l'avatar seulement au premier montage
+  // (pas à chaque retour pour éviter le flash)
+  useEffect(() => {
+    setAvatarRefreshTrigger((prev) => prev + 1);
+  }, []);
 
-  // Animation de remplissage de la batterie au focus
-  useFocusEffect(
-    useCallback(() => {
-      // Clear any existing interval
+  // Animation de remplissage de la batterie - UNIQUEMENT au changement de score
+  const hasAnimatedBattery = useRef(false);
+  useEffect(() => {
+    // Ne pas re-animer si déjà fait et score identique
+    if (hasAnimatedBattery.current && batteryFillPercent === readinessScore) {
+      return;
+    }
+
+    // Clear any existing interval
+    if (batteryIntervalRef.current) {
+      clearInterval(batteryIntervalRef.current);
+    }
+
+    // Première animation: partir de 0
+    // Retour sur écran: garder la valeur actuelle
+    const startValue = hasAnimatedBattery.current ? batteryFillPercent : 0;
+    if (!hasAnimatedBattery.current) {
+      setBatteryFillPercent(0);
+    }
+
+    let currentValue = startValue;
+    const targetValue = readinessScore;
+
+    // Démarrer l'animation après un délai
+    const startTimeout = setTimeout(() => {
+      batteryIntervalRef.current = setInterval(() => {
+        currentValue += 3;
+        if (currentValue >= targetValue) {
+          currentValue = targetValue;
+          setBatteryFillPercent(targetValue);
+          hasAnimatedBattery.current = true;
+          if (batteryIntervalRef.current) {
+            clearInterval(batteryIntervalRef.current);
+            batteryIntervalRef.current = null;
+          }
+        } else {
+          setBatteryFillPercent(currentValue);
+        }
+      }, 40);
+    }, hasAnimatedBattery.current ? 0 : 500);
+
+    return () => {
+      clearTimeout(startTimeout);
       if (batteryIntervalRef.current) {
         clearInterval(batteryIntervalRef.current);
+        batteryIntervalRef.current = null;
       }
-
-      // Reset à 0
-      setBatteryFillPercent(0);
-
-      // Variable locale pour suivre la progression
-      let currentValue = 0;
-      const targetValue = readinessScore;
-
-      // Démarrer l'animation après un délai
-      const startTimeout = setTimeout(() => {
-        batteryIntervalRef.current = setInterval(() => {
-          currentValue += 3;
-          if (currentValue >= targetValue) {
-            currentValue = targetValue;
-            setBatteryFillPercent(targetValue);
-            if (batteryIntervalRef.current) {
-              clearInterval(batteryIntervalRef.current);
-              batteryIntervalRef.current = null;
-            }
-          } else {
-            setBatteryFillPercent(currentValue);
-          }
-        }, 40);
-      }, 500);
-
-      return () => {
-        clearTimeout(startTimeout);
-        if (batteryIntervalRef.current) {
-          clearInterval(batteryIntervalRef.current);
-          batteryIntervalRef.current = null;
-        }
-      };
-    }, [readinessScore])
-  );
+    };
+  }, [readinessScore]);
 
   // Animation toggle compétiteur
   const toggleAnim = useRef(new Animated.Value(isCompetitorMode ? 1 : 0)).current;
@@ -769,7 +776,8 @@ export default function HomeScreen() {
     }
   }, [loadHydration]);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  // Charger les données UNIQUEMENT au premier montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Helper pour vérifier la visibilité d'une section
   const isSectionVisible = useCallback((sectionId: string): boolean => {

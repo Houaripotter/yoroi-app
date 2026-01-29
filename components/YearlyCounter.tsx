@@ -66,11 +66,8 @@ export const YearlyCounter: React.FC = () => {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Calculer le nombre de jours dans l'annee
   const now = new Date();

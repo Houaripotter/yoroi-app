@@ -12,7 +12,6 @@ import { GripVertical, Home, Grid, LineChart } from 'lucide-react-native';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Page1Monitoring } from './pages/Page1Monitoring';
-import { Page2ActionGrid } from './pages/Page2ActionGrid';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -88,7 +87,8 @@ interface HomeTabViewProps {
 }
 
 // Default page IDs - titles are loaded dynamically via i18n
-const DEFAULT_PAGE_IDS = ['home', 'tools'] as const;
+// Only 'home' now - tools are directly embedded in home page
+const DEFAULT_PAGE_IDS = ['home'] as const;
 
 // Composant HomeTabView optimisé avec React.memo
 export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
@@ -130,9 +130,9 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
   const [currentPage, setCurrentPage] = useState(0);
 
   // Create default pages with translations
+  // Only home page now - tools are embedded directly in home
   const getDefaultPages = (): PageItem[] => [
     { id: 'home', title: t('home.title'), icon: '', description: t('home.dashboard') },
-    { id: 'tools', title: t('tools.title'), icon: '', description: t('tools.subtitle') },
   ];
 
   const [pageOrder, setPageOrder] = useState<PageItem[]>(getDefaultPages());
@@ -185,9 +185,9 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
       const saved = await AsyncStorage.getItem(PAGE_ORDER_KEY);
       if (saved) {
         const savedOrder: PageItem[] = JSON.parse(saved);
-        // Filtrer les anciennes pages (stats, reports) pour migrer vers la nouvelle structure
+        // Filtrer pour ne garder que la page home (tools est maintenant intégré dans home)
         const validPages = savedOrder.filter(page =>
-          page.id === 'home' || page.id === 'tools'
+          page.id === 'home'
         );
         // Si des pages ont été filtrées, utiliser les nouvelles pages par défaut
         if (validPages.length < savedOrder.length) {
@@ -297,8 +297,6 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
             waterPercentage={waterPercentage}
           />
         );
-      case 'tools':
-        return <Page2ActionGrid />;
       default:
         return null;
     }
@@ -312,85 +310,12 @@ export const HomeTabView: React.FC<HomeTabViewProps> = memo(({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header avec tabs circulaires - fond limité au centre */}
-      <View style={styles.header} pointerEvents="box-none">
-        {/* Fond uniquement au centre pour les onglets */}
-        <View style={[styles.tabsBackground, { backgroundColor: colors.background }]}>
-          <ScrollView
-            ref={tabScrollRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={!allTabsFit}
-            contentContainerStyle={[
-              styles.tabsContent,
-              allTabsFit && styles.tabsContentCentered
-            ]}
-            style={styles.tabsScroll}
-          >
-            {pageOrder.map((page, index) => {
-              const isActive = currentPage === index;
-              const IconComponent = page.id === 'home' ? Home : page.id === 'tools' ? Grid : LineChart;
+      {/* Plus d'onglet en haut - une seule page */}
 
-              return (
-                <TouchableOpacity
-                  key={page.id}
-                  style={styles.tabWrapper}
-                  onPress={() => scrollToPage(index)}
-                  onLongPress={handleLongPressDot}
-                  activeOpacity={0.7}
-                >
-                  <View style={[
-                    styles.circleTab,
-                    {
-                      backgroundColor: isActive
-                        ? colors.accent
-                        : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)')
-                    },
-                  ]}>
-                    <IconComponent
-                      size={18}
-                      color={isActive ? colors.textOnAccent : colors.textMuted}
-                      strokeWidth={2.5}
-                    />
-                  </View>
-                  <Text style={[
-                    styles.tabTitle,
-                    {
-                      color: isActive ? (isDark ? colors.accent : colors.textPrimary) : colors.textMuted,
-                      fontWeight: isActive ? '800' : '600',
-                    }
-                  ]}>
-                    {page.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+      {/* Contenu direct */}
+      <View style={styles.page}>
+        {renderPage('home')}
       </View>
-
-
-      {/* Horizontal Pager */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        decelerationRate="fast"
-        snapToInterval={SCREEN_WIDTH}
-        snapToAlignment="center"
-        contentContainerStyle={styles.scrollContent}
-        scrollEnabled={!editMode}
-      >
-        {/* Render pages in custom order */}
-        {pageOrder.map((page) => (
-          <View key={page.id} style={styles.page}>
-            {renderPage(page.id)}
-          </View>
-        ))}
-      </ScrollView>
 
 
       {/* Modal de réorganisation */}

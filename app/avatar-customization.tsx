@@ -78,11 +78,8 @@ export default function AvatarCustomizationScreen() {
     }
   }, [isPro]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Sauvegarder et mettre a jour l'apercu
   const updateCustomization = async (newCustomization: AvatarCustomization) => {

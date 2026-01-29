@@ -60,6 +60,8 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   // STATE SIMPLE
   const [sliderPosition, setSliderPosition] = useState(0.5);
   const rafId = useRef<number | null>(null);
+  const containerRef = useRef<View>(null);
+  const containerX = useRef(0);
 
   // PanResponder avec requestAnimationFrame pour limiter les updates
   const panResponder = useRef(
@@ -67,9 +69,18 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
 
+      onPanResponderGrant: (evt) => {
+        // Utiliser pageX pour la position absolue
+        const touchX = evt.nativeEvent.pageX - containerX.current;
+        const position = Math.max(0.02, Math.min(0.98, touchX / sliderWidth));
+        setSliderPosition(position);
+      },
+
       onPanResponderMove: (evt) => {
-        const touchX = evt.nativeEvent.locationX;
-        const position = Math.max(0, Math.min(1, touchX / sliderWidth));
+        // Utiliser pageX pour la position absolue sur l'écran
+        const touchX = evt.nativeEvent.pageX - containerX.current;
+        // Permettre d'aller presque aux extrêmes (2% - 98%)
+        const position = Math.max(0.02, Math.min(0.98, touchX / sliderWidth));
 
         // Annuler l'update précédent si pas encore exécuté
         if (rafId.current) {
@@ -89,6 +100,13 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       },
     })
   ).current;
+
+  // Mesurer la position du container au montage
+  const onContainerLayout = useCallback(() => {
+    containerRef.current?.measureInWindow((x) => {
+      containerX.current = x;
+    });
+  }, []);
 
   // Largeur directe - pas d'interpolation
   const clipWidth = sliderPosition * sliderWidth;
@@ -194,7 +212,9 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
 
         {/* Slider container - PanResponder sur TOUTE la zone */}
         <View
+          ref={containerRef}
           style={[styles.sliderContainer, { height }]}
+          onLayout={onContainerLayout}
           {...panResponder.panHandlers}
         >
           {/* Image AVANT (en dessous) */}

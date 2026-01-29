@@ -459,11 +459,8 @@ export default function TrainingJournalScreen() {
   }, []);
 
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // TASK 2: Apply global filter to benchmarks and skills (Force -> Musculation)
   const matchesGlobalFilter = (benchmarkCategory: BenchmarkCategory | null, skillCategory: SkillCategory | null): boolean => {

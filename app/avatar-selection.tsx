@@ -44,6 +44,9 @@ import { useTheme } from '@/lib/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from '@/lib/security/logger';
 
+// Test direct image import pour debug
+const TEST_IMAGE = require('@/assets/avatars/samurai/samurai_neutral.png');
+
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE = (width - 80) / 5; // 5 avatars par ligne
 
@@ -300,6 +303,11 @@ export default function AvatarSelectionScreen() {
 
     const image = getAvatarImage(pack, state, undefined, selectedGender);
 
+    // DEBUG: Log image loading
+    if (!image) {
+      logger.warn(`[AvatarSelection] No image for ${pack}/${state}/${selectedGender}`);
+    }
+
     return (
       <TouchableOpacity
         key={`${pack}-${state}`}
@@ -324,16 +332,15 @@ export default function AvatarSelectionScreen() {
             },
           ]}
         >
-          {image && (
-            <Image
-              source={image}
-              style={{
-                width: AVATAR_SIZE - 12,
-                height: AVATAR_SIZE - 12,
-              }}
-              resizeMode="contain"
-            />
-          )}
+          <Image
+            source={image || TEST_IMAGE}
+            style={{
+              width: AVATAR_SIZE - 6,
+              height: AVATAR_SIZE - 6,
+            }}
+            resizeMode="cover"
+            onError={(e) => logger.warn(`[AvatarSelection] Image error for ${pack}/${state}: ${e.nativeEvent.error}`)}
+          />
 
           {/* Cadenas si verrouillé */}
           {!isUnlocked && (
@@ -397,16 +404,15 @@ export default function AvatarSelectionScreen() {
             },
           ]}
         >
-          {image && (
-            <Image
-              source={image}
-              style={{
-                width: AVATAR_SIZE - 12,
-                height: AVATAR_SIZE - 12,
-              }}
-              resizeMode="contain"
-            />
-          )}
+          <Image
+            source={image || TEST_IMAGE}
+            style={{
+              width: AVATAR_SIZE - 6,
+              height: AVATAR_SIZE - 6,
+            }}
+            resizeMode="cover"
+            onError={(e) => logger.warn(`[AvatarSelection] Collection image error for ${pack}/${character}: ${e.nativeEvent.error}`)}
+          />
 
           {/* Cadenas si verrouillé */}
           {!isUnlocked && (
@@ -634,13 +640,12 @@ export default function AvatarSelectionScreen() {
 
             {/* Cercle blanc avec avatar agrandi */}
             <View style={styles.previewCircle}>
-              {previewImage && (
-                <Image
-                  source={previewImage}
-                  style={styles.previewImage}
-                  resizeMode="contain"
-                />
-              )}
+              <Image
+                source={previewImage || TEST_IMAGE}
+                style={styles.previewImage}
+                resizeMode="cover"
+                onError={(e) => logger.warn(`[AvatarSelection] Preview image error: ${e.nativeEvent.error}`)}
+              />
             </View>
 
             {/* Nom du pack et niveau */}

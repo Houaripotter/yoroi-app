@@ -281,11 +281,8 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   const rank = getCurrentRank(streak);
   const level = getLevel(totalPoints);

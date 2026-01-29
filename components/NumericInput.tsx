@@ -112,8 +112,11 @@ export const NumericInput: React.FC<NumericInputProps> = ({
   }, [validationType, fieldName]);
 
   const handleChangeText = useCallback((text: string) => {
-    // Filtrer pour n'accepter que les chiffres et le point décimal
-    let filtered = text.replace(/[^0-9.]/g, '');
+    // Filtrer pour n'accepter que les chiffres, le point ET la virgule (clavier français)
+    let filtered = text.replace(/[^0-9.,]/g, '');
+
+    // Convertir les virgules en points (format français -> format standard)
+    filtered = filtered.replace(/,/g, '.');
 
     if (!allowDecimal) {
       // Si pas de décimales autorisées, enlever les points

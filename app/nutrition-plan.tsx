@@ -53,12 +53,8 @@ export default function NutritionPlanScreen() {
   // Résultats
   const [results, setResults] = useState<NutritionPlan | null>(null);
 
-  // Charger le profil
-  useFocusEffect(
-    useCallback(() => {
-      loadProfile();
-    }, [])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadProfile(); }, []);
 
   const loadProfile = async () => {
     try {

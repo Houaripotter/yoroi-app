@@ -3,7 +3,7 @@
 // ============================================
 
 import React, { useState } from 'react';
-import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useI18n } from '@/lib/I18nContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { useScrollContext } from '@/lib/ScrollContext';
@@ -12,9 +12,10 @@ import { StatsSection } from '../StatsSection';
 import { MetricCard } from '../charts/MetricCard';
 import { Award, TrendingUp, Target, Zap } from 'lucide-react-native';
 import { StatsExplanation } from '../StatsExplanation';
+import { PerformanceRadar } from '@/components/PerformanceRadar';
 
 export const PerformancePage: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useI18n();
   const { handleScroll: onScrollContext } = useScrollContext();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('30j');
@@ -95,6 +96,18 @@ export const PerformancePage: React.FC = () => {
         </View>
       </StatsSection>
 
+      {/* RADAR PERFORMANCE */}
+      <StatsSection
+        title="Radar Performance"
+        description="Vue d'ensemble de tes capacités"
+      >
+        <View style={[styles.radarCard, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+          <View style={styles.radarContainer}>
+            <PerformanceRadar size={280} />
+          </View>
+        </View>
+      </StatsSection>
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
@@ -113,5 +126,14 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     flex: 1,
+  },
+  radarCard: {
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
+  },
+  radarContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

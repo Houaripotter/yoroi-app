@@ -113,12 +113,11 @@ export default function PhotosScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchPhotos();
-      checkPrivacyChallenge(); // On ignore le retour ici, on veut juste vérifier et afficher le modal si nécessaire
-    }, [fetchPhotos, checkPrivacyChallenge])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => {
+    fetchPhotos();
+    checkPrivacyChallenge();
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

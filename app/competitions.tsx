@@ -53,11 +53,8 @@ export default function CompetitionsScreen() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      loadCompetitions();
-    }, [])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadCompetitions(); }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);

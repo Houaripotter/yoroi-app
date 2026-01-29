@@ -147,11 +147,8 @@ export default function CompositionDetailScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Récupérer la métrique active
   const activeMetric = useMemo(

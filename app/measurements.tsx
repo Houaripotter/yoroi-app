@@ -279,11 +279,8 @@ export default function MeasurementsScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  // Charger une seule fois au montage (pas à chaque focus)
+  useEffect(() => { loadData(); }, []);
 
   // Get chart data for a specific measurement
   const getChartData = (key: keyof BodyMeasurement): number[] => {
