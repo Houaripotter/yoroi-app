@@ -75,7 +75,7 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { MoreTabView } from '@/components/more/MoreTabView';
-import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV, importDataFromJSON } from '@/lib/exportService';
+import { exportDataToJSON, exportDataToCSV, exportTrainingsToCSV, exportTrainingsToExcelCSV, importDataFromJSON, exportEditableCSV, importEditableCSV, exportEmptyTemplate } from '@/lib/exportService';
 import { scale, scaleModerate } from '@/constants/responsive';
 import { generateProgressPDF } from '@/lib/pdfExport';
 import { getWeightCategoriesBySportAndGender, WeightCategory, sportHasWeightCategories } from '@/lib/weightCategories';
@@ -922,27 +922,84 @@ export default function MoreScreen() {
   const handleExport = async () => {
     showPopup(
       t('menu.exportMyData'),
-      t('menu.chooseExportFormat'),
+      'Choisis le format de sauvegarde',
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: 'JSON', style: 'default', onPress: () => exportDataToJSON() },
-        { text: 'CSV', style: 'primary', onPress: () => exportDataToCSV() },
+        {
+          text: 'Backup Complet',
+          style: 'primary',
+          onPress: () => exportDataToJSON()
+        },
+        {
+          text: 'CSV Éditable',
+          style: 'default',
+          onPress: () => handleExportEditable()
+        },
+      ]
+    );
+  };
+
+  // Export éditable pour modification sur ordinateur
+  const handleExportEditable = async () => {
+    showPopup(
+      'Export Éditable',
+      'Exporte tes données dans un format que tu peux modifier sur ordinateur puis réimporter',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: 'Mes Données',
+          style: 'primary',
+          onPress: () => exportEditableCSV()
+        },
+        {
+          text: 'Template Vide',
+          style: 'default',
+          onPress: () => exportEmptyTemplate()
+        },
       ]
     );
   };
 
   const handleImport = async () => {
-    try {
-      const success = await importDataFromJSON();
-      if (success) {
-        notificationAsync(NotificationFeedbackType.Success);
-        // Forcer un refresh de l'app en naviguant vers l'accueil
-        router.push('/(tabs)');
-      }
-    } catch (error) {
-      logger.error('Erreur import:', error);
-      notificationAsync(NotificationFeedbackType.Error);
-    }
+    showPopup(
+      'Restaurer mes données',
+      'Choisis le type de fichier à importer',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: 'Backup JSON',
+          style: 'primary',
+          onPress: async () => {
+            try {
+              const success = await importDataFromJSON();
+              if (success) {
+                notificationAsync(NotificationFeedbackType.Success);
+                router.push('/(tabs)');
+              }
+            } catch (error) {
+              logger.error('Erreur import:', error);
+              notificationAsync(NotificationFeedbackType.Error);
+            }
+          }
+        },
+        {
+          text: 'CSV Éditable',
+          style: 'default',
+          onPress: async () => {
+            try {
+              const success = await importEditableCSV();
+              if (success) {
+                notificationAsync(NotificationFeedbackType.Success);
+                router.push('/(tabs)');
+              }
+            } catch (error) {
+              logger.error('Erreur import CSV:', error);
+              notificationAsync(NotificationFeedbackType.Error);
+            }
+          }
+        },
+      ]
+    );
   };
 
   const handleRate = async () => {

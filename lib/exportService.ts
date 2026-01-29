@@ -15,20 +15,63 @@ import {
   saveHomeLayout,
   saveSelectedLogo,
 } from './storage';
-import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord } from './database';
+import { getWeights, getTrainings, getProfile, addWeight, addTraining, getClubs, addClub, addMeasurementRecord, updateClub, saveProfile } from './database';
 import { getAllBodyCompositions, addBodyComposition } from './bodyComposition';
 import { getUnlockedBadges, unlockBadge } from './badges';
 import logger from '@/lib/security/logger';
+
+// ============================================
+// 🖼️ UTILITAIRES IMAGES
+// ============================================
+
+/**
+ * Convertit une image URI en base64
+ */
+const imageToBase64 = async (uri: string | undefined | null): Promise<string | null> => {
+  if (!uri) return null;
+  try {
+    // Vérifier si le fichier existe
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    if (!fileInfo.exists) return null;
+
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return base64;
+  } catch (error) {
+    logger.warn('Impossible de convertir image en base64:', uri);
+    return null;
+  }
+};
+
+/**
+ * Sauvegarde une image base64 en fichier local
+ */
+const base64ToImage = async (base64: string, fileName: string): Promise<string | null> => {
+  if (!base64) return null;
+  try {
+    const uri = `${FileSystem.documentDirectory}${fileName}`;
+    await FileSystem.writeAsStringAsync(uri, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    return uri;
+  } catch (error) {
+    logger.warn('Impossible de sauvegarder image depuis base64:', fileName);
+    return null;
+  }
+};
 
 // ============================================
 // 📤 EXPORT & PARTAGE
 // ============================================
 
 /**
- * Exporte toutes les données utilisateur en JSON
+ * Exporte toutes les données utilisateur en JSON (avec images en base64)
  */
 export const exportDataToJSON = async (): Promise<boolean> => {
   try {
+    logger.info('Début export JSON complet avec images...');
+
     // Récupérer toutes les données depuis la base SQLite et AsyncStorage
     const [
       profile,
@@ -60,19 +103,62 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       getHydrationSettings(),
     ]);
 
+    // === CONVERTIR LES IMAGES EN BASE64 ===
+
+    // 1. Photo de profil
+    let profilePhotoBase64: string | null = null;
+    if (profile?.profile_photo) {
+      profilePhotoBase64 = await imageToBase64(profile.profile_photo);
+      logger.info('Photo de profil convertie en base64');
+    }
+
+    // 2. Logos des clubs
+    const clubsWithLogos = await Promise.all(
+      (clubs || []).map(async (club: any) => {
+        let logoBase64: string | null = null;
+        if (club.logo_uri && !club.logo_uri.startsWith('builtin:')) {
+          logoBase64 = await imageToBase64(club.logo_uri);
+        }
+        return {
+          ...club,
+          logo_base64: logoBase64, // Image en base64 pour le backup
+        };
+      })
+    );
+    logger.info(`${clubsWithLogos.filter((c: any) => c.logo_base64).length} logos de clubs convertis`);
+
+    // 3. Photos de transformation (si URI locales)
+    const photosWithBase64 = await Promise.all(
+      (photos || []).map(async (photo: any) => {
+        let imageBase64: string | null = null;
+        if (photo.uri && photo.uri.startsWith('file://')) {
+          imageBase64 = await imageToBase64(photo.uri);
+        }
+        return {
+          ...photo,
+          image_base64: imageBase64,
+        };
+      })
+    );
+    logger.info(`${photosWithBase64.filter((p: any) => p.image_base64).length} photos converties`);
+
     const exportData = {
-      version: '3.0', // Version augmentée car on ajoute plus de données
+      version: '4.0', // Version 4.0 avec images base64
       exportDate: new Date().toISOString(),
       appName: 'Yoroi',
-      profile,
+      // Profil avec photo
+      profile: {
+        ...profile,
+        profile_photo_base64: profilePhotoBase64,
+      },
       weights,
       trainings,
       bodyCompositions,
-      clubs,
+      clubs: clubsWithLogos, // Clubs avec logos en base64
       measurements,
       userSettings,
       unlockedBadges,
-      photos,
+      photos: photosWithBase64, // Photos avec images en base64
       homeLayout,
       selectedLogo,
       hydrationEntries,
@@ -80,7 +166,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     };
 
     // Créer le fichier JSON
-    const fileName = `yoroi_export_${new Date().getTime()}.json`;
+    const fileName = `yoroi_backup_${new Date().toISOString().split('T')[0]}.json`;
     const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
     await FileSystem.writeAsStringAsync(
@@ -88,6 +174,8 @@ export const exportDataToJSON = async (): Promise<boolean> => {
       JSON.stringify(exportData, null, 2),
       { encoding: FileSystem.EncodingType.UTF8 }
     );
+
+    logger.info('Fichier JSON créé:', fileName);
 
     // Partager le fichier JSON
     const canShare = await isAvailableAsync();
@@ -159,7 +247,7 @@ export const exportDataToCSV = async (): Promise<boolean> => {
 };
 
 /**
- * Importe les données depuis un fichier JSON
+ * Importe les données depuis un fichier JSON (avec restauration des images)
  */
 export const importDataFromJSON = async (): Promise<boolean> => {
   try {
@@ -186,16 +274,22 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       return false;
     }
 
+    // Compter les images à restaurer
+    const clubsWithLogos = (importedData.clubs || []).filter((c: any) => c.logo_base64);
+    const hasProfilePhoto = importedData.profile?.profile_photo_base64;
+    const photosWithImages = (importedData.photos || []).filter((p: any) => p.image_base64);
+
     // Demander confirmation
     const confirmed = await new Promise<boolean>((resolve) => {
       const summary = [
         `• ${importedData.weights?.length || 0} mesures de poids`,
         `• ${importedData.trainings?.length || 0} entraînements`,
         `• ${importedData.bodyCompositions?.length || 0} compositions corporelles`,
-        `• ${importedData.clubs?.length || 0} clubs`,
+        `• ${importedData.clubs?.length || 0} clubs${clubsWithLogos.length > 0 ? ` (${clubsWithLogos.length} logos)` : ''}`,
         `• ${importedData.measurements?.length || 0} mensurations`,
         `• ${importedData.unlockedBadges?.length || 0} badges débloqués`,
-        `• ${importedData.photos?.length || 0} photos`,
+        `• ${importedData.photos?.length || 0} photos${photosWithImages.length > 0 ? ` (${photosWithImages.length} images)` : ''}`,
+        hasProfilePhoto ? '• Photo de profil' : null,
         importedData.userSettings ? '• Paramètres utilisateur' : null,
         importedData.homeLayout ? '• Layout de l\'accueil' : null,
       ].filter(Boolean).join('\n');
@@ -214,8 +308,35 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       return false;
     }
 
-    // Importer les données
+    logger.info('Début import données...');
     let importedCount = 0;
+    let imagesRestored = 0;
+
+    // === RESTAURER LE PROFIL AVEC PHOTO ===
+    if (importedData.profile) {
+      try {
+        const profileData = { ...importedData.profile };
+
+        // Restaurer la photo de profil si présente
+        if (profileData.profile_photo_base64) {
+          const photoUri = await base64ToImage(
+            profileData.profile_photo_base64,
+            `profile_photo_${Date.now()}.jpg`
+          );
+          if (photoUri) {
+            profileData.profile_photo = photoUri;
+            imagesRestored++;
+            logger.info('Photo de profil restaurée');
+          }
+        }
+        delete profileData.profile_photo_base64;
+
+        await saveProfile(profileData);
+        importedCount++;
+      } catch (error) {
+        logger.error('Erreur import profil:', error);
+      }
+    }
 
     // Importer les poids
     if (importedData.weights && Array.isArray(importedData.weights)) {
@@ -239,17 +360,29 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       }
     }
 
-    // Importer les entraînements
+    // Importer les entraînements (COMPLET avec tous les champs)
     if (importedData.trainings && Array.isArray(importedData.trainings)) {
       for (const training of importedData.trainings) {
         try {
           await addTraining({
+            club_id: training.club_id,
             sport: training.sport || training.discipline || 'Sport',
             date: training.date,
             session_type: training.session_type || training.type,
+            session_types: training.session_types,
             notes: training.notes,
             duration_minutes: training.duration_minutes,
             start_time: training.start_time,
+            muscles: training.muscles,
+            technical_theme: training.technical_theme,
+            distance: training.distance,
+            calories: training.calories,
+            intensity: training.intensity,
+            rounds: training.rounds,
+            round_duration: training.round_duration,
+            is_outdoor: training.is_outdoor,
+            pente: training.pente,
+            speed: training.speed,
           });
           importedCount++;
         } catch (error) {
@@ -270,11 +403,27 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       }
     }
 
-    // Importer les clubs
+    // === IMPORTER LES CLUBS AVEC LOGOS ===
     if (importedData.clubs && Array.isArray(importedData.clubs)) {
       for (const club of importedData.clubs) {
         try {
-          await addClub(club);
+          const clubData = { ...club };
+
+          // Restaurer le logo si présent en base64
+          if (clubData.logo_base64) {
+            const logoUri = await base64ToImage(
+              clubData.logo_base64,
+              `club_logo_${clubData.name?.replace(/\s/g, '_') || Date.now()}.png`
+            );
+            if (logoUri) {
+              clubData.logo_uri = logoUri;
+              imagesRestored++;
+              logger.info(`Logo restauré pour club: ${clubData.name}`);
+            }
+          }
+          delete clubData.logo_base64;
+
+          await addClub(clubData);
           importedCount++;
         } catch (error) {
           logger.error('Erreur import club:', error);
@@ -350,9 +499,11 @@ export const importDataFromJSON = async (): Promise<boolean> => {
       }
     }
 
+    const imageMsg = imagesRestored > 0 ? `\n\n${imagesRestored} image(s) restaurée(s) (photo de profil, logos de clubs)` : '';
+
     Alert.alert(
       'Import réussi !',
-      `${importedCount} éléments ont été importés avec succès.\n\nTes paramètres, clubs, badges et toutes tes données ont été restaurés !`
+      `${importedCount} éléments ont été importés avec succès.${imageMsg}\n\nTes paramètres, clubs, badges et toutes tes données ont été restaurés !`
     );
 
     return true;
@@ -817,6 +968,418 @@ export const exportTrainingsToExcelCSV = async (): Promise<boolean> => {
       'Erreur',
       "Impossible d'exporter les séances en Excel CSV. Essaie à nouveau."
     );
+    return false;
+  }
+};
+
+// ============================================
+// 📝 EXPORT/IMPORT ÉDITABLE (CSV & JSON)
+// ============================================
+
+/**
+ * Exporte TOUTES les données en CSV éditable (pour modification sur ordinateur)
+ * Crée plusieurs fichiers CSV : pesées, séances, mensurations, clubs
+ */
+export const exportEditableCSV = async (): Promise<boolean> => {
+  try {
+    logger.info('Début export CSV éditable...');
+
+    const [weights, trainings, measurements, clubs] = await Promise.all([
+      getWeights(1000),
+      getTrainings(),
+      getAllMeasurements(),
+      getClubs(),
+    ]);
+
+    const date = new Date().toISOString().split('T')[0];
+
+    // === 1. CSV PESÉES ===
+    let weightsCSV = '# YOROI - PESÉES (éditable)\n';
+    weightsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
+    weightsCSV += '# Format date: AAAA-MM-JJ\n';
+    weightsCSV += '#\n';
+    weightsCSV += 'date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr\n';
+
+    (weights || []).forEach((w: any) => {
+      weightsCSV += `${w.date};${w.weight};`;
+      weightsCSV += `${w.fat_percent || ''};${w.muscle_percent || ''};${w.water_percent || ''};`;
+      weightsCSV += `${w.bone_mass || ''};${w.visceral_fat || ''};${w.metabolic_age || ''};${w.bmr || ''}\n`;
+    });
+
+    // === 2. CSV SÉANCES ===
+    let trainingsCSV = '# YOROI - SÉANCES (éditable)\n';
+    trainingsCSV += '# Modifie ce fichier puis réimporte-le dans Yoroi\n';
+    trainingsCSV += '# Format date: AAAA-MM-JJ | Heure: HH:MM | Durée en minutes\n';
+    trainingsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
+    trainingsCSV += '#\n';
+    trainingsCSV += 'date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes\n';
+
+    const clubsMap = new Map((clubs || []).map((c: any) => [c.id, c.name]));
+
+    (trainings || []).forEach((t: any) => {
+      const clubName = t.club_id ? clubsMap.get(t.club_id) || '' : '';
+      trainingsCSV += `${t.date};${t.sport};${escapeCSV(clubName)};${t.start_time || ''};${t.duration_minutes || ''};`;
+      trainingsCSV += `${escapeCSV(t.session_type || '')};${escapeCSV(t.muscles || '')};`;
+      trainingsCSV += `${escapeCSV(t.technical_theme || '')};${escapeCSV(t.notes || '')}\n`;
+    });
+
+    // === 3. CSV MENSURATIONS ===
+    let measurementsCSV = '# YOROI - MENSURATIONS (éditable)\n';
+    measurementsCSV += '# Toutes les valeurs en cm\n';
+    measurementsCSV += '#\n';
+    measurementsCSV += 'date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou\n';
+
+    (measurements || []).forEach((m: any) => {
+      measurementsCSV += `${m.date};${m.chest || ''};${m.waist || ''};${m.hips || ''};`;
+      measurementsCSV += `${m.left_arm || ''};${m.right_arm || ''};${m.left_thigh || ''};${m.right_thigh || ''};`;
+      measurementsCSV += `${m.left_calf || ''};${m.right_calf || ''};${m.shoulders || ''};${m.neck || ''}\n`;
+    });
+
+    // === 4. CSV CLUBS ===
+    let clubsCSV = '# YOROI - CLUBS (éditable)\n';
+    clubsCSV += '# Sports disponibles: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre\n';
+    clubsCSV += '# Couleur en format hex: #FF0000 (rouge), #00FF00 (vert), #0000FF (bleu)\n';
+    clubsCSV += '#\n';
+    clubsCSV += 'nom;sport;couleur;adresse\n';
+
+    (clubs || []).forEach((c: any) => {
+      clubsCSV += `${escapeCSV(c.name)};${c.sport};${c.color || ''};${escapeCSV(c.address || '')}\n`;
+    });
+
+    // === CRÉER UN ZIP OU PLUSIEURS FICHIERS ===
+    // On crée un fichier JSON avec tous les CSV dedans pour simplifier
+    const editableData = {
+      _documentation: {
+        fr: "Ce fichier contient tes données Yoroi au format éditable.",
+        instructions: [
+          "1. Ouvre ce fichier dans un éditeur de texte (VS Code, Notepad++, etc.)",
+          "2. Modifie les données dans chaque section CSV",
+          "3. Les lignes commençant par # sont des commentaires (ignorés)",
+          "4. Sauvegarde le fichier et réimporte-le dans Yoroi",
+        ],
+        format_date: "AAAA-MM-JJ (ex: 2024-01-15)",
+        format_heure: "HH:MM (ex: 18:30)",
+        separateur: "point-virgule (;)",
+      },
+      pesees_csv: weightsCSV,
+      seances_csv: trainingsCSV,
+      mensurations_csv: measurementsCSV,
+      clubs_csv: clubsCSV,
+      metadata: {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        appName: 'Yoroi',
+        counts: {
+          pesees: weights?.length || 0,
+          seances: trainings?.length || 0,
+          mensurations: measurements?.length || 0,
+          clubs: clubs?.length || 0,
+        },
+      },
+    };
+
+    const fileName = `yoroi_editable_${date}.json`;
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.writeAsStringAsync(
+      fileUri,
+      JSON.stringify(editableData, null, 2),
+      { encoding: FileSystem.EncodingType.UTF8 }
+    );
+
+    logger.info('Fichier éditable créé:', fileName);
+
+    const canShare = await isAvailableAsync();
+    if (canShare) {
+      await shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: 'Exporter données éditables Yoroi',
+        UTI: 'public.json',
+      });
+
+      Alert.alert(
+        'Export réussi',
+        `Fichier éditable créé avec :\n• ${weights?.length || 0} pesées\n• ${trainings?.length || 0} séances\n• ${measurements?.length || 0} mensurations\n• ${clubs?.length || 0} clubs\n\nOuvre ce fichier sur ton ordinateur pour modifier tes données !`
+      );
+    }
+
+    return true;
+  } catch (error) {
+    logger.error('❌ Erreur export éditable:', error);
+    Alert.alert('Erreur', "Impossible d'exporter les données éditables");
+    return false;
+  }
+};
+
+/**
+ * Parse une ligne CSV (gère les guillemets et échappements)
+ */
+const parseCSVLine = (line: string, separator: string = ';'): string[] => {
+  const values: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++; // Skip next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === separator && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  values.push(current.trim());
+  return values;
+};
+
+/**
+ * Parse un CSV complet (ignore les commentaires #)
+ */
+const parseCSV = (csvContent: string, separator: string = ';'): { headers: string[]; rows: string[][] } => {
+  const lines = csvContent.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+
+  if (lines.length === 0) return { headers: [], rows: [] };
+
+  const headers = parseCSVLine(lines[0], separator);
+  const rows = lines.slice(1).map(line => parseCSVLine(line, separator));
+
+  return { headers, rows };
+};
+
+/**
+ * Importe un fichier éditable (CSV dans JSON)
+ */
+export const importEditableCSV = async (): Promise<boolean> => {
+  try {
+    const result = await getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) return false;
+
+    const fileContent = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    const data = JSON.parse(fileContent);
+
+    // Vérifier que c'est un fichier éditable Yoroi
+    if (!data.metadata?.appName || data.metadata.appName !== 'Yoroi') {
+      Alert.alert('Erreur', 'Ce fichier n\'est pas un export éditable Yoroi valide');
+      return false;
+    }
+
+    let importedCount = 0;
+    const errors: string[] = [];
+
+    // === IMPORT PESÉES ===
+    if (data.pesees_csv) {
+      const { rows } = parseCSV(data.pesees_csv);
+      for (const row of rows) {
+        if (row.length >= 2 && row[0] && row[1]) {
+          try {
+            await addWeight({
+              date: row[0],
+              weight: parseFloat(row[1]),
+              fat_percent: row[2] ? parseFloat(row[2]) : undefined,
+              muscle_percent: row[3] ? parseFloat(row[3]) : undefined,
+              water_percent: row[4] ? parseFloat(row[4]) : undefined,
+              bone_mass: row[5] ? parseFloat(row[5]) : undefined,
+              visceral_fat: row[6] ? parseInt(row[6]) : undefined,
+              metabolic_age: row[7] ? parseInt(row[7]) : undefined,
+              bmr: row[8] ? parseInt(row[8]) : undefined,
+            });
+            importedCount++;
+          } catch (e) {
+            errors.push(`Pesée ${row[0]}: erreur`);
+          }
+        }
+      }
+    }
+
+    // === IMPORT SÉANCES ===
+    if (data.seances_csv) {
+      const { rows } = parseCSV(data.seances_csv);
+      for (const row of rows) {
+        if (row.length >= 2 && row[0] && row[1]) {
+          try {
+            await addTraining({
+              date: row[0],
+              sport: row[1],
+              start_time: row[3] || undefined,
+              duration_minutes: row[4] ? parseInt(row[4]) : 60,
+              session_type: row[5] || undefined,
+              muscles: row[6] || undefined,
+              technical_theme: row[7] || undefined,
+              notes: row[8] || undefined,
+            });
+            importedCount++;
+          } catch (e) {
+            errors.push(`Séance ${row[0]}: erreur`);
+          }
+        }
+      }
+    }
+
+    // === IMPORT MENSURATIONS ===
+    if (data.mensurations_csv) {
+      const { rows } = parseCSV(data.mensurations_csv);
+      for (const row of rows) {
+        if (row.length >= 2 && row[0]) {
+          try {
+            await addMeasurementRecord({
+              date: row[0],
+              chest: row[1] ? parseFloat(row[1]) : undefined,
+              waist: row[2] ? parseFloat(row[2]) : undefined,
+              hips: row[3] ? parseFloat(row[3]) : undefined,
+              left_arm: row[4] ? parseFloat(row[4]) : undefined,
+              right_arm: row[5] ? parseFloat(row[5]) : undefined,
+              left_thigh: row[6] ? parseFloat(row[6]) : undefined,
+              right_thigh: row[7] ? parseFloat(row[7]) : undefined,
+              left_calf: row[8] ? parseFloat(row[8]) : undefined,
+              right_calf: row[9] ? parseFloat(row[9]) : undefined,
+              shoulders: row[10] ? parseFloat(row[10]) : undefined,
+              neck: row[11] ? parseFloat(row[11]) : undefined,
+            });
+            importedCount++;
+          } catch (e) {
+            errors.push(`Mensuration ${row[0]}: erreur`);
+          }
+        }
+      }
+    }
+
+    // === IMPORT CLUBS ===
+    if (data.clubs_csv) {
+      const { rows } = parseCSV(data.clubs_csv);
+      for (const row of rows) {
+        if (row.length >= 2 && row[0] && row[1]) {
+          try {
+            await addClub({
+              name: row[0],
+              sport: row[1],
+              color: row[2] || undefined,
+              address: row[3] || undefined,
+            });
+            importedCount++;
+          } catch (e) {
+            errors.push(`Club ${row[0]}: erreur`);
+          }
+        }
+      }
+    }
+
+    const errorMsg = errors.length > 0 ? `\n\n${errors.length} erreur(s) ignorée(s)` : '';
+
+    Alert.alert(
+      'Import réussi !',
+      `${importedCount} éléments importés depuis le fichier éditable.${errorMsg}`
+    );
+
+    return true;
+  } catch (error) {
+    logger.error('❌ Erreur import éditable:', error);
+    Alert.alert('Erreur', "Impossible d'importer le fichier éditable");
+    return false;
+  }
+};
+
+/**
+ * Génère un template vide pour l'utilisateur (à remplir sur ordinateur)
+ */
+export const exportEmptyTemplate = async (): Promise<boolean> => {
+  try {
+    const template = {
+      _documentation: {
+        fr: "TEMPLATE VIDE - Remplis ce fichier avec tes données et importe-le dans Yoroi",
+        instructions: [
+          "1. Ouvre ce fichier dans un éditeur de texte",
+          "2. Ajoute tes données dans chaque section CSV",
+          "3. Respecte le format (une ligne = une entrée)",
+          "4. Sauvegarde et importe dans Yoroi > Plus > Importer CSV",
+        ],
+        exemples: {
+          date: "2024-01-15",
+          heure: "18:30",
+          poids: "75.5",
+          couleur: "#FF0000",
+        },
+      },
+      pesees_csv: `# YOROI - PESÉES (template)
+# date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr
+# EXEMPLE:
+# 2024-01-15;75.5;18.5;42.0;55.0;3.2;8;28;1650
+#
+date;poids_kg;graisse_pct;muscle_pct;eau_pct;masse_osseuse_kg;graisse_viscerale;age_metabolique;bmr
+`,
+      seances_csv: `# YOROI - SÉANCES (template)
+# date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes
+# Sports: musculation, jjb, mma, boxe, running, natation, velo, fitness, yoga, autre
+# EXEMPLE:
+# 2024-01-15;musculation;Basic Fit;18:30;60;Push;pectoraux,triceps;;Super séance !
+#
+date;sport;club;heure_debut;duree_min;type_seance;muscles;theme_technique;notes
+`,
+      mensurations_csv: `# YOROI - MENSURATIONS (template)
+# Toutes les valeurs en cm
+# date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou
+# EXEMPLE:
+# 2024-01-15;105;85;100;35;35;55;55;38;38;120;40
+#
+date;poitrine;taille;hanches;bras_gauche;bras_droit;cuisse_gauche;cuisse_droit;mollet_gauche;mollet_droit;epaules;cou
+`,
+      clubs_csv: `# YOROI - CLUBS (template)
+# nom;sport;couleur;adresse
+# EXEMPLE:
+# Basic Fit Marseille;musculation;#FF6B00;123 rue du Sport, Marseille
+#
+nom;sport;couleur;adresse
+`,
+      metadata: {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        appName: 'Yoroi',
+        type: 'template',
+      },
+    };
+
+    const fileName = `yoroi_template_vide.json`;
+    const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.writeAsStringAsync(
+      fileUri,
+      JSON.stringify(template, null, 2),
+      { encoding: FileSystem.EncodingType.UTF8 }
+    );
+
+    const canShare = await isAvailableAsync();
+    if (canShare) {
+      await shareAsync(fileUri, {
+        mimeType: 'application/json',
+        dialogTitle: 'Template Yoroi',
+        UTI: 'public.json',
+      });
+
+      Alert.alert(
+        'Template créé',
+        'Ouvre ce fichier sur ton ordinateur, remplis-le avec tes données, puis réimporte-le dans Yoroi !'
+      );
+    }
+
+    return true;
+  } catch (error) {
+    logger.error('❌ Erreur création template:', error);
+    Alert.alert('Erreur', "Impossible de créer le template");
     return false;
   }
 };
