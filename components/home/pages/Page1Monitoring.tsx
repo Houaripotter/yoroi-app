@@ -12,6 +12,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import AvatarDisplay from '@/components/AvatarDisplay';
+import { getAvatarConfig, getAvatarImage } from '@/lib/avatarSystem';
 import { HydrationCardFullWidth } from '@/components/cards/HydrationCardFullWidth';
 import { SleepCardFullWidth } from '@/components/cards/SleepCardFullWidth';
 import { ChargeCardFullWidth } from '@/components/cards/ChargeCardFullWidth';
@@ -22,13 +23,362 @@ import { getUserSettings } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition';
 import { getTrainings, Training } from '@/lib/database';
-import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Polygon, ClipPath, G, Image as SvgImage } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
 const IS_VERY_SMALL_SCREEN = SCREEN_WIDTH < 350; // Très petits téléphones
 const CARD_PADDING = 12; // Padding horizontal pour réduire la largeur des cartes
+
+// Composant VRAI Octogone (8 côtés) avec angles super arrondis
+interface RoundedOctagonImageProps {
+  size: number;
+  borderColor: string;
+  borderWidth?: number;
+  backgroundColor?: string;
+  imageUri?: string | null;
+  onPress?: () => void;
+  placeholder?: React.ReactNode;
+  zoomOut?: boolean; // Pour dézoomer l'image (avatar)
+}
+
+const RoundedOctagonImage: React.FC<RoundedOctagonImageProps> = memo(({
+  size,
+  borderColor,
+  borderWidth = 3,
+  backgroundColor = '#FFFFFF',
+  imageUri,
+  onPress,
+  placeholder,
+  zoomOut = false, // false = image pleine, true = dézoomée (avatar)
+}) => {
+  const s = size;
+  const cut = s * 0.28; // Taille des coins coupés (côtés diagonaux)
+  const r = 0;   // Octogone simple sans arrondi
+
+  // Vrai octogone : 8 côtés avec 8 angles arrondis
+  // Points: haut-gauche-diag, haut-droite-diag, droite-haut-diag, droite-bas-diag, etc.
+  const createRoundedOctagon = (sz: number, corner: number, radius: number) => {
+    const c = corner;
+    const rd = radius;
+    return `
+      M ${c + rd},${rd}
+      Q ${c},0 ${c + rd},0
+      L ${sz - c - rd},0
+      Q ${sz - c},0 ${sz - c - rd},${rd}
+      L ${sz - rd},${c + rd}
+      Q ${sz},${c} ${sz},${c + rd}
+      L ${sz},${sz - c - rd}
+      Q ${sz},${sz - c} ${sz - rd},${sz - c - rd}
+      L ${sz - c - rd},${sz - rd}
+      Q ${sz - c},${sz} ${sz - c - rd},${sz}
+      L ${c + rd},${sz}
+      Q ${c},${sz} ${c + rd},${sz - rd}
+      L ${rd},${sz - c - rd}
+      Q 0,${sz - c} 0,${sz - c - rd}
+      L 0,${c + rd}
+      Q 0,${c} ${rd},${c + rd}
+      Z
+    `;
+  };
+
+  const outerPath = createRoundedOctagon(s, cut, r);
+  const innerS = s - borderWidth * 2;
+  const innerCut = innerS * 0.28;
+  const innerR = 0;
+  const innerPath = createRoundedOctagon(innerS, innerCut, innerR);
+
+  const content = (
+    <View style={{ width: s, height: s }}>
+      <Svg width={s} height={s}>
+        <Defs>
+          <ClipPath id={`octClip-${size}`}>
+            <Path d={innerPath} />
+          </ClipPath>
+        </Defs>
+
+        {/* Bordure octogone */}
+        <Path d={outerPath} fill={borderColor} />
+
+        {/* Fond intérieur */}
+        <Path
+          d={innerPath}
+          fill={backgroundColor}
+          transform={`translate(${borderWidth}, ${borderWidth})`}
+        />
+
+        {/* Image clippée en octogone */}
+        {imageUri && (
+          <G clipPath={`url(#octClip-${size})`} transform={`translate(${borderWidth}, ${borderWidth})`}>
+            <SvgImage
+              href={imageUri}
+              x={zoomOut ? innerS * 0.15 : 0}
+              y={zoomOut ? innerS * 0.05 : 0}
+              width={zoomOut ? innerS * 0.7 : innerS}
+              height={zoomOut ? innerS * 0.9 : innerS}
+              preserveAspectRatio={zoomOut ? "xMidYMid meet" : "xMidYMid slice"}
+            />
+          </G>
+        )}
+      </Svg>
+
+      {/* Placeholder si pas d'image */}
+      {!imageUri && placeholder && (
+        <View style={{
+          position: 'absolute',
+          top: borderWidth,
+          left: borderWidth,
+          width: innerS,
+          height: innerS,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {placeholder}
+        </View>
+      )}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+  return content;
+});
+
+// Composant VRAI Octogone pour avatar (avec children React)
+interface RoundedOctagonFrameProps {
+  size: number;
+  borderColor: string;
+  borderWidth?: number;
+  backgroundColor?: string;
+  children: React.ReactNode;
+  onPress?: () => void;
+}
+
+const RoundedOctagonFrame: React.FC<RoundedOctagonFrameProps> = memo(({
+  size,
+  borderColor,
+  borderWidth = 3,
+  backgroundColor = '#FFFFFF',
+  children,
+  onPress
+}) => {
+  const s = size;
+  const cut = s * 0.28;
+  const r = 0;
+
+  const createRoundedOctagon = (sz: number, corner: number, radius: number) => {
+    const c = corner;
+    const rd = radius;
+    return `
+      M ${c + rd},${rd} Q ${c},0 ${c + rd},0 L ${sz - c - rd},0 Q ${sz - c},0 ${sz - c - rd},${rd} L ${sz - rd},${c + rd} Q ${sz},${c} ${sz},${c + rd} L ${sz},${sz - c - rd} Q ${sz},${sz - c} ${sz - rd},${sz - c - rd} L ${sz - c - rd},${sz - rd} Q ${sz - c},${sz} ${sz - c - rd},${sz} L ${c + rd},${sz} Q ${c},${sz} ${c + rd},${sz - rd} L ${rd},${sz - c - rd} Q 0,${sz - c} 0,${sz - c - rd} L 0,${c + rd} Q 0,${c} ${rd},${c + rd} Z
+    `;
+  };
+
+  const outerPath = createRoundedOctagon(s, cut, r);
+  const innerS = s - borderWidth * 2;
+  const innerCut = innerS * 0.28;
+  const innerR = 0;
+  const innerPath = createRoundedOctagon(innerS, innerCut, innerR);
+
+  const content = (
+    <View style={{ width: s, height: s }}>
+      <Svg width={s} height={s}>
+        <Defs>
+          <ClipPath id={`octFrameClip-${size}`}>
+            <Path d={innerPath} />
+          </ClipPath>
+        </Defs>
+        <Path d={outerPath} fill={borderColor} />
+        <Path
+          d={innerPath}
+          fill={backgroundColor}
+          transform={`translate(${borderWidth}, ${borderWidth})`}
+        />
+      </Svg>
+
+      {/* Contenu clippé dans l'octogone via une View masquée */}
+      <View style={{
+        position: 'absolute',
+        top: borderWidth,
+        left: borderWidth,
+        width: innerS,
+        height: innerS,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+        {children}
+      </View>
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+  return content;
+});
+
+// Alias pour compatibilité
+const HexagonImage = RoundedOctagonImage;
+const HexagonFrame = RoundedOctagonFrame;
+
+// ============================================
+// COMPOSANT RANG + NIVEAU SIMPLE ET PROPRE
+// ============================================
+interface AnimatedRankBadgeProps {
+  rankName: string;
+  level: number;
+  maxLevel?: number;
+  isDark: boolean;
+  themeColor: string;
+  accentColor: string;
+  onPress?: () => void;
+}
+
+const AnimatedRankBadge: React.FC<AnimatedRankBadgeProps> = memo(({
+  rankName,
+  level,
+  maxLevel = 5,
+  isDark,
+  themeColor,
+  accentColor,
+  onPress,
+}) => {
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  const progress = (level / maxLevel) * 100;
+
+  // Animation au montage
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 800,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [level]);
+
+  // Couleurs selon le thème classic
+  const isClassic = themeColor === 'classic';
+  const barColor = isClassic
+    ? (isDark ? '#FFFFFF' : '#000000')
+    : accentColor;
+  const trackColor = isClassic
+    ? (isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)')
+    : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)');
+  const textColor = isDark ? '#FFFFFF' : '#000000';
+  const mutedColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)';
+
+  const progressWidth = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+  });
+
+  const content = (
+    <View style={rankBadgeStyles.container}>
+      {/* Rang */}
+      <Text style={[rankBadgeStyles.rankText, { color: textColor }]}>
+        {rankName}
+      </Text>
+
+      {/* Niveau */}
+      <Text style={[rankBadgeStyles.levelText, { color: mutedColor }]}>
+        Niveau {level}
+      </Text>
+
+      {/* Barre de progression avec animation */}
+      <View style={[rankBadgeStyles.progressTrack, { backgroundColor: trackColor }]}>
+        <Animated.View
+          style={[
+            rankBadgeStyles.progressBar,
+            {
+              width: progressWidth,
+              backgroundColor: barColor,
+            }
+          ]}
+        />
+      </View>
+
+      {/* Points indicateurs - Couleur dorée pour les points non atteints */}
+      <View style={rankBadgeStyles.dotsContainer}>
+        {Array.from({ length: maxLevel }).map((_, i) => (
+          <View
+            key={i}
+            style={[
+              rankBadgeStyles.dot,
+              {
+                backgroundColor: i < level ? barColor : 'rgba(255, 215, 0, 0.4)',
+              }
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
+});
+
+const rankBadgeStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    marginTop: 8,
+    width: 110,
+  },
+  rankText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  levelText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  progressTrack: {
+    width: '100%',
+    height: 5,
+    borderRadius: 3,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  dotsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+});
 
 interface WeeklyReport {
   weightChange?: number;
@@ -453,11 +803,12 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   onShareReport,
   refreshTrigger = 0,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, themeColor } = useTheme();
   const { t, locale } = useI18n();
   const [userGoal, setUserGoal] = useState<'lose' | 'maintain' | 'gain'>(propUserGoal || 'lose');
   const [bodyComposition, setBodyComposition] = useState<BodyComposition | null>(null);
   const [trainingCalories, setTrainingCalories] = useState(0);
+  const [avatarImageUri, setAvatarImageUri] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
 
@@ -573,6 +924,31 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       }
     };
     loadBodyComposition();
+  }, [refreshTrigger]);
+
+  // Load avatar image for octagon display
+  useEffect(() => {
+    const loadAvatarImage = async () => {
+      try {
+        const config = await getAvatarConfig();
+        const image = getAvatarImage(
+          config.pack,
+          config.packType === 'character' ? config.state : undefined,
+          config.collectionCharacter,
+          config.gender
+        );
+        // Resolve the require() to get the actual URI
+        const resolved = Image.resolveAssetSource(image);
+        setAvatarImageUri(resolved?.uri || null);
+      } catch (error) {
+        console.error('Error loading avatar image:', error);
+        // Fallback to default
+        const defaultImage = require('@/assets/avatars/samurai/samurai_neutral.png');
+        const resolved = Image.resolveAssetSource(defaultImage);
+        setAvatarImageUri(resolved?.uri || null);
+      }
+    };
+    loadAvatarImage();
   }, [refreshTrigger]);
 
   // Check if share button was dismissed
@@ -791,16 +1167,18 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       <View style={styles.heroHeader}>
         {/* Photo + Greeting + Avatar Row */}
         <View style={styles.heroTop}>
-          <TouchableOpacity
-            style={[styles.profilePhotoLarge, { backgroundColor: colors.backgroundCard, borderColor: isDark ? '#FFFFFF' : '#000000' }]}
-            onPress={() => router.push('/profile')}
-          >
-            {profilePhoto ? (
-              <Image source={{ uri: profilePhoto }} style={styles.profilePhotoImage} />
-            ) : (
-              <Ionicons name="person" size={28} color={colors.textSecondary} />
-            )}
-          </TouchableOpacity>
+          {/* Photo de profil - Octogone Premium */}
+          <View style={styles.hexagonContainer}>
+            <HexagonImage
+              size={105}
+              borderColor={isDark ? '#FFFFFF' : '#000000'}
+              borderWidth={3}
+              backgroundColor={colors.backgroundCard}
+              imageUri={profilePhoto}
+              onPress={() => router.push('/profile')}
+              placeholder={<Ionicons name="person" size={32} color={colors.textSecondary} />}
+            />
+          </View>
 
           {/* Greeting + Name au centre */}
           <View style={styles.greetingSection}>
@@ -812,35 +1190,31 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </Text>
           </View>
 
-          {/* Avatar - Cercle agrandi */}
+          {/* Avatar - Octogone Premium */}
           <View style={styles.avatarContainer}>
-            <TouchableOpacity
+            <HexagonImage
+              size={105}
+              borderColor={isDark ? '#FFFFFF' : '#000000'}
+              borderWidth={3}
+              backgroundColor="#FFFFFF"
+              imageUri={avatarImageUri}
               onPress={() => router.push('/avatar-selection')}
-              style={[styles.avatarCircle, {
-                backgroundColor: '#FFFFFF', // Toujours blanc
-                borderColor: isDark ? '#FFFFFF' : '#000000' // Bordure: blanc en dark, noir en light
-              }]}
-            >
-              <AvatarDisplay size="sm" refreshTrigger={refreshTrigger} />
-            </TouchableOpacity>
-            {/* Rang + Niveau + Barre de progression */}
-            <View style={styles.rankLevelContainer}>
-              <Text style={[styles.rankText, { color: colors.textPrimary }]}>
-                {rankName}
-              </Text>
-              <Text style={[styles.levelText, { color: colors.textMuted }]}>
-                Niveau {level}
-              </Text>
-              {/* Barre de progression du niveau */}
-              <View style={[styles.levelProgressContainer, {
-                backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
-              }]}>
-                <View style={[styles.levelProgressBar, {
-                  width: `${(level / 5) * 100}%`,
-                  backgroundColor: isDark ? colors.accent : '#3B82F6'
-                }]} />
-              </View>
-            </View>
+              placeholder={<Ionicons name="person" size={32} color={colors.textSecondary} />}
+              zoomOut={true}
+            />
+            {/* Rang + Niveau animé premium - Cliquable vers Dojo */}
+            <AnimatedRankBadge
+              rankName={rankName}
+              level={level}
+              maxLevel={5}
+              isDark={isDark}
+              themeColor={themeColor}
+              accentColor={colors.accent}
+              onPress={() => {
+                impactAsync(ImpactFeedbackStyle.Light);
+                router.push('/gamification');
+              }}
+            />
           </View>
         </View>
 
@@ -880,10 +1254,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
       <View style={[styles.weightCardPremium, { backgroundColor: colors.backgroundCard }]}>
         <TouchableOpacity
-          onPress={() => router.push('/(tabs)/stats?tab=poids')}
+          onPress={() => router.push('/stats?tab=poids')}
           activeOpacity={0.9}
         >
-        {/* Header */}
+        {/* Header - Réorganisé */}
         <View style={styles.weightHeader}>
           <View style={styles.weightHeaderLeft}>
             <LinearGradient
@@ -895,31 +1269,30 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               <Ionicons name="fitness" size={18} color="#FFFFFF" />
             </LinearGradient>
             <View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
-                  Poids Actuel
-                </Text>
-                <View style={[styles.goalModeBadge, {
-                  backgroundColor: userGoal === 'lose' ? '#EF444420' : userGoal === 'gain' ? '#22C55E20' : '#F59E0B20',
-                  borderWidth: 1,
-                  borderColor: userGoal === 'lose' ? '#EF444440' : userGoal === 'gain' ? '#22C55E40' : '#F59E0B40'
-                }]}>
-                  <Text style={[styles.goalModeText, {
-                    color: userGoal === 'lose' ? '#EF4444' : userGoal === 'gain' ? '#22C55E' : '#F59E0B'
-                  }]}>
-                    {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de masse' : 'Maintien'}
-                  </Text>
-                </View>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
+                Suivi du Poids
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                 <Target size={14} color={colors.accent} strokeWidth={2.5} />
                 <Text style={[styles.weightSubtitle, { color: colors.textSecondary }]}>
-                  Objectif : <Text style={{ fontWeight: '800', color: colors.textPrimary }}>{targetWeight} kg</Text>
+                  Objectif <Text style={{ fontWeight: '900', color: colors.accent, fontSize: 13 }}>{targetWeight} kg</Text>
                 </Text>
               </View>
             </View>
           </View>
 
+          {/* Badge Mode à droite */}
+          <View style={[styles.goalModeBadge, {
+            backgroundColor: userGoal === 'lose' ? '#EF444415' : userGoal === 'gain' ? '#22C55E15' : '#F59E0B15',
+            borderWidth: 1.5,
+            borderColor: userGoal === 'lose' ? '#EF444450' : userGoal === 'gain' ? '#22C55E50' : '#F59E0B50'
+          }]}>
+            <Text style={[styles.goalModeText, {
+              color: userGoal === 'lose' ? '#EF4444' : userGoal === 'gain' ? '#22C55E' : '#F59E0B'
+            }]}>
+              {userGoal === 'lose' ? 'Perte' : userGoal === 'gain' ? 'Prise' : 'Maintien'}
+            </Text>
+          </View>
         </View>
 
         {/* Ligne optimisée: Perdu (vert) - Poids - Restant (rouge) */}
@@ -944,17 +1317,13 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </View>
           </View>
 
-          {/* Restant à droite - ROUGE */}
+          {/* Restant à droite - ROUGE ou DORÉ si atteint */}
           <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#10B981' : '#EF4444' }]}>
+            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#FFD700' : '#EF4444' }]}>
               {Math.abs(weightDiff) <= 0.1 ? 'ATTEINT' : 'RESTE'}
             </Text>
             {Math.abs(weightDiff) <= 0.1 ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Sparkles size={14} color="#10B981" strokeWidth={2.5} />
-                <Text style={[styles.metricTopValue, { color: '#10B981' }]}>0 kg</Text>
-                <Sparkles size={14} color="#FFD700" strokeWidth={2.5} />
-              </View>
+              <Text style={[styles.metricTopValue, { color: '#FFD700' }]}>0 kg</Text>
             ) : (
               <Text style={[styles.metricTopValue, { color: '#EF4444' }]}>
                 {Math.abs(weightDiff).toFixed(1)} kg
@@ -1470,21 +1839,39 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: 0,
   },
+  // Container pour hexagone photo de profil
+  hexagonContainer: {
+    alignItems: 'center',
+    marginTop: 50, // Descendu pour ne pas toucher l'heure/batterie
+    marginLeft: 8,
+  },
+  hexagonImage: {
+    width: 120,
+    height: 140,
+    resizeMode: 'cover',
+  },
+  hexagonPlaceholder: {
+    width: 100,
+    height: 115,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
   // Container pour avatar + texte rang/niveau
   avatarContainer: {
     alignItems: 'center',
-    marginTop: 35,
+    marginTop: 50, // Descendu pour ne pas toucher l'heure/batterie
     marginRight: 8,
   },
   // Cercle avatar - AGRANDI
   avatarCircle: {
-    width: 105, // AGRANDI
+    width: 105,
     height: 105,
-    borderRadius: 52.5,
+    borderRadius: 35, // Effet Squircle magnifique
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 3, // Bordure plus épaisse
+    borderWidth: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -1494,7 +1881,7 @@ const styles = StyleSheet.create({
   rankLevelContainer: {
     alignItems: 'center',
     marginTop: 8,
-    width: 105, // Même largeur que le cercle
+    width: 105,
   },
   rankText: {
     fontSize: 14,
@@ -1517,20 +1904,20 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   profilePhotoLarge: {
-    width: 105, // AGRANDI - MÊME TAILLE que l'avatar
+    width: 105,
     height: 105,
-    borderRadius: 52.5,
+    borderRadius: 35, // Effet Squircle magnifique
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 3, // Bordure plus épaisse
+    borderWidth: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
     marginLeft: 8,
-    marginTop: 35,
+    marginTop: 50,
   },
   profilePhotoImage: {
     width: '100%',

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated, Easing, ScrollView } from 'react-native';
-import { TrendingUp, TrendingDown, Minus, Target, BarChart3, Sparkles } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Sparkles } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Rect } from 'react-native-svg';
 
@@ -9,6 +9,7 @@ const { width: screenWidth } = Dimensions.get('window');
 interface EssentielWeightCardProps {
   currentWeight?: number;
   objective?: number;
+  startWeight?: number;
   weekData?: number[];
   weekLabels?: string[];
   trend?: 'up' | 'down' | 'stable';
@@ -19,6 +20,7 @@ interface EssentielWeightCardProps {
 export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
   currentWeight,
   objective,
+  startWeight,
   weekData = [],
   weekLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'],
   trend = 'stable',
@@ -172,11 +174,16 @@ export const EssentielWeightCard: React.FC<EssentielWeightCardProps> = ({
           </View>
         </View>
 
-        {/* Objectif */}
+        {/* Objectif - avec type complet (Perte/Maintien/Prise) */}
         {objective && currentWeight && (
           <View style={styles.objectiveRow}>
-            <Target size={18} color={mutedColor} strokeWidth={2} />
-            <Text style={[styles.objectiveLabel, { color: mutedColor }]}>Objectif</Text>
+            <Text style={[styles.objectiveLabel, { color: mutedColor }]}>
+              {startWeight && objective < startWeight
+                ? 'Perte de poids'
+                : startWeight && objective > startWeight
+                  ? 'Prise de masse'
+                  : 'Maintien'}
+            </Text>
             <Text style={[styles.objectiveValue, { color: accentColor }]}>{objective} kg</Text>
             {currentWeight > 0 && (
               <View style={[styles.diffBadge, { backgroundColor: `${trendInfo.color}12` }]}>

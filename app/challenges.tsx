@@ -75,22 +75,22 @@ export default function ChallengesScreen() {
     });
   };
 
-  // Rendu icône défi
+  // Rendu icône défi - Style premium avec couleurs vives
   const renderChallengeIcon = (iconName: string) => {
-    const iconSize = 28;
+    const iconSize = 26;
     switch (iconName) {
-      case 'dumbbell': return <Dumbbell size={iconSize} color={colors.accentText} />;
-      case 'droplets': return <Droplets size={iconSize} color="#06B6D4" />;
-      case 'moon': return <Moon size={iconSize} color="#8B5CF6" />;
-      case 'scale': return <Scale size={iconSize} color={colors.accentText} />;
-      case 'flame': return <Flame size={iconSize} color="#F97316" />;
-      case 'zap': return <Zap size={iconSize} color="#F59E0B" />;
-      case 'waves': return <Waves size={iconSize} color="#06B6D4" />;
-      case 'bed': return <Bed size={iconSize} color="#8B5CF6" />;
-      case 'trophy': return <Trophy size={iconSize} color="#F59E0B" />;
-      case 'trending-down': return <TrendingDown size={iconSize} color={colors.success} />;
-      case 'crown': return <Crown size={iconSize} color="#F59E0B" />;
-      default: return <Target size={iconSize} color={colors.accentText} />;
+      case 'dumbbell': return <Dumbbell size={iconSize} color="#F97316" strokeWidth={2.5} />;
+      case 'droplets': return <Droplets size={iconSize} color="#06B6D4" strokeWidth={2.5} />;
+      case 'moon': return <Moon size={iconSize} color="#A78BFA" strokeWidth={2.5} />;
+      case 'scale': return <Scale size={iconSize} color="#EC4899" strokeWidth={2.5} />;
+      case 'flame': return <Flame size={iconSize} color="#EF4444" strokeWidth={2.5} />;
+      case 'zap': return <Zap size={iconSize} color="#FBBF24" fill="#FBBF24" strokeWidth={2} />;
+      case 'waves': return <Waves size={iconSize} color="#22D3EE" strokeWidth={2.5} />;
+      case 'bed': return <Bed size={iconSize} color="#8B5CF6" strokeWidth={2.5} />;
+      case 'trophy': return <Trophy size={iconSize} color="#FFD700" fill="#FFD70030" strokeWidth={2.5} />;
+      case 'trending-down': return <TrendingDown size={iconSize} color="#10B981" strokeWidth={2.5} />;
+      case 'crown': return <Crown size={iconSize} color="#FFD700" fill="#FFD70030" strokeWidth={2.5} />;
+      default: return <Target size={iconSize} color="#3B82F6" strokeWidth={2.5} />;
     }
   };
 
