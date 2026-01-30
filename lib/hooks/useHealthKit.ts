@@ -78,7 +78,7 @@ export function useHealthKit(): UseHealthKitReturn {
     try {
       if (!isAvailable) {
         Alert.alert(
-          'Apple Santé non disponible',
+          'l'app Santé non disponible',
           'HealthKit n\'est pas disponible sur cet appareil.'
         );
         return false;
@@ -87,7 +87,7 @@ export function useHealthKit(): UseHealthKitReturn {
       // Afficher une explication avant de demander les permissions
       return new Promise((resolve) => {
         Alert.alert(
-          'Connexion à Apple Santé',
+          'Connexion à l'app Santé',
           'YOROI va demander l\'accès à tes données de santé pour un suivi complet de ta forme physique.\n\nDonnées demandées :\n• Poids et composition corporelle\n• Activité (pas, distance)\n• Sommeil\n• Fréquence cardiaque et HRV\n• VO2 Max\n• Entraînements',
           [
             {
@@ -106,7 +106,7 @@ export function useHealthKit(): UseHealthKitReturn {
                   if (connected) {
                     Alert.alert(
                       'Connexion réussie',
-                      'YOROI est maintenant connecté à Apple Santé.',
+                      'YOROI est maintenant connecté à l'app Santé.',
                       [{ text: 'OK' }]
                     );
                     // Première synchronisation
@@ -132,7 +132,7 @@ export function useHealthKit(): UseHealthKitReturn {
                   logger.error('Erreur connexion HealthKit:', error);
                   Alert.alert(
                     'Erreur',
-                    'Impossible de se connecter à Apple Santé.'
+                    'Impossible de se connecter à l'app Santé.'
                   );
                   resolve(false);
                 }

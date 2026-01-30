@@ -264,10 +264,10 @@ export default function HealthMetricsScreen() {
               <Heart size={48} color={colors.gold} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Apple Santé Non Connecté
+              l'app Santé Non Connecté
             </Text>
             <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
-              Connecte YOROI à Apple Santé pour accéder à tes métriques avancées : HRV, VO2 Max,
+              Connecte YOROI à l'app Santé pour accéder à tes métriques avancées : HRV, VO2 Max,
               SpO2, sommeil détaillé et plus encore.
             </Text>
             <TouchableOpacity style={styles.connectButton} onPress={handleConnect}>

@@ -2,7 +2,7 @@
  * sleep-input.tsx
  * Écran de saisie manuelle du sommeil
  * Permet d'enregistrer manuellement les heures de coucher/réveil
- * Synchronise automatiquement avec Apple Santé
+ * Synchronise automatiquement avec l'app Santé
  */
 
 import React, { useState } from 'react';
@@ -90,7 +90,7 @@ export default function SleepInputScreen() {
       logger.error('Error saving sleep:', error);
       Alert.alert(
         'Erreur',
-        'Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l\'accès à Apple Santé.',
+        'Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l\'accès à l'app Santé.',
         [{ text: 'OK' }]
       );
     }
@@ -101,7 +101,7 @@ export default function SleepInputScreen() {
     impactAsync(ImpactFeedbackStyle.Medium);
 
     try {
-      // Écrire dans Apple Santé
+      // Écrire dans l'app Santé
       const success = await healthConnect.writeSleepData({
         startDate: bedtime,
         endDate: wakeTime,
@@ -111,7 +111,7 @@ export default function SleepInputScreen() {
         notificationAsync(NotificationFeedbackType.Success);
         Alert.alert(
           '✅ Sommeil enregistré',
-          `Durée: ${formatDuration(duration)}\n\nLes données ont été synchronisées avec Apple Santé.`,
+          `Durée: ${formatDuration(duration)}\n\nLes données ont été synchronisées avec l'app Santé.`,
           [
             {
               text: 'OK',
@@ -127,7 +127,7 @@ export default function SleepInputScreen() {
       notificationAsync(NotificationFeedbackType.Error);
       Alert.alert(
         'Erreur',
-        'Impossible d\'enregistrer dans Apple Santé. Vérifie les autorisations dans Réglages > Confidentialité.',
+        'Impossible d\'enregistrer dans l'app Santé. Vérifie les autorisations dans Réglages > Confidentialité.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -172,7 +172,7 @@ export default function SleepInputScreen() {
         <View style={styles.headerContent}>
           <Moon size={32} color="#FFFFFF" strokeWidth={2.5} />
           <Text style={styles.headerTitle}>Saisir mon sommeil</Text>
-          <Text style={styles.headerSubtitle}>Synchronisation Apple Santé</Text>
+          <Text style={styles.headerSubtitle}>Synchronisation l'app Santé</Text>
         </View>
       </LinearGradient>
 
@@ -247,10 +247,10 @@ export default function SleepInputScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Info Apple Santé */}
+        {/* Info l'app Santé */}
         <View style={[styles.infoBox, { backgroundColor: isDark ? '#6366F1' + '15' : '#EEF2FF' }]}>
           <Text style={[styles.infoText, { color: isDark ? '#A5B4FC' : '#6366F1' }]}>
-            💡 Ces données seront automatiquement enregistrées dans Apple Santé
+            💡 Ces données seront automatiquement enregistrées dans l'app Santé
             et apparaîtront dans ton historique de sommeil.
           </Text>
         </View>

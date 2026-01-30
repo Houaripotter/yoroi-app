@@ -1,7 +1,7 @@
 /**
  * VitalityBetaWarningModal.tsx
  * Popup d'avertissement pour l'onglet Vitalité
- * Informe les utilisateurs des bugs possibles avec Apple Santé
+ * Informe les utilisateurs des bugs possibles avec l'app Santé
  * Avec lien vers la boîte à idées pour signaler les problèmes
  */
 
@@ -79,7 +79,7 @@ export const VitalityBetaWarningModal: React.FC<VitalityBetaWarningModalProps> =
               </View>
               <Text style={styles.headerTitle}>⚠️ Version Bêta</Text>
               <Text style={styles.headerSubtitle}>
-                Onglet Vitalité & Apple Santé
+                Onglet Vitalité & l'app Santé
               </Text>
 
               <TouchableOpacity
@@ -97,7 +97,7 @@ export const VitalityBetaWarningModal: React.FC<VitalityBetaWarningModalProps> =
               <View style={[styles.warningBox, { backgroundColor: isDark ? '#FCD34D' + '15' : '#FEF3C7' }]}>
                 <Bug size={24} color={isDark ? '#FCD34D' : '#92400E'} strokeWidth={2.5} />
                 <Text style={[styles.warningText, { color: isDark ? '#FDE68A' : '#78350F' }]}>
-                  Cette section intègre les données d'Apple Santé et est encore en{' '}
+                  Cette section intègre les données d'l'app Santé et est encore en{' '}
                   <Text style={{ fontWeight: '900' }}>version bêta</Text>.
                 </Text>
               </View>
@@ -117,7 +117,7 @@ export const VitalityBetaWarningModal: React.FC<VitalityBetaWarningModalProps> =
                   <View style={styles.bulletItem}>
                     <View style={[styles.bullet, { backgroundColor: colors.accent }]} />
                     <Text style={[styles.bulletText, { color: colors.textMuted }]}>
-                      Synchronisation Apple Santé qui redemande l'autorisation
+                      Synchronisation l'app Santé qui redemande l'autorisation
                     </Text>
                   </View>
                   <View style={styles.bulletItem}>

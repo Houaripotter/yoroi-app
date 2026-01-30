@@ -672,6 +672,8 @@ export default function MoreScreen() {
   const [selectedWeightCategory, setSelectedWeightCategory] = useState<WeightCategory | null>(null);
   const [sportsModalVisible, setSportsModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  // ✅ FIX QA: State anti-spam pour les sauvegardes
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [upcomingModalVisible, setUpcomingModalVisible] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
@@ -781,7 +783,7 @@ export default function MoreScreen() {
   const handlePurgeData = async () => {
     Alert.alert(
       '🔥 NETTOYAGE TOTAL',
-      'Ceci va supprimer TOUTES les données de démo (Germain Del Jarret) et réinitialiser l\'application pour une synchronisation propre avec Apple Santé. Continuer ?',
+      'Ceci va supprimer TOUTES les données de démo (Germain Del Jarret) et réinitialiser l\'application pour une synchronisation propre avec l'app Santé. Continuer ?',
       [
         { text: 'Annuler', style: 'cancel' },
         { 
@@ -791,7 +793,7 @@ export default function MoreScreen() {
             const result = await clearScreenshotDemoData();
             if (result.success) {
               setCreatorModeActive(false);
-              showPopup('Succès', 'Application nettoyée. Redémarre l\'app pour synchroniser tes vraies données Apple Santé.', [{ text: 'OK', style: 'primary' }]);
+              showPopup('Succès', 'Application nettoyée. Redémarre l\'app pour synchroniser tes vraies données l'app Santé.', [{ text: 'OK', style: 'primary' }]);
             }
           }
         }
@@ -2013,11 +2015,19 @@ export default function MoreScreen() {
             </ScrollView>
 
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: colors.accent }]}
+              style={[styles.modalButton, { backgroundColor: colors.accent, opacity: isSavingSettings ? 0.6 : 1 }]}
+              disabled={isSavingSettings}
               onPress={async () => {
-                await saveUserSettings({ userSports });
-                setSportsModalVisible(false);
-                showPopup(t('menu.saved'), `${userSports.length} ${t('menu.sportsSelected')}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                // ✅ FIX QA: Protection anti-spam
+                if (isSavingSettings) return;
+                setIsSavingSettings(true);
+                try {
+                  await saveUserSettings({ userSports });
+                  setSportsModalVisible(false);
+                  showPopup(t('menu.saved'), `${userSports.length} ${t('menu.sportsSelected')}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                } finally {
+                  setIsSavingSettings(false);
+                }
               }}
             >
               <Text style={styles.modalButtonText}>{t('common.save')}</Text>
@@ -2186,17 +2196,24 @@ export default function MoreScreen() {
                 styles.modalButton,
                 {
                   backgroundColor: selectedWeightCategory ? colors.gold : colors.backgroundElevated,
-                  opacity: selectedWeightCategory ? 1 : 0.5,
+                  opacity: (selectedWeightCategory && !isSavingSettings) ? 1 : 0.5,
                 },
               ]}
               onPress={async () => {
+                // ✅ FIX QA: Protection anti-spam
+                if (isSavingSettings) return;
                 if (selectedWeightCategory) {
-                  await saveUserSettings({ selectedWeightCategory, userGender });
-                  setCategoryModalVisible(false);
-                  showPopup(t('menu.saved'), `${t('menu.category')}: ${selectedWeightCategory.name}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                  setIsSavingSettings(true);
+                  try {
+                    await saveUserSettings({ selectedWeightCategory, userGender });
+                    setCategoryModalVisible(false);
+                    showPopup(t('menu.saved'), `${t('menu.category')}: ${selectedWeightCategory.name}`, [{ text: 'OK', style: 'primary' }], <CheckCircle size={32} color="#10B981" />);
+                  } finally {
+                    setIsSavingSettings(false);
+                  }
                 }
               }}
-              disabled={!selectedWeightCategory}
+              disabled={!selectedWeightCategory || isSavingSettings}
             >
               <Text style={styles.modalButtonText}>{t('common.save')}</Text>
             </TouchableOpacity>

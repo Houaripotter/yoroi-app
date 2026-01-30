@@ -470,7 +470,7 @@ export default function HealthConnectScreen() {
           onPress={async () => {
             Alert.alert(
               'RÉINITIALISER SANTÉ',
-              'Si la popup Apple Santé ne s\'affiche pas, cela va forcer l\'app à oublier l\'ancienne connexion. Continuer ?',
+              'Si la popup l'app Santé ne s\'affiche pas, cela va forcer l\'app à oublier l\'ancienne connexion. Continuer ?',
               [
                 { text: 'Annuler', style: 'cancel' },
                 { 
@@ -485,7 +485,7 @@ export default function HealthConnectScreen() {
           }}
         >
           <Text style={{ color: colors.textMuted, fontSize: 12, textDecorationLine: 'underline' }}>
-            Un problème de connexion ? Réinitialiser Apple Santé
+            Un problème de connexion ? Réinitialiser l'app Santé
           </Text>
         </TouchableOpacity>
 

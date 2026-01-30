@@ -36,7 +36,7 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
 
       {/* Titre */}
       <Text style={[styles.title, { color: colors.textPrimary }]}>
-        Connecte-toi à Apple Santé
+        Connecte-toi à l'app Santé
       </Text>
 
       {/* Description */}
@@ -55,7 +55,7 @@ export const HealthKitConnectCard: React.FC<HealthKitConnectCardProps> = ({
           <ActivityIndicator size="small" color={colors.textOnAccent} />
         ) : (
           <>
-            <Text style={[styles.buttonText, { color: colors.textOnAccent }]}>Connecter Apple Santé</Text>
+            <Text style={[styles.buttonText, { color: colors.textOnAccent }]}>Connecter l'app Santé</Text>
             <ChevronRight size={20} color={colors.textOnAccent} strokeWidth={2.5} />
           </>
         )}
