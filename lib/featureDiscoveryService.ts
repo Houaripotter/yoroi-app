@@ -66,7 +66,7 @@ export const PAGE_TUTORIALS: Record<FeaturePage, PageTutorial> = {
       'Onglet Vitalité : sommeil, charge, récupération',
       'Onglet Performance : force, endurance, vitesse',
       'Onglet Discipline : assiduité par sport',
-      'Synchronisation Apple Health disponible',
+      'Synchronisation Santé disponible',
     ],
     icon: 'bar-chart',
     color: '#8B5CF6',
@@ -135,7 +135,7 @@ export const PAGE_TUTORIALS: Record<FeaturePage, PageTutorial> = {
     features: [
       'Enregistre ton poids chaque jour',
       'Graphique d\'évolution avec prédictions',
-      'Synchronisation Apple Health',
+      'Synchronisation Santé',
       'Historique complet modifiable',
       'Export des données en PDF',
     ],

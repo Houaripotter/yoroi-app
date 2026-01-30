@@ -167,13 +167,13 @@ export default function SleepTrackerScreen() {
             <View style={[styles.emptyCard, { backgroundColor: colors.backgroundCard }]}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 Aucune donnée de sommeil.{'\n'}
-                Connecte Apple Health ou ajoute manuellement tes nuits.
+                Connecte l'app Santé ou ajoute manuellement tes nuits.
               </Text>
               <TouchableOpacity
                 style={[styles.connectButton, { backgroundColor: '#6366F1' }]}
                 onPress={() => router.push('/health-connect')}
               >
-                <Text style={styles.connectButtonText}>Connecter Apple Health</Text>
+                <Text style={styles.connectButtonText}>Connecter l'app Santé</Text>
               </TouchableOpacity>
             </View>
           ) : (

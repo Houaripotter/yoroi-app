@@ -147,7 +147,7 @@ export default function HealthDiagnosticPage() {
             <View style={[styles.card, { backgroundColor: colors.backgroundCard }]}>
               <View style={styles.cardHeader}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
-                  Apple Health (HealthKit)
+                  App Santé (HealthKit)
                 </Text>
                 <StatusIcon
                   status={

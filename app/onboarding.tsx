@@ -181,7 +181,7 @@ export default function OnboardingScreen() {
       id: 'stats',
       icon: <BarChart3 size={64} color="#4ECDC4" />,
       title: '6 Onglets de Stats',
-      description: 'Poids, composition, mensurations, discipline, performance, vitalité. Graphiques détaillés, prédictions IA, synchronisation Apple Health. Tout au même endroit !',
+      description: 'Poids, composition, mensurations, discipline, performance, vitalité. Graphiques détaillés, prédictions IA, synchronisation Santé. Tout au même endroit !',
       color: '#4ECDC4',
       highlights: [
         { icon: <Scale size={14} color="#4ECDC4" />, text: 'Poids + Graisse + Muscle + Eau' },
@@ -265,10 +265,10 @@ export default function OnboardingScreen() {
       id: 'health',
       icon: <HeartHandshake size={64} color="#10B981" />,
       title: 'Synchronisation Santé',
-      description: 'Synchronise avec Apple Health : pas, sommeil, fréquence cardiaque, calories, distance. Suivi automatique, données en temps réel. Tout se connecte !',
+      description: 'Synchronise avec l\'app Santé : pas, sommeil, fréquence cardiaque, calories, distance. Suivi automatique, données en temps réel. Tout se connecte !',
       color: '#10B981',
       highlights: [
-        { icon: <Target size={14} color="#10B981" />, text: 'Apple Health / HealthKit' },
+        { icon: <Target size={14} color="#10B981" />, text: 'App Santé / Health Connect' },
         { icon: <Zap size={14} color="#10B981" />, text: 'Synchronisation automatique' },
         { icon: <LineChart size={14} color="#10B981" />, text: 'Données en temps réel' },
       ],

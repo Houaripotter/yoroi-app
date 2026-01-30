@@ -78,7 +78,7 @@ export function HealthSyncSettings() {
       if (!granted) {
         showPopup(
           'Permission requise',
-          'L\'accès à Apple Health est nécessaire pour l\'export automatique. Autorise l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
+          'L\'accès à l\'app Santé est nécessaire pour l\'export automatique. Autorise l\'accès dans Réglages > Confidentialité > Santé > Yoroi',
           [{ text: 'OK', style: 'primary' }]
         );
         return;
@@ -91,8 +91,8 @@ export function HealthSyncSettings() {
     showPopup(
       'Succès',
       value
-        ? 'Les nouvelles mesures seront automatiquement envoyées vers Apple Health'
-        : 'L\'export automatique vers Apple Health a été désactivé',
+        ? 'Les nouvelles mesures seront automatiquement envoyées vers l\'app Santé'
+        : 'L\'export automatique vers l\'app Santé a été désactivé',
       [{ text: 'OK', style: 'primary' }]
     );
   };
@@ -179,7 +179,7 @@ export function HealthSyncSettings() {
           <X size={20} color="#94A3B8" strokeWidth={2.5} />
         </View>
         <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
-          Apple Health n'est disponible que sur iOS
+          App Santé n'est disponible que sur iOS
         </Text>
       </View>
     );
@@ -254,7 +254,7 @@ export function HealthSyncSettings() {
             )}
           </View>
           <View>
-            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Importer depuis Apple Health</Text>
+            <Text style={[styles.actionButtonTitle, { color: colors.textPrimary }]}>Importer depuis l'app Santé</Text>
             <Text style={[styles.actionButtonSubtitle, { color: colors.textSecondary }]}>
               Récupérer l'historique de poids (365 jours)
             </Text>
