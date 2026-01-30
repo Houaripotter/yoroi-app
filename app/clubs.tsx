@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -425,6 +425,7 @@ export default function ClubsScreen() {
                 onChangeText={setName}
                 placeholder={t('screens.clubs.clubNamePlaceholder')}
                 placeholderTextColor={colors.textMuted}
+                maxLength={50}
               />
             </View>
 

@@ -94,6 +94,7 @@ export function RepsWeightModal({
                 }}
                 keyboardType="number-pad"
                 selectTextOnFocus
+                maxLength={4}
               />
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
@@ -120,11 +121,12 @@ export function RepsWeightModal({
                 style={[styles.input, { color: colors.textPrimary, borderColor: colors.border }]}
                 value={weight.toString()}
                 onChangeText={(text) => {
-                  const num = parseFloat(text) || 0;
+                  const num = parseFloat(text.replace(',', '.')) || 0;
                   setWeight(Math.max(0, num));
                 }}
                 keyboardType="decimal-pad"
                 selectTextOnFocus
+                maxLength={6}
               />
               <TouchableOpacity
                 style={[styles.controlBtn, { backgroundColor: colors.backgroundElevated }]}
