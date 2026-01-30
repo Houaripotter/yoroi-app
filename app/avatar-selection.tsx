@@ -327,17 +327,17 @@ export default function AvatarSelectionScreen() {
               width: AVATAR_SIZE,
               height: AVATAR_SIZE,
               opacity: isUnlocked ? 1 : 0.4,
-              borderColor: isCurrent ? '#FFD700' : 'transparent',
-              borderWidth: isCurrent ? 3 : 0,
-              backgroundColor: isDark ? '#000000' : '#FFFFFF',
+              borderColor: isCurrent ? '#FFD700' : (isDark ? '#FFFFFF' : '#000000'),
+              borderWidth: isCurrent ? 3 : 2,
+              backgroundColor: '#FFFFFF', // Toujours blanc
             },
           ]}
         >
           <Image
             source={image || TEST_IMAGE}
             style={{
-              width: AVATAR_SIZE - 4,
-              height: AVATAR_SIZE - 4,
+              width: AVATAR_SIZE - 8,
+              height: AVATAR_SIZE - 8,
             }}
             resizeMode="contain"
             onError={(e) => logger.warn(`[AvatarSelection] Image error for ${pack}/${state}: ${e.nativeEvent.error}`)}
@@ -400,17 +400,17 @@ export default function AvatarSelectionScreen() {
               width: AVATAR_SIZE,
               height: AVATAR_SIZE,
               opacity: isUnlocked ? 1 : 0.4,
-              borderColor: isCurrent ? '#FFD700' : 'transparent',
-              borderWidth: isCurrent ? 3 : 0,
-              backgroundColor: isDark ? '#000000' : '#FFFFFF',
+              borderColor: isCurrent ? '#FFD700' : (isDark ? '#FFFFFF' : '#000000'),
+              borderWidth: isCurrent ? 3 : 2,
+              backgroundColor: '#FFFFFF', // Toujours blanc
             },
           ]}
         >
           <Image
             source={image || TEST_IMAGE}
             style={{
-              width: AVATAR_SIZE - 4,
-              height: AVATAR_SIZE - 4,
+              width: AVATAR_SIZE - 8,
+              height: AVATAR_SIZE - 8,
             }}
             resizeMode="contain"
             onError={(e) => logger.warn(`[AvatarSelection] Collection image error for ${pack}/${character}: ${e.nativeEvent.error}`)}

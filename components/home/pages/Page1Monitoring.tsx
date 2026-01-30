@@ -812,25 +812,34 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </Text>
           </View>
 
-          {/* Avatar - MÊME STYLE que la photo de profil */}
+          {/* Avatar - Cercle agrandi */}
           <View style={styles.avatarContainer}>
             <TouchableOpacity
               onPress={() => router.push('/avatar-selection')}
               style={[styles.avatarCircle, {
-                backgroundColor: isDark ? '#000000' : '#FFFFFF',
-                borderColor: isDark ? '#FFFFFF' : '#000000'
+                backgroundColor: '#FFFFFF', // Toujours blanc
+                borderColor: isDark ? '#FFFFFF' : '#000000' // Bordure: blanc en dark, noir en light
               }]}
             >
               <AvatarDisplay size="sm" refreshTrigger={refreshTrigger} />
             </TouchableOpacity>
-            {/* Rang unifié (rang + niveau combinés) */}
+            {/* Rang + Niveau + Barre de progression */}
             <View style={styles.rankLevelContainer}>
-              <Text style={[styles.rankText, { color: rankColor }]}>
+              <Text style={[styles.rankText, { color: colors.textPrimary }]}>
                 {rankName}
               </Text>
               <Text style={[styles.levelText, { color: colors.textMuted }]}>
-                ({level}/5)
+                Niveau {level}
               </Text>
+              {/* Barre de progression du niveau */}
+              <View style={[styles.levelProgressContainer, {
+                backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
+              }]}>
+                <View style={[styles.levelProgressBar, {
+                  width: `${(level / 5) * 100}%`,
+                  backgroundColor: isDark ? colors.accent : '#3B82F6'
+                }]} />
+              </View>
             </View>
           </View>
         </View>
@@ -1464,18 +1473,18 @@ const styles = StyleSheet.create({
   // Container pour avatar + texte rang/niveau
   avatarContainer: {
     alignItems: 'center',
-    marginTop: 45, // MÊME que profilePhotoLarge
-    marginRight: 8, // Proche du bord droit
+    marginTop: 35,
+    marginRight: 8,
   },
-  // Cercle avatar - IDENTIQUE à profilePhotoLarge
+  // Cercle avatar - AGRANDI
   avatarCircle: {
-    width: 90, // MÊME taille
-    height: 90,
-    borderRadius: 45,
+    width: 105, // AGRANDI
+    height: 105,
+    borderRadius: 52.5,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 2, // MÊME bordure
+    borderWidth: 3, // Bordure plus épaisse
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -1485,34 +1494,43 @@ const styles = StyleSheet.create({
   rankLevelContainer: {
     alignItems: 'center',
     marginTop: 8,
+    width: 105, // Même largeur que le cercle
   },
   rankText: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-    fontStyle: 'italic', // Style calligraphique
+    fontSize: 14,
+    fontWeight: '700',
   },
   levelText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
-    fontStyle: 'italic', // Style calligraphique
+  },
+  levelProgressContainer: {
+    width: '100%',
+    height: 4,
+    borderRadius: 2,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  levelProgressBar: {
+    height: '100%',
+    borderRadius: 2,
   },
   profilePhotoLarge: {
-    width: 90, // MÊME TAILLE que l'avatar
-    height: 90,
-    borderRadius: 45,
+    width: 105, // AGRANDI - MÊME TAILLE que l'avatar
+    height: 105,
+    borderRadius: 52.5,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    borderWidth: 2,
+    borderWidth: 3, // Bordure plus épaisse
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
-    marginLeft: 8, // Proche du bord gauche (MÊME que avatar à droite)
-    marginTop: 45, // MÊME position que avatar
+    marginLeft: 8,
+    marginTop: 35,
   },
   profilePhotoImage: {
     width: '100%',
