@@ -58,16 +58,6 @@ export default function HealthConnectScreen() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    // ✅ AVERTIR SI ANDROID (NON SUPPORTÉ POUR L'INSTANT)
-    if (Platform.OS === 'android') {
-      Alert.alert(
-        'Non disponible',
-        'La synchronisation santé n\'est pas encore disponible sur Android. Elle sera ajoutée dans une prochaine mise à jour.',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-      return;
-    }
-
     loadStatus();
   }, []);
 
@@ -143,6 +133,21 @@ export default function HealthConnectScreen() {
             );
             break;
 
+          case 'HEALTH_CONNECT_NOT_INSTALLED':
+            showPopup(
+              'Health Connect non installé',
+              'Health Connect n\'est pas installé sur ton téléphone. C\'est l\'app de Google qui centralise toutes tes données de santé.\n\nInstalle-la depuis le Play Store pour continuer.',
+              [
+                { text: 'Plus tard', style: 'cancel' },
+                {
+                  text: 'Installer',
+                  onPress: () => Linking.openURL('market://details?id=com.google.android.apps.healthdata'),
+                  style: 'primary'
+                }
+              ]
+            );
+            break;
+
           default:
             showPopup(
               'Erreur',
@@ -211,7 +216,8 @@ export default function HealthConnectScreen() {
     if (Platform.OS === 'ios') {
       safeOpenURL('x-apple-health://');
     } else {
-      safeOpenURL('market://details?id=com.google.android.apps.fitness');
+      // Ouvrir Health Connect (pas Google Fit)
+      safeOpenURL('market://details?id=com.google.android.apps.healthdata');
     }
   };
 
