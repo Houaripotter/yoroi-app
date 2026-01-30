@@ -90,7 +90,7 @@ export default function SleepInputScreen() {
       logger.error('Error saving sleep:', error);
       Alert.alert(
         'Erreur',
-        'Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l\'accès à l'app Santé.',
+        'Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l\'accès à l\'app Santé.',
         [{ text: 'OK' }]
       );
     }
@@ -127,7 +127,7 @@ export default function SleepInputScreen() {
       notificationAsync(NotificationFeedbackType.Error);
       Alert.alert(
         'Erreur',
-        'Impossible d\'enregistrer dans l'app Santé. Vérifie les autorisations dans Réglages > Confidentialité.',
+        "Impossible d'enregistrer dans l'app Santé. Vérifie les autorisations dans Réglages > Confidentialité.",
         [{ text: 'OK' }]
       );
     } finally {
