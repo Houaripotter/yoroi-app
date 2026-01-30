@@ -45,6 +45,8 @@ import {
   CheckCircle2,
   Sparkles,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Camera,
   BookOpen,
   Snowflake,
@@ -91,6 +93,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [totalXP, setTotalXP] = useState(0);
   const [previewQuest, setPreviewQuest] = useState<QuestWithProgress | null>(null);
+  const [expandedQuests, setExpandedQuests] = useState<Set<string>>(new Set());
   const questsScrollRef = useRef<ScrollView>(null);
   const [scrollContentHeight, setScrollContentHeight] = useState(1000); // Valeur par défaut pour éviter 0
   const [containerHeight, setContainerHeight] = useState(480);
@@ -239,6 +242,20 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   useEffect(() => {
     loadQuests();
   }, [loadQuests]);
+
+  // Toggle expansion d'une carte défi
+  const toggleExpand = useCallback((questId: string) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setExpandedQuests(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(questId)) {
+        newSet.delete(questId);
+      } else {
+        newSet.add(questId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Naviguer vers l'écran approprié pour remplir la défi
   const getQuestRoute = (questId: string): string | null => {
@@ -581,6 +598,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             const IconComponent = getQuestIcon(quest.id);
             const questColor = getQuestColor(quest.id);
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);
+            const isExpanded = expandedQuests.has(quest.id);
 
             return (
               <Pressable
@@ -590,15 +608,17 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' },
                   quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
                 ]}
-                onPress={() => handleQuestTap(quest)}
-                onLongPress={() => {
-                  impactAsync(ImpactFeedbackStyle.Medium);
-                  setPreviewQuest(quest);
-                }}
-                onPressOut={() => {
-                  if (previewQuest) {
-                    setPreviewQuest(null);
+                onPress={() => {
+                  // Toggle expand au tap simple
+                  if (!quest.completed && quest.instructions) {
+                    toggleExpand(quest.id);
+                  } else {
+                    handleQuestTap(quest);
                   }
+                }}
+                onLongPress={() => {
+                  // Long press pour valider directement
+                  handleQuestTap(quest);
                 }}
                 delayLongPress={300}
               >
@@ -634,17 +654,30 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     {quest.description}
                   </Text>
 
-                  {/* Instructions - Comment faire */}
+                  {/* Hint ou Instructions selon expansion */}
                   {!quest.completed && quest.instructions && (
-                    <Text
-                      style={[
-                        styles.questInstructions,
-                        { color: isDark ? 'rgba(255, 215, 0, 0.7)' : 'rgba(180, 130, 0, 0.9)' }
-                      ]}
-                      numberOfLines={2}
-                    >
-                      → {quest.instructions}
-                    </Text>
+                    !isExpanded ? (
+                      <View style={styles.questHintRow}>
+                        <Text style={[styles.questHintText, { color: colors.textMuted }]}>
+                          Appuie pour les détails
+                        </Text>
+                        <ChevronDown size={12} color={colors.textMuted} />
+                      </View>
+                    ) : (
+                      <>
+                        <Text
+                          style={[
+                            styles.questInstructions,
+                            { color: isDark ? 'rgba(255, 215, 0, 0.7)' : 'rgba(180, 130, 0, 0.9)' }
+                          ]}
+                        >
+                          → {quest.instructions}
+                        </Text>
+                        <View style={styles.questCollapseHint}>
+                          <ChevronUp size={12} color={colors.textMuted} />
+                        </View>
+                      </>
+                    )
                   )}
 
                   {!quest.completed && quest.target > 1 && (
@@ -1006,6 +1039,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
     lineHeight: 14,
+  },
+  questHintRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  questHintText: {
+    fontSize: 10,
+    fontStyle: 'italic',
+  },
+  questCollapseHint: {
+    alignItems: 'center',
+    marginTop: 4,
   },
   questTitleCompleted: {
     textDecorationLine: 'line-through',
