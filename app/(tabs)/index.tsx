@@ -796,7 +796,9 @@ export default function HomeScreen() {
 
   // Calculs
   const rank = getCurrentRank(streak);
-  const level = getLevel(totalPoints);
+  // Niveau unifié basé sur le rang (streak), pas sur les XP
+  const rankLevel = { ashigaru: 1, bushi: 2, samurai: 3, ronin: 4, shogun: 5 }[rank?.id || 'ashigaru'] || 1;
+  const level = getLevel(totalPoints); // Gardé pour compatibilité
   const currentWeight = latestWeight?.weight || null;
   const startWeight = profile?.start_weight || (weightHistory.length > 0 ? weightHistory[weightHistory.length - 1]?.weight : null);
   const targetWeight = profile?.target_weight || null;
@@ -1716,7 +1718,7 @@ export default function HomeScreen() {
         dailyQuote={dailyQuote?.text}
         steps={steps}
         streak={streak}
-        level={level.level}
+        level={rankLevel}
         rankName={rank?.name}
         rankColor={rank?.color}
         currentWeight={currentWeight ?? undefined}

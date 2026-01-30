@@ -329,6 +329,7 @@ export default function AvatarSelectionScreen() {
               opacity: isUnlocked ? 1 : 0.4,
               borderColor: isCurrent ? '#FFD700' : 'transparent',
               borderWidth: isCurrent ? 3 : 0,
+              backgroundColor: isDark ? '#000000' : '#FFFFFF',
             },
           ]}
         >
@@ -401,6 +402,7 @@ export default function AvatarSelectionScreen() {
               opacity: isUnlocked ? 1 : 0.4,
               borderColor: isCurrent ? '#FFD700' : 'transparent',
               borderWidth: isCurrent ? 3 : 0,
+              backgroundColor: isDark ? '#000000' : '#FFFFFF',
             },
           ]}
         >

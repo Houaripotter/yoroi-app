@@ -100,16 +100,15 @@ export default function AvatarDisplay({
       styles.container,
       dimensions,
       isSmall ? {
-        // Taille sm: fond clair avec bordure visible
-        backgroundColor: '#FFFFFF',
-        borderWidth: 3,
-        borderColor: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
+        // Taille sm: fond contrasté (noir en dark, blanc en light)
+        backgroundColor: isDark ? '#000000' : '#FFFFFF',
+        borderWidth: 0, // Pas de bordure, le parent gère ça
         borderRadius: borderRadius,
       } : {
-        // Autres tailles: style complet
+        // Autres tailles: fond contrasté aussi
         borderWidth: 2,
         borderColor: isDark ? '#FFFFFF' : '#000000',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: isDark ? '#000000' : '#FFFFFF',
         borderRadius: borderRadius,
       }
     ];

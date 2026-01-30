@@ -816,17 +816,20 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
           <View style={styles.avatarContainer}>
             <TouchableOpacity
               onPress={() => router.push('/avatar-selection')}
-              style={[styles.avatarCircle, { backgroundColor: '#FFFFFF', borderColor: isDark ? '#FFFFFF' : '#000000' }]}
+              style={[styles.avatarCircle, {
+                backgroundColor: isDark ? '#000000' : '#FFFFFF',
+                borderColor: isDark ? '#FFFFFF' : '#000000'
+              }]}
             >
               <AvatarDisplay size="sm" refreshTrigger={refreshTrigger} />
             </TouchableOpacity>
-            {/* Rang et Niveau */}
+            {/* Rang unifié (rang + niveau combinés) */}
             <View style={styles.rankLevelContainer}>
-              <Text style={[styles.rankText, { color: colors.textPrimary }]}>
+              <Text style={[styles.rankText, { color: rankColor }]}>
                 {rankName}
               </Text>
               <Text style={[styles.levelText, { color: colors.textMuted }]}>
-                Niveau {level}
+                ({level}/5)
               </Text>
             </View>
           </View>
