@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,10 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-  Animated,
-  PanResponder,
   Share,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, ChevronRight, Share2, Download } from 'lucide-react-native';
+import { ChevronRight, Share2 } from 'lucide-react-native';
 import ViewShot from 'react-native-view-shot';
 import { saveToLibraryAsync, requestPermissionsAsync } from 'expo-media-library';
 import { shareAsync, isAvailableAsync } from 'expo-sharing';
@@ -22,8 +19,17 @@ import { useCustomPopup } from '@/components/CustomPopup';
 import { successHaptic } from '@/lib/haptics';
 import logger from '@/lib/security/logger';
 
+// Gesture Handler & Reanimated pour slider fluide
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  runOnJS,
+  withSpring,
+} from 'react-native-reanimated';
+
 // ============================================
-// BEFORE/AFTER SLIDER - COMPARAISON PHOTOS
+// BEFORE/AFTER SLIDER - ULTRA FLUIDE
 // ============================================
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -55,61 +61,58 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
   const viewShotRef = useRef<ViewShot>(null);
+
+  // Largeur du slider (avec padding)
   const sliderWidth = SCREEN_WIDTH - 40;
 
-  // STATE SIMPLE
-  const [sliderPosition, setSliderPosition] = useState(0.5);
-  const rafId = useRef<number | null>(null);
-  const containerRef = useRef<View>(null);
-  const containerX = useRef(0);
+  // Position du slider en valeur animée (0 à sliderWidth)
+  const sliderX = useSharedValue(sliderWidth / 2);
+  const startX = useSharedValue(0);
 
-  // PanResponder avec requestAnimationFrame pour limiter les updates
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-
-      onPanResponderGrant: (evt) => {
-        // Utiliser pageX pour la position absolue
-        const touchX = evt.nativeEvent.pageX - containerX.current;
-        const position = Math.max(0.02, Math.min(0.98, touchX / sliderWidth));
-        setSliderPosition(position);
-      },
-
-      onPanResponderMove: (evt) => {
-        // Utiliser pageX pour la position absolue sur l'écran
-        const touchX = evt.nativeEvent.pageX - containerX.current;
-        // Permettre d'aller presque aux extrêmes (2% - 98%)
-        const position = Math.max(0.02, Math.min(0.98, touchX / sliderWidth));
-
-        // Annuler l'update précédent si pas encore exécuté
-        if (rafId.current) {
-          cancelAnimationFrame(rafId.current);
-        }
-
-        // Planifier l'update au prochain frame
-        rafId.current = requestAnimationFrame(() => {
-          setSliderPosition(position);
-        });
-      },
-
-      onPanResponderRelease: () => {
-        if (rafId.current) {
-          cancelAnimationFrame(rafId.current);
-        }
-      },
+  // Gesture Pan - ULTRA FLUIDE sans limite
+  const panGesture = Gesture.Pan()
+    .onBegin((event) => {
+      // Commencer depuis la position du touch
+      startX.value = sliderX.value;
     })
-  ).current;
-
-  // Mesurer la position du container au montage
-  const onContainerLayout = useCallback(() => {
-    containerRef.current?.measureInWindow((x) => {
-      containerX.current = x;
+    .onUpdate((event) => {
+      // Calculer la nouvelle position (0 à sliderWidth, sans limite !)
+      const newX = startX.value + event.translationX;
+      // Permettre d'aller de 0 à 100% de la largeur
+      sliderX.value = Math.max(0, Math.min(sliderWidth, newX));
+    })
+    .onEnd(() => {
+      // Animation de rebond légère si on est aux extrêmes
+      if (sliderX.value < 10) {
+        sliderX.value = withSpring(10, { damping: 20, stiffness: 300 });
+      } else if (sliderX.value > sliderWidth - 10) {
+        sliderX.value = withSpring(sliderWidth - 10, { damping: 20, stiffness: 300 });
+      }
     });
-  }, []);
 
-  // Largeur directe - pas d'interpolation
-  const clipWidth = sliderPosition * sliderWidth;
+  // Gesture Tap - pour cliquer directement à une position
+  const tapGesture = Gesture.Tap()
+    .onEnd((event) => {
+      sliderX.value = withSpring(event.x, { damping: 15, stiffness: 200 });
+    });
+
+  // Combiner les deux gestes
+  const composedGesture = Gesture.Race(panGesture, tapGesture);
+
+  // Style animé pour le clip de l'image APRÈS
+  const clipStyle = useAnimatedStyle(() => ({
+    width: sliderX.value,
+  }));
+
+  // Style animé pour la ligne du slider
+  const lineStyle = useAnimatedStyle(() => ({
+    left: sliderX.value - 2,
+  }));
+
+  // Style animé pour le handle
+  const handleStyle = useAnimatedStyle(() => ({
+    left: sliderX.value - 20,
+  }));
 
   // Formater la date
   const formatDate = (dateString: string): string => {
@@ -124,14 +127,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     }
   };
 
-  // Log pour déboguer TOUT
-  logger.info('🔍 BeforeAfterSlider - DONNÉES COMPLÈTES:', {
-    before: before,
-    after: after,
-    beforeWeight: before.weight,
-    afterWeight: after.weight,
-  });
-
   // Calculer la différence de poids
   const weightDiff = before.weight && after.weight
     ? after.weight - before.weight
@@ -142,7 +137,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     try {
       if (!viewShotRef.current) return;
 
-      // Capturer l'image
       const uri = await viewShotRef.current.capture?.();
       if (!uri) {
         showPopup('Erreur', 'Impossible de capturer l\'image', [{ text: 'OK', style: 'primary' }]);
@@ -151,7 +145,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
 
       successHaptic();
 
-      // Options de partage
       showPopup(
         'Partager',
         'Que veux-tu faire ?',
@@ -174,9 +167,9 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
               const { status } = await requestPermissionsAsync();
               if (status === 'granted') {
                 await saveToLibraryAsync(uri);
-                showPopup('Sauvegarde !', 'Image enregistree dans ta galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Sauvegardé !', 'Image enregistrée dans ta galerie', [{ text: 'OK', style: 'primary' }]);
               } else {
-                showPopup('Permission refusee', 'Autorise l\'acces a la galerie', [{ text: 'OK', style: 'primary' }]);
+                showPopup('Permission refusée', 'Autorise l\'accès à la galerie', [{ text: 'OK', style: 'primary' }]);
               }
             },
           },
@@ -185,7 +178,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
       );
     } catch (error) {
       logger.error('Erreur capture:', error);
-      showPopup('Erreur', 'Impossible de creer l\'image', [{ text: 'OK', style: 'primary' }]);
+      showPopup('Erreur', 'Impossible de créer l\'image', [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -210,62 +203,68 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
           </Text>
         </View>
 
-        {/* Slider container - PanResponder sur TOUTE la zone */}
-        <View
-          ref={containerRef}
-          style={[styles.sliderContainer, { height }]}
-          onLayout={onContainerLayout}
-          {...panResponder.panHandlers}
-        >
-          {/* Image AVANT (en dessous) */}
-          <Image
-            source={{ uri: before.uri }}
-            style={[styles.image, { height }]}
-            resizeMode="cover"
-          />
-
-          {/* Label AVANT */}
-          <View style={[styles.labelContainer, styles.labelLeft]}>
-            <Text style={styles.labelText}>AVANT</Text>
-          </View>
-
-          {/* Image APRÈS (par-dessus, clippée) */}
-          <View
-            style={[
-              styles.afterContainer,
-              {
-                width: clipWidth,
-                height,
-              },
-            ]}
-            pointerEvents="none"
-          >
+        {/* Slider container - Gesture sur toute la zone */}
+        <GestureDetector gesture={composedGesture}>
+          <View style={[styles.sliderContainer, { height }]}>
+            {/* Image AVANT (fond) */}
             <Image
-              source={{ uri: after.uri }}
-              style={[styles.image, styles.afterImage, { height, width: sliderWidth }]}
+              source={{ uri: before.uri }}
+              style={[styles.image, { height }]}
               resizeMode="cover"
             />
-            {/* Label APRÈS */}
-            <View style={[styles.labelContainer, styles.labelRight]}>
-              <Text style={styles.labelText}>APRÈS</Text>
+
+            {/* Label AVANT */}
+            <View style={[styles.labelContainer, styles.labelLeft]}>
+              <Text style={styles.labelText}>AVANT</Text>
+            </View>
+
+            {/* Image APRÈS (clippée avec animation) */}
+            <Animated.View
+              style={[
+                styles.afterContainer,
+                { height },
+                clipStyle,
+              ]}
+            >
+              <Image
+                source={{ uri: after.uri }}
+                style={[styles.image, styles.afterImage, { height, width: sliderWidth }]}
+                resizeMode="cover"
+              />
+              {/* Label APRÈS */}
+              <View style={[styles.labelContainer, styles.labelRight]}>
+                <Text style={styles.labelText}>APRÈS</Text>
+              </View>
+            </Animated.View>
+
+            {/* Ligne verticale du slider */}
+            <Animated.View style={[styles.sliderLine, lineStyle]} />
+
+            {/* Handle du slider (bouton rond) */}
+            <Animated.View style={[styles.sliderHandle, handleStyle]}>
+              <View style={styles.sliderHandleInner}>
+                <View style={styles.sliderArrows}>
+                  <Text style={styles.sliderArrowText}>◀</Text>
+                  <Text style={styles.sliderArrowText}>▶</Text>
+                </View>
+              </View>
+            </Animated.View>
+
+            {/* Instructions */}
+            <View style={styles.instructionsContainer}>
+              <LinearGradient
+                colors={['transparent', 'rgba(0,0,0,0.6)']}
+                style={styles.instructionsGradient}
+              >
+                <Text style={styles.instructionsText}>← Glisse pour comparer →</Text>
+              </LinearGradient>
             </View>
           </View>
+        </GestureDetector>
 
-          {/* Instructions */}
-          <View style={styles.instructionsContainer}>
-            <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.7)']}
-              style={styles.instructionsGradient}
-            >
-              <Text style={styles.instructionsText}>← Glisse pour comparer →</Text>
-            </LinearGradient>
-          </View>
-        </View>
-
-        {/* Stats - Toujours affichées si showStats est true */}
+        {/* Stats */}
         {showStats && (
           <View style={[styles.statsContainer, { backgroundColor: colors.background }]}>
-            {/* Date & Poids AVANT */}
             <View style={styles.statItem}>
               <Text style={[styles.statDate, { color: colors.textSecondary }]}>
                 {formatDate(before.date)}
@@ -281,7 +280,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
               )}
             </View>
 
-            {/* Différence */}
             {weightDiff !== null && (
               <View style={styles.statDiff}>
                 <Text style={[
@@ -294,7 +292,6 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
               </View>
             )}
 
-            {/* Date & Poids APRÈS */}
             <View style={[styles.statItem, styles.statItemRight]}>
               <Text style={[styles.statDate, { color: colors.textSecondary }]}>
                 {formatDate(after.date)}
@@ -337,7 +334,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
   );
 };
 
-// Version compacte pour la card du dashboard
+// Version compacte pour preview
 export const BeforeAfterPreview: React.FC<{
   before: PhotoData;
   after: PhotoData;
@@ -357,7 +354,6 @@ export const BeforeAfterPreview: React.FC<{
       activeOpacity={0.8}
     >
       <View style={styles.previewImages}>
-        {/* Avant */}
         <View style={styles.previewImageContainer}>
           <Image
             source={{ uri: before.uri }}
@@ -369,12 +365,10 @@ export const BeforeAfterPreview: React.FC<{
           </View>
         </View>
 
-        {/* Arrow */}
         <View style={styles.previewArrow}>
           <ChevronRight size={24} color={colors.gold} />
         </View>
 
-        {/* Après */}
         <View style={styles.previewImageContainer}>
           <Image
             source={{ uri: after.uri }}
@@ -387,7 +381,6 @@ export const BeforeAfterPreview: React.FC<{
         </View>
       </View>
 
-      {/* Stats */}
       {weightDiff !== null && (
         <View style={[styles.previewStats, { borderTopColor: colors.border }]}>
           <Text style={[
@@ -448,6 +441,53 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+  },
+  sliderLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  sliderHandle: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  sliderHandleInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  sliderArrows: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  sliderArrowText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '700',
   },
   labelContainer: {
     position: 'absolute',
