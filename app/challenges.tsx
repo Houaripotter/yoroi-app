@@ -28,6 +28,8 @@ import {
   Bed,
   TrendingDown,
   Crown,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 
@@ -57,6 +59,21 @@ export default function ChallengesScreen() {
   const [activeTab, setActiveTab] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [confettiVisible, setConfettiVisible] = useState(false);
   const [completedChallengeId, setCompletedChallengeId] = useState<string | null>(null);
+  const [expandedChallenges, setExpandedChallenges] = useState<Set<string>>(new Set());
+
+  // Toggle expansion d'une carte
+  const toggleExpand = (challengeId: string) => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    setExpandedChallenges(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(challengeId)) {
+        newSet.delete(challengeId);
+      } else {
+        newSet.add(challengeId);
+      }
+      return newSet;
+    });
+  };
 
   // Rendu icône défi
   const renderChallengeIcon = (iconName: string) => {
@@ -208,69 +225,98 @@ export default function ChallengesScreen() {
           const progress = Math.min(100, ((challenge?.progress?.current ?? 0) / (challenge?.progress?.target || 1)) * 100);
           const isCompleted = challenge?.progress?.completed;
           const isClaimed = challenge?.progress?.claimed;
+          const isExpanded = expandedChallenges.has(challenge.id);
 
           return (
-            <View key={challenge.id} style={[styles.challengeCard, { backgroundColor: colors.backgroundCard }]}>
+            <TouchableOpacity
+              key={challenge.id}
+              style={[styles.challengeCard, { backgroundColor: colors.backgroundCard }]}
+              onLongPress={() => toggleExpand(challenge.id)}
+              onPress={() => toggleExpand(challenge.id)}
+              activeOpacity={0.9}
+              delayLongPress={300}
+            >
+              {/* Header toujours visible */}
               <View style={styles.challengeHeader}>
                 <View style={[styles.challengeIconWrap, { backgroundColor: `${colors.accent}15` }]}>
                   {renderChallengeIcon(challenge.icon)}
                 </View>
                 <View style={styles.challengeInfo}>
                   <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
-                  <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
-                </View>
-              </View>
-
-              {/* Progress */}
-              <View style={styles.progressSection}>
-                <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                  <View style={[
-                    styles.progressFill,
-                    { 
-                      width: `${progress}%`,
-                      backgroundColor: isCompleted ? colors.success : colors.accent,
-                    }
-                  ]} />
-                </View>
-                <Text style={[styles.progressText, { color: colors.textMuted }]}>
-                  {challenge.progress.current}/{challenge.progress.target}
-                </Text>
-              </View>
-
-              {/* Reward */}
-              <View style={styles.challengeFooter}>
-                <View style={[styles.rewardBadge, { backgroundColor: colors.accentMuted }]}>
-                  <Gift size={12} color={colors.accentText} />
-                  <Text style={[styles.rewardText, { color: isDark ? colors.accent : colors.textPrimary }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
-                  {challenge?.reward?.badge && (
-                    <Text style={[styles.rewardBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>+ Badge</Text>
+                  {/* Hint ou description selon expansion */}
+                  {!isExpanded ? (
+                    <View style={styles.hintRow}>
+                      <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                        Appuie pour voir les détails
+                      </Text>
+                      <ChevronDown size={12} color={colors.textMuted} />
+                    </View>
+                  ) : (
+                    <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
                   )}
                 </View>
-
-                {isCompleted && !isClaimed ? (
-                  <TouchableOpacity
-                    style={[styles.claimBtn, { backgroundColor: colors.success }]}
-                    onPress={() => handleClaim(challenge)}
-                  >
-                    <Gift size={14} color="#FFFFFF" />
-                    <Text style={styles.claimBtnText}>Réclamer</Text>
-                  </TouchableOpacity>
-                ) : isCompleted && isClaimed ? (
-                  <View style={[styles.completedBadge, { backgroundColor: colors.successLight }]}>
-                    <CheckCircle2 size={14} color={colors.success} />
-                    <Text style={[styles.completedText, { color: colors.success }]}>Complété</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.validateBtn, { backgroundColor: colors.accent }]}
-                    onPress={() => handleValidate(challenge)}
-                  >
-                    <CheckCircle2 size={14} color={colors.textOnGold} />
-                    <Text style={[styles.validateBtnText, { color: colors.textOnGold }]}>Valider</Text>
-                  </TouchableOpacity>
-                )}
               </View>
-            </View>
+
+              {/* Détails visibles seulement si expanded */}
+              {isExpanded && (
+                <>
+                  {/* Progress */}
+                  <View style={styles.progressSection}>
+                    <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+                      <View style={[
+                        styles.progressFill,
+                        {
+                          width: `${progress}%`,
+                          backgroundColor: isCompleted ? colors.success : colors.accent,
+                        }
+                      ]} />
+                    </View>
+                    <Text style={[styles.progressText, { color: colors.textMuted }]}>
+                      {challenge.progress.current}/{challenge.progress.target}
+                    </Text>
+                  </View>
+
+                  {/* Reward */}
+                  <View style={styles.challengeFooter}>
+                    <View style={[styles.rewardBadge, { backgroundColor: colors.accentMuted }]}>
+                      <Gift size={12} color={colors.accentText} />
+                      <Text style={[styles.rewardText, { color: isDark ? colors.accent : colors.textPrimary }]}>+{challenge?.reward?.xp ?? 0} XP</Text>
+                      {challenge?.reward?.badge && (
+                        <Text style={[styles.rewardBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>+ Badge</Text>
+                      )}
+                    </View>
+
+                    {isCompleted && !isClaimed ? (
+                      <TouchableOpacity
+                        style={[styles.claimBtn, { backgroundColor: colors.success }]}
+                        onPress={() => handleClaim(challenge)}
+                      >
+                        <Gift size={14} color="#FFFFFF" />
+                        <Text style={styles.claimBtnText}>Réclamer</Text>
+                      </TouchableOpacity>
+                    ) : isCompleted && isClaimed ? (
+                      <View style={[styles.completedBadge, { backgroundColor: colors.successLight }]}>
+                        <CheckCircle2 size={14} color={colors.success} />
+                        <Text style={[styles.completedText, { color: colors.success }]}>Complété</Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.validateBtn, { backgroundColor: colors.accent }]}
+                        onPress={(e) => { e.stopPropagation(); handleValidate(challenge); }}
+                      >
+                        <CheckCircle2 size={14} color={colors.textOnGold} />
+                        <Text style={[styles.validateBtnText, { color: colors.textOnGold }]}>Valider</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Indicateur pour replier */}
+                  <View style={styles.collapseHint}>
+                    <ChevronUp size={14} color={colors.textMuted} />
+                  </View>
+                </>
+              )}
+            </TouchableOpacity>
           );
         })}
 
@@ -326,5 +372,9 @@ const styles = StyleSheet.create({
 
   validateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
   validateBtnText: { fontSize: 12, fontWeight: '700' },
+
+  hintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  hintText: { fontSize: 11, fontStyle: 'italic' },
+  collapseHint: { alignItems: 'center', marginTop: 8 },
 });
 
