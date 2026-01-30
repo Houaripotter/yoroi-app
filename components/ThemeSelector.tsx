@@ -139,7 +139,7 @@ const ColorItem: React.FC<ColorItemProps> = ({ item, isSelected, onSelect, isPro
         {isSelected && (
           <Check
             size={20}
-            color={item.id === 'volt' || item.id === 'matrix' || item.id === 'blaze' || item.id === 'ocean' || item.id === 'ghost' && !isDark ? '#000' : '#FFF'}
+            color={['volt', 'matrix', 'blaze', 'ocean', 'ghost'].includes(item.id) ? '#000000' : '#FFFFFF'}
             strokeWidth={3}
           />
         )}

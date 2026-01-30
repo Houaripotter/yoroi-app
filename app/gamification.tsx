@@ -13,6 +13,8 @@ import {
   Animated,
   Dimensions,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -322,6 +324,8 @@ export default function DojoScreen() {
   const [dailyQuests, setDailyQuests] = useState<QuestWithProgress[]>([]);
   const [weeklyQuests, setWeeklyQuests] = useState<QuestWithProgress[]>([]);
   const [monthlyQuests, setMonthlyQuests] = useState<QuestWithProgress[]>([]);
+  const [defisTab, setDefisTab] = useState<'day' | 'week' | 'month'>('day');
+  const [previewQuest, setPreviewQuest] = useState<QuestWithProgress | null>(null);
 
   // Animations
   useEffect(() => {
@@ -417,6 +421,61 @@ export default function DojoScreen() {
   const nextLevel = getNextLevel(totalPoints);
   const levelProgressData = getLevelProgress(totalPoints);
 
+  // Fonctions pour les icônes et couleurs des quêtes
+  const getQuestIcon = (questId: string | undefined) => {
+    if (!questId) return Star;
+    if (questId.includes('photo') || questId.includes('transformation')) return Camera;
+    if (questId.includes('read') || questId.includes('article')) return BookOpen;
+    if (questId.includes('hydration')) return Droplets;
+    if (questId.includes('sleep')) return Moon;
+    if (questId.includes('steps')) return Footprints;
+    if (questId.includes('training') || questId.includes('workout')) return Dumbbell;
+    if (questId.includes('weight') || questId.includes('weigh') || questId.includes('lose')) return Target;
+    if (questId.includes('cardio')) return Flame;
+    if (questId.includes('protein')) return Zap;
+    if (questId.includes('breakfast')) return Coffee;
+    if (questId.includes('cold') || questId.includes('shower')) return Snowflake;
+    if (questId.includes('stretch') || questId.includes('meditation')) return Sparkles;
+    if (questId.includes('rest')) return Sofa;
+    if (questId.includes('share')) return Share2;
+    if (questId.includes('invite') || questId.includes('friend')) return Users;
+    if (questId.includes('record') || questId.includes('pr') || questId.includes('new_pr')) return Trophy;
+    if (questId.includes('level') || questId.includes('best')) return Crown;
+    if (questId.includes('streak')) return Flame;
+    if (questId.includes('consistency') || questId.includes('perfect')) return Calendar;
+    if (questId.includes('junk') || questId.includes('sugar') || questId.includes('clean')) return Salad;
+    return Star;
+  };
+
+  const getQuestColor = (questId: string | undefined) => {
+    if (!questId) return '#FFD700';
+    if (questId.includes('photo') || questId.includes('transformation')) return '#E879F9';
+    if (questId.includes('read') || questId.includes('article')) return '#22D3EE';
+    if (questId.includes('hydration')) return '#06B6D4';
+    if (questId.includes('sleep')) return '#8B5CF6';
+    if (questId.includes('steps')) return '#10B981';
+    if (questId.includes('training') || questId.includes('workout')) return '#F97316';
+    if (questId.includes('weight') || questId.includes('weigh') || questId.includes('lose')) return '#EC4899';
+    if (questId.includes('cardio')) return '#EF4444';
+    if (questId.includes('protein')) return '#F59E0B';
+    if (questId.includes('breakfast')) return '#FBBF24';
+    if (questId.includes('cold') || questId.includes('shower')) return '#0EA5E9';
+    if (questId.includes('stretch')) return '#A855F7';
+    if (questId.includes('meditation')) return '#6366F1';
+    if (questId.includes('rest')) return '#64748B';
+    if (questId.includes('share')) return '#22C55E';
+    if (questId.includes('invite') || questId.includes('friend')) return '#3B82F6';
+    if (questId.includes('record') || questId.includes('pr') || questId.includes('new_pr')) return '#FFD700';
+    if (questId.includes('level') || questId.includes('best')) return '#FCD34D';
+    if (questId.includes('streak')) return '#F97316';
+    if (questId.includes('consistency') || questId.includes('perfect')) return '#059669';
+    if (questId.includes('junk') || questId.includes('sugar') || questId.includes('clean')) return '#84CC16';
+    return '#FFD700';
+  };
+
+  // Quêtes actuelles selon l'onglet sélectionné
+  const currentDefisQuests = defisTab === 'day' ? dailyQuests : defisTab === 'week' ? weeklyQuests : monthlyQuests;
+
   // Stats pour les badges et défis
   const stats = {
     weightsCount,
@@ -442,6 +501,11 @@ export default function DojoScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <ScrollView
+        style={styles.mainScrollView}
+        contentContainerStyle={styles.mainScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
       {/* Header avec gradient */}
       <LinearGradient
         colors={isDark ? ['#1F1F3D', '#0F0F1F'] : ['#667EEA', '#764BA2']}
@@ -615,11 +679,8 @@ export default function DojoScreen() {
         })}
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Contenu des tabs */}
+      <View style={styles.scrollContent}>
         {/* ═══════════════════════════════════════ */}
         {/* TAB: RANGS */}
         {/* ═══════════════════════════════════════ */}
@@ -962,37 +1023,57 @@ export default function DojoScreen() {
         )}
 
         {/* ═══════════════════════════════════════ */}
-        {/* TAB: DÉFIS */}
+        {/* TAB: DÉFIS - Nouveau design avec onglets */}
         {/* ═══════════════════════════════════════ */}
         {selectedTab === 'defis' && (
           <View>
-            {/* Section Quotidiennes */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF' }]}>
-              <View style={styles.questSectionHeader}>
-                <LinearGradient colors={['#10B981', '#059669']} style={styles.questSectionIcon}>
-                  <Flame size={18} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.questSectionTitle, { color: colors.textPrimary }]}>Quotidiennes</Text>
-                <Text style={[styles.questSectionCount, { color: '#10B981' }]}>
-                  {dailyQuests.filter(q => q.completed).length}/{dailyQuests.length}
-                </Text>
-              </View>
+            {/* Onglets Jour/Semaine/Mois */}
+            <View style={[styles.defisTabsRow, { backgroundColor: isDark ? '#1A1A2E' : '#F8FAFC' }]}>
+              {(['day', 'week', 'month'] as const).map((tab) => {
+                const isActive = defisTab === tab;
+                const tabData = {
+                  day: { label: 'Jour', count: dailyQuests.filter(q => q.completed).length, total: dailyQuests.length },
+                  week: { label: 'Semaine', count: weeklyQuests.filter(q => q.completed).length, total: weeklyQuests.length },
+                  month: { label: 'Mois', count: monthlyQuests.filter(q => q.completed).length, total: monthlyQuests.length },
+                };
+                return (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[
+                      styles.defisTab,
+                      { backgroundColor: isActive ? '#FFD700' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)') }
+                    ]}
+                    onPress={() => {
+                      impactAsync(ImpactFeedbackStyle.Light);
+                      setDefisTab(tab);
+                    }}
+                  >
+                    <Text style={[
+                      styles.defisTabText,
+                      { color: isActive ? '#000000' : colors.textMuted, fontWeight: isActive ? '800' : '600' }
+                    ]}>
+                      {tabData[tab].label}
+                    </Text>
+                    <View style={[styles.defisTabBadge, { backgroundColor: isActive ? 'rgba(0,0,0,0.15)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') }]}>
+                      <Text style={[styles.defisTabBadgeText, { color: isActive ? '#000000' : colors.textMuted }]}>
+                        {tabData[tab].count}/{tabData[tab].total}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Liste des défis */}
+            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF', marginTop: 16 }]}>
               <View style={styles.questsList}>
-                {dailyQuests.map((quest) => {
-                  const questColor = quest.questId.includes('hydration') ? '#06B6D4' :
-                    quest.questId.includes('sleep') ? '#8B5CF6' :
-                    quest.questId.includes('training') ? '#F97316' :
-                    quest.questId.includes('protein') ? '#F59E0B' :
-                    quest.questId.includes('photo') ? '#E879F9' :
-                    quest.questId.includes('steps') ? '#10B981' :
-                    quest.questId.includes('cardio') ? '#EF4444' :
-                    quest.questId.includes('cold') ? '#0EA5E9' :
-                    quest.questId.includes('breakfast') ? '#FBBF24' :
-                    quest.questId.includes('read') ? '#22D3EE' :
-                    '#FFD700';
+                {currentDefisQuests.map((quest) => {
+                  const questColor = getQuestColor(quest.questId);
+                  const IconComponent = getQuestIcon(quest.questId);
                   const progress = Math.min(100, (quest.current / quest.target) * 100);
+
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={quest.questId}
                       style={[
                         styles.questItem,
@@ -1009,21 +1090,52 @@ export default function DojoScreen() {
                         notificationAsync(NotificationFeedbackType.Success);
                         loadData();
                       }}
+                      onLongPress={() => {
+                        impactAsync(ImpactFeedbackStyle.Medium);
+                        setPreviewQuest(quest);
+                      }}
+                      onPressOut={() => {
+                        if (previewQuest) {
+                          setPreviewQuest(null);
+                        }
+                      }}
+                      delayLongPress={300}
                     >
                       <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
-                        {quest.completed ? <CheckCircle2 size={20} color="#10B981" /> : <Target size={20} color={questColor} />}
+                        {quest.completed ? (
+                          <CheckCircle2 size={20} color="#10B981" fill="#10B98130" />
+                        ) : (
+                          <IconComponent size={20} color={questColor} />
+                        )}
                       </View>
                       <View style={styles.questContent}>
-                        <Text style={[styles.questTitle, { color: quest.completed ? colors.textMuted : colors.textPrimary }, quest.completed && styles.questTitleCompleted]}>
+                        <Text style={[
+                          styles.questTitle,
+                          { color: quest.completed ? colors.textMuted : colors.textPrimary },
+                          quest.completed && styles.questTitleCompleted
+                        ]}>
                           {quest.title}
                         </Text>
-                        <Text style={[styles.questDescription, { color: colors.textMuted }]}>{quest.description}</Text>
+                        <Text style={[styles.questDescription, { color: colors.textMuted }]}>
+                          {quest.description}
+                        </Text>
+                        {/* Instructions */}
+                        {!quest.completed && quest.instructions && (
+                          <Text
+                            style={[styles.questInstructions, { color: isDark ? 'rgba(255, 215, 0, 0.7)' : 'rgba(180, 130, 0, 0.9)' }]}
+                            numberOfLines={2}
+                          >
+                            → {quest.instructions}
+                          </Text>
+                        )}
                         {!quest.completed && quest.target > 1 && (
                           <View style={styles.questProgressContainer}>
                             <View style={[styles.questProgressBar, { backgroundColor: colors.border }]}>
                               <View style={[styles.questProgressFill, { width: `${progress}%`, backgroundColor: questColor }]} />
                             </View>
-                            <Text style={[styles.questProgressText, { color: colors.textMuted }]}>{quest.current}/{quest.target}</Text>
+                            <Text style={[styles.questProgressText, { color: colors.textMuted }]}>
+                              {quest.current}/{quest.target}
+                            </Text>
                           </View>
                         )}
                       </View>
@@ -1032,146 +1144,111 @@ export default function DojoScreen() {
                           {quest.completed ? '✓' : `+${quest.xp}`}
                         </Text>
                       </View>
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
               </View>
             </View>
 
-            {/* Section Hebdomadaires */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF', marginTop: 16 }]}>
-              <View style={styles.questSectionHeader}>
-                <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.questSectionIcon}>
-                  <Star size={18} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.questSectionTitle, { color: colors.textPrimary }]}>Hebdomadaires</Text>
-                <Text style={[styles.questSectionCount, { color: '#F59E0B' }]}>
-                  {weeklyQuests.filter(q => q.completed).length}/{weeklyQuests.length}
-                </Text>
-              </View>
-              <View style={styles.questsList}>
-                {weeklyQuests.map((quest) => {
-                  const questColor = quest.questId.includes('hydration') ? '#06B6D4' :
-                    quest.questId.includes('training') ? '#F97316' :
-                    quest.questId.includes('photo') ? '#E879F9' :
-                    quest.questId.includes('cardio') ? '#EF4444' :
-                    quest.questId.includes('streak') ? '#F97316' :
-                    quest.questId.includes('share') ? '#22C55E' :
-                    '#FFD700';
-                  const progress = Math.min(100, (quest.current / quest.target) * 100);
-                  return (
-                    <TouchableOpacity
-                      key={quest.questId}
-                      style={[
-                        styles.questItem,
-                        { backgroundColor: isDark ? '#2D2D4D' : '#F8FAFC' },
-                        quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
-                      ]}
-                      onPress={async () => {
-                        impactAsync(ImpactFeedbackStyle.Medium);
-                        if (quest.completed) {
-                          await uncompleteQuest(quest.questId);
-                        } else {
-                          await completeQuest(quest.questId);
-                        }
-                        notificationAsync(NotificationFeedbackType.Success);
-                        loadData();
-                      }}
-                    >
-                      <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
-                        {quest.completed ? <CheckCircle2 size={20} color="#10B981" /> : <Star size={20} color={questColor} />}
+            {/* Modal Preview du défi */}
+            <Modal
+              visible={previewQuest !== null}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={() => setPreviewQuest(null)}
+            >
+              <Pressable
+                style={styles.previewOverlay}
+                onPress={() => setPreviewQuest(null)}
+              >
+                {previewQuest && (
+                  <View style={[styles.previewCard, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
+                    {/* Header avec icône */}
+                    <View style={styles.previewHeader}>
+                      <View style={[styles.previewIconWrap, { backgroundColor: `${getQuestColor(previewQuest.questId)}25` }]}>
+                        {React.createElement(getQuestIcon(previewQuest.questId), {
+                          size: 32,
+                          color: getQuestColor(previewQuest.questId)
+                        })}
                       </View>
-                      <View style={styles.questContent}>
-                        <Text style={[styles.questTitle, { color: quest.completed ? colors.textMuted : colors.textPrimary }, quest.completed && styles.questTitleCompleted]}>
-                          {quest.title}
-                        </Text>
-                        <Text style={[styles.questDescription, { color: colors.textMuted }]}>{quest.description}</Text>
-                        {!quest.completed && quest.target > 1 && (
-                          <View style={styles.questProgressContainer}>
-                            <View style={[styles.questProgressBar, { backgroundColor: colors.border }]}>
-                              <View style={[styles.questProgressFill, { width: `${progress}%`, backgroundColor: questColor }]} />
-                            </View>
-                            <Text style={[styles.questProgressText, { color: colors.textMuted }]}>{quest.current}/{quest.target}</Text>
-                          </View>
-                        )}
+                      <View style={[styles.previewXpBadge, { backgroundColor: '#FFD700' }]}>
+                        <Zap size={14} color="#000" fill="#000" />
+                        <Text style={styles.previewXpText}>+{previewQuest.xp} XP</Text>
                       </View>
-                      <View style={[styles.questXP, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
-                        <Text style={[styles.questXPText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
-                          {quest.completed ? '✓' : `+${quest.xp}`}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
+                    </View>
 
-            {/* Section Mensuelles */}
-            <View style={[styles.sectionCard, { backgroundColor: isDark ? '#1F1F3D' : '#FFFFFF', marginTop: 16 }]}>
-              <View style={styles.questSectionHeader}>
-                <LinearGradient colors={['#EF4444', '#DC2626']} style={styles.questSectionIcon}>
-                  <Crown size={18} color="#FFFFFF" />
-                </LinearGradient>
-                <Text style={[styles.questSectionTitle, { color: colors.textPrimary }]}>Mensuelles</Text>
-                <Text style={[styles.questSectionCount, { color: '#EF4444' }]}>
-                  {monthlyQuests.filter(q => q.completed).length}/{monthlyQuests.length}
-                </Text>
-              </View>
-              <View style={styles.questsList}>
-                {monthlyQuests.map((quest) => {
-                  const questColor = quest.questId.includes('hydration') ? '#06B6D4' :
-                    quest.questId.includes('training') ? '#F97316' :
-                    quest.questId.includes('photo') ? '#E879F9' :
-                    quest.questId.includes('streak') ? '#F97316' :
-                    quest.questId.includes('level') || quest.questId.includes('best') ? '#FCD34D' :
-                    '#FFD700';
-                  const progress = Math.min(100, (quest.current / quest.target) * 100);
-                  return (
-                    <TouchableOpacity
-                      key={quest.questId}
-                      style={[
-                        styles.questItem,
-                        { backgroundColor: isDark ? '#2D2D4D' : '#F8FAFC' },
-                        quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
-                      ]}
-                      onPress={async () => {
-                        impactAsync(ImpactFeedbackStyle.Medium);
-                        if (quest.completed) {
-                          await uncompleteQuest(quest.questId);
-                        } else {
-                          await completeQuest(quest.questId);
-                        }
-                        notificationAsync(NotificationFeedbackType.Success);
-                        loadData();
-                      }}
-                    >
-                      <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
-                        {quest.completed ? <CheckCircle2 size={20} color="#10B981" /> : <Crown size={20} color={questColor} />}
-                      </View>
-                      <View style={styles.questContent}>
-                        <Text style={[styles.questTitle, { color: quest.completed ? colors.textMuted : colors.textPrimary }, quest.completed && styles.questTitleCompleted]}>
-                          {quest.title}
+                    {/* Titre */}
+                    <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
+                      {previewQuest.icon} {previewQuest.title}
+                    </Text>
+
+                    {/* Description */}
+                    <Text style={[styles.previewDescription, { color: colors.textMuted }]}>
+                      {previewQuest.description}
+                    </Text>
+
+                    {/* Instructions */}
+                    {previewQuest.instructions && (
+                      <View style={[styles.previewInstructionsBox, { backgroundColor: isDark ? 'rgba(255,215,0,0.1)' : 'rgba(255,215,0,0.15)' }]}>
+                        <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
+                          📋 Comment faire :
                         </Text>
-                        <Text style={[styles.questDescription, { color: colors.textMuted }]}>{quest.description}</Text>
-                        {!quest.completed && quest.target > 1 && (
-                          <View style={styles.questProgressContainer}>
-                            <View style={[styles.questProgressBar, { backgroundColor: colors.border }]}>
-                              <View style={[styles.questProgressFill, { width: `${progress}%`, backgroundColor: questColor }]} />
-                            </View>
-                            <Text style={[styles.questProgressText, { color: colors.textMuted }]}>{quest.current}/{quest.target}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <View style={[styles.questXP, { backgroundColor: quest.completed ? '#10B98130' : '#FFD700' }]}>
-                        <Text style={[styles.questXPText, { color: quest.completed ? '#FFFFFF' : '#000000' }]}>
-                          {quest.completed ? '✓' : `+${quest.xp}`}
+                        <Text style={[styles.previewInstructionsText, { color: isDark ? '#FFFFFF' : '#333' }]}>
+                          {previewQuest.instructions}
                         </Text>
                       </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
+                    )}
+
+                    {/* Progression */}
+                    {previewQuest.target > 1 && (
+                      <View style={styles.previewProgressSection}>
+                        <View style={[styles.previewProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}>
+                          <View
+                            style={[
+                              styles.previewProgressFill,
+                              {
+                                width: `${Math.min(100, (previewQuest.current / previewQuest.target) * 100)}%`,
+                                backgroundColor: getQuestColor(previewQuest.questId)
+                              }
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.previewProgressText, { color: colors.textMuted }]}>
+                          {previewQuest.current} / {previewQuest.target} {previewQuest.unit || ''}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Statut / Actions */}
+                    {previewQuest.completed ? (
+                      <TouchableOpacity
+                        style={[styles.previewStatus, { backgroundColor: 'rgba(239,68,68,0.15)' }]}
+                        onPress={async () => {
+                          impactAsync(ImpactFeedbackStyle.Heavy);
+                          await uncompleteQuest(previewQuest.questId);
+                          notificationAsync(NotificationFeedbackType.Warning);
+                          setPreviewQuest(null);
+                          loadData();
+                        }}
+                      >
+                        <CheckCircle2 size={18} color="#EF4444" />
+                        <Text style={[styles.previewStatusText, { color: '#EF4444' }]}>Annuler ce défi</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={[styles.previewStatus, { backgroundColor: 'rgba(255,215,0,0.15)' }]}>
+                        <Target size={18} color="#FFD700" />
+                        <Text style={[styles.previewStatusText, { color: '#FFD700' }]}>En cours</Text>
+                      </View>
+                    )}
+
+                    {/* Hint */}
+                    <Text style={[styles.previewHint, { color: colors.textMuted }]}>
+                      Relâche pour fermer
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            </Modal>
           </View>
         )}
 
@@ -1285,6 +1362,7 @@ export default function DojoScreen() {
         )}
 
         <View style={{ height: 180 }} />
+      </View>
       </ScrollView>
 
       {/* Popup de célébration */}
@@ -1306,6 +1384,8 @@ export default function DojoScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  mainScrollView: { flex: 1 },
+  mainScrollContent: { flexGrow: 1 },
 
   // ═══════════════════════════════════════
   // HEADER GRADIENT
@@ -2143,6 +2223,154 @@ const styles = StyleSheet.create({
   questXPText: {
     fontSize: 11,
     fontWeight: '800',
+  },
+  questInstructions: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 4,
+    fontStyle: 'italic',
+    lineHeight: 14,
+  },
+
+  // ═══════════════════════════════════════
+  // DEFIS TABS (Jour/Semaine/Mois)
+  // ═══════════════════════════════════════
+  defisTabsRow: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    padding: 6,
+    gap: 8,
+  },
+  defisTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+  },
+  defisTabText: {
+    fontSize: 13,
+  },
+  defisTabBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  defisTabBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // ═══════════════════════════════════════
+  // PREVIEW MODAL
+  // ═══════════════════════════════════════
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  previewCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  previewIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewXpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  previewXpText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#000',
+  },
+  previewTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  previewDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  previewInstructionsBox: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  previewInstructionsLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  previewInstructionsText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  previewProgressSection: {
+    marginBottom: 16,
+  },
+  previewProgressBar: {
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  previewProgressFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  previewProgressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  previewStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  previewStatusText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  previewHint: {
+    fontSize: 11,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 
   // ═══════════════════════════════════════

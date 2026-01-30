@@ -163,11 +163,11 @@ export default function ShareHubScreen() {
           colors={[colors.accent, colors.accentDark || colors.accent]}
           style={[styles.heroBanner, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
         >
-          <Share2 size={40} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={2.5} />
-          <Text style={[styles.heroTitle, { color: isDark ? '#000000' : '#FFFFFF' }]}>
+          <Share2 size={40} color={colors.textOnAccent} strokeWidth={2.5} />
+          <Text style={[styles.heroTitle, { color: colors.textOnAccent }]}>
             Fais-toi remarquer
           </Text>
-          <Text style={[styles.heroText, { color: isDark ? '#000000' : '#FFFFFF', opacity: 0.8 }]}>
+          <Text style={[styles.heroText, { color: colors.textOnAccent, opacity: 0.8 }]}>
             Choisis un template, ajoute ta photo, et deviens la star de ta communauté !
           </Text>
         </LinearGradient>

@@ -239,8 +239,8 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
               activeOpacity={0.8}
             >
               <View style={styles.rateButtonGradient}>
-                <Ionicons name="star" size={22} color={isDark ? '#000' : '#FFF'} />
-                <Text style={[styles.rateButtonText, { color: isDark ? '#000' : '#FFF' }]}>
+                <Ionicons name="star" size={22} color={colors.textOnAccent} />
+                <Text style={[styles.rateButtonText, { color: colors.textOnAccent }]}>
                   {t('rating.rateButton') || "Je note l'app !"}
                 </Text>
               </View>

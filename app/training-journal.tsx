@@ -1455,11 +1455,11 @@ export default function TrainingJournalScreen() {
         contentContainerStyle={styles.globalFilterContent}
       >
         {[
-          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: isDark ? '#FFFFFF' : '#000000' },
+          { key: 'all' as GlobalFilter, label: 'Tout', iconName: 'bar-chart', color: colors.accent, textOnColor: '#FFFFFF' },
           { key: 'musculation' as GlobalFilter, label: 'Musculation', iconName: 'dumbbell', color: '#EF4444', textOnColor: '#FFFFFF' },
           { key: 'running' as GlobalFilter, label: 'Running', iconName: 'footprints', color: '#3B82F6', textOnColor: '#FFFFFF' },
           { key: 'jjb' as GlobalFilter, label: 'JJB', iconName: 'swords', color: '#06B6D4', textOnColor: '#FFFFFF' },
-          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#000000' },
+          { key: 'boxe' as GlobalFilter, label: 'Boxe', iconName: 'zap', color: '#F59E0B', textOnColor: '#FFFFFF' },
           { key: 'lutte' as GlobalFilter, label: 'Lutte', iconName: 'users', color: '#8B5CF6', textOnColor: '#FFFFFF' },
           { key: 'grappling' as GlobalFilter, label: 'Grappling', iconName: 'shield', color: '#10B981', textOnColor: '#FFFFFF' },
           { key: 'autre' as GlobalFilter, label: 'Autre', iconName: 'target', color: '#6B7280', textOnColor: '#FFFFFF' },

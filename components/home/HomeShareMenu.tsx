@@ -139,7 +139,7 @@ export const HomeShareMenu: React.FC = () => {
                 style={styles.optionButton}
               >
                 <View style={[styles.labelWrapper, { backgroundColor: colors.accent }]}>
-                  <Text style={[styles.optionLabel, { color: isDark ? '#000000' : '#FFFFFF' }]}>
+                  <Text style={[styles.optionLabel, { color: colors.textOnAccent }]}>
                     {option.label}
                   </Text>
                 </View>
@@ -166,7 +166,7 @@ export const HomeShareMenu: React.FC = () => {
           style={[styles.mainButton, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
         >
           {isOpen ? (
-            <X size={24} color={isDark ? '#000000' : '#FFFFFF'} strokeWidth={3} />
+            <X size={24} color={colors.textOnAccent} strokeWidth={3} />
           ) : (
             <Share2 size={24} color={colors.textOnAccent} strokeWidth={2.5} />
           )}

@@ -8,6 +8,8 @@ import {
   Easing,
   ScrollView,
   PanResponder,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -88,6 +90,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   const [monthlyQuests, setMonthlyQuests] = useState<QuestsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalXP, setTotalXP] = useState(0);
+  const [previewQuest, setPreviewQuest] = useState<QuestWithProgress | null>(null);
   const questsScrollRef = useRef<ScrollView>(null);
   const [scrollContentHeight, setScrollContentHeight] = useState(1000); // Valeur par défaut pour éviter 0
   const [containerHeight, setContainerHeight] = useState(480);
@@ -240,26 +243,27 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   // Naviguer vers l'écran approprié pour remplir la défi
   const getQuestRoute = (questId: string): string | null => {
     // Routes pour chaque type de défi (null = défi manuelle à cocher)
+    // IMPORTANT: Ne mettre une route QUE si la page permet de valider automatiquement le défi
     const routes: Record<string, string> = {
       // Daily (15) - Routes triées par XP
       'daily_weigh': '/add-measurement',
-      'daily_breakfast': '/quick-nutrition',
-      'daily_read_article': '/savoir',
+      // daily_breakfast = MANUEL (page nutrition = juste lecture)
+      // daily_read_article = MANUEL (page savoir = juste lecture)
       'daily_sleep': '/sleep-input',
       'daily_hydration': '/hydration',
-      'daily_protein': '/quick-nutrition',
-      'daily_photo': '/(tabs)/more/photos',
+      // daily_protein = MANUEL (page nutrition = juste lecture)
+      'daily_photo': '/more/photos',
       'daily_steps': '/health-metrics',
       'daily_cardio': '/add-training',
       'daily_training': '/add-training',
       // daily_open_app, daily_stretch, daily_meditation, daily_no_junk, daily_cold_shower = manuelles
 
       // Weekly (15) - Routes triées par XP
-      'weekly_visit_dojo': '/gamification',
-      'weekly_check_stats': '/(tabs)/stats',
-      'weekly_share_progress': '/share-hub',
-      'weekly_photo': '/(tabs)/more/photos',
-      'weekly_read_articles': '/savoir',
+      // weekly_visit_dojo = MANUEL (visite gamification = juste lecture)
+      // weekly_check_stats = MANUEL (page stats = juste lecture)
+      // weekly_share_progress = MANUEL (partage = action externe)
+      'weekly_photo': '/more/photos',
+      // weekly_read_articles = MANUEL (page savoir = juste lecture)
       'weekly_5_weighs': '/add-measurement',
       'weekly_measurements': '/measurements',
       'weekly_cardio_3': '/add-training',
@@ -269,7 +273,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       // Monthly (15) - Routes triées par XP
       'monthly_25_weighs': '/add-measurement',
       'monthly_body_scan': '/body-composition',
-      'monthly_transformation': '/(tabs)/more/photos',
+      'monthly_transformation': '/more/photos',
       'monthly_20_trainings': '/add-training',
       'monthly_new_pr': '/records',
       'monthly_lose_2kg': '/add-measurement',
@@ -579,7 +583,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
             const questProgress = Math.min(100, (quest.current / quest.target) * 100);
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={quest.id}
                 style={[
                   styles.questItem,
@@ -587,19 +591,16 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                   quest.completed && { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)' }
                 ]}
                 onPress={() => handleQuestTap(quest)}
-                onLongPress={async () => {
-                  // Long press = désélectionner
-                  if (quest.completed) {
-                    impactAsync(ImpactFeedbackStyle.Heavy);
-                    const result = await uncompleteQuest(quest.id as QuestId);
-                    if (result.success) {
-                      notificationAsync(NotificationFeedbackType.Warning);
-                      loadQuests();
-                    }
+                onLongPress={() => {
+                  impactAsync(ImpactFeedbackStyle.Medium);
+                  setPreviewQuest(quest);
+                }}
+                onPressOut={() => {
+                  if (previewQuest) {
+                    setPreviewQuest(null);
                   }
                 }}
-                delayLongPress={500}
-                activeOpacity={0.7}
+                delayLongPress={300}
               >
                 <View style={[styles.questIcon, { backgroundColor: `${questColor}20` }]}>
                   {quest.completed ? (
@@ -633,6 +634,19 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     {quest.description}
                   </Text>
 
+                  {/* Instructions - Comment faire */}
+                  {!quest.completed && quest.instructions && (
+                    <Text
+                      style={[
+                        styles.questInstructions,
+                        { color: isDark ? 'rgba(255, 215, 0, 0.7)' : 'rgba(180, 130, 0, 0.9)' }
+                      ]}
+                      numberOfLines={2}
+                    >
+                      → {quest.instructions}
+                    </Text>
+                  )}
+
                   {!quest.completed && quest.target > 1 && (
                     <View style={styles.questProgressContainer}>
                       <View style={[styles.questProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
@@ -655,11 +669,113 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                     {quest.completed ? '✓' : `+${quest.xp}`}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
           </ScrollView>
         </View>
+
+        {/* Modal Preview du défi */}
+        <Modal
+          visible={previewQuest !== null}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setPreviewQuest(null)}
+        >
+          <Pressable
+            style={styles.previewOverlay}
+            onPress={() => setPreviewQuest(null)}
+          >
+            {previewQuest && (
+              <View style={[styles.previewCard, { backgroundColor: isDark ? '#1A1A2E' : '#FFFFFF' }]}>
+                {/* Header avec icône */}
+                <View style={styles.previewHeader}>
+                  <View style={[styles.previewIconWrap, { backgroundColor: `${getQuestColor(previewQuest.id)}25` }]}>
+                    {React.createElement(getQuestIcon(previewQuest.id), {
+                      size: 32,
+                      color: getQuestColor(previewQuest.id)
+                    })}
+                  </View>
+                  <View style={[styles.previewXpBadge, { backgroundColor: '#FFD700' }]}>
+                    <Zap size={14} color="#000" fill="#000" />
+                    <Text style={styles.previewXpText}>+{previewQuest.xp} XP</Text>
+                  </View>
+                </View>
+
+                {/* Titre */}
+                <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
+                  {previewQuest.icon} {previewQuest.title}
+                </Text>
+
+                {/* Description */}
+                <Text style={[styles.previewDescription, { color: colors.textMuted }]}>
+                  {previewQuest.description}
+                </Text>
+
+                {/* Instructions */}
+                {previewQuest.instructions && (
+                  <View style={[styles.previewInstructionsBox, { backgroundColor: isDark ? 'rgba(255,215,0,0.1)' : 'rgba(255,215,0,0.15)' }]}>
+                    <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
+                      📋 Comment faire :
+                    </Text>
+                    <Text style={[styles.previewInstructionsText, { color: isDark ? '#FFFFFF' : '#333' }]}>
+                      {previewQuest.instructions}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Progression */}
+                {previewQuest.target > 1 && (
+                  <View style={styles.previewProgressSection}>
+                    <View style={[styles.previewProgressBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}>
+                      <View
+                        style={[
+                          styles.previewProgressFill,
+                          {
+                            width: `${Math.min(100, (previewQuest.current / previewQuest.target) * 100)}%`,
+                            backgroundColor: getQuestColor(previewQuest.id)
+                          }
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.previewProgressText, { color: colors.textMuted }]}>
+                      {previewQuest.current} / {previewQuest.target} {previewQuest.unit || ''}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Statut / Actions */}
+                {previewQuest.completed ? (
+                  <TouchableOpacity
+                    style={[styles.previewStatus, { backgroundColor: 'rgba(239,68,68,0.15)' }]}
+                    onPress={async () => {
+                      impactAsync(ImpactFeedbackStyle.Heavy);
+                      const result = await uncompleteQuest(previewQuest.id as QuestId);
+                      if (result.success) {
+                        notificationAsync(NotificationFeedbackType.Warning);
+                        setPreviewQuest(null);
+                        loadQuests();
+                      }
+                    }}
+                  >
+                    <CheckCircle2 size={18} color="#EF4444" />
+                    <Text style={[styles.previewStatusText, { color: '#EF4444' }]}>Annuler ce défi</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={[styles.previewStatus, { backgroundColor: 'rgba(255,215,0,0.15)' }]}>
+                    <Target size={18} color="#FFD700" />
+                    <Text style={[styles.previewStatusText, { color: '#FFD700' }]}>En cours</Text>
+                  </View>
+                )}
+
+                {/* Hint */}
+                <Text style={[styles.previewHint, { color: colors.textMuted }]}>
+                  Relâche pour fermer
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </Modal>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -884,6 +1000,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
     opacity: 0.8,
   },
+  questInstructions: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 4,
+    fontStyle: 'italic',
+    lineHeight: 14,
+  },
   questTitleCompleted: {
     textDecorationLine: 'line-through',
     opacity: 0.7,
@@ -972,6 +1095,112 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  // Preview Modal Styles
+  previewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  previewCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  previewIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewXpBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  previewXpText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#000',
+  },
+  previewTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  previewDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  previewInstructionsBox: {
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+  previewInstructionsLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  previewInstructionsText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  previewProgressSection: {
+    marginBottom: 16,
+  },
+  previewProgressBar: {
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  previewProgressFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  previewProgressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  previewStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  previewStatusText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  previewHint: {
+    fontSize: 11,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 
