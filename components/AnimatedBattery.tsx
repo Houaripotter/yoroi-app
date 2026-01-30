@@ -19,15 +19,16 @@ export const AnimatedBattery: React.FC<AnimatedBatteryProps> = ({
 
   useEffect(() => {
     // Animation de remplissage
-    Animated.timing(fillAnim, {
+    const fillTiming = Animated.timing(fillAnim, {
       toValue: percentage / 100,
       duration: 1000,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start();
+    });
+    fillTiming.start();
 
-    // Animation pulse
-    Animated.loop(
+    // ✅ FIX PERF: Animation pulse avec cleanup
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.05,
@@ -42,10 +43,11 @@ export const AnimatedBattery: React.FC<AnimatedBatteryProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    pulseLoop.start();
 
-    // Animation spark (éclair)
-    Animated.loop(
+    // ✅ FIX PERF: Animation spark (éclair) avec cleanup
+    const sparkLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(sparkAnim, {
           toValue: 1,
@@ -60,7 +62,15 @@ export const AnimatedBattery: React.FC<AnimatedBatteryProps> = ({
         }),
         Animated.delay(1500),
       ])
-    ).start();
+    );
+    sparkLoop.start();
+
+    // ✅ Cleanup pour éviter memory leaks
+    return () => {
+      fillTiming.stop();
+      pulseLoop.stop();
+      sparkLoop.stop();
+    };
   }, [percentage]);
 
   // Couleur selon le pourcentage

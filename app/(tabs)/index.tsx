@@ -266,11 +266,8 @@ export default function HomeScreen() {
     setShowTutorial(false);
   }, []);
 
-  // Rafraîchir l'avatar seulement au premier montage
-  // (pas à chaque retour pour éviter le flash)
-  useEffect(() => {
-    setAvatarRefreshTrigger((prev) => prev + 1);
-  }, []);
+  // ✅ FIX PERF: Avatar chargé une seule fois au montage (pas à chaque focus)
+  // Supprimé useFocusEffect qui causait des re-renders inutiles
 
   // Animation de remplissage de la batterie - UNIQUEMENT au changement de score
   const hasAnimatedBattery = useRef(false);
@@ -554,7 +551,7 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateWeightStats = useCallback(() => {
-    handleNavigate('/(tabs)/stats?tab=poids');
+    handleNavigate('/stats?tab=poids');
   }, [handleNavigate]);
 
   const handleNavigateSleep = useCallback(() => {
@@ -590,7 +587,7 @@ export default function HomeScreen() {
   }, [handleNavigate]);
 
   const handleNavigateAddWeight = useCallback(() => {
-    handleNavigate('/(tabs)/add');
+    handleNavigate('/add');
   }, [handleNavigate]);
 
   const handleNavigateTimer = useCallback(() => {
@@ -600,12 +597,12 @@ export default function HomeScreen() {
 
   const handleNavigatePlanning = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    handleNavigate('/(tabs)/planning');
+    handleNavigate('/planning');
   }, [handleNavigate]);
 
   const handleNavigateProgramme = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    handleNavigate('/(tabs)/planning?tab=programme');
+    handleNavigate('/planning?tab=programme');
   }, [handleNavigate]);
 
   const handleNavigateEnergy = useCallback(() => {
@@ -810,11 +807,17 @@ export default function HomeScreen() {
     [totalToLose, currentWeight, startWeight]
   );
 
-  // Tendance
-  const avgWeeklyLoss = weightHistory.length >= 7
-    ? (weightHistory[weightHistory.length - 1]?.weight - weightHistory[0]?.weight) / (weightHistory.length / 7)
-    : 0;
-  const trend = avgWeeklyLoss < -0.1 ? 'down' : avgWeeklyLoss > 0.1 ? 'up' : 'stable';
+  // ✅ FIX PERF: Mémoriser le calcul de tendance
+  const { avgWeeklyLoss, trend } = useMemo(() => {
+    if (weightHistory.length < 7) {
+      return { avgWeeklyLoss: 0, trend: 'stable' as const };
+    }
+    const avg = (weightHistory[weightHistory.length - 1]?.weight - weightHistory[0]?.weight) / (weightHistory.length / 7);
+    return {
+      avgWeeklyLoss: avg,
+      trend: (avg < -0.1 ? 'down' : avg > 0.1 ? 'up' : 'stable') as 'down' | 'up' | 'stable'
+    };
+  }, [weightHistory]);
 
   // Salutation
   const getGreeting = useCallback(() => {
@@ -842,6 +845,21 @@ export default function HomeScreen() {
 
   const batteryPercent = useMemo(() => calculateBatteryPercent(), [streak, hydration, hydrationGoal, sleepStats, trainings]);
   const last7Weights = useMemo(() => weightHistory.slice(0, 7).reverse(), [weightHistory]);
+
+  // ✅ FIX PERF: Mémoriser chartHistory pour éviter recréation à chaque render
+  const chartHistory = useMemo(() => last7Weights.map(w => w.weight), [last7Weights]);
+
+  // ✅ FIX PERF: Mémoriser le calcul des sessions de la semaine
+  const weeklySessionCount = useMemo(() => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const uniqueDays = new Set(
+      trainings
+        .filter(t => new Date(t.date) >= weekAgo)
+        .map(t => t.date.split('T')[0])
+    );
+    return uniqueDays.size;
+  }, [trainings]);
 
   // Partager le rapport
   const shareReport = useCallback(async () => {
@@ -892,24 +910,28 @@ export default function HomeScreen() {
     }).start();
   }, [weightProgress]);
 
-  // Animation pulse poids
+  // ✅ FIX PERF: Animation pulse poids avec cleanup
   React.useEffect(() => {
-    Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(weightPulseAnim, { toValue: 1.02, duration: 2000, useNativeDriver: true }),
         Animated.timing(weightPulseAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
   }, []);
 
-  // Animation flamme streak
+  // ✅ FIX PERF: Animation flamme streak avec cleanup
   React.useEffect(() => {
-    Animated.loop(
+    const flameLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(streakFlameAnim, { toValue: 1.1, duration: 1500, useNativeDriver: true }),
         Animated.timing(streakFlameAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    flameLoop.start();
+    return () => flameLoop.stop();
   }, []);
 
   // Animation dette sommeil
@@ -924,7 +946,7 @@ export default function HomeScreen() {
     }
   }, [sleepStats]);
 
-  // Animation Zzz sommeil (apparition/disparition)
+  // ✅ FIX PERF: Animation Zzz sommeil avec cleanup
   React.useEffect(() => {
     const createZzzAnimation = (anim: Animated.Value, delay: number) => {
       return Animated.loop(
@@ -943,28 +965,46 @@ export default function HomeScreen() {
         ])
       );
     };
-    
-    createZzzAnimation(sleepZzzAnim1, 0).start();
-    createZzzAnimation(sleepZzzAnim2, 300).start();
-    createZzzAnimation(sleepZzzAnim3, 600).start();
+
+    const zzz1 = createZzzAnimation(sleepZzzAnim1, 0);
+    const zzz2 = createZzzAnimation(sleepZzzAnim2, 300);
+    const zzz3 = createZzzAnimation(sleepZzzAnim3, 600);
+
+    zzz1.start();
+    zzz2.start();
+    zzz3.start();
+
+    return () => {
+      zzz1.stop();
+      zzz2.stop();
+      zzz3.stop();
+    };
   }, []);
 
-  // Animation charge (pulsation + vague)
+  // ✅ FIX PERF: Animation charge avec cleanup
   React.useEffect(() => {
-    Animated.loop(
+    const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(chargePulseAnim, { toValue: 1.08, duration: 1500, useNativeDriver: true }),
         Animated.timing(chargePulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
       ])
-    ).start();
-    
-    Animated.loop(
+    );
+
+    const waveLoop = Animated.loop(
       Animated.timing(chargeWaveAnim, {
         toValue: 1,
         duration: 2000,
         useNativeDriver: false, // REQUIS: utilisé pour animer vague (translateX/Y via interpolation)
       })
-    ).start();
+    );
+
+    pulseLoop.start();
+    waveLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      waveLoop.stop();
+    };
   }, []);
 
   // Rendu icône batterie status
@@ -1148,7 +1188,7 @@ export default function HomeScreen() {
               currentWeight={currentWeight || 0}
               targetWeight={targetWeight ?? undefined}
               startWeight={weightHistory[0]?.weight ?? undefined}
-              history={last7Weights.map(w => w.weight)}
+              history={chartHistory}
               onPress={handleNavigateWeightStats}
             />
           </View>
@@ -1182,17 +1222,7 @@ export default function HomeScreen() {
                   level={loadStats?.riskLevel || 'optimal'}
                   totalLoad={loadStats?.totalLoad || 0}
                   maxLoad={2000}
-                  sessions={(() => {
-                    // Compter les jours uniques avec au moins une séance (pas le total de séances)
-                    const weekAgo = new Date();
-                    weekAgo.setDate(weekAgo.getDate() - 7);
-                    const uniqueDays = new Set(
-                      trainings
-                        .filter(t => new Date(t.date) >= weekAgo)
-                        .map(t => t.date.split('T')[0]) // Extraire juste la date (YYYY-MM-DD)
-                    );
-                    return uniqueDays.size;
-                  })()}
+                  sessions={weeklySessionCount}
                 />
               </TouchableOpacity>
             </View>

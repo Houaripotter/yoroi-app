@@ -12,11 +12,12 @@ const AnimatedProgressBar = ({ progress, color = '#FFB800', height = 8 }: Animat
 
   useEffect(() => {
     // Animation au chargement
+    // ✅ FIX PERF: useNativeDriver: false car width est une layout property
     Animated.timing(width, {
       toValue: progress,
       duration: 1500,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [progress]);
 
