@@ -55,12 +55,13 @@ export interface ReminderMessage {
 // VALEURS PAR DEFAUT
 // ============================================
 
+// TOUT DÉSACTIVÉ PAR DÉFAUT - l'utilisateur doit activer manuellement
 export const DEFAULT_SETTINGS: SmartReminderSettings = {
-  weightReminder: true,
-  trainingReminder: true,
+  weightReminder: false,
+  trainingReminder: false,
   hydrationReminder: false,
-  measurementsReminder: true,
-  streakProtection: true,
+  measurementsReminder: false,
+  streakProtection: false,
   hydrationIntervalHours: 2,
 };
 

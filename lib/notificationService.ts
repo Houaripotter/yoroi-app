@@ -262,33 +262,48 @@ class NotificationService {
 
   async initialize(): Promise<boolean> {
     try {
-      // Charger les paramètres sauvegardés
-      const saved = await AsyncStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Force désactivation des notifications non voulues même si elles étaient activées
-        this.settings = {
-          ...DEFAULT_SETTINGS,
-          ...parsed,
-          // FORCE OFF - Ces notifications ne doivent JAMAIS s'envoyer
-          streak: { ...DEFAULT_SETTINGS.streak, enabled: false },
-          hydration: { ...DEFAULT_SETTINGS.hydration, enabled: false },
-          smartReminders: { ...DEFAULT_SETTINGS.smartReminders, enabled: false },
-          briefing: { ...DEFAULT_SETTINGS.briefing, enabled: false },
-        };
-        // Sauvegarder les paramètres forcés
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
-      }
+      // ═══════════════════════════════════════════════════════════
+      // MIGRATION FORCÉE: Désactiver TOUTES les notifications spam
+      // Seules les citations sont autorisées par défaut
+      // ═══════════════════════════════════════════════════════════
+
+      // Toujours forcer les paramètres à OFF, peu importe ce qui est sauvegardé
+      this.settings = {
+        ...DEFAULT_SETTINGS, // Tout est déjà OFF dans DEFAULT_SETTINGS
+        enabled: false,
+        training: { ...DEFAULT_SETTINGS.training, enabled: false },
+        hydration: { ...DEFAULT_SETTINGS.hydration, enabled: false },
+        weighing: { ...DEFAULT_SETTINGS.weighing, enabled: false },
+        streak: { ...DEFAULT_SETTINGS.streak, enabled: false },
+        sleep: { ...DEFAULT_SETTINGS.sleep, enabled: false },
+        socialCards: { ...DEFAULT_SETTINGS.socialCards, enabled: false },
+        briefing: { ...DEFAULT_SETTINGS.briefing, enabled: false },
+        smartReminders: { ...DEFAULT_SETTINGS.smartReminders, enabled: false },
+      };
+
+      // Sauvegarder les paramètres forcés à OFF
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.settings));
+
+      // Reset des paramètres des autres services de notifications pour éviter le spam
+      await AsyncStorage.setItem('@yoroi_briefing_settings', JSON.stringify({ enabled: false, time: '07:00' }));
+      await AsyncStorage.setItem('@yoroi_smart_reminders_settings', JSON.stringify({
+        weightReminder: false,
+        trainingReminder: false,
+        hydrationReminder: false,
+        measurementsReminder: false,
+        streakProtection: false,
+        hydrationIntervalHours: 2,
+      }));
 
       // Annuler TOUTES les notifications existantes pour partir propre
       await Notifications.cancelAllScheduledNotificationsAsync();
-      logger.info('[NotificationService] Toutes les notifications annulées');
+      logger.info('[NotificationService] RESET: Toutes les notifications annulées et paramètres forcés à OFF');
 
-      // Ne PAS programmer de nouvelles notifications sauf si explicitement demandé
-      // Les citations sont gérées séparément par citationNotificationService
+      // Ne PAS programmer de nouvelles notifications
+      // Seules les citations sont gérées par citationNotificationService
 
       this.isInitialized = true;
-      logger.info('NotificationService initialisé (mode minimal)');
+      logger.info('NotificationService initialisé (mode minimal - tout désactivé)');
       return true;
     } catch (error) {
       logger.error('Erreur init notifications:', error);

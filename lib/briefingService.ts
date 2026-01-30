@@ -19,9 +19,9 @@ export interface BriefingSettings {
   time: string; // Format "HH:MM"
 }
 
-// Configuration par défaut
+// Configuration par défaut - DÉSACTIVÉ pour ne pas spammer les utilisateurs
 const DEFAULT_SETTINGS: BriefingSettings = {
-  enabled: true,
+  enabled: false, // OFF par défaut - l'utilisateur doit activer manuellement
   time: '07:00', // 7h du matin
 };
 
