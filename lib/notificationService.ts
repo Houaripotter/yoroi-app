@@ -883,9 +883,21 @@ class NotificationService {
 
   // ============================================
   // NOTIFICATIONS INSTANTANÉES
+  // Ces fonctions sont utilisées UNIQUEMENT pour les tests dans les paramètres
+  // Elles ne s'envoient JAMAIS automatiquement
   // ============================================
 
-  async sendInstantNotification(title: string, body: string, data?: any): Promise<void> {
+  /**
+   * Envoie une notification immédiate - USAGE INTERNE/TEST UNIQUEMENT
+   * @param isTest - Si true, envoie même si désactivé (pour les tests utilisateur)
+   */
+  async sendInstantNotification(title: string, body: string, data?: any, isTest: boolean = false): Promise<void> {
+    // Ne pas envoyer si les notifications sont désactivées (sauf pour les tests)
+    if (!isTest && !this.settings.enabled) {
+      logger.info('[NotificationService] Notification bloquée (désactivé)');
+      return;
+    }
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -897,41 +909,43 @@ class NotificationService {
     });
   }
 
+  // Ces fonctions sont UNIQUEMENT pour les boutons "Tester" dans les paramètres
   async sendTrainingReminder(): Promise<void> {
     const message = TRAINING_MESSAGES[Math.floor(Math.random() * TRAINING_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'training' });
+    await this.sendInstantNotification(message.title, message.body, { type: 'training' }, true);
   }
 
   async sendHydrationReminder(): Promise<void> {
     const message = HYDRATION_MESSAGES[Math.floor(Math.random() * HYDRATION_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'hydration' });
+    await this.sendInstantNotification(message.title, message.body, { type: 'hydration' }, true);
   }
 
   async sendStreakWarning(currentStreak: number): Promise<void> {
     await this.sendInstantNotification(
       'Protège ton streak !',
       `Tu as ${currentStreak} jours consécutifs. Ne les perds pas aujourd'hui !`,
-      { type: 'streak' }
+      { type: 'streak' },
+      true
     );
   }
 
   async sendCongratulation(message: string): Promise<void> {
-    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement' });
+    await this.sendInstantNotification('Félicitations !', message, { type: 'achievement' }, true);
   }
 
   async sendWeeklyCardReminder(): Promise<void> {
     const message = WEEKLY_CARD_MESSAGES[Math.floor(Math.random() * WEEKLY_CARD_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_weekly', screen: 'share-hub' });
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_weekly', screen: 'share-hub' }, true);
   }
 
   async sendMonthlyCardReminder(): Promise<void> {
     const message = MONTHLY_CARD_MESSAGES[Math.floor(Math.random() * MONTHLY_CARD_MESSAGES.length)];
-    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_monthly', screen: 'share-hub' });
+    await this.sendInstantNotification(message.title, message.body, { type: 'social_card_monthly', screen: 'share-hub' }, true);
   }
 
   async sendBriefing(): Promise<void> {
     const content = await this.generateBriefingContent();
-    await this.sendInstantNotification(content.title, content.body, { type: 'briefing', screen: 'home' });
+    await this.sendInstantNotification(content.title, content.body, { type: 'briefing', screen: 'home' }, true);
   }
 
   async sendSmartReminderTest(): Promise<{ type: string; message: string }> {

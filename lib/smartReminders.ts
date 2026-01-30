@@ -479,11 +479,12 @@ export const daysSinceLastMeasurements = (habits: DetectedHabits): number => {
 };
 
 // ============================================
-// NOTIFICATIONS (si permissions accordees)
+// NOTIFICATIONS (si permissions accordees ET rappels activés)
 // ============================================
 
 /**
  * Programmer une notification de rappel
+ * SEULEMENT si le type de rappel correspondant est activé
  */
 export const scheduleSmartNotification = async (
   message: ReminderMessage,
@@ -491,6 +492,22 @@ export const scheduleSmartNotification = async (
 ): Promise<string | null> => {
   try {
     if (Platform.OS === 'web') return null;
+
+    // Vérifier si le type de rappel est activé
+    const settings = await getSmartReminderSettings();
+    const typeMap: Record<ReminderMessage['type'], keyof SmartReminderSettings> = {
+      weight: 'weightReminder',
+      training: 'trainingReminder',
+      hydration: 'hydrationReminder',
+      measurements: 'measurementsReminder',
+      streak: 'streakProtection',
+    };
+
+    const settingKey = typeMap[message.type];
+    if (settingKey && !settings[settingKey]) {
+      logger.info(`[SmartReminders] Rappel ${message.type} désactivé - notification bloquée`);
+      return null;
+    }
 
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return null;

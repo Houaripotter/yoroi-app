@@ -180,11 +180,19 @@ export const toggleHydrationReminders = async (enabled: boolean): Promise<boolea
 
 /**
  * Envoie une notification instantanee de rappel
+ * SEULEMENT si les rappels hydratation sont activés
  */
 export const sendInstantHydrationReminder = async (): Promise<void> => {
   try {
-    const todayAmount = await getTodayHydration();
     const settings = await getHydrationSettings();
+
+    // Vérifier si les rappels sont activés
+    if (!settings.reminderEnabled) {
+      logger.info('Rappels hydratation désactivés - notification non envoyée');
+      return;
+    }
+
+    const todayAmount = await getTodayHydration();
     const goal = (settings.customGoal || settings.dailyGoal) * 1000;
     const remaining = Math.max(0, goal - todayAmount);
 

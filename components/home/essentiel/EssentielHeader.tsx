@@ -160,17 +160,14 @@ export const EssentielHeader: React.FC<EssentielHeaderProps> = ({
           {/* Séparateur */}
           <View style={[styles.gamificationDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
 
-          {/* Niveau XP */}
+          {/* Niveau XP - Affiche le nom du niveau (ex: Athlète) et les XP */}
           <View style={styles.gamificationItem}>
             <View style={[styles.levelBadge, { backgroundColor: currentLevel.color }]}>
-              <Text style={styles.levelBadgeText}>{currentLevel.level}</Text>
+              <Zap size={14} color="#FFFFFF" fill="#FFFFFF" />
             </View>
             <View style={styles.gamificationInfo}>
-              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>{t('gamification.level')}</Text>
-              <View style={styles.xpRow}>
-                <Zap size={12} color="#FFD700" fill="#FFD700" />
-                <Text style={[styles.gamificationValue, { color: currentLevel.color }]}>{totalPoints}</Text>
-              </View>
+              <Text style={[styles.gamificationLabel, { color: colors.textMuted }]}>XP</Text>
+              <Text style={[styles.gamificationValue, { color: currentLevel.color }]}>{currentLevel.name}</Text>
             </View>
           </View>
 

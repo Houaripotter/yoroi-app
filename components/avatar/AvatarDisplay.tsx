@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 90, height: 90 }, // EXACTEMENT la même taille que la photo de profil (90x90)
+  sm: { width: 65, height: 65 }, // Petite taille pour header (plus petit que photo profil 85x85)
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
@@ -100,9 +100,10 @@ export default function AvatarDisplay({
       styles.container,
       dimensions,
       isSmall ? {
-        // Taille sm: transparent, pas de bordure (le parent gère)
-        backgroundColor: 'transparent',
-        borderWidth: 0,
+        // Taille sm: fond visible avec bordure subtile
+        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+        borderWidth: 2,
+        borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
         borderRadius: borderRadius,
       } : {
         // Autres tailles: style complet
@@ -128,8 +129,12 @@ export default function AvatarDisplay({
       <View style={containerStyle}>
         <Image
           source={imageSource}
-          // Taille réduite à 85% pour voir l'avatar en entier dans le cercle sans couper
-          style={{ width: '85%', height: '85%' }}
+          // Pour sm: montrer le personnage complet (dézoomé)
+          // Pour autres: 85% standard
+          style={isSmall
+            ? { width: '95%', height: '95%' } // Personnage complet visible dans le cercle
+            : { width: '85%', height: '85%' }
+          }
           resizeMode="contain"
         />
       </View>
