@@ -129,13 +129,18 @@ export const VitalitePage: React.FC = () => {
   const loadHealthData = async () => {
     setLoading(true);
     try {
-      // Charger les données actuelles
-      const [sleep, heartRate, hrv, hydration] = await Promise.all([
+      // Charger les données actuelles avec Promise.allSettled pour éviter qu'une erreur ne bloque tout
+      const results = await Promise.allSettled([
         healthConnect.getLastSleep(),
         healthConnect.getTodayHeartRate(),
         healthConnect.getTodayHRV(),
         healthConnect.getTodayHydration(),
       ]);
+
+      const sleep = results[0].status === 'fulfilled' ? results[0].value : { duration: 0, quality: 0, phases: [] };
+      const heartRate = results[1].status === 'fulfilled' ? results[1].value : { current: 0, resting: 0 };
+      const hrv = results[2].status === 'fulfilled' ? results[2].value : { value: 0, baseline: 0 };
+      const hydration = results[3].status === 'fulfilled' ? results[3].value : { current: 0, goal: 2.5 };
 
       setHealthData({ sleep, heartRate, hrv, hydration });
 
@@ -156,29 +161,31 @@ export const VitalitePage: React.FC = () => {
 
         // Filtrer les données invalides (trop élevées ou manifestement fausses)
         // Cohérence avec healthConnect.ios.ts ligne 691: rejeter < 3h et > 16h
-        const validSleepHistory = sleepHistory.filter((s: any) => {
+        const validSleepHistory = Array.isArray(sleepHistory) ? sleepHistory.filter((s: any) => {
           const hours = (s.duration || 0) / 60;
           // Rejeter les données invalides (> 16h ou < 3h)
           // Apple Santé estime parfois des micro-siestes < 3h qui ne sont pas des vraies nuits
           return hours >= 3 && hours <= 16;
-        });
+        }) : [];
 
         setVitalHistory({
           sleep: validSleepHistory.map((s: any) => ({
             date: s.date,
             value: (s.duration || 0) / 60, // Convertir minutes en heures
           })).reverse(),
-          heartRate: heartRateHistory.map((h: any) => ({
+          heartRate: Array.isArray(heartRateHistory) ? heartRateHistory.map((h: any) => ({
             date: h.date,
             value: h.resting || h.value || 0,
-          })).reverse(),
-          hrv: hrvHistory.map((h: any) => ({
+          })).reverse() : [],
+          hrv: Array.isArray(hrvHistory) ? hrvHistory.map((h: any) => ({
             date: h.date,
             value: h.value || 0,
-          })).reverse(),
+          })).reverse() : [],
         });
       } catch (historyError) {
         console.log('Historical data not available:', historyError);
+        // Initialiser avec tableaux vides en cas d'erreur
+        setVitalHistory({ sleep: [], heartRate: [], hrv: [] });
       }
     } catch (error) {
       console.error('Error loading health data:', error);
@@ -269,9 +276,8 @@ export const VitalitePage: React.FC = () => {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         showsVerticalScrollIndicator={false}
-        nestedScrollEnabled={true}
         onScroll={onScrollContext}
-        scrollEventThrottle={16}
+        scrollEventThrottle={100}
       >
         <StatsHeader
           title={t('statsPages.vitality.title')}
@@ -293,10 +299,9 @@ export const VitalitePage: React.FC = () => {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      nestedScrollEnabled={true}
       contentContainerStyle={styles.content}
       onScroll={onScrollContext}
-      scrollEventThrottle={16}
+      scrollEventThrottle={100}
     >
       <StatsHeader
         title={t('statsPages.vitality.title')}

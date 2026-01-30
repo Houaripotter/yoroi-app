@@ -334,7 +334,7 @@ class HealthConnectService {
   }
 
   getProviderName(): string {
-    return 'Apple Santé';
+    return 'App Santé';
   }
 
   private async requestIOSPermissions(): Promise<HealthPermissions> {
@@ -2617,7 +2617,7 @@ export const healthConnect = new HealthConnectService();
 export const getProviderIcon = (): string => '';
 
 export const getConnectionInstructions = (): string[] => [
-  "1. YOROI va demander l'accès à Apple Santé",
+  "1. YOROI va demander l'accès à l'app Santé",
   "2. Autorise l'accès au poids, aux pas, au sommeil et à l'hydratation",
   "3. Tes données seront synchronisées automatiquement",
 ];

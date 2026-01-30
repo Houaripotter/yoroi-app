@@ -134,9 +134,9 @@ export const HealthStatusModal: React.FC<HealthStatusModalProps> = ({
           title: 'Données insuffisantes',
           description: `Les données pour ${metricName} ne sont pas disponibles ou invalides.`,
           advice: [
-            'Vérifie que tu as autorisé l\'accès à Apple Santé',
+            'Vérifie que tu as autorisé l\'accès à l\'app Santé',
             'Assure-toi que tes appareils synchronisent les données',
-            'Consulte les paramètres de confidentialité iOS',
+            'Consulte les paramètres de confidentialité de ton téléphone',
           ],
         };
     }
@@ -164,7 +164,6 @@ export const HealthStatusModal: React.FC<HealthStatusModalProps> = ({
         >
           <View
             style={[styles.modalContainer, { backgroundColor: colors.card }]}
-            onStartShouldSetResponder={() => true}
           >
             {/* Header avec icône et statut */}
             <View style={[styles.header, { backgroundColor: statusInfo.bgColor }]}>

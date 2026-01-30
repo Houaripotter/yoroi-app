@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useRef, useState, useEffect } from 'react';
-import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text } from 'react-native';
+import { View, ScrollView, Dimensions, StyleSheet, NativeScrollEvent, NativeSyntheticEvent, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -57,6 +57,8 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
   const totalTabsWidth = (PAGES.length * (tabWidth + tabGap)) + 32;
   const allTabsFit = totalTabsWidth <= SCREEN_WIDTH;
 
+  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set([0]));
+
   // Naviguer vers l'onglet initial si spécifié
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -64,6 +66,9 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
     if (initialTab) {
       const tabIndex = PAGE_DEFS.findIndex(p => p.id === initialTab);
       if (tabIndex >= 0) {
+        // Marquer comme chargé
+        setLoadedPages(prev => new Set(prev).add(tabIndex));
+        
         timer = setTimeout(() => {
           scrollViewRef.current?.scrollTo({
             x: tabIndex * SCREEN_WIDTH,
@@ -79,12 +84,24 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
     };
   }, [initialTab]);
 
+  // Lazy load pages when scrolling
+  useEffect(() => {
+    setLoadedPages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(currentPage);
+      if (currentPage < PAGES.length - 1) newSet.add(currentPage + 1); // Preload next
+      if (currentPage > 0) newSet.add(currentPage - 1); // Keep previous
+      return newSet;
+    });
+  }, [currentPage]);
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const page = Math.round(offsetX / SCREEN_WIDTH);
     if (page !== currentPage) {
       setCurrentPage(page);
-
+      // ... rest of handleScroll logic
+      
       // Calculer la largeur totale des onglets
       const tabWidth = 44; // Largeur d'un cercle
       const tabGap = 12; // Gap entre onglets
@@ -192,12 +209,19 @@ export const StatsTabViewNew: React.FC<StatsTabViewNewProps> = ({ initialTab }) 
       >
         {PAGES.map((page, index) => {
           const PageComponent = page.component;
+          const shouldRender = loadedPages.has(index);
           return (
             <View key={page.id} style={styles.page}>
-              <ErrorBoundary>
-                {/* @ts-ignore - Some components might not expect the prop */}
-                <PageComponent onNavigateToTab={handleNavigateToTab} />
-              </ErrorBoundary>
+              {shouldRender ? (
+                <ErrorBoundary>
+                  {/* @ts-ignore - Some components might not expect the prop */}
+                  <PageComponent onNavigateToTab={handleNavigateToTab} />
+                </ErrorBoundary>
+              ) : (
+                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                  <ActivityIndicator size="small" color={colors.textMuted} />
+                </View>
+              )}
             </View>
           );
         })}

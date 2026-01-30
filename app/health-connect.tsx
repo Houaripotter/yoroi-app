@@ -93,8 +93,8 @@ export default function HealthConnectScreen() {
         showPopup(
           'Non disponible',
           Platform.OS === 'ios'
-            ? 'Apple Santé n\'est pas disponible sur cet appareil (ex: Simulateur ou iPad ancien) ou le module n\'est pas chargé.'
-            : 'Health Connect n\'est pas disponible sur cet appareil.',
+            ? 'L\'app Santé n\'est pas disponible sur cet appareil (ex: Simulateur ou tablette) ou le module n\'est pas chargé.'
+            : 'Google Health Connect n\'est pas disponible sur cet appareil. Installe-le depuis le Play Store.',
           [{ text: 'J\'ai compris', style: 'primary' }]
         );
         return;
@@ -115,10 +115,12 @@ export default function HealthConnectScreen() {
           case 'USER_DENIED':
             showPopup(
               'Permissions refusées',
-              'Tu as refusé l\'accès à Apple Santé. Pour que YOROI fonctionne, tu dois autoriser l\'accès.\n\nVa dans Réglages > Santé > Partage de données > YOROI et active toutes les permissions.',
+              Platform.OS === 'ios'
+                ? 'Tu as refusé l\'accès à l\'app Santé. Pour que YOROI fonctionne, tu dois autoriser l\'accès.\n\nVa dans Réglages > Santé > Partage de données > YOROI et active toutes les permissions.'
+                : 'Tu as refusé l\'accès à Health Connect. Pour que YOROI fonctionne, tu dois autoriser l\'accès dans les paramètres de l\'app.',
               [
                 { text: 'Annuler', style: 'cancel' },
-                { text: 'Ouvrir Réglages', onPress: () => safeOpenURL('App-Prefs:HEALTH'), style: 'primary' }
+                { text: 'Ouvrir Réglages', onPress: () => Platform.OS === 'ios' ? safeOpenURL('App-Prefs:HEALTH') : Linking.openSettings(), style: 'primary' }
               ]
             );
             break;
@@ -134,7 +136,9 @@ export default function HealthConnectScreen() {
           case 'DEVICE_NOT_SUPPORTED':
             showPopup(
               'Appareil non supporté',
-              'Apple Santé n\'est pas disponible sur cet appareil (iPad ou ancien iPhone).',
+              Platform.OS === 'ios'
+                ? 'L\'app Santé n\'est pas disponible sur cet appareil (tablette ou ancien modèle).'
+                : 'Health Connect n\'est pas disponible sur cet appareil. Vérifie que tu as Android 9 ou supérieur.',
               [{ text: 'J\'ai compris', style: 'primary' }]
             );
             break;

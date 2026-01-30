@@ -179,7 +179,7 @@
     "fastingDescription": "Intermittent fasting tracking",
     "nutrition": "Nutrition",
     "nutritionDescription": "Meal plans",
-    "appleHealth": "Apple Health",
+    "appleHealth": "Health Data",
     "appleHealthDescription": "Sync health data",
     "knowledge": "Knowledge",
     "knowledgeDescription": "Articles and guides",
@@ -257,8 +257,8 @@
     "dataSaved": "Data saved!",
     "weight": "Weight",
     "important": "Important:",
-    "backupReminder": "Backup your data to iCloud so you never lose it!",
-    "backupToCloud": "Backup to iCloud",
+    "backupReminder": "Backup your data to the cloud so you never lose it!",
+    "backupToCloud": "Backup to cloud",
     "later": "Later",
     "cancel": "Cancel",
     "ok": "OK"
@@ -302,7 +302,7 @@
   },
   "healthspan": {
     "healthTrend": "HEALTH TREND",
-    "connectAppleHealth": "Connect Apple Health to track your sleep and stress",
+    "connectAppleHealth": "Connect Health app to track your sleep and stress",
     "sleep": "Sleep",
     "calm": "Calm"
   },
@@ -320,7 +320,7 @@
     "activeCalories": "Active calories (excluding basal metabolism)",
     "noStepsData": "No steps data available",
     "noCaloriesData": "No calories data available",
-    "connectHealth": "Connect Apple Health to see your data"
+    "connectHealth": "Connect Health app to see your data"
   },
   "stats": {
     "title": "Statistics",
@@ -498,7 +498,7 @@
     "units": "Units",
     "unitsDescription": "Kg/Lbs, Cm/Inches",
     "appleHealthDescription": "Sync your health data",
-    "icloudSync": "iCloud Sync",
+    "icloudSync": "Cloud Sync",
     "icloudSyncDescription": "Automatic backup",
     "pdfReport": "PDF Report",
     "pdfReportDescription": "For doctor or coach",
@@ -563,7 +563,7 @@
     "category": "Category",
     "roadmapYoroi": "YOROI Roadmap",
     "featuresInDevelopment": "Features in development",
-    "appleWatchRealtime": "Apple Watch - Real-time tracking",
+    "appleWatchRealtime": "Smartwatch - Real-time tracking",
     "siriMode": "Siri Mode - Voice commands",
     "shareWithCoach": "Share with coach/nutritionist",
     "friendsLeaderboard": "Friends leaderboard",
@@ -598,8 +598,8 @@
     "activation": "Activation",
     "enterActivationCode": "Enter the activation code",
     "validate": "Validate",
-    "icloudSyncComingSoon": "iCloud sync will be available soon.\n\nYour data will be automatically backed up and synced across all your Apple devices.",
-    "icloudSyncTitle": "iCloud Sync",
+    "icloudSyncComingSoon": "Cloud sync will be available soon.\n\nYour data will be automatically backed up and synced across all your devices.",
+    "icloudSyncTitle": "Cloud Sync",
     "exportMyData": "Export my data",
     "chooseExportFormat": "Choose export format",
     "importData": "Import data",
@@ -746,7 +746,7 @@
     "glasses": "glasses",
     "respiratory": "Respiratory",
     "respiratoryRate": "Respiratory rate",
-    "connectAppleHealth": "Connect Apple Health",
+    "connectAppleHealth": "Connect Health App",
     "syncData": "Sync data",
     "lastSync": "Last sync"
   },
@@ -1106,7 +1106,7 @@
     },
     "vitality": {
       "title": "Vitality",
-      "description": "Your Apple Watch data",
+      "description": "Your smartwatch data",
       "recoveryScore": "Recovery Score",
       "recoveryScoreDesc": "Your recovery level based on sleep and HRV",
       "recovery": "RECOVERY",
@@ -1224,7 +1224,7 @@
     },
     "healthMetrics": {
       "title": "Health Metrics",
-      "notConnected": "Apple Health Not Connected",
+      "notConnected": "Health App Not Connected",
       "connect": "Connect",
       "days7": "7 days",
       "days30": "30 days",

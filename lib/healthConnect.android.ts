@@ -194,7 +194,7 @@ class HealthConnectService {
 
   getProviderName(): string {
     if (Platform.OS === 'ios') {
-      return 'Apple Santé';
+      return 'App Santé';
     } else if (Platform.OS === 'android') {
       return 'Health Connect';
     }
@@ -680,7 +680,7 @@ export const getProviderIcon = (): string => {
 export const getConnectionInstructions = (): string[] => {
   if (Platform.OS === 'ios') {
     return [
-      "1. YOROI va demander l'accès à Apple Santé",
+      "1. YOROI va demander l'accès à l'app Santé",
       "2. Autorise l'accès au poids, aux pas et au sommeil",
       "3. Tes données seront synchronisées automatiquement",
     ];

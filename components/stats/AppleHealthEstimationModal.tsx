@@ -1,7 +1,7 @@
 /**
- * AppleHealthEstimationModal.tsx
- * Modal explicative sur les estimations Apple Health
- * Affiche une explication complète sur comment Apple détecte automatiquement le sommeil
+ * HealthEstimationModal.tsx
+ * Modal explicative sur les estimations de l'app Santé
+ * Affiche une explication complète sur comment l'app détecte automatiquement le sommeil
  */
 
 import React from 'react';
@@ -58,7 +58,6 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
         >
           <View
             style={[styles.modalContainer, { backgroundColor: colors.card }]}
-            onStartShouldSetResponder={() => true}
           >
             {/* Header avec gradient */}
             <LinearGradient
@@ -70,7 +69,7 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
               <View style={styles.headerIcon}>
                 <Moon size={32} color="#FFFFFF" strokeWidth={2.5} />
               </View>
-              <Text style={styles.headerTitle}>Estimation Apple Health</Text>
+              <Text style={styles.headerTitle}>Estimation Santé</Text>
               <Text style={styles.headerSubtitle}>
                 Détection automatique du sommeil
               </Text>
@@ -96,18 +95,18 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                   <Brain size={24} color="#6366F1" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Qu'est-ce qu'une estimation Apple ?
+                  Qu'est-ce qu'une estimation automatique ?
                 </Text>
                 <Text style={[styles.sectionText, { color: colors.textMuted }]}>
-                  Apple Health détecte automatiquement ton sommeil même sans Apple Watch,
-                  en analysant plusieurs indicateurs de ton iPhone et de tes habitudes.
+                  L'app Santé détecte automatiquement ton sommeil même sans montre connectée,
+                  en analysant plusieurs indicateurs de ton téléphone et de tes habitudes.
                 </Text>
               </View>
 
               {/* Comment ça marche */}
               <View style={[styles.section, { backgroundColor: colors.background }]}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  Comment Apple détecte ton sommeil ?
+                  Comment ton téléphone détecte ton sommeil ?
                 </Text>
 
                 {/* Capteurs iPhone */}
@@ -120,7 +119,7 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                       Capteurs de mouvement
                     </Text>
                     <Text style={[styles.methodText, { color: colors.textMuted }]}>
-                      L'accéléromètre et le gyroscope de ton iPhone détectent quand tu ne bouges
+                      L'accéléromètre et le gyroscope de ton téléphone détectent quand tu ne bouges
                       plus pendant une période prolongée (typiquement la nuit).
                     </Text>
                   </View>
@@ -136,7 +135,7 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                       Activité de l'écran
                     </Text>
                     <Text style={[styles.methodText, { color: colors.textMuted }]}>
-                      Apple analyse quand tu n'utilises pas ton téléphone. Une longue période
+                      L'app analyse quand tu n'utilises pas ton téléphone. Une longue période
                       d'inactivité nocturne indique que tu dors probablement.
                     </Text>
                   </View>
@@ -153,7 +152,7 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                     </Text>
                     <Text style={[styles.methodText, { color: colors.textMuted }]}>
                       Si tu actives le mode "Ne pas déranger" ou "Sommeil" programmé,
-                      Apple l'utilise pour détecter tes heures de coucher et réveil.
+                      l'app l'utilise pour détecter tes heures de coucher et réveil.
                     </Text>
                   </View>
                 </View>
@@ -168,7 +167,7 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                       Apprentissage de tes habitudes
                     </Text>
                     <Text style={[styles.methodText, { color: colors.textMuted }]}>
-                      Avec le temps, Apple apprend tes routines de sommeil et affine ses
+                      Avec le temps, l'app apprend tes routines de sommeil et affine ses
                       estimations en fonction de tes horaires habituels.
                     </Text>
                   </View>
@@ -181,9 +180,9 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                   Quelle est la précision ?
                 </Text>
                 <Text style={[styles.sectionText, { color: colors.textMuted }]}>
-                  Les estimations Apple sont <Text style={{ fontWeight: '700' }}>assez fiables</Text> pour
+                  Les estimations automatiques sont <Text style={{ fontWeight: '700' }}>assez fiables</Text> pour
                   détecter <Text style={{ fontWeight: '700' }}>les périodes de sommeil</Text>, mais moins
-                  précises qu'une Apple Watch qui mesure:
+                  précises qu'une montre connectée qui mesure:
                 </Text>
 
                 <View style={styles.comparisonList}>
@@ -220,8 +219,8 @@ export const AppleHealthEstimationModal: React.FC<AppleHealthEstimationModalProp
                   💡 Bon à savoir
                 </Text>
                 <Text style={[styles.importantText, { color: isDark ? '#FDE68A' : '#78350F' }]}>
-                  Pour obtenir des données plus précises, utilise une Apple Watch ou configure
-                  manuellement tes heures de sommeil dans l'app Santé d'Apple.
+                  Pour obtenir des données plus précises, utilise une montre connectée ou configure
+                  manuellement tes heures de sommeil dans l'app Santé de ton téléphone.
                 </Text>
               </View>
 

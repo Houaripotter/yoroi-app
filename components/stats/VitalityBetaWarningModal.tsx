@@ -66,7 +66,6 @@ export const VitalityBetaWarningModal: React.FC<VitalityBetaWarningModalProps> =
         >
           <View
             style={[styles.modalContainer, { backgroundColor: colors.card }]}
-            onStartShouldSetResponder={() => true}
           >
             {/* Header avec icône alerte */}
             <LinearGradient
