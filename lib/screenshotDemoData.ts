@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDatabase, addWeight, addMeasurementRecord, addTraining, resetDatabase, openDatabase } from './database';
 import { format, subDays, addDays } from 'date-fns';
 import logger from '@/lib/security/logger';
-import { createBenchmark, addBenchmarkEntry, createSkill } from './carnetService';
+import { createBenchmark, addBenchmarkEntry, createSkill, resetCarnet } from './carnetService';
 import type { BenchmarkCategory, BenchmarkUnit, SkillCategory, SkillStatus } from './carnetService';
 
 // ============================================
@@ -1815,11 +1815,18 @@ const generateJournalEntries = async () => {
 // FONCTION PRINCIPALE : CHARGER LES DONNÉES
 // ============================================
 export const generateScreenshotDemoData = async (): Promise<{ success: boolean; error?: string }> => {
+  let currentStep = 'init';
   try {
     logger.info('Génération du mode Germain Del Jarret (Screenshot)...');
 
     // 1. Initialiser la base de données
+    currentStep = '1. initDatabase';
     await initDatabase();
+
+    // 1a. Reset complet de la base pour éviter les conflits
+    currentStep = '1a. resetDatabase';
+    await resetDatabase();
+
     const database = await openDatabase();
 
     // 1b. Forcer les migrations critiques pour trainings
@@ -1843,9 +1850,10 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info('Migrations trainings vérifiées');
 
     // 2. Sauvegarder le profil dans AsyncStorage
+    currentStep = '2. profil AsyncStorage';
     await AsyncStorage.removeItem('@yoroi_user_name');
     await AsyncStorage.removeItem('@yoroi_user_settings');
-    
+
     await AsyncStorage.setItem('@yoroi_user_name', DEMO_PROFILE.name);
     await AsyncStorage.setItem('@yoroi_user_height', DEMO_PROFILE.height_cm.toString());
     await AsyncStorage.setItem('@yoroi_start_weight', DEMO_PROFILE.start_weight.toString());
@@ -1854,6 +1862,7 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     await AsyncStorage.setItem('@yoroi_user_mode', DEMO_PROFILE.mode);
 
     // 2b. Sauvegarder le profil dans la base de données SQLite
+    currentStep = '2b. profil SQLite';
     const startDate = format(DEMO_PROFILE.startDate, 'yyyy-MM-dd');
     await database.runAsync(`DELETE FROM profile`);
     await database.runAsync(
@@ -1908,6 +1917,7 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info(`Profil créé: ${DEMO_PROFILE.name}`);
 
     // 3. Générer et insérer les pesées avec composition corporelle complète
+    currentStep = '3. pesées';
     logger.info('Génération des pesées...');
     const weights = generateWeights();
     for (const w of weights) {
@@ -1927,6 +1937,7 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info(`${weights.length} pesées ajoutées avec composition corporelle complète`);
 
     // 4. Générer et insérer les mensurations
+    currentStep = '4. mensurations';
     logger.info('📏 Génération des mensurations...');
     const measurements = generateMeasurements();
     for (const m of measurements) {
@@ -1947,23 +1958,28 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info(`${measurements.length} mensurations ajoutées`);
 
     // 5. Créer les clubs avec logos
+    currentStep = '5. clubs';
     logger.info('🏢 Création des clubs avec logos...');
     const clubIds = await createClubs();
 
     // 6. Générer et insérer les entraînements
+    currentStep = '6. entraînements';
     logger.info('Génération des entraînements...');
     const trainingsCount = await generateTrainings(clubIds);
     logger.info(`${trainingsCount} entraînements ajoutés`);
 
     // 7. Générer le planning hebdomadaire
+    currentStep = '7. planning';
     logger.info('Génération du planning hebdomadaire...');
     await generateWeeklyPlan(clubIds);
 
     // 8. Générer les photos de transformation
+    currentStep = '8. photos';
     logger.info('📸 Génération des photos...');
     await generatePhotos();
 
     // 9. Générer les données de sommeil
+    currentStep = '9. sommeil';
     logger.info('😴 Génération des données de sommeil...');
     const sleepEntries = generateSleepData();
     await AsyncStorage.setItem('@yoroi_sleep_entries', JSON.stringify(sleepEntries));
@@ -1971,24 +1987,28 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info(`${sleepEntries.length} nuits de sommeil ajoutées`);
 
     // 10. Générer l'hydratation
+    currentStep = '10. hydratation';
     logger.info('💧 Génération de l\'hydratation...');
     await generateHydrationData();
     await AsyncStorage.setItem('@yoroi_hydration_goal', '2500'); // 2.5L
     logger.info('Données d\'hydratation ajoutées');
 
     // 11. Débloquer les badges
+    currentStep = '11. badges';
     logger.info('Déblocage des badges...');
     const badges = generateUnlockedBadges();
     await AsyncStorage.setItem('@yoroi_unlocked_badges', JSON.stringify(badges));
     logger.info(`${badges.length} badges débloqués`);
 
     // 12. Sauvegarder les blessures
+    currentStep = '12. blessures';
     logger.info('🏥 Génération des blessures...');
     const injuries = generateInjuries();
     await AsyncStorage.setItem('@yoroi_injuries', JSON.stringify(injuries));
     logger.info(`${injuries.length} blessures ajoutées`);
 
     // 13. Sauvegarder la charge d'entraînement (format quotidien pour le graphique)
+    currentStep = '13. charge';
     logger.info('Génération de la charge d\'entraînement...');
     const trainingLoads = generateTrainingLoads();
     await AsyncStorage.setItem('@yoroi_training_loads', JSON.stringify(trainingLoads)); // Clé avec 's' pour le service
@@ -1997,49 +2017,61 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     logger.info(`${trainingLoads.length} charges quotidiennes + ${trainingLoad.length} semaines ajoutées`);
 
     // 14. Sauvegarder les données de batterie
+    currentStep = '14. batterie';
     logger.info('🔋 Génération des données de batterie...');
     const batteryData = generateBatteryData();
     await AsyncStorage.setItem('@yoroi_battery_history', JSON.stringify(batteryData));
     logger.info(`${batteryData.length} jours de batterie ajoutés`);
 
     // 15. Générer les compétitions à venir
+    currentStep = '15. compétitions';
     logger.info('Génération des compétitions...');
     await generateCompetitions();
 
     // 16. Générer les données temps réel pour l'accueil
+    currentStep = '16. données accueil';
     logger.info('Génération des données temps réel...');
     await generateTodayData();
 
     // 17. Générer les données du Carnet d'Entraînement
+    currentStep = '17. carnet';
     logger.info('📓 Génération du Carnet d\'Entraînement...');
+    await resetCarnet(); // Clear existing benchmarks/skills first
     const carnetCount = await generateCarnetData();
     logger.info(`${carnetCount} éléments ajoutés au carnet`);
 
     // 18. Générer les avatars débloqués
+    currentStep = '18. avatars';
     logger.info('🎭 Génération des avatars...');
     await generateAvatars();
 
     // 19. Générer les données Apple Health complètes
+    currentStep = '19. apple health';
     logger.info('❤️ Génération des données Apple Health...');
     await generateAppleHealthData();
 
     // 20. Générer le palmares
+    currentStep = '20. palmares';
     logger.info('🏆 Génération du palmares...');
     await generatePalmares();
 
     // 21. Générer les défis et quêtes
+    currentStep = '21. défis/quêtes';
     logger.info('⚔️ Génération des défis et quêtes...');
     await generateChallengesAndQuests();
 
     // 22. Générer les données de jeûne
+    currentStep = '22. jeûne';
     logger.info('🍽️ Génération du jeûne intermittent...');
     await generateFastingData();
 
     // 23. Générer l'historique du timer
+    currentStep = '23. timer';
     logger.info('⏱️ Génération de l\'historique timer...');
     await generateTimerHistory();
 
     // 24. Définir des objectifs et paramètres - 6 MOIS DE DONNÉES!
+    currentStep = '24. objectifs';
     await AsyncStorage.setItem('@yoroi_steps_goal', '10000');
     await AsyncStorage.setItem('@yoroi_calories_goal', '600');
     await AsyncStorage.setItem('@yoroi_distance_goal', '8.0');
@@ -2060,10 +2092,12 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
     }));
 
     // 25. Générer les entrées du Journal (Humeur/Notes)
+    currentStep = '25. journal humeur';
     logger.info('📔 Génération du Journal (Humeur)...');
     await generateJournalEntries();
 
     // 26. Activer le mode screenshot
+    currentStep = '26. finalisation';
     await AsyncStorage.setItem('@yoroi_screenshot_mode', 'true');
 
     logger.info('Mode Screenshot activé avec succès !');
@@ -2110,10 +2144,10 @@ export const generateScreenshotDemoData = async (): Promise<{ success: boolean; 
       success: true,
     };
   } catch (error) {
-    logger.error('❌ Erreur lors de la génération Germain:', error);
+    logger.error(`❌ Erreur à l'étape ${currentStep}:`, error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Erreur inconnue',
+      error: `Erreur étape ${currentStep}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
     };
   }
 };
