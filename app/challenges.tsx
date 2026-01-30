@@ -247,12 +247,19 @@ export default function ChallengesScreen() {
                   {!isExpanded ? (
                     <View style={styles.hintRow}>
                       <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                        Appuie pour voir les détails
+                        {isCompleted ? 'Complété ✓' : progress > 0 ? `En cours (${Math.round(progress)}%)` : 'Appuie pour voir les détails'}
                       </Text>
                       <ChevronDown size={12} color={colors.textMuted} />
                     </View>
                   ) : (
-                    <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
+                    <>
+                      <Text style={[styles.challengeDesc, { color: colors.textMuted }]}>{challenge.description}</Text>
+                      {!isCompleted && (
+                        <Text style={[styles.validateHint, { color: colors.accent }]}>
+                          💡 Reste appuyé sur "Valider" pour compléter
+                        </Text>
+                      )}
+                    </>
                   )}
                 </View>
               </View>
@@ -376,5 +383,6 @@ const styles = StyleSheet.create({
   hintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   hintText: { fontSize: 11, fontStyle: 'italic' },
   collapseHint: { alignItems: 'center', marginTop: 8 },
+  validateHint: { fontSize: 10, fontStyle: 'italic', marginTop: 6 },
 });
 

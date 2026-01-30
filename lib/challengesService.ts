@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import logger from '@/lib/security/logger';
+import { getDailyHydration } from '@/lib/quests';
 
 // ============================================
 // TYPES
@@ -321,9 +322,32 @@ export const getActiveChallenges = async (): Promise<ActiveChallenge[]> => {
 };
 
 /**
- * Récupère les défis quotidiens
+ * Synchronise l'hydratation avec le défi correspondant
+ */
+export const syncHydrationChallenge = async (): Promise<void> => {
+  try {
+    // Récupérer l'hydratation du jour (en litres)
+    const hydrationLiters = await getDailyHydration();
+    // Convertir en ml (le défi utilise des ml)
+    const hydrationMl = Math.round(hydrationLiters * 1000);
+
+    // Mettre à jour la progression du défi d'hydratation
+    const hydrationChallenge = DAILY_CHALLENGES.find(c => c.id === 'daily_hydration');
+    if (hydrationChallenge) {
+      await updateChallengeProgress('daily_hydration', hydrationMl, hydrationChallenge.target);
+    }
+  } catch (error) {
+    logger.error('Erreur sync hydratation défi:', error);
+  }
+};
+
+/**
+ * Récupère les défis quotidiens (synchronise l'hydratation automatiquement)
  */
 export const getDailyChallenges = async (): Promise<ActiveChallenge[]> => {
+  // Synchroniser l'hydratation avant de récupérer les défis
+  await syncHydrationChallenge();
+
   const all = await getActiveChallenges();
   return all.filter(c => c.type === 'daily');
 };
@@ -387,5 +411,6 @@ export default {
   getWeeklyChallenges,
   getTotalChallengeXP,
   resetDailyChallenges,
+  syncHydrationChallenge,
 };
 
