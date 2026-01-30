@@ -476,7 +476,7 @@ export default function HealthConnectScreen() {
           onPress={async () => {
             Alert.alert(
               'RÉINITIALISER SANTÉ',
-              'Si la popup l'app Santé ne s\'affiche pas, cela va forcer l\'app à oublier l\'ancienne connexion. Continuer ?',
+              "Si la popup de l'app Santé ne s'affiche pas, cela va forcer l'app à oublier l'ancienne connexion. Continuer ?",
               [
                 { text: 'Annuler', style: 'cancel' },
                 { 
