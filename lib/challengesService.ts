@@ -241,6 +241,36 @@ export const updateChallengeProgress = async (
 };
 
 /**
+ * Valide manuellement un défi (le marque comme complété)
+ */
+export const manualCompleteChallenge = async (challengeId: string): Promise<boolean> => {
+  try {
+    const challenge = ALL_CHALLENGES.find(c => c.id === challengeId);
+    if (!challenge) return false;
+
+    const progress = await getChallengeProgress();
+
+    // Si déjà complété, ne rien faire
+    if (progress[challengeId]?.completed) return true;
+
+    progress[challengeId] = {
+      challengeId,
+      current: challenge.target,
+      target: challenge.target,
+      completed: true,
+      completedAt: new Date().toISOString(),
+      claimed: false,
+    };
+
+    await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_PROGRESS, JSON.stringify(progress));
+    return true;
+  } catch (error) {
+    logger.error('Erreur validation manuelle défi:', error);
+    return false;
+  }
+};
+
+/**
  * Réclame la récompense d'un défi
  */
 export const claimChallengeReward = async (challengeId: string): Promise<number> => {
@@ -350,6 +380,7 @@ export default {
   ALL_CHALLENGES,
   getChallengeProgress,
   updateChallengeProgress,
+  manualCompleteChallenge,
   claimChallengeReward,
   getActiveChallenges,
   getDailyChallenges,

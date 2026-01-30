@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -37,6 +37,7 @@ import {
   getWeeklyChallenges,
   MONTHLY_CHALLENGES,
   claimChallengeReward,
+  manualCompleteChallenge,
   getTotalChallengeXP,
   ActiveChallenge,
 } from '@/lib/challengesService';
@@ -99,11 +100,11 @@ export default function ChallengesScreen() {
 
     notificationAsync(NotificationFeedbackType.Success);
     const xp = await claimChallengeReward(challenge.id);
-    
+
     if (xp > 0) {
       setCompletedChallengeId(challenge.id);
       setConfettiVisible(true);
-      
+
       // Popup après l'animation
       setTimeout(() => {
         showPopup(
@@ -112,7 +113,21 @@ export default function ChallengesScreen() {
           [{ text: 'Super !', style: 'primary' }]
         );
       }, 500);
-      
+
+      loadData();
+    }
+  };
+
+  // Valider manuellement un défi
+  const handleValidate = async (challenge: ActiveChallenge) => {
+    if (challenge?.progress?.completed) return;
+
+    impactAsync(ImpactFeedbackStyle.Medium);
+    const success = await manualCompleteChallenge(challenge.id);
+
+    if (success) {
+      setCompletedChallengeId(challenge.id);
+      setConfettiVisible(true);
       loadData();
     }
   };
@@ -233,7 +248,7 @@ export default function ChallengesScreen() {
                 </View>
 
                 {isCompleted && !isClaimed ? (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.claimBtn, { backgroundColor: colors.success }]}
                     onPress={() => handleClaim(challenge)}
                   >
@@ -246,10 +261,13 @@ export default function ChallengesScreen() {
                     <Text style={[styles.completedText, { color: colors.success }]}>Complété</Text>
                   </View>
                 ) : (
-                  <View style={[styles.pendingBadge, { backgroundColor: colors.border }]}>
-                    <Clock size={12} color={colors.textMuted} />
-                    <Text style={[styles.pendingText, { color: colors.textMuted }]}>En cours</Text>
-                  </View>
+                  <TouchableOpacity
+                    style={[styles.validateBtn, { backgroundColor: colors.accent }]}
+                    onPress={() => handleValidate(challenge)}
+                  >
+                    <CheckCircle2 size={14} color={colors.textOnGold} />
+                    <Text style={[styles.validateBtnText, { color: colors.textOnGold }]}>Valider</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
@@ -305,5 +323,8 @@ const styles = StyleSheet.create({
 
   pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   pendingText: { fontSize: 11, fontWeight: '600' },
+
+  validateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10 },
+  validateBtnText: { fontSize: 12, fontWeight: '700' },
 });
 
