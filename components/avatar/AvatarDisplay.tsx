@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 85, height: 85 }, // Même taille que la photo de profil
+  sm: { width: 100, height: 100 }, // Taille pour le cercle du header (remplit le parent de 105x105)
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
@@ -128,10 +128,10 @@ export default function AvatarDisplay({
       <View style={containerStyle}>
         <Image
           source={imageSource}
-          // Pour sm: montrer le personnage complet (dézoomé)
+          // Pour sm: image plus petite pour voir le personnage EN ENTIER (pas coupé)
           // Pour autres: 85% standard
           style={isSmall
-            ? { width: '95%', height: '95%' } // Personnage complet visible dans le cercle
+            ? { width: '60%', height: '90%' } // Personnage complet visible (dézoomé)
             : { width: '85%', height: '85%' }
           }
           resizeMode="contain"
