@@ -36,7 +36,7 @@ export interface AvatarDisplayProps {
 // ============================================================================
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number }> = {
-  sm: { width: 65, height: 65 }, // Petite taille pour header (plus petit que photo profil 85x85)
+  sm: { width: 85, height: 85 }, // Même taille que la photo de profil
   md: { width: 120, height: 180 },
   lg: { width: 160, height: 240 },
   xl: { width: 200, height: 300 },
@@ -100,10 +100,10 @@ export default function AvatarDisplay({
       styles.container,
       dimensions,
       isSmall ? {
-        // Taille sm: fond visible avec bordure subtile
-        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-        borderWidth: 2,
-        borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+        // Taille sm: fond clair avec bordure visible
+        backgroundColor: '#FFFFFF',
+        borderWidth: 3,
+        borderColor: isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.2)',
         borderRadius: borderRadius,
       } : {
         // Autres tailles: style complet
