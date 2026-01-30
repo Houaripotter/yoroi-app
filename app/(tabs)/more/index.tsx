@@ -783,7 +783,7 @@ export default function MoreScreen() {
   const handlePurgeData = async () => {
     Alert.alert(
       '🔥 NETTOYAGE TOTAL',
-      'Ceci va supprimer TOUTES les données de démo (Germain Del Jarret) et réinitialiser l\'application pour une synchronisation propre avec l'app Santé. Continuer ?',
+      "Ceci va supprimer TOUTES les données de démo (Germain Del Jarret) et réinitialiser l'application pour une synchronisation propre avec l'app Santé. Continuer ?",
       [
         { text: 'Annuler', style: 'cancel' },
         { 
@@ -793,7 +793,7 @@ export default function MoreScreen() {
             const result = await clearScreenshotDemoData();
             if (result.success) {
               setCreatorModeActive(false);
-              showPopup('Succès', 'Application nettoyée. Redémarre l\'app pour synchroniser tes vraies données l'app Santé.', [{ text: 'OK', style: 'primary' }]);
+              showPopup('Succès', "Application nettoyée. Redémarre l'app pour synchroniser tes vraies données avec l'app Santé.", [{ text: 'OK', style: 'primary' }]);
             }
           }
         }
