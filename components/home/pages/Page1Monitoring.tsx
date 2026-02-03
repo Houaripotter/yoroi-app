@@ -1164,109 +1164,109 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       nestedScrollEnabled={true}
     >
       {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* HEADER ÉLÉGANT - Photo avec icône + Avatar avec progression */}
+      {/* HEADER PROPRE - Cercles identiques bien alignés */}
       {/* ═══════════════════════════════════════════════════════════════ */}
-      <View style={[styles.headerElegant, { paddingTop: 55 }]}>
-        {/* Row: Photo + Texte + Avatar */}
-        <View style={styles.headerRow}>
+      <View style={styles.headerClean}>
+        {/* Row principale - Bien alignée aux bords */}
+        <View style={styles.headerRowClean}>
 
-          {/* Photo de profil avec icône "profil" */}
+          {/* GAUCHE - Photo de profil (sous l'heure) */}
           <TouchableOpacity
             onPress={() => router.push('/profile')}
             activeOpacity={0.8}
-            style={styles.profileTouchable}
+            style={styles.leftSection}
           >
-            <View style={[styles.profileCircleOuter, { borderColor: colors.accent }]}>
+            <View style={[styles.circleFrame, { borderColor: colors.accent }]}>
               {profilePhoto ? (
-                <Image source={{ uri: profilePhoto }} style={styles.profileCircleImg} />
+                <Image source={{ uri: profilePhoto }} style={styles.circleImg} />
               ) : (
-                <View style={[styles.profileCirclePlaceholder, { backgroundColor: `${colors.accent}15` }]}>
-                  <Ionicons name="person" size={36} color={colors.accent} />
+                <View style={[styles.circlePlaceholderClean, { backgroundColor: `${colors.accent}10` }]}>
+                  <Ionicons name="person" size={44} color={colors.accent} />
                 </View>
               )}
             </View>
-            {/* Icône Mon Profil */}
-            <View style={[styles.profileIconBadge, { backgroundColor: colors.accent }]}>
-              <User size={12} color="#FFFFFF" strokeWidth={2.5} />
+            {/* Badge icône profil */}
+            <View style={[styles.badgeIcon, { backgroundColor: colors.accent }]}>
+              <User size={14} color="#FFFFFF" strokeWidth={2.5} />
             </View>
           </TouchableOpacity>
 
-          {/* Texte au centre */}
-          <View style={styles.headerTextCenter}>
-            <Text style={[styles.greetingSimple, { color: colors.textMuted }]}>
+          {/* CENTRE - Texte */}
+          <View style={styles.centerSection}>
+            <Text style={[styles.greetingClean, { color: colors.textMuted }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.userNameSimple, { color: colors.textPrimary }]}>
+            <Text style={[styles.nameClean, { color: colors.textPrimary }]}>
               {userName}
             </Text>
           </View>
 
-          {/* Avatar avec barre de progression circulaire + rang */}
+          {/* DROITE - Avatar avec progression (sous la batterie) */}
           <TouchableOpacity
             onPress={() => {
               impactAsync(ImpactFeedbackStyle.Light);
               router.push('/avatar-customization');
             }}
             activeOpacity={0.8}
-            style={styles.avatarSection}
+            style={styles.rightSection}
           >
-            {/* Container avatar avec progression */}
-            <View style={styles.avatarProgressWrapper}>
+            <View style={styles.avatarWithProgress}>
               {/* Cercle de progression SVG */}
-              <Svg width={90} height={90} style={styles.progressRing}>
-                {/* Fond du cercle */}
+              <Svg width={100} height={100} style={styles.progressSvg}>
+                {/* Fond */}
                 <Circle
-                  cx={45}
-                  cy={45}
-                  r={40}
-                  stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}
+                  cx={50}
+                  cy={50}
+                  r={46}
+                  stroke={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'}
                   strokeWidth={4}
                   fill="transparent"
                 />
-                {/* Progression (niveau sur 100) */}
+                {/* Progression */}
                 <Circle
-                  cx={45}
-                  cy={45}
-                  r={40}
+                  cx={50}
+                  cy={50}
+                  r={46}
                   stroke={colors.accent}
                   strokeWidth={4}
                   fill="transparent"
-                  strokeDasharray={`${(level / 100) * 251} 251`}
+                  strokeDasharray={`${(level / 100) * 289} 289`}
                   strokeDashoffset={0}
                   strokeLinecap="round"
-                  transform="rotate(-90 45 45)"
+                  transform="rotate(-90 50 50)"
                 />
               </Svg>
-              {/* Avatar au centre */}
-              <View style={[styles.avatarInnerBg, { backgroundColor: colors.backgroundCard }]}>
+              {/* Avatar centre */}
+              <View style={[styles.avatarCenter, { backgroundColor: colors.backgroundCard }]}>
                 {avatarImageUri ? (
-                  <Image source={{ uri: avatarImageUri }} style={styles.avatarInnerImg} />
+                  <Image source={{ uri: avatarImageUri }} style={styles.avatarImg} />
                 ) : (
-                  <Ionicons name="person" size={32} color={colors.accent} />
+                  <Ionicons name="person" size={44} color={colors.accent} />
                 )}
               </View>
               {/* Badge niveau */}
-              <View style={[styles.levelBadgeNew, { backgroundColor: colors.accent }]}>
-                <Text style={styles.levelBadgeTextNew}>{level}</Text>
+              <View style={[styles.levelBadge, { backgroundColor: colors.accent }]}>
+                <Text style={styles.levelText}>{level}</Text>
               </View>
             </View>
-            {/* Rang sous l'avatar */}
-            <Text style={[styles.rankText, { color: rankColor || colors.accent }]}>
-              {rankName}
-            </Text>
+            {/* Rang - Style élégant discret */}
+            <View style={[styles.rankBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]}>
+              <Trophy size={10} color={colors.textMuted} />
+              <Text style={[styles.rankLabel, { color: colors.textMuted }]}>
+                {rankName}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
-        {/* Citation du jour */}
-        <View style={[styles.quoteCard, {
-          backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-          borderColor: isDark ? colors.border : `${colors.accent}15`,
+        {/* Citation - Style Nuage simple */}
+        <View style={[styles.quoteCloud, {
+          backgroundColor: isDark ? colors.backgroundCard : '#F5F5F5',
         }]}>
-          <View style={[styles.quoteAccent, { backgroundColor: colors.accent }]} />
-          <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
+          <Text style={[styles.quoteCloudText, { color: colors.textPrimary }]}>
             "{dailyQuote || 'Chaque jour est une nouvelle chance de devenir meilleur.'}"
           </Text>
-          <Text style={[styles.quoteLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.quoteCloudLabel, { color: colors.textMuted }]}>
             Citation du jour
           </Text>
         </View>
@@ -1855,52 +1855,53 @@ const styles = StyleSheet.create({
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // HEADER ÉLÉGANT - Photo avec icône + Avatar avec progression
+  // HEADER PROPRE - Cercles identiques bien alignés
   // ═══════════════════════════════════════════════════════════════
-  headerElegant: {
+  headerClean: {
+    paddingTop: 55,
+    paddingHorizontal: 0,
     marginBottom: 12,
-    paddingHorizontal: CARD_PADDING,
   },
-  headerRow: {
+  headerRowClean: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
 
-  // Photo de profil
-  profileTouchable: {
+  // GAUCHE - Photo de profil
+  leftSection: {
     position: 'relative',
+    alignItems: 'center',
   },
-  profileCircleOuter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  circleFrame: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     borderWidth: 3,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
-  profileCircleImg: {
+  circleImg: {
     width: '100%',
     height: '100%',
-    borderRadius: 37,
   },
-  profileCirclePlaceholder: {
+  circlePlaceholderClean: {
     width: '100%',
     height: '100%',
-    borderRadius: 37,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  profileIconBadge: {
+  badgeIcon: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1909,59 +1910,59 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // Texte centre
-  headerTextCenter: {
+  // CENTRE - Texte
+  centerSection: {
     flex: 1,
     marginHorizontal: 12,
-    paddingTop: 12,
+    paddingTop: 18,
   },
-  greetingSimple: {
+  greetingClean: {
     fontSize: 14,
     fontWeight: '600',
   },
-  userNameSimple: {
-    fontSize: 22,
+  nameClean: {
+    fontSize: 24,
     fontWeight: '800',
     marginTop: 2,
   },
 
-  // Avatar avec progression circulaire
-  avatarSection: {
+  // DROITE - Avatar avec progression
+  rightSection: {
     alignItems: 'center',
   },
-  avatarProgressWrapper: {
-    width: 90,
-    height: 90,
+  avatarWithProgress: {
+    width: 100,
+    height: 100,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  progressRing: {
+  progressSvg: {
     position: 'absolute',
   },
-  avatarInnerBg: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+  avatarCenter: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
-  avatarInnerImg: {
-    width: 55,
-    height: 65,
+  avatarImg: {
+    width: 62,
+    height: 74,
     resizeMode: 'contain',
   },
-  levelBadgeNew: {
+  levelBadge: {
     position: 'absolute',
     bottom: 2,
     right: 2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1969,53 +1970,45 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  levelBadgeTextNew: {
+  levelText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
   },
-  rankText: {
+  rankBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginTop: 6,
+    gap: 4,
+  },
+  rankLabel: {
     fontSize: 11,
-    fontWeight: '700',
-    marginTop: 4,
-    textAlign: 'center',
+    fontWeight: '600',
   },
 
-  // Citation
-  quoteCard: {
+  // Citation - Style Nuage
+  quoteCloud: {
     marginTop: 16,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    position: 'relative',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    marginHorizontal: CARD_PADDING,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
   },
-  quoteAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
-  },
-  quoteText: {
+  quoteCloudText: {
     fontSize: 14,
     fontWeight: '500',
     fontStyle: 'italic',
     lineHeight: 20,
-    paddingLeft: 10,
+    textAlign: 'center',
   },
-  quoteLabel: {
+  quoteCloudLabel: {
     fontSize: 9,
     fontWeight: '700',
     marginTop: 8,
-    paddingLeft: 10,
+    textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

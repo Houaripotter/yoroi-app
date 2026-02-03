@@ -1,437 +1,68 @@
 [
-  {
-    "id": "ibjjf_euro_2026",
-    "title": "IBJJF European Championship 2026",
-    "date_start": "2026-01-18",
-    "location": {
-      "city": "Lisbon",
-      "country": "Portugal",
-      "full_address": "Altice Arena, Rossio dos Olivais, 1990-231 Lisboa, Portugal"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ibjjf.com/events/european-championship-2026",
-    "federation": "IBJJF",
-    "image_logo_url": "https://ibjjf.com/wp-content/uploads/2021/01/ibjjf-logo.png"
-  },
-  {
-    "id": "ajp_abu_dhabi_world_pro_2026",
-    "title": "AJP Abu Dhabi World Pro 2026",
-    "date_start": "2026-04-05",
-    "location": {
-      "city": "Abu Dhabi",
-      "country": "United Arab Emirates",
-      "full_address": "Mubadala Arena, Zayed Sports City, Abu Dhabi"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ajptour.com/en/events",
-    "federation": "AJP",
-    "image_logo_url": "https://ajptour.com/images/logo-ajp.svg"
-  },
-  {
-    "id": "ibjjf_london_open_2026",
-    "title": "IBJJF London International Open 2026",
-    "date_start": "2026-02-22",
-    "location": {
-      "city": "London",
-      "country": "United Kingdom",
-      "full_address": "Crystal Palace National Sports Centre, London SE19 2BB"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ibjjf.com/events/london-international-open-2026",
-    "federation": "IBJJF",
-    "image_logo_url": "https://ibjjf.com/wp-content/uploads/2021/01/ibjjf-logo.png"
-  },
-  {
-    "id": "ajp_rome_pro_2026",
-    "title": "AJP Tour Rome International Pro 2026",
-    "date_start": "2026-03-08",
-    "location": {
-      "city": "Rome",
-      "country": "Italy",
-      "full_address": "PalaLottomatica, Piazzale dello Sport, 00144 Roma"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ajptour.com/en/events",
-    "federation": "AJP",
-    "image_logo_url": "https://ajptour.com/images/logo-ajp.svg"
-  },
-  {
-    "id": "ajp_amsterdam_pro_2026",
-    "title": "AJP Tour Amsterdam International Pro 2026",
-    "date_start": "2026-05-16",
-    "location": {
-      "city": "Amsterdam",
-      "country": "Netherlands",
-      "full_address": "Ziggo Dome, De Passage 100, 1101 AX Amsterdam"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ajptour.com/en/events",
-    "federation": "AJP",
-    "image_logo_url": "https://ajptour.com/images/logo-ajp.svg"
-  },
-  {
-    "id": "ajp_madrid_pro_2026",
-    "title": "AJP Tour Madrid International Pro 2026",
-    "date_start": "2026-06-21",
-    "location": {
-      "city": "Madrid",
-      "country": "Spain",
-      "full_address": "WiZink Center, Avenida de Felipe II, 28009 Madrid"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ajptour.com/en/events",
-    "federation": "AJP",
-    "image_logo_url": "https://ajptour.com/images/logo-ajp.svg"
-  },
-  {
-    "id": "ibjjf_munich_open_2026",
-    "title": "IBJJF Munich International Open 2026",
-    "date_start": "2026-04-19",
-    "location": {
-      "city": "Munich",
-      "country": "Germany",
-      "full_address": "Olympiahalle München, Spiridon-Louis-Ring 21, 80809 München"
-    },
-    "category": "combat",
-    "sport_tag": "jjb",
-    "registration_link": "https://ibjjf.com/events/munich-open-2026",
-    "federation": "IBJJF",
-    "image_logo_url": "https://ibjjf.com/wp-content/uploads/2021/01/ibjjf-logo.png"
-  },
-  {
-    "id": "grappling_industries_london_2026",
-    "title": "Grappling Industries London 2026",
-    "date_start": "2026-03-29",
-    "location": {
-      "city": "London",
-      "country": "United Kingdom",
-      "full_address": "Excel London, Royal Victoria Dock, 1 Western Gateway, London E16 1XL"
-    },
-    "category": "combat",
-    "sport_tag": "grappling",
-    "registration_link": "https://grapplingindustries.com/events/",
-    "federation": "Grappling Industries",
-    "image_logo_url": "https://grapplingindustries.com/wp-content/uploads/2020/01/GI-Logo.png"
-  },
-  {
-    "id": "adcc_euro_trials_2026",
-    "title": "ADCC European Trials 2026",
-    "date_start": "2026-03-15",
-    "location": {
-      "city": "Warsaw",
-      "country": "Poland",
-      "full_address": "Torwar Hall, Łazienkowska 6A, 00-449 Warszawa"
-    },
-    "category": "combat",
-    "sport_tag": "grappling",
-    "registration_link": "https://adcombat.com/events/",
-    "federation": "ADCC",
-    "image_logo_url": "https://adcombat.com/wp-content/uploads/2020/01/adcc-logo.png"
-  },
-  {
-    "id": "naga_uk_2026",
-    "title": "NAGA UK Championship 2026",
-    "date_start": "2026-05-03",
-    "location": {
-      "city": "Birmingham",
-      "country": "United Kingdom",
-      "full_address": "NEC Birmingham, North Avenue, Marston Green, Birmingham B40 1NT"
-    },
-    "category": "combat",
-    "sport_tag": "grappling",
-    "registration_link": "https://nagafighter.com/",
-    "federation": "NAGA",
-    "image_logo_url": "https://nagafighter.com/images/naga-logo.png"
-  },
-  {
-    "id": "hyrox_london_2026",
-    "title": "HYROX London 2026",
-    "date_start": "2026-01-25",
-    "location": {
-      "city": "London",
-      "country": "United Kingdom",
-      "full_address": "Excel London, Royal Victoria Dock, 1 Western Gateway, London E16 1XL"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/london/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_berlin_2026",
-    "title": "HYROX Berlin 2026",
-    "date_start": "2026-02-15",
-    "location": {
-      "city": "Berlin",
-      "country": "Germany",
-      "full_address": "Messe Berlin, Messedamm 22, 14055 Berlin"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/berlin/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_amsterdam_2026",
-    "title": "HYROX Amsterdam 2026",
-    "date_start": "2026-03-08",
-    "location": {
-      "city": "Amsterdam",
-      "country": "Netherlands",
-      "full_address": "RAI Amsterdam, Europaplein, 1078 GZ Amsterdam"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/amsterdam/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_barcelona_2026",
-    "title": "HYROX Barcelona 2026",
-    "date_start": "2026-04-05",
-    "location": {
-      "city": "Barcelona",
-      "country": "Spain",
-      "full_address": "Fira Barcelona, Av. Reina Maria Cristina, 08004 Barcelona"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/barcelona/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_madrid_2026",
-    "title": "HYROX Madrid 2026",
-    "date_start": "2026-05-24",
-    "location": {
-      "city": "Madrid",
-      "country": "Spain",
-      "full_address": "IFEMA Madrid, Av. del Partenón 5, 28042 Madrid"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/madrid/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_milan_2026",
-    "title": "HYROX Milan 2026",
-    "date_start": "2026-06-14",
-    "location": {
-      "city": "Milan",
-      "country": "Italy",
-      "full_address": "Fiera Milano, Strada Statale del Sempione 28, 20017 Rho"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/milan/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_vienna_2026",
-    "title": "HYROX Vienna 2026",
-    "date_start": "2026-03-22",
-    "location": {
-      "city": "Vienna",
-      "country": "Austria",
-      "full_address": "Messe Wien, Messeplatz 1, 1020 Wien"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/event/vienna/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "hyrox_world_championship_2026",
-    "title": "HYROX World Championship 2026",
-    "date_start": "2026-06-07",
-    "location": {
-      "city": "Manchester",
-      "country": "United Kingdom",
-      "full_address": "Manchester Central, Windmill Street, Manchester M2 3GX"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://hyrox.com/world-championship/",
-    "federation": "HYROX",
-    "image_logo_url": "https://hyrox.com/wp-content/uploads/2021/01/hyrox-logo.png"
-  },
-  {
-    "id": "london_marathon_2026",
-    "title": "TCS London Marathon 2026",
-    "date_start": "2026-04-26",
-    "location": {
-      "city": "London",
-      "country": "United Kingdom",
-      "full_address": "Greenwich Park, London SE10 8QY"
-    },
-    "category": "endurance",
-    "sport_tag": "marathon",
-    "registration_link": "https://www.tcslondonmarathon.com/",
-    "federation": null,
-    "image_logo_url": "https://www.tcslondonmarathon.com/images/logo.png"
-  },
-  {
-    "id": "berlin_marathon_2026",
-    "title": "BMW Berlin Marathon 2026",
-    "date_start": "2026-09-27",
-    "location": {
-      "city": "Berlin",
-      "country": "Germany",
-      "full_address": "Brandenburger Tor, Pariser Platz, 10117 Berlin"
-    },
-    "category": "endurance",
-    "sport_tag": "marathon",
-    "registration_link": "https://www.bmw-berlin-marathon.com/",
-    "federation": null,
-    "image_logo_url": "https://www.bmw-berlin-marathon.com/images/logo.png"
-  },
-  {
-    "id": "amsterdam_marathon_2026",
-    "title": "TCS Amsterdam Marathon 2026",
-    "date_start": "2026-10-18",
-    "location": {
-      "city": "Amsterdam",
-      "country": "Netherlands",
-      "full_address": "Olympic Stadium, Olympisch Stadion 2, 1076 DE Amsterdam"
-    },
-    "category": "endurance",
-    "sport_tag": "marathon",
-    "registration_link": "https://www.tcsamsterdammarathon.nl/",
-    "federation": null,
-    "image_logo_url": "https://www.tcsamsterdammarathon.nl/images/logo.png"
-  },
-  {
-    "id": "barcelona_marathon_2026",
-    "title": "Zurich Marató Barcelona 2026",
-    "date_start": "2026-03-15",
-    "location": {
-      "city": "Barcelona",
-      "country": "Spain",
-      "full_address": "Plaça d'Espanya, 08004 Barcelona"
-    },
-    "category": "endurance",
-    "sport_tag": "marathon",
-    "registration_link": "https://www.zurichmaratobarcelona.es/",
-    "federation": null,
-    "image_logo_url": "https://www.zurichmaratobarcelona.es/images/logo.png"
-  },
-  {
-    "id": "rome_marathon_2026",
-    "title": "Acea Run Rome The Marathon 2026",
-    "date_start": "2026-03-22",
-    "location": {
-      "city": "Rome",
-      "country": "Italy",
-      "full_address": "Via dei Fori Imperiali, 00186 Roma"
-    },
-    "category": "endurance",
-    "sport_tag": "marathon",
-    "registration_link": "https://www.runromethemarathon.com/",
-    "federation": null,
-    "image_logo_url": "https://www.runromethemarathon.com/images/logo.png"
-  },
-  {
-    "id": "crossfit_games_europe_2026",
-    "title": "CrossFit Semifinal - Europe 2026",
-    "date_start": "2026-05-30",
-    "location": {
-      "city": "Berlin",
-      "country": "Germany",
-      "full_address": "Velodrom Berlin, Paul-Heyse-Straße 26, 10407 Berlin"
-    },
-    "category": "force",
-    "sport_tag": "crossfit",
-    "registration_link": "https://games.crossfit.com/",
-    "federation": "CrossFit",
-    "image_logo_url": "https://games.crossfit.com/images/logo.png"
-  },
-  {
-    "id": "european_powerlifting_2026",
-    "title": "IPF European Powerlifting Championship 2026",
-    "date_start": "2026-05-09",
-    "location": {
-      "city": "Pilsen",
-      "country": "Czech Republic",
-      "full_address": "Home Credit Arena, Štefánikovo náměstí 1, 301 00 Plzeň"
-    },
-    "category": "force",
-    "sport_tag": "powerlifting",
-    "registration_link": "https://www.powerlifting.sport/",
-    "federation": "IPF",
-    "image_logo_url": "https://www.powerlifting.sport/images/logo.png"
-  },
-  {
-    "id": "spartan_trifecta_weekend_uk_2026",
-    "title": "Spartan Trifecta Weekend UK 2026",
-    "date_start": "2026-06-13",
-    "location": {
-      "city": "Edinburgh",
-      "country": "United Kingdom",
-      "full_address": "Hopetoun House, South Queensferry, Edinburgh EH30 9SL"
-    },
-    "category": "endurance",
-    "sport_tag": "hyrox",
-    "registration_link": "https://www.spartan.com/en/race/detail/8136",
-    "federation": "Spartan",
-    "image_logo_url": "https://www.spartan.com/images/logo.png"
-  },
-  {
-    "id": "ultra_trail_lavaredo_2026",
-    "title": "Ultra Trail Lavaredo 2026",
-    "date_start": "2026-06-25",
-    "location": {
-      "city": "Cortina d'Ampezzo",
-      "country": "Italy",
-      "full_address": "Centro Sportivo, Via dello Stadio, 32043 Cortina d'Ampezzo"
-    },
-    "category": "endurance",
-    "sport_tag": "trail",
-    "registration_link": "https://www.ultratrail-lavaredo.com/",
-    "federation": "UTMB",
-    "image_logo_url": "https://www.ultratrail-lavaredo.com/images/logo.png"
-  },
-  {
-    "id": "eiger_ultra_trail_2026",
-    "title": "Eiger Ultra Trail 2026",
-    "date_start": "2026-07-18",
-    "location": {
-      "city": "Grindelwald",
-      "country": "Switzerland",
-      "full_address": "Grindelwald Sports Center, 3818 Grindelwald"
-    },
-    "category": "endurance",
-    "sport_tag": "trail",
-    "registration_link": "https://www.eigerultratrail.ch/",
-    "federation": "UTMB",
-    "image_logo_url": "https://www.eigerultratrail.ch/images/logo.png"
-  },
-  {
-    "id": "transgrancanaria_2026",
-    "title": "Transgrancanaria HG 2026",
-    "date_start": "2026-02-28",
-    "location": {
-      "city": "Las Palmas",
-      "country": "Spain",
-      "full_address": "Agaete, 35480 Las Palmas de Gran Canaria"
-    },
-    "category": "endurance",
-    "sport_tag": "trail",
-    "registration_link": "https://www.transgrancanaria.net/",
-    "federation": "UTMB",
-    "image_logo_url": "https://www.transgrancanaria.net/images/logo.png"
-  }
+  {"id": "ibjjf_euro_2026", "title": "IBJJF European Championship 2026", "date_start": "2026-01-21", "location": {"city": "Lisbonne", "country": "Portugal", "full_address": "Altice Arena, Lisbonne"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ibjjf.com/events/european-jiu-jitsu-championship-2026", "federation": "IBJJF", "image_logo_url": "https://ibjjf.com/wp-content/uploads/2023/06/IBJJF-Logo.png"},
+  {"id": "ajp_london_2026", "title": "AJP Tour London Pro 2026", "date_start": "2026-02-15", "location": {"city": "Londres", "country": "UK", "full_address": "ExCeL London"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ajptour.com/en/event/london-pro-2026", "federation": "AJP", "image_logo_url": "https://ajptour.com/images/logo-ajp.png"},
+  {"id": "ajp_rome_2026", "title": "AJP Tour Rome Pro 2026", "date_start": "2026-03-08", "location": {"city": "Rome", "country": "Italy", "full_address": "PalaLottomatica, Rome"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ajptour.com/en/event/rome-pro-2026", "federation": "AJP", "image_logo_url": "https://ajptour.com/images/logo-ajp.png"},
+  {"id": "ajp_madrid_2026", "title": "AJP Tour Madrid Pro 2026", "date_start": "2026-04-12", "location": {"city": "Madrid", "country": "Spain", "full_address": "WiZink Center, Madrid"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ajptour.com/en/event/madrid-pro-2026", "federation": "AJP", "image_logo_url": "https://ajptour.com/images/logo-ajp.png"},
+  {"id": "ajp_amsterdam_2026", "title": "AJP Tour Amsterdam Pro 2026", "date_start": "2026-05-24", "location": {"city": "Amsterdam", "country": "Netherlands", "full_address": "RAI Amsterdam"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ajptour.com/en/event/amsterdam-pro-2026", "federation": "AJP", "image_logo_url": "https://ajptour.com/images/logo-ajp.png"},
+  {"id": "ajp_berlin_2026", "title": "AJP Tour Berlin Pro 2026", "date_start": "2026-06-14", "location": {"city": "Berlin", "country": "Germany", "full_address": "Mercedes-Benz Arena, Berlin"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ajptour.com/en/event/berlin-pro-2026", "federation": "AJP", "image_logo_url": "https://ajptour.com/images/logo-ajp.png"},
+  {"id": "ibjjf_london_open_2026", "title": "IBJJF London Open 2026", "date_start": "2026-03-22", "location": {"city": "Londres", "country": "UK", "full_address": "Copper Box Arena, London"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ibjjf.com/events/london-open-2026", "federation": "IBJJF", "image_logo_url": "https://ibjjf.com/wp-content/uploads/2023/06/IBJJF-Logo.png"},
+  {"id": "ibjjf_lisbon_open_2026", "title": "IBJJF Lisbon Open 2026", "date_start": "2026-04-05", "location": {"city": "Lisbonne", "country": "Portugal", "full_address": "Pavilhão Atlântico, Lisbonne"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ibjjf.com/events/lisbon-open-2026", "federation": "IBJJF", "image_logo_url": "https://ibjjf.com/wp-content/uploads/2023/06/IBJJF-Logo.png"},
+  {"id": "ibjjf_rome_open_2026", "title": "IBJJF Rome Open 2026", "date_start": "2026-05-03", "location": {"city": "Rome", "country": "Italy", "full_address": "Foro Italico, Rome"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ibjjf.com/events/rome-open-2026", "federation": "IBJJF", "image_logo_url": "https://ibjjf.com/wp-content/uploads/2023/06/IBJJF-Logo.png"},
+  {"id": "ibjjf_madrid_open_2026", "title": "IBJJF Madrid Open 2026", "date_start": "2026-06-07", "location": {"city": "Madrid", "country": "Spain", "full_address": "Palacio de Deportes, Madrid"}, "category": "combat", "sport_tag": "jjb", "registration_link": "https://ibjjf.com/events/madrid-open-2026", "federation": "IBJJF", "image_logo_url": "https://ibjjf.com/wp-content/uploads/2023/06/IBJJF-Logo.png"},
+  {"id": "adcc_trials_uk_2026", "title": "ADCC UK & Ireland Trials 2026", "date_start": "2026-03-15", "location": {"city": "Manchester", "country": "UK", "full_address": "Manchester Arena"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://adcombat.com/trials/uk-2026/", "federation": "ADCC", "image_logo_url": "https://adcombat.com/wp-content/uploads/2023/06/ADCC-Logo.png"},
+  {"id": "adcc_trials_germany_2026", "title": "ADCC German Trials 2026", "date_start": "2026-04-19", "location": {"city": "Munich", "country": "Germany", "full_address": "Olympiahalle, Munich"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://adcombat.com/trials/germany-2026/", "federation": "ADCC", "image_logo_url": "https://adcombat.com/wp-content/uploads/2023/06/ADCC-Logo.png"},
+  {"id": "adcc_trials_spain_2026", "title": "ADCC Spanish Trials 2026", "date_start": "2026-05-17", "location": {"city": "Barcelone", "country": "Spain", "full_address": "Palau Sant Jordi, Barcelona"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://adcombat.com/trials/spain-2026/", "federation": "ADCC", "image_logo_url": "https://adcombat.com/wp-content/uploads/2023/06/ADCC-Logo.png"},
+  {"id": "adcc_trials_italy_2026", "title": "ADCC Italian Trials 2026", "date_start": "2026-06-21", "location": {"city": "Milan", "country": "Italy", "full_address": "Forum di Assago, Milan"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://adcombat.com/trials/italy-2026/", "federation": "ADCC", "image_logo_url": "https://adcombat.com/wp-content/uploads/2023/06/ADCC-Logo.png"},
+  {"id": "grappling_industries_london_2026", "title": "Grappling Industries London 2026", "date_start": "2026-02-22", "location": {"city": "Londres", "country": "UK", "full_address": "Crystal Palace National Sports Centre"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://grapplingindustries.com/events/london-2026", "federation": "Grappling Industries", "image_logo_url": "https://grapplingindustries.com/logo.png"},
+  {"id": "grappling_industries_dublin_2026", "title": "Grappling Industries Dublin 2026", "date_start": "2026-03-29", "location": {"city": "Dublin", "country": "Ireland", "full_address": "National Basketball Arena, Dublin"}, "category": "combat", "sport_tag": "grappling", "registration_link": "https://grapplingindustries.com/events/dublin-2026", "federation": "Grappling Industries", "image_logo_url": "https://grapplingindustries.com/logo.png"},
+  {"id": "ufc_london_2026", "title": "UFC Fight Night London", "date_start": "2026-03-21", "location": {"city": "Londres", "country": "UK", "full_address": "O2 Arena, London"}, "category": "combat", "sport_tag": "mma", "registration_link": "https://www.ufc.com/events", "federation": "UFC", "image_logo_url": "https://upload.wikimedia.org/wikipedia/commons/9/92/UFC_Logo.svg"},
+  {"id": "ufc_paris_2026", "title": "UFC Fight Night Paris", "date_start": "2026-09-19", "location": {"city": "Paris", "country": "France", "full_address": "Accor Arena, Paris"}, "category": "combat", "sport_tag": "mma", "registration_link": "https://www.ufc.com/events", "federation": "UFC", "image_logo_url": "https://upload.wikimedia.org/wikipedia/commons/9/92/UFC_Logo.svg"},
+  {"id": "bellator_dublin_2026", "title": "Bellator Dublin", "date_start": "2026-02-28", "location": {"city": "Dublin", "country": "Ireland", "full_address": "3Arena, Dublin"}, "category": "combat", "sport_tag": "mma", "registration_link": "https://www.bellator.com/events", "federation": "Bellator", "image_logo_url": "https://bellator.com/logo.png"},
+  {"id": "bellator_milan_2026", "title": "Bellator Milan", "date_start": "2026-05-09", "location": {"city": "Milan", "country": "Italy", "full_address": "Allianz Cloud, Milan"}, "category": "combat", "sport_tag": "mma", "registration_link": "https://www.bellator.com/events", "federation": "Bellator", "image_logo_url": "https://bellator.com/logo.png"},
+  {"id": "cage_warriors_london_2026", "title": "Cage Warriors 170 - London", "date_start": "2026-04-18", "location": {"city": "Londres", "country": "UK", "full_address": "Indigo at The O2, London"}, "category": "combat", "sport_tag": "mma", "registration_link": "https://cagewarriors.com/events", "federation": "Cage Warriors", "image_logo_url": "https://cagewarriors.com/logo.png"},
+  {"id": "ijf_grand_slam_dusseldorf_2026", "title": "IJF Grand Slam Düsseldorf 2026", "date_start": "2026-02-21", "location": {"city": "Düsseldorf", "country": "Germany", "full_address": "ISS Dome, Düsseldorf"}, "category": "combat", "sport_tag": "judo", "registration_link": "https://www.ijf.org/competition/2457", "federation": "IJF", "image_logo_url": "https://www.ijf.org/images/ijf-logo.png"},
+  {"id": "ijf_grand_slam_tbilisi_2026", "title": "IJF Grand Slam Tbilisi 2026", "date_start": "2026-03-28", "location": {"city": "Tbilissi", "country": "Georgia", "full_address": "Sports Palace, Tbilisi"}, "category": "combat", "sport_tag": "judo", "registration_link": "https://www.ijf.org/competition/2459", "federation": "IJF", "image_logo_url": "https://www.ijf.org/images/ijf-logo.png"},
+  {"id": "euro_judo_championships_2026", "title": "European Judo Championships 2026", "date_start": "2026-04-25", "location": {"city": "Zagreb", "country": "Croatia", "full_address": "Arena Zagreb"}, "category": "combat", "sport_tag": "judo", "registration_link": "https://www.eju.net/events/european-championships-2026", "federation": "EJU", "image_logo_url": "https://www.eju.net/logo.png"},
+  {"id": "euro_wrestling_2026", "title": "European Wrestling Championships 2026", "date_start": "2026-04-04", "location": {"city": "Budapest", "country": "Hungary", "full_address": "Budapest Sports Arena"}, "category": "combat", "sport_tag": "lutte", "registration_link": "https://uww.org/event/european-championships-2026", "federation": "UWW", "image_logo_url": "https://uww.org/sites/default/files/uww_logo.png"},
+  {"id": "hyrox_london_2026", "title": "HYROX London 2026", "date_start": "2026-01-31", "location": {"city": "Londres", "country": "UK", "full_address": "ExCeL London"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/london/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_berlin_2026", "title": "HYROX Berlin 2026", "date_start": "2026-02-07", "location": {"city": "Berlin", "country": "Germany", "full_address": "Messe Berlin"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/berlin/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_munich_2026", "title": "HYROX Munich 2026", "date_start": "2026-03-07", "location": {"city": "Munich", "country": "Germany", "full_address": "Messe München"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/munich/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_cologne_2026", "title": "HYROX Cologne 2026", "date_start": "2026-03-14", "location": {"city": "Cologne", "country": "Germany", "full_address": "Koelnmesse"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/cologne/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_hamburg_2026", "title": "HYROX Hamburg 2026", "date_start": "2026-03-21", "location": {"city": "Hambourg", "country": "Germany", "full_address": "Hamburg Messe"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/hamburg/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_dusseldorf_2026", "title": "HYROX Düsseldorf 2026", "date_start": "2026-04-04", "location": {"city": "Düsseldorf", "country": "Germany", "full_address": "Messe Düsseldorf"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/dusseldorf/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_amsterdam_2026", "title": "HYROX Amsterdam 2026", "date_start": "2026-04-25", "location": {"city": "Amsterdam", "country": "Netherlands", "full_address": "RAI Amsterdam"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/amsterdam/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_barcelona_2026", "title": "HYROX Barcelona 2026", "date_start": "2026-05-09", "location": {"city": "Barcelone", "country": "Spain", "full_address": "Fira Barcelona"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/barcelona/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_madrid_2026", "title": "HYROX Madrid 2026", "date_start": "2026-05-16", "location": {"city": "Madrid", "country": "Spain", "full_address": "IFEMA Madrid"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/madrid/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_vienna_2026", "title": "HYROX Vienna 2026", "date_start": "2026-10-10", "location": {"city": "Vienne", "country": "Austria", "full_address": "Messe Wien"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/vienna/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_zurich_2026", "title": "HYROX Zurich 2026", "date_start": "2026-01-25", "location": {"city": "Zurich", "country": "Switzerland", "full_address": "Messe Zürich"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/zurich/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "hyrox_milan_2026", "title": "HYROX Milan 2026", "date_start": "2026-10-24", "location": {"city": "Milan", "country": "Italy", "full_address": "Fiera Milano"}, "category": "endurance", "sport_tag": "hyrox", "registration_link": "https://hyrox.com/event/milan/", "federation": "HYROX", "image_logo_url": "https://hyrox.com/wp-content/uploads/2023/01/HYROX-Logo.png"},
+  {"id": "london_marathon_2026", "title": "TCS London Marathon 2026", "date_start": "2026-04-26", "location": {"city": "Londres", "country": "UK", "full_address": "Greenwich Park to The Mall, London"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.tcslondonmarathon.com/", "federation": "London Marathon Events", "image_logo_url": "https://www.tcslondonmarathon.com/logo.png"},
+  {"id": "berlin_marathon_2026", "title": "BMW Berlin Marathon 2026", "date_start": "2026-09-27", "location": {"city": "Berlin", "country": "Germany", "full_address": "Straße des 17. Juni, Berlin"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.bmw-berlin-marathon.com/", "federation": "SCC Events", "image_logo_url": "https://www.bmw-berlin-marathon.com/logo.png"},
+  {"id": "amsterdam_marathon_2026", "title": "TCS Amsterdam Marathon 2026", "date_start": "2026-10-18", "location": {"city": "Amsterdam", "country": "Netherlands", "full_address": "Olympic Stadium, Amsterdam"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.tcsamsterdammarathon.nl/", "federation": "Le Champion", "image_logo_url": "https://www.tcsamsterdammarathon.nl/logo.png"},
+  {"id": "barcelona_marathon_2026", "title": "Zurich Marathon Barcelona 2026", "date_start": "2026-03-08", "location": {"city": "Barcelone", "country": "Spain", "full_address": "Plaça Espanya, Barcelona"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.zurichmaratobarcelona.es/", "federation": null, "image_logo_url": "https://www.zurichmaratobarcelona.es/logo.png"},
+  {"id": "madrid_marathon_2026", "title": "EDP Rock'n'Roll Madrid Marathon 2026", "date_start": "2026-04-19", "location": {"city": "Madrid", "country": "Spain", "full_address": "Paseo de la Castellana, Madrid"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.runrocknroll.com/madrid", "federation": null, "image_logo_url": "https://www.runrocknroll.com/logo.png"},
+  {"id": "rome_marathon_2026", "title": "Acea Run Rome The Marathon 2026", "date_start": "2026-03-15", "location": {"city": "Rome", "country": "Italy", "full_address": "Via dei Fori Imperiali, Rome"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.runromethemarathon.com/", "federation": null, "image_logo_url": "https://www.runromethemarathon.com/logo.png"},
+  {"id": "vienna_marathon_2026", "title": "Vienna City Marathon 2026", "date_start": "2026-04-19", "location": {"city": "Vienne", "country": "Austria", "full_address": "Ringstraße, Vienna"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.vienna-marathon.com/", "federation": null, "image_logo_url": "https://www.vienna-marathon.com/logo.png"},
+  {"id": "lisbon_marathon_2026", "title": "EDP Lisbon Marathon 2026", "date_start": "2026-10-11", "location": {"city": "Lisbonne", "country": "Portugal", "full_address": "Ponte 25 de Abril, Lisbon"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.maratonaclubedeportugal.com/", "federation": null, "image_logo_url": "https://www.maratonaclubedeportugal.com/logo.png"},
+  {"id": "stockholm_marathon_2026", "title": "ASICS Stockholm Marathon 2026", "date_start": "2026-05-30", "location": {"city": "Stockholm", "country": "Sweden", "full_address": "Olympic Stadium, Stockholm"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.stockholmmarathon.se/", "federation": null, "image_logo_url": "https://www.stockholmmarathon.se/logo.png"},
+  {"id": "copenhagen_marathon_2026", "title": "Copenhagen Marathon 2026", "date_start": "2026-05-17", "location": {"city": "Copenhague", "country": "Denmark", "full_address": "Islands Brygge, Copenhagen"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.copenhagenmarathon.dk/", "federation": null, "image_logo_url": "https://www.copenhagenmarathon.dk/logo.png"},
+  {"id": "eiger_ultra_trail_2026", "title": "Eiger Ultra Trail 2026", "date_start": "2026-07-18", "location": {"city": "Grindelwald", "country": "Switzerland", "full_address": "Grindelwald, Swiss Alps"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://www.eigerultratrail.ch/", "federation": "UTMB World Series", "image_logo_url": "https://www.eigerultratrail.ch/logo.png"},
+  {"id": "madeira_island_ultra_2026", "title": "Madeira Island Ultra Trail 2026", "date_start": "2026-04-25", "location": {"city": "Funchal", "country": "Portugal", "full_address": "Madeira Island"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://www.miut.pt/", "federation": "UTMB World Series", "image_logo_url": "https://www.miut.pt/logo.png"},
+  {"id": "lavaredo_ultra_trail_2026", "title": "Lavaredo Ultra Trail 2026", "date_start": "2026-06-25", "location": {"city": "Cortina", "country": "Italy", "full_address": "Cortina d'Ampezzo, Dolomites"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://www.ultratrail.it/", "federation": "UTMB World Series", "image_logo_url": "https://www.ultratrail.it/logo.png"},
+  {"id": "transgrancanaria_2026", "title": "Transgrancanaria 2026", "date_start": "2026-02-27", "location": {"city": "Las Palmas", "country": "Spain", "full_address": "Gran Canaria"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://transgrancanaria.net/", "federation": "UTMB World Series", "image_logo_url": "https://transgrancanaria.net/logo.png"},
+  {"id": "zegama_aizkorri_2026", "title": "Zegama-Aizkorri 2026", "date_start": "2026-05-23", "location": {"city": "Zegama", "country": "Spain", "full_address": "Basque Country, Spain"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://www.zegama-aizkorri.com/", "federation": "Golden Trail World Series", "image_logo_url": "https://www.zegama-aizkorri.com/logo.png"},
+  {"id": "ring_of_steall_2026", "title": "Salomon Ring of Steall Skyrace 2026", "date_start": "2026-09-05", "location": {"city": "Fort William", "country": "UK", "full_address": "Scottish Highlands"}, "category": "endurance", "sport_tag": "trail", "registration_link": "https://www.skyrunning.com/ring-of-steall/", "federation": "Skyrunning", "image_logo_url": "https://www.skyrunning.com/logo.png"},
+  {"id": "ironman_703_barcelona_2026", "title": "IRONMAN 70.3 Barcelona 2026", "date_start": "2026-05-17", "location": {"city": "Barcelone", "country": "Spain", "full_address": "Calella, Barcelona"}, "category": "endurance", "sport_tag": "triathlon", "registration_link": "https://www.ironman.com/im703-barcelona", "federation": "IRONMAN", "image_logo_url": "https://www.ironman.com/images/ironman-logo.png"},
+  {"id": "ironman_703_dublin_2026", "title": "IRONMAN 70.3 Dublin 2026", "date_start": "2026-08-23", "location": {"city": "Dublin", "country": "Ireland", "full_address": "Dun Laoghaire, Dublin"}, "category": "endurance", "sport_tag": "triathlon", "registration_link": "https://www.ironman.com/im703-dublin", "federation": "IRONMAN", "image_logo_url": "https://www.ironman.com/images/ironman-logo.png"},
+  {"id": "ironman_italy_2026", "title": "IRONMAN Italy Emilia Romagna 2026", "date_start": "2026-09-20", "location": {"city": "Cervia", "country": "Italy", "full_address": "Cervia, Emilia-Romagna"}, "category": "endurance", "sport_tag": "triathlon", "registration_link": "https://www.ironman.com/im-italy", "federation": "IRONMAN", "image_logo_url": "https://www.ironman.com/images/ironman-logo.png"},
+  {"id": "challenge_roth_2026", "title": "Challenge Roth 2026", "date_start": "2026-07-05", "location": {"city": "Roth", "country": "Germany", "full_address": "Roth, Bavaria"}, "category": "endurance", "sport_tag": "triathlon", "registration_link": "https://www.challenge-roth.com/", "federation": "Challenge Family", "image_logo_url": "https://www.challenge-roth.com/logo.png"},
+  {"id": "london_triathlon_2026", "title": "AJ Bell London Triathlon 2026", "date_start": "2026-08-01", "location": {"city": "Londres", "country": "UK", "full_address": "ExCeL London, Royal Victoria Dock"}, "category": "endurance", "sport_tag": "triathlon", "registration_link": "https://www.thelondontriathlon.com/", "federation": null, "image_logo_url": "https://www.thelondontriathlon.com/logo.png"},
+  {"id": "crossfit_semifinal_europe_2026", "title": "CrossFit Semifinal Europe 2026", "date_start": "2026-05-30", "location": {"city": "Berlin", "country": "Germany", "full_address": "Berlin, Germany"}, "category": "endurance", "sport_tag": "crossfit", "registration_link": "https://games.crossfit.com/", "federation": "CrossFit", "image_logo_url": "https://games.crossfit.com/images/crossfit-games-logo.png"},
+  {"id": "crossfit_torian_pro_2026", "title": "CrossFit Torian Pro 2026", "date_start": "2026-06-13", "location": {"city": "Gold Coast", "country": "Australia", "full_address": "Gold Coast Convention Centre"}, "category": "endurance", "sport_tag": "crossfit", "registration_link": "https://torianpro.com/", "federation": "CrossFit", "image_logo_url": "https://torianpro.com/logo.png"},
+  {"id": "great_north_run_2026", "title": "Great North Run 2026", "date_start": "2026-09-13", "location": {"city": "Newcastle", "country": "UK", "full_address": "Newcastle to South Shields"}, "category": "endurance", "sport_tag": "running", "registration_link": "https://www.greatrun.org/great-north-run", "federation": "Great Run", "image_logo_url": "https://www.greatrun.org/logo.png"},
+  {"id": "goteborg_half_marathon_2026", "title": "Göteborgsvarvet 2026", "date_start": "2026-05-16", "location": {"city": "Göteborg", "country": "Sweden", "full_address": "Gothenburg"}, "category": "endurance", "sport_tag": "running", "registration_link": "https://www.goteborgsvarvet.se/", "federation": null, "image_logo_url": "https://www.goteborgsvarvet.se/logo.png"},
+  {"id": "dublin_city_marathon_2026", "title": "Dublin City Marathon 2026", "date_start": "2026-10-25", "location": {"city": "Dublin", "country": "Ireland", "full_address": "Merrion Square, Dublin"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.dublinmarathon.ie/", "federation": null, "image_logo_url": "https://www.dublinmarathon.ie/logo.png"},
+  {"id": "frankfurt_marathon_2026", "title": "Mainova Frankfurt Marathon 2026", "date_start": "2026-10-25", "location": {"city": "Francfort", "country": "Germany", "full_address": "Festhalle Frankfurt"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.frankfurt-marathon.com/", "federation": null, "image_logo_url": "https://www.frankfurt-marathon.com/logo.png"},
+  {"id": "valencia_marathon_2026", "title": "Valencia Marathon Trinidad Alfonso 2026", "date_start": "2026-12-06", "location": {"city": "Valence", "country": "Spain", "full_address": "City of Arts and Sciences, Valencia"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.valenciaciudaddelrunning.com/", "federation": null, "image_logo_url": "https://www.valenciaciudaddelrunning.com/logo.png"},
+  {"id": "sevilla_marathon_2026", "title": "Zurich Marathon Sevilla 2026", "date_start": "2026-02-22", "location": {"city": "Séville", "country": "Spain", "full_address": "Plaza de España, Sevilla"}, "category": "endurance", "sport_tag": "marathon", "registration_link": "https://www.zurichmaratondesevilla.es/", "federation": null, "image_logo_url": "https://www.zurichmaratondesevilla.es/logo.png"}
 ]
