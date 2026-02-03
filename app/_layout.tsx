@@ -150,52 +150,20 @@ export default function RootLayout() {
       try {
         logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ Initialiser la base de donnees SQLite (en arrière-plan)
+        // ✅ Initialiser la base de donnees SQLite PUIS importer les événements
         initDatabase()
-          .then(() => logger.info('Base de donnees initialisee'))
-          .catch(err => logger.error('Erreur init database:', err));
+          .then(() => {
+            logger.info('Base de donnees initialisee');
+            // ⚠️ IMPORTANT: Import des événements APRÈS que la DB soit prête
+            return importEventsFromJSON();
+          })
+          .then(() => logger.info('✅ Catalogue événements importé'))
+          .catch(err => logger.error('Erreur init database ou import événements:', err));
 
         // ✅ Initialiser Apple Watch Service (sync automatique iPhone ↔ Watch)
         appleWatchService.init()
           .then(() => logger.info('✅ Apple Watch Service initialisé et sync démarrée'))
           .catch(err => logger.error('❌ Erreur Apple Watch Service:', err));
-
-        // ✅ Créer table events_catalog (en arrière-plan)
-        (async () => {
-          try {
-            const { openDatabase } = await import('@/lib/database');
-            const db = await openDatabase();
-            const tableCheck = await db.getFirstAsync<{ count: number }>(
-              `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
-            );
-            if (!tableCheck || tableCheck.count === 0) {
-              logger.info('Création de la table events_catalog...');
-              await db.execAsync(`
-                CREATE TABLE IF NOT EXISTS events_catalog (
-                  id TEXT PRIMARY KEY,
-                  title TEXT NOT NULL,
-                  date_start TEXT NOT NULL,
-                  city TEXT,
-                  country TEXT,
-                  full_address TEXT,
-                  category TEXT NOT NULL,
-                  sport_tag TEXT NOT NULL,
-                  registration_link TEXT,
-                  federation TEXT,
-                  image_logo_url TEXT,
-                  created_at TEXT DEFAULT CURRENT_TIMESTAMP
-                );
-              `);
-              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
-              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
-              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
-              await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
-              logger.info('✅ Table events_catalog créée');
-            }
-          } catch (err) {
-            logger.error('Erreur création table events_catalog:', err);
-          }
-        })();
 
         // Migrer le système d'avatars V2 (en arrière-plan)
         migrateAvatarSystem()
@@ -206,11 +174,6 @@ export default function RootLayout() {
         autoImportCompetitionsOnFirstLaunch()
           .then(() => logger.info('✅ Auto-import compétitions terminé'))
           .catch(err => logger.error('Erreur auto-import compétitions:', err));
-
-        // Import événements (peut prendre du temps)
-        importEventsFromJSON()
-          .then(() => logger.info('✅ Catalogue événements importé'))
-          .catch(err => logger.error('❌ Erreur import événements:', err));
 
         // Notifications
         notificationService.initialize()
