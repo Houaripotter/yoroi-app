@@ -898,8 +898,8 @@ export const deleteTraining = async (id: number): Promise<void> => {
 export const addClub = async (data: Club): Promise<number> => {
   const database = await openDatabase();
   const result = await database.runAsync(
-    `INSERT INTO clubs (name, sport, logo_uri, color) VALUES (?, ?, ?, ?)`,
-    [data.name, data.sport, data.logo_uri || null, data.color || null]
+    `INSERT INTO clubs (name, sport, logo_uri, color, sessions_per_week) VALUES (?, ?, ?, ?, ?)`,
+    [data.name, data.sport, data.logo_uri || null, data.color || null, data.sessions_per_week || 3]
   );
   if (!result?.lastInsertRowId) {
     throw new Error('Failed to insert club record');

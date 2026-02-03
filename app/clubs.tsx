@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -68,8 +68,12 @@ export default function ClubsScreen() {
     }
   }, []);
 
-  // Charger une seule fois au montage (pas à chaque focus)
-  useEffect(() => { loadClubs(); }, []);
+  // Recharger les clubs quand l'écran devient actif (après retour de add-club)
+  useFocusEffect(
+    useCallback(() => {
+      loadClubs();
+    }, [loadClubs])
+  );
 
   const resetForm = () => {
     setName('');

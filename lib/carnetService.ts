@@ -14,7 +14,7 @@ import { WatchConnectivity } from './watchConnectivity.ios';
 export type BenchmarkCategory = 'bodyweight' | 'force' | 'musculation' | 'cardio' | 'street_workout' | 'running' | 'trail' | 'hyrox' | 'custom';
 export type BenchmarkUnit = 'kg' | 'lbs' | 'time' | 'reps' | 'meters' | 'km';
 export type SkillStatus = 'to_learn' | 'in_progress' | 'mastered';
-export type SkillCategory = 'jjb_garde' | 'jjb_passage' | 'jjb_soumission' | 'lutte' | 'striking' | 'other';
+export type SkillCategory = 'jjb_garde' | 'jjb_passage' | 'jjb_soumission' | 'jjb_nogi' | 'lutte' | 'striking' | 'other';
 
 export interface BenchmarkEntry {
   id: string;
@@ -190,6 +190,22 @@ export const JJB_SOUMISSION_SKILLS: Omit<Skill, 'id' | 'drillCount' | 'notes' | 
   { name: 'Omoplata', category: 'jjb_soumission', status: 'to_learn' },
 ];
 
+// JJB - NO GI (Sans Kimono)
+export const JJB_NOGI_SKILLS: Omit<Skill, 'id' | 'drillCount' | 'notes' | 'createdAt' | 'updatedAt'>[] = [
+  { name: 'Heel Hook', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Toe Hold', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Knee Bar', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Calf Slicer', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Saddle (Ashi Garami)', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Inside Sankaku', category: 'jjb_nogi', status: 'to_learn' },
+  { name: '50/50 Guard', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Darce Choke', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Anaconda Choke', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Arm-In Guillotine', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Front Headlock', category: 'jjb_nogi', status: 'to_learn' },
+  { name: 'Body Lock Takedown', category: 'jjb_nogi', status: 'to_learn' },
+];
+
 // LUTTE & GRAPPLING
 export const LUTTE_SKILLS: Omit<Skill, 'id' | 'drillCount' | 'notes' | 'createdAt' | 'updatedAt'>[] = [
   { name: 'Single Leg', category: 'lutte', status: 'to_learn' },
@@ -232,6 +248,7 @@ export const SKILL_CATEGORIES: Record<SkillCategory, { label: string; color: str
   jjb_garde: { label: 'JJB - Garde', color: '#8B5CF6', iconName: 'shield' },
   jjb_passage: { label: 'JJB - Passage', color: '#06B6D4', iconName: 'move' },
   jjb_soumission: { label: 'JJB - Soumission', color: '#EC4899', iconName: 'lock' },
+  jjb_nogi: { label: 'JJB - No Gi', color: '#F97316', iconName: 'flame' },
   lutte: { label: 'Lutte', color: '#F59E0B', iconName: 'users' },
   striking: { label: 'Striking', color: '#EF4444', iconName: 'zap' },
   other: { label: 'Autre', color: '#6B7280', iconName: 'book-open' },
@@ -725,6 +742,8 @@ export const getPresetSkills = (category: SkillCategory): string[] => {
       return JJB_PASSAGE_SKILLS.map(s => s.name);
     case 'jjb_soumission':
       return JJB_SOUMISSION_SKILLS.map(s => s.name);
+    case 'jjb_nogi':
+      return JJB_NOGI_SKILLS.map(s => s.name);
     case 'lutte':
       return LUTTE_SKILLS.map(s => s.name);
     case 'striking':
