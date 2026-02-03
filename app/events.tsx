@@ -45,7 +45,7 @@ interface SportEvent {
     full_address: string;
   };
   category: 'combat' | 'endurance';
-  sport_tag: 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail';
+  sport_tag: 'jjb' | 'grappling' | 'mma' | 'lutte' | 'judo' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'triathlon' | 'crossfit' | 'strongman';
   registration_link: string;
   federation: string | null;
   image_logo_url: string | null;
@@ -53,7 +53,7 @@ interface SportEvent {
 
 type CategoryFilter = 'all' | 'combat' | 'endurance';
 type LocationFilter = 'monde' | 'europe' | 'france';
-type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail';
+type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'mma' | 'lutte' | 'judo' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'triathlon' | 'crossfit';
 
 // European countries list
 const EUROPEAN_COUNTRIES = [
@@ -184,18 +184,23 @@ export default function EventsScreen() {
       all: locationFiltered.length,
       combat: combatEvents.length,
       endurance: enduranceEvents.length,
-      // Location counts: These are approximate/fixed to avoid loading all regions
-      monde: 2050, // Total across all regions
-      europe: 1148,
-      france: 301,
+      // Location counts: Dynamic based on loaded events
+      monde: allEvents.length,
+      europe: allEvents.length,
+      france: allEvents.length,
       // Combat sport tags
       jjb: combatEvents.filter(e => e.sport_tag === 'jjb').length,
       grappling: combatEvents.filter(e => e.sport_tag === 'grappling').length,
+      mma: combatEvents.filter(e => e.sport_tag === 'mma').length,
+      lutte: combatEvents.filter(e => e.sport_tag === 'lutte').length,
+      judo: combatEvents.filter(e => e.sport_tag === 'judo').length,
       // Endurance sport tags
       hyrox: enduranceEvents.filter(e => e.sport_tag === 'hyrox').length,
       marathon: enduranceEvents.filter(e => e.sport_tag === 'marathon').length,
       running: enduranceEvents.filter(e => e.sport_tag === 'running').length,
       trail: enduranceEvents.filter(e => e.sport_tag === 'trail').length,
+      triathlon: enduranceEvents.filter(e => e.sport_tag === 'triathlon').length,
+      crossfit: enduranceEvents.filter(e => e.sport_tag === 'crossfit').length,
     };
   }, [allEvents, getLocationFilteredEvents]);
 
@@ -317,7 +322,7 @@ export default function EventsScreen() {
           >
             <ExternalLink size={12} color={colors.primary} />
             <Text style={[styles.linkText, { color: colors.primary }]}>
-              Voir l'événement
+              Voir l&apos;événement
             </Text>
           </TouchableOpacity>
         </View>
@@ -624,6 +629,75 @@ export default function EventsScreen() {
               Grappling ({eventCounts.grappling})
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sportFilterButton,
+              {
+                backgroundColor: selectedSportTag === 'mma' ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              setSelectedSportTag('mma');
+            }}
+          >
+            <Text
+              style={[
+                styles.sportFilterText,
+                { color: selectedSportTag === 'mma' ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              MMA ({eventCounts.mma})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sportFilterButton,
+              {
+                backgroundColor: selectedSportTag === 'lutte' ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              setSelectedSportTag('lutte');
+            }}
+          >
+            <Text
+              style={[
+                styles.sportFilterText,
+                { color: selectedSportTag === 'lutte' ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              Lutte ({eventCounts.lutte})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sportFilterButton,
+              {
+                backgroundColor: selectedSportTag === 'judo' ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              setSelectedSportTag('judo');
+            }}
+          >
+            <Text
+              style={[
+                styles.sportFilterText,
+                { color: selectedSportTag === 'judo' ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              Judo ({eventCounts.judo})
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -741,6 +815,52 @@ export default function EventsScreen() {
               ]}
             >
               Trail ({eventCounts.trail})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sportFilterButton,
+              {
+                backgroundColor: selectedSportTag === 'triathlon' ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              setSelectedSportTag('triathlon');
+            }}
+          >
+            <Text
+              style={[
+                styles.sportFilterText,
+                { color: selectedSportTag === 'triathlon' ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              Triathlon ({eventCounts.triathlon})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.sportFilterButton,
+              {
+                backgroundColor: selectedSportTag === 'crossfit' ? colors.primary : colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              setSelectedSportTag('crossfit');
+            }}
+          >
+            <Text
+              style={[
+                styles.sportFilterText,
+                { color: selectedSportTag === 'crossfit' ? colors.textOnAccent : colors.text },
+              ]}
+            >
+              CrossFit ({eventCounts.crossfit})
             </Text>
           </TouchableOpacity>
         </View>

@@ -1163,93 +1163,114 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
       showsVerticalScrollIndicator={false}
       nestedScrollEnabled={true}
     >
-      {/* HERO HEADER - Agrandi */}
-      <View style={styles.heroHeader}>
-        {/* Photo + Greeting + Avatar Row */}
-        <View style={styles.heroTop}>
-          {/* Photo de profil - Octogone Premium */}
-          <View style={styles.hexagonContainer}>
-            <HexagonImage
-              size={105}
-              borderColor={isDark ? '#FFFFFF' : '#000000'}
-              borderWidth={3}
-              backgroundColor={colors.backgroundCard}
-              imageUri={profilePhoto}
-              onPress={() => router.push('/profile')}
-              placeholder={<Ionicons name="person" size={32} color={colors.textSecondary} />}
-            />
-          </View>
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* HEADER ÉLÉGANT - Photo avec icône + Avatar avec progression */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <View style={[styles.headerElegant, { paddingTop: 55 }]}>
+        {/* Row: Photo + Texte + Avatar */}
+        <View style={styles.headerRow}>
 
-          {/* Greeting + Name au centre */}
-          <View style={styles.greetingSection}>
-            <Text style={[styles.greetingLarge, { color: colors.textMuted }]}>
+          {/* Photo de profil avec icône "profil" */}
+          <TouchableOpacity
+            onPress={() => router.push('/profile')}
+            activeOpacity={0.8}
+            style={styles.profileTouchable}
+          >
+            <View style={[styles.profileCircleOuter, { borderColor: colors.accent }]}>
+              {profilePhoto ? (
+                <Image source={{ uri: profilePhoto }} style={styles.profileCircleImg} />
+              ) : (
+                <View style={[styles.profileCirclePlaceholder, { backgroundColor: `${colors.accent}15` }]}>
+                  <Ionicons name="person" size={36} color={colors.accent} />
+                </View>
+              )}
+            </View>
+            {/* Icône Mon Profil */}
+            <View style={[styles.profileIconBadge, { backgroundColor: colors.accent }]}>
+              <User size={12} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Texte au centre */}
+          <View style={styles.headerTextCenter}>
+            <Text style={[styles.greetingSimple, { color: colors.textMuted }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.userNameLarge, { color: colors.textPrimary }]}>
+            <Text style={[styles.userNameSimple, { color: colors.textPrimary }]}>
               {userName}
             </Text>
           </View>
 
-          {/* Avatar - Octogone Premium */}
-          <View style={styles.avatarContainer}>
-            <HexagonImage
-              size={105}
-              borderColor={isDark ? '#FFFFFF' : '#000000'}
-              borderWidth={3}
-              backgroundColor="#FFFFFF"
-              imageUri={avatarImageUri}
-              onPress={() => router.push('/avatar-selection')}
-              placeholder={<Ionicons name="person" size={32} color={colors.textSecondary} />}
-              zoomOut={true}
-            />
-            {/* Rang + Niveau animé premium - Cliquable vers Dojo */}
-            <AnimatedRankBadge
-              rankName={rankName}
-              level={level}
-              maxLevel={5}
-              isDark={isDark}
-              themeColor={themeColor}
-              accentColor={colors.accent}
-              onPress={() => {
-                impactAsync(ImpactFeedbackStyle.Light);
-                router.push('/gamification');
-              }}
-            />
-          </View>
+          {/* Avatar avec barre de progression circulaire + rang */}
+          <TouchableOpacity
+            onPress={() => {
+              impactAsync(ImpactFeedbackStyle.Light);
+              router.push('/avatar-customization');
+            }}
+            activeOpacity={0.8}
+            style={styles.avatarSection}
+          >
+            {/* Container avatar avec progression */}
+            <View style={styles.avatarProgressWrapper}>
+              {/* Cercle de progression SVG */}
+              <Svg width={90} height={90} style={styles.progressRing}>
+                {/* Fond du cercle */}
+                <Circle
+                  cx={45}
+                  cy={45}
+                  r={40}
+                  stroke={isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}
+                  strokeWidth={4}
+                  fill="transparent"
+                />
+                {/* Progression (niveau sur 100) */}
+                <Circle
+                  cx={45}
+                  cy={45}
+                  r={40}
+                  stroke={colors.accent}
+                  strokeWidth={4}
+                  fill="transparent"
+                  strokeDasharray={`${(level / 100) * 251} 251`}
+                  strokeDashoffset={0}
+                  strokeLinecap="round"
+                  transform="rotate(-90 45 45)"
+                />
+              </Svg>
+              {/* Avatar au centre */}
+              <View style={[styles.avatarInnerBg, { backgroundColor: colors.backgroundCard }]}>
+                {avatarImageUri ? (
+                  <Image source={{ uri: avatarImageUri }} style={styles.avatarInnerImg} />
+                ) : (
+                  <Ionicons name="person" size={32} color={colors.accent} />
+                )}
+              </View>
+              {/* Badge niveau */}
+              <View style={[styles.levelBadgeNew, { backgroundColor: colors.accent }]}>
+                <Text style={styles.levelBadgeTextNew}>{level}</Text>
+              </View>
+            </View>
+            {/* Rang sous l'avatar */}
+            <Text style={[styles.rankText, { color: rankColor || colors.accent }]}>
+              {rankName}
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* CITATION MOTIVANTE */}
-        {dailyQuote && (
-          <Animated.View
-            style={[
-              { paddingHorizontal: CARD_PADDING, marginTop: -2 },
-              { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
-            ]}
-          >
-            {/* Badge "Citation du jour" - AU-DESSUS */}
-            <View style={[styles.quoteBadgeTop, {
-              backgroundColor: `${colors.accent}15`,
-              borderColor: `${colors.accent}40`,
-            }]}>
-              <Text style={[styles.quoteBadgeTextTop, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('home.dailyQuote')}</Text>
-            </View>
-
-            {/* Carte citation avec fond adaptatif - PLEINE LARGEUR */}
-            <View style={[styles.cloudBubble, {
-              backgroundColor: colors.backgroundCard,
-              shadowColor: isDark ? colors.accent : '#000',
-              borderColor: colors.border,
-            }]}>
-              <Text style={[styles.quoteTextCloud, { color: colors.textPrimary }]}>
-                "{dailyQuote}"
-              </Text>
-            </View>
-          </Animated.View>
-        )}
+        {/* Citation du jour */}
+        <View style={[styles.quoteCard, {
+          backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+          borderColor: isDark ? colors.border : `${colors.accent}15`,
+        }]}>
+          <View style={[styles.quoteAccent, { backgroundColor: colors.accent }]} />
+          <Text style={[styles.quoteText, { color: colors.textPrimary }]}>
+            "{dailyQuote || 'Chaque jour est une nouvelle chance de devenir meilleur.'}"
+          </Text>
+          <Text style={[styles.quoteLabel, { color: colors.textMuted }]}>
+            Citation du jour
+          </Text>
+        </View>
       </View>
-
-        {/* Fond qui couvre les onglets quand on scrolle */}
-        <View style={[styles.contentBackground, { backgroundColor: colors.background }]}>
 
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
       <View style={[styles.weightCardPremium, { backgroundColor: colors.backgroundCard }]}>
@@ -1801,7 +1822,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         <ToolsGrid />
       </View>
 
-        </View>
     </ScrollView>
   );
 };
@@ -1830,8 +1850,331 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 10,
     marginHorizontal: -CARD_PADDING,
-    paddingHorizontal: 0, // Pas de padding, les cercles gèrent leur espacement
+    paddingHorizontal: 0,
     zIndex: 10,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // HEADER ÉLÉGANT - Photo avec icône + Avatar avec progression
+  // ═══════════════════════════════════════════════════════════════
+  headerElegant: {
+    marginBottom: 12,
+    paddingHorizontal: CARD_PADDING,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+
+  // Photo de profil
+  profileTouchable: {
+    position: 'relative',
+  },
+  profileCircleOuter: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  profileCircleImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 37,
+  },
+  profileCirclePlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 37,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileIconBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+
+  // Texte centre
+  headerTextCenter: {
+    flex: 1,
+    marginHorizontal: 12,
+    paddingTop: 12,
+  },
+  greetingSimple: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  userNameSimple: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+
+  // Avatar avec progression circulaire
+  avatarSection: {
+    alignItems: 'center',
+  },
+  avatarProgressWrapper: {
+    width: 90,
+    height: 90,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressRing: {
+    position: 'absolute',
+  },
+  avatarInnerBg: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarInnerImg: {
+    width: 55,
+    height: 65,
+    resizeMode: 'contain',
+  },
+  levelBadgeNew: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  levelBadgeTextNew: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  rankText: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+
+  // Citation
+  quoteCard: {
+    marginTop: 16,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  quoteAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
+  },
+  quoteText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    paddingLeft: 10,
+  },
+  quoteLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    marginTop: 8,
+    paddingLeft: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  // Legacy styles (gardés pour compatibilité)
+  heroHeaderGaming: {
+    marginTop: 0,
+    marginBottom: 10,
+    marginHorizontal: -CARD_PADDING,
+    paddingTop: 55,
+    paddingBottom: 16,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    zIndex: 10,
+  },
+  // Stats Bar Gaming
+  statsBarGaming: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    marginHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  statItemGaming: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  statValueGaming: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  statLabelGaming: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 0.5,
+  },
+  statSeparator: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    marginHorizontal: 12,
+  },
+  // Citation Gaming
+  quoteBadgeGaming: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 8,
+  },
+  quoteBadgeTextGaming: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quoteCardGaming: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  quoteTextGaming: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  // Photo de profil Gaming
+  profilePhotoContainer: {
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  profilePhotoRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  profilePhotoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  profilePhotoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3E8FF',
+  },
+  // Avatar avec progression circulaire
+  avatarProgressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    width: 100,
+    height: 100,
+  },
+  progressRingSvg: {
+    position: 'absolute',
+  },
+  avatarInnerCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarInnerImage: {
+    width: 60,
+    height: 70,
+    resizeMode: 'contain',
+  },
+  levelBadgeGaming: {
+    position: 'absolute',
+    bottom: 0,
+    right: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FCD34D',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 3,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  levelBadgeText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#1F2937',
   },
   heroTop: {
     flexDirection: 'row',
@@ -1842,8 +2185,8 @@ const styles = StyleSheet.create({
   // Container pour hexagone photo de profil
   hexagonContainer: {
     alignItems: 'center',
-    marginTop: 50, // Descendu pour ne pas toucher l'heure/batterie
-    marginLeft: 8,
+    marginTop: 0,
+    marginLeft: 12,
   },
   hexagonImage: {
     width: 120,
@@ -1860,8 +2203,8 @@ const styles = StyleSheet.create({
   // Container pour avatar + texte rang/niveau
   avatarContainer: {
     alignItems: 'center',
-    marginTop: 50, // Descendu pour ne pas toucher l'heure/batterie
-    marginRight: 8,
+    marginTop: 0,
+    marginRight: 12,
   },
   // Cercle avatar - AGRANDI
   avatarCircle: {
