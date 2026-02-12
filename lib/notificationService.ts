@@ -295,12 +295,25 @@ class NotificationService {
         hydrationIntervalHours: 2,
       }));
 
+      // ═══ FORCE DISABLE: Health Tips (Dormir Moins Bête) ═══
+      await AsyncStorage.setItem('@yoroi_evening_health_tips_settings', JSON.stringify({
+        enabled: false,
+        time: '22:00',
+        days: [],
+      }));
+
+      // ═══ FORCE DISABLE: Hydration reminders ═══
+      await AsyncStorage.setItem('@yoroi_hydration_settings', JSON.stringify({
+        reminderEnabled: false,
+        reminderInterval: 120,
+      }));
+
       // Annuler TOUTES les notifications existantes pour partir propre
       await Notifications.cancelAllScheduledNotificationsAsync();
       logger.info('[NotificationService] RESET: Toutes les notifications annulées et paramètres forcés à OFF');
 
       // Ne PAS programmer de nouvelles notifications
-      // Seules les citations sont gérées par citationNotificationService
+      // Seules les citations (1x matin) sont gérées par citationNotificationService
 
       this.isInitialized = true;
       logger.info('NotificationService initialisé (mode minimal - tout désactivé)');

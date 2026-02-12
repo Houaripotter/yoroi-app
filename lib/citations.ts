@@ -1427,13 +1427,13 @@ export const getCitationNotifSettings = async (): Promise<CitationNotifSettings>
     const time = await AsyncStorage.getItem(CITATION_NOTIF_TIME_KEY);
 
     return {
-      enabled: enabled !== null ? enabled === 'true' : true, // ACTIVÉ par défaut - 2 citations/jour
-      frequency: frequency ? parseInt(frequency, 10) : 2, // 2×/jour par défaut (matin et soir)
+      enabled: enabled !== null ? enabled === 'true' : true, // ACTIVÉ par défaut
+      frequency: 1, // FORCÉ: 1×/jour matin uniquement - ignorer la valeur sauvegardée
       time: time || '08:00',
     };
   } catch (error) {
     logger.error('Erreur lecture paramètres notif citations:', error);
-    return { enabled: true, frequency: 2, time: '08:00' }; // ACTIVÉ par défaut - 2×/jour
+    return { enabled: true, frequency: 1, time: '08:00' }; // ACTIVÉ par défaut - 1×/jour matin
   }
 };
 

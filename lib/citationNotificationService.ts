@@ -96,22 +96,13 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 // ═══════════════════════════════════════════════
 
 /**
- * Heures de notification selon la fréquence
- * Réparties intelligemment sur la journée
- * MAX 3 citations par jour pour ne pas spammer
+ * Heures de notification
+ * FORCÉ: 1 seule notification le matin à 8h00
+ * Les utilisateurs ne veulent qu'une seule citation par jour
  */
-const getNotificationHours = (frequency: number): number[] => {
-  switch (frequency) {
-    case 1:
-      return [8]; // 8h00 (matin)
-    case 2:
-      return [8, 19]; // 8h00 (matin) et 19h00 (soir)
-    case 3:
-      return [8, 13, 19]; // 8h00 (matin), 13h00 (midi) et 19h00 (soir)
-    // SUPPRESSION de 4 et 5 - trop de notifications!
-    default:
-      return [8]; // Par défaut: 1 fois par jour
-  }
+const getNotificationHours = (_frequency: number): number[] => {
+  // TOUJOURS 1 seule notification le matin - peu importe la fréquence
+  return [8]; // 8h00 (matin uniquement)
 };
 
 /**
@@ -208,20 +199,11 @@ export const scheduleCitationNotifications = async (): Promise<boolean> => {
 };
 
 /**
- * Obtient un titre aléatoire pour la notification
+ * Titre UNIQUE et cohérent pour la notification
+ * Fini les titres aléatoires qui spamment ("Motivation YOROI", "Citation du moment", etc.)
  */
 const getNotificationTitle = (): string => {
-  const titles = [
-    'Ta dose de motivation',
-    'Citation du moment',
-    'Écoute ça',
-    'Focus du jour',
-    'Motivation YOROI',
-    'Boost mental',
-    'Sagesse du dojo',
-    'Énergie positive',
-  ];
-  return titles[Math.floor(Math.random() * titles.length)];
+  return 'Citation du jour';
 };
 
 // ═══════════════════════════════════════════════

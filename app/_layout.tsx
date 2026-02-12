@@ -13,11 +13,11 @@ import { WatchConnectivityProvider } from '@/lib/WatchConnectivityProvider';
 import DevCodeModal from '@/components/DevCodeModal';
 import { initDatabase } from '@/lib/database';
 import { autoImportCompetitionsOnFirstLaunch } from '@/lib/importCompetitionsService';
-import { importEventsFromJSON } from '@/lib/eventsService';
+import { forceReimportEvents } from '@/lib/eventsService';
 import { notificationService } from '@/lib/notificationService';
 import { migrateAvatarSystem } from '@/lib/avatarMigration';
 import { initCitationNotifications } from '@/lib/citationNotificationService';
-import { initHealthTipNotifications, setupNotificationHandler } from '@/lib/eveningHealthTipsService';
+import { setupNotificationHandler } from '@/lib/eveningHealthTipsService';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
 import { appleWatchService } from '@/lib/appleWatchService';
@@ -150,14 +150,14 @@ export default function RootLayout() {
       try {
         logger.info('Yoroi - Initialisation en arrière-plan...');
 
-        // ✅ Initialiser la base de donnees SQLite PUIS importer les événements
+        // ✅ Initialiser la base de donnees SQLite PUIS forcer la réimportation des événements
         initDatabase()
           .then(() => {
             logger.info('Base de donnees initialisee');
-            // ⚠️ IMPORTANT: Import des événements APRÈS que la DB soit prête
-            return importEventsFromJSON();
+            // ⚠️ FORCE REIMPORT: Charger les nouvelles données JSON
+            return forceReimportEvents();
           })
-          .then(() => logger.info('✅ Catalogue événements importé'))
+          .then(() => logger.info('✅ Catalogue événements reimporté avec succès'))
           .catch(err => logger.error('Erreur init database ou import événements:', err));
 
         // ✅ Initialiser Apple Watch Service (sync automatique iPhone ↔ Watch)
@@ -175,18 +175,17 @@ export default function RootLayout() {
           .then(() => logger.info('✅ Auto-import compétitions terminé'))
           .catch(err => logger.error('Erreur auto-import compétitions:', err));
 
-        // Notifications
+        // Notifications - SEULEMENT citations du matin (1x/jour à 8h)
+        // Tout le reste est DÉSACTIVÉ (hydratation, sommeil, health tips, etc.)
         notificationService.initialize()
           .then(success => {
             if (success) {
-              logger.info('✅ Service notifications initialisé');
-              return Promise.all([
-                initCitationNotifications(),
-                initHealthTipNotifications()
-              ]);
+              logger.info('✅ Service notifications initialisé (tout OFF sauf citations)');
+              // UNIQUEMENT les citations du jour - 1 seule notif le matin
+              return initCitationNotifications();
             }
           })
-          .then(() => logger.info('✅ Notifications initialisées'))
+          .then(() => logger.info('✅ Citation du jour initialisée (1x matin)'))
           .catch(err => logger.error('❌ Erreur notifications:', err));
 
       } catch (error) {

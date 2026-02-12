@@ -94,7 +94,8 @@ export default function NotificationsScreen() {
 
     impactAsync(ImpactFeedbackStyle.Light);
 
-    const newSettings = { ...citationSettings, [key]: value };
+    // TOUJOURS forcer frequency à 1 (1x matin uniquement)
+    const newSettings = { ...citationSettings, [key]: value, frequency: 1 };
     setCitationSettings(newSettings);
     await setCitationNotifSettings(newSettings);
   };
@@ -149,13 +150,8 @@ export default function NotificationsScreen() {
     );
   }
 
-  const getFrequencyText = (freq: number) => {
-    switch (freq) {
-      case 1: return '1× par jour (matin)';
-      case 2: return '2× par jour (matin, soir)';
-      case 3: return '3× par jour (matin, midi, soir)';
-      default: return '1× par jour';
-    }
+  const getFrequencyText = (_freq: number) => {
+    return '1× par jour (8h00)';
   };
 
   return (
@@ -217,38 +213,12 @@ export default function NotificationsScreen() {
             />
           </View>
 
-          {citationSettings.enabled && (
-            <View style={[styles.featuredOptions, { borderTopColor: colors.border }]}>
-              <Text style={[styles.optionLabel, { color: colors.textMuted }]}>Fréquence</Text>
-              <View style={styles.frequencyButtons}>
-                {[1, 2, 3].map((freq) => (
-                  <TouchableOpacity
-                    key={freq}
-                    style={[
-                      styles.frequencyBtn,
-                      {
-                        backgroundColor: citationSettings.frequency === freq ? colors.accent : colors.backgroundCard,
-                        borderColor: citationSettings.frequency === freq ? colors.accent : colors.border,
-                      }
-                    ]}
-                    onPress={() => updateCitationSetting('frequency', freq)}
-                  >
-                    <Text style={[
-                      styles.frequencyBtnText,
-                      { color: citationSettings.frequency === freq ? colors.textOnGold : colors.textSecondary }
-                    ]}>
-                      {freq}×
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
+          {/* Fréquence forcée à 1x matin - pas de sélecteur */}
 
           <View style={[styles.infoBox, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }]}>
             <Sparkles size={14} color={colors.textMuted} />
             <Text style={[styles.infoText, { color: colors.textMuted }]}>
-              Reçois des citations inspirantes pour rester motivé tout au long de la journée
+              1 citation motivante chaque matin à 8h pour bien démarrer ta journée
             </Text>
           </View>
         </LinearGradient>
