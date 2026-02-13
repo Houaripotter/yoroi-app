@@ -7,12 +7,19 @@ import logger from '@/lib/security/logger';
 // ============================================
 
 let db: SQLite.SQLiteDatabase | null = null;
+let _initPromise: Promise<void> | null = null;
 
-// Ouvrir la base de donnees
-export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+// Ouverture interne (sans attendre l'init - utilisé par initDatabase)
+const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
   if (db) return db;
   db = await SQLite.openDatabaseAsync('yoroi.db');
   return db;
+};
+
+// Ouvrir la base de donnees (attend que l'init soit terminée)
+export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+  if (_initPromise) await _initPromise;
+  return _openDB();
 };
 
 // ============================================
@@ -20,7 +27,14 @@ export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 // ============================================
 
 export const initDatabase = async () => {
-  const database = await openDatabase();
+  // Idempotent : si déjà en cours ou terminé, retourner la même promise
+  if (_initPromise) return _initPromise;
+  _initPromise = _performInit();
+  return _initPromise;
+};
+
+const _performInit = async () => {
+  const database = await _openDB();
 
   // Table Profil Utilisateur
   await database.execAsync(`
@@ -328,8 +342,44 @@ export const initDatabase = async () => {
     );
   `);
 
+  // Table Training Goals
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS training_goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sport_id TEXT NOT NULL UNIQUE,
+      weekly_target INTEGER NOT NULL DEFAULT 1,
+      is_active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Table Events Catalog (Catalogue d'événements sportifs)
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS events_catalog (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      date_start TEXT NOT NULL,
+      city TEXT,
+      country TEXT,
+      full_address TEXT,
+      category TEXT NOT NULL,
+      sport_tag TEXT NOT NULL,
+      registration_link TEXT,
+      federation TEXT,
+      image_logo_url TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Index pour améliorer les performances de recherche
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_date ON events_catalog(date_start);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_category ON events_catalog(category);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
+
   // Initialiser le carnet d'entraînement
-  initTrainingJournalDB();
+  await initTrainingJournalDB();
 
   logger.info('Database initialized successfully');
 };
@@ -586,11 +636,14 @@ export const addWeight = async (data: Weight): Promise<number> => {
 
 export const getWeights = async (days?: number): Promise<Weight[]> => {
   const database = await openDatabase();
-  const query = days
-    ? `SELECT * FROM weights WHERE date >= date('now', '-${days} days') ORDER BY date DESC`
-    : `SELECT * FROM weights ORDER BY date DESC`;
-
-  return await database.getAllAsync<Weight>(query);
+  if (days) {
+    const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 3650));
+    return await database.getAllAsync<Weight>(
+      `SELECT * FROM weights WHERE date >= date('now', '-' || ? || ' days') ORDER BY date DESC`,
+      [safeDays]
+    );
+  }
+  return await database.getAllAsync<Weight>(`SELECT * FROM weights ORDER BY date DESC`);
 };
 
 // Alias pour getAllWeights (utilisé par certains composants)
@@ -642,18 +695,26 @@ export const addTraining = async (data: Training): Promise<number> => {
 
 export const getTrainings = async (days?: number): Promise<Training[]> => {
   const database = await openDatabase();
-  const query = days
-    ? `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+  let results: (Training & { exercises?: string })[];
+  if (days) {
+    const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 3650));
+    results = await database.getAllAsync<Training & { exercises?: string }>(
+      `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
        FROM trainings t
        LEFT JOIN clubs c ON t.club_id = c.id
-       WHERE t.date >= date('now', '-${days} days')
+       WHERE t.date >= date('now', '-' || ? || ' days')
+       ORDER BY t.date DESC, t.start_time ASC`,
+      [safeDays]
+    );
+  } else {
+    results = await database.getAllAsync<Training & { exercises?: string }>(
+      `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
+       FROM trainings t
+       LEFT JOIN clubs c ON t.club_id = c.id
        ORDER BY t.date DESC, t.start_time ASC`
-    : `SELECT t.*, t.duration_minutes as duration, c.name as club_name, c.logo_uri as club_logo, c.color as club_color
-       FROM trainings t
-       LEFT JOIN clubs c ON t.club_id = c.id
-       ORDER BY t.date DESC, t.start_time ASC`;
+    );
+  }
 
-  const results = await database.getAllAsync<Training & { exercises?: string }>(query);
   return results.map(r => {
     let exercises;
     if (r.exercises) {
@@ -780,11 +841,14 @@ export const addMeasurementRecord = async (data: Measurement): Promise<number> =
 
 export const getMeasurements = async (days?: number): Promise<Measurement[]> => {
   const database = await openDatabase();
-  const query = days
-    ? `SELECT * FROM measurements WHERE date >= date('now', '-${days} days') ORDER BY date DESC`
-    : `SELECT * FROM measurements ORDER BY date DESC`;
-
-  return await database.getAllAsync<Measurement>(query);
+  if (days) {
+    const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 3650));
+    return await database.getAllAsync<Measurement>(
+      `SELECT * FROM measurements WHERE date >= date('now', '-' || ? || ' days') ORDER BY date DESC`,
+      [safeDays]
+    );
+  }
+  return await database.getAllAsync<Measurement>(`SELECT * FROM measurements ORDER BY date DESC`);
 };
 
 export const getLatestMeasurement = async (): Promise<Measurement | null> => {
@@ -1298,7 +1362,7 @@ export const importData = async (jsonString: string): Promise<void> => {
   }
 
   // Importer les données YOROI MEDIC (version 2.0+)
-  if (data.version >= '2.0') {
+  if (parseFloat(data.version) >= 2.0) {
     // Créer une map pour mapper les anciens IDs aux nouveaux
     const injuryIdMap = new Map<number, number>();
 

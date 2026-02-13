@@ -91,6 +91,26 @@ export const getSleepEntries = async (): Promise<SleepEntry[]> => {
 };
 
 /**
+ * Valide le format HH:MM d'une heure
+ */
+const isValidTimeFormat = (time: string): boolean => {
+  if (!time || typeof time !== 'string') return false;
+  const match = time.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return false;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+};
+
+/**
+ * Parse une heure au format HH:MM en heures et minutes
+ */
+const parseTime = (time: string): { hours: number; minutes: number } => {
+  const [h, m] = time.split(':').map(Number);
+  return { hours: h, minutes: m };
+};
+
+/**
  * Ajoute une entrée de sommeil
  */
 export const addSleepEntry = async (
@@ -99,19 +119,32 @@ export const addSleepEntry = async (
   quality: number,
   notes?: string
 ): Promise<SleepEntry> => {
+  // Validation du format horaire
+  if (!isValidTimeFormat(bedTime)) {
+    throw new Error(`Format heure de coucher invalide: "${bedTime}". Utilisez HH:MM (ex: 23:00)`);
+  }
+  if (!isValidTimeFormat(wakeTime)) {
+    throw new Error(`Format heure de réveil invalide: "${wakeTime}". Utilisez HH:MM (ex: 07:00)`);
+  }
+
   try {
     const entries = await getSleepEntries();
     const today = format(new Date(), 'yyyy-MM-dd');
-    
+
     // Calculer la durée
-    const [bedH, bedM] = bedTime.split(':').map(Number);
-    const [wakeH, wakeM] = wakeTime.split(':').map(Number);
-    
-    let durationMinutes = (wakeH * 60 + wakeM) - (bedH * 60 + bedM);
-    if (durationMinutes < 0) {
+    const bed = parseTime(bedTime);
+    const wake = parseTime(wakeTime);
+
+    let durationMinutes = (wake.hours * 60 + wake.minutes) - (bed.hours * 60 + bed.minutes);
+    if (durationMinutes <= 0) {
       durationMinutes += 24 * 60; // Passe minuit
     }
-    
+
+    // Validation : durée entre 1h et 16h
+    if (durationMinutes < 60 || durationMinutes > 960) {
+      throw new Error(`Durée de sommeil irréaliste (${Math.round(durationMinutes / 60)}h). Vérifiez vos horaires.`);
+    }
+
     const newEntry: SleepEntry = {
       id: `sleep_${Date.now()}`,
       date: today,
@@ -121,7 +154,7 @@ export const addSleepEntry = async (
       quality,
       notes,
     };
-    
+
     // Remplacer si même date, sinon ajouter
     const existingIndex = entries.findIndex(e => e.date === today);
     if (existingIndex >= 0) {
@@ -129,7 +162,7 @@ export const addSleepEntry = async (
     } else {
       entries.unshift(newEntry);
     }
-    
+
     await AsyncStorage.setItem(STORAGE_KEYS.SLEEP_ENTRIES, JSON.stringify(entries));
     return newEntry;
   } catch (error) {

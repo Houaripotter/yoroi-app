@@ -102,9 +102,28 @@ export default function SleepScreen() {
   useEffect(() => { loadData(); }, []);
 
   const handleSave = async () => {
+    // Validation du format horaire avant sauvegarde
+    const timeRegex = /^\d{1,2}:\d{2}$/;
+    if (!timeRegex.test(bedTime)) {
+      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 23:00)', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
+    if (!timeRegex.test(wakeTime)) {
+      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 07:00)', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
+
+    // Validation des heures/minutes
+    const [bedH, bedM] = bedTime.split(':').map(Number);
+    const [wakeH, wakeM] = wakeTime.split(':').map(Number);
+    if (bedH > 23 || bedM > 59 || wakeH > 23 || wakeM > 59) {
+      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Heure invalide. Les heures doivent être entre 00:00 et 23:59', [{ text: 'OK', style: 'primary' }]);
+      return;
+    }
+
     try {
-      notificationAsync(NotificationFeedbackType.Success);
       await addSleepEntry(bedTime, wakeTime, quality, notes);
+      try { notificationAsync(NotificationFeedbackType.Success); } catch (_) {}
       setShowAddModal(false);
       setBedTime('23:00');
       setWakeTime('07:00');
@@ -112,8 +131,9 @@ export default function SleepScreen() {
       setNotes('');
       loadData();
       showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
-    } catch (error) {
-      showPopup(t('common.error'), t('sleep.saveError'), [{ text: 'OK', style: 'primary' }]);
+    } catch (error: any) {
+      const message = error?.message || t('sleep.saveError') || 'Erreur lors de la sauvegarde';
+      showPopup(t('common.error'), message, [{ text: 'OK', style: 'primary' }]);
     }
   };
 
@@ -344,6 +364,7 @@ export default function SleepScreen() {
                   placeholder="23:00"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numbers-and-punctuation"
+                  maxLength={5}
                 />
               </View>
               <View style={styles.timeInput}>
@@ -356,6 +377,7 @@ export default function SleepScreen() {
                   placeholder="07:00"
                   placeholderTextColor={colors.textMuted}
                   keyboardType="numbers-and-punctuation"
+                  maxLength={5}
                 />
               </View>
             </View>

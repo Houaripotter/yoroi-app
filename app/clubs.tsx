@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { launchImageLibraryAsync, launchCameraAsync, requestMediaLibraryPermissionsAsync, getMediaLibraryPermissionsAsync, requestCameraPermissionsAsync, getCameraPermissionsAsync } from 'expo-image-picker';
 import {
@@ -68,12 +68,10 @@ export default function ClubsScreen() {
     }
   }, []);
 
-  // Recharger les clubs quand l'écran devient actif (après retour de add-club)
-  useFocusEffect(
-    useCallback(() => {
-      loadClubs();
-    }, [loadClubs])
-  );
+  // Charger les clubs au montage (les mises à jour sont gérées par handleSave/handleDelete)
+  useEffect(() => {
+    loadClubs();
+  }, []);
 
   const resetForm = () => {
     setName('');

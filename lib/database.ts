@@ -6,12 +6,19 @@ import { initTrainingJournalDB } from './trainingJournalService';
 // ============================================
 
 let db: SQLite.SQLiteDatabase | null = null;
+let _initPromise: Promise<void> | null = null;
 
-// Ouvrir la base de donnees
-export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+// Ouverture interne (sans attendre l'init - utilisé par initDatabase)
+const _openDB = async (): Promise<SQLite.SQLiteDatabase> => {
   if (db) return db;
   db = await SQLite.openDatabaseAsync('yoroi.db');
   return db;
+};
+
+// Ouvrir la base de donnees (attend que l'init soit terminée)
+export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+  if (_initPromise) await _initPromise;
+  return _openDB();
 };
 
 // ============================================
@@ -19,7 +26,14 @@ export const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 // ============================================
 
 export const initDatabase = async () => {
-  const database = await openDatabase();
+  // Idempotent : si déjà en cours ou terminé, retourner la même promise
+  if (_initPromise) return _initPromise;
+  _initPromise = _performInit();
+  return _initPromise;
+};
+
+const _performInit = async () => {
+  const database = await _openDB();
 
   // Table Profil Utilisateur
   await database.execAsync(`
@@ -1493,7 +1507,7 @@ export const importData = async (jsonString: string): Promise<void> => {
   }
 
   // Importer les données YOROI MEDIC (version 2.0+)
-  if (data.version >= '2.0') {
+  if (parseFloat(data.version) >= 2.0) {
     // Créer une map pour mapper les anciens IDs aux nouveaux
     const injuryIdMap = new Map<number, number>();
 

@@ -4,7 +4,7 @@
 // Connecté au toggle Menu → Apparence → Bouton Partage Stats
 // ============================================
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -15,7 +15,7 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Share2, Calendar, CalendarDays, CalendarRange, X } from 'lucide-react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '@/lib/ThemeContext';
@@ -35,23 +35,18 @@ export const ShareFloatingButton: React.FC = () => {
   const menuAnim = useRef(new Animated.Value(0)).current;
 
   // Vérifier si le bouton doit être affiché (connecté au toggle Menu → Apparence)
-  useFocusEffect(
-    useCallback(() => {
-      const checkVisibility = async () => {
-        try {
-          const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
-          setIsVisible(hidden !== 'true');
-        } catch (error) {
-          console.error('Error checking share button visibility:', error);
-          setIsVisible(true);
-        }
-      };
-      checkVisibility();
-      // Fermer le menu quand on change d'écran
-      setIsMenuOpen(false);
-      menuAnim.setValue(0);
-    }, [])
-  );
+  useEffect(() => {
+    const checkVisibility = async () => {
+      try {
+        const hidden = await AsyncStorage.getItem(SHARE_BUTTON_KEY);
+        setIsVisible(hidden !== 'true');
+      } catch (error) {
+        console.error('Error checking share button visibility:', error);
+        setIsVisible(true);
+      }
+    };
+    checkVisibility();
+  }, []);
 
   // Animation du menu
   useEffect(() => {

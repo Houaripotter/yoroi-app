@@ -14,7 +14,7 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
@@ -92,11 +92,9 @@ export default function TransformationV2Screen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadPhotos();
-    }, [loadPhotos])
-  );
+  useEffect(() => {
+    loadPhotos();
+  }, []);
 
   // ============================================
   // FORMATER DATES

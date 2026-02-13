@@ -470,7 +470,11 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
 
           // VALIDATION
           if (weight > 0 && weight <= 300) {
-            await addWeight(weight);
+            await addWeight({
+              weight,
+              date: new Date().toISOString().split('T')[0],
+              source: 'apple',
+            });
             await AsyncStorage.setItem('currentWeight', String(weight));
             logSync('handleWatchMessage - Poids sauvegardé', { weight });
           } else {
