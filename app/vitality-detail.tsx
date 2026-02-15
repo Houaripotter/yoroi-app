@@ -20,6 +20,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getSleepStats } from '@/lib/sleepService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -170,7 +171,7 @@ export default function VitalityDetailScreen() {
               styles.periodBtn,
               { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
             ]}
-            onPress={() => setPeriod(p)}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
             activeOpacity={0.7}
           >
             <Text

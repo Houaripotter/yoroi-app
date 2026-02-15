@@ -60,6 +60,7 @@ export default function HydrationScreen() {
   const [currentAmount, setCurrentAmount] = useState(0);
   const [goal, setGoal] = useState(2.5);
   const [editingGoal, setEditingGoal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [goalInput, setGoalInput] = useState('2.5');
   const [history, setHistory] = useState<DayData[]>([]);
 
@@ -235,33 +236,39 @@ export default function HydrationScreen() {
   };
 
   const handleSaveNotificationSettings = async () => {
-    const settings = notificationService.getSettings();
-    await notificationService.updateSettings({
-      hydration: {
-        ...settings.hydration,
-        useSlots: true,
-        slots: {
-          morning: {
-            enabled: morningEnabled,
-            time: morningTime,
-            amount: parseInt(morningAmount, 10),
-          },
-          afternoon: {
-            enabled: afternoonEnabled,
-            time: afternoonTime,
-            amount: parseInt(afternoonAmount, 10),
-          },
-          evening: {
-            enabled: eveningEnabled,
-            time: eveningTime,
-            amount: parseInt(eveningAmount, 10),
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const settings = notificationService.getSettings();
+      await notificationService.updateSettings({
+        hydration: {
+          ...settings.hydration,
+          useSlots: true,
+          slots: {
+            morning: {
+              enabled: morningEnabled,
+              time: morningTime,
+              amount: parseInt(morningAmount, 10),
+            },
+            afternoon: {
+              enabled: afternoonEnabled,
+              time: afternoonTime,
+              amount: parseInt(afternoonAmount, 10),
+            },
+            evening: {
+              enabled: eveningEnabled,
+              time: eveningTime,
+              amount: parseInt(eveningAmount, 10),
+            },
           },
         },
-      },
-    });
-    setShowNotificationSettings(false);
-    notificationAsync(NotificationFeedbackType.Success);
-    showPopup(t('hydration.saved'), t('hydration.remindersSavedMessage'));
+      });
+      setShowNotificationSettings(false);
+      notificationAsync(NotificationFeedbackType.Success);
+      showPopup(t('hydration.saved'), t('hydration.remindersSavedMessage'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const percentage = Math.min((currentAmount / goal) * 100, 100);
@@ -630,6 +637,7 @@ export default function HydrationScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={handleSaveNotificationSettings}
+                      disabled={isSaving}
                       style={[styles.notificationSaveBtn, { backgroundColor: '#0EA5E9' }]}
                     >
                       <Text style={styles.notificationSaveText}>{t('common.save')}</Text>

@@ -61,6 +61,7 @@ export default function BodyStatusScreen() {
   };
   const [selectedZone, setSelectedZone] = useState<BodyZone | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<BodyZoneStatus>('ok');
   const [painLevel, setPainLevel] = useState<number>(5);
   const [medicalNote, setMedicalNote] = useState<string>('');
@@ -98,28 +99,30 @@ export default function BodyStatusScreen() {
   };
 
   const handleSaveStatus = async () => {
+    if (isSaving) return;
     if (!selectedZone) return;
-
-    const zoneData: BodyZoneData = {
-      status: selectedStatus,
-    };
-
-    if (selectedStatus === 'warning') {
-      zoneData.pain = painLevel;
-    } else if (selectedStatus === 'injury') {
-      if (!medicalNote.trim()) {
-        showPopup(t('screens.bodyStatus.noteRequired'), t('screens.bodyStatus.noteRequiredDesc'), [{ text: t('common.ok'), style: 'primary' }]);
-        return;
-      }
-      zoneData.note = medicalNote.trim();
-    }
-
-    const newStatus = {
-      ...bodyStatus,
-      [selectedZone]: zoneData,
-    };
+    setIsSaving(true);
 
     try {
+      const zoneData: BodyZoneData = {
+        status: selectedStatus,
+      };
+
+      if (selectedStatus === 'warning') {
+        zoneData.pain = painLevel;
+      } else if (selectedStatus === 'injury') {
+        if (!medicalNote.trim()) {
+          showPopup(t('screens.bodyStatus.noteRequired'), t('screens.bodyStatus.noteRequiredDesc'), [{ text: t('common.ok'), style: 'primary' }]);
+          return;
+        }
+        zoneData.note = medicalNote.trim();
+      }
+
+      const newStatus = {
+        ...bodyStatus,
+        [selectedZone]: zoneData,
+      };
+
       await saveUserBodyStatus(newStatus);
       setBodyStatus(newStatus);
       setModalVisible(false);
@@ -128,6 +131,8 @@ export default function BodyStatusScreen() {
     } catch (error) {
       logger.error('Erreur sauvegarde statut:', error);
       showPopup(t('common.error'), t('screens.bodyStatus.saveError'), [{ text: t('common.ok'), style: 'primary' }]);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -387,6 +392,7 @@ export default function BodyStatusScreen() {
                 <TouchableOpacity
                   style={[styles.saveButton, { backgroundColor: colors.accent }]}
                   onPress={handleSaveStatus}
+                  disabled={isSaving}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>{t('common.save')}</Text>

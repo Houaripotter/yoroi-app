@@ -99,6 +99,7 @@ export default function FastingScreen() {
   const [fastingState, setFastingState] = useState<FastingState | null>(null);
   const [stats, setStats] = useState<FastingStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Timer
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -263,39 +264,51 @@ export default function FastingScreen() {
 
   // Sauvegarder les parametres personnalises
   const handleSaveCustomSettings = async () => {
-    const settings: CustomFastingSettings = {
-      startTime: customStartTime,
-      durationHours: parseInt(customDuration, 10) || 16,
-      activeDays: customDays,
-    };
-    await saveCustomFastingSettings(settings);
-    setShowCustomModal(false);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const settings: CustomFastingSettings = {
+        startTime: customStartTime,
+        durationHours: parseInt(customDuration, 10) || 16,
+        activeDays: customDays,
+      };
+      await saveCustomFastingSettings(settings);
+      setShowCustomModal(false);
 
-    // Demarrer le jeûne
-    const success = await startFasting('custom');
-    if (success) {
-      successHaptic();
-      await loadData();
+      // Demarrer le jeûne
+      const success = await startFasting('custom');
+      if (success) {
+        successHaptic();
+        await loadData();
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
   // Sauvegarder les parametres Ramadan
   const handleSaveRamadanSettings = async () => {
-    const settings: RamadanSettings = {
-      city: ramadanCity,
-      country: 'France',
-      fajrTime: ramadanFajr,
-      maghribTime: ramadanMaghrib,
-      useManualTimes: true,
-    };
-    await saveRamadanSettings(settings);
-    setShowRamadanModal(false);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const settings: RamadanSettings = {
+        city: ramadanCity,
+        country: 'France',
+        fajrTime: ramadanFajr,
+        maghribTime: ramadanMaghrib,
+        useManualTimes: true,
+      };
+      await saveRamadanSettings(settings);
+      setShowRamadanModal(false);
 
-    // Demarrer le jeûne
-    const success = await startFasting('ramadan');
-    if (success) {
-      successHaptic();
-      await loadData();
+      // Demarrer le jeûne
+      const success = await startFasting('ramadan');
+      if (success) {
+        successHaptic();
+        await loadData();
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -683,6 +696,7 @@ export default function FastingScreen() {
               <TouchableOpacity
                 style={[styles.saveButton, { backgroundColor: colors.gold }]}
                 onPress={handleSaveCustomSettings}
+                disabled={isSaving}
               >
                 <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
                   Commencer le jeûne
@@ -757,6 +771,7 @@ export default function FastingScreen() {
               <TouchableOpacity
                 style={[styles.saveButton, { backgroundColor: colors.gold }]}
                 onPress={handleSaveRamadanSettings}
+                disabled={isSaving}
               >
                 <Text style={[styles.saveButtonText, { color: colors.textOnGold }]}>
                   Commencer le Ramadan

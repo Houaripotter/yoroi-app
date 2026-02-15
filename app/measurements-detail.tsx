@@ -23,6 +23,7 @@ import { getMeasurements, Measurement } from '@/lib/database';
 import { useSensitiveScreen } from '@/lib/security/screenshotProtection';
 import { BlurView } from 'expo-blur';
 import logger from '@/lib/security/logger';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -146,7 +147,7 @@ export default function MeasurementsDetailScreen() {
               styles.periodBtn,
               { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
             ]}
-            onPress={() => setPeriod(p)}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
             activeOpacity={0.7}
           >
             <Text

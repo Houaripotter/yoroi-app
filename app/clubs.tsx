@@ -51,6 +51,7 @@ export default function ClubsScreen() {
   const { showPopup, PopupComponent } = useCustomPopup();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
 
@@ -164,7 +165,10 @@ export default function ClubsScreen() {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     if (!name.trim()) {
+      setIsSaving(false);
       showPopup(t('common.error'), t('screens.clubs.nameRequired'), [
         { text: t('common.ok'), style: 'primary' }
       ]);
@@ -195,6 +199,8 @@ export default function ClubsScreen() {
       showPopup(t('common.error'), t('screens.clubs.saveError'), [
         { text: t('common.ok'), style: 'primary' }
       ]);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -351,8 +357,8 @@ export default function ClubsScreen() {
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {editingClub ? t('screens.clubs.editClub') : t('screens.clubs.newClub')}
             </Text>
-            <TouchableOpacity onPress={handleSave} style={styles.modalSave}>
-              <Check size={24} color={colors.gold} />
+            <TouchableOpacity onPress={handleSave} style={styles.modalSave} disabled={isSaving}>
+              <Check size={24} color={isSaving ? colors.textMuted : colors.gold} />
             </TouchableOpacity>
           </View>
 

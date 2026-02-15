@@ -15,6 +15,7 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Flame, Zap, TrendingUp, Activity } from 'lucide-react-native';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
@@ -133,7 +134,7 @@ export default function PerformanceDetailScreen() {
               styles.periodBtn,
               { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
             ]}
-            onPress={() => setPeriod(p)}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
             activeOpacity={0.7}
           >
             <Text

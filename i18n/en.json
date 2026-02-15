@@ -254,5 +254,26 @@
     "achievements": "Achievements",
     "legend": "Legend",
     "warrior": "Warrior"
+  },
+  "sleepInput": {
+    "title": "Log my sleep",
+    "subtitle": "Health app sync",
+    "sleepDuration": "Sleep duration",
+    "bedtime": "Bedtime",
+    "wakeTime": "Wake-up time",
+    "healthSyncInfo": "This data will be automatically saved to the Health app and appear in your sleep history.",
+    "saving": "Saving...",
+    "wakeAfterBed": "Wake-up time must be after bedtime.",
+    "maxDuration": "Sleep duration cannot exceed 16 hours.",
+    "shortDuration": "Short duration",
+    "shortDurationMessage": "You only slept {{duration}}. Are you sure?",
+    "sleepSaved": "Sleep saved",
+    "sleepSavedMessage": "Duration: {{duration}}\n\nData has been synced with the Health app.",
+    "saveError": "Unable to save sleep data. Check that you have authorized access to the Health app.",
+    "healthWriteError": "Unable to save to the Health app. Check permissions in Settings > Privacy.",
+    "danger": "DANGER",
+    "insufficient": "INSUFFICIENT",
+    "optimal": "OPTIMAL",
+    "high": "HIGH"
   }
 }

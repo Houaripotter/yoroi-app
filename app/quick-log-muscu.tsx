@@ -13,6 +13,8 @@ import {
   TextInput,
   Modal,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -367,6 +369,7 @@ export default function QuickLogMuscuScreen() {
         </TouchableOpacity>
       </View>
 
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }} keyboardVerticalOffset={100}>
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -627,6 +630,7 @@ export default function QuickLogMuscuScreen() {
 
         <View style={{ height: 150 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal Calculateur de disques */}
       <Modal

@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -221,6 +223,7 @@ export default function QuickLogOtherScreen() {
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <Text style={[styles.selectTitle, { color: colors.textPrimary }]}>
             Quelle activité ?
@@ -284,6 +287,11 @@ export default function QuickLogOtherScreen() {
         </TouchableOpacity>
       </View>
 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={100}
+      >
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -463,6 +471,7 @@ export default function QuickLogOtherScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
       <PopupComponent />
     </View>
   );

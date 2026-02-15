@@ -255,5 +255,26 @@
     "achievements": "Succès",
     "legend": "Légende",
     "warrior": "Guerrier"
+  },
+  "sleepInput": {
+    "title": "Saisir mon sommeil",
+    "subtitle": "Synchronisation l'app Santé",
+    "sleepDuration": "Durée du sommeil",
+    "bedtime": "Heure de coucher",
+    "wakeTime": "Heure de réveil",
+    "healthSyncInfo": "Ces données seront automatiquement enregistrées dans l'app Santé et apparaîtront dans ton historique de sommeil.",
+    "saving": "Enregistrement...",
+    "wakeAfterBed": "L'heure de réveil doit être après l'heure de coucher.",
+    "maxDuration": "La durée du sommeil ne peut pas dépasser 16 heures.",
+    "shortDuration": "Durée courte",
+    "shortDurationMessage": "Tu as dormi seulement {{duration}}. Es-tu sûr ?",
+    "sleepSaved": "Sommeil enregistré",
+    "sleepSavedMessage": "Durée: {{duration}}\n\nLes données ont été synchronisées avec l'app Santé.",
+    "saveError": "Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l'accès à l'app Santé.",
+    "healthWriteError": "Impossible d'enregistrer dans l'app Santé. Vérifie les autorisations dans Réglages > Confidentialité.",
+    "danger": "DANGER",
+    "insufficient": "INSUFFISANT",
+    "optimal": "OPTIMAL",
+    "high": "ÉLEVÉ"
   }
 }

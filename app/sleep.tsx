@@ -65,6 +65,7 @@ export default function SleepScreen() {
   const [entries, setEntries] = useState<SleepEntry[]>([]);
   const [stats, setStats] = useState<SleepStats | null>(null);
   const [goal, setGoal] = useState(480); // 8h par défaut
+  const [isSaving, setIsSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -103,38 +104,44 @@ export default function SleepScreen() {
   useEffect(() => { loadData(); }, []);
 
   const handleSave = async () => {
-    // Validation du format horaire avant sauvegarde
-    const timeRegex = /^\d{1,2}:\d{2}$/;
-    if (!timeRegex.test(bedTime)) {
-      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 23:00)', [{ text: 'OK', style: 'primary' }]);
-      return;
-    }
-    if (!timeRegex.test(wakeTime)) {
-      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 07:00)', [{ text: 'OK', style: 'primary' }]);
-      return;
-    }
-
-    // Validation des heures/minutes
-    const [bedH, bedM] = bedTime.split(':').map(Number);
-    const [wakeH, wakeM] = wakeTime.split(':').map(Number);
-    if (bedH > 23 || bedM > 59 || wakeH > 23 || wakeM > 59) {
-      showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Heure invalide. Les heures doivent être entre 00:00 et 23:59', [{ text: 'OK', style: 'primary' }]);
-      return;
-    }
-
+    if (isSaving) return;
+    setIsSaving(true);
     try {
-      await addSleepEntry(bedTime, wakeTime, quality, notes);
-      try { notificationAsync(NotificationFeedbackType.Success); } catch (_) {}
-      setShowAddModal(false);
-      setBedTime('23:00');
-      setWakeTime('07:00');
-      setQuality(3);
-      setNotes('');
-      loadData().catch(() => {});
-      showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
-    } catch (error: any) {
-      const message = error?.message || t('sleep.saveError') || 'Erreur lors de la sauvegarde';
-      showPopup(t('common.error'), message, [{ text: 'OK', style: 'primary' }]);
+      // Validation du format horaire avant sauvegarde
+      const timeRegex = /^\d{1,2}:\d{2}$/;
+      if (!timeRegex.test(bedTime)) {
+        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 23:00)', [{ text: 'OK', style: 'primary' }]);
+        return;
+      }
+      if (!timeRegex.test(wakeTime)) {
+        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Format invalide. Utilisez HH:MM (ex: 07:00)', [{ text: 'OK', style: 'primary' }]);
+        return;
+      }
+
+      // Validation des heures/minutes
+      const [bedH, bedM] = bedTime.split(':').map(Number);
+      const [wakeH, wakeM] = wakeTime.split(':').map(Number);
+      if (bedH > 23 || bedM > 59 || wakeH > 23 || wakeM > 59) {
+        showPopup(t('common.error'), t('sleep.invalidTimeFormat') || 'Heure invalide. Les heures doivent être entre 00:00 et 23:59', [{ text: 'OK', style: 'primary' }]);
+        return;
+      }
+
+      try {
+        await addSleepEntry(bedTime, wakeTime, quality, notes);
+        try { notificationAsync(NotificationFeedbackType.Success); } catch (_) {}
+        setShowAddModal(false);
+        setBedTime('23:00');
+        setWakeTime('07:00');
+        setQuality(3);
+        setNotes('');
+        loadData().catch(() => {});
+        showPopup(t('sleep.saved'), t('sleep.savedMessage'), [{ text: 'OK', style: 'primary' }]);
+      } catch (error: any) {
+        const message = error?.message || t('sleep.saveError') || 'Erreur lors de la sauvegarde';
+        showPopup(t('common.error'), message, [{ text: 'OK', style: 'primary' }]);
+      }
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -167,16 +174,22 @@ export default function SleepScreen() {
   };
 
   const handleSaveBedtimeReminder = async () => {
-    const settings = notificationService.getSettings();
-    await notificationService.updateSettings({
-      sleep: {
-        ...settings.sleep,
-        bedtimeReminder,
-      },
-    });
-    setShowNotificationSettings(false);
-    notificationAsync(NotificationFeedbackType.Success);
-    showPopup(t('sleep.saved'), t('sleep.reminderScheduled', { time: bedtimeReminder }), [{ text: 'OK', style: 'primary' }]);
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      const settings = notificationService.getSettings();
+      await notificationService.updateSettings({
+        sleep: {
+          ...settings.sleep,
+          bedtimeReminder,
+        },
+      });
+      setShowNotificationSettings(false);
+      notificationAsync(NotificationFeedbackType.Success);
+      showPopup(t('sleep.saved'), t('sleep.reminderScheduled', { time: bedtimeReminder }), [{ text: 'OK', style: 'primary' }]);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const advice = stats ? getSleepAdvice(stats.sleepDebtHours) : null;
@@ -326,6 +339,7 @@ export default function SleepScreen() {
                       <Text style={[styles.notificationCancelText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
+                      disabled={isSaving}
                       onPress={handleSaveBedtimeReminder}
                       style={[styles.notificationSaveBtn, { backgroundColor: '#8B5CF6' }]}
                     >
@@ -406,7 +420,7 @@ export default function SleepScreen() {
               <TouchableOpacity onPress={() => setShowAddModal(false)} style={[styles.cancelBtn, { borderColor: colors.border }]}>
                 <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleSave} style={[styles.saveBtn, { backgroundColor: '#8B5CF6' }]}>
+              <TouchableOpacity disabled={isSaving} onPress={handleSave} style={[styles.saveBtn, { backgroundColor: '#8B5CF6' }]}>
                 <Text style={styles.saveBtnText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>

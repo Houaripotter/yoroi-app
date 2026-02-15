@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   View,
   Text,
@@ -243,7 +244,7 @@ export default function CompositionDetailScreen() {
               return (
                 <TouchableOpacity
                   key={metric.id}
-                  onPress={() => setSelectedMetric(metric.id)}
+                  onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setSelectedMetric(metric.id); }}
                   style={[
                     styles.tab,
                     isActive && { backgroundColor: metric.color + '20' },
@@ -278,7 +279,7 @@ export default function CompositionDetailScreen() {
             return (
               <TouchableOpacity
                 key={period.id}
-                onPress={() => setSelectedPeriod(period.id)}
+                onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setSelectedPeriod(period.id); }}
                 style={[
                   styles.periodButton,
                   isActive && {

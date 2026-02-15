@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -44,6 +46,7 @@ export default function QuickLogRunningScreen() {
 
   // États
   const [runType, setRunType] = useState('Course Libre');
+  const [isSaving, setIsSaving] = useState(false);
   const [distance, setDistance] = useState('5');
   const [timeMinutes, setTimeMinutes] = useState('25');
   const [timeSeconds, setTimeSeconds] = useState('00');
@@ -107,6 +110,8 @@ export default function QuickLogRunningScreen() {
   };
 
   const handleSave = () => {
+    if (isSaving) return;
+    setIsSaving(true);
     const dist = parseFloat(distance);
     const mins = parseInt(timeMinutes);
     const secs = parseInt(timeSeconds);
@@ -163,6 +168,7 @@ export default function QuickLogRunningScreen() {
         },
       ]
     );
+    setIsSaving(false);
   };
 
   return (
@@ -183,12 +189,14 @@ export default function QuickLogRunningScreen() {
         </Text>
         <TouchableOpacity
           onPress={handleSave}
-          style={[styles.saveButton, { backgroundColor: colors.accent }]}
+          disabled={isSaving}
+          style={[styles.saveButton, { backgroundColor: isSaving ? colors.textMuted : colors.accent }]}
         >
           <Check size={20} color={colors.textOnGold} strokeWidth={3} />
         </TouchableOpacity>
       </View>
 
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }} keyboardVerticalOffset={100}>
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -449,6 +457,7 @@ export default function QuickLogRunningScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
       <PopupComponent />
     </View>
   );

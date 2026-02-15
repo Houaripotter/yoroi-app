@@ -12,6 +12,8 @@ import {
   ScrollView,
   TextInput,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { router } from 'expo-router';
@@ -265,10 +267,12 @@ export default function QuickLogCombatScreen() {
       </View>
 
       {/* Liste des techniques */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }} keyboardVerticalOffset={100}>
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {filteredTechniques().length === 0 ? (
           <View style={styles.emptyState}>
@@ -353,6 +357,7 @@ export default function QuickLogCombatScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modal Ajouter Technique */}
       <Modal

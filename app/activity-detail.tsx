@@ -19,6 +19,7 @@ import { ArrowLeft, Activity, Calendar, Clock, Dumbbell, TrendingUp } from 'luci
 import { useTheme } from '@/lib/ThemeContext';
 import { SmoothLineChart } from '@/components/charts/SmoothLineChart';
 import { getTrainings, Training } from '@/lib/database';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import logger from '@/lib/security/logger';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -167,7 +168,7 @@ export default function ActivityDetailScreen() {
               styles.periodBtn,
               { backgroundColor: period === p ? colors.accent : colors.backgroundCard },
             ]}
-            onPress={() => setPeriod(p)}
+            onPress={() => { impactAsync(ImpactFeedbackStyle.Light); setPeriod(p); }}
             activeOpacity={0.7}
           >
             <Text

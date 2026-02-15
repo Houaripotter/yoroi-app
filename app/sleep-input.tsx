@@ -18,6 +18,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Moon, ChevronLeft, Check, Calendar, Clock } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
+import { useI18n } from '@/lib/I18nContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { impactAsync, ImpactFeedbackStyle, notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -28,6 +29,7 @@ import { fr } from 'date-fns/locale';
 
 export default function SleepInputScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useI18n();
   const insets = useSafeAreaInsets();
 
   const [bedtime, setBedtime] = useState(new Date());
@@ -57,29 +59,29 @@ export default function SleepInputScreen() {
       // Validation
       if (duration <= 0) {
         Alert.alert(
-          'Erreur',
-          'L\'heure de réveil doit être après l\'heure de coucher.',
-          [{ text: 'OK' }]
+          t('common.error'),
+          t('sleepInput.wakeAfterBed'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
 
       if (duration > 16) {
         Alert.alert(
-          'Erreur',
-          'La durée du sommeil ne peut pas dépasser 16 heures.',
-          [{ text: 'OK' }]
+          t('common.error'),
+          t('sleepInput.maxDuration'),
+          [{ text: t('common.ok') }]
         );
         return;
       }
 
       if (duration < 1) {
         Alert.alert(
-          'Durée courte',
-          `Tu as dormi seulement ${formatDuration(duration)}. Es-tu sûr ?`,
+          t('sleepInput.shortDuration'),
+          t('sleepInput.shortDurationMessage', { duration: formatDuration(duration) }),
           [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Confirmer', onPress: () => saveSleepData() },
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('common.confirm'), onPress: () => saveSleepData() },
           ]
         );
         return;
@@ -89,9 +91,9 @@ export default function SleepInputScreen() {
     } catch (error) {
       logger.error('Error saving sleep:', error);
       Alert.alert(
-        'Erreur',
-        'Impossible de sauvegarder le sommeil. Vérifie que tu as autorisé l\'accès à l\'app Santé.',
-        [{ text: 'OK' }]
+        t('common.error'),
+        t('sleepInput.saveError'),
+        [{ text: t('common.ok') }]
       );
     }
   };
@@ -110,11 +112,11 @@ export default function SleepInputScreen() {
       if (success) {
         notificationAsync(NotificationFeedbackType.Success);
         Alert.alert(
-          'Sommeil enregistré',
-          `Durée: ${formatDuration(duration)}\n\nLes données ont été synchronisées avec l'app Santé.`,
+          t('sleepInput.sleepSaved'),
+          t('sleepInput.sleepSavedMessage', { duration: formatDuration(duration) }),
           [
             {
-              text: 'OK',
+              text: t('common.ok'),
               onPress: () => router.back(),
             },
           ]
@@ -126,9 +128,9 @@ export default function SleepInputScreen() {
       logger.error('Error writing sleep data:', error);
       notificationAsync(NotificationFeedbackType.Error);
       Alert.alert(
-        'Erreur',
-        "Impossible d'enregistrer dans l'app Santé. Vérifie les autorisations dans Réglages > Confidentialité.",
-        [{ text: 'OK' }]
+        t('common.error'),
+        t('sleepInput.healthWriteError'),
+        [{ text: t('common.ok') }]
       );
     } finally {
       setIsSaving(false);
@@ -145,10 +147,10 @@ export default function SleepInputScreen() {
   };
 
   const getStatusLabel = (): string => {
-    if (duration < 3) return 'DANGER';
-    if (duration < 6) return 'INSUFFISANT';
-    if (duration >= 7 && duration <= 9) return 'OPTIMAL';
-    if (duration > 9) return 'ÉLEVÉ';
+    if (duration < 3) return t('sleepInput.danger');
+    if (duration < 6) return t('sleepInput.insufficient');
+    if (duration >= 7 && duration <= 9) return t('sleepInput.optimal');
+    if (duration > 9) return t('sleepInput.high');
     return '—';
   };
 
@@ -171,8 +173,8 @@ export default function SleepInputScreen() {
 
         <View style={styles.headerContent}>
           <Moon size={32} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={styles.headerTitle}>Saisir mon sommeil</Text>
-          <Text style={styles.headerSubtitle}>Synchronisation l'app Santé</Text>
+          <Text style={styles.headerTitle}>{t('sleepInput.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('sleepInput.subtitle')}</Text>
         </View>
       </LinearGradient>
 
@@ -185,7 +187,7 @@ export default function SleepInputScreen() {
         {/* Carte Durée */}
         <View style={[styles.durationCard, { backgroundColor: colors.card }]}>
           <Text style={[styles.durationLabel, { color: colors.textMuted }]}>
-            Durée du sommeil
+            {t('sleepInput.sleepDuration')}
           </Text>
           <Text style={[styles.durationValue, { color: getStatusColor() }]}>
             {formatDuration(duration)}
@@ -202,7 +204,7 @@ export default function SleepInputScreen() {
           <View style={styles.timeSectionHeader}>
             <Moon size={20} color={colors.accent} strokeWidth={2.5} />
             <Text style={[styles.timeSectionTitle, { color: colors.text }]}>
-              Heure de coucher
+              {t('sleepInput.bedtime')}
             </Text>
           </View>
 
@@ -227,7 +229,7 @@ export default function SleepInputScreen() {
           <View style={styles.timeSectionHeader}>
             <Moon size={20} color={colors.accent} strokeWidth={2.5} />
             <Text style={[styles.timeSectionTitle, { color: colors.text }]}>
-              Heure de réveil
+              {t('sleepInput.wakeTime')}
             </Text>
           </View>
 
@@ -250,8 +252,7 @@ export default function SleepInputScreen() {
         {/* Info l'app Santé */}
         <View style={[styles.infoBox, { backgroundColor: isDark ? '#6366F1' + '15' : '#EEF2FF' }]}>
           <Text style={[styles.infoText, { color: isDark ? '#A5B4FC' : '#6366F1' }]}>
-            💡 Ces données seront automatiquement enregistrées dans l'app Santé
-            et apparaîtront dans ton historique de sommeil.
+            💡 {t('sleepInput.healthSyncInfo')}
           </Text>
         </View>
       </ScrollView>
@@ -269,7 +270,7 @@ export default function SleepInputScreen() {
         >
           <Check size={20} color={colors.textOnAccent} strokeWidth={2.5} />
           <Text style={[styles.saveButtonText, { color: colors.textOnAccent }]}>
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+            {isSaving ? t('sleepInput.saving') : t('common.save')}
           </Text>
         </TouchableOpacity>
       </View>
