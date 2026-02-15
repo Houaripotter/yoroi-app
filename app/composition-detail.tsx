@@ -32,6 +32,7 @@ import {
   Minus,
 } from 'lucide-react-native';
 import { getAllBodyCompositions, BodyComposition } from '@/lib/bodyComposition';
+import { SourceBadge } from '@/components/SourceBadge';
 
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -423,9 +424,12 @@ export default function CompositionDetailScreen() {
                   
                   style={styles.historyItem}
                 >
-                  <Text style={styles.historyDate}>
-                    {format(parseISO(item.date), 'd MMMM yyyy', { locale: fr })}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.historyDate}>
+                      {format(parseISO(item.date), 'd MMMM yyyy', { locale: fr })}
+                    </Text>
+                    {item.source && <SourceBadge source={item.source} size="small" />}
+                  </View>
                   <View style={styles.historyValueContainer}>
                     <Text style={styles.historyValue}>
                       {typeof value === 'number' ? value.toFixed(1) : '--'} {activeMetric.unit}

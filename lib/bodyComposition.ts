@@ -107,6 +107,7 @@ export interface BodyComposition {
   visceralFat: number;           // Graisse viscérale (1-59)
   metabolicAge?: number;         // Âge métabolique
   bmr?: number;                  // Métabolisme de base kcal
+  source?: string;               // Source normalisée (withings, garmin, manual, etc.)
   // Analyse segmentaire (optionnel)
   segments?: {
     rightArm?: { fatPercent: number; muscleRating: number };
@@ -167,7 +168,7 @@ export const getLatestBodyComposition = async (): Promise<BodyComposition | null
     const localData = all.length > 0 ? all[0] : null;
 
     // 2. ✅ NOUVEAU: Récupérer les données Apple Health
-    let healthKitData: { bodyFatPercentage?: number; leanBodyMass?: number; date?: string } | null = null;
+    let healthKitData: { bodyFatPercentage?: number; leanBodyMass?: number; date?: string; source?: string } | null = null;
     try {
       healthKitData = await healthConnect.getBodyComposition();
       if (healthKitData) {
@@ -188,6 +189,7 @@ export const getLatestBodyComposition = async (): Promise<BodyComposition | null
         boneMass: 0,
         waterPercent: 0,
         visceralFat: 0,
+        source: healthKitData.source || 'apple_health',
       };
     }
 
@@ -204,6 +206,7 @@ export const getLatestBodyComposition = async (): Promise<BodyComposition | null
           bodyFatPercent: healthKitData.bodyFatPercentage ?? localData.bodyFatPercent,
           muscleMass: healthKitData.leanBodyMass ?? localData.muscleMass,
           date: healthKitData.date || localData.date,
+          source: healthKitData.source || 'apple_health',
         };
       }
 

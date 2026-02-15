@@ -5,7 +5,7 @@
 // et des guides de configuration par marque (Withings, Garmin, Polar, Whoop, etc.)
 // ============================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,8 +26,6 @@ import {
   ChevronDown,
   ChevronUp,
   Heart,
-  Scale,
-  Watch,
   Activity,
   RefreshCw,
   Check,
@@ -46,12 +44,9 @@ import { lightHaptic } from '@/lib/haptics';
 import {
   healthConnect,
   getProviderIcon,
-  getConnectionInstructions,
-  HealthPermissions,
   SyncStatus,
 } from '@/lib/healthConnect';
 import { getDetectedSources, getDetectedWeightSources, DetectedSource } from '@/lib/database';
-import { useWatch } from '@/lib/WatchConnectivityProvider';
 
 // ============================================
 // SOURCE DISPLAY CONFIG
@@ -228,7 +223,6 @@ export default function ConnectedDevicesScreen() {
   const { colors } = useTheme();
   const { locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const { syncAllData } = useWatch();
 
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);

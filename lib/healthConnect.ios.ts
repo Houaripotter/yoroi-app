@@ -2483,6 +2483,32 @@ class HealthConnectService {
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
 
+      // ══════ STOCKER LA FRAICHEUR PAR SOURCE ══════
+      try {
+        const sourcesDetected = new Set<string>();
+        if (data.weight?.source) sourcesDetected.add(data.weight.source);
+        if (data.heartRate?.source) sourcesDetected.add(data.heartRate.source);
+        if (data.heartRateVariability?.source) sourcesDetected.add(data.heartRateVariability.source);
+        if (data.sleep?.source) sourcesDetected.add(data.sleep.source);
+        if (data.bodyComposition?.source) sourcesDetected.add(data.bodyComposition.source);
+        if (data.vo2Max?.source) sourcesDetected.add(data.vo2Max.source);
+
+        if (sourcesDetected.size > 0) {
+          const freshness: Record<string, string> = {};
+          try {
+            const existing = await AsyncStorage.getItem('@yoroi_source_freshness');
+            if (existing) Object.assign(freshness, JSON.parse(existing));
+          } catch {}
+          const now = new Date().toISOString();
+          for (const src of sourcesDetected) {
+            freshness[src] = now;
+          }
+          await AsyncStorage.setItem('@yoroi_source_freshness', JSON.stringify(freshness));
+        }
+      } catch (e) {
+        // Best-effort
+      }
+
       logger.info(`[syncAll] Synchronisation terminée: ${savedCount} données sauvegardées dans SQLite`);
       return data;
     } catch (error) {

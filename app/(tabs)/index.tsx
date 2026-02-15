@@ -102,6 +102,7 @@ import { AnimatedCompositionCircle } from '@/components/AnimatedCompositionCircl
 import { StreakCalendar } from '@/components/StreakCalendar';
 import { AvatarViewerModal } from '@/components/AvatarViewerModal';
 import HealthConnect from '@/lib/healthConnect.ios';
+import { healthConnect as healthConnectService } from '@/lib/healthConnect';
 import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { UpdateChangelogModal } from '@/components/UpdateChangelogModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
@@ -782,6 +783,29 @@ export default function HomeScreen() {
     cancelledRef.current = false;
     loadData();
     return () => { cancelledRef.current = true; };
+  }, []);
+
+  // Auto-sync: synchroniser les donnees de sante si derniere sync > 15 min
+  useEffect(() => {
+    const autoSync = async () => {
+      try {
+        await healthConnectService.initialize();
+        const status = healthConnectService.getSyncStatus();
+        if (!status.isConnected || !status.lastSync) return;
+
+        const lastSyncTime = new Date(status.lastSync).getTime();
+        const fifteenMinutes = 15 * 60 * 1000;
+        if (Date.now() - lastSyncTime > fifteenMinutes) {
+          logger.info('[AutoSync] Last sync > 15 min, syncing...');
+          await healthConnectService.syncAll();
+          logger.info('[AutoSync] Auto-sync complete');
+        }
+      } catch (e) {
+        // Auto-sync is best-effort, don't crash
+        logger.warn('[AutoSync] Error:', e);
+      }
+    };
+    autoSync();
   }, []);
 
   // Helper pour vérifier la visibilité d'une section

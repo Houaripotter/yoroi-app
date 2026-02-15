@@ -499,7 +499,7 @@ export interface Weight {
   metabolic_age?: number;
   bmr?: number;
   note?: string;
-  source?: 'manual' | 'body_composition' | 'apple';
+  source?: string;  // 'manual', 'body_composition', 'withings', 'garmin', etc.
   date: string;
   created_at?: string;
   // Body measurements (optional, can be saved with weight)
