@@ -406,7 +406,7 @@ const getHealthItems = (t: TranslateFunction): MenuItem[] => [
     label: t('tools.appleHealth'),
     sublabel: t('menu.appleHealthDescription'),
     Icon: Watch,
-    route: '/health-connect',
+    route: '/connected-devices',
     iconColor: '#EC4899',
     iconBg: '#EC489920',
   },
