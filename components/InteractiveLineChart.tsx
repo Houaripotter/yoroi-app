@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
@@ -24,6 +24,14 @@ export function InteractiveLineChart({
   unit = 'kg',
   locale = 'fr-FR',
 }: InteractiveLineChartProps) {
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    };
+  }, []);
+
   const [selectedPoint, setSelectedPoint] = useState<{
     index: number;
     value: number;
@@ -152,7 +160,8 @@ export function InteractiveLineChart({
                 y: point.y,
               });
 
-              setTimeout(() => {
+              if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+              tooltipTimerRef.current = setTimeout(() => {
                 setSelectedPoint(null);
               }, 3000);
             }}

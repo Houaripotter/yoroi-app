@@ -101,7 +101,10 @@ export const EditableHomeContainer: React.FC<EditableHomeContainerProps> = ({
   const renderItem = ({ item, drag, isActive }: RenderItemParams<HomeSection>) => {
     if (!item.visible) return null;
 
-    const shakeAnim = shakeAnims[item.id] || new Animated.Value(0);
+    if (!shakeAnims[item.id]) {
+      shakeAnims[item.id] = new Animated.Value(0);
+    }
+    const shakeAnim = shakeAnims[item.id];
 
     const animatedStyle = {
       transform: [

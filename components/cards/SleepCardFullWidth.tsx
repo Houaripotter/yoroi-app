@@ -48,7 +48,7 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
 
   // Badge pulsation
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(badgeScale, {
           toValue: 1.1,
@@ -61,12 +61,14 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   // Respiration de la personne
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(breatheScale, {
           toValue: 1.02,
@@ -81,7 +83,9 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   // Animation ZzZ
@@ -124,6 +128,12 @@ export const SleepCardFullWidth = React.memo<SleepCardFullWidthProps>(({
     z1.start();
     z2.start();
     z3.start();
+
+    return () => {
+      z1.stop();
+      z2.stop();
+      z3.stop();
+    };
   }, []);
 
   const handleAdd = () => {

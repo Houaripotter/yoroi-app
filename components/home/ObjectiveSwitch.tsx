@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Target, Trophy, ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -19,7 +19,7 @@ interface NextEvent {
 const ObjectiveSwitch = () => {
   const { colors, isDark } = useTheme();
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
-  const [toggleAnim] = useState(new Animated.Value(0));
+  const toggleAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     loadNextEvent();

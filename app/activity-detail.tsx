@@ -33,20 +33,25 @@ export default function ActivityDetailScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-  const loadData = async () => {
-    try {
-      const data = await getTrainings();
-      setTrainings(data);
-    } catch (error) {
-      logger.error('Erreur chargement trainings:', error);
-    } finally {
-      // Simuler un léger délai pour éviter le flash de contenu
-      setTimeout(() => setLoading(false), 400);
-    }
-  };
+    const loadData = async () => {
+      try {
+        const data = await getTrainings();
+        setTrainings(data);
+      } catch (error) {
+        logger.error('Erreur chargement trainings:', error);
+      } finally {
+        timer = setTimeout(() => setLoading(false), 400);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
 
   // Filtrer par période
   const getFilteredData = () => {

@@ -34,8 +34,16 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulseLoopRef = useRef<Animated.CompositeAnimation | null>(null);
+
   useEffect(() => {
     checkAndShowPopup();
+
+    return () => {
+      if (showTimerRef.current) clearTimeout(showTimerRef.current);
+      if (pulseLoopRef.current) pulseLoopRef.current.stop();
+    };
   }, [batteryPercent]);
 
   const checkAndShowPopup = async () => {
@@ -45,18 +53,18 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
     try {
       const today = format(new Date(), 'yyyy-MM-dd');
       const lastShown = await AsyncStorage.getItem(POPUP_KEY);
-      
+
       // Ne montrer qu'une fois par jour
       if (lastShown === today) return;
 
       // Marquer comme montré aujourd'hui
       await AsyncStorage.setItem(POPUP_KEY, today);
-      
+
       // Afficher le popup avec délai
-      setTimeout(() => {
+      showTimerRef.current = setTimeout(() => {
         setVisible(true);
         notificationAsync(NotificationFeedbackType.Success);
-        
+
         // Animation d'entrée
         Animated.parallel([
           Animated.spring(scaleAnim, {
@@ -73,12 +81,13 @@ export const BatteryReadyPopup: React.FC<BatteryReadyPopupProps> = ({
         ]).start();
 
         // Animation pulse continue
-        Animated.loop(
+        pulseLoopRef.current = Animated.loop(
           Animated.sequence([
             Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
             Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
           ])
-        ).start();
+        );
+        pulseLoopRef.current.start();
       }, 1500);
     } catch (error) {
       logger.error('Erreur popup batterie:', error);

@@ -80,7 +80,7 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
   // Pulse animation - speed varies by level
   useEffect(() => {
     const speed = level === 'light' ? 2000 : level === 'intense' ? 800 : 1200;
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
@@ -93,7 +93,9 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, [level]);
 
   // Fill animation
@@ -111,7 +113,7 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
     const intensity = level === 'light' ? 1.08 : level === 'intense' ? 1.2 : 1.12;
     const speed = level === 'light' ? 1500 : level === 'intense' ? 600 : 1000;
 
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(iconScale, {
           toValue: intensity,
@@ -124,12 +126,14 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, [level]);
 
   // Glow animation
   useEffect(() => {
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
@@ -142,7 +146,9 @@ export const ChargeCardFullWidth = React.memo<ChargeCardFullWidthProps>(({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, []);
 
   const pulseScale = pulseAnim.interpolate({

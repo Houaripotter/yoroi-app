@@ -3,7 +3,7 @@
 // ============================================
 // Popup personnalisee pour remplacer Alert.alert
 
-import React from 'react';
+import React, { memo } from 'react';
 import {
   View,
   Text,
@@ -33,7 +33,7 @@ export interface CustomPopupProps {
   icon?: React.ReactNode;
 }
 
-export const CustomPopup: React.FC<CustomPopupProps> = ({
+export const CustomPopup: React.FC<CustomPopupProps> = memo(({
   visible,
   title,
   message,
@@ -139,7 +139,7 @@ export const CustomPopup: React.FC<CustomPopupProps> = ({
       </View>
     </Modal>
   );
-};
+});
 
 // ============================================
 // HOOK POUR UTILISER LA POPUP

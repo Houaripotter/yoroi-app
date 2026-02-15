@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   View,
   Text,
@@ -67,7 +67,7 @@ interface IconCircleProps {
   iconColor?: string;
 }
 
-export const IconCircle: React.FC<IconCircleProps> = ({
+export const IconCircle: React.FC<IconCircleProps> = memo(({
   Icon,
   variant = 'gray',
   size = 45,
@@ -107,7 +107,7 @@ export const IconCircle: React.FC<IconCircleProps> = ({
       <Icon size={size * 0.44} color={iconColor || defaultIconColors[variant]} />
     </View>
   );
-};
+});
 
 // ============================================
 // COLORED STAT CARD
@@ -124,7 +124,7 @@ interface ColoredStatCardProps {
   style?: ViewStyle;
 }
 
-export const ColoredStatCard: React.FC<ColoredStatCardProps> = ({
+export const ColoredStatCard: React.FC<ColoredStatCardProps> = memo(({
   title,
   subtitle,
   value,
@@ -199,7 +199,7 @@ export const ColoredStatCard: React.FC<ColoredStatCardProps> = ({
   }
 
   return content;
-};
+});
 
 // ============================================
 // CHART CARD (Bleu clair)
@@ -213,7 +213,7 @@ interface ChartCardProps {
   onPress?: () => void;
 }
 
-export const ChartCard: React.FC<ChartCardProps> = ({
+export const ChartCard: React.FC<ChartCardProps> = memo(({
   children,
   title,
   headerLeft,
@@ -247,7 +247,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   }
 
   return content;
-};
+});
 
 // ============================================
 // WHITE CARD
@@ -259,7 +259,7 @@ interface WhiteCardProps {
   noPadding?: boolean;
 }
 
-export const WhiteCard: React.FC<WhiteCardProps> = ({
+export const WhiteCard: React.FC<WhiteCardProps> = memo(({
   children,
   style,
   onPress,
@@ -283,7 +283,7 @@ export const WhiteCard: React.FC<WhiteCardProps> = ({
   }
 
   return content;
-};
+});
 
 // ============================================
 // EXERCISE CARD
@@ -300,7 +300,7 @@ interface ExerciseCardProps {
   style?: ViewStyle;
 }
 
-export const ExerciseCard: React.FC<ExerciseCardProps> = ({
+export const ExerciseCard: React.FC<ExerciseCardProps> = memo(({
   title,
   subtitle,
   duration,
@@ -364,7 +364,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
       )}
     </TouchableOpacity>
   );
-};
+});
 
 // ============================================
 // WATER PROGRESS CARD
@@ -376,7 +376,7 @@ interface WaterProgressCardProps {
   style?: ViewStyle;
 }
 
-export const WaterProgressCard: React.FC<WaterProgressCardProps> = ({
+export const WaterProgressCard: React.FC<WaterProgressCardProps> = memo(({
   currentLiters,
   targetLiters,
   onPress,
@@ -424,7 +424,7 @@ export const WaterProgressCard: React.FC<WaterProgressCardProps> = ({
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 // ============================================
 // SECTION HEADER
@@ -435,7 +435,7 @@ interface SectionHeaderProps {
   style?: ViewStyle;
 }
 
-export const SectionHeader: React.FC<SectionHeaderProps> = ({
+export const SectionHeader: React.FC<SectionHeaderProps> = memo(({
   title,
   rightElement,
   style,
@@ -447,7 +447,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       {rightElement}
     </View>
   );
-};
+});
 
 // ============================================
 // STYLES

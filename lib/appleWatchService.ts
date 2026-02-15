@@ -220,17 +220,32 @@ class AppleWatchService {
    * Préparer les données à envoyer à la watch (MEGA-PACK complet)
    */
   private async prepareWatchData(): Promise<WatchData> {
-    // Hydratation
+    // Lecture batch via multiGet pour de meilleures performances
     const today = new Date().toISOString().split('T')[0];
-    const hydrationCurrent = parseInt(await AsyncStorage.getItem(`hydration_${today}`) || '0');
-    const hydrationGoal = parseInt(await AsyncStorage.getItem('@yoroi_hydration_goal') || '3000');
+    const keys = [
+      `hydration_${today}`,
+      '@yoroi_hydration_goal',
+      '@yoroi_current_weight',
+      '@yoroi_target_weight',
+      '@yoroi_sleep_entries',
+      '@yoroi_steps_goal',
+      '@yoroi_user_name',
+      '@yoroi_avatar_config',
+      '@yoroi_profile_photo_base64',
+      '@yoroi_user_level',
+      '@yoroi_user_rank',
+    ];
+    const results = await AsyncStorage.multiGet(keys);
+    const values: Record<string, string | null> = {};
+    results.forEach(([key, val]) => { values[key] = val; });
 
-    // Poids
-    const currentWeight = parseFloat(await AsyncStorage.getItem('@yoroi_current_weight') || '78.2');
-    const targetWeight = parseFloat(await AsyncStorage.getItem('@yoroi_target_weight') || '77.0');
+    const hydrationCurrent = parseInt(values[`hydration_${today}`] || '0');
+    const hydrationGoal = parseInt(values['@yoroi_hydration_goal'] || '3000');
+    const currentWeight = parseFloat(values['@yoroi_current_weight'] || '78.2');
+    const targetWeight = parseFloat(values['@yoroi_target_weight'] || '77.0');
 
     // Sommeil (dernière nuit)
-    const sleepEntriesStr = await AsyncStorage.getItem('@yoroi_sleep_entries');
+    const sleepEntriesStr = values['@yoroi_sleep_entries'];
     let sleepData = {
       duration: 450, // 7h30 par défaut
       quality: 5,
@@ -255,16 +270,13 @@ class AppleWatchService {
       }
     }
 
-    // Pas
-    const stepsGoal = parseInt(await AsyncStorage.getItem('@yoroi_steps_goal') || '8000');
-
-    // Avatar et Profil
-    const userName = await AsyncStorage.getItem('@yoroi_user_name') || undefined;
-    const avatarConfigStr = await AsyncStorage.getItem('@yoroi_avatar_config');
+    const stepsGoal = parseInt(values['@yoroi_steps_goal'] || '8000');
+    const userName = values['@yoroi_user_name'] || undefined;
+    const avatarConfigStr = values['@yoroi_avatar_config'];
     const avatarConfig = avatarConfigStr ? JSON.parse(avatarConfigStr) : undefined;
-    const profilePhotoBase64 = await AsyncStorage.getItem('@yoroi_profile_photo_base64') || undefined;
-    const level = parseInt(await AsyncStorage.getItem('@yoroi_user_level') || '1');
-    const rank = await AsyncStorage.getItem('@yoroi_user_rank') || 'Débutant';
+    const profilePhotoBase64 = values['@yoroi_profile_photo_base64'] || undefined;
+    const level = parseInt(values['@yoroi_user_level'] || '1');
+    const rank = values['@yoroi_user_rank'] || 'Débutant';
 
     return {
       // Santé

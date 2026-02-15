@@ -201,6 +201,7 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
   // NOUVEAU : Refs pour throttling et queue
   const lastSyncTimestamps = useRef<Record<string, number>>({});
   const processedMessageIds = useRef<Set<string>>(new Set());
+  const MAX_PROCESSED_IDS = 200;
   const syncDebounceTimer = useRef<NodeJS.Timeout | null>(null);
   const appState = useRef<AppStateStatus>(AppState.currentState);
 
@@ -438,6 +439,11 @@ export function WatchConnectivityProvider({ children }: { children: ReactNode })
         return;
       }
 
+      // Borner la taille du Set pour eviter une croissance memoire illimitee
+      if (processedMessageIds.current.size >= MAX_PROCESSED_IDS) {
+        const idsArray = Array.from(processedMessageIds.current);
+        processedMessageIds.current = new Set(idsArray.slice(-100));
+      }
       processedMessageIds.current.add(messageId);
 
       // Stocker dans queue avec timestamp

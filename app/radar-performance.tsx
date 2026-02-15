@@ -47,6 +47,17 @@ export default function RadarPerformanceScreen() {
     mental: useRef(new Animated.Value(0)).current,
   };
 
+  // Valeurs animees pour le rendu SVG (remplace __getValue())
+  const [radarValues, setRadarValues] = useState<Record<string, number>>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
+  const radarValuesRef = useRef<Record<string, number>>({ force: 0, cardio: 0, technique: 0, souplesse: 0, mental: 0 });
+  const rafPending = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      Object.values(anims).forEach(a => a.removeAllListeners());
+    };
+  }, []);
+
   // Configuration du radar
   const RADAR_SIZE = 400;
   const CENTER = RADAR_SIZE / 2;
@@ -80,11 +91,22 @@ export default function RadarPerformanceScreen() {
       const scoreValue = radarScores[axis.key as keyof RadarScores] || 0;
 
       if (animValue) {
+        animValue.removeAllListeners();
+        animValue.addListener(({ value }) => {
+          radarValuesRef.current = { ...radarValuesRef.current, [axis.key]: value };
+          if (!rafPending.current) {
+            rafPending.current = true;
+            requestAnimationFrame(() => {
+              setRadarValues({ ...radarValuesRef.current });
+              rafPending.current = false;
+            });
+          }
+        });
         Animated.spring(animValue, {
           toValue: scoreValue,
           tension: 50,
           friction: 7,
-          useNativeDriver: true,
+          useNativeDriver: false, // REQUIS: listeners necessitent JS thread pour rendu SVG
         }).start();
       }
     });
@@ -100,7 +122,7 @@ export default function RadarPerformanceScreen() {
 
   // Points de données animés
   const dataPoints = axes.map((axis) => {
-    const value = (anims[axis.key as keyof typeof anims] as any).__getValue();
+    const value = radarValues[axis.key] || 0;
     const r = (value / 100) * RADIUS;
     return angleToCoord(axis.angle, r);
   });

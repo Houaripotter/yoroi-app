@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useTheme } from '@/lib/ThemeContext';
@@ -35,7 +35,7 @@ const MEASUREMENT_CONFIG: { key: keyof Measurement; label: string; shortLabel: s
 const DEFAULT_SELECTED = ['waist', 'hips', 'chest'];
 const MAX_SELECTED = 4;
 
-export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
+export const MeasurementsChart: React.FC<MeasurementsChartProps> = memo(({
   data,
   onPointPress,
 }) => {
@@ -351,7 +351,7 @@ export const MeasurementsChart: React.FC<MeasurementsChartProps> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -83,7 +83,7 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
     loadData();
 
     // Animation de la lune
-    Animated.loop(
+    const moonLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(moonAnim, {
           toValue: 1,
@@ -98,7 +98,8 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    moonLoop.start();
 
     // Rafraichir le temps restant toutes les minutes
     const interval = setInterval(() => {
@@ -108,7 +109,10 @@ export const RamadanStats: React.FC<RamadanStatsProps> = ({
       }
     }, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      moonLoop.stop();
+      clearInterval(interval);
+    };
   }, [loadData, settings, isFasting]);
 
   // Ajouter de l'hydratation

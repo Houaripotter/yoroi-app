@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity, Text, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { EssentielHeader } from './essentiel/EssentielHeader';
@@ -54,7 +54,7 @@ interface HomeEssentielContentProps {
   refreshTrigger?: number;
 }
 
-export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = ({
+export const HomeEssentielContent: React.FC<HomeEssentielContentProps> = memo(({
   userName,
   viewMode,
   onToggleMode,
@@ -296,7 +296,7 @@ const QuickToolsRow: React.FC = () => {
       ))}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

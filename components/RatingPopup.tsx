@@ -91,7 +91,12 @@ export const RatingPopup: React.FC<RatingPopupProps> = ({
         Animated.delay(1500),
       ]);
 
-      Animated.loop(heartbeat).start();
+      const heartLoop = Animated.loop(heartbeat);
+      heartLoop.start();
+
+      return () => {
+        heartLoop.stop();
+      };
     } else {
       scaleAnim.setValue(0.8);
       opacityAnim.setValue(0);
