@@ -49,8 +49,7 @@ export const APP_CONFIG = {
 
   // === DEVELOPER INFO ===
   developer: {
-    name: 'Houari BOUKEROUCHA',
-    teamId: 'LTMAN6D7GZ',
+    name: 'Yoroi Team',
     email: 'yoroiapp@hotmail.com',
   },
 

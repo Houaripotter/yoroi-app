@@ -443,6 +443,27 @@ const _performInit = async () => {
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events_catalog(sport_tag);`);
   await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_events_country ON events_catalog(country);`);
 
+  // Table Données de santé (pas, calories, FC, sommeil, etc.)
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS health_data (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      type TEXT NOT NULL,
+      value REAL,
+      value2 REAL,
+      value3 REAL,
+      value4 REAL,
+      unit TEXT,
+      source TEXT DEFAULT 'apple_health',
+      metadata TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(date, type, source)
+    );
+  `);
+
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_date ON health_data(date);`);
+  await database.execAsync(`CREATE INDEX IF NOT EXISTS idx_health_type ON health_data(type);`);
+
   // Initialiser le carnet d'entraînement
   await initTrainingJournalDB();
 
@@ -1677,10 +1698,145 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM benchmarks;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM skills;'); } catch (e) { /* table peut ne pas exister */ }
 
+    // Table Données de santé
+    try { await database.execAsync('DELETE FROM health_data;'); } catch (e) { /* table peut ne pas exister */ }
+
   } catch (error) {
     logger.error('Erreur reset database:', error);
     throw error;
   }
+};
+
+// ============================================
+// FONCTIONS CRUD - DONNÉES DE SANTÉ
+// ============================================
+
+export interface HealthDataRecord {
+  id?: number;
+  date: string;
+  type: 'steps' | 'calories_active' | 'calories_basal' | 'heart_rate' | 'heart_rate_resting' | 'hrv' | 'sleep' | 'distance' | 'vo2max' | 'spo2' | 'respiratory_rate' | 'body_temp' | 'body_fat' | 'lean_mass';
+  value: number;
+  value2?: number;
+  value3?: number;
+  value4?: number;
+  unit?: string;
+  source?: string;
+  metadata?: string;
+  created_at?: string;
+}
+
+export const saveHealthData = async (record: HealthDataRecord): Promise<void> => {
+  const database = await openDatabase();
+  await database.runAsync(
+    `INSERT OR REPLACE INTO health_data (date, type, value, value2, value3, value4, unit, source, metadata)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [record.date, record.type, record.value,
+     record.value2 || null, record.value3 || null, record.value4 || null,
+     record.unit || null, record.source || 'apple_health', record.metadata || null]
+  );
+};
+
+export const saveHealthDataBatch = async (records: HealthDataRecord[]): Promise<number> => {
+  if (records.length === 0) return 0;
+  const database = await openDatabase();
+  let saved = 0;
+  await database.execAsync('BEGIN TRANSACTION;');
+  try {
+    for (const record of records) {
+      await database.runAsync(
+        `INSERT OR REPLACE INTO health_data (date, type, value, value2, value3, value4, unit, source, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [record.date, record.type, record.value,
+         record.value2 || null, record.value3 || null, record.value4 || null,
+         record.unit || null, record.source || 'apple_health', record.metadata || null]
+      );
+      saved++;
+    }
+    await database.execAsync('COMMIT;');
+  } catch (error) {
+    await database.execAsync('ROLLBACK;');
+    throw error;
+  }
+  return saved;
+};
+
+export const getHealthData = async (type: string, days?: number): Promise<HealthDataRecord[]> => {
+  const database = await openDatabase();
+  if (days) {
+    const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 365));
+    return await database.getAllAsync<HealthDataRecord>(
+      `SELECT * FROM health_data WHERE type = ? AND date >= date('now', '-' || ? || ' days') ORDER BY date DESC`,
+      [type, safeDays]
+    );
+  }
+  return await database.getAllAsync<HealthDataRecord>(
+    `SELECT * FROM health_data WHERE type = ? ORDER BY date DESC`,
+    [type]
+  );
+};
+
+export const getLatestHealthData = async (type: string): Promise<HealthDataRecord | null> => {
+  const database = await openDatabase();
+  return await database.getFirstAsync<HealthDataRecord>(
+    `SELECT * FROM health_data WHERE type = ? ORDER BY date DESC LIMIT 1`,
+    [type]
+  ) || null;
+};
+
+export const getHealthDataByDate = async (date: string): Promise<HealthDataRecord[]> => {
+  const database = await openDatabase();
+  return await database.getAllAsync<HealthDataRecord>(
+    `SELECT * FROM health_data WHERE date = ? ORDER BY type`,
+    [date]
+  );
+};
+
+// ============================================
+// DETECTED SOURCES
+// ============================================
+
+export interface DetectedSource {
+  source: string;
+  last_date: string;
+  last_type: string;
+  record_count: number;
+}
+
+export const getDetectedSources = async (days: number = 30): Promise<DetectedSource[]> => {
+  const database = await openDatabase();
+  const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 365));
+  return await database.getAllAsync<DetectedSource>(
+    `SELECT source,
+            MAX(date) as last_date,
+            (SELECT type FROM health_data h2 WHERE h2.source = health_data.source ORDER BY date DESC LIMIT 1) as last_type,
+            COUNT(*) as record_count
+     FROM health_data
+     WHERE date >= date('now', '-' || ? || ' days')
+       AND source IS NOT NULL
+       AND source != ''
+     GROUP BY source
+     ORDER BY MAX(date) DESC`,
+    [safeDays]
+  );
+};
+
+export const getDetectedWeightSources = async (days: number = 30): Promise<DetectedSource[]> => {
+  const database = await openDatabase();
+  const safeDays = Math.max(1, Math.min(Math.floor(Number(days)), 365));
+  return await database.getAllAsync<DetectedSource>(
+    `SELECT source,
+            MAX(date) as last_date,
+            'weight' as last_type,
+            COUNT(*) as record_count
+     FROM weights
+     WHERE date >= date('now', '-' || ? || ' days')
+       AND source IS NOT NULL
+       AND source != ''
+       AND source != 'manual'
+     GROUP BY source
+     ORDER BY MAX(date) DESC`,
+    [safeDays]
+  );
 };
 
 export default {

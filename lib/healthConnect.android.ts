@@ -37,16 +37,19 @@ export interface HealthData {
     value: number;
     unit: 'kg' | 'lbs';
     date: string;
+    source?: string;
   };
   steps?: {
     count: number;
     date: string;
+    source?: string;
   };
   sleep?: {
     startTime: string;
     endTime: string;
     duration: number;
     quality?: 'poor' | 'fair' | 'good' | 'excellent';
+    source?: string;
     phases?: {
       awake: number;
       rem: number;
@@ -58,6 +61,7 @@ export interface HealthData {
   hydration?: {
     amount: number;
     date: string;
+    source?: string;
   };
   heartRate?: {
     current?: number;
@@ -65,42 +69,51 @@ export interface HealthData {
     min: number;
     max: number;
     resting: number;
+    source?: string;
   };
   heartRateVariability?: {
     value: number;
     date: string;
+    source?: string;
   };
   calories?: {
     active: number;
     basal: number;
     total: number;
+    source?: string;
   };
   distance?: {
     walking: number;
     running: number;
     total: number;
     unit: 'km' | 'miles';
+    source?: string;
   };
   vo2Max?: {
     value: number;
     date: string;
+    source?: string;
   };
   oxygenSaturation?: {
     value: number;
     date: string;
+    source?: string;
   };
   respiratoryRate?: {
     value: number;
     date: string;
+    source?: string;
   };
   bodyTemperature?: {
     value: number;
     date: string;
+    source?: string;
   };
   bodyComposition?: {
     bodyFatPercentage?: number;
     leanBodyMass?: number;
     date: string;
+    source?: string;
   };
   workouts?: Array<{
     id: string;
@@ -112,6 +125,7 @@ export interface HealthData {
     calories?: number;
     averageHeartRate?: number;
     maxHeartRate?: number;
+    source?: string;
   }>;
 }
 
@@ -140,6 +154,57 @@ export interface SyncStatus {
   permissions: HealthPermissions;
   failureReason?: 'USER_DENIED' | 'MODULE_NOT_LOADED' | 'DEVICE_NOT_SUPPORTED' | 'HEALTH_CONNECT_NOT_INSTALLED' | 'UNKNOWN';
 }
+
+// ============================================
+// SOURCE NAME MAP - Normalise les noms d'apps vers des clés standard
+// ============================================
+
+export const SOURCE_NAME_MAP: Record<string, string> = {
+  // Withings
+  'Health Mate': 'withings', 'Withings': 'withings', 'com.withings.wiscale2': 'withings',
+  // Garmin
+  'Garmin Connect': 'garmin', 'com.garmin.android.apps.connectmobile': 'garmin',
+  // Polar
+  'Polar Flow': 'polar', 'com.polar.polarflow': 'polar', 'Polar Beat': 'polar',
+  // Whoop
+  'WHOOP': 'whoop', 'com.whoop.android': 'whoop',
+  // Samsung
+  'Samsung Health': 'samsung', 'com.sec.android.app.shealth': 'samsung',
+  // Fitbit
+  'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
+  // Xiaomi
+  'Mi Fitness': 'xiaomi', 'Zepp Life': 'xiaomi', 'Mi Fit': 'xiaomi',
+  'com.xiaomi.wearable': 'xiaomi', 'com.xiaomi.hm.health': 'xiaomi',
+  // Renpho / Eufy / Omron
+  'Renpho': 'renpho', 'RENPHO': 'renpho', 'com.qingniu.renpho': 'renpho',
+  'EufyLife': 'eufy', 'eufy Life': 'eufy',
+  'OMRON connect': 'omron', 'Omron': 'omron',
+  // Suunto
+  'Suunto': 'suunto',
+  // Oura
+  'Oura': 'oura',
+  // Yoroi manual
+  'Yoroi': 'manual', 'YOROI': 'manual',
+};
+
+export const normalizeSourceName = (rawSource: string): string => {
+  if (!rawSource) return 'unknown';
+  if (SOURCE_NAME_MAP[rawSource]) return SOURCE_NAME_MAP[rawSource];
+  const lower = rawSource.toLowerCase();
+  for (const [key, value] of Object.entries(SOURCE_NAME_MAP)) {
+    if (lower.includes(key.toLowerCase())) return value;
+  }
+  if (lower.includes('watch')) return 'android_watch';
+  return rawSource;
+};
+
+export const SOURCE_PRIORITY: Record<string, number> = {
+  withings: 10, garmin: 9, polar: 9, whoop: 9,
+  renpho: 9, eufy: 9, omron: 9, suunto: 9, oura: 9,
+  apple_watch: 8, samsung: 8, fitbit: 8,
+  xiaomi: 7, iphone: 5, manual: 3,
+  apple_health: 1, health_connect: 1, unknown: 0,
+};
 
 // ============================================
 // CONSTANTES
@@ -179,6 +244,15 @@ const EXERCISE_TYPE_MAP: { [key: string]: number } = {
   'Walking': 79,
   'Randonnée': 37, // EXERCISE_TYPE_HIKING
   'Hiking': 37,
+};
+
+/**
+ * Extrait le nom de source brut depuis un record Health Connect Android
+ */
+const extractAndroidSourceName = (record: any): string => {
+  return record?.metadata?.dataOrigin
+    || record?.metadata?.clientRecordId
+    || 'health_connect';
 };
 
 // ============================================
@@ -542,6 +616,7 @@ class HealthConnectService {
           value: Math.round(latest.weight.inKilograms * 10) / 10,
           unit: 'kg',
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -576,6 +651,7 @@ class HealthConnectService {
         return {
           count: safeSteps,
           date: today.toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(records.records[0])),
         };
       }
       return null;
@@ -755,6 +831,7 @@ class HealthConnectService {
           min: Math.round(min),
           max: Math.round(max),
           resting: Math.round(resting),
+          source: normalizeSourceName(extractAndroidSourceName(records.records[0])),
         };
       }
       return null;
@@ -787,6 +864,7 @@ class HealthConnectService {
         return {
           value: Math.round(latest.heartRateVariabilityMillis || 0),
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -898,6 +976,7 @@ class HealthConnectService {
         return {
           value: Math.round(latest.vo2MillilitersPerMinuteKilogram * 10) / 10,
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -924,6 +1003,7 @@ class HealthConnectService {
         return {
           value: Math.round(latest.percentage * 100),
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -950,6 +1030,7 @@ class HealthConnectService {
         return {
           value: Math.round(latest.rate),
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -976,6 +1057,7 @@ class HealthConnectService {
         return {
           value: Math.round(latest.temperature?.inCelsius * 10) / 10,
           date: new Date(latest.time).toISOString(),
+          source: normalizeSourceName(extractAndroidSourceName(latest)),
         };
       }
       return null;
@@ -1014,10 +1096,16 @@ class HealthConnectService {
         : undefined;
 
       if (bodyFatPercentage !== undefined || leanBodyMass !== undefined) {
+        const sourceSample = (fatRecords?.records && fatRecords.records.length > 0)
+          ? fatRecords.records[fatRecords.records.length - 1]
+          : (leanRecords?.records && leanRecords.records.length > 0)
+            ? leanRecords.records[leanRecords.records.length - 1]
+            : null;
         return {
           bodyFatPercentage,
           leanBodyMass,
           date: new Date().toISOString(),
+          source: sourceSample ? normalizeSourceName(extractAndroidSourceName(sourceSample)) : undefined,
         };
       }
       return null;

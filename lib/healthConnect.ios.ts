@@ -8,6 +8,8 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DemoData from './healthDemoData';
 import logger from '@/lib/security/logger';
+import { saveHealthDataBatch, saveHealthData, addWeight } from './database';
+import type { HealthDataRecord } from './database';
 
 // ============================================
 // MODE DÉMO - Active les fausses données
@@ -40,16 +42,19 @@ export interface HealthData {
     value: number;
     unit: 'kg' | 'lbs';
     date: string;
+    source?: string;             // Nom de source normalisé (withings, garmin, etc.)
   };
   steps?: {
     count: number;
     date: string;
+    source?: string;
   };
   sleep?: {
     startTime: string;
     endTime: string;
     duration: number; // minutes totales
     quality?: 'poor' | 'fair' | 'good' | 'excellent';
+    source?: string;
     // Phases de sommeil (Apple Watch uniquement)
     phases?: {
       awake: number; // minutes
@@ -62,6 +67,7 @@ export interface HealthData {
   hydration?: {
     amount: number; // en millilitres
     date: string;
+    source?: string;
   };
   heartRate?: {
     current?: number;    // BPM actuel
@@ -69,42 +75,51 @@ export interface HealthData {
     min: number;         // BPM minimum
     max: number;         // BPM maximum
     resting: number;     // FC au repos (important pour récupération)
+    source?: string;
   };
   heartRateVariability?: {
     value: number;       // HRV en ms (SDNN)
     date: string;
+    source?: string;
   };
   calories?: {
     active: number;      // Calories actives brûlées
     basal: number;       // Calories au repos (BMR)
     total: number;       // Total = active + basal
+    source?: string;
   };
   distance?: {
     walking: number;     // Distance marche (km)
     running: number;     // Distance course (km)
     total: number;       // Total (km)
     unit: 'km' | 'miles';
+    source?: string;
   };
   vo2Max?: {
     value: number;       // ml/kg/min
     date: string;
+    source?: string;
   };
   oxygenSaturation?: {
     value: number;       // SpO2 en % (0-100)
     date: string;
+    source?: string;
   };
   respiratoryRate?: {
     value: number;       // Respirations par minute
     date: string;
+    source?: string;
   };
   bodyTemperature?: {
     value: number;       // Température en °C
     date: string;
+    source?: string;
   };
   bodyComposition?: {
     bodyFatPercentage?: number;  // % graisse corporelle
     leanBodyMass?: number;       // Masse maigre en kg
     date: string;
+    source?: string;
   };
   workouts?: Array<{
     id: string;
@@ -116,6 +131,7 @@ export interface HealthData {
     calories?: number;            // kcal
     averageHeartRate?: number;    // BPM
     maxHeartRate?: number;        // BPM
+    source?: string;
   }>;
 }
 
@@ -144,6 +160,92 @@ export interface SyncStatus {
   permissions: HealthPermissions;
   failureReason?: 'USER_DENIED' | 'MODULE_NOT_LOADED' | 'DEVICE_NOT_SUPPORTED' | 'UNKNOWN';
 }
+
+// ============================================
+// SOURCE NAME MAP - Normalise les noms d'apps vers des clés standard
+// ============================================
+
+export const SOURCE_NAME_MAP: Record<string, string> = {
+  // Withings
+  'Health Mate': 'withings', 'Withings': 'withings', 'Withings Health Mate': 'withings',
+  // Garmin
+  'Garmin Connect': 'garmin', 'com.garmin.android.apps.connectmobile': 'garmin',
+  // Polar
+  'Polar Flow': 'polar', 'com.polar.polarflow': 'polar', 'Polar Beat': 'polar',
+  // Whoop
+  'WHOOP': 'whoop', 'com.whoop.android': 'whoop',
+  // Apple
+  'Apple Watch': 'apple_watch', "John's Apple Watch": 'apple_watch',
+  'iPhone': 'iphone',
+  // Samsung
+  'Samsung Health': 'samsung', 'com.sec.android.app.shealth': 'samsung',
+  // Fitbit
+  'Fitbit': 'fitbit', 'com.fitbit.FitbitMobile': 'fitbit',
+  // Xiaomi
+  'Mi Fitness': 'xiaomi', 'Zepp Life': 'xiaomi', 'Mi Fit': 'xiaomi',
+  // Renpho / Eufy / Omron
+  'Renpho': 'renpho', 'RENPHO': 'renpho',
+  'EufyLife': 'eufy', 'eufy Life': 'eufy',
+  'OMRON connect': 'omron', 'Omron': 'omron',
+  // Suunto
+  'Suunto': 'suunto',
+  // Oura
+  'Oura': 'oura',
+  // Yoroi manual
+  'Yoroi': 'manual', 'YOROI': 'manual',
+};
+
+/**
+ * Normalise le nom de source brut en clé standard.
+ * Essaie d'abord un match exact, puis un match partiel (contains).
+ */
+export const normalizeSourceName = (rawSource: string): string => {
+  if (!rawSource) return 'unknown';
+  // Exact match
+  if (SOURCE_NAME_MAP[rawSource]) return SOURCE_NAME_MAP[rawSource];
+  // Partial match (case-insensitive)
+  const lower = rawSource.toLowerCase();
+  for (const [key, value] of Object.entries(SOURCE_NAME_MAP)) {
+    if (lower.includes(key.toLowerCase())) return value;
+  }
+  // Apple Watch variants (nom personnalisé)
+  if (lower.includes('apple watch') || lower.includes('watch')) return 'apple_watch';
+  if (lower.includes('iphone')) return 'iphone';
+  return rawSource;
+};
+
+/**
+ * Extrait le nom de source brut depuis un sample HealthKit iOS
+ */
+const extractIOSSourceName = (sample: any): string => {
+  return sample?.sourceRevision?.source?.name
+    || sample?.device?.name
+    || 'apple_health';
+};
+
+// ============================================
+// SOURCE PRIORITY - Plus haut = plus fiable
+// ============================================
+
+export const SOURCE_PRIORITY: Record<string, number> = {
+  withings: 10,
+  garmin: 9,
+  polar: 9,
+  whoop: 9,
+  renpho: 9,
+  eufy: 9,
+  omron: 9,
+  suunto: 9,
+  oura: 9,
+  apple_watch: 8,
+  samsung: 8,
+  fitbit: 8,
+  xiaomi: 7,
+  iphone: 5,
+  manual: 3,
+  apple_health: 1,
+  unknown: 0,
+};
 
 // ============================================
 // CONSTANTES
@@ -418,18 +520,18 @@ class HealthConnectService {
     if (!HealthKit) return false;
 
     try {
-      await HealthKit.queryQuantitySamples(identifier, {
-        from: new Date().getTime(),
-        to: new Date().getTime(),
-        limit: 1
-      });
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const options = this.createQueryOptions(weekAgo, now, { limit: 1 });
+      if (!options) return false;
+
+      await HealthKit.queryQuantitySamples(identifier, options);
       return true; // Si pas d'erreur = permission OK
     } catch (error: any) {
-      // Erreur de permission = refusée (Code 4, 5, or 6)
       if (this.isHealthKitAuthError(error)) {
+        logger.info(`[HealthKit] Permission refusée pour: ${identifier}`);
         return false;
       }
-      // Erreur de disponibilité (Code 1 or 2) = données non disponibles sur cet appareil
       if (this.isHealthKitUnavailableError(error)) {
         return false;
       }
@@ -445,18 +547,18 @@ class HealthConnectService {
     if (!HealthKit) return false;
 
     try {
-      await HealthKit.queryCategorySamples(identifier, {
-        from: new Date().getTime(),
-        to: new Date().getTime(),
-        limit: 1
-      });
+      const now = new Date();
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const options = this.createQueryOptions(weekAgo, now, { limit: 1 });
+      if (!options) return false;
+
+      await HealthKit.queryCategorySamples(identifier, options);
       return true;
     } catch (error: any) {
-      // Erreur de permission = refusée (Code 4, 5, or 6)
       if (this.isHealthKitAuthError(error)) {
+        logger.info(`[HealthKit] Permission catégorie refusée pour: ${identifier}`);
         return false;
       }
-      // Erreur de disponibilité (Code 1 or 2) = données non disponibles sur cet appareil
       if (this.isHealthKitUnavailableError(error)) {
         return false;
       }
@@ -486,35 +588,28 @@ class HealthConnectService {
       }
 
       // Demander les permissions (ouvre le popup iOS)
-      await this.requestIOSPermissions();
+      const grantedPermissions = await this.requestIOSPermissions();
 
-      // CRITIQUE: Vérifier que les permissions ont vraiment été accordées
-      logger.info('[HealthConnect] Vérification des permissions réelles...');
-      const hasPermissions = await this.verifyPermissions();
+      // CRITIQUE: Utiliser les VRAIS résultats de permissions
+      this.syncStatus.permissions = grantedPermissions;
+      logger.info('[HealthConnect] Permissions réelles:', grantedPermissions);
 
-      if (!hasPermissions) {
-        logger.warn('[HealthConnect] Utilisateur a refusé les permissions');
-        // ✅ DÉFINIR LA RAISON DE L'ÉCHEC
+      // Vérifier qu'au moins une permission a été accordée
+      const hasAnyPermission = Object.values(grantedPermissions).some(v => v === true);
+
+      if (!hasAnyPermission) {
+        logger.warn('[HealthConnect] Aucune permission accordée');
         this.syncStatus.isConnected = false;
         this.syncStatus.failureReason = 'USER_DENIED';
         await this.saveSyncStatus();
         return false;
       }
 
-      // Tester une lecture réelle pour s'assurer que tout fonctionne
-      logger.info('[HealthConnect] Test de lecture HealthKit...');
-      const testData = await this.getLatestWeight();
-
-      logger.info('[HealthConnect] Test réussi, marquage comme connecté');
+      logger.info('[HealthConnect] Permissions accordées, marquage comme connecté');
 
       this.syncStatus.isConnected = true;
       this.syncStatus.lastSync = new Date().toISOString();
-      delete this.syncStatus.failureReason; // ✅ SUPPRIMER failureReason SI SUCCÈS
-
-      // Marquer toutes les permissions comme disponibles (vérifiées)
-      Object.keys(this.syncStatus.permissions).forEach(key => {
-        this.syncStatus.permissions[key as keyof HealthPermissions] = true;
-      });
+      delete this.syncStatus.failureReason;
 
       await this.saveSyncStatus();
 
@@ -679,6 +774,7 @@ class HealthConnectService {
           value: Math.round(latest.quantity * 10) / 10,
           unit: 'kg',
           date: new Date(latest.startDate).toISOString(),
+          source: normalizeSourceName(extractIOSSourceName(latest)),
         };
       }
       return null;
@@ -756,11 +852,12 @@ class HealthConnectService {
 
       logger.info('[HealthKit] Requête sommeil: de', twoDaysAgo.toISOString(), 'à', now.toISOString());
 
-      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
-        from: twoDaysAgo.getTime(),
-        to: now.getTime(),
-        limit: 500, // ✅ FIX: Augmenter la limite de 100 à 500
-      });
+      const sleepQueryOptions = this.createQueryOptions(twoDaysAgo, now, { limit: 500 });
+      if (!sleepQueryOptions) {
+        logger.error('[HealthKit] Impossible de créer les options de requête pour le sommeil');
+        return null;
+      }
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', sleepQueryOptions);
 
       logger.info('[HealthKit] Échantillons sommeil bruts:', samples?.length || 0);
 
@@ -967,6 +1064,7 @@ class HealthConnectService {
           min: Math.round(min),
           max: Math.round(max),
           resting: Math.round(resting),
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -996,6 +1094,7 @@ class HealthConnectService {
         return {
           value: Math.round(samples[0].quantity), // HRV en ms
           date: samples[0].startDate,
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -1102,6 +1201,7 @@ class HealthConnectService {
         return {
           value: Math.round(samples[0].quantity * 10) / 10,
           date: samples[0].startDate,
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -1131,6 +1231,7 @@ class HealthConnectService {
         return {
           value: Math.round(samples[0].quantity * 100),
           date: samples[0].startDate,
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -1159,6 +1260,7 @@ class HealthConnectService {
         return {
           value: Math.round(samples[0].quantity),
           date: samples[0].startDate,
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -1188,6 +1290,7 @@ class HealthConnectService {
         return {
           value: Math.round(samples[0].quantity * 10) / 10,
           date: samples[0].startDate,
+          source: normalizeSourceName(extractIOSSourceName(samples[0])),
         };
       }
       return null;
@@ -1232,10 +1335,14 @@ class HealthConnectService {
         : undefined;
 
       if (bodyFatPercentage !== undefined || leanBodyMass !== undefined) {
+        // Source: prefer fat sample, then lean sample
+        const sourceSample = (fatSamples && fatSamples.length > 0) ? fatSamples[0]
+          : (leanSamples && leanSamples.length > 0) ? leanSamples[0] : null;
         return {
           bodyFatPercentage,
           leanBodyMass,
           date: new Date().toISOString(),
+          source: sourceSample ? normalizeSourceName(extractIOSSourceName(sourceSample)) : undefined,
         };
       }
       return null;
@@ -1587,11 +1694,12 @@ class HealthConnectService {
 
       logger.info('[HealthKit] getSleepHistory: Requête sur', days, 'jours, depuis', fromDate.toISOString());
 
-      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
-        from: fromDate.getTime(),
-        to: new Date().getTime(),
-        limit: 2000, // ✅ FIX: Augmenter de 500 à 2000
-      });
+      const sleepHistoryOptions = this.createQueryOptions(fromDate, new Date(), { limit: 2000 });
+      if (!sleepHistoryOptions) {
+        logger.error('[HealthKit] getSleepHistory: Impossible de créer les options de requête');
+        return [];
+      }
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', sleepHistoryOptions);
 
       logger.info('[HealthKit] getSleepHistory: Échantillons bruts reçus:', samples?.length || 0);
 
@@ -2158,13 +2266,207 @@ class HealthConnectService {
 
   async syncAll(): Promise<HealthData | null> {
     if (!this.syncStatus.isConnected) {
+      logger.warn('[syncAll] Non connecté, abandon');
       return null;
     }
 
     try {
-      logger.info('Synchronisation iOS en cours...');
+      logger.info('[syncAll] Synchronisation iOS en cours...');
       const data = await this.getAllHealthData();
+      const today = new Date().toISOString().split('T')[0];
+      const records: HealthDataRecord[] = [];
+      let savedCount = 0;
 
+      // ══════ POIDS → SQLite (table weights) ══════
+      if (data.weight) {
+        try {
+          await addWeight({
+            weight: data.weight.value,
+            source: data.weight.source || 'apple_health',
+            date: data.weight.date.split('T')[0],
+          });
+          savedCount++;
+          logger.info(`[syncAll] Poids sauvegardé: ${data.weight.value} kg (source: ${data.weight.source})`);
+        } catch (e) {
+          // Doublon ou erreur, on continue
+          logger.warn('[syncAll] Poids déjà existant ou erreur:', e);
+        }
+      }
+
+      // ══════ PAS → SQLite (table health_data) ══════
+      if (data.steps && data.steps.count > 0) {
+        records.push({
+          date: today,
+          type: 'steps',
+          value: data.steps.count,
+          unit: 'count',
+          source: data.steps.source || 'apple_health',
+        });
+        logger.info(`[syncAll] Pas: ${data.steps.count}`);
+      }
+
+      // ══════ CALORIES → SQLite ══════
+      if (data.calories) {
+        const calSource = data.calories.source || 'apple_health';
+        if (data.calories.active > 0) {
+          records.push({
+            date: today,
+            type: 'calories_active',
+            value: Math.round(data.calories.active),
+            unit: 'kcal',
+            source: calSource,
+          });
+        }
+        if (data.calories.basal > 0) {
+          records.push({
+            date: today,
+            type: 'calories_basal',
+            value: Math.round(data.calories.basal),
+            unit: 'kcal',
+            source: calSource,
+          });
+        }
+        logger.info(`[syncAll] Calories: ${data.calories.active} actives + ${data.calories.basal} basales`);
+      }
+
+      // ══════ FRÉQUENCE CARDIAQUE → SQLite ══════
+      if (data.heartRate && data.heartRate.average > 0) {
+        records.push({
+          date: today,
+          type: 'heart_rate',
+          value: Math.round(data.heartRate.average),
+          value2: data.heartRate.min,
+          value3: data.heartRate.max,
+          unit: 'bpm',
+          source: data.heartRate.source || 'apple_health',
+        });
+        logger.info(`[syncAll] FC: ${data.heartRate.average} moy, ${data.heartRate.min}-${data.heartRate.max}`);
+      }
+
+      // ══════ FC AU REPOS → SQLite ══════
+      if (data.heartRate && data.heartRate.resting > 0) {
+        records.push({
+          date: today,
+          type: 'heart_rate_resting',
+          value: Math.round(data.heartRate.resting),
+          unit: 'bpm',
+          source: data.heartRate.source || 'apple_health',
+        });
+        logger.info(`[syncAll] FC repos: ${data.heartRate.resting}`);
+      }
+
+      // ══════ HRV → SQLite ══════
+      if (data.heartRateVariability && data.heartRateVariability.value > 0) {
+        records.push({
+          date: today,
+          type: 'hrv',
+          value: Math.round(data.heartRateVariability.value),
+          unit: 'ms',
+          source: data.heartRateVariability.source || 'apple_health',
+        });
+      }
+
+      // ══════ SOMMEIL → SQLite ══════
+      if (data.sleep && data.sleep.duration > 0) {
+        records.push({
+          date: today,
+          type: 'sleep',
+          value: Math.round(data.sleep.duration),
+          value2: data.sleep.phases?.deep || 0,
+          value3: data.sleep.phases?.rem || 0,
+          value4: data.sleep.phases?.awake || 0,
+          unit: 'min',
+          source: data.sleep.source || 'apple_health',
+          metadata: JSON.stringify({
+            quality: data.sleep.quality,
+            startTime: data.sleep.startTime,
+            endTime: data.sleep.endTime,
+            phases: data.sleep.phases,
+          }),
+        });
+        logger.info(`[syncAll] Sommeil: ${data.sleep.duration} min (${data.sleep.quality})`);
+      }
+
+      // ══════ DISTANCE → SQLite ══════
+      if (data.distance && data.distance.total > 0) {
+        records.push({
+          date: today,
+          type: 'distance',
+          value: Math.round(data.distance.total * 100) / 100,
+          value2: data.distance.walking,
+          value3: data.distance.running,
+          unit: 'km',
+          source: data.distance.source || 'apple_health',
+        });
+        logger.info(`[syncAll] Distance: ${data.distance.total} km`);
+      }
+
+      // ══════ VO2 MAX → SQLite ══════
+      if (data.vo2Max && data.vo2Max.value > 0) {
+        records.push({
+          date: today,
+          type: 'vo2max',
+          value: Math.round(data.vo2Max.value * 10) / 10,
+          unit: 'ml/kg/min',
+          source: data.vo2Max.source || 'apple_health',
+        });
+      }
+
+      // ══════ SpO2 → SQLite ══════
+      if (data.oxygenSaturation && data.oxygenSaturation.value > 0) {
+        records.push({
+          date: today,
+          type: 'spo2',
+          value: Math.round(data.oxygenSaturation.value * 10) / 10,
+          unit: '%',
+          source: data.oxygenSaturation.source || 'apple_health',
+        });
+      }
+
+      // ══════ COMPOSITION CORPORELLE → SQLite ══════
+      if (data.bodyComposition) {
+        const compSource = data.bodyComposition.source || 'apple_health';
+        if (data.bodyComposition.bodyFatPercentage && data.bodyComposition.bodyFatPercentage > 0) {
+          records.push({
+            date: today,
+            type: 'body_fat',
+            value: Math.round(data.bodyComposition.bodyFatPercentage * 10) / 10,
+            unit: '%',
+            source: compSource,
+          });
+        }
+        if (data.bodyComposition.leanBodyMass && data.bodyComposition.leanBodyMass > 0) {
+          records.push({
+            date: today,
+            type: 'lean_mass',
+            value: Math.round(data.bodyComposition.leanBodyMass * 10) / 10,
+            unit: 'kg',
+            source: compSource,
+          });
+        }
+      }
+
+      // ══════ SAUVEGARDER TOUT EN BATCH dans SQLite ══════
+      if (records.length > 0) {
+        try {
+          const batchSaved = await saveHealthDataBatch(records);
+          savedCount += batchSaved;
+          logger.info(`[syncAll] ${batchSaved} enregistrements sauvegardés dans SQLite`);
+        } catch (batchError) {
+          // Fallback: sauvegarder un par un
+          logger.warn('[syncAll] Batch failed, sauvegarde individuelle:', batchError);
+          for (const record of records) {
+            try {
+              await saveHealthData(record);
+              savedCount++;
+            } catch (e) {
+              logger.warn(`[syncAll] Erreur sauvegarde ${record.type}:`, e);
+            }
+          }
+        }
+      }
+
+      // ══════ AUSSI sauvegarder dans AsyncStorage (cache rapide pour UI) ══════
       if (data.weight) {
         await AsyncStorage.setItem(STORAGE_KEYS.LAST_WEIGHT, JSON.stringify(data.weight));
       }
@@ -2181,11 +2483,11 @@ class HealthConnectService {
       this.syncStatus.lastSync = new Date().toISOString();
       await this.saveSyncStatus();
 
-      logger.info('Synchronisation terminée:', data);
+      logger.info(`[syncAll] Synchronisation terminée: ${savedCount} données sauvegardées dans SQLite`);
       return data;
     } catch (error) {
-      logger.error('Erreur synchronisation:', error);
-      throw error; // ✅ THROW AU LIEU DE RETOURNER NULL pour que syncWithRetry puisse détecter l'erreur
+      logger.error('[syncAll] Erreur synchronisation:', error);
+      throw error;
     }
   }
 
@@ -2333,12 +2635,12 @@ class HealthConnectService {
       logger.info('[HealthKit] Fetching sleep details from', fromDate, 'to', toDate);
 
       // Récupérer tous les échantillons de sommeil en utilisant HealthKit (importé depuis le wrapper)
-      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', {
-        from: fromDate,
-        to: toDate,
-        limit: 1000,
-        ascending: false,
-      });
+      const sleepDetailOptions = this.createQueryOptions(fromDate, toDate, { limit: 1000, ascending: false });
+      if (!sleepDetailOptions) {
+        logger.error('[HealthKit] getSleepDetails: Impossible de créer les options de requête');
+        return null;
+      }
+      const samples = await HealthKit.queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', sleepDetailOptions);
 
       if (!samples || samples.length === 0) {
         logger.info('[HealthKit] No sleep data found');

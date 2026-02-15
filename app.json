@@ -2,9 +2,8 @@
   "expo": {
     "name": "Yoroi",
     "slug": "yoroi",
-    "displayName": "Yoroi",
     "description": "YOROI - Votre compagnon fitness pour le suivi de poids, composition corporelle et entraînements. 100% offline, vos données restent sur votre appareil.",
-    "version": "2.0",
+    "version": "2.2.0",
     "orientation": "portrait",
     "icon": "./assets/logo d'app/logo1.png",
     "scheme": "yoroi",
@@ -18,6 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.houari.yoroi",
+      "buildNumber": "5",
       "infoPlist": {
         "NSHealthShareUsageDescription": "YOROI lit vos données de poids, composition corporelle, sommeil, pas, fréquence cardiaque et calories pour afficher vos statistiques de progression, calculer vos objectifs personnalisés et suivre votre évolution physique au fil du temps.",
         "NSHealthUpdateUsageDescription": "YOROI enregistre vos pesées quotidiennes, vos séances d'entraînement, vos données d'hydratation et de sommeil pour synchroniser automatiquement vos progrès entre tous vos appareils.",
@@ -101,8 +101,6 @@
         "android.permission.health.READ_TOTAL_CALORIES_BURNED",
         "android.permission.health.WRITE_WEIGHT",
         "android.permission.health.WRITE_STEPS",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.CAMERA"
       ]
     },
