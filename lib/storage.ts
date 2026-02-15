@@ -363,7 +363,14 @@ const generateId = (): string => {
 const getData = async <T>(key: string): Promise<T[]> => {
   try {
     const data = await AsyncStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    // Garantir qu'on retourne toujours un tableau
+    if (!Array.isArray(parsed)) {
+      logger.warn(`⚠️ getData(${key}): valeur non-tableau détectée, reset à []`);
+      return [];
+    }
+    return parsed;
   } catch (error) {
     // Erreur critique - logging multiple pour visibilité
     logger.warn(`⚠️ ERREUR CRITIQUE - Lecture stockage ${key}:`, error);
