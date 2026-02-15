@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { safeOpenURL } from '@/lib/security/validators';
 import { useCustomPopup } from '@/components/CustomPopup';
-import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, AlertTriangle, Check } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { requestReview, isAvailableAsync } from 'expo-store-review';
@@ -2006,7 +2006,7 @@ export default function MoreScreen() {
                     </Text>
                     {isSelected && (
                       <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
-                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                        <Check size={12} color="#fff" strokeWidth={3} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -2178,7 +2178,7 @@ export default function MoreScreen() {
                               </View>
                               {isSelected && (
                                 <View style={[styles.checkmark, { backgroundColor: colors.gold }]}>
-                                  <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                                  <Check size={12} color="#fff" strokeWidth={3} />
                                 </View>
                               )}
                             </TouchableOpacity>
@@ -2519,7 +2519,7 @@ export default function MoreScreen() {
                     </View>
                     {useMetric && (
                       <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
-                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                        <Check size={12} color="#fff" strokeWidth={3} />
                       </View>
                     )}
                   </View>
@@ -2547,7 +2547,7 @@ export default function MoreScreen() {
                     </View>
                     {!useMetric && (
                       <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
-                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                        <Check size={12} color="#fff" strokeWidth={3} />
                       </View>
                     )}
                   </View>
@@ -2694,7 +2694,7 @@ export default function MoreScreen() {
                     </View>
                     {isSelected && (
                       <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
-                        <Text style={{ color: '#fff', fontSize: 12 }}>✓</Text>
+                        <Check size={12} color="#fff" strokeWidth={3} />
                       </View>
                     )}
                   </TouchableOpacity>

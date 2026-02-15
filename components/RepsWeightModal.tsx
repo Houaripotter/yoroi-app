@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { X, Plus, Minus } from 'lucide-react-native';
+import { X, Plus, Minus, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { COLORS, SPACING, RADIUS, FONT } from '@/constants/appTheme';
 
@@ -151,7 +151,10 @@ export function RepsWeightModal({
               style={[styles.saveButton, { backgroundColor: colors.accent }]}
               onPress={handleSave}
             >
-              <Text style={styles.saveText}>✓ Enregistrer</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Check size={14} color="#fff" strokeWidth={3} />
+                <Text style={styles.saveText}>Enregistrer</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>

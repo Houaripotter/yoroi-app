@@ -184,6 +184,20 @@ export const SPORTS: Sport[] = [
     color: '#10B981',
     category: 'fitness',
   },
+  {
+    id: 'powerlifting',
+    name: 'Powerlifting',
+    icon: 'weight-lifter',
+    color: '#B91C1C',
+    category: 'fitness',
+  },
+  {
+    id: 'fitness',
+    name: 'Fitness',
+    icon: 'dumbbell',
+    color: '#8B5CF6',
+    category: 'fitness',
+  },
 
   // === CARDIO ===
   {
@@ -191,6 +205,34 @@ export const SPORTS: Sport[] = [
     name: 'Running',
     icon: 'run',
     color: '#38A169',
+    category: 'cardio',
+  },
+  {
+    id: 'marathon',
+    name: 'Marathon',
+    icon: 'run-fast',
+    color: '#DC2626',
+    category: 'cardio',
+  },
+  {
+    id: 'triathlon',
+    name: 'Triathlon',
+    icon: 'trophy-award',
+    color: '#0891B2',
+    category: 'cardio',
+  },
+  {
+    id: 'obstacle',
+    name: 'Course à obstacles',
+    icon: 'wall',
+    color: '#D97706',
+    category: 'cardio',
+  },
+  {
+    id: 'cycling',
+    name: 'Cyclisme',
+    icon: 'bike-fast',
+    color: '#FBBF24',
     category: 'cardio',
   },
   {
@@ -381,6 +423,13 @@ export const SPORTS: Sport[] = [
   {
     id: 'escalade',
     name: 'Escalade',
+    icon: 'hiking',
+    color: '#78716C',
+    category: 'nature',
+  },
+  {
+    id: 'climbing',
+    name: 'Climbing',
     icon: 'hiking',
     color: '#78716C',
     category: 'nature',

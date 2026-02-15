@@ -22,6 +22,7 @@ import {
   MessageSquareQuote,
   User,
   ChevronRight,
+  Shapes,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 import { ThemeMode } from '@/constants/themes';
@@ -77,6 +78,14 @@ export default function AppearanceScreen() {
       icon: User,
       route: '/avatar-selection',
       color: '#F59E0B',
+    },
+    {
+      id: 'frames',
+      title: 'Cadres photo',
+      description: 'Choisis la forme de ton avatar',
+      icon: Shapes,
+      route: '/frame-selection',
+      color: '#EC4899',
     },
   ];
 

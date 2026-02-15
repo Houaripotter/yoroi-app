@@ -35,7 +35,15 @@ import {
   ChevronRight,
   X,
   Sword,
-  Timer
+  Swords,
+  Timer,
+  Target,
+  Dumbbell,
+  Mountain,
+  Activity,
+  Users,
+  Zap,
+  LucideIcon,
 } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ScreenWrapper } from '@/components/ScreenWrapper';
@@ -73,21 +81,21 @@ const PLANNING_STORAGE_KEY = 'my_planning';
 // Sport tag configurations
 const SPORT_TAGS = {
   combat: [
-    { id: 'all', label: 'Tout', icon: '🥋' },
-    { id: 'jjb', label: 'JJB', icon: '🥋' },
-    { id: 'grappling', label: 'Grappling', icon: '🤼' },
-    { id: 'mma', label: 'MMA', icon: '🥊' },
-    { id: 'judo', label: 'Judo', icon: '🥋' },
-    { id: 'lutte', label: 'Lutte', icon: '🤼' },
+    { id: 'all', label: 'Tout', icon: Sword },
+    { id: 'jjb', label: 'JJB', icon: Sword },
+    { id: 'grappling', label: 'Grappling', icon: Users },
+    { id: 'mma', label: 'MMA', icon: Swords },
+    { id: 'judo', label: 'Judo', icon: Sword },
+    { id: 'lutte', label: 'Lutte', icon: Users },
   ],
   endurance: [
-    { id: 'all', label: 'Tout', icon: '🏃' },
-    { id: 'hyrox', label: 'HYROX', icon: '💪' },
-    { id: 'marathon', label: 'Marathon', icon: '🏃' },
-    { id: 'trail', label: 'Trail', icon: '⛰️' },
-    { id: 'triathlon', label: 'Triathlon', icon: '🏊' },
-    { id: 'running', label: 'Running', icon: '👟' },
-    { id: 'crossfit', label: 'CrossFit', icon: '🏋️' },
+    { id: 'all', label: 'Tout', icon: Timer },
+    { id: 'hyrox', label: 'HYROX', icon: Zap },
+    { id: 'marathon', label: 'Marathon', icon: Timer },
+    { id: 'trail', label: 'Trail', icon: Mountain },
+    { id: 'triathlon', label: 'Triathlon', icon: Activity },
+    { id: 'running', label: 'Running', icon: Timer },
+    { id: 'crossfit', label: 'CrossFit', icon: Dumbbell },
   ],
 };
 
@@ -534,11 +542,11 @@ export default function EventsScreen() {
 
             {/* Category Filters */}
             <View style={styles.filterGroup}>
-              {[
-                { id: 'all', label: 'Tous', icon: '🎯' },
-                { id: 'combat', label: 'Combat', icon: '🥋' },
-                { id: 'endurance', label: 'Endurance', icon: '🏃' },
-              ].map((cat) => (
+              {([
+                { id: 'all', label: 'Tous', icon: Target },
+                { id: 'combat', label: 'Combat', icon: Sword },
+                { id: 'endurance', label: 'Endurance', icon: Timer },
+              ] as const).map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   style={[
@@ -553,12 +561,15 @@ export default function EventsScreen() {
                     setSelectedCategory(cat.id as CategoryFilter);
                   }}
                 >
-                  <Text style={[
-                    styles.filterChipText,
-                    { color: selectedCategory === cat.id ? '#FFF' : colors.text }
-                  ]}>
-                    {cat.icon} {cat.label}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <cat.icon size={14} color={selectedCategory === cat.id ? '#FFF' : colors.text} />
+                    <Text style={[
+                      styles.filterChipText,
+                      { color: selectedCategory === cat.id ? '#FFF' : colors.text }
+                    ]}>
+                      {cat.label}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -589,12 +600,15 @@ export default function EventsScreen() {
                     setSelectedSportTag(sport.id);
                   }}
                 >
-                  <Text style={[
-                    styles.sportChipText,
-                    { color: selectedSportTag === sport.id ? '#FFF' : colors.text }
-                  ]}>
-                    {sport.icon} {sport.label}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <sport.icon size={12} color={selectedSportTag === sport.id ? '#FFF' : colors.text} />
+                    <Text style={[
+                      styles.sportChipText,
+                      { color: selectedSportTag === sport.id ? '#FFF' : colors.text }
+                    ]}>
+                      {sport.label}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>

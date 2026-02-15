@@ -192,7 +192,10 @@ export default function AddClubScreen() {
         </View>
         {nameError && (
           <View style={{ backgroundColor: '#EF444420', borderLeftWidth: 3, borderLeftColor: '#EF4444', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>❌ {nameError}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <X size={14} color="#EF4444" strokeWidth={2.5} />
+              <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{nameError}</Text>
+            </View>
           </View>
         )}
 

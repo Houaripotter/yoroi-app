@@ -45,6 +45,7 @@ import {
   Trash2,
   Sun,
   Filter,
+  Circle,
 } from 'lucide-react-native';
 
 // Import events catalog service (SQLite optimized)
@@ -70,7 +71,7 @@ import { FeatureDiscoveryModal } from '@/components/FeatureDiscoveryModal';
 import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/featureDiscoveryService';
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
-import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
+import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 
 // ============================================
 // PLANNING SCREEN - SWIPEABLE VIEWS
@@ -122,7 +123,7 @@ export default function PlanningScreen() {
   const { colors, isDark } = useTheme();
   const { t, locale } = useI18n();
   const { showPopup, PopupComponent } = useCustomPopup();
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>('competitions'); // Prochains RDV en premier
   const [workouts, setWorkouts] = useState<Training[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -180,7 +181,7 @@ export default function PlanningScreen() {
   // ============================================
   // CATALOG STATE (for "Trouver" feature)
   // ============================================
-  const [eventsTabMode, setEventsTabMode] = useState<EventsTabMode>('my_events');
+  const [eventsTabMode, setEventsTabMode] = useState<EventsTabMode>('catalog'); // Trouver par défaut
   const [savedExternalEvents, setSavedExternalEvents] = useState<SportEvent[]>([]);
   const [savedExternalEventIds, setSavedExternalEventIds] = useState<Set<string>>(new Set());
   const [catalogSearchQuery, setCatalogSearchQuery] = useState('');
@@ -497,14 +498,17 @@ export default function PlanningScreen() {
   useEffect(() => {
     const loadEvents = async () => {
       setCatalogLoading(true);
+      console.log('🔄 Chargement des événements...');
       try {
-        // ⚡ PERFORMANCE: Charger seulement 50 événements (pagination future)
-        // Au lieu de 5000 qui bloquait l'UI pendant 1 minute
-        const events = await getFilteredEvents({ upcomingOnly: true, limit: 50 });
+        // ⚡ PERFORMANCE: Charger 500 événements maximum
+        const events = await getFilteredEvents({ upcomingOnly: true, limit: 500 });
         setAllCatalogEvents(events as SportEvent[]);
-        console.log('✅ Événements chargés:', events.length);
+        console.log('✅ Événements chargés:', events.length, 'événements');
+        if (events.length > 0) {
+          console.log('📅 Premier événement:', events[0].title, '-', events[0].sport_tag);
+        }
       } catch (error) {
-        console.error('Error loading events:', error);
+        console.error('❌ Erreur chargement événements:', error);
         setAllCatalogEvents([]);
       } finally {
         setCatalogLoading(false);
@@ -632,6 +636,26 @@ export default function PlanningScreen() {
     europe: allCatalogEvents.filter(e => EUROPEAN_COUNTRIES.includes(e.location?.country ?? '')).length,
     france: allCatalogEvents.filter(e => e.location?.country?.toLowerCase() === 'france').length,
   }), [allCatalogEvents]);
+
+  // ============================================
+  // GROUPEMENT DES ÉVÉNEMENTS DU CATALOGUE PAR SPORT
+  // ============================================
+  const groupedCatalogEvents = useMemo(() => {
+    const groups: Record<string, SportEvent[]> = {};
+
+    filteredCatalogEvents.forEach(event => {
+      const sportTag = event.sport_tag || 'autre';
+      if (!groups[sportTag]) {
+        groups[sportTag] = [];
+      }
+      groups[sportTag].push(event);
+    });
+
+    // Trier les sports par nombre d'événements (décroissant)
+    const sortedSports = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+
+    return { groups, sortedSports };
+  }, [filteredCatalogEvents]);
 
   // Add external event to saved list
   const addExternalEventToSaved = useCallback(async (event: SportEvent) => {
@@ -900,6 +924,22 @@ export default function PlanningScreen() {
       animated: true,
     });
   };
+
+  // ============================================
+  // SCROLL INITIAL vers Prochains RDV (competitions)
+  // ============================================
+  useEffect(() => {
+    // Scroll vers l'onglet competitions (index 4) au montage
+    const competitionsIndex = tabs.findIndex(t => t.key === 'competitions');
+    if (competitionsIndex >= 0 && horizontalScrollRef.current) {
+      setTimeout(() => {
+        horizontalScrollRef.current?.scrollTo({
+          x: competitionsIndex * SCREEN_WIDTH,
+          animated: false,
+        });
+      }, 100);
+    }
+  }, []);
 
   // Gérer le scroll horizontal des pages
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -1465,9 +1505,13 @@ export default function PlanningScreen() {
                                     paddingVertical: 2,
                                     marginLeft: 4,
                                   }}>
-                                    <Text style={{ color: statusColor, fontSize: 8, fontWeight: '700' }}>
-                                      {skill.status === 'mastered' ? '✓' : skill.status === 'in_progress' ? '⟳' : '○'}
-                                    </Text>
+                                    {skill.status === 'mastered' ? (
+                                      <Check size={8} color={statusColor} strokeWidth={3} />
+                                    ) : skill.status === 'in_progress' ? (
+                                      <Clock size={8} color={statusColor} strokeWidth={2.5} />
+                                    ) : (
+                                      <Circle size={8} color={statusColor} strokeWidth={2} />
+                                    )}
                                   </View>
                                 </View>
                                 {/* Status text */}
@@ -1776,7 +1820,8 @@ export default function PlanningScreen() {
                               </Text>
                             </View>
 
-                            {/* Events de ce sport */}
+                            {/* Events de ce sport - Nouveau design avec images */}
+                            <View style={styles.savedEventsGrid}>
                             {events.map((event) => {
                               const eventDate = new Date(event.date_start);
                               const today = new Date();
@@ -1797,7 +1842,7 @@ export default function PlanningScreen() {
                         return (
                           <TouchableOpacity
                             key={event.id}
-                            style={[styles.savedEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                            style={[styles.savedEventCardNew, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
                             onPress={() => {
                               impactAsync(ImpactFeedbackStyle.Medium);
                               router.push({
@@ -1808,66 +1853,68 @@ export default function PlanningScreen() {
                                   date_start: event.date_start,
                                   city: event.location?.city || '',
                                   country: event.location?.country || '',
+                                  full_address: event.location?.full_address || '',
                                   category: event.category,
                                   sport_tag: event.sport_tag,
                                   registration_link: event.registration_link || '',
                                   federation: event.federation || '',
+                                  image_logo_url: event.image_logo_url || '',
                                 }
                               });
                             }}
                             activeOpacity={0.7}
                           >
-                            <View style={styles.savedEventLeft}>
-                              <View style={[styles.savedEventDateBadge, { backgroundColor: categoryColor + '20' }]}>
-                                <Text style={[styles.savedEventDay, { color: categoryColor }]}>
-                                  {eventDate.getDate()}
-                                </Text>
-                                <Text style={[styles.savedEventMonth, { color: categoryColor }]}>
-                                  {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
-                                </Text>
+                            {/* Visual Header avec gradient et icône */}
+                            <View style={[styles.savedEventImageContainer, { backgroundColor: categoryColor }]}>
+                              {/* Gradient overlay effect */}
+                              <View style={[styles.savedEventGradientOverlay, { backgroundColor: categoryColor }]} />
+                              {/* Pattern décoratif */}
+                              <View style={styles.savedEventPattern}>
+                                <MaterialCommunityIcons name={sportInfo.icon as any} size={80} color="rgba(255,255,255,0.08)" />
                               </View>
-                            </View>
-
-                            <View style={styles.savedEventCenter}>
-                              <Text style={[styles.savedEventTitle, { color: colors.textPrimary }]} numberOfLines={2}>
-                                {event.title}
-                              </Text>
-                              <View style={styles.savedEventMeta}>
-                                <MapPin size={12} color={colors.textSecondary} />
-                                <Text style={[styles.savedEventLocation, { color: colors.textSecondary }]} numberOfLines={1}>
-                                  {city}{country ? `, ${country}` : ''}
-                                </Text>
+                              {/* Icône centrale */}
+                              <View style={styles.savedEventIconCircle}>
+                                <MaterialCommunityIcons name={sportInfo.icon as any} size={32} color="#FFFFFF" />
                               </View>
-                              <View style={[styles.savedEventTagRow]}>
-                                <View style={[styles.savedEventTag, { backgroundColor: categoryColor + '20' }]}>
-                                  <Text style={[styles.savedEventTagText, { color: categoryColor }]}>
-                                    {(event.sport_tag || 'sport').toUpperCase()}
-                                  </Text>
+                              {/* Countdown Badge */}
+                              {daysLeft > 0 && (
+                                <View style={[styles.savedEventCountdownBadge, { backgroundColor: urgencyColor }]}>
+                                  <Text style={styles.savedEventCountdownText}>J-{daysLeft}</Text>
                                 </View>
-                                {daysLeft > 0 && (
-                                  <View style={[styles.savedEventTag, { backgroundColor: urgencyColor + '20' }]}>
-                                    <Text style={[styles.savedEventTagText, { color: urgencyColor }]}>
-                                      J-{daysLeft}
-                                    </Text>
-                                  </View>
-                                )}
-                              </View>
-                            </View>
-
-                            <View style={styles.savedEventActions}>
+                              )}
+                              {/* Delete Button */}
                               <TouchableOpacity
-                                style={[styles.savedEventActionBtn, { backgroundColor: '#EF444420' }]}
+                                style={styles.savedEventDeleteBtn}
                                 onPress={(e) => {
                                   e.stopPropagation();
                                   removeExternalEventFromSaved(event.id);
                                 }}
                               >
-                                <Trash2 size={16} color="#EF4444" />
+                                <Trash2 size={14} color="#FFFFFF" />
                               </TouchableOpacity>
+                            </View>
+
+                            {/* Event Info */}
+                            <View style={styles.savedEventInfoNew}>
+                              <View style={[styles.savedEventDateBadgeSmall, { backgroundColor: categoryColor + '15' }]}>
+                                <Text style={[styles.savedEventDateText, { color: categoryColor }]}>
+                                  {eventDate.getDate()} {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
+                                </Text>
+                              </View>
+                              <Text style={[styles.savedEventTitleNew, { color: colors.textPrimary }]} numberOfLines={2}>
+                                {event.title}
+                              </Text>
+                              <View style={styles.savedEventLocationRow}>
+                                <MapPin size={11} color={colors.textMuted} />
+                                <Text style={[styles.savedEventLocationText, { color: colors.textMuted }]} numberOfLines={1}>
+                                  {city}{country ? `, ${country}` : ''}
+                                </Text>
+                              </View>
                             </View>
                           </TouchableOpacity>
                         );
                       })}
+                            </View>
                           </View>
                         );
                       })}
@@ -1931,7 +1978,7 @@ export default function PlanningScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Modal Filtres */}
+                {/* Modal Filtres - Design Premium */}
                 <Modal
                   visible={showFiltersModal}
                   transparent
@@ -1939,96 +1986,116 @@ export default function PlanningScreen() {
                   onRequestClose={() => setShowFiltersModal(false)}
                 >
                   <TouchableOpacity
-                    style={styles.modalOverlay}
+                    style={styles.filterModalOverlay}
                     activeOpacity={1}
                     onPress={() => setShowFiltersModal(false)}
                   >
                     <TouchableOpacity
-                      style={[styles.filtersPanel, { backgroundColor: colors.backgroundCard }]}
+                      style={[styles.filterModalPanel, { backgroundColor: isDark ? '#1A1A1E' : '#FFFFFF' }]}
                       activeOpacity={1}
                     >
-                      {/* Header */}
-                      <View style={[styles.filtersPanelHeader, { borderBottomColor: colors.border }]}>
-                        <Text style={[styles.filtersPanelTitle, { color: colors.textPrimary }]}>Filtres</Text>
-                        <TouchableOpacity onPress={() => setShowFiltersModal(false)}>
-                          <X size={24} color={colors.textPrimary} />
+                      {/* Header avec gradient */}
+                      <View style={[styles.filterModalHeader, { backgroundColor: '#8B5CF6' }]}>
+                        <View style={styles.filterModalHeaderContent}>
+                          <Filter size={22} color="#FFFFFF" />
+                          <Text style={styles.filterModalTitle}>Filtres</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.filterModalCloseBtn}
+                          onPress={() => setShowFiltersModal(false)}
+                        >
+                          <X size={20} color="#FFFFFF" />
                         </TouchableOpacity>
                       </View>
 
-                      <ScrollView style={styles.filtersPanelContent} showsVerticalScrollIndicator={false}>
-                        {/* Localisation */}
-                        <Text style={[styles.filterSectionTitle, { color: colors.textMuted }]}>LOCALISATION</Text>
-                        <View style={styles.filterGrid}>
-                          {(['monde', 'europe', 'france'] as CatalogLocationFilter[]).map((loc) => (
+                      <ScrollView style={styles.filterModalContent} showsVerticalScrollIndicator={false}>
+                        {/* Localisation - Cards design */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <MapPin size={14} color={colors.textMuted} />
+                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>LOCALISATION</Text>
+                        </View>
+                        <View style={styles.filterLocationGrid}>
+                          {([
+                            { key: 'france', emoji: '🇫🇷', label: 'France', color: '#3B82F6' },
+                            { key: 'europe', emoji: '🇪🇺', label: 'Europe', color: '#8B5CF6' },
+                            { key: 'monde', emoji: '🌍', label: 'Monde', color: '#10B981' },
+                          ] as const).map((loc) => (
                             <TouchableOpacity
-                              key={loc}
+                              key={loc.key}
                               style={[
-                                styles.filterChip,
+                                styles.filterLocationCard,
                                 {
-                                  backgroundColor: catalogLocationFilter === loc ? colors.accent : colors.background,
-                                  borderColor: catalogLocationFilter === loc ? colors.accent : colors.border,
+                                  backgroundColor: catalogLocationFilter === loc.key ? loc.color : colors.background,
+                                  borderColor: catalogLocationFilter === loc.key ? loc.color : colors.border,
                                 },
                               ]}
                               onPress={() => {
-                                impactAsync(ImpactFeedbackStyle.Light);
-                                setCatalogLocationFilter(loc);
+                                impactAsync(ImpactFeedbackStyle.Medium);
+                                setCatalogLocationFilter(loc.key);
                               }}
                             >
+                              <Text style={styles.filterLocationEmoji}>{loc.emoji}</Text>
                               <Text style={[
-                                styles.filterChipText,
-                                { color: catalogLocationFilter === loc ? '#FFFFFF' : colors.textPrimary },
+                                styles.filterLocationLabel,
+                                { color: catalogLocationFilter === loc.key ? '#FFFFFF' : colors.textPrimary },
                               ]}>
-                                {loc === 'monde' ? '🌍 Monde' : loc === 'europe' ? '🇪🇺 Europe' : '🇫🇷 France'}
+                                {loc.label}
                               </Text>
+                              {catalogLocationFilter === loc.key && (
+                                <View style={styles.filterCheckBadge}>
+                                  <Check size={12} color={loc.color} strokeWidth={3} />
+                                </View>
+                              )}
                             </TouchableOpacity>
                           ))}
                         </View>
 
-                        {/* Catégorie */}
-                        <Text style={[styles.filterSectionTitle, { color: colors.textMuted, marginTop: 24 }]}>CATÉGORIE</Text>
-                        <View style={styles.filterGrid}>
-                          {(['all', 'combat', 'endurance', 'force', 'nature'] as const).map((cat) => {
-                            const categoryInfo = {
-                              all: { icon: 'trophy', label: 'Tous', color: '#6B7280' },
-                              combat: { icon: 'karate', label: 'Combat', color: '#EF4444' },
-                              endurance: { icon: 'run', label: 'Endurance', color: '#10B981' },
-                              force: { icon: 'dumbbell', label: 'Force', color: '#F59E0B' },
-                              nature: { icon: 'terrain', label: 'Nature', color: '#8B5CF6' },
-                            };
-                            const info = categoryInfo[cat];
-                            return (
-                              <TouchableOpacity
-                                key={cat}
-                                style={[
-                                  styles.filterChip,
-                                  {
-                                    backgroundColor: catalogCategoryFilter === cat ? colors.accent : colors.background,
-                                    borderColor: catalogCategoryFilter === cat ? colors.accent : colors.border,
-                                  },
-                                ]}
-                                onPress={() => {
-                                  impactAsync(ImpactFeedbackStyle.Light);
-                                  setCatalogCategoryFilter(cat as CatalogCategoryFilter);
-                                  setCatalogSportFilter('all');
-                                  setCatalogSubFilter('all');
-                                }}
-                              >
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                  <MaterialCommunityIcons
-                                    name={info.icon as any}
-                                    size={16}
-                                    color={catalogCategoryFilter === cat ? '#FFFFFF' : info.color}
-                                  />
-                                  <Text style={[
-                                    styles.filterChipText,
-                                    { color: catalogCategoryFilter === cat ? '#FFFFFF' : colors.textPrimary },
-                                  ]}>
-                                    {info.label}
-                                  </Text>
+                        {/* Catégorie - Premium Cards */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 24 }}>
+                          <Trophy size={14} color={colors.textMuted} />
+                          <Text style={[styles.filterModalSectionTitle, { color: colors.textMuted }]}>CATÉGORIE</Text>
+                        </View>
+                        <View style={styles.filterCategoryGrid}>
+                          {([
+                            { key: 'all', icon: 'trophy-outline', label: 'Tous', color: '#6B7280' },
+                            { key: 'combat', icon: 'karate', label: 'Combat', color: '#EF4444' },
+                            { key: 'endurance', icon: 'run-fast', label: 'Endurance', color: '#10B981' },
+                            { key: 'force', icon: 'dumbbell', label: 'Force', color: '#F59E0B' },
+                            { key: 'nature', icon: 'terrain', label: 'Nature', color: '#8B5CF6' },
+                          ] as const).map((cat) => (
+                            <TouchableOpacity
+                              key={cat.key}
+                              style={[
+                                styles.filterCategoryCard,
+                                {
+                                  backgroundColor: catalogCategoryFilter === cat.key ? cat.color + '15' : colors.background,
+                                  borderColor: catalogCategoryFilter === cat.key ? cat.color : colors.border,
+                                  borderWidth: catalogCategoryFilter === cat.key ? 2 : 1,
+                                },
+                              ]}
+                              onPress={() => {
+                                impactAsync(ImpactFeedbackStyle.Medium);
+                                setCatalogCategoryFilter(cat.key as CatalogCategoryFilter);
+                                setCatalogSportFilter('all');
+                                setCatalogSubFilter('all');
+                              }}
+                            >
+                              <View style={[styles.filterCategoryIconBg, { backgroundColor: cat.color + '20' }]}>
+                                <MaterialCommunityIcons name={cat.icon as any} size={24} color={cat.color} />
+                              </View>
+                              <Text style={[
+                                styles.filterCategoryLabel,
+                                { color: catalogCategoryFilter === cat.key ? cat.color : colors.textPrimary },
+                              ]}>
+                                {cat.label}
+                              </Text>
+                              {catalogCategoryFilter === cat.key && (
+                                <View style={[styles.filterCategoryCheck, { backgroundColor: cat.color }]}>
+                                  <Check size={10} color="#FFFFFF" strokeWidth={3} />
                                 </View>
-                              </TouchableOpacity>
-                            );
-                          })}
+                              )}
+                            </TouchableOpacity>
+                          ))}
                         </View>
 
                         {/* Sports spécifiques selon la catégorie */}
@@ -2060,7 +2127,7 @@ export default function PlanningScreen() {
                               {/* Sports Combat */}
                               {catalogCategoryFilter === 'combat' && (
                                 <>
-                                  {['jjb', 'grappling'].map((sport) => {
+                                  {['jjb', 'grappling', 'judo'].map((sport) => {
                                     const sportInfo = getSportById(sport);
                                     return (
                                       <TouchableOpacity
@@ -2100,7 +2167,7 @@ export default function PlanningScreen() {
                               {/* Sports Endurance */}
                               {catalogCategoryFilter === 'endurance' && (
                                 <>
-                                  {['hyrox', 'running', 'marathon', 'trail'].map((sport) => {
+                                  {['running', 'marathon', 'trail', 'triathlon', 'obstacle', 'cycling'].map((sport) => {
                                     const sportInfo = getSportById(sport);
                                     return (
                                       <TouchableOpacity
@@ -2140,7 +2207,7 @@ export default function PlanningScreen() {
                               {/* Sports Force */}
                               {catalogCategoryFilter === 'force' && (
                                 <>
-                                  {['crossfit', 'powerlifting', 'fitness'].map((sport) => {
+                                  {['hyrox', 'crossfit', 'powerlifting', 'fitness'].map((sport) => {
                                     const sportInfo = getSportById(sport);
                                     return (
                                       <TouchableOpacity
@@ -2308,10 +2375,10 @@ export default function PlanningScreen() {
                         })()}
                       </ScrollView>
 
-                      {/* Footer avec boutons */}
-                      <View style={[styles.filtersPanelFooter, { borderTopColor: colors.border }]}>
+                      {/* Footer avec boutons - Design Premium */}
+                      <View style={[styles.filterModalFooter, { borderTopColor: colors.border }]}>
                         <TouchableOpacity
-                          style={[styles.filterResetButton, { borderColor: colors.border }]}
+                          style={[styles.filterResetBtnNew, { borderColor: colors.border }]}
                           onPress={() => {
                             impactAsync(ImpactFeedbackStyle.Light);
                             setCatalogLocationFilter('monde');
@@ -2320,16 +2387,18 @@ export default function PlanningScreen() {
                             setCatalogSubFilter('all');
                           }}
                         >
-                          <Text style={[styles.filterResetButtonText, { color: colors.textSecondary }]}>Réinitialiser</Text>
+                          <X size={16} color={colors.textSecondary} />
+                          <Text style={[styles.filterResetBtnText, { color: colors.textSecondary }]}>Reset</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                          style={[styles.filterApplyButton, { backgroundColor: colors.accent }]}
+                          style={styles.filterApplyBtnNew}
                           onPress={() => {
                             impactAsync(ImpactFeedbackStyle.Medium);
                             setShowFiltersModal(false);
                           }}
                         >
-                          <Text style={styles.filterApplyButtonText}>Appliquer</Text>
+                          <Check size={18} color="#FFFFFF" strokeWidth={3} />
+                          <Text style={styles.filterApplyBtnText}>Appliquer ({filteredCatalogEvents.length})</Text>
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
@@ -2341,7 +2410,7 @@ export default function PlanningScreen() {
                   {filteredCatalogEvents.length} evenement{filteredCatalogEvents.length > 1 ? 's' : ''} trouve{filteredCatalogEvents.length > 1 ? 's' : ''}
                 </Text>
 
-                {/* Events List */}
+                {/* Events List - Grouped by Sport */}
                 {catalogLoading ? (
                   <View style={[styles.catalogEmptyState, { backgroundColor: colors.backgroundCard }]}>
                     <ActivityIndicator size="large" color={colors.accent} />
@@ -2360,108 +2429,157 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                 ) : (
-                  filteredCatalogEvents.slice(0, 2500).map((event) => {
-                    const eventDate = new Date(event.date_start);
-                    const formattedDate = eventDate.toLocaleDateString(locale, {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    });
-                    const isSaved = savedExternalEventIds.has(event.id);
-
-                    // Safe location display
-                    const city = event.location?.city || 'Lieu inconnu';
-                    const country = event.location?.country || '';
+                  groupedCatalogEvents.sortedSports.map((sportTag) => {
+                    const events = groupedCatalogEvents.groups[sportTag];
+                    const sport = getSportById(sportTag);
+                    const sportInfo = sport ? {
+                      label: sport.name,
+                      icon: sport.icon,
+                      color: sport.color,
+                    } : {
+                      label: sportTag.charAt(0).toUpperCase() + sportTag.slice(1),
+                      icon: 'trophy',
+                      color: '#6B7280',
+                    };
 
                     return (
-                      <TouchableOpacity
-                        key={event.id}
-                        style={[styles.catalogEventCard, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
-                        onPress={() => {
-                          impactAsync(ImpactFeedbackStyle.Medium);
-                          router.push({
-                            pathname: '/event-detail',
-                            params: {
-                              id: event.id,
-                              title: event.title,
-                              date_start: event.date_start,
-                              city: event.location?.city || '',
-                              country: event.location?.country || '',
-                              category: event.category,
-                              sport_tag: event.sport_tag,
-                              registration_link: event.registration_link || '',
-                              federation: event.federation || '',
-                            }
-                          });
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <View style={styles.catalogEventLeft}>
-                          <View style={styles.catalogEventHeader}>
-                            <Text style={[styles.catalogEventDate, { color: colors.textSecondary }]}>
-                              {formattedDate}
-                            </Text>
-                            <View style={[
-                              styles.catalogCategoryBadge, 
-                              { 
-                                backgroundColor: 
-                                  event.category === 'combat' ? '#EF444420' : 
-                                  event.category === 'endurance' ? '#10B98120' :
-                                  event.category === 'force' ? '#F59E0B20' :
-                                  event.category === 'nature' ? '#8B5CF620' : '#6B728020'
-                              }
-                            ]}>
-                              <Text style={[
-                                styles.catalogCategoryText, 
-                                { 
-                                  color: 
-                                    event.category === 'combat' ? '#EF4444' : 
-                                    event.category === 'endurance' ? '#10B981' :
-                                    event.category === 'force' ? '#F59E0B' :
-                                    event.category === 'nature' ? '#8B5CF6' : '#6B7280'
-                                }
-                              ]}>
-                                {event.sport_tag.toUpperCase()}
-                              </Text>
-                            </View>
+                      <View key={sportTag} style={styles.catalogSportSection}>
+                        {/* Sport Header */}
+                        {/* Sport Header - Design épuré sans barre */}
+                        <View style={[styles.catalogSportHeaderNew, { backgroundColor: sportInfo.color + '10' }]}>
+                          <View style={[styles.catalogSportIconCircle, { backgroundColor: sportInfo.color }]}>
+                            <MaterialCommunityIcons name={sportInfo.icon as any} size={20} color="#FFFFFF" />
                           </View>
-
-                          <Text style={[styles.catalogEventTitle, { color: colors.textPrimary }]} numberOfLines={2}>
-                            {event.title}
+                          <Text style={[styles.catalogSportTitleNew, { color: colors.textPrimary }]}>
+                            {sportInfo.label}
                           </Text>
-
-                          <View style={styles.catalogLocationRow}>
-                            <MapPin size={14} color={colors.textSecondary} />
-                            <Text style={[styles.catalogLocationText, { color: colors.textSecondary }]} numberOfLines={1}>
-                              {city}{country ? `, ${country}` : ''}
+                          <View style={[styles.catalogSportCountBadge, { backgroundColor: sportInfo.color + '20' }]}>
+                            <Text style={[styles.catalogSportCountText, { color: sportInfo.color }]}>
+                              {events.length}
                             </Text>
                           </View>
-
-                          {event.registration_link && (
-                            <View style={styles.catalogLinkRow}>
-                              <ExternalLink size={12} color="#8B5CF6" />
-                              <Text style={[styles.catalogLinkText, { color: '#8B5CF6' }]}>
-                                Inscription
-                              </Text>
-                            </View>
-                          )}
                         </View>
 
-                        <TouchableOpacity
-                          style={[
-                            styles.catalogAddButton,
-                            { backgroundColor: isSaved ? '#10B981' : '#8B5CF6' },
-                          ]}
-                          onPress={() => toggleExternalEventInSaved(event)}
-                          activeOpacity={0.7}
-                        >
-                          {isSaved ? (
-                            <Check size={20} color="#FFFFFF" strokeWidth={3} />
-                          ) : (
-                            <Plus size={20} color="#FFFFFF" strokeWidth={2.5} />
-                          )}
-                        </TouchableOpacity>
-                      </TouchableOpacity>
+                        {/* Events Grid - 2 par sport */}
+                        <View style={styles.catalogEventsGrid}>
+                          {events.slice(0, 2).map((event) => {
+                            const eventDate = new Date(event.date_start);
+                            const formattedDate = eventDate.toLocaleDateString(locale, {
+                              day: 'numeric',
+                              month: 'short',
+                            });
+                            const isSaved = savedExternalEventIds.has(event.id);
+                            const city = event.location?.city || 'Lieu inconnu';
+                            const country = event.location?.country || '';
+
+                            const categoryColor =
+                              event.category === 'combat' ? '#EF4444' :
+                              event.category === 'endurance' ? '#10B981' :
+                              event.category === 'force' ? '#F59E0B' :
+                              event.category === 'nature' ? '#8B5CF6' : '#6B7280';
+
+                            return (
+                              <TouchableOpacity
+                                key={event.id}
+                                style={[styles.catalogEventCardNew, { backgroundColor: colors.backgroundCard, borderColor: colors.border }]}
+                                onPress={() => {
+                                  impactAsync(ImpactFeedbackStyle.Medium);
+                                  router.push({
+                                    pathname: '/event-detail',
+                                    params: {
+                                      id: event.id,
+                                      title: event.title,
+                                      date_start: event.date_start,
+                                      city: event.location?.city || '',
+                                      country: event.location?.country || '',
+                                      full_address: event.location?.full_address || '',
+                                      category: event.category,
+                                      sport_tag: event.sport_tag,
+                                      registration_link: event.registration_link || '',
+                                      federation: event.federation || '',
+                                      image_logo_url: event.image_logo_url || '',
+                                    }
+                                  });
+                                }}
+                                activeOpacity={0.7}
+                              >
+                                {/* Visual Header avec gradient et icône */}
+                                <View style={[styles.catalogEventImageContainer, { backgroundColor: categoryColor }]}>
+                                  {/* Pattern décoratif en arrière-plan */}
+                                  <View style={styles.catalogEventPattern}>
+                                    <MaterialCommunityIcons name={sportInfo.icon as any} size={90} color="rgba(255,255,255,0.08)" />
+                                  </View>
+                                  {/* Icône centrale dans un cercle */}
+                                  <View style={styles.catalogEventIconCircle}>
+                                    <MaterialCommunityIcons name={sportInfo.icon as any} size={28} color="#FFFFFF" />
+                                  </View>
+                                  {/* Date Badge */}
+                                  <View style={[styles.catalogEventDateBadge, { backgroundColor: colors.background + 'EE' }]}>
+                                    <Text style={[styles.catalogEventDateDay, { color: categoryColor }]}>
+                                      {eventDate.getDate()}
+                                    </Text>
+                                    <Text style={[styles.catalogEventDateMonth, { color: colors.textSecondary }]}>
+                                      {eventDate.toLocaleDateString(locale, { month: 'short' }).toUpperCase()}
+                                    </Text>
+                                  </View>
+                                  {/* Save Button */}
+                                  <TouchableOpacity
+                                    style={[styles.catalogEventSaveBtn, { backgroundColor: isSaved ? '#10B981' : categoryColor }]}
+                                    onPress={(e) => {
+                                      e.stopPropagation();
+                                      toggleExternalEventInSaved(event);
+                                    }}
+                                    activeOpacity={0.7}
+                                  >
+                                    {isSaved ? (
+                                      <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                                    ) : (
+                                      <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
+                                    )}
+                                  </TouchableOpacity>
+                                </View>
+
+                                {/* Event Info */}
+                                <View style={styles.catalogEventInfo}>
+                                  <Text style={[styles.catalogEventTitleNew, { color: colors.textPrimary }]} numberOfLines={2}>
+                                    {event.title}
+                                  </Text>
+                                  <View style={styles.catalogEventLocationRow}>
+                                    <MapPin size={12} color={colors.textMuted} />
+                                    <Text style={[styles.catalogEventLocationText, { color: colors.textMuted }]} numberOfLines={1}>
+                                      {city}{country ? `, ${country}` : ''}
+                                    </Text>
+                                  </View>
+                                  {event.registration_link && (
+                                    <View style={[styles.catalogEventLinkBadge, { backgroundColor: categoryColor + '15' }]}>
+                                      <ExternalLink size={10} color={categoryColor} />
+                                      <Text style={[styles.catalogEventLinkText, { color: categoryColor }]}>
+                                        Inscription
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+
+                        {/* See More Button - Affiche si plus de 2 événements */}
+                        {events.length > 2 && (
+                          <TouchableOpacity
+                            style={[styles.catalogSeeMoreBtnNew, { backgroundColor: sportInfo.color + '15', borderColor: sportInfo.color + '30' }]}
+                            onPress={() => {
+                              impactAsync(ImpactFeedbackStyle.Light);
+                              setCatalogSportFilter(sportTag);
+                            }}
+                          >
+                            <Text style={[styles.catalogSeeMoreTextNew, { color: sportInfo.color }]}>
+                              Voir les {events.length - 2} autres
+                            </Text>
+                            <ChevronRight size={18} color={sportInfo.color} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     );
                   })
                 )}
@@ -2572,8 +2690,8 @@ export default function PlanningScreen() {
 
       <PopupComponent />
 
-      {/* Bouton partage flottant */}
-      <ShareFloatingButton />
+      {/* Bouton outils flottant */}
+      <HomeToolsMenu />
       </View>
     </ErrorBoundary>
   );
@@ -3816,6 +3934,361 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
+  // ============================================
+  // NOUVEAU DESIGN CATALOGUE - GROUPÉ PAR SPORT
+  // ============================================
+  catalogSportSection: {
+    marginBottom: 24,
+  },
+  catalogSportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    gap: 12,
+  },
+  catalogSportIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catalogSportHeaderText: {
+    flex: 1,
+  },
+  catalogSportTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  catalogSportCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  catalogEventsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  catalogEventCardNew: {
+    width: (SCREEN_WIDTH - SPACING.sm * 2 - 10) / 2,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  catalogEventImageContainer: {
+    position: 'relative',
+    height: 100,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catalogEventPattern: {
+    position: 'absolute',
+    right: -25,
+    bottom: -25,
+    opacity: 1,
+  },
+  catalogEventIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  catalogEventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  catalogEventImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catalogEventDateBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  catalogEventDateDay: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  catalogEventDateMonth: {
+    fontSize: 9,
+    fontWeight: '600',
+  },
+  catalogEventSaveBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catalogEventInfo: {
+    padding: 10,
+    gap: 4,
+  },
+  catalogEventTitleNew: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  catalogEventLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  catalogEventLocationText: {
+    fontSize: 11,
+    flex: 1,
+  },
+  catalogEventLinkBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  catalogEventLinkText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  catalogSeeMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: 12,
+    gap: 6,
+  },
+  catalogSeeMoreText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ============================================
+  // NOUVEAU HEADER SPORT - Design épuré sans barre
+  // ============================================
+  catalogSportHeaderNew: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    gap: 12,
+  },
+  catalogSportIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catalogSportTitleNew: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  catalogSportCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  catalogSportCountText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // ============================================
+  // NOUVEAU BOUTON VOIR PLUS
+  // ============================================
+  catalogSeeMoreBtnNew: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginTop: 12,
+    gap: 8,
+  },
+  catalogSeeMoreTextNew: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // ============================================
+  // NOUVEAU MODAL FILTRES - Design Premium
+  // ============================================
+  filterModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  filterModalPanel: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '85%',
+    overflow: 'hidden',
+  },
+  filterModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  filterModalHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  filterModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  filterModalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterModalContent: {
+    padding: 20,
+  },
+  filterModalSectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 14,
+  },
+  filterLocationGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  filterLocationCard: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    gap: 6,
+  },
+  filterLocationEmoji: {
+    fontSize: 24,
+  },
+  filterLocationLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  filterCheckBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCategoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  filterCategoryCard: {
+    width: '31%',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 14,
+    alignItems: 'center',
+    gap: 8,
+  },
+  filterCategoryIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCategoryLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  filterCategoryCheck: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterModalFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    borderTopWidth: 1,
+  },
+  filterResetBtnNew: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 6,
+  },
+  filterResetBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  filterApplyBtnNew: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: '#8B5CF6',
+    gap: 8,
+  },
+  filterApplyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+
   // Sport Header
   sportHeader: {
     flexDirection: 'row',
@@ -3843,7 +4316,113 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Saved Events Card styles
+  // ============================================
+  // NOUVEAU DESIGN MES RDV - CARTES AVEC IMAGES
+  // ============================================
+  savedEventsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 8,
+  },
+  savedEventCardNew: {
+    width: (SCREEN_WIDTH - SPACING.sm * 2 - 10) / 2,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  savedEventImageContainer: {
+    position: 'relative',
+    height: 90,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedEventGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.9,
+  },
+  savedEventPattern: {
+    position: 'absolute',
+    right: -20,
+    bottom: -20,
+    opacity: 1,
+  },
+  savedEventIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  savedEventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  savedEventImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedEventCountdownBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  savedEventCountdownText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  savedEventDeleteBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savedEventInfoNew: {
+    padding: 10,
+    gap: 4,
+  },
+  savedEventDateBadgeSmall: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 2,
+  },
+  savedEventDateText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  savedEventTitleNew: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  savedEventLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  savedEventLocationText: {
+    fontSize: 11,
+    flex: 1,
+  },
+
+  // Ancien design Saved Events (gardé pour compatibilité)
   savedEventCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,7 +7,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions
 import { useTheme } from '@/lib/ThemeContext';
 import { useI18n } from '@/lib/I18nContext';
 import { router } from 'expo-router';
-import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange, FileText, BookOpen, Timer, Calculator, Clock, Camera, User, Palette, Trophy, Utensils, Bell, Heart, Users, BookMarked, Plus, Medal, ListChecks, Moon, Crown } from 'lucide-react-native';
+import { Sparkles, TrendingUp, TrendingDown, Minus, Target, Home, Grid, LineChart, Dumbbell, Apple, Droplet, Share2, X, Calendar, CalendarDays, CalendarRange, FileText, BookOpen, Timer, Calculator, Clock, Camera, User, Trophy, Utensils, Bell, Heart, Users, BookMarked, Plus, Medal, ListChecks, Moon, Crown, Palette, Shield, Swords, ChevronRight } from 'lucide-react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AnimatedCounter from '@/components/AnimatedCounter';
@@ -25,6 +25,7 @@ import { getLatestBodyComposition, BodyComposition } from '@/lib/bodyComposition
 import { getTrainings, Training } from '@/lib/database';
 import Svg, { Path, Circle, Defs, LinearGradient as SvgLinearGradient, Stop, Polygon, ClipPath, G, Image as SvgImage } from 'react-native-svg';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { RankCitationCard } from '@/components/home/RankCitationCard';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const IS_SMALL_SCREEN = SCREEN_WIDTH < 375; // iPhone SE, petits téléphones
@@ -622,7 +623,7 @@ const toolsGridStyles = StyleSheet.create({
 });
 
 // ============================================
-// COMPOSANT BARRE DE PROGRESSION POIDS (Simple avec couleurs)
+// COMPOSANT BARRE DE PROGRESSION POIDS (Simple avec couleurs du thème)
 // ============================================
 interface WeightProgressProps {
   currentWeight: number;
@@ -660,56 +661,52 @@ const WeightProgressWithCharacter: React.FC<WeightProgressProps> = memo(({
     return 50;
   }, [targetWeight, startWeight, currentWeight, userGoal]);
 
-  // Couleur selon la progression - Optimisé avec useMemo
-  const progressColor = useMemo(() => {
-    if (progress < 25) return '#EF4444'; // Rouge - loin
-    if (progress < 50) return '#F97316'; // Orange - commence
-    if (progress < 75) return '#EAB308'; // Jaune - se rapproche
-    return '#10B981'; // Vert - proche/atteint
-  }, [progress]);
+  // Déterminer si le thème est "classic" (noir/blanc)
+  const isClassicTheme = colors.accent === '#000000' || colors.accent === '#FFFFFF' ||
+                         colors.accent === '#1a1a1a' || colors.accent === '#f5f5f5';
+
+  // Couleur de la barre de progression = couleur du thème
+  // Pour classic: blanc en dark mode, noir en light mode
+  const barColor = isClassicTheme
+    ? (isDark ? '#FFFFFF' : '#000000')
+    : colors.accent;
+
+  // Couleur du contour/track
+  // Dark mode: blanc, Light mode: noir
+  const trackBorderColor = isDark ? '#FFFFFF' : '#000000';
 
   return (
     <View style={progressStyles.container}>
-      {/* Barre de progression */}
-      <View style={[progressStyles.track, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]}>
-        {/* Fond dégradé complet */}
-        <LinearGradient
-          colors={['#EF4444', '#F97316', '#EAB308', '#10B981']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={progressStyles.gradientBackground}
-        />
-        {/* Masque pour cacher la partie non atteinte */}
+      {/* Barre de progression avec contour */}
+      <View style={[
+        progressStyles.track,
+        {
+          backgroundColor: 'transparent',
+          borderWidth: 1.5,
+          borderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+        }
+      ]}>
+        {/* Barre de progression remplie */}
         <View
           style={[
-            progressStyles.mask,
+            progressStyles.fill,
             {
-              left: `${Math.min(100, Math.max(5, progress))}%`,
-              backgroundColor: isDark ? '#1a1a1a' : '#f5f5f5',
-            }
-          ]}
-        />
-        {/* Indicateur de position */}
-        <View
-          style={[
-            progressStyles.indicator,
-            {
-              left: `${Math.min(95, Math.max(2, progress))}%`,
-              backgroundColor: progressColor,
+              width: `${Math.min(100, Math.max(2, progress))}%`,
+              backgroundColor: barColor,
             }
           ]}
         />
       </View>
 
-      {/* Labels */}
+      {/* Labels - poids de départ et objectif en couleur du thème */}
       <View style={progressStyles.labels}>
-        <Text style={[progressStyles.label, { color: colors.textMuted }]}>
+        <Text style={[progressStyles.label, { color: colors.accent }]}>
           {startWeight.toFixed(1)} kg
         </Text>
-        <Text style={[progressStyles.progressText, { color: progressColor }]}>
+        <Text style={[progressStyles.progressText, { color: colors.accent }]}>
           {progress.toFixed(0)}%
         </Text>
-        <Text style={[progressStyles.label, { color: '#10B981' }]}>
+        <Text style={[progressStyles.label, { color: colors.accent }]}>
           {targetWeight > 0 ? targetWeight.toFixed(1) : currentWeight.toFixed(1)} kg
         </Text>
       </View>
@@ -723,51 +720,29 @@ const progressStyles = StyleSheet.create({
     marginBottom: 8,
   },
   track: {
-    height: 8,
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 5,
     overflow: 'hidden',
     position: 'relative',
   },
-  gradientBackground: {
+  fill: {
     position: 'absolute',
     left: 0,
-    right: 0,
     top: 0,
     bottom: 0,
-  },
-  mask: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    opacity: 0.85,
-  },
-  indicator: {
-    position: 'absolute',
-    top: -2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginLeft: -6,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
+    borderRadius: 5,
   },
   labels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
+    marginTop: 8,
   },
   label: {
-    fontSize: 9,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
   progressText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
   },
 });
@@ -810,7 +785,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
   const [trainingCalories, setTrainingCalories] = useState(0);
   const [avatarImageUri, setAvatarImageUri] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-
 
   // Calculer les calories des entraînements du jour
   useEffect(() => {
@@ -856,16 +830,6 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
     t('dates.octoberShort'), t('dates.novemberShort'), t('dates.decemberShort')
   ], [t]);
 
-  // Share button state
-  const [showShareButton, setShowShareButton] = useState(true);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-  const shareButtonScale = useRef(new Animated.Value(1)).current;
-  const shareButtonGlow = useRef(new Animated.Value(0.4)).current;
-  const shareButtonRotate = useRef(new Animated.Value(0)).current;
-  const shareMenuAnim = useRef(new Animated.Value(0)).current;
-  const menuItem1Anim = useRef(new Animated.Value(0)).current;
-  const menuItem2Anim = useRef(new Animated.Value(0)).current;
-  const menuItem3Anim = useRef(new Animated.Value(0)).current;
 
   // Animations citation - apparition simple
   const quoteFadeAnim = useRef(new Animated.Value(0)).current;
@@ -953,158 +917,9 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
 
   // Check if share button was dismissed
   useEffect(() => {
-    const checkShareButtonDismissed = async () => {
-      try {
-        const dismissed = await AsyncStorage.getItem('@share_button_dismissed');
-        if (dismissed === 'true') {
-          setShowShareButton(false);
-        }
-      } catch (error) {
-        console.error('Error checking share button:', error);
-      }
-    };
-    checkShareButtonDismissed();
   }, []);
 
-  // Share button animations
-  useEffect(() => {
-    if (!showShareButton) return;
 
-    // Pulse animation
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shareButtonScale, {
-          toValue: 1.15,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(shareButtonScale, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    // Glow animation
-    const glowAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shareButtonGlow, {
-          toValue: 0.8,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(shareButtonGlow, {
-          toValue: 0.3,
-          duration: 1500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    pulseAnimation.start();
-    glowAnimation.start();
-
-    return () => {
-      pulseAnimation.stop();
-      glowAnimation.stop();
-    };
-  }, [showShareButton]);
-
-  const openShareMenu = () => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    setShowShareMenu(true);
-
-    // Animation d'ouverture du menu avec effet cascade
-    Animated.parallel([
-      Animated.spring(shareMenuAnim, {
-        toValue: 1,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.spring(shareButtonRotate, {
-        toValue: 1,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Animation cascade des items
-    Animated.stagger(80, [
-      Animated.spring(menuItem1Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
-      Animated.spring(menuItem2Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
-      Animated.spring(menuItem3Anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const closeShareMenu = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
-
-    // Animation de fermeture
-    Animated.parallel([
-      Animated.timing(shareMenuAnim, {
-        toValue: 0,
-        duration: 200,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(shareButtonRotate, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(menuItem1Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
-      Animated.timing(menuItem2Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
-      Animated.timing(menuItem3Anim, { toValue: 0, duration: 150, useNativeDriver: true }),
-    ]).start(() => setShowShareMenu(false));
-  };
-
-  const handleSharePress = () => {
-    if (showShareMenu) {
-      closeShareMenu();
-    } else {
-      openShareMenu();
-    }
-  };
-
-  const handleShareCard = (type: 'weekly' | 'monthly' | 'yearly') => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    closeShareMenu();
-
-    // Naviguer vers la carte appropriée
-    setTimeout(() => {
-      switch (type) {
-        case 'weekly':
-          router.push('/social-share/weekly-recap-v2');
-          break;
-        case 'monthly':
-          router.push('/social-share/monthly-recap-v2');
-          break;
-        case 'yearly':
-          router.push('/social-share/year-counter-v2');
-          break;
-      }
-    }, 200);
-  };
-
-  const handleDismissShareButton = async () => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    if (showShareMenu) {
-      closeShareMenu();
-    }
-    setShowShareButton(false);
-    try {
-      await AsyncStorage.setItem('@share_button_dismissed', 'true');
-    } catch (error) {
-      console.error('Error saving share button state:', error);
-    }
-  };
 
   const weightDiff = currentWeight - targetWeight;
   // Utiliser le startWeight passé en prop, sinon le poids le plus ancien de l'historique (dernier élément car trié du plus récent au plus ancien)
@@ -1170,24 +985,23 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
         {/* Row principale - Bien alignée aux bords */}
         <View style={styles.headerRowClean}>
 
-          {/* GAUCHE - Photo de profil (sous l'heure) */}
+          {/* GAUCHE - Photo de profil (rond) */}
           <TouchableOpacity
             onPress={() => router.push('/profile')}
             activeOpacity={0.8}
             style={styles.leftSection}
           >
-            <View style={[styles.circleFrame, { borderColor: colors.accent }]}>
+            <View style={[styles.profileFrame, {
+              borderColor: isDark ? '#FFFFFF' : '#000000',
+              backgroundColor: '#FFFFFF',
+            }]}>
               {profilePhoto ? (
-                <Image source={{ uri: profilePhoto }} style={styles.circleImg} />
+                <Image source={{ uri: profilePhoto }} style={styles.profileImg} />
               ) : (
-                <View style={[styles.circlePlaceholderClean, { backgroundColor: `${colors.accent}10` }]}>
-                  <Ionicons name="person" size={44} color={colors.accent} />
+                <View style={[styles.profilePlaceholder, { backgroundColor: '#FFFFFF' }]}>
+                  <Ionicons name="person" size={44} color={isDark ? '#666' : '#999'} />
                 </View>
               )}
-            </View>
-            {/* Badge icône profil */}
-            <View style={[styles.badgeIcon, { backgroundColor: colors.accent }]}>
-              <User size={14} color="#FFFFFF" strokeWidth={2.5} />
             </View>
           </TouchableOpacity>
 
@@ -1201,75 +1015,10 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </Text>
           </View>
 
-          {/* DROITE - Avatar avec progression (sous la batterie) */}
-          <TouchableOpacity
-            onPress={() => {
-              impactAsync(ImpactFeedbackStyle.Light);
-              router.push('/avatar-customization');
-            }}
-            activeOpacity={0.8}
-            style={styles.rightSection}
-          >
-            <View style={styles.avatarWithProgress}>
-              {/* Cercle de progression SVG */}
-              <Svg width={100} height={100} style={styles.progressSvg}>
-                {/* Fond */}
-                <Circle
-                  cx={50}
-                  cy={50}
-                  r={46}
-                  stroke={isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)'}
-                  strokeWidth={4}
-                  fill="transparent"
-                />
-                {/* Progression */}
-                <Circle
-                  cx={50}
-                  cy={50}
-                  r={46}
-                  stroke={colors.accent}
-                  strokeWidth={4}
-                  fill="transparent"
-                  strokeDasharray={`${(level / 100) * 289} 289`}
-                  strokeDashoffset={0}
-                  strokeLinecap="round"
-                  transform="rotate(-90 50 50)"
-                />
-              </Svg>
-              {/* Avatar centre */}
-              <View style={[styles.avatarCenter, { backgroundColor: colors.backgroundCard }]}>
-                {avatarImageUri ? (
-                  <Image source={{ uri: avatarImageUri }} style={styles.avatarImg} />
-                ) : (
-                  <Ionicons name="person" size={44} color={colors.accent} />
-                )}
-              </View>
-              {/* Badge niveau */}
-              <View style={[styles.levelBadge, { backgroundColor: colors.accent }]}>
-                <Text style={styles.levelText}>{level}</Text>
-              </View>
-            </View>
-            {/* Rang - Style élégant discret */}
-            <View style={[styles.rankBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }]}>
-              <Trophy size={10} color={colors.textMuted} />
-              <Text style={[styles.rankLabel, { color: colors.textMuted }]}>
-                {rankName}
-              </Text>
-            </View>
-          </TouchableOpacity>
         </View>
 
-        {/* Citation - Style Nuage simple */}
-        <View style={[styles.quoteCloud, {
-          backgroundColor: isDark ? colors.backgroundCard : '#F5F5F5',
-        }]}>
-          <Text style={[styles.quoteCloudText, { color: colors.textPrimary }]}>
-            "{dailyQuote || 'Chaque jour est une nouvelle chance de devenir meilleur.'}"
-          </Text>
-          <Text style={[styles.quoteCloudLabel, { color: colors.textMuted }]}>
-            Citation du jour
-          </Text>
-        </View>
+        {/* CARTE RANG & CITATION - Premium Design */}
+        <RankCitationCard streak={streak} dailyQuote={dailyQuote} avatarUri={avatarImageUri} />
       </View>
 
       {/* GRAPHIQUE POIDS - Redesign Complet Premium */}
@@ -1291,39 +1040,34 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
             </LinearGradient>
             <View>
               <Text style={[styles.weightTitle, { color: colors.textPrimary }]}>
-                Suivi du Poids
+                Poids actuel
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                <Target size={14} color={colors.accent} strokeWidth={2.5} />
-                <Text style={[styles.weightSubtitle, { color: colors.textSecondary }]}>
-                  Objectif <Text style={{ fontWeight: '900', color: colors.accent, fontSize: 13 }}>{targetWeight} kg</Text>
-                </Text>
-              </View>
+              <Text style={[styles.weightSubtitle, { color: colors.textMuted, marginTop: 2 }]}>
+                Objectif {targetWeight} kg
+              </Text>
             </View>
           </View>
 
-          {/* Badge Mode à droite */}
+          {/* Badge Mode à droite - Simplifié */}
           <View style={[styles.goalModeBadge, {
-            backgroundColor: userGoal === 'lose' ? '#EF444415' : userGoal === 'gain' ? '#22C55E15' : '#F59E0B15',
+            backgroundColor: `${colors.accent}15`,
             borderWidth: 1.5,
-            borderColor: userGoal === 'lose' ? '#EF444450' : userGoal === 'gain' ? '#22C55E50' : '#F59E0B50'
+            borderColor: `${colors.accent}50`
           }]}>
-            <Text style={[styles.goalModeText, {
-              color: userGoal === 'lose' ? '#EF4444' : userGoal === 'gain' ? '#22C55E' : '#F59E0B'
-            }]}>
-              {userGoal === 'lose' ? 'Perte' : userGoal === 'gain' ? 'Prise' : 'Maintien'}
+            <Text style={[styles.goalModeText, { color: colors.accent }]}>
+              {userGoal === 'lose' ? 'Perte de poids' : userGoal === 'gain' ? 'Prise de masse' : 'Maintien'}
             </Text>
           </View>
         </View>
 
-        {/* Ligne optimisée: Perdu (vert) - Poids - Restant (rouge) */}
+        {/* Ligne optimisée: Perdu - Poids - Restant (2 couleurs max: accent + textPrimary) */}
         <View style={styles.weightOptimizedRow}>
-          {/* Perdu à gauche - VERT */}
+          {/* Perdu à gauche */}
           <View style={styles.weightSideMetric}>
-            <Text style={[styles.metricTopLabel, { color: '#10B981' }]}>
+            <Text style={[styles.metricTopLabel, { color: colors.textMuted }]}>
               {userGoal === 'lose' ? 'PERDU' : userGoal === 'gain' ? 'PRIS' : 'ÉVOLUTION'}
             </Text>
-            <Text style={[styles.metricTopValue, { color: '#10B981' }]}>
+            <Text style={[styles.metricTopValue, { color: colors.accent }]}>
               {userGoal === 'lose' ? '-' : '+'}{Math.abs(totalLoss).toFixed(1)} kg
             </Text>
           </View>
@@ -1334,22 +1078,18 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
               <Text style={[styles.weightValueLarge, { color: colors.textPrimary }]}>
                 {currentWeight.toFixed(1)}
               </Text>
-              <Text style={[styles.weightUnit, { color: colors.textSecondary }]}>kg</Text>
+              <Text style={[styles.weightUnit, { color: colors.textMuted }]}>kg</Text>
             </View>
           </View>
 
-          {/* Restant à droite - ROUGE ou DORÉ si atteint */}
+          {/* Restant à droite */}
           <View style={[styles.weightSideMetric, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.metricTopLabel, { color: Math.abs(weightDiff) <= 0.1 ? '#FFD700' : '#EF4444' }]}>
+            <Text style={[styles.metricTopLabel, { color: colors.textMuted }]}>
               {Math.abs(weightDiff) <= 0.1 ? 'ATTEINT' : 'RESTE'}
             </Text>
-            {Math.abs(weightDiff) <= 0.1 ? (
-              <Text style={[styles.metricTopValue, { color: '#FFD700' }]}>0 kg</Text>
-            ) : (
-              <Text style={[styles.metricTopValue, { color: '#EF4444' }]}>
-                {Math.abs(weightDiff).toFixed(1)} kg
-              </Text>
-            )}
+            <Text style={[styles.metricTopValue, { color: colors.accent }]}>
+              {Math.abs(weightDiff).toFixed(1)} kg
+            </Text>
           </View>
         </View>
 
@@ -1466,100 +1206,49 @@ const Page1MonitoringComponent: React.FC<Page1MonitoringProps> = ({
                   nestedScrollEnabled={true}
                   keyExtractor={(item, index) => `weight-${index}`}
                   getItemLayout={(data, index) => ({
-                    length: 22,
-                    offset: 22 * index,
+                    length: 42,
+                    offset: 42 * index,
                     index,
                   })}
                   removeClippedSubviews={true}
                   maxToRenderPerBatch={15}
                   windowSize={5}
                   renderItem={({ item: weight, index }) => {
-                    const heightPercent = ((weight - minWeightValue) / weightRange) * 100;
+                    // Hauteur proportionnelle avec base minimum de 30%
+                    // Cela évite les "chutes" visuelles dramatiques
+                    const rawPercent = ((weight - minWeightValue) / weightRange) * 70; // Max 70% de variation
+                    const heightPercent = 30 + rawPercent; // Base de 30% + variation
 
                     // Calculer la date réelle (inversé: récent à gauche, ancien à droite)
                     const today = new Date();
-                    const daysAgo = index; // index 0 = aujourd'hui (le plus récent)
+                    const daysAgo = index;
                     const date = new Date(today);
                     date.setDate(date.getDate() - daysAgo);
                     const dayOfMonth = date.getDate();
                     const monthLabel = monthNames[date.getMonth()];
 
-                    // Calculer la variation (comparer avec le jour précédent = index + 1 car inversé)
-                    const previousWeight = index < last30Weights.length - 1 ? last30Weights[index + 1] : null;
-                    const diff = previousWeight ? weight - previousWeight : 0;
-                    const isGain = diff > 0.05;
-                    const isLoss = diff < -0.05;
-                    const isStable = !isGain && !isLoss;
-
-                    // LOGIQUE COULEUR INTELLIGENTE
-                    let arrowColor = colors.textMuted;
-                    let arrowIcon = '→';
-
-                    if (userGoal === 'lose') {
-                      if (isLoss) {
-                        arrowColor = '#10B981';
-                        arrowIcon = '↘';
-                      } else if (isGain) {
-                        arrowColor = '#EF4444';
-                        arrowIcon = '↗';
-                      } else {
-                        arrowColor = '#F59E0B';
-                        arrowIcon = '→';
-                      }
-                    } else if (userGoal === 'gain') {
-                      if (isGain) {
-                        arrowColor = '#10B981';
-                        arrowIcon = '↗';
-                      } else if (isLoss) {
-                        arrowColor = '#EF4444';
-                        arrowIcon = '↘';
-                      } else {
-                        arrowColor = '#F59E0B';
-                        arrowIcon = '→';
-                      }
-                    } else {
-                      if (isStable) {
-                        arrowColor = '#10B981';
-                        arrowIcon = '→';
-                      } else {
-                        arrowColor = '#F59E0B';
-                        arrowIcon = isGain ? '↗' : '↘';
-                      }
-                    }
-
                     return (
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                        <View style={styles.simpleChartBar}>
-                          <Text style={[styles.simpleChartWeight, { color: colors.textPrimary }]}>
-                            {weight.toFixed(1)}
-                          </Text>
-                          <View style={styles.simpleChartBarBg}>
-                            <LinearGradient
-                              colors={[colors.accent, colors.accent + 'DD', colors.accent + 'BB']}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 0, y: 1 }}
-                              style={[
-                                styles.simpleChartBarFill,
-                                { height: `${Math.max(heightPercent, 10)}%` }
-                              ]}
-                            />
-                          </View>
-                          <Text style={[styles.simpleChartDate, { color: colors.textPrimary }]}>
-                            {dayOfMonth}
-                          </Text>
-                          <Text style={[styles.simpleChartMonth, { color: colors.textMuted }]}>
-                            {monthLabel}
-                          </Text>
+                      <View style={styles.simpleChartBar}>
+                        <Text style={[styles.simpleChartWeight, { color: colors.textPrimary }]}>
+                          {weight.toFixed(1)}
+                        </Text>
+                        <View style={styles.simpleChartBarBg}>
+                          <LinearGradient
+                            colors={[colors.accent, colors.accent + 'CC', colors.accent + '99']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 0, y: 1 }}
+                            style={[
+                              styles.simpleChartBarFill,
+                              { height: `${heightPercent}%` }
+                            ]}
+                          />
                         </View>
-
-                        {/* Indicateur de variation */}
-                        {index < last30Weights.length - 1 && (
-                          <View style={styles.simpleChartConnector}>
-                            <View style={[styles.simpleChartArrow, { backgroundColor: arrowColor }]}>
-                              <Text style={styles.simpleChartArrowIcon}>{arrowIcon}</Text>
-                            </View>
-                          </View>
-                        )}
+                        <Text style={[styles.simpleChartDate, { color: colors.textPrimary }]}>
+                          {dayOfMonth}
+                        </Text>
+                        <Text style={[styles.simpleChartMonth, { color: colors.textMuted }]}>
+                          {monthLabel}
+                        </Text>
                       </View>
                     );
                   }}
@@ -1869,67 +1558,147 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
 
-  // GAUCHE - Photo de profil
+  // GAUCHE - Photo de profil (rond)
   leftSection: {
     position: 'relative',
     alignItems: 'center',
   },
-  circleFrame: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 3,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  circleImg: {
-    width: '100%',
-    height: '100%',
-  },
-  circlePlaceholderClean: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+  profileFrame: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     borderWidth: 2.5,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    overflow: 'hidden',
+  },
+  profileImg: {
+    width: '100%',
+    height: '100%',
+  },
+  profilePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // CENTRE - Texte
   centerSection: {
     flex: 1,
-    marginHorizontal: 12,
-    paddingTop: 18,
+    marginHorizontal: 8,
+    paddingTop: 20,
+    alignItems: 'center',
   },
   greetingClean: {
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   nameClean: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     marginTop: 2,
+    textAlign: 'center',
   },
 
-  // DROITE - Avatar avec progression
-  rightSection: {
+  avatarWithProgressGlow: {
+    width: 120,
+    height: 120,
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
   },
+  progressSvgGlow: {
+    position: 'absolute',
+  },
+  // Forme #3 - Cercle avec glow pour avatar (même taille que photo profil)
+  glowCircleFrameAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 15,
+  },
+  glowCircleImgAvatar: {
+    width: 76,
+    height: 90,
+    resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: 2,
+  },
+  levelBadgeGlow: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    minWidth: 32,
+    height: 28,
+    borderRadius: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  levelPrefixGlow: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '700',
+    marginRight: 1,
+    opacity: 0.9,
+  },
+  levelTextGlow: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  progressPercentBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    minWidth: 36,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  progressPercentTextWhite: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  // Legacy styles
+  progressPercentCircle: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressPercentText: {
+    position: 'absolute',
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  // Legacy avatar styles (gardé pour compatibilité)
   avatarWithProgress: {
     width: 100,
     height: 100,
@@ -1988,6 +1757,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  // Badge combiné: Niveau + Rang + % - COLLE sous l'avatar
+  combinedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 6,
+    gap: 6,
+  },
+  combinedBadgeAttached: {
+    position: 'absolute',
+    bottom: -8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    gap: 5,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  combinedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
 
   // Citation - Style Nuage
   quoteCloud: {
@@ -2011,6 +1811,386 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+
+  // RANK CARD - Design Premium Samouraï
+  rankCard: {
+    marginTop: 16,
+    marginHorizontal: CARD_PADDING,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 12,
+  },
+  rankCardInner: {
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    position: 'relative' as const,
+  },
+  rankGoldLine: {
+    height: 1.5,
+    width: '100%',
+  },
+  rankGoldLineBottom: {
+    height: 1.5,
+    width: '100%',
+  },
+  rankMainContent: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 14,
+  },
+  rankBadgeColumn: {
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    marginRight: 14,
+  },
+  rankHexContainer: {
+    width: 72,
+    height: 80,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  rankLevelOverlay: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  rankLevelNumber: {
+    fontSize: 30,
+    fontWeight: '900' as const,
+    color: '#FFD700',
+    textShadowColor: 'rgba(255,215,0,0.4)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  rankInfoColumn: {
+    flex: 1,
+  },
+  rankNameText: {
+    fontSize: 18,
+    fontWeight: '900' as const,
+    color: '#FFD700',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 3,
+    textShadowColor: 'rgba(255,215,0,0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  rankLevelInfoRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginTop: 5,
+    gap: 8,
+  },
+  rankLevelLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: 0.5,
+  },
+  rankXpPill: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    backgroundColor: 'rgba(255,215,0,0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    gap: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,215,0,0.2)',
+  },
+  rankXpPillText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#F0C040',
+  },
+  rankProgressContainer: {
+    marginTop: 10,
+  },
+  rankProgressBg: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden' as const,
+  },
+  rankProgressFill: {
+    height: '100%' as const,
+    borderRadius: 3,
+  },
+  rankNavigateRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginTop: 8,
+    gap: 5,
+  },
+  rankNavigateText: {
+    fontSize: 11,
+    fontWeight: '500' as const,
+    color: 'rgba(255,215,0,0.4)',
+    flex: 1,
+  },
+  rankSeparator: {
+    height: 1,
+    marginHorizontal: 20,
+  },
+  rankQuoteSection: {
+    flexDirection: 'row' as const,
+    alignItems: 'stretch' as const,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  rankQuoteAccent: {
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: '#C9A84C',
+    opacity: 0.6,
+  },
+  rankQuoteContent: {
+    flex: 1,
+    justifyContent: 'center' as const,
+  },
+  rankQuoteText: {
+    fontSize: 13.5,
+    fontWeight: '500' as const,
+    fontStyle: 'italic' as const,
+    color: 'rgba(255,255,255,0.65)',
+    lineHeight: 20,
+    letterSpacing: 0.2,
+  },
+
+  // Legacy GAMIFICATION CARD - Premium Design V2
+  gamificationCardPremium: {
+    marginTop: 16,
+    marginHorizontal: CARD_PADDING,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  gamificationGradient: {
+    padding: 18,
+  },
+  gamificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  rankBadgePremium: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  rankIconGold: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  rankLabelSmall: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  rankNamePremium: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  levelCircleContainer: {
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelTextCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+  },
+  levelNumber: {
+    fontSize: 18,
+    fontWeight: '900',
+    lineHeight: 20,
+  },
+  levelLabelTiny: {
+    fontSize: 8,
+    fontWeight: '700',
+    marginTop: -2,
+  },
+  xpSectionPremium: {
+    marginBottom: 14,
+  },
+  xpLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  xpLabelText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  xpPercentText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  xpBarPremium: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  xpBarFillPremium: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  quoteSectionPremium: {
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  quoteMarkLeft: {
+    fontSize: 32,
+    fontWeight: '800',
+    lineHeight: 28,
+    marginRight: 4,
+    marginTop: -4,
+  },
+  quoteMarkRight: {
+    fontSize: 32,
+    fontWeight: '800',
+    lineHeight: 28,
+    marginLeft: 4,
+    marginTop: -4,
+    alignSelf: 'flex-end',
+  },
+  quotePremiumText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  // Legacy gamification styles
+  gamificationCard: {
+    marginTop: 16,
+    marginHorizontal: CARD_PADDING,
+    borderRadius: 20,
+    padding: 16,
+  },
+  gamificationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  rankIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gamificationInfo: {
+    flex: 1,
+  },
+  gamificationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  gamificationRank: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  levelPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  levelPillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  xpBarContainer: {
+    gap: 4,
+  },
+  xpBarBg: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  xpBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  xpText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  quoteSection: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  quoteIcon: {
+    fontSize: 28,
+    fontWeight: '800',
+    lineHeight: 24,
+    marginTop: -4,
+  },
+  gamificationQuote: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+
+  // Bouton temporaire pour voir les formes
+  shapesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    marginHorizontal: CARD_PADDING,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  shapesBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   // Legacy styles (gardés pour compatibilité)
@@ -2398,14 +2578,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   goalModeBadge: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
   },
   goalModeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.3,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   trendBadge: {
     flexDirection: 'row',
@@ -2472,6 +2652,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   simpleChartBar: {
+    width: 42, // Largeur fixe pour chaque barre - SCROLLABLE
     alignItems: 'center',
     gap: 4,
   },
@@ -2480,10 +2661,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   simpleChartBarBg: {
-    width: 24,
-    height: 60,
+    width: 26,
+    height: 75,
     backgroundColor: 'rgba(128, 128, 128, 0.1)',
-    borderRadius: 4,
+    borderRadius: 6,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },

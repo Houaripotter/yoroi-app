@@ -4,7 +4,7 @@ import { useTheme } from '@/lib/ThemeContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { SparklineChart } from '../charts/SparklineChart';
-import { Flame, TrendingDown, TrendingUp, Target, Activity, Calendar, Maximize2 } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Target, Activity, Calendar, Maximize2, Check } from 'lucide-react-native';
 import { StatsDetailModal } from '../StatsDetailModal';
 import { getHistoryDays, scale, isIPad } from '@/constants/responsive';
 
@@ -250,10 +250,17 @@ export const DisciplineStats: React.FC<DisciplineStatsProps> = ({ data, weeklyGo
               />
             </View>
           </View>
-          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
-            {latest.sessionsCount}/{weeklyGoal} entraînements
-            {latest.sessionsCount >= weeklyGoal && ' ✓ Objectif atteint !'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={[styles.progressText, { color: colors.textSecondary }]}>
+              {latest.sessionsCount}/{weeklyGoal} entraînements
+            </Text>
+            {latest.sessionsCount >= weeklyGoal && (
+              <>
+                <Check size={12} color="#10B981" strokeWidth={3} />
+                <Text style={[styles.progressText, { color: '#10B981' }]}>Objectif atteint !</Text>
+              </>
+            )}
+          </View>
         </View>
       )}
 

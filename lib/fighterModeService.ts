@@ -219,6 +219,7 @@ export const getNextEvent = async (): Promise<{
   name: string;
   daysLeft: number;
   date: string;
+  dateISO: string;
   sport?: string;
 } | null> => {
   try {
@@ -266,6 +267,7 @@ export const getNextEvent = async (): Promise<{
       name: nextEvent.title.length > 25 ? nextEvent.title.substring(0, 25) + '...' : nextEvent.title,
       daysLeft,
       date: dateFormatted,
+      dateISO: nextEvent.date_start,
       sport: nextEvent.sport_tag || nextEvent.category,
     };
   } catch (error) {

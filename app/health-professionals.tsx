@@ -26,6 +26,7 @@ import {
   MapPin,
   Star,
   X,
+  ClipboardList,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/lib/ThemeContext';
@@ -161,9 +162,12 @@ export default function HealthProfessionalsScreen() {
               ))
             ) : (
               <View style={[styles.emptyState, { backgroundColor: colors.backgroundCard }]}>
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  📋 Aucun nutritionniste pour le moment
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                  <ClipboardList size={16} color={colors.textMuted} />
+                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                    Aucun nutritionniste pour le moment
+                  </Text>
+                </View>
                 <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                   Les partenariats arrivent bientôt !
                 </Text>

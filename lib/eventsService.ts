@@ -32,13 +32,13 @@ export interface SportEvent {
   date_start: string; // ISO date (YYYY-MM-DD)
   location: EventLocation;
   category: 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
-  sport_tag: 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit';
+  sport_tag: 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit' | 'triathlon' | 'obstacle' | 'judo' | 'cycling';
   registration_link: string;
   federation: string | null;
   image_logo_url: string | null;
 }
 
-export type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit';
+export type SportTagFilter = 'all' | 'jjb' | 'grappling' | 'hyrox' | 'marathon' | 'running' | 'trail' | 'climbing' | 'fitness' | 'powerlifting' | 'crossfit' | 'triathlon' | 'obstacle' | 'judo' | 'cycling';
 export type CategoryFilter = 'all' | 'combat' | 'endurance' | 'force' | 'nature' | 'autre';
 
 export interface EventFilters {
@@ -116,11 +116,13 @@ export async function importEventsFromJSON(): Promise<void> {
     }
 
     // Importer les données depuis les chunks JSON (optimisation mémoire)
+    console.log('📥 Import des événements depuis JSON...');
     logger.info('Import des événements depuis chunks JSON...');
     const europeData = require('@/src/data/events/europe.json');
     const franceData = require('@/src/data/events/france.json');
     const mondeData = require('@/src/data/events/monde.json');
     const eventsData = [...europeData, ...franceData, ...mondeData];
+    console.log(`📊 Total événements à importer: ${eventsData.length} (Europe: ${europeData.length}, France: ${franceData.length}, Monde: ${mondeData.length})`);
 
     // Insertion par batch pour meilleures performances
     const BATCH_SIZE = 100;
@@ -156,10 +158,12 @@ export async function importEventsFromJSON(): Promise<void> {
       logger.info(`Importé ${imported}/${eventsData.length} événements`);
     }
 
+    console.log(`✅ Import terminé: ${imported} événements dans SQLite`);
     logger.info(`✅ Import terminé: ${imported} événements`);
     isInitialized = true;
     clearCache();
   } catch (error) {
+    console.error('❌ Erreur import events:', error);
     logger.error('Erreur import events:', error);
     throw error;
   }
@@ -546,6 +550,10 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
       fitness: 'Fitness',
       powerlifting: 'Powerlifting',
       crossfit: 'CrossFit',
+      triathlon: 'Triathlon',
+      obstacle: 'Course à obstacles',
+      judo: 'Judo',
+      cycling: 'Cyclisme',
       all: 'Tous les sports',
     },
     en: {
@@ -559,6 +567,10 @@ export function getSportTagLabel(sportTag: string, locale: string = 'fr'): strin
       fitness: 'Fitness',
       powerlifting: 'Powerlifting',
       crossfit: 'CrossFit',
+      triathlon: 'Triathlon',
+      obstacle: 'Obstacle Course',
+      judo: 'Judo',
+      cycling: 'Cycling',
       all: 'All sports',
     },
   };
@@ -581,6 +593,10 @@ export function getSportTagEmoji(sportTag: string): string {
     fitness: '💪',
     powerlifting: '🏋️',
     crossfit: '🔥',
+    triathlon: '🏊',
+    obstacle: '🏅',
+    judo: '🥋',
+    cycling: '🚴',
   };
 
   return emojis[sportTag] || '';
@@ -595,6 +611,49 @@ export function getSportTagEmoji(sportTag: string): string {
  */
 export async function getEventsByFederation(federation: string): Promise<SportEvent[]> {
   return getFilteredEvents({ federation });
+}
+
+// ============================================
+// FORCE REIMPORT (pour mise à jour des données)
+// ============================================
+
+/**
+ * Force la réimportation des événements depuis les fichiers JSON
+ * Supprime toutes les anciennes données et reimporte
+ */
+export async function forceReimportEvents(): Promise<void> {
+  try {
+    console.log('🔄 FORCE REIMPORT: Début de la réimportation des événements...');
+    const db = await openDatabase();
+
+    // Vérifier que la table existe avant de tenter le DELETE
+    const tableExists = await db.getFirstAsync<{ count: number }>(
+      `SELECT count(*) as count FROM sqlite_master WHERE type='table' AND name='events_catalog'`
+    );
+
+    if (tableExists && tableExists.count > 0) {
+      // Supprimer toutes les anciennes données
+      await db.runAsync('DELETE FROM events_catalog');
+      console.log('🗑️ Anciennes données événements supprimées');
+      logger.info('Anciennes données événements supprimées');
+    } else {
+      logger.warn('Table events_catalog inexistante, skip DELETE');
+    }
+
+    // Réinitialiser le flag
+    isInitialized = false;
+
+    // Vider le cache
+    clearCache();
+
+    // Réimporter les nouvelles données
+    await importEventsFromJSON();
+
+    logger.info('Réimportation des événements terminée');
+  } catch (error) {
+    logger.error('Erreur forceReimportEvents:', error);
+    throw error;
+  }
 }
 
 // Log au chargement

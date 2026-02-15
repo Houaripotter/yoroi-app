@@ -7,6 +7,7 @@ import DraggableFlatList, {
   ScaleDecorator,
 } from 'react-native-draggable-flatlist';
 import { HomeSection, saveHomeCustomization } from '@/lib/homeCustomizationService';
+import { Check } from 'lucide-react-native';
 
 interface EditableHomeContainerProps {
   sections: HomeSection[];
@@ -223,9 +224,12 @@ export const EditableHomeContainer: React.FC<EditableHomeContainerProps> = ({
           alignItems: 'center',
         }}
       >
-        <Text style={{ color: '#10B981', fontWeight: '700', fontSize: 14 }}>
-          ✓ Terminer la réorganisation
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Check size={14} color="#10B981" strokeWidth={3} />
+          <Text style={{ color: '#10B981', fontWeight: '700', fontSize: 14 }}>
+            Terminer la réorganisation
+          </Text>
+        </View>
       </TouchableOpacity>
     </View>
   );

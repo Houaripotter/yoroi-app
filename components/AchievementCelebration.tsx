@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
-import { Sparkles } from 'lucide-react-native';
+import { Sparkles, Star } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -239,9 +239,9 @@ export const AchievementCelebration: React.FC<AchievementCelebrationProps> = ({
 
           {/* Sparkles decoration */}
           <View style={styles.sparklesRow}>
-            <Text style={styles.sparkle}>✨</Text>
-            <Text style={styles.sparkle}>⭐</Text>
-            <Text style={styles.sparkle}>✨</Text>
+            <Sparkles size={20} color="#FFD700" />
+            <Star size={20} color="#FFD700" fill="#FFD700" />
+            <Sparkles size={20} color="#FFD700" />
           </View>
         </Animated.View>
       </BlurView>

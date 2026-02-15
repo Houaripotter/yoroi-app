@@ -354,6 +354,27 @@ const _performInit = async () => {
     );
   `);
 
+  // Table Objectives (objectifs polyvalents avec countdown)
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS objectives (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      target_date TEXT NOT NULL,
+      created_date TEXT NOT NULL,
+      sport_id TEXT,
+      target_weight REAL,
+      location TEXT,
+      color TEXT,
+      status TEXT DEFAULT 'active',
+      completed_at TEXT,
+      is_pinned INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Table Events Catalog (Catalogue d'événements sportifs)
   await database.execAsync(`
     CREATE TABLE IF NOT EXISTS events_catalog (
@@ -566,6 +587,24 @@ export interface TreatmentReminder {
   next_reminder_date: string;
   enabled: boolean;
   created_at?: string;
+}
+
+export interface Objective {
+  id?: number;
+  type: 'competition' | 'weight' | 'exam' | 'travel' | 'custom';
+  title: string;
+  description?: string;
+  target_date: string;       // YYYY-MM-DD
+  created_date: string;      // YYYY-MM-DD pour calculer le ratio sable
+  sport_id?: string;
+  target_weight?: number;
+  location?: string;
+  color?: string;
+  status: 'active' | 'completed' | 'expired';
+  completed_at?: string;
+  is_pinned: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Competition {
@@ -1499,6 +1538,7 @@ export const resetDatabase = async (): Promise<void> => {
     try { await database.execAsync('DELETE FROM clubs;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM profile;'); } catch (e) { /* table peut ne pas exister */ }
     try { await database.execAsync('DELETE FROM competitions;'); } catch (e) { /* table peut ne pas exister */ }
+    try { await database.execAsync('DELETE FROM objectives;'); } catch (e) { /* table peut ne pas exister */ }
 
     // Tables YOROI MEDIC
     try { await database.execAsync('DELETE FROM treatment_reminders;'); } catch (e) { /* table peut ne pas exister */ }

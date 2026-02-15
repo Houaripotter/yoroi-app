@@ -9,7 +9,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Droplet, Plus } from 'lucide-react-native';
+import { Droplet, Plus, Check } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTheme } from '@/lib/ThemeContext';
 import { useCustomPopup } from '@/components/CustomPopup';
@@ -92,7 +92,7 @@ export function HydrationWidget({ onPress }: HydrationWidgetProps) {
             Hydratation
           </Text>
         </View>
-        {isGoalReached && <Text style={styles.goalBadge}>✓</Text>}
+        {isGoalReached && <View style={styles.goalBadge}><Check size={12} color="#0ABAB5" strokeWidth={3} /></View>}
       </View>
 
       {/* Progress Bar */}

@@ -57,7 +57,8 @@ import {
   Coffee,
   Salad,
   Sofa,
-  Share2
+  Share2,
+  ClipboardList,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 
@@ -195,7 +196,10 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
   // ... (loadQuests inchangé)
   const loadQuests = useCallback(async () => {
     try {
-      setIsLoading(true);
+      // Ne montrer le loading QUE si on n'a pas encore de données (premier chargement)
+      if (!dailyQuests && !weeklyQuests && !monthlyQuests) {
+        setIsLoading(true);
+      }
       await checkAndUpdateQuests();
 
       const [daily, weekly, monthly] = await Promise.all([
@@ -299,6 +303,25 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
     return routes[questId] || null;
   };
 
+  // Mise à jour optimiste d'un défi dans le state local (sans recharger)
+  const updateQuestLocally = useCallback((questId: string, completed: boolean, xp: number) => {
+    const updateSummary = (summary: QuestsSummary | null): QuestsSummary | null => {
+      if (!summary) return null;
+      const updatedQuests = summary.quests.map(q =>
+        q.id === questId
+          ? { ...q, completed, current: completed ? q.target : 0 }
+          : q
+      );
+      const completedCount = updatedQuests.filter(q => q.completed).length;
+      const xpEarned = updatedQuests.filter(q => q.completed).reduce((sum, q) => sum + q.xp, 0);
+      return { ...summary, quests: updatedQuests, completed: completedCount, xpEarned };
+    };
+
+    if (activeTab === 'day') setDailyQuests(prev => updateSummary(prev));
+    else if (activeTab === 'week') setWeeklyQuests(prev => updateSummary(prev));
+    else setMonthlyQuests(prev => updateSummary(prev));
+  }, [activeTab]);
+
   // Gérer le tap sur une défi
   const handleQuestTap = async (quest: QuestWithProgress) => {
     impactAsync(ImpactFeedbackStyle.Medium);
@@ -310,23 +333,33 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
       router.push(route as any);
     } else {
       // Quête manuelle - toggle compléter/désélectionner
+      // Mise à jour optimiste IMMÉDIATE (pas de rechargement, pas de loading)
+      const wasCompleted = quest.completed;
+      updateQuestLocally(quest.id, !wasCompleted, quest.xp);
+
       try {
-        if (quest.completed) {
+        if (wasCompleted) {
           const result = await uncompleteQuest(quest.id as QuestId);
           if (result.success) {
             notificationAsync(NotificationFeedbackType.Warning);
-            loadQuests();
+          } else {
+            // Revert si échec
+            updateQuestLocally(quest.id, wasCompleted, quest.xp);
           }
         } else {
           const result = await completeQuest(quest.id as QuestId);
           if (result.success && result.xpEarned > 0) {
             notificationAsync(NotificationFeedbackType.Success);
             onXPGained?.(result.xpEarned);
-            loadQuests();
+          } else if (!result.success) {
+            // Revert si échec
+            updateQuestLocally(quest.id, wasCompleted, quest.xp);
           }
         }
       } catch (error) {
         logger.error('Erreur toggle defi:', error);
+        // Revert en cas d'erreur
+        updateQuestLocally(quest.id, wasCompleted, quest.xp);
       }
     }
   };
@@ -737,7 +770,7 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
 
                 {/* Titre */}
                 <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
-                  {previewQuest.icon} {previewQuest.title}
+                  {previewQuest.title}
                 </Text>
 
                 {/* Description */}
@@ -748,9 +781,12 @@ export const QuestsCard: React.FC<QuestsCardProps> = ({
                 {/* Instructions */}
                 {previewQuest.instructions && (
                   <View style={[styles.previewInstructionsBox, { backgroundColor: isDark ? 'rgba(255,215,0,0.1)' : 'rgba(255,215,0,0.15)' }]}>
-                    <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
-                      📋 Comment faire :
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <ClipboardList size={14} color="#FFD700" />
+                      <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
+                        Comment faire :
+                      </Text>
+                    </View>
                     <Text style={[styles.previewInstructionsText, { color: isDark ? '#FFFFFF' : '#333' }]}>
                       {previewQuest.instructions}
                     </Text>

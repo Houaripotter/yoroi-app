@@ -102,9 +102,12 @@ const DevCodeModal: React.FC = () => {
 
           {/* Error message */}
           {error && (
-            <Text style={styles.errorText}>
-              ❌ Code incorrect
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+              <X size={14} color="#EF4444" strokeWidth={2.5} />
+              <Text style={styles.errorText}>
+                Code incorrect
+              </Text>
+            </View>
           )}
 
           {/* Success message */}

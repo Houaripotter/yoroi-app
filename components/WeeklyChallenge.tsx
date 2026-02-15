@@ -16,6 +16,7 @@ import {
   Challenge,
 } from '@/lib/challenges';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
+import { Check } from 'lucide-react-native';
 import logger from '@/lib/security/logger';
 
 // ============================================
@@ -264,9 +265,12 @@ export const WeeklyChallenge: React.FC<WeeklyChallengeProps> = ({
           </Animated.View>
         ) : xpClaimed ? (
           <View style={[styles.claimedBadge, { backgroundColor: colors.cardHover }]}>
-            <Text style={[styles.claimedText, { color: colors.success }]}>
-              ✓ XP récupérés
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Check size={14} color={colors.success} strokeWidth={3} />
+              <Text style={[styles.claimedText, { color: colors.success }]}>
+                XP récupérés
+              </Text>
+            </View>
           </View>
         ) : (
           <View style={styles.xpPreview}>

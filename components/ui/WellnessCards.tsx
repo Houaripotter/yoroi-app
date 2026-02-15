@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
-import { LucideIcon } from 'lucide-react-native';
+import { LucideIcon, Check } from 'lucide-react-native';
 import { useTheme } from '@/lib/ThemeContext';
 
 // ============================================
@@ -355,7 +355,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         onPress={onToggle}
         activeOpacity={0.7}
       >
-        <Text style={[styles.checkIcon, { color: completed ? '#1A1A2E' : titleColor }]}>{completed ? '✓' : ''}</Text>
+        {completed && <Check size={14} color="#1A1A2E" strokeWidth={3} />}
       </TouchableOpacity>
 
       {/* Emoji */}

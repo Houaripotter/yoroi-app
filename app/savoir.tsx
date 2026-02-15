@@ -490,7 +490,7 @@ const protocolData: ProtocolCard[] = [
         "Sets d'approche : 50% puis 70% du poids de travail"
       ],
       frequency: "AVANT chaque séance",
-      notes: "❌ PAS d'étirements statiques avant l'effort (diminue la force de 5-8%)."
+      notes: "PAS d'étirements statiques avant l'effort (diminue la force de 5-8%)."
     }
   },
   {

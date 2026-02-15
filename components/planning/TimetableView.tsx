@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useCustomPopup } from '@/components/CustomPopup';
 import { useTheme } from '@/lib/ThemeContext';
-import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar } from 'lucide-react-native';
+import { Plus, Clock, Maximize2, X, Moon, ChevronRight, Calendar, ClipboardList } from 'lucide-react-native';
 import { useWeekSchedule } from '@/hooks/useWeekSchedule';
 import { SPACING, RADIUS, FONT } from '@/constants/appTheme';
 import { getClubLogoSource } from '@/lib/sports';
@@ -828,9 +828,12 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
                               </View>
                             )}
                             {session.details && (
-                              <Text style={[styles.sessionListDetails, { color: colors.textMuted }]} numberOfLines={2}>
-                                📋 {session.details}
-                              </Text>
+                              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+                                <ClipboardList size={12} color={colors.textMuted} style={{ marginTop: 2 }} />
+                                <Text style={[styles.sessionListDetails, { color: colors.textMuted, flex: 1 }]} numberOfLines={2}>
+                                  {session.details}
+                                </Text>
+                              </View>
                             )}
                           </View>
                         </View>

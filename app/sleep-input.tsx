@@ -110,7 +110,7 @@ export default function SleepInputScreen() {
       if (success) {
         notificationAsync(NotificationFeedbackType.Success);
         Alert.alert(
-          '✅ Sommeil enregistré',
+          'Sommeil enregistré',
           `Durée: ${formatDuration(duration)}\n\nLes données ont été synchronisées avec l'app Santé.`,
           [
             {

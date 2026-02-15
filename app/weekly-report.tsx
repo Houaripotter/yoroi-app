@@ -26,6 +26,7 @@ import {
   Zap,
   Target,
   AlertTriangle,
+  Star,
 } from 'lucide-react-native';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import { format } from 'date-fns';
@@ -174,7 +175,10 @@ export default function WeeklyReportScreen() {
           </View>
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Qualité</Text>
-            <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{report.sleepQuality.toFixed(1)}/5 ⭐</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{report.sleepQuality.toFixed(1)}/5</Text>
+              <Star size={14} color="#F59E0B" fill="#F59E0B" />
+            </View>
           </View>
           <View style={styles.detailRow}>
             <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Dette accumulée</Text>

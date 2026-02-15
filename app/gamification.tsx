@@ -86,6 +86,7 @@ import {
   Footprints,
   CheckCircle2,
   Egg,
+  ClipboardList,
 } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -546,7 +547,11 @@ export default function DojoScreen() {
         <View style={styles.heroSection}>
           {/* Rang actuel avec anneau de progression */}
           <Animated.View style={[styles.rankHero, { transform: [{ scale: pulseAnim }] }]}>
-            <View style={styles.rankRingContainer}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/avatar-selection' as any)}
+              style={styles.rankRingContainer}
+            >
               <ProgressRing
                 progress={rankProgress}
                 size={100}
@@ -557,7 +562,7 @@ export default function DojoScreen() {
               <View style={[styles.rankIconHero, { backgroundColor: 'transparent' }]}>
                 <AvatarDisplay size="small" />
               </View>
-            </View>
+            </TouchableOpacity>
             {/* Niveau en grand */}
             <View style={styles.levelBigBadge}>
               <Zap size={16} color="#FFD700" fill="#FFD700" />
@@ -1179,7 +1184,7 @@ export default function DojoScreen() {
 
                     {/* Titre */}
                     <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
-                      {previewQuest.icon} {previewQuest.title}
+                      {previewQuest.title}
                     </Text>
 
                     {/* Description */}
@@ -1190,9 +1195,12 @@ export default function DojoScreen() {
                     {/* Instructions */}
                     {previewQuest.instructions && (
                       <View style={[styles.previewInstructionsBox, { backgroundColor: isDark ? 'rgba(255,215,0,0.1)' : 'rgba(255,215,0,0.15)' }]}>
-                        <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
-                          📋 Comment faire :
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <ClipboardList size={14} color="#FFD700" />
+                          <Text style={[styles.previewInstructionsLabel, { color: '#FFD700' }]}>
+                            Comment faire :
+                          </Text>
+                        </View>
                         <Text style={[styles.previewInstructionsText, { color: isDark ? '#FFFFFF' : '#333' }]}>
                           {previewQuest.instructions}
                         </Text>

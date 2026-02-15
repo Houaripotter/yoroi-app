@@ -108,7 +108,7 @@ import { PAGE_TUTORIALS, hasVisitedPage, markPageAsVisited } from '@/lib/feature
 import { RatingPopup } from '@/components/RatingPopup';
 import ratingService from '@/lib/ratingService';
 import { addHydration as addHydrationToQuests } from '@/lib/quests';
-import { ShareFloatingButton } from '@/components/stats/ShareFloatingButton';
+import { HomeToolsMenu } from '@/components/home/HomeToolsMenu';
 
 // Mode Essentiel
 import { useViewMode } from '@/hooks/useViewMode';
@@ -1053,22 +1053,33 @@ export default function HomeScreen() {
       case 'header':
         return (
           <View key={sectionId}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HEADER SIMPLE & ÉLÉGANT */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
             <View style={styles.header}>
-              {/* Photo de profil (Gauche) */}
+              {/* Photo de profil (Gauche) - Design élégant */}
               <TouchableOpacity
-                style={[styles.profilePhotoContainer, { borderColor: colors.border }]}
                 onPress={handleNavigateProfile}
                 activeOpacity={0.8}
               >
-                {profile?.profile_photo ? (
-                  <Image
-                    source={{ uri: profile.profile_photo }}
-                    style={styles.profilePhotoImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Ionicons name="person" size={24} color={colors.textSecondary} />
-                )}
+                <View style={[styles.profilePhotoWrapper, { borderColor: colors.accent }]}>
+                  <View style={[styles.profilePhotoContainer, { backgroundColor: colors.backgroundCard }]}>
+                    {profile?.profile_photo ? (
+                      <Image
+                        source={{ uri: profile.profile_photo }}
+                        style={styles.profilePhotoImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[`${colors.accent}30`, `${colors.accent}10`]}
+                        style={styles.profilePlaceholder}
+                      >
+                        <Ionicons name="person" size={28} color={colors.accent} />
+                      </LinearGradient>
+                    )}
+                  </View>
+                </View>
               </TouchableOpacity>
 
               {/* Texte (Centre) */}
@@ -1080,60 +1091,49 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              {/* Avatar (Droite) - Clique pour aller au Dojo */}
+              {/* Avatar (Droite) - Design élégant */}
               <TouchableOpacity
-                style={styles.avatarContainerRight}
-                onPress={handleNavigateGamification}
+                style={styles.avatarWrapper}
+                onPress={handleNavigateAvatarSelection}
                 activeOpacity={0.8}
               >
-                <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
+                <View style={[styles.avatarFrame, {
+                  backgroundColor: colors.backgroundCard,
+                  borderColor: `${colors.accent}40`,
+                }]}>
+                  <AvatarDisplay size="small" refreshTrigger={avatarRefreshTrigger} />
+                </View>
+                {/* Badge niveau discret */}
+                <View style={[styles.levelBadgeSmall, { backgroundColor: colors.accent }]}>
+                  <Text style={styles.levelBadgeText}>{level.level}</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
-            {/* Citation motivante - BULLE DE PENSÉE ANIMÉE */}
+            {/* Citation motivante - Design épuré */}
             {dailyQuote && (
               <Animated.View
                 style={[
-                  { paddingHorizontal: 16, marginTop: 20 },
+                  { paddingHorizontal: 16, marginTop: 16 },
                   { opacity: quoteFadeAnim, transform: [{ scale: quoteScaleAnim }] }
                 ]}
               >
-                <View style={styles.speechBubbleContainer}>
-                  {/* Cerveau animé */}
-                  <Animated.View style={[styles.brainContainer, { transform: [{ scale: quotePulseAnim }] }]}>
-                    <View style={[styles.brainCircle, { backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}40` }]}>
-                      <Brain size={28} color={colors.accentText} strokeWidth={2.5} />
-                    </View>
-                    {/* Mini éclairs d'idée */}
-                    <View style={styles.ideaSparks}>
-                      <Zap size={12} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -8, right: -4 }} />
-                      <Zap size={10} color="#FFD700" fill="#FFD700" style={{ position: 'absolute', top: -4, right: 8 }} />
-                    </View>
-                  </Animated.View>
-
-                  {/* Bulle de pensée (fond caméléon) */}
-                  <View style={[styles.speechBubble, {
-                    backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-                    shadowColor: isDark ? colors.accent : '#000',
-                    borderColor: isDark ? colors.border : `${colors.accent}30`,
-                  }]}>
-                    {/* Petite queue de bulle */}
-                    <View style={[styles.bubbleTail, {
-                      backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
-                      borderColor: isDark ? colors.border : `${colors.accent}30`,
-                    }]} />
-
-                    <Text style={[styles.quoteTextBubble, { color: isDark ? colors.textPrimary : '#1A1A1A' }]}>
-                      "{dailyQuote.text}"
+                <View style={[styles.quoteCardClean, {
+                  backgroundColor: isDark ? colors.backgroundCard : '#FFFFFF',
+                  borderColor: isDark ? `${colors.accent}20` : 'rgba(0,0,0,0.06)',
+                  shadowColor: isDark ? colors.accent : '#000',
+                }]}>
+                  <View style={[styles.quoteAccentBar, { backgroundColor: `${colors.accent}90` }]} />
+                  <View style={styles.quoteCleanContent}>
+                    <Text
+                      style={[styles.quoteCleanText, { color: isDark ? colors.textPrimary : '#1A1A2E' }]}
+                      numberOfLines={3}
+                    >
+                      «{'\u00A0'}{dailyQuote.text}{'\u00A0'}»
                     </Text>
-
-                    {/* Badge "Citation du jour" */}
-                    <View style={[styles.quoteBadge, {
-                      backgroundColor: `${colors.accent}15`,
-                      borderColor: `${colors.accent}40`,
-                    }]}>
-                      <Text style={[styles.quoteBadgeText, { color: isDark ? colors.accent : colors.textPrimary }]}>{t('home.quoteOfTheDay')}</Text>
-                    </View>
+                    <Text style={[styles.quoteCleanLabel, { color: colors.textMuted }]}>
+                      {t('home.quoteOfTheDay')}
+                    </Text>
                   </View>
                 </View>
               </Animated.View>
@@ -1819,8 +1819,9 @@ export default function HomeScreen() {
         <Cloud size={20} color="#FFFFFF" />
       </TouchableOpacity> */}
 
-      {/* Bouton partage flottant */}
-      <ShareFloatingButton />
+
+      {/* Bouton outils flottant */}
+      <HomeToolsMenu />
       </View>
     </ErrorBoundary>
   );
@@ -1834,23 +1835,82 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 16 },
 
-  // Header
+  // Header - Design Simple & Élégant
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   logo: { width: 70, height: 70, borderRadius: 14 },
-  profilePhotoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+
+  // Photo de profil - Cercle élégant avec bordure subtile
+  profilePhotoWrapper: {
+    padding: 3,
+    borderRadius: 44,
     borderWidth: 2,
+    borderStyle: 'solid',
+  },
+  profilePhotoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   profilePhotoImage: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
+  profilePlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Avatar - Forme élégante avec badge niveau
+  avatarWrapper: {
+    position: 'relative',
+  },
+  avatarFrame: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    borderWidth: 2,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  levelBadgeSmall: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  levelBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
   avatarContainerRight: {
     width: 80,
     height: 80,
@@ -1861,6 +1921,242 @@ const styles = StyleSheet.create({
   greeting: { fontSize: 14, fontWeight: '600' },
   userNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   userName: { fontSize: 22, fontWeight: '900' },
+
+  // ═══════════════════════════════════════════════════════════════
+  // Styles legacy (gardés pour compatibilité)
+  // ═══════════════════════════════════════════════════════════════
+
+  headerGradientBg: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+
+  headerMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  profileContainerV4: {
+    position: 'relative',
+  },
+  profileBorderGold: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    padding: 3,
+  },
+  profileInnerV4: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a2e',
+  },
+  profileImgV4: {
+    width: 76,
+    height: 76,
+  },
+  profilePlaceholderV4: {
+    width: 76,
+    height: 76,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2a2a4e',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22C55E',
+    borderWidth: 3,
+    borderColor: '#1a1a2e',
+  },
+
+  // Center Info V4
+  centerInfoV4: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  greetingV4: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
+  },
+  nameV4: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginTop: 2,
+  },
+  levelBarContainer: {
+    width: '100%',
+    marginTop: 10,
+  },
+  levelBarBg: {
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  levelBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  levelBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  levelBadgeV4: {
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  levelNumV4: {
+    color: '#1a1a2e',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  xpTextV4: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  // Avatar V4
+  avatarContainerV4: {
+    position: 'relative',
+  },
+  avatarFrameV4: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    borderColor: '#FF6B35',
+    overflow: 'hidden',
+    backgroundColor: '#1a1a2e',
+  },
+  energyBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 3,
+    borderWidth: 2,
+    borderColor: '#1a1a2e',
+  },
+  energyText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+
+  // Stats Bar V4
+  statsBarV4: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 12,
+  },
+  statItemV4: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 4,
+  },
+  statItemRankV4: {
+    alignItems: 'center',
+    flex: 1.3,
+    gap: 4,
+  },
+  statValueV4: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  statLabelV4: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  rankTextV4: {
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+
+  // Quote V4
+  quoteContainerV4: {
+    paddingHorizontal: 16,
+    marginTop: 16,
+  },
+  quoteCardV4: {
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  quoteAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
+  quoteTextV4: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    fontStyle: 'italic',
+    lineHeight: 21,
+    paddingLeft: 8,
+  },
+  quoteLabel: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  // Mode Switch
+  modeSwitchContainer: {
+    alignItems: 'center',
+    marginTop: 14,
+    marginBottom: 4,
+  },
   avatarBtn: {
     width: 75,
     height: 95,
@@ -2974,25 +3270,59 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  // Cerveau animé
+  // Citation - Design épuré
+  quoteCardClean: {
+    flexDirection: 'row' as const,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  quoteAccentBar: {
+    width: 3,
+    borderRadius: 2,
+    minHeight: 36,
+  },
+  quoteCleanContent: {
+    flex: 1,
+  },
+  quoteCleanText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    fontStyle: 'italic' as const,
+    lineHeight: 21,
+    letterSpacing: 0.15,
+  },
+  quoteCleanLabel: {
+    fontSize: 9.5,
+    fontWeight: '700' as const,
+    letterSpacing: 1.2,
+    marginTop: 8,
+    textTransform: 'uppercase' as const,
+  },
+
+  // Legacy styles (kept for compatibility)
   brainContainer: {
-    position: 'relative',
+    position: 'relative' as const,
   },
   brainCircle: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
     borderWidth: 2,
   },
   ideaSparks: {
-    position: 'relative',
+    position: 'relative' as const,
     width: 60,
     height: 20,
   },
 
-  // Bulle de pensée (FOND BLANC)
   speechBubble: {
     flex: 1,
     padding: 16,

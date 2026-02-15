@@ -170,9 +170,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type, onAction }) => {
         </LinearGradient>
       </Animated.View>
 
-      {/* Emoji décoratif */}
-      <Text style={styles.emoji}>{config.emoji}</Text>
-
       {/* Titre */}
       <Text style={[styles.title, { color: colors.textPrimary }]}>
         {config.title}

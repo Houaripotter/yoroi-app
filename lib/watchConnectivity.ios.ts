@@ -47,14 +47,12 @@ const WatchConnectivityModule = isModuleAvailable
         return Promise.resolve(false);
       },
       sendMessageToWatch: () => {
-        console.error('[WatchConnectivity] Stub: sendMessageToWatch() appelé - module non disponible');
-        return Promise.reject(new Error('WatchConnectivityBridge module not available - check native linking'));
+        return Promise.resolve(false);
       },
       updateApplicationContext: () => {
-        console.error('[WatchConnectivity] Stub: updateApplicationContext() appelé - module non disponible');
-        return Promise.reject(new Error('WatchConnectivityBridge module not available - check native linking'));
+        return Promise.resolve(false);
       },
-      transferUserInfo: () => Promise.reject(new Error('Module not available')),
+      transferUserInfo: () => Promise.resolve(false),
       getReceivedApplicationContext: () => Promise.resolve({}),
       activateSession: () => Promise.resolve(true),
       transferFile: () => Promise.reject(new Error('Module not available')),

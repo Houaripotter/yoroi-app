@@ -354,7 +354,7 @@ export default function ActivityHistoryScreen() {
                     {t('activity.noStepsData') || 'Aucune donnée de pas disponible'}
                   </Text>
                   <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-                    {t('activity.connectHealth') || 'Connectez l'app Santé pour voir vos données'}
+                    {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
                   </Text>
                 </View>
               )}
@@ -456,7 +456,7 @@ export default function ActivityHistoryScreen() {
                     {t('activity.noCaloriesData') || 'Aucune donnée de calories disponible'}
                   </Text>
                   <Text style={[styles.emptyHint, { color: colors.textMuted }]}>
-                    {t('activity.connectHealth') || 'Connectez l'app Santé pour voir vos données'}
+                    {t('activity.connectHealth') || "Connectez l'app Santé pour voir vos données"}
                   </Text>
                 </View>
               )}

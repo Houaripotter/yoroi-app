@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Bell,
   BellOff,
+  Minus,
 } from 'lucide-react-native';
 import { impactAsync, notificationAsync, ImpactFeedbackStyle, NotificationFeedbackType } from 'expo-haptics';
 import { format, subDays, Locale } from 'date-fns';
@@ -246,9 +247,15 @@ export default function SleepScreen() {
               {stats?.trend === 'declining' && <TrendingDown size={18} color="#EF4444" strokeWidth={2.5} />}
               {stats?.trend === 'stable' && <Target size={18} color={colors.textMuted} strokeWidth={2.5} />}
             </View>
-            <Text style={[styles.statValue, { color: stats?.trend === 'improving' ? '#10B981' : stats?.trend === 'declining' ? '#EF4444' : colors.textPrimary }]}>
-              {stats?.trend === 'improving' ? '↗' : stats?.trend === 'declining' ? '↘' : '→'}
-            </Text>
+            <View style={{ alignItems: 'center', marginVertical: 4 }}>
+              {stats?.trend === 'improving' ? (
+                <TrendingUp size={20} color="#10B981" strokeWidth={2.5} />
+              ) : stats?.trend === 'declining' ? (
+                <TrendingDown size={20} color="#EF4444" strokeWidth={2.5} />
+              ) : (
+                <Minus size={20} color={colors.textPrimary} strokeWidth={2.5} />
+              )}
+            </View>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('sleep.trend')}</Text>
           </View>
         </View>
